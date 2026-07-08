@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Sandboxed: host co-owns the App Group container with the extension
+	     (logs/stats) without TCC prompts. macOS tunnel uses the NE. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Network Extension: the host app manages the packet-tunnel. -->
+	<key>com.apple.developer.networking.networkextension</key>
+	<array>
+		<string>packet-tunnel-provider</string>
+	</array>
+	<!-- Shared container with the extension (logs + stats). -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.nt.vpnClient</string>
+	</array>
+	<!-- Data-protection keychain access group (required for flutter_secure_storage
+	     under the sandbox). $(AppIdentifierPrefix) expands to the team ID. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.nt.vpnClient</string>
+	</array>
+</dict>
+</plist>
