@@ -22,6 +22,28 @@ class LoginResult {
   final Account account;
 }
 
+/// One SSO provider offered by the server (from /api/client/auth-config).
+class AuthProvider {
+  AuthProvider({required this.id, required this.name, required this.issuer, required this.clientId});
+  final int id;
+  final String name;
+  final String issuer;
+  final String clientId;
+
+  factory AuthProvider.fromJson(Map<String, dynamic> j) => AuthProvider(
+        id: j['id'] as int,
+        name: j['name'] as String? ?? 'SSO',
+        issuer: j['issuer'] as String? ?? '',
+        clientId: j['client_id'] as String? ?? '',
+      );
+}
+
+class AuthConfig {
+  AuthConfig({required this.passwordLogin, required this.providers});
+  final bool passwordLogin;
+  final List<AuthProvider> providers;
+}
+
 /// ApiClient talks to one management service's client API.
 class ApiClient {
   ApiClient(String baseUrl, {this.token}) : baseUrl = _normalize(baseUrl);
@@ -42,6 +64,28 @@ class ApiClient {
       'POST',
       '/api/client/login',
       body: {'username': username, 'password': password},
+    );
+    return LoginResult(
+      data['token'] as String,
+      Account.fromJson(data['account'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+
+  /// Which auth methods this server offers (pre-login, no token needed).
+  Future<AuthConfig> authConfig() async {
+    final data = await _send('GET', '/api/client/auth-config');
+    final list = (data['providers'] as List<dynamic>? ?? [])
+        .map((e) => AuthProvider.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return AuthConfig(passwordLogin: data['password_login'] as bool? ?? true, providers: list);
+  }
+
+  /// Exchange a verified OIDC ID token for a client session token.
+  Future<LoginResult> loginOIDC(int providerId, String idToken) async {
+    final data = await _send(
+      'POST',
+      '/api/client/login/oidc',
+      body: {'provider_id': providerId, 'id_token': idToken},
     );
     return LoginResult(
       data['token'] as String,

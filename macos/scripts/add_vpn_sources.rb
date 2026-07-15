@@ -24,5 +24,16 @@ existing = target.source_build_phase.files.map { |f| f.file_ref&.path }.compact
   puts "added to Runner: #{rel}"
 end
 
+# SSO: the web-auth bridge lives directly under Runner/.
+%w[WebAuthChannel.swift].each do |name|
+  if existing.include?(name)
+    puts "skip (already added): #{name}"
+    next
+  end
+  ref = runner_group.new_reference(name)
+  target.add_file_references([ref])
+  puts "added to Runner: #{name}"
+end
+
 project.save
 puts 'saved Runner.xcodeproj'

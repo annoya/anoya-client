@@ -47,6 +47,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// Fetch the server's SSO providers, let the user pick one (if several), and
+  /// run the browser OIDC flow. The server address must be filled first.
+  Future<void> _ssoLogin() async {
+    if (_server.text.trim().isEmpty) {
+      setState(() => _error = 'Enter the server address first.');
+      return;
+    }
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
+    final auth = ref.read(authControllerProvider.notifier);
+    try {
+      final cfg = await auth.authConfig(_server.text);
+      if (cfg.providers.isEmpty) {
+        setState(() => _error = 'This server has no SSO providers configured.');
+        return;
+      }
+      final provider = cfg.providers.length == 1 ? cfg.providers.first : await _pickProvider(cfg.providers);
+      if (provider == null) return; // user dismissed the picker
+      await auth.loginOIDC(_server.text, provider);
+      Log.i('SSO login succeeded via ${provider.name}');
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    } catch (e) {
+      Log.e('SSO login failed', '$e');
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<AuthProvider?> _pickProvider(List<AuthProvider> providers) {
+    return showModalBottomSheet<AuthProvider>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Sign in with', style: Theme.of(context).textTheme.titleMedium),
+            ),
+            ...providers.map((p) => ListTile(
+                  leading: const Icon(Icons.login),
+                  title: Text(p.name),
+                  onTap: () => Navigator.of(context).pop(p),
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,6 +155,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: _busy
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Text('Sign in'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Row(children: [
+                    Expanded(child: Divider()),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('or')),
+                    Expanded(child: Divider()),
+                  ]),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: _busy ? null : _ssoLogin,
+                      icon: const Icon(Icons.business_outlined, size: 18),
+                      label: const Text('Sign in with SSO'),
                     ),
                   ),
                 ],

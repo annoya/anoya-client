@@ -16,6 +16,9 @@ class MainFlutterWindow: NSWindow {
     // VPN control/status bridge to the packet-tunnel extension.
     VpnChannel.register(messenger: flutterViewController.engine.binaryMessenger)
 
+    // SSO: system auth browser (ASWebAuthenticationSession) for the OIDC flow.
+    WebAuthChannel.register(messenger: flutterViewController.engine.binaryMessenger, window: self)
+
     super.awakeFromNib()
   }
 }
