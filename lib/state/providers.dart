@@ -5,6 +5,7 @@ import 'dart:io' show Platform;
 import '../api/api_client.dart';
 import '../api/session.dart';
 import '../core/network_extension_core.dart';
+import '../core/oidc_login.dart';
 import '../core/vpn_core.dart';
 
 final sessionProvider = Provider<Session>((_) => Session());
@@ -45,6 +46,20 @@ class AuthController extends Notifier<AuthState> {
   Future<void> login(String serverUrl, String username, String password) async {
     final api = ApiClient(serverUrl);
     final result = await api.login(username, password);
+    await _session.save(serverUrl: api.baseUrl, token: result.token);
+    state = AuthState(loggedIn: true, serverUrl: api.baseUrl);
+  }
+
+  /// Fetch which auth methods a server offers (password + SSO providers).
+  Future<AuthConfig> authConfig(String serverUrl) =>
+      ApiClient(serverUrl).authConfig();
+
+  /// Sign in via an SSO provider: run the browser OIDC flow, then exchange the
+  /// ID token with the server for a session.
+  Future<void> loginOIDC(String serverUrl, AuthProvider provider) async {
+    final api = ApiClient(serverUrl);
+    final idToken = await obtainOidcIdToken(provider);
+    final result = await api.loginOIDC(provider.id, idToken);
     await _session.save(serverUrl: api.baseUrl, token: result.token);
     state = AuthState(loggedIn: true, serverUrl: api.baseUrl);
   }
