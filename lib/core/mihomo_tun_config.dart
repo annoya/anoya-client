@@ -9,8 +9,13 @@ import 'norm_config.dart';
 /// [routing] is the split-tunneling policy (managed or device-local); null
 /// means "everything through the VPN".
 ///
+/// [stack] is the mihomo TUN network stack: "gvisor" on macOS (bundled via the
+/// with_gvisor build tag), "system" on iOS (lighter — the iOS Network
+/// Extension has a hard ~50MB memory cap, and the iOS xcframework slice is
+/// built without gVisor).
+///
 /// Pure + top-level so it can be unit-tested. Only "vless" is implemented.
-String mihomoTunConfigYaml(Location location, {Routing? routing}) {
+String mihomoTunConfigYaml(Location location, {Routing? routing, String stack = 'gvisor'}) {
   final p = location.proxy;
   if (location.proxyType != 'vless') {
     throw StateError('unsupported proxy type: ${location.proxyType}');
@@ -34,7 +39,7 @@ String mihomoTunConfigYaml(Location location, {Routing? routing}) {
     '    - https://1.1.1.1/dns-query',
     'tun:',
     '  enable: true',
-    '  stack: gvisor',
+    '  stack: $stack',
     '  dns-hijack:',
     '    - any:53',
     // NE owns OS routing; mihomo just reads the fd. Detect the physical
