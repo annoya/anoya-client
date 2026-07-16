@@ -56,7 +56,10 @@ class NetworkExtensionCore implements VpnCore {
       (l) => l.id == locationId,
       orElse: () => throw StateError('unknown location $locationId'),
     );
-    final yaml = mihomoTunConfigYaml(location, routing: config.routing);
+    // gvisor on both macOS and iOS: it's fully userspace (no socket binds), the
+    // only stack that works inside the iOS NE sandbox. (The `system` stack
+    // fails there trying to bind the fake-ip gateway.)
+    final yaml = mihomoTunConfigYaml(location, routing: config.routing, stack: 'gvisor');
     final serverIp = location.proxy['server']?.toString() ?? '';
     final routing = config.routing;
     final routingDesc =

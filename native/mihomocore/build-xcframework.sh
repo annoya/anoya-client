@@ -38,9 +38,35 @@ if [ "${UNIVERSAL:-0}" = "1" ]; then
   LIB="$OUT/universal/libmihomocore.a"
 fi
 
+# iOS device slice (arm64), built WITH with_gvisor — same as macOS. The gVisor
+# userspace TUN stack is the one that works inside the NE sandbox: it needs no
+# real socket binds, whereas mihomo's `system` stack tries to bind the fake-ip
+# gateway (198.18.0.1) and fails with "can't assign requested address" in the
+# NE. Memory (iOS NE ~50MB cap) is validated empirically on device instead.
+# Set IOS=0 to skip (e.g. on a Mac without the iOS SDK).
+XCARGS=(-library "$LIB" -headers "$OUT/headers")
+if [ "${IOS:-1}" = "1" ] && xcrun --sdk iphoneos --show-sdk-path >/dev/null 2>&1; then
+  echo ">> building ios/arm64 c-archive (with_gvisor)"
+  mkdir -p "$OUT/ios-arm64" "$OUT/ios-headers"
+  IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+  CGO_ENABLED=1 GOOS=ios GOARCH=arm64 \
+    SDKROOT="$IOS_SDK" \
+    CC="$(xcrun --sdk iphoneos --find clang) -arch arm64 -isysroot $IOS_SDK -miphoneos-version-min=15.0" \
+    go build -tags with_gvisor -buildmode=c-archive -o "$OUT/ios-arm64/libmihomocore.a" .
+  cp "$OUT/ios-arm64/libmihomocore.h" "$OUT/ios-headers/mihomocore.h"
+  cat > "$OUT/ios-headers/module.modulemap" <<'MAP'
+module MihomoCore {
+    header "mihomocore.h"
+    export *
+}
+MAP
+  XCARGS+=(-library "$OUT/ios-arm64/libmihomocore.a" -headers "$OUT/ios-headers")
+else
+  echo ">> skipping iOS slice (no iOS SDK or IOS=0)"
+fi
+
 echo ">> packaging MihomoCore.xcframework"
-xcodebuild -create-xcframework \
-  -library "$LIB" -headers "$OUT/headers" \
+xcodebuild -create-xcframework "${XCARGS[@]}" \
   -output MihomoCore.xcframework >/dev/null
 
 echo ">> done: $(pwd)/MihomoCore.xcframework"
