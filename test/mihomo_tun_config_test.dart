@@ -53,6 +53,13 @@ void main() {
         },
       });
 
+  test('stack defaults to gvisor and is overridable (iOS uses system)', () {
+    expect(mihomoTunConfigYaml(vlessLoc()), contains('stack: gvisor'));
+    final ios = mihomoTunConfigYaml(vlessLoc(), stack: 'system');
+    expect(ios, contains('stack: system'));
+    expect(ios, isNot(contains('stack: gvisor')));
+  });
+
   test('no routing → full tunnel, process matching off', () {
     final yaml = mihomoTunConfigYaml(vlessLoc());
     expect(yaml, contains('find-process-mode: "off"'));
