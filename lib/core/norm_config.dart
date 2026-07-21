@@ -124,6 +124,14 @@ class Account {
       dataLimit: (json['data_limit'] as num?)?.toInt() ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'display_name': displayName,
+        'status': status,
+        if (expiresAt != null) 'expires_at': expiresAt!.toIso8601String(),
+        'used_bytes': usedBytes,
+        'data_limit': dataLimit,
+      };
 }
 
 class Location {
@@ -140,4 +148,6 @@ class Location {
         label: json['label'] as String? ?? '',
         proxy: Map<String, dynamic>.from(json['proxy'] as Map? ?? {}),
       );
+
+  Map<String, dynamic> toJson() => {'id': id, 'label': label, 'proxy': proxy};
 }

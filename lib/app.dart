@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/log.dart';
-import 'features/login_screen.dart';
+import 'features/start_screen.dart';
 import 'features/home_screen.dart';
+import 'state/profiles_controller.dart';
 import 'state/providers.dart';
 
 class VpnApp extends ConsumerStatefulWidget {
@@ -17,7 +18,6 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   @override
   void initState() {
     super.initState();
-    // Log the VPN engine version once at startup for diagnostics.
     ref.read(vpnCoreProvider).engineVersion().then((v) {
       Log.i('vpn engine: ${v ?? 'unavailable'}');
     });
@@ -25,7 +25,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
+    final profiles = ref.watch(profilesControllerProvider);
     return MaterialApp(
       title: 'VPN',
       debugShowCheckedModeBanner: false,
@@ -36,9 +36,9 @@ class _VpnAppState extends ConsumerState<VpnApp> {
           brightness: Brightness.dark,
         ),
       ),
-      home: auth.loading
+      home: profiles.loading
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-          : (auth.loggedIn ? const HomeScreen() : const LoginScreen()),
+          : (profiles.hasProfiles ? const HomeScreen() : const StartScreen()),
     );
   }
 }

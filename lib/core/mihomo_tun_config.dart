@@ -9,18 +9,15 @@ import 'norm_config.dart';
 /// [routing] is the split-tunneling policy (managed or device-local); null
 /// means "everything through the VPN".
 ///
-/// [stack] is the mihomo TUN network stack: "gvisor" on macOS (bundled via the
-/// with_gvisor build tag), "system" on iOS (lighter — the iOS Network
-/// Extension has a hard ~50MB memory cap, and the iOS xcframework slice is
-/// built without gVisor).
+/// [stack] is the mihomo TUN network stack — "gvisor" on both macOS and iOS
+/// (fully userspace; the only stack that works inside the NE sandbox).
 ///
-/// Pure + top-level so it can be unit-tested. Only "vless" is implemented.
+/// Supports vless / vmess / trojan / ss. The selected location's `proxy` is
+/// either the self-hosted vless+reality shape (custom `reality` key) or a
+/// mihomo-format map (from a share link / subscription); both are normalized
+/// to a single mihomo proxy here. Pure + top-level so it can be unit-tested.
 String mihomoTunConfigYaml(Location location, {Routing? routing, String stack = 'gvisor'}) {
-  final p = location.proxy;
-  if (location.proxyType != 'vless') {
-    throw StateError('unsupported proxy type: ${location.proxyType}');
-  }
-  final reality = Map<String, dynamic>.from(p['reality'] as Map? ?? {});
+  final proxy = _mihomoProxy(location);
   final ruleLines = _routingRuleLines(routing);
   final hasProcessRules =
       routing?.rules.any((r) => r.type == 'process-name' && r.isValid) ?? false;
@@ -48,20 +45,7 @@ String mihomoTunConfigYaml(Location location, {Routing? routing, String stack = 
     '  auto-detect-interface: true',
     '  mtu: 9000',
     'proxies:',
-    '  - name: proxy',
-    '    type: vless',
-    '    server: ${p['server']}',
-    '    port: ${p['port']}',
-    '    uuid: ${p['uuid']}',
-    '    network: tcp',
-    '    udp: true',
-    '    tls: ${p['tls'] ?? true}',
-    if ((p['flow'] as String?)?.isNotEmpty ?? false) '    flow: ${p['flow']}',
-    '    servername: ${reality['server_name']}',
-    '    client-fingerprint: chrome',
-    '    reality-opts:',
-    '      public-key: ${reality['public_key']}',
-    '      short-id: "${reality['short_id']}"',
+    ..._emitProxy(proxy),
     'proxy-groups:',
     '  - name: PROXY',
     '    type: select',
@@ -72,6 +56,80 @@ String mihomoTunConfigYaml(Location location, {Routing? routing, String stack = 
     if (routing?.mode == 'split') '  - MATCH,DIRECT' else '  - MATCH,PROXY',
   ];
   return '${lines.join('\n')}\n';
+}
+
+const _supportedProxyTypes = {'vless', 'vmess', 'trojan', 'ss'};
+
+/// Normalizes a Location's proxy into a single mihomo proxy map named "proxy".
+/// The self-hosted bundle uses a custom `reality` sub-map; share-link and
+/// subscription proxies are already mihomo-shaped (see proxy_uri.dart).
+Map<String, dynamic> _mihomoProxy(Location location) {
+  final type = location.proxyType;
+  if (!_supportedProxyTypes.contains(type)) {
+    throw StateError('unsupported proxy type: $type');
+  }
+  final p = location.proxy;
+  // Self-hosted vless+reality shape → mihomo keys (matches the old output).
+  if (p['reality'] is Map) {
+    final r = Map<String, dynamic>.from(p['reality'] as Map);
+    final m = <String, dynamic>{
+      'name': 'proxy',
+      'type': 'vless',
+      'server': p['server'],
+      'port': p['port'],
+      'uuid': p['uuid'],
+      'network': 'tcp',
+      'udp': true,
+      'tls': p['tls'] ?? true,
+    };
+    if ((p['flow'] as String?)?.isNotEmpty ?? false) m['flow'] = p['flow'];
+    m['servername'] = r['server_name'];
+    m['client-fingerprint'] = 'chrome';
+    m['reality-opts'] = {'public-key': r['public_key'], 'short-id': r['short_id']};
+    return m;
+  }
+  // Already a mihomo proxy map — clone with name forced to "proxy".
+  final m = <String, dynamic>{'name': 'proxy'};
+  for (final e in p.entries) {
+    if (e.key != 'name') m[e.key] = e.value;
+  }
+  return m;
+}
+
+/// Emits a mihomo proxy map as YAML block-list lines under `proxies:`. All
+/// string scalars are double-quoted (safe against special chars in
+/// uuids/paths/passwords); bools/numbers stay unquoted. Nested maps (ws-opts,
+/// reality-opts…) are supported.
+List<String> _emitProxy(Map<String, dynamic> proxy) {
+  final body = _mapLines(proxy, 4);
+  body[0] = '  - ${body[0].substring(4)}'; // first key becomes the list item
+  return body;
+}
+
+List<String> _mapLines(Map<String, dynamic> m, int indent) {
+  final pad = ' ' * indent;
+  final out = <String>[];
+  m.forEach((k, v) {
+    if (v is Map) {
+      out.add('$pad$k:');
+      out.addAll(_mapLines(v.cast<String, dynamic>(), indent + 2));
+    } else if (v is List) {
+      out.add('$pad$k:');
+      for (final e in v) {
+        out.add('${' ' * (indent + 2)}- ${_scalar(e)}');
+      }
+    } else {
+      out.add('$pad$k: ${_scalar(v)}');
+    }
+  });
+  return out;
+}
+
+String _scalar(dynamic v) {
+  if (v is bool) return v ? 'true' : 'false';
+  if (v is num) return v.toString();
+  final s = v.toString().replaceAll('\\', r'\\').replaceAll('"', r'\"');
+  return '"$s"';
 }
 
 const _ruleTypeMap = {

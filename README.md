@@ -1,70 +1,68 @@
-# VPN client (Flutter, macOS first)
+# VPN client (Flutter — macOS & iOS)
 
-Cross-platform VPN client. macOS is the first target.
+Cross-platform VPN client. One Flutter/Dart UI drives both macOS and iOS.
 
 ## Architecture
 
-The app depends only on the **`VpnCore`** abstraction (`lib/core/vpn_core.dart`),
-never on a specific engine. Today the only implementation is **`MihomoCore`**
-(`lib/core/mihomo_core.dart`), which:
+The app depends only on the **`VpnCore`** seam (`lib/core/vpn_core.dart`), never
+on a specific engine. On macOS/iOS the implementation is **`NetworkExtensionCore`**
+(`lib/core/network_extension_core.dart`): a real system-wide VPN via a
+**`NEPacketTunnelProvider`** extension. The mihomo engine is compiled as a Go
+c-archive (`MihomoCore.xcframework`) and linked into the extension; Dart only
+renders the mihomo TUN config and sends start/stop over a MethodChannel.
 
-- translates the management service's normalized config bundle into mihomo YAML
-  (`mihomoConfigYaml`, unit-tested in `test/mihomo_config_test.dart`),
-- runs the bundled mihomo engine as a subprocess,
-- points the macOS system proxy at it (best-effort).
+- config translation: `mihomoTunConfigYaml` (`lib/core/mihomo_tun_config.dart`,
+  unit-tested) — TUN inbound bound to the utun fd, `stack: gvisor` on both
+  platforms, split-tunneling rules rendered from the config bundle.
+- the app re-fetches its config from management before every connect.
 
-Swapping the engine — or moving to a full Network Extension tunnel — means
-writing a new `VpnCore`; no screen or state code changes.
+Swapping the engine or adding a platform means writing a new `VpnCore`; no
+screen or state code changes.
 
-### Tunnel mode (MVP) vs production
+## Native core (Go → xcframework)
 
-This MVP uses **proxy mode**: mihomo exposes a local SOCKS/HTTP proxy and the
-app sets the macOS system proxy. This tunnels apps that honor the system proxy —
-it is **not** a full system-wide VPN.
+`native/mihomocore/` is a standalone Go module (mihomo pinned, CGO,
+`-tags with_gvisor`). `build-xcframework.sh` builds `MihomoCore.xcframework`
+with a `macos-arm64` slice and (on a Mac with the iOS SDK) an `ios-arm64` slice.
+The xcframework is **not committed** (129 MB, over GitHub's file limit) — it is
+built on demand (see below).
 
-The production path is a **Network Extension** (`NEPacketTunnelProvider`) with
-mihomo linked as a Go c-archive, captured behind the same `VpnCore` seam. That
-requires a paid Apple Developer account (available) and is tracked as a later
-milestone.
+## Shared Network Extension code
 
-## Prerequisites to run
+The Swift that is identical across platforms lives once in **`shared/apple/`**
+(`PacketTunnelProvider.swift`, `VPNManager.swift`, `VpnChannel.swift`) and is
+**symlinked** into `macos/…` and `ios/…`. Edit the file in `shared/apple/` —
+both platforms pick it up. `VpnChannel.swift` uses `#if canImport(FlutterMacOS)`
+so the one file compiles against FlutterMacOS (macOS) or Flutter (iOS).
 
-Just Flutter 3.38+ and Xcode.
+## Build & run
 
-The **mihomo engine is bundled** with the app (`assets/mihomo/mihomo`,
-darwin-arm64). At runtime `MihomoCore` extracts it to the app-support directory,
-marks it executable, and runs it — no manual install needed.
-
-> Must be a mihomo **Alpha** build. The stable channel (1.19.x) is incompatible
-> with the Reality handshake of current Xray-core (26.x) on the worker —
-> connections fail with `connect error: EOF` / `REALITY: handshake did not
-> complete`. The Alpha tracks the latest XTLS/Reality and interoperates.
-
-Binary resolution order (first hit wins):
-- `MIHOMO_BIN` environment variable (override, e.g. to test another build),
-- the bundled engine extracted from assets,
-- `/usr/local/bin/mihomo` or `/opt/homebrew/bin/mihomo`.
-
-> To update the bundled engine, replace `assets/mihomo/mihomo` with a newer
-> darwin build from https://github.com/MetaCubeX/mihomo and rebuild. For an
-> Intel/universal app, bundle the matching arch.
-
-## Run
+One command handles the Go core (rebuilt only when it changed) and the
+Flutter+extension build-phase quirk, then runs Flutter:
 
 ```sh
 cd client
-flutter run -d macos        # or: flutter run -d macos --release
+./scripts/build.sh macos          # build core if stale → flutter run -d macos
+./scripts/build.sh ios            # + fixes the Flutter/extension build cycle
+./scripts/build.sh macos build    # flutter build instead of run
 ```
 
-Then sign in with the **server address**, **username**, and **password** of a
-user created in the management panel. The app fetches its config (locations,
-account status) and re-fetches it before every connect, so admin-side changes
-take effect immediately.
+Sign in with the **server address** (e.g. `https://…:8443`), **username**, and
+**password** of a user from the management panel — or **Sign in with SSO** if the
+server has an OIDC provider configured.
 
-## Notes
+## Requirements
 
-- The dev build disables the app sandbox (see `macos/Runner/*.entitlements`) so
-  the app can launch mihomo and run `networksetup`. The Network Extension build
-  will re-enable the sandbox with the appropriate entitlements.
-- A real tunnel needs a worker deployed on a reachable VPS (the demo worker uses
-  a placeholder endpoint).
+- Flutter 3.38+, Xcode.
+- A **paid Apple Developer account** (Network Extension capability + App Group).
+- iOS: a **real device** — the NE does not run in the Simulator.
+
+Bundle ids: app `com.nt.vpnClient`, extension `com.nt.vpnClient.tunnel`, App
+Group `group.com.nt.vpnClient`.
+
+## Bootstrap (one-time, already done)
+
+The Xcode projects already contain the Tunnel extension targets, so day-to-day
+you only need `build.sh`. If you ever recreate a target from scratch, see
+`macos/Tunnel/SETUP.md` / `ios/Tunnel/SETUP-ios.md` and the helper scripts under
+`macos/scripts/` and `ios/scripts/`.
