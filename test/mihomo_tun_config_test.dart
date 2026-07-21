@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
 import 'package:vpn_client/core/mihomo_tun_config.dart';
 import 'package:vpn_client/core/norm_config.dart';
+import 'package:vpn_client/core/proxy_uri.dart';
 
 void main() {
   test('mihomoTunConfigYaml renders a tun inbound + vless proxy', () {
@@ -90,6 +93,40 @@ void main() {
     final rules =
         (loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing)) as YamlMap)['rules'] as YamlList;
     expect(rules, ['DOMAIN-SUFFIX,bank.local,DIRECT', 'MATCH,PROXY']);
+  });
+
+  test('renders a parsed vmess (ws+tls) proxy', () {
+    final loc = parseProxyUri(
+      'vmess://${base64.encode(utf8.encode(jsonEncode({
+            'ps': 'VM', 'add': '9.9.9.9', 'port': '8443', 'id': 'vmess-uuid',
+            'aid': '0', 'scy': 'auto', 'net': 'ws', 'host': 'h.example.com',
+            'path': '/p', 'tls': 'tls', 'sni': 's.example.com',
+          }))).replaceAll('\n', '')}')!;
+    final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
+    final proxy = (doc['proxies'] as YamlList).first as YamlMap;
+    expect(proxy['name'], 'proxy');
+    expect(proxy['type'], 'vmess');
+    expect(proxy['server'], '9.9.9.9');
+    expect(proxy['port'], 8443);
+    expect(proxy['uuid'], 'vmess-uuid');
+    expect(proxy['tls'], true);
+    expect((proxy['ws-opts'] as YamlMap)['path'], '/p');
+    expect(((proxy['ws-opts'] as YamlMap)['headers'] as YamlMap)['Host'], 'h.example.com');
+  });
+
+  test('renders a parsed trojan proxy + group references it', () {
+    final loc = parseProxyUri('trojan://p@t.example.com:443?sni=t.example.com#T')!;
+    final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
+    final proxy = (doc['proxies'] as YamlList).first as YamlMap;
+    expect(proxy['type'], 'trojan');
+    expect(proxy['password'], 'p');
+    expect(proxy['sni'], 't.example.com');
+    expect((doc['proxy-groups'] as YamlList).first['proxies'], ['proxy']);
+  });
+
+  test('rejects unknown proxy types (renderer)', () {
+    final loc = Location.fromJson({'id': 'x', 'label': 'y', 'proxy': {'type': 'hysteria2'}});
+    expect(() => mihomoTunConfigYaml(loc), throwsStateError);
   });
 
   test('process rules enable strict process matching', () {
