@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/country_flag.dart';
 import '../core/norm_config.dart';
+import '../core/profile.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
-import '../state/config_controller.dart';
+import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import 'settings_screen.dart';
 
@@ -39,19 +41,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   bool get _busy => _status == VpnStatus.connected || _status == VpnStatus.connecting;
 
-  Future<void> _toggleConnect() async {
-    final controller = ref.read(configControllerProvider.notifier);
+  Future<void> _toggle() async {
+    final ctrl = ref.read(profilesControllerProvider.notifier);
     if (_busy) {
-      await controller.disconnect();
+      await ctrl.disconnect();
     } else {
-      await controller.connect();
+      await ctrl.connect();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cfgState = ref.watch(configControllerProvider);
-    final config = cfgState.config;
+    final st = ref.watch(profilesControllerProvider);
+    final active = st.active;
 
     return Scaffold(
       appBar: AppBar(
@@ -60,45 +62,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => SettingsScreen(
-                account: config?.account,
-                managedRouting: config?.routing,
-              ),
-            )),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
           ),
         ],
       ),
       body: PageBody(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            try {
-              await ref.read(configControllerProvider.notifier).refresh();
-            } catch (_) {/* surfaced via state.error */}
-          },
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            children: [
-              const SizedBox(height: 24),
-              Center(child: _statusLabel()),
-              const SizedBox(height: 28),
-              Center(child: _ConnectButton(status: _status, onTap: _toggleConnect)),
-              const SizedBox(height: 40),
-              _locationRow(cfgState),
-              if (config?.account != null) ...[
-                const SizedBox(height: 12),
-                _accountRow(config!.account),
-              ],
-              if (cfgState.error != null) ...[
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                  child: Text(cfgState.error!, textAlign: TextAlign.center,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                ),
-              ],
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          children: [
+            const SizedBox(height: 24),
+            Center(child: _statusLabel()),
+            const SizedBox(height: 28),
+            Center(child: _ConnectButton(status: _status, onTap: _toggle)),
+            const SizedBox(height: 40),
+            if (st.profiles.length > 1) _profileRow(st, active),
+            if (active != null) _locationRow(st, active),
+            if (active != null && active.hasAccount && active.account != null) ...[
+              const SizedBox(height: 12),
+              _accountRow(active.account!),
             ],
-          ),
+            if (st.error != null) ...[
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                child: Text(st.error!, textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -111,79 +104,132 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       VpnStatus.error => ('Error', Theme.of(context).colorScheme.error),
       VpnStatus.disconnected => ('Not connected', Colors.grey),
     };
-    return Text(text, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color, fontWeight: FontWeight.w600));
+    return Text(text,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color, fontWeight: FontWeight.w600));
   }
 
-  Widget _locationRow(ConfigState cfgState) {
-    final loc = cfgState.selectedLocation;
-    final empty = cfgState.config?.locations.isEmpty ?? true;
+  Widget _profileRow(ProfilesState st, Profile? active) {
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: const Icon(Icons.public),
-        title: Text(loc?.label ?? (cfgState.loading ? 'Loading…' : 'No locations')),
+        leading: const Icon(Icons.folder_outlined),
+        title: Text(active?.name ?? 'Configuration'),
+        subtitle: Text(_profileSubtitle(active)),
+        trailing: _busy ? const Icon(Icons.lock_outline, size: 18) : const Icon(Icons.expand_more),
+        onTap: _busy ? null : () => _pickProfile(st),
+      ),
+    );
+  }
+
+  Widget _locationRow(ProfilesState st, Profile active) {
+    final loc = st.selectedLocation;
+    // A single-server profile (a plain link) has nothing to pick between: show
+    // the server but no dropdown affordance or picker.
+    final pickable = !active.isSingleServer && st.locations.length > 1;
+    return Card(
+      margin: kCardMargin,
+      child: ListTile(
+        leading: _flagOrIcon(loc?.label),
+        title: Text(loc != null ? stripLeadingFlag(loc.label) : 'No servers'),
         subtitle: loc != null ? Text('${loc.proxyType} · ${loc.proxy['server']}') : null,
-        trailing: _busy ? const Icon(Icons.lock_outline, size: 18) : const Icon(Icons.chevron_right),
-        onTap: (_busy || empty) ? null : () => _pickLocation(cfgState),
+        trailing: !pickable
+            ? null
+            : _busy
+                ? const Icon(Icons.lock_outline, size: 18)
+                : const Icon(Icons.chevron_right),
+        onTap: (!pickable || _busy) ? null : () => _pickLocation(st),
       ),
     );
   }
 
   Widget _accountRow(Account account) {
-    final color = switch (account.status) {
-      'active' => Colors.green,
-      'expired' => Colors.orange,
-      _ => Colors.grey,
-    };
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: kGutter),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(radius: 4, backgroundColor: color),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              account.expiresAt != null
-                  ? '${account.status} · until ${account.expiresAt!.toLocal().toString().split('.').first}'
-                  : account.status,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
-            ),
-          ),
-        ],
+      child: Text(
+        account.expiresAt != null
+            ? '${account.status} · until ${account.expiresAt!.toLocal().toString().split('.').first}'
+            : account.status,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
       ),
     );
   }
 
-  Future<void> _pickLocation(ConfigState cfgState) async {
-    final locs = cfgState.config?.locations ?? [];
-    final selectedId = cfgState.selectedLocation?.id;
+  String _profileSubtitle(Profile? p) {
+    if (p == null) return '';
+    final kind = switch (p.type) {
+      ProfileType.selfhosted => 'Self-hosted',
+      ProfileType.subscription => 'Subscription',
+      ProfileType.link => 'Link',
+    };
+    return p.isSingleServer ? kind : '$kind · ${p.locations.length} servers';
+  }
+
+  Future<void> _pickProfile(ProfilesState st) async {
     final picked = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Location', style: Theme.of(context).textTheme.titleMedium),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(padding: const EdgeInsets.all(16), child: Text('Configuration', style: Theme.of(context).textTheme.titleMedium)),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: st.profiles
+                  .map((p) => ListTile(
+                        leading: const Icon(Icons.folder_outlined),
+                        title: Text(p.name),
+                        subtitle: Text(_profileSubtitle(p)),
+                        trailing: p.id == st.activeId ? const Icon(Icons.check, color: Colors.green) : null,
+                        onTap: () => Navigator.of(context).pop(p.id),
+                      ))
+                  .toList(),
             ),
-            ...locs.map((l) => ListTile(
-                  leading: const Icon(Icons.public),
-                  title: Text(l.label),
-                  subtitle: Text('${l.proxyType} · ${l.proxy['server']}'),
-                  trailing: l.id == selectedId ? const Icon(Icons.check, color: Colors.green) : null,
-                  onTap: () => Navigator.of(context).pop(l.id),
-                )),
-            const SizedBox(height: 8),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+        ]),
       ),
     );
-    if (picked != null) ref.read(configControllerProvider.notifier).select(picked);
+    if (picked != null) ref.read(profilesControllerProvider.notifier).setActive(picked);
   }
+
+  Future<void> _pickLocation(ProfilesState st) async {
+    final selectedId = st.selectedLocation?.id;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(padding: const EdgeInsets.all(16), child: Text('Server', style: Theme.of(context).textTheme.titleMedium)),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: st.locations
+                  .map((l) => ListTile(
+                        leading: _flagOrIcon(l.label),
+                        title: Text(stripLeadingFlag(l.label)),
+                        subtitle: Text('${l.proxyType} · ${l.proxy['server']}'),
+                        trailing: l.id == selectedId ? const Icon(Icons.check, color: Colors.green) : null,
+                        onTap: () => Navigator.of(context).pop(l.id),
+                      ))
+                  .toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+    if (picked != null) ref.read(profilesControllerProvider.notifier).selectLocation(picked);
+  }
+}
+
+/// A country flag emoji for the location (rendered natively on Apple
+/// platforms), falling back to a globe icon when no country is inferred.
+Widget _flagOrIcon(String? label) {
+  final flag = label == null ? null : flagEmoji(label);
+  if (flag == null) return const Icon(Icons.public);
+  return Text(flag, style: const TextStyle(fontSize: 26));
 }
 
 /// Big circular connect button whose color reflects status.
@@ -215,14 +261,12 @@ class _ConnectButton extends StatelessWidget {
         child: Center(
           child: connecting
               ? const SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 3))
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.power_settings_new, size: 56, color: color),
-                    const SizedBox(height: 8),
-                    Text(connected ? 'Disconnect' : 'Connect', style: TextStyle(color: color, fontWeight: FontWeight.w600)),
-                  ],
-                ),
+              : Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.power_settings_new, size: 56, color: color),
+                  const SizedBox(height: 8),
+                  Text(connected ? 'Disconnect' : 'Connect',
+                      style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+                ]),
         ),
       ),
     );
