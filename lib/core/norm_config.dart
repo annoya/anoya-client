@@ -53,26 +53,49 @@ class Routing {
 }
 
 class RoutingRule {
-  const RoutingRule({required this.type, required this.value, required this.action});
+  const RoutingRule({
+    required this.type,
+    required this.value,
+    required this.action,
+    this.noResolve = false,
+  });
 
-  final String type; // domain-suffix|domain-keyword|domain-exact|ip-cidr|process-name
+  final String type; // domain-suffix|domain-keyword|domain-exact|ip-cidr|process-name|geoip|geosite
   final String value;
   final String action; // proxy|direct|block
+
+  /// geoip only: match plain-IP connections without resolving domains first.
+  /// Client-side extension — server-managed rules never carry it.
+  final bool noResolve;
 
   factory RoutingRule.fromJson(Map<String, dynamic> json) => RoutingRule(
         type: json['type'] as String? ?? '',
         value: json['value'] as String? ?? '',
         action: json['action'] as String? ?? '',
+        noResolve: json['no_resolve'] as bool? ?? false,
       );
 
-  Map<String, dynamic> toJson() => {'type': type, 'value': value, 'action': action};
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'value': value,
+        'action': action,
+        if (noResolve) 'no_resolve': true,
+      };
 
-  static const types = ['domain-suffix', 'domain-keyword', 'domain-exact', 'ip-cidr', 'process-name'];
+  static const types = [
+    'domain-suffix', 'domain-keyword', 'domain-exact', 'ip-cidr', 'process-name',
+    'geoip', 'geosite',
+  ];
   static const actions = ['proxy', 'direct', 'block'];
 
   static final _domainRe = RegExp(r'^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$');
   static final _cidrRe = RegExp(r'^[0-9a-fA-F:.]+/\d{1,3}$');
   static final _processRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9 ._-]*$');
+  static final _geoipRe = RegExp(r'^[A-Za-z]{2}$'); // ISO 3166-1 alpha-2
+  static final _geositeRe = RegExp(r'^[a-z0-9][a-z0-9@.!-]*$'); // geosite category
+
+  /// Whether this rule needs the local GeoIP/GeoSite databases to work.
+  bool get needsGeoData => type == 'geoip' || type == 'geosite';
 
   /// Mirrors the server-side validation. Rule values end up interpolated into
   /// the core's config text, so invalid ones must never pass (also applied at
@@ -88,6 +111,10 @@ class RoutingRule {
         return _cidrRe.hasMatch(value);
       case 'process-name':
         return _processRe.hasMatch(value);
+      case 'geoip':
+        return _geoipRe.hasMatch(value);
+      case 'geosite':
+        return _geositeRe.hasMatch(value);
       default:
         return false;
     }

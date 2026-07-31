@@ -85,6 +85,19 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<String?> engineVersion() async => 'mihomo (NetworkExtension)';
 
+  /// App Group container shared with the tunnel extension — the engine's home
+  /// dir. GeoIP/GeoSite databases are downloaded here so mihomo (whose home is
+  /// set to the same path) can read them. Null when the platform side has no
+  /// group container (then geo rules are unavailable).
+  static Future<String?> sharedDir() async {
+    try {
+      return await _control.invokeMethod<String>('shared_dir');
+    } on PlatformException catch (e) {
+      Log.e('NE shared_dir failed', e.message ?? e.code);
+      return null;
+    }
+  }
+
   VpnStatus _mapStatus(String? s) {
     switch (s) {
       case 'connected':

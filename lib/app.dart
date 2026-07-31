@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/log.dart';
+import 'core/theme.dart';
 import 'features/start_screen.dart';
 import 'features/home_screen.dart';
 import 'state/profiles_controller.dart';
@@ -29,13 +30,9 @@ class _VpnAppState extends ConsumerState<VpnApp> {
     return MaterialApp(
       title: 'VPN',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4F7CFF),
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: buildAppTheme(Brightness.light),
+      darkTheme: buildAppTheme(Brightness.dark),
+      themeMode: ThemeMode.system,
       home: profiles.loading
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : (profiles.hasProfiles ? const HomeScreen() : const StartScreen()),

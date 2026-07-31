@@ -65,6 +65,28 @@ else
   echo ">> skipping iOS slice (no iOS SDK or IOS=0)"
 fi
 
+# iOS simulator slice (arm64), so the app builds and UI can be exercised in
+# the Simulator. NE tunnels don't actually run there — this is link-only.
+if [ "${IOS:-1}" = "1" ] && xcrun --sdk iphonesimulator --show-sdk-path >/dev/null 2>&1; then
+  echo ">> building ios-simulator/arm64 c-archive (with_gvisor)"
+  mkdir -p "$OUT/ios-sim-arm64" "$OUT/ios-sim-headers"
+  SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+  CGO_ENABLED=1 GOOS=ios GOARCH=arm64 \
+    SDKROOT="$SIM_SDK" \
+    CC="$(xcrun --sdk iphonesimulator --find clang) -arch arm64 -isysroot $SIM_SDK -target arm64-apple-ios15.0-simulator" \
+    go build -tags with_gvisor -buildmode=c-archive -o "$OUT/ios-sim-arm64/libmihomocore.a" .
+  cp "$OUT/ios-sim-arm64/libmihomocore.h" "$OUT/ios-sim-headers/mihomocore.h"
+  cat > "$OUT/ios-sim-headers/module.modulemap" <<'MAP'
+module MihomoCore {
+    header "mihomocore.h"
+    export *
+}
+MAP
+  XCARGS+=(-library "$OUT/ios-sim-arm64/libmihomocore.a" -headers "$OUT/ios-sim-headers")
+else
+  echo ">> skipping iOS simulator slice (no simulator SDK or IOS=0)"
+fi
+
 echo ">> packaging MihomoCore.xcframework"
 xcodebuild -create-xcframework "${XCARGS[@]}" \
   -output MihomoCore.xcframework >/dev/null

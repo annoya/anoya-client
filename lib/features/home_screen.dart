@@ -6,11 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/country_flag.dart';
 import '../core/norm_config.dart';
 import '../core/profile.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
+import 'config_screen.dart';
 import 'settings_screen.dart';
+import 'start_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -22,20 +25,41 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   VpnStatus _status = VpnStatus.disconnected;
   StreamSubscription<VpnStatus>? _statusSub;
+  DateTime? _connectedAt;
+  Timer? _sessionTimer;
 
   @override
   void initState() {
     super.initState();
     final core = ref.read(vpnCoreProvider);
     _status = core.status;
+    _onStatus(core.status);
     _statusSub = core.statusStream().listen((s) {
-      if (mounted) setState(() => _status = s);
+      if (!mounted) return;
+      setState(() => _status = s);
+      _onStatus(s);
     });
+  }
+
+  /// Track the session start so the label can show "Connected · 00:12:34";
+  /// tick once a second only while connected.
+  void _onStatus(VpnStatus s) {
+    if (s == VpnStatus.connected) {
+      _connectedAt ??= DateTime.now();
+      _sessionTimer ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    } else {
+      _connectedAt = null;
+      _sessionTimer?.cancel();
+      _sessionTimer = null;
+    }
   }
 
   @override
   void dispose() {
     _statusSub?.cancel();
+    _sessionTimer?.cancel();
     super.dispose();
   }
 
@@ -57,7 +81,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.add),
+          tooltip: 'Add configuration',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const StartScreen()),
+          ),
+        ),
         title: const Text('VPN'),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -70,8 +102,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: PageBody(
         child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 32),
           children: [
+            // Spec: 24 above the status, 28 between status and ring, 40 below.
             const SizedBox(height: 24),
             Center(child: _statusLabel()),
             const SizedBox(height: 28),
@@ -97,12 +129,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  String _session() {
+    final at = _connectedAt;
+    if (at == null) return '';
+    final d = DateTime.now().difference(at);
+    String two(int n) => n.toString().padLeft(2, '0');
+    return ' · ${two(d.inHours)}:${two(d.inMinutes % 60)}:${two(d.inSeconds % 60)}';
+  }
+
   Widget _statusLabel() {
+    final vpn = context.vpnColors;
     final (text, color) = switch (_status) {
-      VpnStatus.connected => ('Connected', Colors.green),
-      VpnStatus.connecting => ('Connecting…', Colors.orange),
+      VpnStatus.connected => ('Connected${_session()}', vpn.connected),
+      VpnStatus.connecting => ('Connecting…', vpn.connecting),
       VpnStatus.error => ('Error', Theme.of(context).colorScheme.error),
-      VpnStatus.disconnected => ('Not connected', Colors.grey),
+      VpnStatus.disconnected => ('Not connected', Theme.of(context).colorScheme.onSurfaceVariant),
     };
     return Text(text,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color, fontWeight: FontWeight.w600));
@@ -112,7 +153,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: const Icon(Icons.folder_outlined),
+        leading: Icon(active == null ? Icons.folder_outlined : profileIcon(active.type)),
         title: Text(active?.name ?? 'Configuration'),
         subtitle: Text(_profileSubtitle(active)),
         trailing: _busy ? const Icon(Icons.lock_outline, size: 18) : const Icon(Icons.expand_more),
@@ -156,69 +197,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _profileSubtitle(Profile? p) {
-    if (p == null) return '';
-    final kind = switch (p.type) {
-      ProfileType.selfhosted => 'Self-hosted',
-      ProfileType.subscription => 'Subscription',
-      ProfileType.link => 'Link',
-    };
-    return p.isSingleServer ? kind : '$kind · ${p.locations.length} servers';
-  }
+  String _profileSubtitle(Profile? p) => p == null ? '' : profileKind(p);
 
   Future<void> _pickProfile(ProfilesState st) async {
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Padding(padding: const EdgeInsets.all(16), child: Text('Configuration', style: Theme.of(context).textTheme.titleMedium)),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: st.profiles
-                  .map((p) => ListTile(
-                        leading: const Icon(Icons.folder_outlined),
-                        title: Text(p.name),
-                        subtitle: Text(_profileSubtitle(p)),
-                        trailing: p.id == st.activeId ? const Icon(Icons.check, color: Colors.green) : null,
-                        onTap: () => Navigator.of(context).pop(p.id),
-                      ))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ]),
-      ),
+    final picked = await pickOption<String>(
+      context,
+      title: 'Configuration',
+      selected: st.activeId,
+      options: st.profiles
+          .map((p) => Option(
+                p.id,
+                p.name,
+                subtitle: _profileSubtitle(p),
+                leading: Icon(profileIcon(p.type)),
+              ))
+          .toList(),
     );
     if (picked != null) ref.read(profilesControllerProvider.notifier).setActive(picked);
   }
 
   Future<void> _pickLocation(ProfilesState st) async {
-    final selectedId = st.selectedLocation?.id;
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Padding(padding: const EdgeInsets.all(16), child: Text('Server', style: Theme.of(context).textTheme.titleMedium)),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: st.locations
-                  .map((l) => ListTile(
-                        leading: _flagOrIcon(l.label),
-                        title: Text(stripLeadingFlag(l.label)),
-                        subtitle: Text('${l.proxyType} · ${l.proxy['server']}'),
-                        trailing: l.id == selectedId ? const Icon(Icons.check, color: Colors.green) : null,
-                        onTap: () => Navigator.of(context).pop(l.id),
-                      ))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ]),
-      ),
+    final picked = await pickOption<String>(
+      context,
+      title: 'Server',
+      selected: st.selectedLocation?.id,
+      options: st.locations
+          .map((l) => Option(
+                l.id,
+                stripLeadingFlag(l.label),
+                subtitle: '${l.proxyType} · ${l.proxy['server']}',
+                leading: _flagOrIcon(l.label),
+              ))
+          .toList(),
     );
     if (picked != null) ref.read(profilesControllerProvider.notifier).selectLocation(picked);
   }
@@ -242,15 +252,18 @@ class _ConnectButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final connected = status == VpnStatus.connected;
     final connecting = status == VpnStatus.connecting;
+    final vpn = context.vpnColors;
     final color = connected
-        ? Colors.green
+        ? vpn.connected
         : connecting
-            ? Colors.orange
+            ? vpn.connecting
             : Theme.of(context).colorScheme.primary;
 
     return GestureDetector(
       onTap: connecting ? null : onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
         width: 180,
         height: 180,
         decoration: BoxDecoration(
@@ -260,7 +273,10 @@ class _ConnectButton extends StatelessWidget {
         ),
         child: Center(
           child: connecting
-              ? const SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 3))
+              ? SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(strokeWidth: 3, color: color))
               : Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.power_settings_new, size: 56, color: color),
                   const SizedBox(height: 8),
