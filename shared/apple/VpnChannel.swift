@@ -34,6 +34,14 @@ enum VpnChannel {
                 result(nil)
             case "status":
                 result(VPNManager.shared.currentStatus())
+            case "shared_dir":
+                // App Group container shared with the tunnel extension — the
+                // engine's home dir, where GeoIP/GeoSite databases live. Dart
+                // writes there with dart:io (POSIX), which avoids the macOS
+                // "access data from other apps" TCC probe.
+                let url = FileManager.default.containerURL(
+                    forSecurityApplicationGroupIdentifier: "group.com.nt.vpnClient")
+                result(url?.path)
             case "fetch_log":
                 // Pull a log file from the running extension over provider IPC
                 // (the extension logs into its own container, not a shared one).

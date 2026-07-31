@@ -123,3 +123,18 @@ const Map<String, String> _names = {
 
 /// Valid alpha-2 codes we accept as a bare token (the value side of _names).
 final Set<String> _codes = _names.values.toSet();
+
+/// (code, name) pairs for the geoip country picker, alphabetical by name.
+/// Derived from the alias map: the first (canonical) alias per code wins.
+List<(String, String)> geoCountries() {
+  final byCode = <String, String>{};
+  for (final e in _names.entries) {
+    byCode.putIfAbsent(e.value, () => _title(e.key));
+  }
+  final list = byCode.entries.map((e) => (e.key, e.value)).toList()
+    ..sort((a, b) => a.$2.compareTo(b.$2));
+  return list;
+}
+
+String _title(String s) =>
+    s.split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');

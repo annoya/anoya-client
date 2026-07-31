@@ -5,13 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
 import '../core/config_source.dart';
+import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/norm_config.dart';
 import '../core/oidc_login.dart';
 import '../core/profile.dart';
 import '../core/profile_store.dart';
 import '../core/proxy_uri.dart';
-import '../core/routing_store.dart';
+import '../core/routing_prefs.dart';
+import '../core/rule_set.dart';
 import '../core/vpn_core.dart';
 import 'providers.dart';
 
@@ -90,6 +92,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   }
 
   Future<void> _init() async {
+    unawaited(GeoStore.maybeAutoUpdate()); // weekly refresh, never a first download
     final profiles = await ProfileStore.load();
     state = ProfilesState(
       profiles: profiles,
@@ -227,11 +230,27 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<Profile> refreshActive() async {
     final p = state.active;
     if (p == null) throw StateError('no active profile');
+    return refreshProfile(p.id);
+  }
+
+  /// Re-pull any profile by id (the per-configuration screen's manual refresh).
+  Future<Profile> refreshProfile(String id) async {
+    final p = _byId(id);
+    if (p == null) throw StateError('unknown profile $id');
     final updated = await configSourceFor(p).refresh();
     if (identical(updated, p)) return p;
     _replaceProfile(updated);
     await ProfileStore.save(state.profiles);
     return updated;
+  }
+
+  /// Apply a global rule set to a profile (takes effect on the next connect,
+  /// same as editing the set itself).
+  Future<void> setRuleSet(String profileId, String ruleSetId) async {
+    final p = _byId(profileId);
+    if (p == null) return;
+    _replaceProfile(p.copyWith(ruleSetId: ruleSetId));
+    await ProfileStore.save(state.profiles);
   }
 
   void _replaceProfile(Profile updated) {
@@ -276,10 +295,32 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<void> disconnect() => ref.read(vpnCoreProvider).disconnect();
 
   /// Builds a NormConfig for the core from a profile: its locations + the
-  /// effective routing (server-managed for self-hosted, else device-local).
+  /// effective routing. Precedence: server-managed policy (self-hosted), else
+  /// the profile's global rule set. Device-level extras are applied on top:
+  /// LAN-direct rules are prepended, and geo rules are dropped (with a log)
+  /// while the databases aren't downloaded — a rule that can't match must not
+  /// stall the engine into fetching 20+ MB mid-connect.
   Future<NormConfig> _normConfig(Profile p) async {
     Routing? routing = p.routing;
-    routing ??= await RoutingStore.load();
+    if (routing == null) {
+      final set = await RuleSetStore.byId(p.ruleSetId);
+      routing = set.toRouting();
+    }
+
+    if (routing.rules.any((r) => r.needsGeoData) &&
+        !(await GeoStore.status()).downloaded) {
+      Log.e('routing', 'geo rules skipped: databases not downloaded');
+      routing = Routing(
+        mode: routing.mode,
+        rules: routing.rules.where((r) => !r.needsGeoData).toList(),
+      );
+    }
+
+    final prefs = await RoutingPrefsStore.load();
+    if (prefs.lanDirect) {
+      routing = Routing(mode: routing.mode, rules: [...kLanDirectRules, ...routing.rules]);
+    }
+
     return NormConfig(
       version: 1,
       account: p.account ?? Account(displayName: p.name, status: 'active'),

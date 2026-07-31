@@ -16,6 +16,15 @@ func engineVersion() string {
 	return "mihomo " + constant.Version
 }
 
+// setEngineHomeDir sets mihomo's working directory (GeoIP/GeoSite database
+// location). Must be called before startEngine; the config keeps
+// geo-auto-update off, so mihomo only ever reads what the host app downloaded.
+func setEngineHomeDir(path string) {
+	if path != "" {
+		constant.SetHomeDir(path)
+	}
+}
+
 func startEngine(fd int, configYAML string) error {
 	if fd <= 0 {
 		return fmt.Errorf("invalid tun fd %d", fd)

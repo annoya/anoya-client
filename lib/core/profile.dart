@@ -25,6 +25,7 @@ class Profile {
     this.subscriptionUrl,
     this.account,
     this.routing,
+    this.ruleSetId,
     this.refreshedAt,
   });
 
@@ -43,6 +44,10 @@ class Profile {
   final Account? account;
   final Routing? routing;
 
+  /// Which global rule set applies to this profile (null → Default). Ignored
+  /// when the server delivers a managed [routing] policy.
+  final String? ruleSetId;
+
   final DateTime? refreshedAt;
 
   /// A single-server source (link) shows no location picker.
@@ -60,6 +65,7 @@ class Profile {
     List<Location>? locations,
     Account? account,
     Routing? routing,
+    String? ruleSetId,
     DateTime? refreshedAt,
   }) =>
       Profile(
@@ -71,6 +77,7 @@ class Profile {
         subscriptionUrl: subscriptionUrl,
         account: account ?? this.account,
         routing: routing ?? this.routing,
+        ruleSetId: ruleSetId ?? this.ruleSetId,
         refreshedAt: refreshedAt ?? this.refreshedAt,
       );
 
@@ -89,6 +96,7 @@ class Profile {
         routing: j['routing'] is Map
             ? Routing.fromJson(Map<String, dynamic>.from(j['routing'] as Map))
             : null,
+        ruleSetId: j['rule_set_id'] as String?,
         refreshedAt:
             j['refreshed_at'] != null ? DateTime.tryParse(j['refreshed_at'] as String) : null,
       );
@@ -102,6 +110,7 @@ class Profile {
         if (subscriptionUrl != null) 'subscription_url': subscriptionUrl,
         if (account != null) 'account': account!.toJson(),
         if (routing != null) 'routing': routing!.toJson(),
+        if (ruleSetId != null) 'rule_set_id': ruleSetId,
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
       };
 }

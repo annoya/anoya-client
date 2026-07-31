@@ -144,7 +144,7 @@ void main() {
       RoutingRule(type: 'domain-suffix', value: 'evil,MATCH', action: 'proxy'),
       RoutingRule(type: 'domain-suffix', value: 'x\nrules:', action: 'proxy'),
       RoutingRule(type: 'ip-cidr', value: '10.0.0.1', action: 'proxy'), // bare IP
-      RoutingRule(type: 'geoip', value: 'ru', action: 'proxy'), // unknown type
+      RoutingRule(type: 'geo-ip', value: 'ru', action: 'proxy'), // unknown type
       RoutingRule(type: 'domain-suffix', value: 'y.com', action: 'allow'), // unknown action
     ]);
     final yaml = mihomoTunConfigYaml(vlessLoc(), routing: routing);

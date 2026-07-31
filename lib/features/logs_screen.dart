@@ -74,7 +74,9 @@ class _LogTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (size != null) Text(size!, style: const TextStyle(color: Colors.grey)),
+            if (size != null)
+              Text(size!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(width: 6),
             const Icon(Icons.chevron_right),
           ],

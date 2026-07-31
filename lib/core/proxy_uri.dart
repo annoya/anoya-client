@@ -223,6 +223,55 @@ String _label(String frag, String host, int port) {
   return f.isNotEmpty ? f : '$host:$port';
 }
 
+/// What a pasted string on the add screen turned out to be — drives the live
+/// detection chip and enables Continue.
+enum InputKind {
+  /// A single share link (vless:// etc.) → a link profile.
+  link,
+
+  /// An http(s) URL, fetched as a subscription on Continue.
+  subscriptionUrl,
+
+  /// Raw subscription content (base64 list / Clash YAML), parsed locally.
+  subscriptionText,
+}
+
+class DetectedInput {
+  const DetectedInput(this.kind, this.label, {this.serverCount = 0});
+
+  final InputKind kind;
+  final String label; // what to show in the chip
+  final int serverCount; // known for local text, 0 for URLs (fetched later)
+}
+
+/// Classifies pasted text without any network I/O. Null → nothing usable yet.
+DetectedInput? detectInput(String raw) {
+  final t = raw.trim();
+  if (t.isEmpty) return null;
+  final scheme = t.contains('://') ? t.split('://').first.toLowerCase() : '';
+  // A share link is a single token; multi-line vless:// lists are a
+  // subscription and fall through to the parser below.
+  final singleToken = !t.contains(RegExp(r'\s'));
+  if (singleToken && const {'vless', 'vmess', 'trojan', 'ss'}.contains(scheme)) {
+    final loc = parseProxyUri(t);
+    return loc == null
+        ? null
+        : DetectedInput(InputKind.link, '${loc.proxyType.toUpperCase()} server · ${loc.label}',
+            serverCount: 1);
+  }
+  if (scheme == 'http' || scheme == 'https') {
+    final u = Uri.tryParse(t);
+    if (u == null || u.host.isEmpty) return null;
+    return DetectedInput(InputKind.subscriptionUrl, 'Subscription URL · ${u.host}');
+  }
+  final locs = parseSubscription(t);
+  if (locs.isEmpty) return null;
+  return locs.length == 1
+      ? DetectedInput(InputKind.link, 'Server · ${locs.first.label}', serverCount: 1)
+      : DetectedInput(InputKind.subscriptionText, 'Subscription · ${locs.length} servers',
+          serverCount: locs.length);
+}
+
 /// URI fragments are percent-encoded UTF-8 (remarks often carry a flag emoji +
 /// spaces). `Uri.fragment` returns the raw encoded form, so decode it here;
 /// fall back to the raw string if it isn't valid percent-encoding.
