@@ -30,6 +30,17 @@ func MihomoVersion() *C.char {
 	return C.CString(engineVersion())
 }
 
+// MihomoSetHomeDir points the engine at its working directory — where it looks
+// for the GeoIP/GeoSite databases (geoip.metadb, GeoSite.dat). Call before
+// MihomoStart. The host app downloads the databases into the same directory.
+//
+//export MihomoSetHomeDir
+func MihomoSetHomeDir(path *C.char) {
+	mu.Lock()
+	defer mu.Unlock()
+	setEngineHomeDir(C.GoString(path))
+}
+
 //export MihomoStart
 func MihomoStart(fd C.int, configJSON *C.char) *C.char {
 	mu.Lock()

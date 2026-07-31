@@ -149,8 +149,21 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         return nil
     }
 
+    /// mihomo's working directory: the App Group container, where the host app
+    /// downloads the GeoIP/GeoSite databases (geoip.metadb, GeoSite.dat). Both
+    /// sides touch it with POSIX-level I/O only (Go file ops / dart:io), which
+    /// stays clear of the Foundation TCC probe (see log() above). Falls back to
+    /// our own Caches when the group container is unavailable.
+    private func mihomoHomeDir() -> URL {
+        FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: Self.appGroup) ?? sharedDir()
+    }
+
     /// Calls into the Go core. Returns nil on success or an error message.
     private func startEngine(fd: Int32, config: String) -> String? {
+        let home = mihomoHomeDir().path
+        home.withCString { MihomoSetHomeDir(UnsafeMutablePointer(mutating: $0)) }
+        log("mihomo home dir: \(home)")
         return config.withCString { cfgPtr -> String? in
             guard let res = MihomoStart(fd, UnsafeMutablePointer(mutating: cfgPtr)) else {
                 return nil

@@ -21,6 +21,7 @@ String mihomoTunConfigYaml(Location location, {Routing? routing, String stack = 
   final ruleLines = _routingRuleLines(routing);
   final hasProcessRules =
       routing?.rules.any((r) => r.type == 'process-name' && r.isValid) ?? false;
+  final hasGeoRules = routing?.rules.any((r) => r.needsGeoData && r.isValid) ?? false;
   final lines = <String>[
     'log-level: info',
     'mode: rule',
@@ -28,6 +29,13 @@ String mihomoTunConfigYaml(Location location, {Routing? routing, String stack = 
     // Resolving a connection's owning process is only needed for PROCESS-NAME
     // rules; otherwise keep it off (it reads other processes' info).
     hasProcessRules ? 'find-process-mode: strict' : 'find-process-mode: "off"',
+    // Geo rules read geoip.metadb / GeoSite.dat from the engine home dir (the
+    // app downloads them there). Never let the engine self-download: a 20+ MB
+    // fetch during tunnel start would hang connects.
+    if (hasGeoRules) ...[
+      'geodata-mode: false',
+      'geo-auto-update: false',
+    ],
     'dns:',
     '  enable: true',
     '  enhanced-mode: fake-ip',
@@ -138,6 +146,8 @@ const _ruleTypeMap = {
   'domain-exact': 'DOMAIN',
   'ip-cidr': 'IP-CIDR',
   'process-name': 'PROCESS-NAME',
+  'geoip': 'GEOIP',
+  'geosite': 'GEOSITE',
 };
 
 const _actionMap = {'proxy': 'PROXY', 'direct': 'DIRECT', 'block': 'REJECT'};
@@ -155,9 +165,12 @@ List<String> _routingRuleLines(Routing? routing) {
       Log.e('routing: skipping invalid rule', '${r.type},${r.value},${r.action}');
       continue;
     }
-    // no-resolve: IP rules must not force DNS resolution of domain traffic.
-    final suffix = r.type == 'ip-cidr' ? ',no-resolve' : '';
-    out.add('  - $type,${r.value},$action$suffix');
+    // no-resolve: IP-based rules must not force DNS resolution of domain
+    // traffic. Always on for ip-cidr; opt-in per geoip rule.
+    final suffix =
+        (r.type == 'ip-cidr' || (r.type == 'geoip' && r.noResolve)) ? ',no-resolve' : '';
+    final value = r.type == 'geoip' ? r.value.toUpperCase() : r.value;
+    out.add('  - $type,$value,$action$suffix');
   }
   return out;
 }
