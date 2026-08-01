@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/app_prefs.dart';
 import '../core/geo_store.dart';
 import '../core/norm_config.dart';
 import '../core/routing_prefs.dart';
@@ -49,6 +50,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _push(Widget screen) async {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     await _load(); // pushed screens may change prefs/sets/geo
+  }
+
+  Future<void> _pickTheme() async {
+    final picked = await pickOption<ThemeMode>(
+      context,
+      title: 'Appearance',
+      selected: ref.read(appPrefsProvider).themeMode,
+      options: const [
+        Option(ThemeMode.system, 'System', subtitle: 'Follow the device setting'),
+        Option(ThemeMode.light, 'Light'),
+        Option(ThemeMode.dark, 'Dark'),
+      ],
+    );
+    if (picked != null) await ref.read(appPrefsProvider.notifier).setThemeMode(picked);
+  }
+
+  Future<void> _pickLanguage() async {
+    final picked = await pickOption<AppLanguage>(
+      context,
+      title: 'Language',
+      selected: ref.read(appPrefsProvider).language,
+      options: AppLanguage.values.map((l) => Option(l, l.label)).toList(),
+    );
+    if (picked != null) await ref.read(appPrefsProvider.notifier).setLanguage(picked);
   }
 
   Future<void> _pickActive() async {
@@ -101,7 +126,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final st = ref.watch(profilesControllerProvider);
-    final core = ref.read(vpnCoreProvider);
+    final appPrefs = ref.watch(appPrefsProvider);
     final p = st.active;
 
     return Scaffold(
@@ -158,6 +183,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ],
 
+            const SectionHeader('GENERAL'),
+            Card(
+              margin: kCardMargin,
+              child: Column(children: [
+                ListTile(
+                  leading: const Icon(Icons.brightness_6_outlined),
+                  title: const Text('Appearance'),
+                  subtitle: Text(appPrefs.themeLabel),
+                  trailing: const Icon(Icons.expand_more),
+                  onTap: _pickTheme,
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                ListTile(
+                  leading: const Icon(Icons.translate),
+                  title: const Text('Language'),
+                  subtitle: Text(appPrefs.language.label),
+                  trailing: const Icon(Icons.expand_more),
+                  onTap: _pickLanguage,
+                ),
+              ]),
+            ),
+
             const SectionHeader('ROUTING'),
             Card(
               margin: kCardMargin,
@@ -202,17 +249,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: const Text('Logs'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _push(const LogsScreen()),
-              ),
-            ),
-            FutureBuilder<String?>(
-              future: core.engineVersion(),
-              builder: (context, snap) => Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: Text('Engine: ${snap.data ?? '…'}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ),
             ),
             const SizedBox(height: 24),

@@ -27,12 +27,14 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   @override
   Widget build(BuildContext context) {
     final profiles = ref.watch(profilesControllerProvider);
+    final prefs = ref.watch(appPrefsProvider);
     return MaterialApp(
       title: 'VPN',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
+      themeMode: prefs.themeMode,
+      locale: prefs.language.locale,
       home: profiles.loading
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : (profiles.hasProfiles ? const HomeScreen() : const StartScreen()),
