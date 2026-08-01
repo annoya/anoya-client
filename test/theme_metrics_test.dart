@@ -26,6 +26,8 @@ void main() {
 
     final insetLeft = leftCentre - bar.left;
     final insetRight = bar.right - rightCentre;
+    // 28 = half of the 56pt leading slot. The number matters
+    // less than both sides agreeing, which is what actually looked broken.
     expect(insetLeft, closeTo(28, 1), reason: 'leading icon should sit 28pt from the edge');
     expect(insetRight, closeTo(insetLeft, 1),
         reason: 'action icon inset ($insetRight) must match the leading one ($insetLeft)');

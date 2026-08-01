@@ -103,12 +103,12 @@ ThemeData buildAppTheme(Brightness brightness) {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      // The leading slot is 56 wide, so a 48pt icon button sits 28 from the
-      // left edge; actions are flush right and would sit 24 from it. The 4pt
-      // padding makes both sides 28 — otherwise "+" and the gear look
-      // misaligned (most obvious on macOS).
+      // The leading slot is 56 wide and centres a 48pt icon button, so its
+      // centre lands 28 from the left edge. Actions are flush right, which puts
+      // theirs at 24 — hence half the difference as padding, making both 28.
+      // Without it "+" and the gear look misaligned (most obvious on macOS).
       leadingWidth: _kLeading,
-      actionsPadding: const EdgeInsets.only(right: _kLeading - _kIconButton),
+      actionsPadding: const EdgeInsets.only(right: (_kLeading - _kIconButton) / 2),
       titleTextStyle: TextStyle(
         color: scheme.onSurface,
         fontSize: 18,
