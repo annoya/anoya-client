@@ -102,31 +102,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
+      // The ring owns the free space and stays centred in it; the pickers are
+      // pinned to the bottom edge, within thumb reach and steady when a banner
+      // appears above them.
       body: PageBody(
-        child: ListView(
-          children: [
-            // Spec: 24 above the status, 28 between status and ring, 40 below.
-            const SizedBox(height: 24),
-            Center(child: _statusLabel()),
-            const SizedBox(height: 28),
-            Center(child: _ConnectButton(status: _status, onTap: _toggle)),
-            const SizedBox(height: 40),
-            ?_onDemandBanner(),
-            if (st.profiles.length > 1) _profileRow(st, active),
-            if (active != null) _locationRow(st, active),
-            if (active != null && active.hasAccount && active.account != null) ...[
-              const SizedBox(height: 12),
-              _accountRow(active.account!),
-            ],
-            if (st.error != null) ...[
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                child: Text(st.error!, textAlign: TextAlign.center,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: LayoutBuilder(
+          builder: (context, box) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: box.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          _statusLabel(),
+                          const SizedBox(height: 28),
+                          _ConnectButton(status: _status, onTap: _toggle),
+                        ]),
+                      ),
+                    ),
+                    ?_onDemandBanner(),
+                    if (active != null) _profileRow(st, active),
+                    if (active != null) _locationRow(st, active),
+                    if (active != null && active.hasAccount && active.account != null) ...[
+                      const SizedBox(height: 12),
+                      _accountRow(active.account!),
+                    ],
+                    if (st.error != null) ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                        child: Text(st.error!, textAlign: TextAlign.center,
+                            style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                      ),
+                    ],
+                    const SizedBox(height: kGutter),
+                  ],
+                ),
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );
@@ -180,15 +196,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _profileRow(ProfilesState st, Profile? active) {
+  /// The active configuration is always on screen, even when it is the only
+  /// one: the gear jumps straight into its settings, while the chevron (and the
+  /// row tap) only offer a choice when there is something to choose between.
+  Widget _profileRow(ProfilesState st, Profile active) {
+    final pickable = st.profiles.length > 1;
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: Icon(active == null ? Icons.folder_outlined : profileIcon(active.type)),
-        title: Text(active?.name ?? 'Configuration'),
-        subtitle: Text(_profileSubtitle(active)),
-        trailing: _busy ? const Icon(Icons.lock_outline, size: 18) : const Icon(Icons.expand_more),
-        onTap: _busy ? null : () => _pickProfile(st),
+        leading: Icon(profileIcon(active.type)),
+        title: Text(active.name),
+        subtitle: Text(profileKind(active)),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, size: 20),
+            tooltip: 'Configuration settings',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ConfigScreen(profileId: active.id)),
+            ),
+          ),
+          if (pickable)
+            _busy ? const Icon(Icons.lock_outline, size: 18) : const Icon(Icons.expand_more),
+        ]),
+        onTap: (!pickable || _busy) ? null : () => _pickProfile(st),
       ),
     );
   }
@@ -228,8 +258,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _profileSubtitle(Profile? p) => p == null ? '' : profileKind(p);
-
   Future<void> _pickProfile(ProfilesState st) async {
     final picked = await pickOption<String>(
       context,
@@ -239,7 +267,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .map((p) => Option(
                 p.id,
                 p.name,
-                subtitle: _profileSubtitle(p),
+                subtitle: profileKind(p),
                 leading: Icon(profileIcon(p.type)),
               ))
           .toList(),

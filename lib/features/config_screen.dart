@@ -156,7 +156,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
               ),
 
             // Account (self-hosted only).
-            if (profile.hasAccount && profile.account != null)
+            if (profile.hasAccount && profile.account != null) ...[
               Card(
                 margin: kCardMargin,
                 child: ListTile(
@@ -164,6 +164,28 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
                   subtitle: Text(_accountSummary(profile.account!)),
                 ),
               ),
+              if (profile.account!.dataLimit > 0)
+                Card(
+                  margin: kCardMargin,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(
+                          'Traffic: ${_bytes(profile.account!.usedBytes)} of ${_bytes(profile.account!.dataLimit)}',
+                          style: Theme.of(context).textTheme.bodyMedium),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: (profile.account!.usedBytes / profile.account!.dataLimit)
+                              .clamp(0.0, 1.0),
+                          minHeight: 6,
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+            ],
 
             const SectionHeader('ROUTING'),
             if (profile.routing != null)
@@ -199,10 +221,9 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.check, size: 18),
                   label: const Text('Set active'),
-                  onPressed: () {
-                    _ctrl.setActive(profile.id);
-                    Navigator.of(context).pop();
-                  },
+                  // Stays open: the check mark moves to the header card and the
+                  // button disappears, so the result is visible in place.
+                  onPressed: () => _ctrl.setActive(profile.id),
                 ),
               ),
             const SizedBox(height: 8),
@@ -244,6 +265,14 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
       return 'Status: $status · expires ${a.expiresAt!.toLocal().toString().split('.').first}';
     }
     return 'Status: $status';
+  }
+
+  String _bytes(int n) {
+    const gb = 1024 * 1024 * 1024;
+    const mb = 1024 * 1024;
+    if (n >= gb) return '${(n / gb).toStringAsFixed(2)} GB';
+    if (n >= mb) return '${(n / mb).toStringAsFixed(1)} MB';
+    return '${(n / 1024).toStringAsFixed(0)} KB';
   }
 }
 
