@@ -16,6 +16,8 @@ class VpnApp extends ConsumerStatefulWidget {
 }
 
 class _VpnAppState extends ConsumerState<VpnApp> {
+  final _navigator = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -28,9 +30,24 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   Widget build(BuildContext context) {
     final profiles = ref.watch(profilesControllerProvider);
     final prefs = ref.watch(appPrefsProvider);
+
+    // Removing the last configuration swaps home to the add screen, but any
+    // pushed routes (settings, the configuration itself) would stay on top of
+    // it — showing settings for something that no longer exists. Unwind to the
+    // root so the user lands on "Add a connection".
+    ref.listen(profilesControllerProvider.select((s) => s.hasProfiles), (had, has) {
+      if (had == true && has == false) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final nav = _navigator.currentState;
+          if (nav != null && nav.canPop()) nav.popUntil((r) => r.isFirst);
+        });
+      }
+    });
+
     return MaterialApp(
       title: 'VPN',
       debugShowCheckedModeBanner: false,
+      navigatorKey: _navigator,
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
       themeMode: prefs.themeMode,

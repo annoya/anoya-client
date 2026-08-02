@@ -89,7 +89,12 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
       } catch (_) {/* ignore */}
     }
     await _ctrl.removeProfile(p.id);
-    if (mounted) Navigator.of(context).pop();
+    if (!mounted) return;
+    // Only close ourselves while other configurations remain. When that was the
+    // last one, the app shell unwinds to the add screen on its own — popping
+    // here as well would race it and take the root route down too (leaving an
+    // empty navigator, i.e. a black screen).
+    if (ref.read(profilesControllerProvider).hasProfiles) Navigator.of(context).pop();
   }
 
   @override

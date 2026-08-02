@@ -52,11 +52,19 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
         log("startTunnel: begin")
-        guard let config = options?["Config"] as? String, !config.isEmpty else {
-            log("startTunnel: missing config")
+        // The app passes the config in the start options. On-demand starts come
+        // from the OS with no options — fall back to the copy the app persisted
+        // in providerConfiguration on its last connect.
+        let persisted = (protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration
+        let config = (options?["Config"] as? String)
+            ?? (persisted?["Config"] as? String)
+            ?? ""
+        guard !config.isEmpty else {
+            log("startTunnel: missing config (no options, nothing persisted)")
             completionHandler(err("missing tunnel config"))
             return
         }
+        if options?["Config"] == nil { log("startTunnel: on-demand start, using persisted config") }
 
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
         settings.mtu = 9000
@@ -65,7 +73,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         ipv4.includedRoutes = [NEIPv4Route.default()]
         // Exclude the VPN server itself so mihomo's own connection to the worker
         // bypasses the tunnel (otherwise it loops back into the utun → no traffic).
-        if let serverIP = options?["ServerIP"] as? String, !serverIP.isEmpty {
+        let serverIP = (options?["ServerIP"] as? String) ?? (persisted?["ServerIP"] as? String) ?? ""
+        if !serverIP.isEmpty {
             ipv4.excludedRoutes = [NEIPv4Route(destinationAddress: serverIP, subnetMask: "255.255.255.255")]
             log("excluding server route \(serverIP)")
         }

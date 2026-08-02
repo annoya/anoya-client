@@ -14,7 +14,7 @@ enum VpnChannel {
         control.setMethodCallHandler { call, result in
             switch call.method {
             case "prepare":
-                Task {
+                Task { @MainActor in
                     do { try await VPNManager.shared.prepare(); result(nil) }
                     catch { result(FlutterError(code: "prepare_failed", message: error.localizedDescription, details: nil)) }
                 }
@@ -25,13 +25,58 @@ enum VpnChannel {
                     return
                 }
                 let serverIp = args?["server_ip"] as? String
-                Task {
+                Task { @MainActor in
                     do { try await VPNManager.shared.start(config: config, serverIp: serverIp); result(nil) }
                     catch { result(FlutterError(code: "start_failed", message: error.localizedDescription, details: nil)) }
                 }
             case "stop":
-                VPNManager.shared.stop()
-                result(nil)
+                Task { @MainActor in
+                    await VPNManager.shared.stop()
+                    result(nil)
+                }
+            case "set_on_demand":
+                let args = call.arguments as? [String: Any] ?? [:]
+                let enabled = args["enabled"] as? Bool ?? false
+                let rules = args["rules"] as? [[String: Any]] ?? []
+                let sleep = args["disconnect_on_sleep"] as? Bool ?? false
+                Task { @MainActor in
+                    do {
+                        // Returns whether the system actually armed — it refuses
+                        // when there is no tunnel config to start from.
+                        let armed = try await VPNManager.shared.setOnDemand(
+                            enabled: enabled, rules: rules, disconnectOnSleep: sleep,
+                            config: args["config"] as? String,
+                            serverIp: args["server_ip"] as? String)
+                        result(armed)
+                    } catch {
+                        result(FlutterError(code: "on_demand_failed",
+                                            message: error.localizedDescription, details: nil))
+                    }
+                }
+            case "sync_config":
+                // Mirror the current selection into the saved profile without
+                // starting anything (and without creating the profile).
+                let args = call.arguments as? [String: Any] ?? [:]
+                guard let config = args["config"] as? String else {
+                    result(FlutterError(code: "bad_args", message: "config required", details: nil))
+                    return
+                }
+                Task { @MainActor in
+                    do {
+                        try await VPNManager.shared.syncConfig(
+                            config: config, serverIp: args["server_ip"] as? String)
+                        result(nil)
+                    } catch {
+                        result(FlutterError(code: "sync_failed",
+                                            message: error.localizedDescription, details: nil))
+                    }
+                }
+            case "remove_profile":
+                Task { @MainActor in
+                    do { try await VPNManager.shared.removeProfile(); result(nil) }
+                    catch { result(FlutterError(code: "remove_failed",
+                                                message: error.localizedDescription, details: nil)) }
+                }
             case "status":
                 result(VPNManager.shared.currentStatus())
             case "shared_dir":
@@ -46,7 +91,7 @@ enum VpnChannel {
                 // Pull a log file from the running extension over provider IPC
                 // (the extension logs into its own container, not a shared one).
                 let name = (call.arguments as? [String: Any])?["name"] as? String ?? ""
-                Task {
+                Task { @MainActor in
                     do { let text = try await VPNManager.shared.fetchLog(name); result(text) }
                     catch { result(FlutterError(code: "fetch_log_failed", message: error.localizedDescription, details: nil)) }
                 }

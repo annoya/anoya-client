@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/country_flag.dart';
 import '../core/norm_config.dart';
+import '../core/on_demand.dart';
 import '../core/profile.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
+import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import 'config_screen.dart';
@@ -109,6 +111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 28),
             Center(child: _ConnectButton(status: _status, onTap: _toggle)),
             const SizedBox(height: 40),
+            ?_onDemandBanner(),
             if (st.profiles.length > 1) _profileRow(st, active),
             if (active != null) _locationRow(st, active),
             if (active != null && active.hasAccount && active.account != null) ...[
@@ -139,14 +142,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _statusLabel() {
     final vpn = context.vpnColors;
+    // "· auto" only when the OS confirmed it is auto-connecting.
+    final auto = ref.watch(onDemandProvider).systemArmed ? ' · auto' : '';
     final (text, color) = switch (_status) {
-      VpnStatus.connected => ('Connected${_session()}', vpn.connected),
+      VpnStatus.connected => ('Connected${_session()}$auto', vpn.connected),
       VpnStatus.connecting => ('Connecting…', vpn.connecting),
       VpnStatus.error => ('Error', Theme.of(context).colorScheme.error),
       VpnStatus.disconnected => ('Not connected', Theme.of(context).colorScheme.onSurfaceVariant),
     };
     return Text(text,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color, fontWeight: FontWeight.w600));
+  }
+
+  /// Explains why the system is not auto-connecting: either the user paused it
+  /// with a manual disconnect, or it is enabled but has no tunnel config to
+  /// start from yet (the system only accepts on-demand after one connect).
+  Widget? _onDemandBanner() {
+    final onDemand = ref.watch(onDemandProvider);
+    if (!onDemand.enabled || _busy) return null;
+    final (title, subtitle) = switch (onDemand) {
+      OnDemandPrefs(paused: true) => ('Auto-connect paused', 'Press Connect to arm it again'),
+      OnDemandPrefs(awaitingFirstConnect: true) => (
+          'Auto-connect not armed yet',
+          'Connect once so the system can take over',
+        ),
+      _ => (null, null),
+    };
+    if (title == null) return null;
+    return Card(
+      margin: kCardMargin,
+      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
+      child: ListTile(
+        leading: const Icon(Icons.bolt_outlined),
+        title: Text(title),
+        subtitle: Text(subtitle!),
+      ),
+    );
   }
 
   Widget _profileRow(ProfilesState st, Profile? active) {
