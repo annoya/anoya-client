@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/on_demand.dart';
 import '../core/ui.dart';
 import '../state/on_demand_controller.dart';
+import 'on_demand_values_screen.dart';
 
 /// Editor for one on-demand rule. Persists as the user edits (same convention
 /// as the routing rule-set editor — no Save button); a brand-new rule is added
@@ -51,55 +52,40 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
     if (picked != null) await _update(_rule.copyWith(action: picked));
   }
 
-  Future<void> _addTo(List<String> current, String title, String hint,
-      void Function(List<String>) apply) async {
-    final controller = TextEditingController();
-    final value = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          autocorrect: false,
-          decoration: InputDecoration(labelText: 'Value', hintText: hint),
-          onSubmitted: (v) => Navigator.of(context).pop(v),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Add')),
-        ],
-      ),
-    );
-    controller.dispose();
-    final v = value?.trim() ?? '';
-    if (v.isEmpty || current.contains(v)) return;
-    apply([...current, v]);
-  }
-
-  Widget _chips({
+  /// One condition list, shown as a row with a summary; the entries live on
+  /// their own screen (searchable, sorted) because a rule can easily carry a
+  /// dozen SSIDs or domains.
+  Widget _conditionRow({
+    required String title,
     required List<String> values,
+    required String unit,
     required String addTitle,
     required String addHint,
+    required String help,
     required void Function(List<String>) apply,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: kGutter),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          ...values.map((v) => InputChip(
-                label: Text(v, style: const TextStyle(fontSize: 13)),
-                onDeleted: () => apply(values.where((x) => x != v).toList()),
-              )),
-          ActionChip(
-            label: const Text('+ Add', style: TextStyle(fontSize: 13)),
-            onPressed: () => _addTo(values, addTitle, addHint, apply),
-          ),
-        ],
+    return Card(
+      margin: kCardMargin,
+      child: ListTile(
+        title: Text(title),
+        subtitle: Text(values.isEmpty ? 'Any' : values.join(', '),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () async {
+          final updated = await Navigator.of(context).push<List<String>>(
+            MaterialPageRoute(
+              builder: (_) => OnDemandValuesScreen(
+                title: title,
+                values: values,
+                unit: unit,
+                addTitle: addTitle,
+                addHint: addHint,
+                help: help,
+              ),
+            ),
+          );
+          if (updated != null) apply(updated);
+        },
       ),
     );
   }
@@ -112,6 +98,18 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 .bodySmall
                 ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       );
+
+  /// What the selected interface mode means, in the user's terms.
+  String _networkHelp(OnDemandInterface selected) => switch (selected) {
+        OnDemandInterface.any =>
+          'The rule is checked on every network — Wi-Fi, mobile or wired.',
+        OnDemandInterface.wifi =>
+          'When the device joins a Wi-Fi network, the system checks the conditions below and applies the rule.',
+        OnDemandInterface.cellular =>
+          'When the device is on mobile data, the system checks the conditions below and applies the rule.',
+        OnDemandInterface.ethernet =>
+          'When the device is on a wired network, the system checks the conditions below and applies the rule.',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -164,33 +162,37 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 ),
               ),
             ),
+            _hint(_networkHelp(_rule.interface)),
 
-            const SectionHeader('WI-FI NETWORKS (SSID)'),
-            _chips(
-              values: _rule.ssids,
-              addTitle: 'Wi-Fi network',
-              addHint: 'home-5G',
-              apply: (v) => _update(_rule.copyWith(ssids: v)),
-            ),
-            _hint('Matches the network name exactly. Leave empty for any Wi-Fi.'),
-
-            const SectionHeader('DNS SEARCH DOMAINS'),
-            _chips(
+            const SectionHeader('CONDITIONS'),
+            if (_rule.ssidsApply)
+              _conditionRow(
+                title: 'Wi-Fi networks',
+                values: _rule.ssids,
+                unit: 'NETWORKS',
+                addTitle: 'Wi-Fi network',
+                addHint: 'home-5G',
+                help: 'Matches the network name exactly. Leave empty for any Wi-Fi.',
+                apply: (v) => _update(_rule.copyWith(ssids: v)),
+              ),
+            _conditionRow(
+              title: 'DNS search domains',
               values: _rule.dnsDomains,
+              unit: 'DOMAINS',
               addTitle: 'DNS search domain',
               addHint: 'corp.example.com',
+              help: 'Matches when the network’s search domain ends with an entry.',
               apply: (v) => _update(_rule.copyWith(dnsDomains: v)),
             ),
-            _hint('Matches when the network’s search domain ends with an entry.'),
-
-            const SectionHeader('DNS SERVERS'),
-            _chips(
+            _conditionRow(
+              title: 'DNS servers',
               values: _rule.dnsServers,
+              unit: 'SERVERS',
               addTitle: 'DNS server',
               addHint: '10.0.*',
+              help: 'Matches the network’s DNS servers; a single “*” wildcard is allowed.',
               apply: (v) => _update(_rule.copyWith(dnsServers: v)),
             ),
-            _hint('Matches the network’s DNS servers; a single “*” wildcard is allowed.'),
 
             const SectionHeader('URL PROBE'),
             Padding(
