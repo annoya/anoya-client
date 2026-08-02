@@ -212,28 +212,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ]),
             ),
 
-            const SectionHeader('GENERAL'),
-            Card(
-              margin: kCardMargin,
-              child: Column(children: [
-                ListTile(
-                  leading: const Icon(Icons.brightness_6_outlined),
-                  title: const Text('Appearance'),
-                  subtitle: Text(appPrefs.themeLabel),
-                  trailing: const Icon(Icons.expand_more),
-                  onTap: _pickTheme,
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.translate),
-                  title: const Text('Language'),
-                  subtitle: Text(appPrefs.language.label),
-                  trailing: const Icon(Icons.expand_more),
-                  onTap: _pickLanguage,
-                ),
-              ]),
-            ),
-
             const SectionHeader('ROUTING'),
             Card(
               margin: kCardMargin,
@@ -269,6 +247,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       : 'not downloaded'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _push(const GeoScreen()),
+                ),
+              ]),
+            ),
+
+            const SectionHeader('GENERAL'),
+            Card(
+              margin: kCardMargin,
+              child: Column(children: [
+                ListTile(
+                  leading: const Icon(Icons.brightness_6_outlined),
+                  title: const Text('Appearance'),
+                  subtitle: Text(appPrefs.themeLabel),
+                  trailing: const Icon(Icons.expand_more),
+                  onTap: _pickTheme,
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                ListTile(
+                  leading: const Icon(Icons.translate),
+                  title: const Text('Language'),
+                  subtitle: Text(appPrefs.language.label),
+                  trailing: const Icon(Icons.expand_more),
+                  onTap: _pickLanguage,
                 ),
               ]),
             ),
