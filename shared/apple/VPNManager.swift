@@ -45,9 +45,66 @@ final class VPNManager {
         _ = try await loadOrCreate()
     }
 
+    /// Write the config into the protocol so an on-demand start (where the OS
+    /// launches the extension with no options) has something to run. Only
+    /// writes when it actually changed — saving preferences on a live session
+    /// makes the system re-assert the tunnel.
+    private func persist(config: String, serverIp: String?, into m: NETunnelProviderManager) async throws {
+        guard let proto = m.protocolConfiguration as? NETunnelProviderProtocol else { return }
+        let current = proto.providerConfiguration
+        let changed = (current?["Config"] as? String) != config
+            || (current?["ServerIP"] as? String) != (serverIp ?? "")
+        guard changed else { return }
+        proto.providerConfiguration = ["Config": config, "ServerIP": serverIp ?? ""]
+        try await m.saveToPreferences()
+        try await m.loadFromPreferences()
+        NSLog("VPN-NATIVE: persisted tunnel config (\(config.count) bytes)")
+    }
+
+    /// Keep the persisted config in step with what the app currently has
+    /// selected, without starting anything. Deliberately does NOT create the
+    /// VPN profile: the first save is what triggers the system approval dialog,
+    /// and that belongs to an explicit Connect (or to arming on-demand), not to
+    /// merely adding a configuration. With no profile yet there is nothing to
+    /// keep in step anyway — the first Connect writes it.
+    func syncConfig(config: String, serverIp: String?) async throws {
+        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
+        guard let m = managers.first else {
+            NSLog("VPN-NATIVE: no VPN profile yet, skipping config sync")
+            return
+        }
+        self.manager = m
+        observe(m)
+        try await persist(config: config, serverIp: serverIp, into: m)
+    }
+
+    /// Remove the VPN profile from the system entirely — the user deleted the
+    /// last configuration, so leaving an entry in System Settings (still able
+    /// to auto-start) would be wrong. The next connect recreates it.
+    func removeProfile() async throws {
+        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
+        guard !managers.isEmpty else { return }
+        for m in managers {
+            m.connection.stopVPNTunnel()
+            try await m.removeFromPreferences()
+        }
+        if let statusObserver {
+            NotificationCenter.default.removeObserver(statusObserver)
+            self.statusObserver = nil
+        }
+        manager = nil
+        lastStatus = nil
+        // onStatus feeds a Flutter EventChannel, which must be driven from the
+        // platform thread — this runs inside a Task, so hop to main explicitly.
+        await MainActor.run { self.onStatus?("disconnected") }
+        NSLog("VPN-NATIVE: removed VPN profile from system preferences")
+    }
+
     func start(config: String, serverIp: String?) async throws {
         let m = try await loadOrCreate()
         NSLog("VPN-NATIVE: loadOrCreate ok, status=\(currentStatus()), enabled=\(m.isEnabled)")
+        try await persist(config: config, serverIp: serverIp, into: m)
+
         guard let session = m.connection as? NETunnelProviderSession else {
             throw NSError(domain: "vpn", code: 1, userInfo: [NSLocalizedDescriptionKey: "no tunnel session"])
         }
@@ -64,8 +121,108 @@ final class VPNManager {
         }
     }
 
-    func stop() {
+    /// Manual stop. When on-demand is armed the system would reconnect within
+    /// seconds, so disarm first — the Dart side records this as "paused" and
+    /// re-arms on the next connect.
+    func stop() async {
+        if let m = manager, m.isOnDemandEnabled {
+            m.isOnDemandEnabled = false
+            try? await m.saveToPreferences()
+            NSLog("VPN-NATIVE: on-demand disarmed for manual stop")
+        }
         manager?.connection.stopVPNTunnel()
+    }
+
+    /// Arm or disarm system on-demand with the given rules, and set the
+    /// disconnect-on-sleep flag. Rules come as dictionaries from Dart:
+    /// {action, interface, ssids, dns_domains, dns_servers, probe_url}.
+    ///
+    /// Returns whether on-demand ended up armed. Arming is refused until a
+    /// tunnel config has been persisted: the OS would start the extension, the
+    /// extension would fail for lack of a config, and the OS would retry
+    /// immediately — a connect/disconnect loop several times a second.
+    @discardableResult
+    func setOnDemand(
+        enabled: Bool,
+        rules: [[String: Any]],
+        disconnectOnSleep: Bool,
+        config: String?,
+        serverIp: String?
+    ) async throws -> Bool {
+        // Arming may create the profile (the approval dialog belongs to that
+        // deliberate action). Disarming must never create one — asking for
+        // permission in order to turn something off is nonsense, and it used to
+        // happen when the last configuration was deleted.
+        let m: NETunnelProviderManager
+        if enabled {
+            m = try await loadOrCreate()
+        } else {
+            guard let existing = try await NETunnelProviderManager.loadAllFromPreferences().first
+            else {
+                NSLog("VPN-NATIVE: no VPN profile, nothing to disarm")
+                return false
+            }
+            m = existing
+            manager = existing
+            observe(existing)
+        }
+        // Arming needs a config to start from; the caller passes the currently
+        // selected one, which also updates the profile in one go.
+        if let config, !config.isEmpty {
+            try await persist(config: config, serverIp: serverIp, into: m)
+        }
+        let compiled = rules.compactMap(compileRule)
+        let hasConfig = !((m.protocolConfiguration as? NETunnelProviderProtocol)?
+            .providerConfiguration?["Config"] as? String ?? "").isEmpty
+        let arm = enabled && !compiled.isEmpty && hasConfig
+
+        let wasArmed = m.isOnDemandEnabled
+        m.onDemandRules = compiled
+        m.isOnDemandEnabled = arm
+        m.protocolConfiguration?.disconnectOnSleep = disconnectOnSleep
+        try await m.saveToPreferences()
+        try await m.loadFromPreferences()
+
+        // Only report real transitions: this runs on every connect (to carry
+        // the sleep flag), and logging "disarmed" each time is just noise.
+        if enabled && !arm {
+            NSLog("VPN-NATIVE: on-demand NOT armed (rules=\(compiled.count), config=\(hasConfig))")
+        } else if arm != wasArmed {
+            NSLog("VPN-NATIVE: on-demand \(arm ? "armed" : "disarmed"), \(compiled.count) rule(s), sleep=\(disconnectOnSleep)")
+        }
+        return arm
+    }
+
+    private func compileRule(_ dict: [String: Any]) -> NEOnDemandRule? {
+        let rule: NEOnDemandRule
+        switch dict["action"] as? String {
+        case "connect": rule = NEOnDemandRuleConnect()
+        case "disconnect": rule = NEOnDemandRuleDisconnect()
+        case "ignore": rule = NEOnDemandRuleIgnore()
+        default: return nil
+        }
+        switch dict["interface"] as? String {
+        case "wifi": rule.interfaceTypeMatch = .wiFi
+        #if os(iOS)
+        case "cellular": rule.interfaceTypeMatch = .cellular
+        #elseif os(macOS)
+        case "ethernet": rule.interfaceTypeMatch = .ethernet
+        #endif
+        default: rule.interfaceTypeMatch = .any
+        }
+        if let ssids = dict["ssids"] as? [String], !ssids.isEmpty {
+            rule.ssidMatch = ssids
+        }
+        if let domains = dict["dns_domains"] as? [String], !domains.isEmpty {
+            rule.dnsSearchDomainMatch = domains
+        }
+        if let servers = dict["dns_servers"] as? [String], !servers.isEmpty {
+            rule.dnsServerAddressMatch = servers
+        }
+        if let probe = dict["probe_url"] as? String, let url = URL(string: probe), !probe.isEmpty {
+            rule.probeURL = url
+        }
+        return rule
     }
 
     /// Ask the running extension for one of its log files (e.g. "tunnel",
@@ -94,16 +251,30 @@ final class VPNManager {
         statusString(manager?.connection.status ?? .invalid)
     }
 
+    /// Block-based observers are identified by the token addObserver returns —
+    /// removeObserver(self,…) does NOT remove them. Keeping the token is what
+    /// stops every loadOrCreate() from stacking another observer (which is why
+    /// one status change used to be reported a dozen times).
+    private var statusObserver: NSObjectProtocol?
+
     private func observe(_ m: NETunnelProviderManager) {
-        NotificationCenter.default.removeObserver(self, name: .NEVPNStatusDidChange, object: nil)
-        NotificationCenter.default.addObserver(
+        if let statusObserver {
+            NotificationCenter.default.removeObserver(statusObserver)
+            self.statusObserver = nil
+        }
+        statusObserver = NotificationCenter.default.addObserver(
             forName: .NEVPNStatusDidChange, object: m.connection, queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            NSLog("VPN-NATIVE: status changed -> \(self.currentStatus())")
-            self.onStatus?(self.currentStatus())
+            let status = self.currentStatus()
+            guard status != self.lastStatus else { return }
+            self.lastStatus = status
+            NSLog("VPN-NATIVE: status changed -> \(status)")
+            self.onStatus?(status)
         }
     }
+
+    private var lastStatus: String?
 
     private func statusString(_ s: NEVPNStatus) -> String {
         switch s {

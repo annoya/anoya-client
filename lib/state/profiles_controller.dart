@@ -15,6 +15,7 @@ import '../core/proxy_uri.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/vpn_core.dart';
+import 'on_demand_controller.dart';
 import 'providers.dart';
 
 /// How often a refreshable profile (self-hosted / subscription) is re-pulled.
@@ -190,6 +191,9 @@ class ProfilesController extends Notifier<ProfilesState> {
       activeId: p.id,
       selectedLocationId: p.locations.isEmpty ? null : p.locations.first.id,
     );
+    // A new configuration becomes the active one, so it is what on-demand
+    // should bring up from now on.
+    await syncTunnelConfig();
   }
 
   Profile? _byId(String id) {
@@ -202,6 +206,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<void> removeProfile(String id) async {
     final removed = _byId(id);
     if (removed != null) await configSourceFor(removed).dispose();
+    final wasActive = id == state.activeId;
     final profiles = state.profiles.where((p) => p.id != id).toList();
     await ProfileStore.save(profiles);
     final newActive = profiles.isEmpty ? null : profiles.first;
@@ -211,17 +216,32 @@ class ProfilesController extends Notifier<ProfilesState> {
       selectedLocationId:
           newActive == null || newActive.locations.isEmpty ? null : newActive.locations.first.id,
     );
+    if (profiles.isEmpty) {
+      // The user removed their last configuration: take the VPN profile out of
+      // the system settings too, rather than leaving an entry that could still
+      // auto-start. It comes back on the next connect. Removing the profile
+      // drops its on-demand rules with it, so on-demand is only cleared
+      // locally — pushing a disarm would recreate the profile first.
+      await ref.read(vpnCoreProvider).removeSystemProfile();
+      await ref.read(onDemandProvider.notifier).forget();
+    } else if (wasActive) {
+      await syncTunnelConfig();
+    }
   }
 
-  void setActive(String id) {
+  Future<void> setActive(String id) async {
     final p = _byId(id);
     state = state.copyWith(
       activeId: id,
       selectedLocationId: p == null || p.locations.isEmpty ? null : p.locations.first.id,
     );
+    await syncTunnelConfig();
   }
 
-  void selectLocation(String id) => state = state.copyWith(selectedLocationId: id);
+  Future<void> selectLocation(String id) async {
+    state = state.copyWith(selectedLocationId: id);
+    await syncTunnelConfig();
+  }
 
   // --- refresh ---
 
@@ -241,6 +261,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     if (identical(updated, p)) return p;
     _replaceProfile(updated);
     await ProfileStore.save(state.profiles);
+    if (id == state.activeId) await syncTunnelConfig();
     return updated;
   }
 
@@ -251,6 +272,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     if (p == null) return;
     _replaceProfile(p.copyWith(ruleSetId: ruleSetId));
     await ProfileStore.save(state.profiles);
+    if (profileId == state.activeId) await syncTunnelConfig();
   }
 
   void _replaceProfile(Profile updated) {
@@ -287,12 +309,41 @@ class ProfilesController extends Notifier<ProfilesState> {
       await core.load(await _normConfig(p));
       await core.connect(loc.id);
       _lastReapply = DateTime.now();
+      // Re-arm (or arm) system auto-connect now that a working config is
+      // persisted on the native side.
+      await ref.read(onDemandProvider.notifier).onConnected();
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
   }
 
-  Future<void> disconnect() => ref.read(vpnCoreProvider).disconnect();
+  Future<void> disconnect() async {
+    // The native stop disarms the system side; record the pause so the UI
+    // explains why auto-connect is not active and the next connect re-arms.
+    await ref.read(onDemandProvider.notifier).pause();
+    await ref.read(vpnCoreProvider).disconnect();
+  }
+
+  /// Mirror the current selection into the system's saved tunnel config, so an
+  /// on-demand start always brings up what the app is showing — not whatever
+  /// was selected at the last manual connect. Best-effort and silent: it does
+  /// nothing until a VPN profile exists (creating one would pop the system
+  /// approval dialog at a surprising moment).
+  Future<void> syncTunnelConfig() async {
+    final p = state.active;
+    final loc = state.selectedLocation;
+    if (p == null || loc == null) return;
+    try {
+      await ref.read(vpnCoreProvider).syncConfig(await _normConfig(p), loc.id);
+    } catch (e) {
+      Log.e('tunnel config sync failed', '$e');
+    }
+  }
+
+  /// The config the core would run for [p] right now (routing resolved, LAN
+  /// rules and geo availability applied). Exposed so on-demand can hand it to
+  /// the system when arming.
+  Future<NormConfig> effectiveConfig(Profile p) => _normConfig(p);
 
   /// Builds a NormConfig for the core from a profile: its locations + the
   /// effective routing. Precedence: server-managed policy (self-hosted), else

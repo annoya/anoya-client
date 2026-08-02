@@ -7,11 +7,13 @@ import '../core/norm_config.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
+import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import 'config_screen.dart';
 import 'geo_screen.dart';
 import 'logs_screen.dart';
+import 'on_demand_screen.dart';
 import 'rule_sets_screen.dart';
 
 /// App settings. Top: the active configuration (tap → pick the active one; a
@@ -50,6 +52,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _push(Widget screen) async {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     await _load(); // pushed screens may change prefs/sets/geo
+    // Rule sets and geo databases both change what the tunnel would run, and
+    // those screens don't know about profiles — resync here on the way back.
+    if (mounted) await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
   }
 
   Future<void> _pickTheme() async {
@@ -127,6 +132,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final st = ref.watch(profilesControllerProvider);
     final appPrefs = ref.watch(appPrefsProvider);
+    final onDemand = ref.watch(onDemandProvider);
     final p = st.active;
 
     return Scaffold(
@@ -183,6 +189,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ],
 
+            const SectionHeader('CONNECTION'),
+            Card(
+              margin: kCardMargin,
+              child: Column(children: [
+                ListTile(
+                  leading: const Icon(Icons.bolt_outlined),
+                  title: const Text('On demand'),
+                  subtitle: Text(onDemand.statusLabel),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _push(const OnDemandScreen()),
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                SwitchListTile(
+                  secondary: const Icon(Icons.bedtime_outlined),
+                  title: const Text('Disconnect on sleep'),
+                  subtitle: const Text('Drop the tunnel when the device sleeps'),
+                  value: onDemand.disconnectOnSleep,
+                  onChanged: (v) =>
+                      ref.read(onDemandProvider.notifier).setDisconnectOnSleep(v),
+                ),
+              ]),
+            ),
+
             const SectionHeader('GENERAL'),
             Card(
               margin: kCardMargin,
@@ -218,6 +247,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     final updated = _prefs.copyWith(lanDirect: v);
                     await RoutingPrefsStore.save(updated);
                     setState(() => _prefs = updated);
+                    // Changes the rendered rules, so the system's saved config
+                    // must follow.
+                    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
                   },
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
