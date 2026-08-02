@@ -28,10 +28,19 @@ class OnDemandRule {
   final List<String> dnsServers;
   final String probeUrl;
 
+  /// An SSID only exists on Wi-Fi: pairing it with a cellular/ethernet rule
+  /// would produce a condition the system can never satisfy. The values stay in
+  /// the model (so switching back restores them) but are neither shown nor
+  /// compiled while another interface is selected.
+  bool get ssidsApply =>
+      interface == OnDemandInterface.wifi || interface == OnDemandInterface.any;
+
+  List<String> get effectiveSsids => ssidsApply ? ssids : const [];
+
   /// Condition summary for list rows: "Wi-Fi · SSID corp-net · DNS 10.0.*".
   String get summary {
     final parts = <String>[interface.label];
-    if (ssids.isNotEmpty) parts.add('SSID ${ssids.join(', ')}');
+    if (effectiveSsids.isNotEmpty) parts.add('SSID ${effectiveSsids.join(', ')}');
     if (dnsDomains.isNotEmpty) parts.add('domain ${dnsDomains.join(', ')}');
     if (dnsServers.isNotEmpty) parts.add('DNS ${dnsServers.join(', ')}');
     if (probeUrl.isNotEmpty) parts.add('probe');
@@ -89,7 +98,7 @@ class OnDemandRule {
   Map<String, dynamic> toChannel() => {
         'action': action.name,
         'interface': interface.name,
-        'ssids': ssids,
+        'ssids': effectiveSsids,
         'dns_domains': dnsDomains,
         'dns_servers': dnsServers,
         'probe_url': probeUrl,

@@ -27,15 +27,43 @@ void main() {
     const rule = OnDemandRule(
       id: 'r2',
       action: OnDemandAction.connect,
-      interface: OnDemandInterface.cellular,
+      interface: OnDemandInterface.wifi,
       ssids: ['home-5G'],
     );
     final ch = rule.toChannel();
     expect(ch['action'], 'connect');
-    expect(ch['interface'], 'cellular');
+    expect(ch['interface'], 'wifi');
     expect(ch['ssids'], ['home-5G']);
     expect(ch.containsKey('id'), false); // system rules carry no id/name
     expect(ch.containsKey('name'), false);
+  });
+
+  group('ssid only applies to Wi-Fi', () {
+    const withSsid = OnDemandRule(id: 'r', ssids: ['corp-net']);
+
+    test('kept for Wi-Fi and Any, dropped for cellular/ethernet', () {
+      expect(withSsid.effectiveSsids, ['corp-net']); // any
+      expect(withSsid.copyWith(interface: OnDemandInterface.wifi).effectiveSsids,
+          ['corp-net']);
+      expect(withSsid.copyWith(interface: OnDemandInterface.cellular).effectiveSsids,
+          isEmpty);
+      expect(withSsid.copyWith(interface: OnDemandInterface.ethernet).effectiveSsids,
+          isEmpty);
+    });
+
+    test('never compiled into a rule the system could not satisfy', () {
+      final mobile = withSsid.copyWith(interface: OnDemandInterface.cellular);
+      expect(mobile.toChannel()['ssids'], isEmpty);
+      expect(mobile.summary, 'Mobile');
+    });
+
+    test('values survive a round trip through another interface', () {
+      final back = withSsid
+          .copyWith(interface: OnDemandInterface.cellular)
+          .copyWith(interface: OnDemandInterface.wifi);
+      expect(back.effectiveSsids, ['corp-net'],
+          reason: 'switching modes must not throw the list away');
+    });
   });
 
   test('summary names the conditions', () {
