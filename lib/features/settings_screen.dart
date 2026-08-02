@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_prefs.dart';
 import '../core/geo_store.dart';
-import '../core/norm_config.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
@@ -16,9 +15,9 @@ import 'logs_screen.dart';
 import 'on_demand_screen.dart';
 import 'rule_sets_screen.dart';
 
-/// App settings. Top: the active configuration (tap → pick the active one; a
-/// gear per row opens that configuration's own settings). Then the global
-/// ROUTING section (LAN switch, rule sets, geo databases) and diagnostics.
+/// App settings. Top: every configuration, each row a way into its own
+/// settings — which one is active is decided on the home screen, not here.
+/// Then the global CONNECTION, ROUTING, GENERAL and DIAGNOSTICS sections.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -81,36 +80,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (picked != null) await ref.read(appPrefsProvider.notifier).setLanguage(picked);
   }
 
-  Future<void> _pickActive() async {
+  /// The way into a configuration's own settings. A single configuration is
+  /// named right here; several open as a sheet, so a long list never turns the
+  /// settings screen into an endless scroll.
+  Widget _configurationsRow(ProfilesState st) {
+    if (st.profiles.length == 1) {
+      final only = st.profiles.single;
+      return ListTile(
+        leading: Icon(profileIcon(only.type)),
+        title: Text(only.name),
+        subtitle: Text(profileKind(only)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _push(ConfigScreen(profileId: only.id)),
+      );
+    }
+    return ListTile(
+      leading: const Icon(Icons.folder_copy_outlined),
+      title: const Text('Configurations'),
+      subtitle: Text('${st.profiles.length} configurations'),
+      trailing: const Icon(Icons.expand_more),
+      onTap: _openConfigurations,
+    );
+  }
+
+  Future<void> _openConfigurations() async {
     final st = ref.read(profilesControllerProvider);
-    final ctrl = ref.read(profilesControllerProvider.notifier);
-    // Not pickOption: each row carries a second action (the gear opens that
-    // configuration's own settings, active or not).
+    // Not pickOption: these rows navigate, they don't select — which
+    // configuration is active is decided on the home screen.
     final picked = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(
-              padding: const EdgeInsets.all(16),
-              child:
-                  Text('Active configuration', style: Theme.of(context).textTheme.titleMedium)),
+            padding: const EdgeInsets.all(16),
+            child: Text('Configurations', style: Theme.of(context).textTheme.titleMedium),
+          ),
           Flexible(
             child: ListView(
               shrinkWrap: true,
               children: st.profiles
                   .map((p) => ListTile(
-                        leading: p.id == st.activeId
-                            ? Icon(Icons.radio_button_checked,
-                                color: Theme.of(context).colorScheme.primary)
-                            : const Icon(Icons.radio_button_off),
+                        leading: Icon(profileIcon(p.type)),
                         title: Text(p.name),
-                        subtitle: Text(profileKind(p)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.settings_outlined, size: 20),
-                          tooltip: 'Configuration settings',
-                          onPressed: () => Navigator.of(context).pop('cfg:${p.id}'),
-                        ),
+                        subtitle: Text(p.id == st.activeId
+                            ? '${profileKind(p)} · active'
+                            : profileKind(p)),
+                        trailing: const Icon(Icons.chevron_right),
                         onTap: () => Navigator.of(context).pop(p.id),
                       ))
                   .toList(),
@@ -120,12 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ]),
       ),
     );
-    if (picked == null) return;
-    if (picked.startsWith('cfg:')) {
-      await _push(ConfigScreen(profileId: picked.substring(4)));
-    } else {
-      ctrl.setActive(picked);
-    }
+    if (picked != null && mounted) await _push(ConfigScreen(profileId: picked));
   }
 
   @override
@@ -133,60 +144,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final st = ref.watch(profilesControllerProvider);
     final appPrefs = ref.watch(appPrefsProvider);
     final onDemand = ref.watch(onDemandProvider);
-    final p = st.active;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: PageBody(
         child: ListView(
           children: [
-            if (p != null) ...[
-              const SectionHeader('CONFIGURATION'),
-              Card(
-                margin: kCardMargin,
-                child: ListTile(
-                  leading: Icon(profileIcon(p.type)),
-                  title: Text(p.name),
-                  subtitle: Text(p.serverUrl ?? p.subscriptionUrl ?? profileKind(p)),
-                  trailing: st.profiles.length > 1
-                      ? const Icon(Icons.expand_more)
-                      : const Icon(Icons.chevron_right),
-                  onTap: st.profiles.length > 1
-                      ? _pickActive
-                      : () => _push(ConfigScreen(profileId: p.id)),
-                ),
-              ),
-
-              // Account (self-hosted only).
-              if (p.hasAccount && p.account != null) ...[
-                Card(
-                  margin: kCardMargin,
-                  child: ListTile(
-                    title: const Text('Account'),
-                    subtitle: Text(_accountSummary(p.account!)),
-                  ),
-                ),
-                if (p.account!.dataLimit > 0)
-                  Card(
-                    margin: kCardMargin,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(
-                            'Traffic: ${_bytes(p.account!.usedBytes)} of ${_bytes(p.account!.dataLimit)}',
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: (p.account!.usedBytes / p.account!.dataLimit).clamp(0.0, 1.0),
-                            minHeight: 6,
-                          ),
-                        ),
-                      ]),
-                    ),
-                  ),
-              ],
+            if (st.profiles.isNotEmpty) ...[
+              const SectionHeader('CONFIGURATIONS'),
+              Card(margin: kCardMargin, child: _configurationsRow(st)),
             ],
 
             const SectionHeader('CONNECTION'),
@@ -289,15 +255,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
-}
-
-String _accountSummary(Account a) {
-  final status = a.status.replaceAll('_', ' ');
-  if (a.status == 'on_hold') return 'Status: $status · starts on first use';
-  if (a.expiresAt != null) {
-    return 'Status: $status · expires ${a.expiresAt!.toLocal().toString().split('.').first}';
-  }
-  return 'Status: $status';
 }
 
 String _bytes(int n) {
