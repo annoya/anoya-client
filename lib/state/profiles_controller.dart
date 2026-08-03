@@ -15,6 +15,7 @@ import '../core/proxy_uri.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/vpn_core.dart';
+import 'favorites_controller.dart';
 import 'on_demand_controller.dart';
 import 'providers.dart';
 
@@ -209,6 +210,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     final wasActive = id == state.activeId;
     final profiles = state.profiles.where((p) => p.id != id).toList();
     await ProfileStore.save(profiles);
+    await ref.read(favoritesProvider.notifier).forgetProfile(id);
     final newActive = profiles.isEmpty ? null : profiles.first;
     state = ProfilesState(
       profiles: profiles,
