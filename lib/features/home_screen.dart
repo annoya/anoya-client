@@ -10,6 +10,7 @@ import '../core/profile.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
+import '../state/favorites_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
@@ -239,7 +240,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : _busy
                 ? const Icon(Icons.lock_outline, size: 18)
                 : const Icon(Icons.chevron_right),
-        onTap: (!pickable || _busy) ? null : () => _pickLocation(st),
+        onTap: (!pickable || _busy) ? null : () => _pickLocation(st, active),
       ),
     );
   }
@@ -259,10 +260,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _pickProfile(ProfilesState st) async {
+    final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
       title: 'Configuration',
       selected: st.activeId,
+      itemNoun: 'configuration',
+      favorites: favorites.profiles,
+      onToggleFavorite: (id) => ref.read(favoritesProvider.notifier).toggleProfile(id),
+      onOpenSettings: (id) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ConfigScreen(profileId: id)),
+      ),
       options: st.profiles
           .map((p) => Option(
                 p.id,
@@ -275,11 +283,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (picked != null) ref.read(profilesControllerProvider.notifier).setActive(picked);
   }
 
-  Future<void> _pickLocation(ProfilesState st) async {
+  Future<void> _pickLocation(ProfilesState st, Profile active) async {
+    final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
       title: 'Server',
       selected: st.selectedLocation?.id,
+      itemNoun: 'server',
+      favorites: favorites.locationsOf(active.id),
+      onToggleFavorite: (id) =>
+          ref.read(favoritesProvider.notifier).toggleLocation(active.id, id),
       options: st.locations
           .map((l) => Option(
                 l.id,

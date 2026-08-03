@@ -96,48 +96,198 @@ class Option<T> {
   final Widget? leading;
 }
 
+/// Search only earns its place once the list is long enough to scan — the same
+/// threshold the on-demand value lists use.
+const int kSearchThreshold = 6;
+
 /// The app's single way to choose from a list: a bottom sheet with a title,
-/// the current value checked, and disabled rows kept visible (greyed, with
-/// their reason in the subtitle) rather than hidden.
+/// the current value marked by a filled row, and disabled rows kept visible
+/// (greyed, with their reason in the subtitle) rather than hidden.
+///
+/// The current value is filled rather than check-marked, which keeps the
+/// trailing slot free for actions: [onToggleFavorite] adds a star and splits
+/// the list into FAVORITES / ALL, [onOpenSettings] adds a gear that closes the
+/// sheet and hands the value back to the caller. Long lists also get a search
+/// field; favourites stay on top while filtering.
 Future<T?> pickOption<T>(
   BuildContext context, {
   required String title,
   required List<Option<T>> options,
   T? selected,
+  Set<T> favorites = const {},
+  ValueChanged<T>? onToggleFavorite,
+  ValueChanged<T>? onOpenSettings,
+  String itemNoun = 'item',
 }) {
   return showModalBottomSheet<T>(
     context: context,
     showDragHandle: true,
-    builder: (context) {
-      final cs = Theme.of(context).colorScheme;
-      return SafeArea(
+    isScrollControlled: true,
+    builder: (context) => _PickSheet<T>(
+      title: title,
+      options: options,
+      selected: selected,
+      favorites: favorites,
+      onToggleFavorite: onToggleFavorite,
+      onOpenSettings: onOpenSettings,
+      itemNoun: itemNoun,
+    ),
+  );
+}
+
+class _PickSheet<T> extends StatefulWidget {
+  const _PickSheet({
+    required this.title,
+    required this.options,
+    required this.selected,
+    required this.favorites,
+    required this.onToggleFavorite,
+    required this.onOpenSettings,
+    required this.itemNoun,
+  });
+
+  final String title;
+  final List<Option<T>> options;
+  final T? selected;
+  final Set<T> favorites;
+  final ValueChanged<T>? onToggleFavorite;
+  final ValueChanged<T>? onOpenSettings;
+  final String itemNoun;
+
+  @override
+  State<_PickSheet<T>> createState() => _PickSheetState<T>();
+}
+
+class _PickSheetState<T> extends State<_PickSheet<T>> {
+  late final Set<T> _favorites = {...widget.favorites};
+  String _query = '';
+
+  bool get _grouped => widget.onToggleFavorite != null || _favorites.isNotEmpty;
+
+  bool _matches(Option<T> o) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return o.title.toLowerCase().contains(q) ||
+        (o.subtitle?.toLowerCase().contains(q) ?? false);
+  }
+
+  void _toggle(T value) {
+    setState(() => _favorites.contains(value)
+        ? _favorites.remove(value)
+        : _favorites.add(value));
+    widget.onToggleFavorite!(value);
+  }
+
+  /// The gear leaves the sheet first: its screen would otherwise open behind
+  /// the sheet, which stays up until the user picks something.
+  void _openSettings(T value) {
+    Navigator.of(context).pop();
+    widget.onOpenSettings!(value);
+  }
+
+  Widget _row(Option<T> o) {
+    final cs = Theme.of(context).colorScheme;
+    final favorite = _favorites.contains(o.value);
+    final selected = o.value == widget.selected;
+    final actions = <Widget>[
+      if (widget.onToggleFavorite != null)
+        IconButton(
+          icon: Icon(favorite ? Icons.star : Icons.star_border, size: 20),
+          color: favorite ? cs.primary : cs.onSurfaceVariant,
+          tooltip: favorite ? 'Remove from favorites' : 'Add to favorites',
+          onPressed: () => _toggle(o.value),
+        ),
+      if (widget.onOpenSettings != null)
+        IconButton(
+          icon: const Icon(Icons.settings_outlined, size: 20),
+          color: cs.onSurfaceVariant,
+          tooltip: 'Settings',
+          onPressed: () => _openSettings(o.value),
+        ),
+    ];
+    return Opacity(
+      opacity: o.enabled ? 1 : 0.45,
+      child: ListTile(
+        // Selection is a fill, so the colour is not the only carrier: the tile
+        // also reports itself as selected to assistive technology.
+        selected: selected,
+        selectedTileColor: cs.primaryContainer.withValues(alpha: 0.55),
+        leading: o.leading == null
+            ? null
+            : IconTheme.merge(
+                data: IconThemeData(color: selected ? cs.primary : null),
+                child: o.leading!,
+              ),
+        title: Text(o.title),
+        subtitle: o.subtitle != null ? Text(o.subtitle!) : null,
+        trailing: actions.isEmpty
+            ? null
+            : Row(mainAxisSize: MainAxisSize.min, children: actions),
+        onTap: o.enabled ? () => Navigator.of(context).pop(o.value) : null,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final shown = widget.options.where(_matches).toList();
+    final favorites = shown.where((o) => _favorites.contains(o.value)).toList();
+    final rest = shown.where((o) => !_favorites.contains(o.value)).toList();
+    final searching = _query.trim().isNotEmpty;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+            child: Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
           ),
+          if (widget.options.length >= kSearchThreshold)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: kGutter),
+              child: TextField(
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Search',
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              ),
+            ),
           Flexible(
             child: ListView(
               shrinkWrap: true,
-              children: options
-                  .map((o) => Opacity(
-                        opacity: o.enabled ? 1 : 0.45,
-                        child: ListTile(
-                          leading: o.leading,
-                          title: Text(o.title),
-                          subtitle: o.subtitle != null ? Text(o.subtitle!) : null,
-                          trailing: o.value == selected
-                              ? Icon(Icons.check, color: cs.primary)
-                              : null,
-                          onTap: o.enabled ? () => Navigator.of(context).pop(o.value) : null,
-                        ),
-                      ))
-                  .toList(),
+              children: [
+                if (!_grouped)
+                  ...shown.map(_row)
+                else ...[
+                  if (favorites.isNotEmpty) ...[
+                    const SectionHeader('FAVORITES'),
+                    ...favorites.map(_row),
+                  ],
+                  SectionHeader(searching
+                      ? 'ALL · ${rest.isEmpty ? 'NOTHING MATCHES' : '${rest.length} OF ${widget.options.length} MATCH'}'
+                      : 'ALL'),
+                  if (rest.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(kGutter, 0, kGutter, 8),
+                      child: Text(
+                        'No ${widget.itemNoun} matches “${_query.trim()}”. '
+                        'Clear the search to see all ${widget.options.length}.',
+                        style: TextStyle(color: cs.onSurfaceVariant),
+                      ),
+                    )
+                  else
+                    ...rest.map(_row),
+                ],
+              ],
             ),
           ),
           const SizedBox(height: 8),
         ]),
-      );
-    },
-  );
+      ),
+    );
+  }
 }

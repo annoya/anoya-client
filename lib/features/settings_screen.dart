@@ -6,6 +6,7 @@ import '../core/geo_store.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
+import '../state/favorites_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
@@ -105,6 +106,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _openConfigurations() async {
     final st = ref.read(profilesControllerProvider);
+    final favorites = ref.read(favoritesProvider);
+    // Same order as the picker on the home screen — favourites first — but no
+    // stars: favourites are edited where they are used, in the picker.
+    final profiles = [
+      ...st.profiles.where((p) => favorites.hasProfile(p.id)),
+      ...st.profiles.where((p) => !favorites.hasProfile(p.id)),
+    ];
     // Not pickOption: these rows navigate, they don't select — which
     // configuration is active is decided on the home screen.
     final picked = await showModalBottomSheet<String>(
@@ -119,7 +127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Flexible(
             child: ListView(
               shrinkWrap: true,
-              children: st.profiles
+              children: profiles
                   .map((p) => ListTile(
                         leading: Icon(profileIcon(p.type)),
                         title: Text(p.name),
