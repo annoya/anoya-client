@@ -32,7 +32,7 @@
   document.querySelectorAll('.row').forEach(r => {
     const h = pt(r.getBoundingClientRect().height);
     const two = !!r.querySelector('.s');
-    const wraps = !!r.querySelector('.s.wrap');
+    const wraps = !!r.querySelector('.s.multi');
     const want = two ? 72 : 56;
     if (!wraps && Math.abs(h - want) > 8) bad.push(`${label(r)}: row ${h}pt, expected ${want}`);
     if (wraps && h > 110) bad.push(`${label(r)}: wrapped row ${h}pt — too tall`);

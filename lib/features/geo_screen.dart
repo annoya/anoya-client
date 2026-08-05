@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_error.dart';
 import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/routing_prefs.dart';
@@ -20,7 +21,6 @@ class _GeoScreenState extends State<GeoScreen> {
   GeoStatus _status = const GeoStatus();
   bool _loading = true;
   bool _busy = false;
-  String? _error;
 
   @override
   void initState() {
@@ -42,14 +42,14 @@ class _GeoScreenState extends State<GeoScreen> {
   Future<void> _update() async {
     setState(() {
       _busy = true;
-      _error = null;
     });
     try {
       await GeoStore.download();
       await _load();
     } catch (e) {
       Log.e('geo update failed', '$e');
-      if (mounted) setState(() => _error = '$e');
+      // Nothing is broken without fresh databases — the old ones keep working.
+      if (mounted) showToast(context, describeError(e, subject: 'the database host').line);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -150,7 +150,6 @@ class _GeoScreenState extends State<GeoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('GeoIP & GeoSite')),
       body: _loading
@@ -205,11 +204,6 @@ class _GeoScreenState extends State<GeoScreen> {
                       label: Text(_status.downloaded ? 'Update now' : 'Download (~25 MB)'),
                     ),
                   ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.all(kGutter),
-                      child: Text(_error!, style: TextStyle(color: cs.error)),
-                    ),
                   const SizedBox(height: 24),
                 ],
               ),
