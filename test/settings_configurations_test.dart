@@ -60,6 +60,13 @@ void main() {
     expect(find.text('travel'), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_off), findsNothing,
         reason: 'the sheet navigates, it does not select the active one');
+    // Navigational mode: every row in the sheet promises to open something.
+    expect(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byIcon(Icons.chevron_right),
+        ),
+        findsNWidgets(3));
   });
 }
 

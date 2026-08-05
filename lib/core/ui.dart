@@ -100,6 +100,10 @@ class Option<T> {
 /// threshold the on-demand value lists use.
 const int kSearchThreshold = 6;
 
+/// A sheet never covers the whole screen: the strip of scrim left above it is
+/// what makes it dismissable by a tap, not only by a swipe.
+const double kSheetMaxHeightFraction = 0.8;
+
 /// The app's single way to choose from a list: a bottom sheet with a title,
 /// the current value marked by a filled row, and disabled rows kept visible
 /// (greyed, with their reason in the subtitle) rather than hidden.
@@ -109,6 +113,10 @@ const int kSearchThreshold = 6;
 /// the list into FAVORITES / ALL, [onOpenSettings] adds a gear that closes the
 /// sheet and hands the value back to the caller. Long lists also get a search
 /// field; favourites stay on top while filtering.
+///
+/// With [navigational] the rows carry a chevron instead of promising a choice:
+/// the caller treats the returned value as "open this", not "select this". The
+/// fill still marks whichever value is current.
 Future<T?> pickOption<T>(
   BuildContext context, {
   required String title,
@@ -117,12 +125,16 @@ Future<T?> pickOption<T>(
   Set<T> favorites = const {},
   ValueChanged<T>? onToggleFavorite,
   ValueChanged<T>? onOpenSettings,
+  bool navigational = false,
   String itemNoun = 'item',
 }) {
   return showModalBottomSheet<T>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
+    ),
     builder: (context) => _PickSheet<T>(
       title: title,
       options: options,
@@ -130,6 +142,7 @@ Future<T?> pickOption<T>(
       favorites: favorites,
       onToggleFavorite: onToggleFavorite,
       onOpenSettings: onOpenSettings,
+      navigational: navigational,
       itemNoun: itemNoun,
     ),
   );
@@ -143,6 +156,7 @@ class _PickSheet<T> extends StatefulWidget {
     required this.favorites,
     required this.onToggleFavorite,
     required this.onOpenSettings,
+    required this.navigational,
     required this.itemNoun,
   });
 
@@ -152,6 +166,7 @@ class _PickSheet<T> extends StatefulWidget {
   final Set<T> favorites;
   final ValueChanged<T>? onToggleFavorite;
   final ValueChanged<T>? onOpenSettings;
+  final bool navigational;
   final String itemNoun;
 
   @override
@@ -204,6 +219,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
           tooltip: 'Settings',
           onPressed: () => _openSettings(o.value),
         ),
+      if (widget.navigational) Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
     ];
     return Opacity(
       opacity: o.enabled ? 1 : 0.45,
@@ -256,33 +272,43 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
                 onChanged: (v) => setState(() => _query = v),
               ),
             ),
+          // Row fills and highlights are Ink, which paints on the nearest
+          // Material — the sheet's own, outside the list — so an overscrolled
+          // row used to be drawn over the title. A transparent Material here
+          // makes the list host its own ink, and the ClipRect bounds it (a
+          // shrink-wrapping viewport clips only once its content overflows).
           Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                if (!_grouped)
-                  ...shown.map(_row)
-                else ...[
-                  if (favorites.isNotEmpty) ...[
-                    const SectionHeader('FAVORITES'),
-                    ...favorites.map(_row),
+            child: ClipRect(
+              child: Material(
+                type: MaterialType.transparency,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    if (!_grouped)
+                      ...shown.map(_row)
+                    else ...[
+                      if (favorites.isNotEmpty) ...[
+                        const SectionHeader('FAVORITES'),
+                        ...favorites.map(_row),
+                      ],
+                      SectionHeader(searching
+                          ? 'ALL · ${rest.isEmpty ? 'NOTHING MATCHES' : '${rest.length} OF ${widget.options.length} MATCH'}'
+                          : 'ALL'),
+                      if (rest.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(kGutter, 0, kGutter, 8),
+                          child: Text(
+                            'No ${widget.itemNoun} matches “${_query.trim()}”. '
+                            'Clear the search to see all ${widget.options.length}.',
+                            style: TextStyle(color: cs.onSurfaceVariant),
+                          ),
+                        )
+                      else
+                        ...rest.map(_row),
+                    ],
                   ],
-                  SectionHeader(searching
-                      ? 'ALL · ${rest.isEmpty ? 'NOTHING MATCHES' : '${rest.length} OF ${widget.options.length} MATCH'}'
-                      : 'ALL'),
-                  if (rest.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(kGutter, 0, kGutter, 8),
-                      child: Text(
-                        'No ${widget.itemNoun} matches “${_query.trim()}”. '
-                        'Clear the search to see all ${widget.options.length}.',
-                        style: TextStyle(color: cs.onSurfaceVariant),
-                      ),
-                    )
-                  else
-                    ...rest.map(_row),
-                ],
-              ],
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 8),
