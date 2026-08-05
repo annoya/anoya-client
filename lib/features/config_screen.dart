@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/app_error.dart';
 import '../core/log.dart';
 import '../core/norm_config.dart';
 import '../core/profile.dart';
@@ -42,9 +43,10 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
       await _ctrl.refreshProfile(widget.profileId);
     } catch (e) {
       Log.e('manual refresh failed', '$e');
+      // The cached servers still work, so this is news, not a decision.
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Refresh failed: $e')));
+        showToast(context,
+            'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}');
       }
     } finally {
       if (mounted) setState(() => _refreshing = false);

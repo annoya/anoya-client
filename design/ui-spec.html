@@ -69,6 +69,7 @@
     --m-pri:#b6c4ff; --m-onpri:#1d2f63; --m-pric:#3f57a6; --m-onpric:#dce1ff;
     --m-input:rgba(148,156,178,.14);
     --m-ok:#4cc97b; --m-warn:#e0a93e; --m-err:#ffb4ab; --m-dir:#98a1ad;
+    --m-inv:#e4e5ee; --m-oninv:#1b1c22;
     --m-dim:rgba(0,0,0,.55);
   }
   .mocks.light{
@@ -77,6 +78,7 @@
     --m-pri:#4463c4; --m-onpri:#ffffff; --m-pric:#dce2ff; --m-onpric:#16336e;
     --m-input:rgba(96,102,128,.12);
     --m-ok:#1e9e50; --m-warn:#b57e00; --m-err:#ba1a1a; --m-dir:#5b6470;
+    --m-inv:#2f3038; --m-oninv:#f1f0f7;
     --m-dim:rgba(20,22,30,.4);
   }
 
@@ -223,6 +225,17 @@
   .chip.on{color:var(--m-onpric);background:var(--m-pric);border-color:transparent}
   .hint{font-size:12.5px;color:var(--m-mut);padding:10px 0 0;line-height:1.4}
   .errtext{font-size:13px;color:var(--m-err);padding:8px 0 0}
+  /* toast: сам исчезает через 3 c, закрывается тапом по себе, без крестика */
+  .toast{position:absolute;left:16px;right:16px;bottom:16px;z-index:4;min-height:48px;
+    display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;
+    background:var(--m-inv);color:var(--m-oninv);font-size:14px;line-height:1.35;
+    box-shadow:0 6px 24px rgba(0,0,0,.35)}
+  .toast .tt{flex:1}
+  /* error banner: живёт в потоке контента, пока его не закроют крестиком */
+  .dlg .head{display:flex;align-items:flex-start;gap:12px;padding:20px 12px 0 24px}
+  .dlg .head svg:first-child{margin-top:2px}
+  .dlg .head h4{flex:1;padding:0;font-size:20px;font-weight:500;line-height:1.25}
+  .dlg .body.msg{font-size:14px;line-height:1.45;padding:12px 24px 24px;color:var(--m-mut)}
   .prog{height:6px;border-radius:3px;background:var(--m-input);margin-top:8px;overflow:hidden}
   .prog i{display:block;height:100%;width:38%;background:var(--m-pri);border-radius:3px}
   .mono{font:12px/1.5 ui-monospace,"SF Mono",Menlo,monospace;color:var(--m-mut);
@@ -295,6 +308,8 @@
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
   <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 3 14.9 8.9 21.4 9.8 16.7 14.4 17.8 20.9 12 17.8 6.2 20.9 7.3 14.4 2.6 9.8 9.1 8.9 12 3"/></symbol>
   <symbol id="i-lang" viewBox="0 0 24 24"><path d="M4 5h10"/><path d="M9 3v2c0 5-2.5 8-5 9"/><path d="M6 11c0 3 3 5 7 6"/><path d="M13 21l4-10 4 10"/><path d="M14.5 17.5h5"/></symbol>
 </defs></svg>
@@ -652,11 +667,19 @@
             <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · 94.159.101.110</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
-          <div style="padding:16px;text-align:center;font-size:14px;color:var(--m-err)">Account is expired.</div>
         </div>
       </div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <div class="head">
+          <svg class="icon muted"><use href="#i-alert"/></svg>
+          <h4>Subscription expired</h4>
+          <span class="iconbtn"><svg class="icon s"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="body msg">Renew it in your account, then connect again.</div>
+      </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · error</span><b>Ошибка.</b> Текст 14&nbsp;pt по центру под карточками, отступ 16.</p>
+    <p class="cap"><span class="id">HomeScreen · error</span><b>Ошибка.</b> Вместо красной строки — модальный диалог по центру: затемнение гасит экран, пока ошибку не закроют крестиком. Заголовок говорит, что случилось, текст — что с этим делать. Раскладка не сдвигается, и пропустить сообщение нельзя.</p>
   </div>
 </div>
 
@@ -1577,6 +1600,141 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div>
     </div></div>
     <p class="cap"><span class="id">HomeScreen · paused</span><b>Пауза.</b> После ручного Disconnect: баннер на primary-container объясняет состояние. Переключатель в настройках остаётся ON — намерение пользователя не сбрасывается.</p>
+  </div>
+</div>
+
+
+<!-- ============ 9 ============ -->
+<h2>9 · Сообщения об ошибках</h2>
+<p class="flowdesc">Два формата, и выбор между ними определяется одним вопросом: успеет ли пользователь
+что-то сделать по этому сообщению. <b>Тост</b> — для того, что уже прошло и не требует решения
+(обновление подписки не удалось, ссылка скопирована): исчезает сам через 3&nbsp;c, закрывается тапом
+по себе, крестика нет — нечего закрывать вручную то, что уходит само. <b>Диалог ошибки</b> — для того, что
+блокирует работу (не подключились, аккаунт истёк, нет разрешения на VPN): по центру, с затемнением,
+которое перехватывает нажатия, пока сообщение не закроют крестиком 40&nbsp;pt. Пропустить его нельзя
+— в отличие от плашки внизу, которую легко не заметить, — а исчезнувшая через три секунды причина
+сбоя бесполезна. Ни один из форматов не занимает места в раскладке: экран не должен прыгать из-за
+сообщения. Формулировка всегда из двух частей: что случилось и что с этим делать; технический текст
+исключения остаётся в логах, а не в интерфейсе.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+      <div class="toast"><div class="tt">Couldn’t refresh the subscription — showing the servers we already have.</div></div>
+    </div></div>
+    <p class="cap"><span class="id">Toast</span><b>Тост.</b> Плавающая плашка на inverse-surface: 16&nbsp;pt от краёв и от низа, r12, текст 14&nbsp;pt в две строки максимум. Ничего не перекрывает из того, с чем работают, и не отбирает фокус. Три секунды, тап — закрыть.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-err)">Error</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <div class="head">
+          <svg class="icon muted"><use href="#i-alert"/></svg>
+          <h4>Couldn’t reach the server</h4>
+          <span class="iconbtn"><svg class="icon s"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="body msg">germany.nexus.13371488.xyz didn’t answer. Check your network, or pick another server.</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">Error dialog</span><b>Диалог ошибки.</b> Обычная поверхность диалогов, без красного: ошибку отличают заголовок и модальность, а кричащий цвет на весь попап только выбивается из палитры. Красным остаётся лишь обводка поля с неверным вводом — там он показывает конкретное место. Геометрия диалогов: вставка 40&nbsp;pt, r20, иконка 24&nbsp;pt и заголовок 20/w500 в шапке, текст 14&nbsp;pt под ним, крестик 40&nbsp;pt справа сверху. Затемнение перехватывает нажатия, поэтому кнопка Connect и пикеры недоступны, пока ошибку не прочитали. Тап по затемнению не закрывает — только крестик, иначе сообщение снесут случайным касанием. Текст называет конкретный сервер или адрес: по «Ошибка подключения» пользователь не поймёт, что чинить.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Add a connection</span></div>
+      <div style="padding:8px 24px 0">
+        <div class="inp err"><div class="lb">Link or subscription</div><div class="vl">vmess://not-a-real-link</div></div>
+      </div>
+      <div style="padding:0 24px"><div class="hint">Обводка поля остаётся красной, пока строку не исправят: диалог объясняет, поле показывает где.</div></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <div class="head">
+          <svg class="icon muted"><use href="#i-alert"/></svg>
+          <h4>This doesn’t look like a link we know</h4>
+          <span class="iconbtn"><svg class="icon s"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="body msg">Expected vless://, vmess://, trojan://, ss:// or a subscription URL.</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen · error</span><b>Ошибка ввода.</b> Разбор ссылки — тот же диалог: пока его не закрыли, строку всё равно не поправить, а после закрытия поле остаётся с красной обводкой — видно и «что», и «где».</p>
+  </div>
+</div>
+
+<p class="flowdesc">Таблица формулировок — источник правды для текстов. Слева то, что видит код, справа —
+то, что читает пользователь. Ничего из левой колонки в интерфейс не попадает.</p>
+<div class="metrics">
+  <div class="mt">
+    <h4>Сеть и сервер</h4>
+    <table>
+      <tr><td>SocketException, timeout</td><td>Сервер не ответил · проверьте сеть или выберите другой сервер · баннер</td></tr>
+      <tr><td>HandshakeException, TLS</td><td>Не удалось установить защищённое соединение · баннер</td></tr>
+      <tr><td>HTTP 5xx</td><td>Сервер отвечает ошибкой · попробуйте позже · баннер</td></tr>
+      <tr><td>Обновление подписки не удалось</td><td>Показываем сохранённые серверы · тост</td></tr>
+    </table>
+  </div>
+  <div class="mt">
+    <h4>Доступ и аккаунт</h4>
+    <table>
+      <tr><td>HTTP 401 при входе</td><td>Неверный логин или пароль · баннер</td></tr>
+      <tr><td>HTTP 401 позже</td><td>Сессия истекла · войдите снова · баннер</td></tr>
+      <tr><td>status expired / limited</td><td>Подписка истекла или лимит трафика · баннер</td></tr>
+      <tr><td>Отказ в разрешении VPN</td><td>Разрешение не выдано · включите профиль VPN · баннер</td></tr>
+    </table>
+  </div>
+  <div class="mt">
+    <h4>Данные и прочее</h4>
+    <table>
+      <tr><td>FormatException при разборе</td><td>Ссылка не распознана · перечисляем поддерживаемые схемы · баннер</td></tr>
+      <tr><td>Пустая подписка</td><td>В подписке нет серверов · баннер</td></tr>
+      <tr><td>Скачивание гео не удалось</td><td>Базы не обновились · тост</td></tr>
+      <tr><td>Всё остальное</td><td>Что-то пошло не так · подробности в логах · тост</td></tr>
+    </table>
   </div>
 </div>
 

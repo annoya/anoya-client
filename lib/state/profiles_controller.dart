@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
+import '../core/app_error.dart';
 import '../core/config_source.dart';
 import '../core/geo_store.dart';
 import '../core/log.dart';
@@ -39,7 +40,7 @@ class ProfilesState {
   final String? activeId;
   final String? selectedLocationId;
   final bool loading;
-  final String? error;
+  final AppError? error;
 
   bool get hasProfiles => profiles.isNotEmpty;
 
@@ -65,7 +66,7 @@ class ProfilesState {
     String? activeId,
     String? selectedLocationId,
     bool? loading,
-    String? error,
+    AppError? error,
   }) =>
       ProfilesState(
         profiles: profiles ?? this.profiles,
@@ -291,7 +292,9 @@ class ProfilesController extends Notifier<ProfilesState> {
     try {
       var p = state.active;
       if (p == null) {
-        state = state.copyWith(error: 'No configuration.');
+        state = state.copyWith(
+            error: const AppError('No configuration',
+                detail: 'Add a link, a subscription, or sign in to your server.'));
         return;
       }
       // Server-managed profiles force a refresh before connect (enforces
@@ -300,12 +303,14 @@ class ProfilesController extends Notifier<ProfilesState> {
         p = await refreshActive();
       }
       if (p.account != null && !p.account!.canConnect) {
-        state = state.copyWith(error: 'Account is ${p.account!.status.replaceAll('_', ' ')}.');
+        state = state.copyWith(error: describeAccountStatus(p.account!.status));
         return;
       }
       final loc = state.selectedLocation;
       if (loc == null) {
-        state = state.copyWith(error: 'No server available.');
+        state = state.copyWith(
+            error: const AppError('This configuration has no servers',
+                detail: 'Refresh it, or add another configuration.'));
         return;
       }
       await core.load(await _normConfig(p));
@@ -315,9 +320,15 @@ class ProfilesController extends Notifier<ProfilesState> {
       // persisted on the native side.
       await ref.read(onDemandProvider.notifier).onConnected();
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      Log.e('connect failed', '$e');
+      // The server/host is what the user can act on, so name it in the message.
+      final host = state.selectedLocation?.proxy['server'] as String?;
+      state = state.copyWith(error: describeError(e, subject: host));
     }
   }
+
+  /// Drops the banner the user just dismissed.
+  void clearError() => state = state.copyWith(error: null);
 
   Future<void> disconnect() async {
     // The native stop disarms the system side; record the pause so the UI

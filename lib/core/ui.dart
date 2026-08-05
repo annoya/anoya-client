@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_error.dart';
+
 /// Shared layout constants so every screen uses the same spacing.
 const double kGutter = 16; // horizontal screen gutter (card margins, headers)
 const double kMaxContentWidth = 560; // cap content width on wide/desktop windows
@@ -94,6 +96,83 @@ class Option<T> {
   final String? subtitle;
   final bool enabled;
   final Widget? leading;
+}
+
+/// A toast: three seconds, dismissed by tapping it. No close button — there is
+/// nothing to close by hand about a message that leaves on its own. Use it for
+/// what is already over (a refresh that failed, a copy that succeeded); if the
+/// user has to decide something, they need [showErrorDialog] instead.
+void showToast(BuildContext context, String message) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(SnackBar(
+    duration: const Duration(seconds: 3),
+    content: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: messenger.hideCurrentSnackBar,
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+      ),
+    ),
+  ));
+}
+
+/// An error the user has to acknowledge: centred, with the scrim swallowing
+/// taps so Connect and the pickers stay out of reach until it is read. What
+/// happened in the title, what to do about it below, and a cross as the only
+/// way out — a tap on the scrim would wipe out the reason for the failure by
+/// accident. Nothing here occupies space in the layout, so no screen jumps.
+///
+/// Ordinary dialog surface, not the error palette: being modal is what marks
+/// this as a problem, and a red sheet the size of the dialog only fights the
+/// rest of the app. Red stays where it points at a spot — the outline of a
+/// field with bad input.
+///
+/// [onDismiss] runs after it closes, so the caller can clear the error it holds;
+/// otherwise the next rebuild would raise the dialog again.
+Future<void> showErrorDialog(BuildContext context, AppError error,
+    {VoidCallback? onDismiss}) async {
+  final cs = Theme.of(context).colorScheme;
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 12, 0),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(Icons.error_outline, color: cs.onSurfaceVariant),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(error.title,
+                  style: TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.w500, color: cs.onSurface)),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, size: 20),
+              color: cs.onSurfaceVariant,
+              tooltip: 'Dismiss',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ]),
+        ),
+        if (error.detail != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(error.detail!,
+                  style: TextStyle(fontSize: 14, height: 1.45, color: cs.onSurfaceVariant)),
+            ),
+          )
+        else
+          const SizedBox(height: 20),
+      ]),
+    ),
+  );
+  onDismiss?.call();
 }
 
 /// Search only earns its place once the list is long enough to scan — the same

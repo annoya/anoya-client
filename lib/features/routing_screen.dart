@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_error.dart';
 import '../core/country_flag.dart';
 import '../core/geo_store.dart';
 import '../core/log.dart';
@@ -102,8 +103,7 @@ class _RoutingScreenState extends State<RoutingScreen> {
     } catch (e) {
       Log.e('geo download failed', '$e');
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Download failed: $e')));
+        showToast(context, describeError(e, subject: 'the database host').line);
       }
     } finally {
       if (mounted) setState(() => _geoBusy = false);

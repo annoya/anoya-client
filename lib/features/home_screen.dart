@@ -82,6 +82,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final st = ref.watch(profilesControllerProvider);
     final active = st.active;
 
+    // A connect failure floats above the screen until dismissed: the layout
+    // must not jump, and a cause that vanished on its own tells the user
+    // nothing about what to fix.
+    ref.listen(profilesControllerProvider.select((s) => s.error), (_, error) {
+      if (error != null) {
+        showErrorDialog(context, error,
+            onDismiss: ref.read(profilesControllerProvider.notifier).clearError);
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -129,14 +139,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (active != null && active.hasAccount && active.account != null) ...[
                       const SizedBox(height: 12),
                       _accountRow(active.account!),
-                    ],
-                    if (st.error != null) ...[
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                        child: Text(st.error!, textAlign: TextAlign.center,
-                            style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                      ),
                     ],
                     const SizedBox(height: kGutter),
                   ],
