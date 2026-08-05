@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
+import '../core/app_error.dart';
 import '../core/log.dart';
+import '../core/ui.dart';
 import '../state/profiles_controller.dart';
 
 /// Self-hosted sign-in: server address + credentials, or SSO when the server
@@ -21,7 +23,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   late final _server = TextEditingController(text: widget.initialServer ?? '');
   final _username = TextEditingController();
   final _password = TextEditingController();
-  String? _error;
   bool _busy = false;
 
   @override
@@ -34,19 +35,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   ProfilesController get _ctrl => ref.read(profilesControllerProvider.notifier);
 
+  String? _host() {
+    final h = Uri.tryParse(_server.text.trim())?.host;
+    return h == null || h.isEmpty ? null : h;
+  }
+
   Future<void> _run(Future<void> Function() action) async {
-    setState(() {
-      _error = null;
-      _busy = true;
-    });
+    setState(() => _busy = true);
     try {
       await action();
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
-    } on ApiException catch (e) {
-      setState(() => _error = e.message);
     } catch (e) {
       Log.e('sign in failed', '$e');
-      setState(() => _error = e.toString());
+      if (mounted) showErrorDialog(context, describeError(e, subject: _host()));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -151,10 +152,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     icon: const Icon(Icons.login, size: 18),
                     label: const Text('Sign in with SSO'),
                   ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 14),
-                    Text(_error!, style: TextStyle(color: cs.error)),
-                  ],
                 ],
               ),
             ),

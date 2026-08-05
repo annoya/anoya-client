@@ -4,9 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/api_client.dart';
+import '../core/app_error.dart';
 import '../core/log.dart';
 import '../core/proxy_uri.dart';
+import '../core/ui.dart';
 import '../state/profiles_controller.dart';
 import 'sign_in_screen.dart';
 
@@ -24,7 +25,6 @@ class StartScreen extends ConsumerStatefulWidget {
 class _StartScreenState extends ConsumerState<StartScreen> {
   final _input = TextEditingController();
   DetectedInput? _detected;
-  String? _error;
   bool _busy = false;
 
   @override
@@ -35,26 +35,25 @@ class _StartScreenState extends ConsumerState<StartScreen> {
 
   ProfilesController get _ctrl => ref.read(profilesControllerProvider.notifier);
 
-  void _onChanged(String v) => setState(() {
-        _detected = detectInput(v);
-        _error = null;
-      });
+  /// What the message should name: the host the user typed, when there is one.
+  String? _subject() {
+    final text = _input.text.trim();
+    if (!text.startsWith('http')) return null;
+    return Uri.tryParse(text)?.host.isNotEmpty == true ? Uri.parse(text).host : null;
+  }
+
+  void _onChanged(String v) => setState(() => _detected = detectInput(v));
 
   Future<void> _run(Future<void> Function() action) async {
-    setState(() {
-      _error = null;
-      _busy = true;
-    });
+    setState(() => _busy = true);
     try {
       await action();
       // First run: app.dart swaps to Home when a profile appears. Pushed from
       // home/settings: unwind whatever is above the root.
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
-    } on ApiException catch (e) {
-      setState(() => _error = e.message);
     } catch (e) {
       Log.e('add configuration failed', '$e');
-      setState(() => _error = e.toString());
+      if (mounted) showErrorDialog(context, describeError(e, subject: _subject()));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -67,10 +66,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     if (d.kind == InputKind.subscriptionUrl) {
       // Fetch as a subscription; when it isn't one, probe whether it's a
       // management server and hand over to sign-in instead of failing.
-      setState(() {
-        _error = null;
-        _busy = true;
-      });
+      setState(() => _busy = true);
       try {
         await _ctrl.addSubscriptionUrl('', t);
         if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
@@ -78,7 +74,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
         try {
           await _ctrl.authConfig(t);
         } catch (_) {
-          if (mounted) setState(() => _error = fe.message);
+          if (mounted) showErrorDialog(context, describeError(fe, subject: _subject()));
           return;
         }
         if (mounted) {
@@ -88,7 +84,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
         }
       } catch (e) {
         Log.e('add subscription failed', '$e');
-        if (mounted) setState(() => _error = e.toString());
+        if (mounted) showErrorDialog(context, describeError(e, subject: _subject()));
       } finally {
         if (mounted) setState(() => _busy = false);
       }
@@ -191,10 +187,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                     icon: const Icon(Icons.business_outlined, size: 18),
                     label: const Text('Sign in to your server'),
                   ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 14),
-                    Text(_error!, style: TextStyle(color: cs.error)),
-                  ],
                 ],
               ),
             ),

@@ -1,0 +1,162 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:vpn_client/api/api_client.dart';
+import 'package:vpn_client/core/app_error.dart';
+import 'package:vpn_client/core/theme.dart';
+import 'package:vpn_client/core/ui.dart';
+
+void main() {
+  group('describeError', () {
+    test('never leaks the exception text into the message', () {
+      final errors = <Object>[
+        const SocketException('Connection refused (OS Error: ...), port = 443'),
+        TimeoutException('after 0:00:10.000000'),
+        const HandshakeException('CERTIFICATE_VERIFY_FAILED'),
+        const FormatException('Unexpected character'),
+        ApiException(500, 'internal', 'sql: no rows in result set'),
+        PlatformException(code: 'NEVPNErrorConfigurationInvalid'),
+        StateError('shared container unavailable'),
+      ];
+      for (final e in errors) {
+        final described = describeError(e, subject: 'vpn.example.com');
+        expect(described.line, isNot(contains('OS Error')));
+        expect(described.line, isNot(contains('Exception')));
+        expect(described.line, isNot(contains('sql:')));
+        expect(described.title, isNotEmpty);
+        expect(described.detail, isNotNull,
+            reason: 'the second line is what tells the user what to do');
+      }
+    });
+
+    test('names the subject so the user knows what to fix', () {
+      final e = describeError(const SocketException('nope'), subject: 'de1.example.com');
+      expect(e.detail, contains('de1.example.com'));
+      // Without a subject the sentence still reads as a sentence.
+      expect(describeError(const SocketException('nope')).detail, contains('the server'));
+    });
+
+    test('a bad password is not the same message as an expired session', () {
+      final wrong = describeError(ApiException(401, 'invalid_credentials', 'unauthorized'));
+      final expired = describeError(ApiException(401, 'token_expired', 'unauthorized'));
+      expect(wrong.title, 'Wrong username or password');
+      expect(expired.title, 'Session expired');
+    });
+
+    test('level travels with the message', () {
+      expect(describeError(const SocketException('x')).level, ErrorLevel.banner);
+      expect(describeError(const SocketException('x'), level: ErrorLevel.toast).level,
+          ErrorLevel.toast);
+      expect(describeError(const SocketException('x')).asToast().level, ErrorLevel.toast);
+    });
+
+    test('account states are explained, not printed', () {
+      expect(describeAccountStatus('expired').title, 'Subscription expired');
+      expect(describeAccountStatus('limited').title, 'Traffic limit reached');
+      // Unknown states still read as a sentence rather than an enum.
+      expect(describeAccountStatus('some_new_state').title, 'Account is some new state');
+    });
+  });
+
+  group('presentation', () {
+    testWidgets('a toast disappears on its own and closes on tap', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showToast(context, 'Couldn’t refresh the subscription'),
+              child: const Text('go'),
+            ),
+          ),
+        ),
+      ));
+
+      await tester.tap(find.text('go'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400)); // let it slide in
+      expect(find.text('Couldn’t refresh the subscription'), findsOneWidget);
+      // No cross: there is nothing to close by hand about a message that leaves.
+      expect(find.descendant(of: find.byType(SnackBar), matching: find.byIcon(Icons.close)),
+          findsNothing);
+
+      await tester.tap(find.text('Couldn’t refresh the subscription'));
+      await tester.pumpAndSettle();
+      expect(find.text('Couldn’t refresh the subscription'), findsNothing);
+
+      // And again, this time waiting it out.
+      await tester.tap(find.text('go'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(SnackBar), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('an error dialog blocks the screen until the cross is pressed',
+        (tester) async {
+      var dismissed = false;
+      var connectTaps = 0;
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Column(children: [
+              TextButton(onPressed: () => connectTaps++, child: const Text('Connect')),
+              TextButton(
+                onPressed: () => showErrorDialog(
+                  context,
+                  const AppError('Couldn’t reach the server',
+                      detail: 'de1.example.com didn’t answer. Check your network.'),
+                  onDismiss: () => dismissed = true,
+                ),
+                child: const Text('fail'),
+              ),
+            ]),
+          ),
+        ),
+      ));
+
+      await tester.tap(find.text('fail'));
+      await tester.pumpAndSettle();
+      expect(find.text('Couldn’t reach the server'), findsOneWidget);
+      expect(find.textContaining('de1.example.com'), findsOneWidget);
+
+      // Ordinary dialog surface: modality marks the problem, not a red sheet.
+      final scheme = buildAppTheme(Brightness.light).colorScheme;
+      final material = tester.widget<Material>(find.descendant(
+        of: find.byType(Dialog),
+        matching: find.byType(Material),
+      ).first);
+      expect(material.color, isNot(scheme.errorContainer));
+      expect(material.color, isNot(scheme.error));
+
+      // The scrim swallows taps: the screen behind is out of reach.
+      expect(find.byType(ModalBarrier), findsWidgets);
+      await tester.tap(find.text('Connect'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(connectTaps, 0, reason: 'the dialog blocks the UI behind it');
+
+      // Neither time nor a tap on the scrim closes it.
+      await tester.pump(const Duration(seconds: 10));
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.text('Couldn’t reach the server'), findsOneWidget);
+      expect(dismissed, false);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      expect(find.text('Couldn’t reach the server'), findsNothing);
+      expect(dismissed, true, reason: 'the caller must be able to clear its error');
+
+      // And the screen works again.
+      await tester.tap(find.text('Connect'));
+      expect(connectTaps, 1);
+    });
+
+  });
+}
