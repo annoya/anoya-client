@@ -1,0 +1,1606 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>vpn2 · UI-спека клиента</title>
+<style>
+  :root{
+    --bg:#f4f5f9; --panel:#ffffff; --ink:#171a21; --mut:#5c6270;
+    --line:rgba(23,26,33,.09); --acc:#4f7cff; --chip:#e9edfb; --new:#c2410c; --ok:#1e7a45;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0e1015; --panel:#161922; --ink:#e7e9f0; --mut:#99a0b0;
+      --line:rgba(231,233,240,.09); --chip:#232b45; --new:#fb923c; --ok:#4cc97b; }
+  }
+  :root[data-theme="dark"]{ --bg:#0e1015; --panel:#161922; --ink:#e7e9f0; --mut:#99a0b0;
+    --line:rgba(231,233,240,.09); --chip:#232b45; --new:#fb923c; --ok:#4cc97b; }
+  :root[data-theme="light"]{ --bg:#f4f5f9; --panel:#ffffff; --ink:#171a21; --mut:#5c6270;
+    --line:rgba(23,26,33,.09); --chip:#e9edfb; --new:#c2410c; --ok:#1e7a45; }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1320px;margin:0 auto;padding:36px 28px 80px}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);font-weight:700}
+  h1{font-size:30px;line-height:1.15;margin:6px 0 8px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+  .lede{color:var(--mut);max-width:70ch;margin:0}
+  h2{font-size:19px;margin:52px 0 4px;letter-spacing:-.01em;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:15px;margin:26px 0 2px}
+  .flowdesc{color:var(--mut);margin:0 0 10px;max-width:86ch}
+  code{font:12px ui-monospace,"SF Mono",Menlo,monospace;background:var(--chip);padding:1px 6px;border-radius:6px}
+
+  .bar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:10px 0;margin:20px 0 6px;border-bottom:1px solid var(--line)}
+  .bar .lbl{font-size:12px;color:var(--mut)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--mut);
+    font:600 12.5px -apple-system,BlinkMacSystemFont,sans-serif;padding:7px 16px;cursor:pointer}
+  .seg button.on{background:var(--acc);color:#fff}
+  .seg button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+
+  /* ---------- metrics table ---------- */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:16px}
+  .mt{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .mt h4{margin:0 0 10px;font-size:13px}
+  .mt table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .mt td{padding:4px 0;vertical-align:top}
+  .mt td:first-child{color:var(--mut);padding-right:12px}
+  .mt td:last-child{text-align:right;font:12px ui-monospace,Menlo,monospace;white-space:nowrap;
+    font-variant-numeric:tabular-nums}
+
+  /* ---------- device frames: 1pt = 1px, displayed scaled ---------- */
+  .rail{display:flex;gap:14px;align-items:flex-start;overflow-x:auto;padding:10px 2px 18px}
+  .board{flex:0 0 auto}
+  .scaler{width:249px;height:542px;overflow:hidden} /* 402*.62 x 874*.62 */
+  .scaler.mac{width:434px;height:390px}             /* 700*.62 x 630*.62 */
+  .scaler > *{transform:scale(.62);transform-origin:top left}
+  .cap{max-width:249px;margin:10px 2px 0;font-size:12px;color:var(--mut);line-height:1.5}
+  .cap.wide{max-width:434px}
+  .cap b{color:var(--ink);font-weight:600}
+  .cap .id{display:block;font:11px ui-monospace,Menlo,monospace;color:var(--acc);margin-bottom:3px}
+
+  /* ---------- product tokens ---------- */
+  .mocks{
+    --m-surface:#121319; --m-card:#1c1e27; --m-line:rgba(148,156,178,.24);
+    --m-ink:#e4e5ee; --m-mut:#9da0ad;
+    --m-pri:#b6c4ff; --m-onpri:#1d2f63; --m-pric:#3f57a6; --m-onpric:#dce1ff;
+    --m-input:rgba(148,156,178,.14);
+    --m-ok:#4cc97b; --m-warn:#e0a93e; --m-err:#ffb4ab; --m-dir:#98a1ad;
+    --m-dim:rgba(0,0,0,.55);
+  }
+  .mocks.light{
+    --m-surface:#fbfaff; --m-card:#f3f2f9; --m-line:rgba(96,102,128,.28);
+    --m-ink:#1b1c22; --m-mut:#4a4c56;
+    --m-pri:#4463c4; --m-onpri:#ffffff; --m-pric:#dce2ff; --m-onpric:#16336e;
+    --m-input:rgba(96,102,128,.12);
+    --m-ok:#1e9e50; --m-warn:#b57e00; --m-err:#ba1a1a; --m-dir:#5b6470;
+    --m-dim:rgba(20,22,30,.4);
+  }
+
+  /* device: iPhone 17 Pro logical size */
+  .ph{width:402px;height:874px;position:relative;overflow:hidden;
+    background:var(--m-surface);color:var(--m-ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+    border:1px solid var(--m-line);border-radius:24px}
+  /* macOS window */
+  .mac{width:700px;height:630px;position:relative;overflow:hidden;
+    background:var(--m-surface);color:var(--m-ink);border:1px solid var(--m-line);border-radius:12px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
+  .macbar{display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-bottom:1px solid var(--m-line)}
+  .macdot{width:12px;height:12px;border-radius:50%}
+  .maccol{width:560px;margin:0 auto}   /* kMaxContentWidth */
+
+  /* status bar 54, app bar 56 */
+  .sb{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+    font-size:15px;font-weight:600}
+  .sb .island{width:120px;height:34px;border-radius:18px;background:#000}
+  .sb .side{width:70px}
+  .sb .side.r{text-align:right;font-size:13px}
+  .ab{height:56px;display:flex;align-items:center;padding:0 4px}
+  .ab .ic{width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+  .ab .ttl{font-size:18px;font-weight:600;flex:1;padding-left:12px}
+  .ab .ttl.c{text-align:center;padding:0}
+  .ab .ttl.back{padding-left:4px}
+
+  .icon{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  .icon.s{width:18px;height:18px}
+  .icon.xs{width:16px;height:16px}
+  .icon.big{width:56px;height:56px;stroke-width:1.6}
+  .muted{color:var(--m-mut)}
+
+  /* card: radius 16, margin 16/4, hairline */
+  .card{background:var(--m-card);border:1px solid var(--m-line);border-radius:16px;
+    margin:4px 16px;overflow:hidden}
+  /* ListTile: padding h16, minHeight 56 (1 line) / 72 (2 lines) */
+  .row{display:flex;align-items:center;gap:16px;padding:8px 16px;min-height:72px}
+  .row.one{min-height:56px}
+  .row.dense{min-height:64px}
+  .row .tx{flex:1;min-width:0}
+  .row .t{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .s{font-size:12.5px;color:var(--m-mut);margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .s.multi{white-space:normal}
+  .flag{font-size:26px;line-height:1;width:26px;text-align:center}
+  .sep{height:1px;background:var(--m-line);margin:0 16px}
+  /* SectionHeader: 16/20/16/8, labelMedium 12 caps ls .8 */
+  .sh{font-size:12px;font-weight:500;letter-spacing:.8px;color:var(--m-mut);padding:20px 16px 8px}
+
+  /* buttons: filled h48 r12 15/600 · outlined h44 · text */
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:12px;
+    margin:6px 16px;font-size:15px;font-weight:600}
+  .btn.out{border:1px solid var(--m-line);color:var(--m-ink)}
+  .btn.fill{background:var(--m-pri);color:var(--m-onpri)}
+  .btn.tonal{background:var(--m-pric);color:var(--m-onpric)}
+  .btn.err{border:1px solid var(--m-line);color:var(--m-err)}
+  .btn.dis{opacity:.38}
+
+  /* input: filled, r12, label 12 floating, value 15 */
+  .inp{background:var(--m-input);border-radius:12px;margin:4px 0;padding:8px 16px;min-height:56px;
+    display:flex;flex-direction:column;justify-content:center}
+  .inp .lb{font-size:12px;color:var(--m-mut);margin-bottom:2px}
+  .inp .vl{font-size:15px;color:var(--m-ink)}
+  .inp .vl.plc{color:var(--m-mut)}   /* placeholder — NOT ".ph": that's the phone frame */
+  .inp .vl.multi{white-space:normal;word-break:break-all;line-height:1.35}
+  .inp.focus{box-shadow:inset 0 0 0 1.6px var(--m-pri)}
+  .inp.focus .lb{color:var(--m-pri)}
+  .inp.err{box-shadow:inset 0 0 0 1.6px var(--m-err)}
+  /* select = input + trailing chevron, laid out as a ROW (overrides .inp column) */
+  .inp.sel{flex-direction:row;align-items:center;gap:8px}
+  .inp.sel .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+
+  /* segmented: full width, pill r19, no check */
+  .segm{display:flex;width:100%;border:1px solid var(--m-line);border-radius:20px;overflow:hidden;height:40px}
+  .segm div{flex:1;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;
+    color:var(--m-ink)}
+  .segm .on{background:var(--m-pric);color:var(--m-onpric)}
+  .segm.dis{opacity:.38}
+
+  .sw{width:52px;height:32px;border-radius:16px;background:var(--m-pri);position:relative;flex:0 0 auto}
+  .sw i{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--m-onpri)}
+  .sw.off{background:var(--m-input);box-shadow:inset 0 0 0 2px var(--m-line)}
+  .sw.off i{left:4px;right:auto;width:16px;height:16px;top:8px;background:var(--m-mut)}
+  .radio{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--m-mut);flex:0 0 auto}
+  .radio.on{box-shadow:inset 0 0 0 2px var(--m-pri);position:relative}
+  .radio.on::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--m-pri)}
+
+  /* connect ring 180 */
+  .ringwrap{display:flex;flex-direction:column;align-items:center;padding:24px 0 40px}
+  /* home: the ring owns the free space, the pickers sit at the bottom edge —
+     thumb reach on the phone, and the ring stays put when a banner appears */
+  .hbody{display:flex;flex-direction:column}
+  .hfill{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .hfill .ringwrap{padding:0}
+  .hbot{padding-bottom:16px}
+  .stat{font-size:16px;font-weight:600;margin-bottom:28px}
+  .ring{width:180px;height:180px;border-radius:50%;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:8px;border:3px solid var(--rc);
+    background:color-mix(in srgb, var(--rc) 12%, transparent);color:var(--rc)}
+  .ring span{font-size:15px;font-weight:600}
+
+  /* rule row: tag 46 · body · trash 40 · handle */
+  .rule{display:flex;align-items:center;padding:10px 8px 10px 12px;min-height:64px}
+  .tag{width:46px;font-size:11px;font-weight:700;letter-spacing:.5px;flex:0 0 auto}
+  .rule .tx{flex:1;min-width:0;padding-left:8px}
+  .rule .t{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rule .s{font-size:12px;color:var(--m-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .iconbtn{width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+
+  /* overlays */
+  .dim{position:absolute;inset:0;background:var(--m-dim);z-index:2}
+  /* AlertDialog: inset 40, r20, title pad 24/24/24/0, content 24/16/24/24 */
+  .dlg{position:absolute;left:40px;right:40px;top:50%;transform:translateY(-50%);z-index:3;
+    background:var(--m-card);border-radius:20px;overflow:hidden}
+  .dlg h4{margin:0;padding:24px 24px 0;font-size:20px;font-weight:500}
+  .dlg .body{padding:16px 24px 0}
+  .dlg .acts{display:flex;justify-content:flex-end;gap:8px;padding:16px 16px 16px}
+  .dlg .acts.split{justify-content:space-between;align-items:center}
+  .act{height:40px;padding:0 14px;display:flex;align-items:center;border-radius:12px;
+    font-size:15px;font-weight:600}
+  .act.fill{background:var(--m-pri);color:var(--m-onpri)}
+  .act.txt{color:var(--m-pri)}
+  .act.txt.ic{gap:6px}
+  /* BottomSheet: r20 top, drag handle 32x4 */
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:3;background:var(--m-card);
+    border-radius:20px 20px 0 0;padding-bottom:16px;max-height:699px}   /* 80% экрана */
+  .grab{width:32px;height:4px;border-radius:2px;background:var(--m-mut);opacity:.4;margin:12px auto 4px}
+  .sheet .stitle{font-size:16px;font-weight:500;padding:16px;text-align:center}
+  .sheet .sepl{height:1px;background:var(--m-line);margin:6px 16px}
+
+  /* FAB 56, r16 */
+  .fab{position:absolute;right:16px;bottom:16px;width:56px;height:56px;border-radius:16px;
+    background:var(--m-pric);color:var(--m-onpric);display:flex;align-items:center;justify-content:center}
+
+  .banner{background:color-mix(in srgb, var(--m-pric) 40%, transparent)}
+  .warn{background:color-mix(in srgb, var(--m-warn) 14%, transparent)}
+  .empty{padding:16px;color:var(--m-mut);font-size:14px;line-height:1.45}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0 0}
+  .chip{font-size:13px;font-weight:500;color:var(--m-ink);border:1px solid var(--m-line);
+    border-radius:8px;padding:6px 12px}
+  .chip.on{color:var(--m-onpric);background:var(--m-pric);border-color:transparent}
+  .hint{font-size:12.5px;color:var(--m-mut);padding:10px 0 0;line-height:1.4}
+  .errtext{font-size:13px;color:var(--m-err);padding:8px 0 0}
+  .prog{height:6px;border-radius:3px;background:var(--m-input);margin-top:8px;overflow:hidden}
+  .prog i{display:block;height:100%;width:38%;background:var(--m-pri);border-radius:3px}
+  .mono{font:12px/1.5 ui-monospace,"SF Mono",Menlo,monospace;color:var(--m-mut);
+    padding:12px;white-space:pre-wrap;word-break:break-all}
+  .center{display:flex;align-items:center;justify-content:center;height:400px;color:var(--m-mut);font-size:15px}
+  .pin{position:absolute;z-index:6;font-size:13px;font-weight:700;color:#fff;background:var(--new);
+    border-radius:8px;padding:4px 10px;white-space:nowrap}
+
+  /* ---------- pointer states (desktop) ----------
+     Hover highlight is a pill INSIDE the card (radius 12, inset 8/4), never a
+     full-bleed rectangle with square corners. Icon buttons get a 40pt circle. */
+  /* active row: three ways to mark "this is the one running" without spending
+     the trailing slot, which now holds the star and the gear */
+  .row.act-fill{position:relative}
+  .row.act-fill::before{content:"";position:absolute;left:8px;right:8px;top:4px;bottom:4px;
+    border-radius:12px;background:color-mix(in srgb, var(--m-pric) 55%, transparent)}
+  .row.act-fill > *{position:relative}
+
+  .row.hover{position:relative}
+  .row.hover::before{content:"";position:absolute;left:8px;right:8px;top:4px;bottom:4px;
+    border-radius:12px;background:color-mix(in srgb, var(--m-ink) 8%, transparent)}
+  .row.hover > *{position:relative}
+  .btn.hover{background-image:linear-gradient(color-mix(in srgb, var(--m-ink) 8%, transparent),
+    color-mix(in srgb, var(--m-ink) 8%, transparent))}
+  .ic.hover{border-radius:50%;background:color-mix(in srgb, var(--m-ink) 10%, transparent)}
+  .ring.hover{background:color-mix(in srgb, var(--rc) 20%, transparent)}
+  .tip{position:absolute;background:var(--m-ink);color:var(--m-surface);font-size:12px;font-weight:500;
+    padding:6px 10px;border-radius:8px;white-space:nowrap;z-index:5}
+
+  .fixlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;margin:14px 0 0}
+  .fix{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px}
+  .fix .n{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:7px;
+    background:var(--new);color:#fff;font-size:11px;font-weight:800;margin-right:8px;vertical-align:-3px}
+  .fix p{margin:6px 0 0;font-size:12.5px;color:var(--mut)}
+  .bad{color:var(--new);font-weight:600}
+  .good{color:var(--ok);font-weight:600}
+  footer{margin-top:56px;color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:16px;max-width:86ch}
+  @media (prefers-reduced-motion: no-preference){
+    .ph,.mac{transition:background .25s ease,color .25s ease}
+  }
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-exp" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+  <symbol id="i-org" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+  <symbol id="i-restart" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><polyline points="3 4 3 9 8 9"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-globe-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4" y1="20" x2="20" y2="4"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 3 14.9 8.9 21.4 9.8 16.7 14.4 17.8 20.9 12 17.8 6.2 20.9 7.3 14.4 2.6 9.8 9.1 8.9 12 3"/></symbol>
+  <symbol id="i-lang" viewBox="0 0 24 24"><path d="M4 5h10"/><path d="M9 3v2c0 5-2.5 8-5 9"/><path d="M6 11c0 3 3 5 7 6"/><path d="M13 21l4-10 4 10"/><path d="M14.5 17.5h5"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">vpn2 · client · UI-спека, версия 3</div>
+  <h1>Все экраны в реальных метриках</h1>
+  <p class="lede">Макеты нарисованы 1:1 в логических точках Flutter — рамка телефона это ровно 402×874&nbsp;pt
+  (iPhone 17 Pro), окно macOS 700×630 с контентом, ограниченным 560&nbsp;pt. Все отступы, высоты строк и
+  размеры шрифтов взяты из <code>core/theme.dart</code>, поэтому макет и приложение сверяются числами,
+  а не на глаз. Отображение уменьшено до 62%.</p>
+</header>
+
+<div class="bar">
+  <span class="lbl">Тема макетов</span>
+  <div class="seg" role="group" aria-label="Тема макетов">
+    <button id="btn-dark" class="on">Тёмная</button>
+    <button id="btn-light">Светлая</button>
+  </div>
+  <span class="lbl">— в приложении тема следует за системой.</span>
+</div>
+
+<div class="mocks" id="mocks">
+
+<!-- ============ METRICS ============ -->
+<h2>0 · Метрики</h2>
+<p class="flowdesc">Единственный источник правды по размерам. Всё, что рисуется в макете и в коде, берёт числа отсюда.</p>
+<div class="metrics">
+  <div class="mt">
+    <h4>Сетка и поверхности</h4>
+    <table>
+      <tr><td>Боковой отступ экрана (kGutter)</td><td>16</td></tr>
+      <tr><td>Отступ карточки</td><td>16 / 4</td></tr>
+      <tr><td>Радиус карточки</td><td>16</td></tr>
+      <tr><td>Радиус кнопок, полей</td><td>12</td></tr>
+      <tr><td>Радиус диалогов, шитов</td><td>20</td></tr>
+      <tr><td>Обводка (hairline)</td><td>1</td></tr>
+      <tr><td>Макс. ширина контента</td><td>560</td></tr>
+    </table>
+  </div>
+  <div class="mt">
+    <h4>Строки и заголовки</h4>
+    <table>
+      <tr><td>Строка списка: паддинг</td><td>16</td></tr>
+      <tr><td>Мин. высота: 1 строка</td><td>56</td></tr>
+      <tr><td>Мин. высота: 2 строки</td><td>72</td></tr>
+      <tr><td>Заголовок строки</td><td>15 / w500</td></tr>
+      <tr><td>Подпись строки</td><td>12.5</td></tr>
+      <tr><td>Заголовок секции</td><td>12 caps, ls .8</td></tr>
+      <tr><td>Паддинг заголовка секции</td><td>16 / 20 / 16 / 8</td></tr>
+      <tr><td>AppBar: высота, заголовок</td><td>56, 18 / w600</td></tr>
+    </table>
+  </div>
+  <div class="mt">
+    <h4>Контролы</h4>
+    <table>
+      <tr><td>Кнопка: высота, текст</td><td>48, 15 / w600</td></tr>
+      <tr><td>Все кнопки в столбце</td><td>одна высота</td></tr>
+      <tr><td>Поле ввода: высота</td><td>56</td></tr>
+      <tr><td>Поле: лейбл / значение</td><td>12 / 15</td></tr>
+      <tr><td>Сегмент: высота</td><td>40, во всю ширину</td></tr>
+      <tr><td>Switch</td><td>52 × 32</td></tr>
+      <tr><td>Иконка / иконка-кнопка</td><td>24 / 40</td></tr>
+      <tr><td>Иконка в аппбаре: центр от края</td><td>28 слева и справа</td></tr>
+      <tr><td>FAB</td><td>56, r16</td></tr>
+      <tr><td>Кольцо подключения</td><td>180, обводка 3</td></tr>
+    </table>
+  </div>
+</div>
+
+<h3>Спорные компоненты — как должно быть</h3>
+<div class="fixlist">
+  <div class="fix"><span class="n">1</span><b>Селект.</b>
+    <p><span class="bad">Было:</span> нативное меню поверх заголовка диалога.<br>
+    <span class="good">Стало:</span> поле 56&nbsp;pt того же вида, что текстовое, с шевроном; выбор — bottom sheet.</p></div>
+  <div class="fix"><span class="n">2</span><b>Сегмент режима.</b>
+    <p><span class="bad">Было:</span> сжат по контенту, с галочкой.<br>
+    <span class="good">Стало:</span> высота 40, во всю ширину карточки, без галочки.</p></div>
+  <div class="fix"><span class="n">3</span><b>Ручка перетаскивания.</b>
+    <p><span class="bad">Было:</span> дефолтная ручка вне карточки.<br>
+    <span class="good">Стало:</span> элемент строки: <code>тег 46 · текст · корзина 40 · ручка 40</code>.</p></div>
+</div>
+
+<div class="rail">
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sh">SELECT — 56 pt, ШЕВРОН 24</div>
+      <div style="padding:0 16px">
+        <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">geoip</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="inp sel"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+      </div>
+      <div class="sh">SEGMENTED — 40 pt, FULL WIDTH</div>
+      <div style="padding:0 16px"><div class="segm"><div class="on">Full tunnel</div><div>Split</div></div></div>
+      <div class="sh">RULE ROW — 64 pt</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-ok)">PROXY</span>
+        <div class="tx"><div class="t">www.myip.com</div><div class="s">domain-suffix</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="sh">SWITCH 52×32 · RADIO 20</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-wifi"/></svg>
+          <div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div>
+          <span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="radio on"></span><div class="tx"><div class="t">Активная</div></div></div>
+        <div class="row one"><span class="radio"></span><div class="tx"><div class="t">Неактивная</div></div></div>
+      </div>
+      <div class="sh">CHIPS 32 pt</div>
+      <div style="padding:0 16px"><div class="chips"><span class="chip on">netflix</span><span class="chip">youtube</span><span class="chip">category-ru</span></div></div>
+    </div></div>
+    <p class="cap"><span class="id">core/ui.dart · core/theme.dart</span><b>UI-кит.</b> Всё, что открывает выбор, использует <code>pickOption</code>; нативных dropdown-меню в приложении нет.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sh">HOVER — СТРОКА СПИСКА</div>
+      <div class="card">
+        <div class="row hover"><svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">Rule sets</div><div class="s">3 sets</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-globe"/></svg>
+          <div class="tx"><div class="t">GeoIP &amp; GeoSite</div><div class="s">downloaded · 12.3 MB</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      </div>
+      <div class="sh">HOVER — ИКОНКА В APPBAR (КРУГ 40)</div>
+      <div class="ab" style="position:relative">
+        <span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span>
+        <span class="ic hover"><svg class="icon muted"><use href="#i-gear"/></svg></span>
+      </div>
+      <div class="sh">HOVER — КНОПКА И КОЛЬЦО</div>
+      <div class="btn tonal hover" style="margin-top:0">Update now</div>
+      <div style="display:flex;justify-content:center;padding:12px 0 0">
+        <div class="ring hover demo" style="--rc:var(--m-pri);width:120px;height:120px">
+          <svg class="icon" style="width:36px;height:36px"><use href="#i-power"/></svg><span>Connect</span>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">состояния указателя</span><b>Hover.</b> Подсветка строки — «пилюля» r12 с вставкой 8/4 внутри карточки (не прямоугольник во всю ширину). Иконка в аппбаре — круг 40&nbsp;pt. Кнопка и кольцо просто темнеют на 8–20%.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Match</div>
+        <div class="row act-fill" style="min-height:72px"><div class="tx"><div class="t">domain-suffix</div><div class="s">domain and subdomains</div></div></div>
+        <div class="row"><div class="tx"><div class="t">domain-keyword</div><div class="s">domain contains</div></div></div>
+        <div class="row"><div class="tx"><div class="t">domain-exact</div><div class="s">exact domain</div></div></div>
+        <div class="row"><div class="tx"><div class="t">ip-cidr</div><div class="s">IP range</div></div></div>
+        <div class="row"><div class="tx"><div class="t">process-name</div><div class="s">app (desktop only)</div></div></div>
+        <div class="row"><div class="tx"><div class="t">geoip</div><div class="s">country by IP</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">pickOption</span><b>Шит выбора.</b> Заголовок 16&nbsp;pt по центру, строки 72&nbsp;pt, галочка на текущем; недоступные — прозрачность .38 и причина в подписи.</p>
+  </div>
+</div>
+
+<!-- ============ 1 ============ -->
+<h2>1 · Добавление конфигурации</h2>
+<p class="flowdesc">Один экран, два пути: вставить ссылку/открыть файл или войти на свой сервер.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
+      <div style="padding:0 24px">
+        <div class="inp"><div class="lb">Link or subscription</div><div class="vl plc">vless://…  or  https://…/sub</div></div>
+        <div class="btn fill dis" style="margin:14px 0 8px">Continue</div>
+        <div class="btn out" style="margin:0 0 18px"><svg class="icon s"><use href="#i-file"/></svg>Open a config file…</div>
+        <div style="display:flex;align-items:center;gap:10px;color:var(--m-mut);font-size:12.5px">
+          <span style="flex:1;height:1px;background:var(--m-line)"></span>or<span style="flex:1;height:1px;background:var(--m-line)"></span>
+        </div>
+        <div class="btn tonal" style="margin:18px 0 0"><svg class="icon s"><use href="#i-org"/></svg>Sign in to your server</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen</span><b>Пусто.</b> Ширина контента ограничена 420&nbsp;pt, боковой отступ 24. «Continue» задизейблена (.38).</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
+      <div style="padding:0 24px">
+        <div class="inp focus"><div class="lb">Link or subscription</div><div class="vl">https://sub.nexus…/s/a1b2c3</div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 12px;border-radius:12px;
+             background:color-mix(in srgb, var(--m-pric) 45%, transparent)">
+          <svg class="icon s" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+          <span style="font-size:12.5px;font-weight:600;color:var(--m-onpric)">Subscription URL · sub.nexus.13371488.xyz</span>
+        </div>
+        <div class="btn fill" style="margin:14px 0 8px">Continue</div>
+        <div class="btn out" style="margin:0 0 18px"><svg class="icon s"><use href="#i-file"/></svg>Open a config file…</div>
+        <div style="display:flex;align-items:center;gap:10px;color:var(--m-mut);font-size:12.5px">
+          <span style="flex:1;height:1px;background:var(--m-line)"></span>or<span style="flex:1;height:1px;background:var(--m-line)"></span>
+        </div>
+        <div class="btn tonal" style="margin:18px 0 0"><svg class="icon s"><use href="#i-org"/></svg>Sign in to your server</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen · detectInput</span><b>Распознано.</b> Чип 40&nbsp;pt, r12, на primary-container.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Sign in</span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri);width:48px;height:48px"><use href="#i-org"/></svg></div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:10px 24px 20px">Your organization’s or personal server</div>
+      <div style="padding:0 24px">
+        <div class="inp"><div class="lb">Server address</div><div class="vl">https://vpn.acme.dev</div></div>
+        <div class="inp" style="margin-top:12px"><div class="lb">Username</div><div class="vl">maria</div></div>
+        <div class="inp" style="margin-top:12px"><div class="lb">Password</div><div class="vl">••••••••</div></div>
+        <div class="btn fill" style="margin:20px 0 8px">Sign in</div>
+        <div class="btn out" style="margin:0"><svg class="icon s"><use href="#i-org"/></svg>Sign in with SSO</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SignInScreen</span><b>Свой сервер.</b> Поля 56&nbsp;pt с шагом 12.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Sign in</span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Sign in with</div>
+        <div class="row one"><svg class="icon muted"><use href="#i-org"/></svg><div class="tx"><div class="t">Google Workspace</div></div></div>
+        <div class="row one"><svg class="icon muted"><use href="#i-org"/></svg><div class="tx"><div class="t">Microsoft Entra ID</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SignInScreen · _pickProvider</span><b>Выбор SSO.</b> Строки без подписи — 56&nbsp;pt.</p>
+  </div>
+</div>
+
+<!-- ============ 2 ============ -->
+<h2>2 · Главный экран</h2>
+<p class="flowdesc">Кольцо 180&nbsp;pt со статусом 16&nbsp;pt над ним (отступ 28) занимает всё свободное место и центрируется в нём. Карточки конфигурации и сервера — 72&nbsp;pt, прижаты к низу экрана с отступом 16: до них дотягивается большой палец, и кольцо не прыгает, когда появляется баннер. Конфигурация показывается всегда, даже единственная: шестерёнка 40&nbsp;pt ведёт в её настройки, шеврон вниз (только когда конфигураций больше одной) — выбор активной.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat muted">Not connected</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-link"/></svg>
+            <div class="tx"><div class="t">backup.single</div><div class="s">Single server</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · link</span><b>Один сервер.</b> Конфигурация видна всегда, даже единственная: без шеврона выбора, но с шестерёнкой — быстрый переход в её настройки. Строка сервера без шеврона.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · connected</span><b>Подключено.</b> Таймер в статусе, кольцо зелёное. Несколько конфигураций: шестерёнка ведёт в настройки активной, шеврон вниз — выбор активной.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-warn)">Connecting…</span>
+          <div class="ring" style="--rc:var(--m-warn)">
+            <svg viewBox="0 0 40 40" style="width:40px;height:40px"><circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="80 27"/></svg>
+          </div>
+        </div></div>
+        <div class="hbot">
+          <div class="card" style="opacity:.5"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon s muted"><use href="#i-lock"/></svg>
+          </div></div>
+          <div class="card" style="opacity:.5"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <svg class="icon s muted"><use href="#i-lock"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · connecting</span><b>Подключается.</b> Внутри кольца спиннер 40&nbsp;pt; выбор заблокирован, замок 18&nbsp;pt. Шестерёнка остаётся активной — настройки читаются и на подключении.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-err)">Error</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-org"/></svg>
+            <div class="tx"><div class="t">Acme Corp VPN</div><div class="s">Self-hosted · 3 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+          <div style="padding:16px;text-align:center;font-size:14px;color:var(--m-err)">Account is expired.</div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · error</span><b>Ошибка.</b> Текст 14&nbsp;pt по центру под карточками, отступ 16.</p>
+  </div>
+</div>
+
+<h3>Пикеры главного и вид на macOS</h3>
+<div class="rail">
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Configuration</div>
+        <div style="padding:0 16px">
+          <div class="inp sel"><svg class="icon muted"><use href="#i-search"/></svg>
+            <div class="tx"><div class="vl plc">Search</div></div></div>
+        </div>
+        <div class="sh">FAVORITES</div>
+        <div class="row act-fill"><svg class="icon" style="color:var(--m-pri)"><use href="#i-folder"/></svg>
+          <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+          <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span></div>
+        <div class="sh">ALL</div>
+        <div class="row"><svg class="icon muted"><use href="#i-org"/></svg>
+          <div class="tx"><div class="t">Acme Corp VPN</div><div class="s">Self-hosted · 3 servers</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span></div>
+        <div class="row"><svg class="icon muted"><use href="#i-link"/></svg>
+          <div class="tx"><div class="t">backup.single</div><div class="s">Single server</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · _pickProfile</span><b>Выбор конфигурации.</b> Справа две кнопки 40&nbsp;pt: звезда и шестерёнка в настройки этой конфигурации. Активная строка помечена заливкой primary-container (пилюля r12 — та же геометрия, что у ховера) и окрашенной иконкой; галочки больше нет, поэтому трейлинг целиком отдан действиям. Для скринридеров строка объявляется как «active» — цвет не единственный носитель смысла. Тап по строке делает конфигурацию активной. Поиск — от шести элементов.</p>
+  </div>
+
+    <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Server</div>
+        <div style="padding:0 16px">
+          <div class="inp sel focus"><svg class="icon" style="color:var(--m-pri)"><use href="#i-search"/></svg>
+            <div class="tx"><div class="vl">nexus</div></div></div>
+        </div>
+        <div class="sh">FAVORITES</div>
+        <div class="row act-fill"><span class="flag">🇩🇪</span>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+          <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
+        <div class="row"><span class="flag">🇯🇵</span>
+          <div class="tx"><div class="t">tokyo.nexus</div><div class="s">vless · 45.32.11.8</div></div>
+          <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
+        <div class="sh">ALL · 2 OF 8 MATCH</div>
+        <div class="row"><span class="flag">🇳🇱</span>
+          <div class="tx"><div class="t">ams.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
+        <div class="row"><span class="flag">🇺🇸</span>
+          <div class="tx"><div class="t">us-east.nexus</div><div class="s">vless · 38.99.23.140</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation</span><b>Выбор сервера.</b> Флаг 26&nbsp;pt. Тот же маркер активного, что в пикере конфигураций — заливка строки. Шестерёнки здесь нет: у сервера нет своего экрана настроек. Поиск фильтрует обе группы по имени и адресу; счётчик в заголовке «ALL» показывает, сколько из всех серверов подошло. Подошедшее избранное остаётся наверху.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Server</div>
+        <div style="padding:0 16px">
+          <div class="inp sel focus"><svg class="icon" style="color:var(--m-pri)"><use href="#i-search"/></svg>
+            <div class="tx"><div class="vl">reykjavik</div></div></div>
+        </div>
+        <div class="sh">ALL · NOTHING MATCHES</div>
+        <div class="empty">No server matches “reykjavik”. Clear the search to see all 8.</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation · поиск пуст</span><b>Поиск без совпадений.</b> Поиск фильтрует обе группы, поэтому не подошедшее избранное тоже уходит вместе с заголовком «FAVORITES» — иначе список врал бы, что что-то нашлось. Текст называет запрос и общее число серверов.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler mac"><div class="mac">
+      <div class="macbar">
+        <span class="macdot" style="background:#ff5f57"></span><span class="macdot" style="background:#febc2e"></span><span class="macdot" style="background:#28c840"></span>
+        <span style="flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--m-mut);margin-right:60px">vpn_client</span>
+      </div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:536px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:04:11</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot maccol">
+          <div class="card"><div class="row hover">
+            <svg class="icon muted"><use href="#i-org"/></svg>
+            <div class="tx"><div class="t">Acme Corp VPN</div><div class="s">Self-hosted · 3 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇳🇱</span>
+            <div class="tx"><div class="t">Amsterdam</div><div class="s">vless · nl1.acme.dev</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap wide"><span class="id">HomeScreen · macOS</span><b>macOS.</b> Контент центрирован и ограничен 560&nbsp;pt; метрики строк те же, что на телефоне.</p>
+  </div>
+</div>
+
+<!-- ============ 3 ============ -->
+<h2>3 · Настройки</h2>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">CONFIGURATIONS</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">Configurations</div><div class="s">3 configurations</div></div>
+        <svg class="icon muted"><use href="#i-exp"/></svg>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-wifi"/></svg>
+          <div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div>
+          <span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">Rule sets</div><div class="s">3 sets</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      </div>
+      <div class="sh">GENERAL</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-theme"/></svg>
+          <div class="tx"><div class="t">Appearance</div><div class="s">System</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-lang"/></svg>
+          <div class="tx"><div class="t">Language</div><div class="s">English</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen</span><b>Селфхостед.</b> Порядок секций: конфигурации → подключение → роутинг → общие → диагностика: сначала всё про туннель, потом настройки самого приложения. Конфигурации — одна строка со счётчиком и шевроном вниз: список открывается шитом, чтобы полсотни конфигураций не превращали настройки в бесконечный скролл. Активная выбирается на главном экране, здесь только навигация.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">GENERAL</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-theme"/></svg>
+          <div class="tx"><div class="t">Appearance</div><div class="s">System</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-lang"/></svg>
+          <div class="tx"><div class="t">Language</div><div class="s">English</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
+      </div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Appearance</div>
+        <div class="row act-fill"><div class="tx"><div class="t">System</div><div class="s">Follow the device setting</div></div></div>
+        <div class="row one"><div class="tx"><div class="t">Light</div></div></div>
+        <div class="row one"><div class="tx"><div class="t">Dark</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · _pickTheme</span><b>Тема.</b> Три варианта, по умолчанию «System»; выбранный помечен той же заливкой, что и активная конфигурация — один приём на все шиты выбора. Язык — такой же шит, пока с одним пунктом English.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">CONFIGURATIONS</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">backup.single</div><div class="s">Single server</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-globe"/></svg>
+        <div class="tx"><div class="t">GeoIP &amp; GeoSite</div><div class="s">downloaded · 62.4 MB</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">DIAGNOSTICS</div>
+      <div class="card"><div class="row one">
+        <svg class="icon muted"><use href="#i-doc"/></svg><div class="tx"><div class="t">Logs</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · одна конфигурация</span><b>Одна конфигурация.</b> Шит из одной строки — лишний шаг, поэтому строка называется самой конфигурацией и ведёт прямо в её настройки: шеврон вправо вместо шеврона вниз. Геобазы живут в роутинге, ядро и его версия нигде не упоминаются.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">CONFIGURATIONS</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">Configurations</div><div class="s">3 configurations</div></div>
+        <svg class="icon muted"><use href="#i-exp"/></svg>
+      </div></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Configurations</div>
+        <div class="sh">FAVORITES</div>
+        <div class="row"><svg class="icon muted"><use href="#i-folder"/></svg>
+          <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="sh">ALL</div>
+        <div class="row act-fill"><svg class="icon" style="color:var(--m-pri)"><use href="#i-org"/></svg>
+          <div class="tx"><div class="t">Acme Corp VPN</div><div class="s">Self-hosted · 3 servers</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="row"><svg class="icon muted"><use href="#i-link"/></svg>
+          <div class="tx"><div class="t">backup.single</div><div class="s">Single server</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · configurations</span><b>Шит конфигураций.</b> Тот же шит выбора, что на главном, в навигационном режиме: шеврон вправо в каждой строке, тап ведёт в настройки конфигурации, а не делает её активной — активная выбирается на главном. Заливка всё равно показывает, какая работает сейчас, а порядок и группы те же (избранные сверху); звёзд здесь нет — избранное редактируется там, где им пользуются. Поиск, как во всех шитах, появляется от шести элементов.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">nexus.13371488</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Source</div><div class="s">sub.nexus.13371488.xyz/s/a1b2c3</div></div>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">5 min ago · auto every 5 min</div></div>
+        <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-layers"/></svg>
+        <div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div>
+        <svg class="icon muted"><use href="#i-exp"/></svg>
+      </div></div>
+      <div class="btn out" style="margin-top:20px"><svg class="icon s"><use href="#i-check"/></svg>Set active</div>
+      <div class="btn err"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen</span><b>Конфигурация.</b> Экран любой конфигурации, не только активной: сюда ведут и шестерёнка с главного, и строка из шита в настройках. «Set active» не закрывает экран — галочка переезжает в верхнюю карточку, а сама кнопка исчезает. Кнопки 48&nbsp;pt внизу с отступом 16.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Acme Corp VPN</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-org"/></svg>
+        <div class="tx"><div class="t">Acme Corp VPN</div><div class="s">Self-hosted · 3 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Account</div><div class="s">Status: active · expires 2026-09-01</div></div>
+      </div></div>
+      <div class="card"><div style="padding:16px">
+        <div style="font-size:14px">Traffic: 38.2 GB of 100 GB</div>
+        <div class="prog"><i></i></div>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card banner"><div class="row">
+        <svg class="icon muted"><use href="#i-org"/></svg>
+        <div class="tx"><div class="t">Managed by your organization</div><div class="s">Full tunnel · 3 rules, set on the server</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="btn err" style="margin-top:20px"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · managed</span><b>Управляемая политика.</b> Вместо выбора набора — баннер на primary-container.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">nexus.13371488</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>Remove nexus.13371488?</h4>
+        <div class="body"><div style="font-size:14px;color:var(--m-mut)">This configuration will be removed from this device.</div></div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Remove</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · confirm</span><b>Удаление.</b> Диалог r20, инсет 40, заголовок 20&nbsp;pt, кнопки 40&nbsp;pt.</p>
+  </div>
+</div>
+
+<!-- ============ 4 ============ -->
+<h2>4 · Наборы правил</h2>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Rule sets</span></div>
+      <div style="height:8px"></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-layers"/></svg>
+        <div class="tx"><div class="t">Default</div><div class="s">Full tunnel · no rules · used by 1 config</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-layers"/></svg>
+        <div class="tx"><div class="t">Work</div><div class="s">Full tunnel · 4 rules · used by 2 configs</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-layers"/></svg>
+        <div class="tx"><div class="t">Streaming off VPN</div><div class="s">Full tunnel · 2 rules</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">RuleSetsScreen</span><b>Список наборов.</b> FAB 56&nbsp;pt, отступ 16 от краёв.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Default</span></div>
+      <div class="card" style="margin-top:8px"><div style="padding:16px">
+        <div class="segm"><div class="on">Full tunnel</div><div>Split</div></div>
+        <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">All traffic goes through the VPN; rules define exceptions.</div>
+      </div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="empty" style="padding:16px">No rules: all traffic goes through the VPN.</div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · empty</span><b>Пустой набор.</b> Сегмент внутри карточки с паддингом 16, пояснение 12.5&nbsp;pt.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div class="card" style="margin-top:8px"><div style="padding:16px">
+        <div class="segm"><div class="on">Full tunnel</div><div>Split</div></div>
+        <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">All traffic goes through the VPN; rules define exceptions.</div>
+      </div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-ok)">PROXY</span>
+        <div class="tx"><div class="t">corp.example.com</div><div class="s">domain-suffix</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">🇷🇺&nbsp; RU</div><div class="s">geoip · no-resolve</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">netflix</div><div class="s">geosite</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-err)">BLOCK</span>
+        <div class="tx"><div class="t">tracker.example.net</div><div class="s">domain-suffix</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · editSet</span><b>Редактор.</b> Строка правила 64&nbsp;pt: тег 46 · текст · две кнопки 40.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div class="card warn" style="margin-top:12px">
+        <div class="row"><svg class="icon" style="color:var(--m-warn)"><use href="#i-globe-off"/></svg>
+          <div class="tx"><div class="t">Geo databases not downloaded</div><div class="s multi">geoip / geosite rules are inactive until then (~25 MB)</div></div></div>
+        <div style="display:flex;justify-content:flex-end;padding:0 16px 12px">
+          <span class="act fill" style="background:var(--m-pric);color:var(--m-onpric)">Download</span></div>
+      </div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-ok)">PROXY</span>
+        <div class="tx"><div class="t">corp.example.com</div><div class="s">domain-suffix</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card" style="opacity:.45"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">🇷🇺&nbsp; RU</div><div class="s">geoip · inactive — no database</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · no geo</span><b>Без баз.</b> Янтарный баннер с кнопкой; geo-правила .45 и «inactive».</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Split tunneling</span></div>
+      <div class="card banner" style="margin-top:12px"><div class="row">
+        <svg class="icon muted"><use href="#i-org"/></svg>
+        <div class="tx"><div class="t">Managed by your organization</div><div class="s multi">These rules are set on the server and cannot be changed here.</div></div>
+      </div></div>
+      <div class="card"><div style="padding:16px">
+        <div class="segm dis"><div class="on">Full tunnel</div><div>Split</div></div>
+      </div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-ok)">PROXY</span>
+        <div class="tx"><div class="t">corp.example.com</div><div class="s">domain-suffix</div></div>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">192.168.0.0/16</div><div class="s">ip-cidr</div></div>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · managed</span><b>Только чтение.</b> Без кнопок в строках, без FAB, сегмент .38.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Rule sets</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>New rule set</h4>
+        <div class="body"><div class="inp focus"><div class="lb">Name</div><div class="vl">Work</div></div></div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Create</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">RuleSetsScreen · _create</span><b>Новый набор.</b> После создания открывается редактор.</p>
+  </div>
+</div>
+
+<!-- ============ 5 ============ -->
+<h2>5 · Диалог правила</h2>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>Add rule</h4>
+        <div class="body">
+          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">domain-suffix</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="inp focus" style="margin-top:8px"><div class="lb">Value</div><div class="vl">corp.example.com</div></div>
+          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">proxy</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="hint">→ Traffic matching corp.example.com goes through the VPN.</div>
+        </div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_RuleDialog · domain</span><b>Домен.</b> Поля 56&nbsp;pt с шагом 8; резюме 12.5&nbsp;pt.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>Add rule</h4>
+        <div class="body">
+          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">geoip</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Country</div><div class="vl">🇷🇺&nbsp; Russia (RU)</div></div><svg class="icon muted"><use href="#i-chev"/></svg></div>
+          <div style="display:flex;align-items:center;gap:16px;padding:12px 0 4px">
+            <div style="flex:1"><div style="font-size:15px">no-resolve</div>
+              <div style="font-size:12.5px;color:var(--m-mut)">Match only plain-IP connections, don’t resolve domains</div></div>
+            <span class="sw"><i></i></span>
+          </div>
+          <div class="inp sel"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="hint">→ Traffic to IPs in 🇷🇺 Russia (RU) connects directly, bypassing the VPN.</div>
+        </div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_RuleDialog · geoip</span><b>GeoIP.</b> Страна из пикера, свитч 52×32, резюме внизу.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="sheet" style="height:524px">
+        <div class="grab"></div>
+        <div style="padding:8px 16px 4px"><div class="inp focus"><div class="lb">Country</div><div class="vl">russ</div></div></div>
+        <div class="row"><span class="flag">🇷🇺</span><div class="tx"><div class="t">Russia</div><div class="s">RU</div></div></div>
+        <div class="row"><span class="flag">🇷🇸</span><div class="tx"><div class="t">Serbia</div><div class="s">RS</div></div></div>
+        <div class="row"><span class="flag">🇷🇴</span><div class="tx"><div class="t">Romania</div><div class="s">RO</div></div></div>
+        <div class="row"><span class="flag">🇷🇼</span><div class="tx"><div class="t">Rwanda</div><div class="s">RW</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_CountrySheet</span><b>Пикер страны.</b> Высота 60% экрана, поиск сверху, строки 72&nbsp;pt.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>Add rule</h4>
+        <div class="body">
+          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">geosite</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="inp focus" style="margin-top:8px"><div class="lb">Value</div><div class="vl">netflix</div></div>
+          <div class="chips">
+            <span class="chip on">netflix</span><span class="chip">youtube</span><span class="chip">telegram</span>
+            <span class="chip">google</span><span class="chip">category-ads-all</span>
+          </div>
+          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="hint">→ “netflix” domains (GeoSite list) connect directly, bypassing the VPN.</div>
+        </div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_RuleDialog · geosite</span><b>GeoSite.</b> Чипы 32&nbsp;pt, r8, с шагом 8.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>Add rule</h4>
+        <div class="body">
+          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">ip-cidr</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="inp err" style="margin-top:8px"><div class="lb" style="color:var(--m-err)">Value</div><div class="vl">10.0.0.1</div></div>
+          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+          <div class="errtext">Invalid value for ip-cidr.</div>
+        </div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_RuleDialog · invalid</span><b>Ошибка.</b> Рамка поля error, текст 13&nbsp;pt; диалог не закрывается.</p>
+  </div>
+</div>
+
+<!-- ============ 6 ============ -->
+<h2>6 · GeoIP &amp; GeoSite</h2>
+<p class="flowdesc">Строка базы: имя и размер на одной линии, источник — одной усечённой строкой. Полный URL живёт только в диалоге; раньше он занимал три строки и подминал остальной экран.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">GeoIP &amp; GeoSite</span></div>
+      <div class="sh">DATABASES</div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoIP</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">not downloaded</span>
+          </div>
+          <div class="s">github.com/…/geoip.metadb</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoSite</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">not downloaded</span>
+          </div>
+          <div class="s">github.com/…/geosite.dat</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="sh">UPDATES</div>
+      <div class="card">
+        <div class="row"><div class="tx"><div class="t">Last updated</div><div class="s">never</div></div></div>
+        <div class="sep"></div>
+        <div class="row"><div class="tx"><div class="t">Auto-update</div><div class="s">Weekly, when already downloaded</div></div><span class="sw"><i></i></span></div>
+      </div>
+      <div class="btn tonal" style="margin-top:16px"><svg class="icon s"><use href="#i-refresh"/></svg>Download (~25 MB)</div>
+    </div></div>
+    <p class="cap"><span class="id">GeoScreen · empty</span><b>Не скачано.</b> Строка 72&nbsp;pt: имя + статус справа, источник ниже одной строкой.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">GeoIP &amp; GeoSite</span></div>
+      <div class="sh">DATABASES</div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoIP</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">8.3 MB</span>
+          </div>
+          <div class="s">github.com/…/geoip.metadb</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoSite</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">4.0 MB</span>
+          </div>
+          <div class="s">github.com/…/geosite.dat</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="sh">UPDATES</div>
+      <div class="card">
+        <div class="row"><div class="tx"><div class="t">Last updated</div><div class="s">just now</div></div></div>
+        <div class="sep"></div>
+        <div class="row"><div class="tx"><div class="t">Auto-update</div><div class="s">Weekly, when already downloaded</div></div><span class="sw"><i></i></span></div>
+      </div>
+      <div class="btn tonal" style="margin-top:16px"><svg class="icon s"><use href="#i-refresh"/></svg>Update now</div>
+    </div></div>
+    <p class="cap"><span class="id">GeoScreen · ready</span><b>Скачано.</b> Размер вместо статуса, кнопка «Update now».</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">GeoIP &amp; GeoSite</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>GeoIP source</h4>
+        <div class="body">
+          <div class="inp focus" style="min-height:auto;padding:12px 16px">
+            <div class="lb">Download URL</div>
+            <div class="vl multi" style="font-size:13px">https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb</div>
+          </div>
+          <span class="act txt ic" style="padding:0;height:40px"><svg class="icon s"><use href="#i-restart"/></svg>Reset to default</span>
+        </div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">GeoScreen · _editUrl</span><b>Смена источника.</b> URL переносится внутри поля (13&nbsp;pt, до 4 строк). «Reset to default» — кнопка в контенте слева, а не третья кнопка в строке действий: три кнопки не влезают в ряд на телефоне.</p>
+  </div>
+</div>
+
+<!-- ============ 7 ============ -->
+<h2>7 · Диагностика</h2>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Logs</span></div>
+      <div class="sh">TUNNEL</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Tunnel</div><div class="s">Network Extension events</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Core (mihomo)</div><div class="s">Engine log: dials, DNS, routing</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">APP</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Application</div><div class="s">Client-side events</div></div>
+        <span style="font-size:12.5px;color:var(--m-mut)">42 KB</span>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">LogsScreen</span><b>Хаб журналов.</b> Размер буфера перед шевроном, отступ 16.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Core (mihomo)</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+        <span class="ic"><svg class="icon muted"><use href="#i-copy"/></svg></span></div>
+      <div class="mono">time="13:29:02" level=info msg="mihomo 1.19.14 started"
+time="13:29:02" level=info msg="Start initial Compatible provider PROXY"
+time="13:29:03" level=info msg="Start TUN listening at utun4"
+time="13:29:03" level=info msg="[TCP] 10.0.0.4:52318 --> www.myip.com:443 match DomainSuffix(www.myip.com) using PROXY"
+time="13:29:05" level=info msg="[TCP] 10.0.0.4:52320 --> api.telegram.org:443 match GeoIP(RU) using DIRECT"</div>
+    </div></div>
+    <p class="cap"><span class="id">LogViewerScreen</span><b>Журнал.</b> Моноширинный 12&nbsp;pt / 1.5, паддинг 12, автоскролл в конец.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Tunnel</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+        <span class="ic"><svg class="icon muted"><use href="#i-copy"/></svg></span></div>
+      <div class="center">Empty</div>
+    </div></div>
+    <p class="cap"><span class="id">LogViewerScreen · empty</span><b>Пусто.</b> «Empty» по центру, 15&nbsp;pt.</p>
+  </div>
+</div>
+
+<!-- ============ 8 ============ -->
+<h2>8 · On demand (iOS / macOS)</h2>
+<p class="flowdesc">Автоподключение силами системы: правила сохраняются в системные настройки, и
+туннель поднимает сама ОС — при совпадении условий, после смены сети, перезагрузки и даже если
+приложение не запущено. Правила — упорядоченный набор (как в happ/Shadowrocket и как наши rule
+sets): у каждого действие <code>Connect / Disconnect / Ignore</code> и условия — тип сети,
+SSID, поисковый DNS-домен, адрес DNS-сервера, URL-проба. Применяется первое совпавшее.
+Ручной «Disconnect» при включённом on-demand <b>ставит автоподключение на паузу</b>, следующий
+«Connect» снимает её. Только Apple-платформы (NEOnDemandRule); на будущих Windows/Linux —
+сторожевой сервис + kill switch.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">CONNECTION</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
+          <div class="tx"><div class="t">On demand</div><div class="s">On · 3 rules</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-theme"/></svg>
+          <div class="tx"><div class="t">Disconnect on sleep</div><div class="s">Drop the tunnel when the device sleeps</div></div>
+          <span class="sw off"><i></i></span></div>
+      </div>
+      <div class="sh">ROUTING</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-wifi"/></svg>
+          <div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div>
+          <span class="sw"><i></i></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · CONNECTION</span><b>Настройки.</b> «On demand» — строка с состоянием («Off» / «On · N rules» / «Paused»), ведёт на свой экран. Рядом «Disconnect on sleep» (флаг протокола). Секция видна только на iOS/macOS.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">On demand</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-bolt"/></svg>
+        <div class="tx"><div class="t">Enable on demand</div><div class="s">The system applies the first matching rule</div></div>
+        <span class="sw"><i></i></span>
+      </div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">IGNORE</span>
+        <div class="tx"><div class="t">Home Wi-Fi</div><div class="s">Wi-Fi · SSID home-5G</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-err)">DISC.</span>
+        <div class="tx"><div class="t">Office</div><div class="s">Wi-Fi · SSID corp-net · DNS 10.0.*</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-ok)">CONN.</span>
+        <div class="tx"><div class="t">Everywhere else</div><div class="s">Any network</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="empty" style="padding-top:8px">Rules are evaluated top to bottom. If none matches, the tunnel is left as is.</div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">OnDemandScreen</span><b>Набор правил.</b> Тот же паттерн, что редактор rule sets: тег действия (CONNECT зелёный, DISCONNECT красный, IGNORE нейтральный), имя, сводка условий, корзина и ручка внутри карточки, FAB. При первом включении создаётся правило «Connect · Any network».</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph" style="height:auto;min-height:874px">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">New rule</span></div>
+      <div style="padding:0 16px">
+        <div class="inp"><div class="lb">Name (optional)</div><div class="vl">Office</div></div>
+        <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">Disconnect</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+      </div>
+      <div class="sh">NETWORK</div>
+      <div style="padding:0 16px"><div class="segm"><div>Any</div><div class="on">Wi-Fi</div><div>Mobile</div></div>
+        <div class="hint">When the device joins a Wi-Fi network, the system checks the conditions below and applies the rule.</div>
+      </div>
+      <div class="sh">CONDITIONS</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Wi-Fi networks</div><div class="s">corp-guest, corp-net</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">DNS search domains</div><div class="s">Any</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">DNS servers</div><div class="s">10.0.*</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">URL PROBE</div>
+      <div style="padding:0 16px">
+        <div class="inp"><div class="lb">URL (optional)</div><div class="vl plc">https://intranet.example.com/ping</div></div>
+        <div class="hint">The rule matches only if this URL returns 200 without redirects.</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">OnDemandRuleScreen</span><b>Редактор правила.</b> Под сегментом сети — пояснение, что означает выбранный режим (меняется вместе с ним). Списки условий свёрнуты в строки со сводкой («Any», если пусто) и открываются отдельным экраном: чипы не давали ни порядка, ни поиска и расплывались на десяток значений.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Wi-Fi networks</span></div>
+      <div style="padding:8px 16px 0">
+        <div class="inp sel"><svg class="icon muted"><use href="#i-search"/></svg>
+          <div class="tx"><div class="vl plc">Search</div></div></div>
+      </div>
+      <div class="sh">4 NETWORKS · ANY OF THEM MATCHES</div>
+      <div class="card"><div class="rule" style="min-height:56px">
+        <div class="tx" style="padding-left:0"><div class="t">corp-guest</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule" style="min-height:56px">
+        <div class="tx" style="padding-left:0"><div class="t">corp-net</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule" style="min-height:56px">
+        <div class="tx" style="padding-left:0"><div class="t">home-5G</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule" style="min-height:56px">
+        <div class="tx" style="padding-left:0"><div class="t">office-guest</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+      </div></div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">OnDemandValuesScreen</span><b>Список значений.</b> Один экран на все три условия (SSID, домены, DNS-серверы): поиск сверху, строки 56&nbsp;pt с корзиной, FAB для добавления. Значения отсортированы по алфавиту и <b>не</b> перетаскиваются: система считает совпадение по любому из них, а действие у правила одно — порядок ненаблюдаем. Приоритет выражается порядком самих правил.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">DNS search domains</span></div>
+      <div class="sh">NO ENTRIES</div>
+      <div class="empty">The condition is ignored and the rule matches any network of the selected type.</div>
+      <div style="padding:0 16px"><div class="hint">Matches when the network’s search domain ends with an entry, e.g. corp.example.com.</div></div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">OnDemandValuesScreen · empty</span><b>Пусто.</b> Поиск скрыт, пока список короткий. Текст объясняет, что пустое условие не сужает правило, а не ломает его. Ниже — подсказка про формат конкретного условия.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34 · auto</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-link"/></svg>
+            <div class="tx"><div class="t">backup.single</div><div class="s">Single server</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · armed</span><b>Взведено.</b> Суффикс «· auto» в статусе — единственная индикация: система сама переподнимет туннель. Кнопка работает как обычно.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat muted">Not connected</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card banner"><div class="row">
+            <svg class="icon muted"><use href="#i-bolt"/></svg>
+            <div class="tx"><div class="t">Auto-connect paused</div><div class="s">Press Connect to arm it again</div></div>
+          </div></div>
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-link"/></svg>
+            <div class="tx"><div class="t">backup.single</div><div class="s">Single server</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · paused</span><b>Пауза.</b> После ручного Disconnect: баннер на primary-container объясняет состояние. Переключатель в настройках остаётся ON — намерение пользователя не сбрасывается.</p>
+  </div>
+</div>
+
+<footer>
+  Макет и код используют одни числа: раздел «Метрики» — источник правды, значения в нём совпадают с
+  <code>core/theme.dart</code> и <code>core/ui.dart</code>. Правила: карточки плоские с обводкой 1&nbsp;pt;
+  выбор всегда через bottom sheet не выше 80% экрана — над ним остаётся затемнение, по которому шит закрывается тапом, а не только свайпом; сегменты во всю ширину; интерактивные элементы строки внутри карточки;
+  недоступное — прозрачность .38–.45 с пояснением, а не скрытое; длинные URL усекаются в списках и
+  переносятся только в диалогах.
+</footer>
+</div>
+</div>
+
+<script>
+  const mocks = document.getElementById('mocks');
+  const bDark = document.getElementById('btn-dark');
+  const bLight = document.getElementById('btn-light');
+  function setMock(light){
+    mocks.classList.toggle('light', light);
+    bLight.classList.toggle('on', light);
+    bDark.classList.toggle('on', !light);
+  }
+  bDark.addEventListener('click', () => setMock(false));
+  bLight.addEventListener('click', () => setMock(true));
+</script>
+</body>
+</html>
