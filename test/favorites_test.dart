@@ -161,6 +161,51 @@ void main() {
           tester.widget<ListTile>(find.widgetWithText(ListTile, 'server-1')).selected, true);
     });
 
+    testWidgets('a long list stops at 80% of the screen, leaving scrim to tap',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => pickOption<String>(
+                context,
+                title: 'Server',
+                options: [
+                  for (var i = 0; i < 40; i++) Option('s$i', 'server-$i', subtitle: 'host-$i'),
+                ],
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      final screen = tester.getSize(find.byType(MaterialApp)).height;
+      final sheet = tester.getRect(find.byType(BottomSheet));
+      expect(sheet.height, lessThanOrEqualTo(screen * kSheetMaxHeightFraction + 1));
+      expect(sheet.top, greaterThan(0),
+          reason: 'the scrim above the sheet is what a tap closes it with');
+    });
+
+    testWidgets('the list hosts its own ink, inside a clip', (tester) async {
+      await open(tester);
+
+      // Row fills are Ink: painted on the nearest Material. Without a Material
+      // of its own inside the clip, the list drew its fills on the sheet's
+      // Material and an overscrolled row landed on top of the title.
+      final clip = find.ancestor(
+        of: find.byType(ListView),
+        matching: find.byType(ClipRect),
+      );
+      expect(clip, findsWidgets);
+      final inkHost = find.descendant(of: clip.first, matching: find.byType(Material));
+      expect(find.descendant(of: inkHost.first, matching: find.byType(ListView)),
+          findsOneWidget);
+    });
+
     testWidgets('the gear closes the sheet and reports the value', (tester) async {
       final opened = <String>[];
       await open(tester, onOpenSettings: opened.add);

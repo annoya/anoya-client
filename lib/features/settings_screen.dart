@@ -107,42 +107,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _openConfigurations() async {
     final st = ref.read(profilesControllerProvider);
     final favorites = ref.read(favoritesProvider);
-    // Same order as the picker on the home screen — favourites first — but no
-    // stars: favourites are edited where they are used, in the picker.
-    final profiles = [
-      ...st.profiles.where((p) => favorites.hasProfile(p.id)),
-      ...st.profiles.where((p) => !favorites.hasProfile(p.id)),
-    ];
-    // Not pickOption: these rows navigate, they don't select — which
-    // configuration is active is decided on the home screen.
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('Configurations', style: Theme.of(context).textTheme.titleMedium),
-          ),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: profiles
-                  .map((p) => ListTile(
-                        leading: Icon(profileIcon(p.type)),
-                        title: Text(p.name),
-                        subtitle: Text(p.id == st.activeId
-                            ? '${profileKind(p)} · active'
-                            : profileKind(p)),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.of(context).pop(p.id),
-                      ))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ]),
-      ),
+    // The same sheet as the home-screen picker, in its navigational mode: the
+    // returned value is "open this configuration", not "make it active" —
+    // that choice belongs to the home screen. Passing the favourites still
+    // buys the shared order (favourites first) without the stars, which are
+    // edited where they are used.
+    final picked = await pickOption<String>(
+      context,
+      title: 'Configurations',
+      selected: st.activeId,
+      favorites: favorites.profiles,
+      navigational: true,
+      itemNoun: 'configuration',
+      options: st.profiles
+          .map((p) => Option(
+                p.id,
+                p.name,
+                subtitle: profileKind(p),
+                leading: Icon(profileIcon(p.type)),
+              ))
+          .toList(),
     );
     if (picked != null && mounted) await _push(ConfigScreen(profileId: picked));
   }
