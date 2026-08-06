@@ -16,14 +16,21 @@ import 'norm_config.dart';
 /// either the self-hosted vless+reality shape (custom `reality` key) or a
 /// mihomo-format map (from a share link / subscription); both are normalized
 /// to a single mihomo proxy here. Pure + top-level so it can be unit-tested.
-String mihomoTunConfigYaml(Location location, {Routing? routing, String stack = 'gvisor'}) {
+String mihomoTunConfigYaml(
+  Location location, {
+  Routing? routing,
+  String stack = 'gvisor',
+  bool collectLogs = true,
+}) {
   final proxy = _mihomoProxy(location);
   final ruleLines = _routingRuleLines(routing);
   final hasProcessRules =
       routing?.rules.any((r) => r.type == 'process-name' && r.isValid) ?? false;
   final hasGeoRules = routing?.rules.any((r) => r.needsGeoData && r.isValid) ?? false;
   final lines = <String>[
-    'log-level: info',
+    // "silent" is how the engine stops writing at all: the log file is in the
+    // extension's container, so there is no other way to keep it quiet.
+    collectLogs ? 'log-level: info' : 'log-level: silent',
     'mode: rule',
     'ipv6: false',
     // Resolving a connection's owning process is only needed for PROCESS-NAME

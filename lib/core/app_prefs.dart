@@ -17,13 +17,21 @@ enum AppLanguage {
   final Locale locale;
 }
 
-/// App-level preferences: appearance and language. Kept apart from routing
-/// prefs — these only affect how the app looks, never how traffic is routed.
+/// App-level preferences: appearance, language and log collection. Kept apart
+/// from routing prefs — none of these change how traffic is routed.
 class AppPrefs {
-  const AppPrefs({this.themeMode = ThemeMode.system, this.language = AppLanguage.en});
+  const AppPrefs({
+    this.themeMode = ThemeMode.system,
+    this.language = AppLanguage.en,
+    this.collectLogs = true,
+  });
 
   final ThemeMode themeMode;
   final AppLanguage language;
+
+  /// Whether the app, the tunnel and the engine write logs at all. Off means
+  /// "stop writing", not "hide": what was already collected stays readable.
+  final bool collectLogs;
 
   /// What the settings row shows under "Appearance".
   String get themeLabel => switch (themeMode) {
@@ -32,8 +40,12 @@ class AppPrefs {
         ThemeMode.dark => 'Dark',
       };
 
-  AppPrefs copyWith({ThemeMode? themeMode, AppLanguage? language}) =>
-      AppPrefs(themeMode: themeMode ?? this.themeMode, language: language ?? this.language);
+  AppPrefs copyWith({ThemeMode? themeMode, AppLanguage? language, bool? collectLogs}) =>
+      AppPrefs(
+        themeMode: themeMode ?? this.themeMode,
+        language: language ?? this.language,
+        collectLogs: collectLogs ?? this.collectLogs,
+      );
 
   factory AppPrefs.fromJson(Map<String, dynamic> j) => AppPrefs(
         themeMode: ThemeMode.values.firstWhere(
@@ -44,9 +56,14 @@ class AppPrefs {
           (l) => l.name == (j['language'] as String? ?? 'en'),
           orElse: () => AppLanguage.en,
         ),
+        collectLogs: j['collect_logs'] as bool? ?? true,
       );
 
-  Map<String, dynamic> toJson() => {'theme_mode': themeMode.name, 'language': language.name};
+  Map<String, dynamic> toJson() => {
+        'theme_mode': themeMode.name,
+        'language': language.name,
+        'collect_logs': collectLogs,
+      };
 }
 
 class AppPrefsStore {

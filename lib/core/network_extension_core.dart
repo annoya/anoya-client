@@ -64,14 +64,23 @@ class NetworkExtensionCore implements VpnCore {
     // gvisor on both macOS and iOS: it's fully userspace (no socket binds), the
     // only stack that works inside the iOS NE sandbox. (The `system` stack
     // fails there trying to bind the fake-ip gateway.)
-    final yaml = mihomoTunConfigYaml(location, routing: config.routing, stack: 'gvisor');
+    // Log.enabled is the "collect logs" switch. The level in the config is what
+    // an on-demand start (no app involved) will use; a start driven from here
+    // also gets it pushed straight into the engine, because the engine logs
+    // while parsing the config, before it reads log-level out of it.
+    final yaml = mihomoTunConfigYaml(location,
+        routing: config.routing, stack: 'gvisor', collectLogs: Log.enabled);
     final serverIp = location.proxy['server']?.toString() ?? '';
     final routing = config.routing;
     final routingDesc =
         routing == null ? 'none (full tunnel)' : '${routing.mode}, ${routing.rules.length} rule(s)';
     Log.i('NE connect: location=${location.id} (${location.label}) server=$serverIp routing=$routingDesc');
     try {
-      await _control.invokeMethod<void>('start', {'config': yaml, 'server_ip': serverIp});
+      await _control.invokeMethod<void>('start', {
+        'config': yaml,
+        'server_ip': serverIp,
+        'log_enabled': Log.enabled,
+      });
     } on PlatformException catch (e) {
       Log.e('NE start failed', e.message ?? e.code);
       rethrow;
@@ -102,6 +111,7 @@ class NetworkExtensionCore implements VpnCore {
         'enabled': prefs.armed,
         'rules': prefs.rules.map((r) => r.toChannel()).toList(),
         'disconnect_on_sleep': prefs.disconnectOnSleep,
+        'log_enabled': Log.enabled,
         if (rendered != null) ...rendered,
       });
       Log.i('on-demand ${armed == true ? 'armed' : 'not armed'} (${prefs.rules.length} rule(s))');
@@ -117,7 +127,10 @@ class NetworkExtensionCore implements VpnCore {
     final rendered = _render(config, locationId);
     if (rendered == null) return;
     try {
-      await _control.invokeMethod<void>('sync_config', rendered);
+      await _control.invokeMethod<void>('sync_config', {
+        ...rendered,
+        'log_enabled': Log.enabled,
+      });
     } on PlatformException catch (e) {
       // Best-effort: the profile may not exist yet, or the user may have
       // revoked it. The next connect writes the config anyway.
@@ -146,7 +159,8 @@ class NetworkExtensionCore implements VpnCore {
     if (location == null) return null;
     try {
       return {
-        'config': mihomoTunConfigYaml(location, routing: config.routing, stack: 'gvisor'),
+        'config': mihomoTunConfigYaml(location,
+            routing: config.routing, stack: 'gvisor', collectLogs: Log.enabled),
         'server_ip': location.proxy['server']?.toString() ?? '',
       };
     } catch (e) {
