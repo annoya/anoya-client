@@ -37,8 +37,14 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// apps" prompt on every connect, even though the App Group container is
     /// already accessible via the sandbox entitlement. POSIX I/O (like the
     /// freopen below) does not, so it stays silent.
+    /// Mirrors the app's "Collect logs" switch, carried in the start options and
+    /// in providerConfiguration (an on-demand start has no options). Off means
+    /// the file stops growing; what is already in it stays.
+    private var logEnabled = true
+
     private func log(_ message: String) {
         NSLog("TUNNEL: \(message)")
+        guard logEnabled else { return }
         let path = sharedDir().appendingPathComponent("tunnel.log").path
         let line = "[\(Date())] \(message)\n"
         guard let data = line.data(using: .utf8) else { return }
@@ -51,11 +57,14 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
-        log("startTunnel: begin")
         // The app passes the config in the start options. On-demand starts come
         // from the OS with no options — fall back to the copy the app persisted
-        // in providerConfiguration on its last connect.
+        // in providerConfiguration on its last connect. Same for the log switch.
         let persisted = (protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration
+        logEnabled = (options?["LogEnabled"] as? NSNumber)?.boolValue
+            ?? (persisted?["LogEnabled"] as? Bool)
+            ?? true
+        log("startTunnel: begin")
         let config = (options?["Config"] as? String)
             ?? (persisted?["Config"] as? String)
             ?? ""
@@ -101,12 +110,21 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 return
             }
             self.log("got tun fd \(fd); starting mihomo")
-            self.redirectStdoutToMihomoLog()
+            // Only wire up the engine's log file when we are collecting: with
+            // the switch off the file should not even appear.
+            if self.logEnabled { self.redirectStdoutToMihomoLog() }
+            // Before the start: parsing the config already logs (geo rule
+            // loading, "initial configuration in progress"), and that happens
+            // before the engine applies the level from the YAML.
+            self.applyEngineLogLevel(self.logEnabled)
             if let message = self.startEngine(fd: fd, config: config) {
                 self.log("mihomo start failed: \(message)")
                 completionHandler(self.err("mihomo start failed: \(message)"))
                 return
             }
+            // And again after: applying the config overwrites the level with
+            // whatever the YAML said, which may be stale.
+            self.applyEngineLogLevel(self.logEnabled)
             self.log("mihomo started; tunnel up")
             completionHandler(nil)
         }
@@ -119,12 +137,39 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     /// IPC from the host app. Protocol: a UTF-8 request string.
-    ///   "log:<name>"  -> returns the bytes of <name>.log from our container
+    ///   "log:<name>"      -> returns the bytes of <name>.log from our container
+    ///   "clear-logs"      -> empties our log files
+    ///   "logging:<0|1>"   -> turns log writing off/on without reconnecting
     /// The host uses this to display tunnel/core logs without a shared
     /// container (which would be TCC-gated). Reading our OWN container is never
     /// TCC-gated. Only works while the tunnel is running (extension alive).
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
         let request = String(data: messageData, encoding: .utf8) ?? ""
+        if request.hasPrefix("logging:") {
+            let on = request.hasSuffix("1")
+            logEnabled = on
+            // Turning it on mid-session: the engine's stdout may never have been
+            // redirected, so there would be nowhere for its log to land.
+            if on { redirectStdoutToMihomoLog() }
+            // The engine reads log-level only when a config is applied, so a
+            // running tunnel needs the level pushed in directly — otherwise it
+            // would keep filling mihomo.log until the next connect.
+            applyEngineLogLevel(on)
+            log("logging \(on ? "enabled" : "disabled") by the app")
+            completionHandler?(Data())
+            return
+        }
+        if request == "clear-logs" {
+            for name in ["tunnel", "mihomo"] {
+                let path = sharedDir().appendingPathComponent("\(name).log").path
+                // Truncate rather than unlink: mihomo's stdout is freopen'd onto
+                // mihomo.log, and removing the file would leave it writing to a
+                // deleted inode with no way to reopen it.
+                _ = path.withCString { truncate($0, 0) }
+            }
+            completionHandler?(Data())
+            return
+        }
         if request.hasPrefix("log:") {
             let name = String(request.dropFirst(4)).replacingOccurrences(of: "/", with: "")
             let url = sharedDir().appendingPathComponent("\(name).log")
@@ -134,10 +179,21 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         completionHandler?(messageData)
     }
 
+    /// Push the log level into the running engine: "info" while collecting,
+    /// "silent" when the user turned logging off.
+    private func applyEngineLogLevel(_ enabled: Bool) {
+        let level = enabled ? "info" : "silent"
+        level.withCString { MihomoSetLogLevel(UnsafeMutablePointer(mutating: $0)) }
+    }
+
     /// mihomo logs to stdout; redirect it to a file in the extension's
     /// container so we can read what the engine is doing (dials, DNS, etc.):
     ///   ~/Library/Containers/<ext-id>/Data/Library/Caches/mihomo.log
+    private var stdoutRedirected = false
+
     private func redirectStdoutToMihomoLog() {
+        guard !stdoutRedirected else { return }
+        stdoutRedirected = true
         let path = sharedDir().appendingPathComponent("mihomo.log").path
         freopen(path, "a", stdout)
         setvbuf(stdout, nil, _IOLBF, 0) // line-buffered for prompt logs

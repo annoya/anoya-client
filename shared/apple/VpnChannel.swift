@@ -25,8 +25,13 @@ enum VpnChannel {
                     return
                 }
                 let serverIp = args?["server_ip"] as? String
+                let logEnabled = args?["log_enabled"] as? Bool ?? true
                 Task { @MainActor in
-                    do { try await VPNManager.shared.start(config: config, serverIp: serverIp); result(nil) }
+                    do {
+                        try await VPNManager.shared.start(
+                            config: config, serverIp: serverIp, logEnabled: logEnabled)
+                        result(nil)
+                    }
                     catch { result(FlutterError(code: "start_failed", message: error.localizedDescription, details: nil)) }
                 }
             case "stop":
@@ -46,7 +51,8 @@ enum VpnChannel {
                         let armed = try await VPNManager.shared.setOnDemand(
                             enabled: enabled, rules: rules, disconnectOnSleep: sleep,
                             config: args["config"] as? String,
-                            serverIp: args["server_ip"] as? String)
+                            serverIp: args["server_ip"] as? String,
+                            logEnabled: args["log_enabled"] as? Bool ?? true)
                         result(armed)
                     } catch {
                         result(FlutterError(code: "on_demand_failed",
@@ -64,7 +70,8 @@ enum VpnChannel {
                 Task { @MainActor in
                     do {
                         try await VPNManager.shared.syncConfig(
-                            config: config, serverIp: args["server_ip"] as? String)
+                            config: config, serverIp: args["server_ip"] as? String,
+                            logEnabled: args["log_enabled"] as? Bool ?? true)
                         result(nil)
                     } catch {
                         result(FlutterError(code: "sync_failed",
@@ -87,6 +94,21 @@ enum VpnChannel {
                 let url = FileManager.default.containerURL(
                     forSecurityApplicationGroupIdentifier: "group.com.nt.vpnClient")
                 result(url?.path)
+            case "set_logging":
+                let on = (call.arguments as? [String: Any])?["enabled"] as? Bool ?? true
+                Task { @MainActor in
+                    await VPNManager.shared.setLogging(on)
+                    result(nil)
+                }
+            case "clear_logs":
+                // Only the extension may delete files in its own container, so
+                // this needs a running tunnel — the app side says so when it
+                // fails rather than pretending the logs are gone.
+                Task { @MainActor in
+                    do { try await VPNManager.shared.clearLogs(); result(nil) }
+                    catch { result(FlutterError(code: "clear_logs_failed",
+                                                message: error.localizedDescription, details: nil)) }
+                }
             case "fetch_log":
                 // Pull a log file from the running extension over provider IPC
                 // (the extension logs into its own container, not a shared one).
