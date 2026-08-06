@@ -6,34 +6,29 @@ import 'package:flutter/services.dart' show PlatformException;
 import '../api/api_client.dart';
 import 'oidc_login.dart';
 
-/// How a message is shown. The question that decides it: can the user act on
-/// this? A failed refresh is over and done with — a toast. A tunnel that would
-/// not come up needs a decision, so it stays until dismissed.
-enum ErrorLevel { toast, banner }
-
 /// A message in the two parts the UI always shows: what happened, and what to
 /// do about it. Exception text never reaches either — it goes to the log.
+///
+/// Which of the two formats carries it — a toast that leaves on its own or a
+/// modal dialog — is the caller's call, since only the caller knows whether the
+/// user can still act on it. See [showToast] and [showErrorDialog].
 class AppError {
-  const AppError(this.title, {this.detail, this.level = ErrorLevel.banner});
+  const AppError(this.title, {this.detail});
 
   final String title;
   final String? detail;
-  final ErrorLevel level;
 
   /// Single line for a toast, where there is no room for two.
   String get line => detail == null ? title : '$title — $detail';
-
-  AppError asToast() => AppError(title, detail: detail, level: ErrorLevel.toast);
 }
 
 /// Translates whatever the layers below threw into something a person can act
 /// on. [subject] names what failed — a host, a subscription URL — so the second
 /// line can be specific instead of "connection error".
-AppError describeError(Object error, {String? subject, ErrorLevel level = ErrorLevel.banner}) {
+AppError describeError(Object error, {String? subject}) {
   final what = subject ?? 'the server';
 
-  AppError err(String title, String? detail) =>
-      AppError(title, detail: detail, level: level);
+  AppError err(String title, String? detail) => AppError(title, detail: detail);
 
   return switch (error) {
     SocketException() || TimeoutException() => err(

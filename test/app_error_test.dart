@@ -46,13 +46,6 @@ void main() {
       expect(expired.title, 'Session expired');
     });
 
-    test('level travels with the message', () {
-      expect(describeError(const SocketException('x')).level, ErrorLevel.banner);
-      expect(describeError(const SocketException('x'), level: ErrorLevel.toast).level,
-          ErrorLevel.toast);
-      expect(describeError(const SocketException('x')).asToast().level, ErrorLevel.toast);
-    });
-
     test('account states are explained, not printed', () {
       expect(describeAccountStatus('expired').title, 'Subscription expired');
       expect(describeAccountStatus('limited').title, 'Traffic limit reached');

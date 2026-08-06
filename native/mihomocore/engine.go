@@ -7,9 +7,11 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub/executor"
+	"github.com/metacubex/mihomo/log"
 )
 
 func engineVersion() string {
@@ -22,6 +24,16 @@ func engineVersion() string {
 func setEngineHomeDir(path string) {
 	if path != "" {
 		constant.SetHomeDir(path)
+	}
+}
+
+// setEngineLogLevel changes the engine's log level on a running tunnel. The
+// level in the config is only read when the config is applied, so without this
+// turning logging off would not take effect until the next connect — while the
+// engine kept writing to its log file the whole time.
+func setEngineLogLevel(level string) {
+	if l, ok := log.LogLevelMapping[strings.ToLower(level)]; ok {
+		log.SetLevel(l)
 	}
 }
 

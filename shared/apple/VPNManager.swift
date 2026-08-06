@@ -49,13 +49,17 @@ final class VPNManager {
     /// launches the extension with no options) has something to run. Only
     /// writes when it actually changed — saving preferences on a live session
     /// makes the system re-assert the tunnel.
-    private func persist(config: String, serverIp: String?, into m: NETunnelProviderManager) async throws {
+    private func persist(config: String, serverIp: String?, logEnabled: Bool,
+                         into m: NETunnelProviderManager) async throws {
         guard let proto = m.protocolConfiguration as? NETunnelProviderProtocol else { return }
         let current = proto.providerConfiguration
         let changed = (current?["Config"] as? String) != config
             || (current?["ServerIP"] as? String) != (serverIp ?? "")
+            || (current?["LogEnabled"] as? Bool) != logEnabled
         guard changed else { return }
-        proto.providerConfiguration = ["Config": config, "ServerIP": serverIp ?? ""]
+        proto.providerConfiguration = [
+            "Config": config, "ServerIP": serverIp ?? "", "LogEnabled": logEnabled,
+        ]
         try await m.saveToPreferences()
         try await m.loadFromPreferences()
         NSLog("VPN-NATIVE: persisted tunnel config (\(config.count) bytes)")
@@ -67,7 +71,7 @@ final class VPNManager {
     /// and that belongs to an explicit Connect (or to arming on-demand), not to
     /// merely adding a configuration. With no profile yet there is nothing to
     /// keep in step anyway — the first Connect writes it.
-    func syncConfig(config: String, serverIp: String?) async throws {
+    func syncConfig(config: String, serverIp: String?, logEnabled: Bool) async throws {
         let managers = try await NETunnelProviderManager.loadAllFromPreferences()
         guard let m = managers.first else {
             NSLog("VPN-NATIVE: no VPN profile yet, skipping config sync")
@@ -75,7 +79,7 @@ final class VPNManager {
         }
         self.manager = m
         observe(m)
-        try await persist(config: config, serverIp: serverIp, into: m)
+        try await persist(config: config, serverIp: serverIp, logEnabled: logEnabled, into: m)
     }
 
     /// Remove the VPN profile from the system entirely — the user deleted the
@@ -100,15 +104,18 @@ final class VPNManager {
         NSLog("VPN-NATIVE: removed VPN profile from system preferences")
     }
 
-    func start(config: String, serverIp: String?) async throws {
+    func start(config: String, serverIp: String?, logEnabled: Bool) async throws {
         let m = try await loadOrCreate()
         NSLog("VPN-NATIVE: loadOrCreate ok, status=\(currentStatus()), enabled=\(m.isEnabled)")
-        try await persist(config: config, serverIp: serverIp, into: m)
+        try await persist(config: config, serverIp: serverIp, logEnabled: logEnabled, into: m)
 
         guard let session = m.connection as? NETunnelProviderSession else {
             throw NSError(domain: "vpn", code: 1, userInfo: [NSLocalizedDescriptionKey: "no tunnel session"])
         }
-        var options: [String: NSObject] = ["Config": config as NSString]
+        var options: [String: NSObject] = [
+            "Config": config as NSString,
+            "LogEnabled": NSNumber(value: logEnabled),
+        ]
         if let serverIp, !serverIp.isEmpty {
             options["ServerIP"] = serverIp as NSString
         }
@@ -147,7 +154,8 @@ final class VPNManager {
         rules: [[String: Any]],
         disconnectOnSleep: Bool,
         config: String?,
-        serverIp: String?
+        serverIp: String?,
+        logEnabled: Bool
     ) async throws -> Bool {
         // Arming may create the profile (the approval dialog belongs to that
         // deliberate action). Disarming must never create one — asking for
@@ -169,7 +177,7 @@ final class VPNManager {
         // Arming needs a config to start from; the caller passes the currently
         // selected one, which also updates the profile in one go.
         if let config, !config.isEmpty {
-            try await persist(config: config, serverIp: serverIp, into: m)
+            try await persist(config: config, serverIp: serverIp, logEnabled: logEnabled, into: m)
         }
         let compiled = rules.compactMap(compileRule)
         let hasConfig = !((m.protocolConfiguration as? NETunnelProviderProtocol)?
@@ -223,6 +231,37 @@ final class VPNManager {
             rule.probeURL = url
         }
         return rule
+    }
+
+    /// Tell the running extension whether to keep writing logs. The engine's
+    /// level lives in the applied config, so a live tunnel has to be told
+    /// directly; with the tunnel down there is nothing to tell — the persisted
+    /// config already carries the flag for the next start.
+    func setLogging(_ enabled: Bool) async {
+        let managers = try? await NETunnelProviderManager.loadAllFromPreferences()
+        guard let session = managers?.first?.connection as? NETunnelProviderSession,
+              session.status == .connected || session.status == .connecting else { return }
+        try? session.sendProviderMessage(Data("logging:\(enabled ? 1 : 0)".utf8)) { _ in }
+    }
+
+    /// Ask the running extension to delete its log files. Like fetchLog, this
+    /// only works while the tunnel is up: the extension is the only process
+    /// that may touch its own container.
+    func clearLogs() async throws {
+        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
+        guard let session = managers.first?.connection as? NETunnelProviderSession else {
+            throw NSError(domain: "vpn", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
+        }
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            do {
+                try session.sendProviderMessage(Data("clear-logs".utf8)) { _ in
+                    cont.resume()
+                }
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
     }
 
     /// Ask the running extension for one of its log files (e.g. "tunnel",

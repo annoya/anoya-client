@@ -1354,6 +1354,12 @@
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Logs</span></div>
+      <div class="sh">COLLECTION</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-doc"/></svg>
+        <div class="tx"><div class="t">Collect logs</div><div class="s multi">Off: the app, the tunnel and the core stop writing. Existing files stay readable.</div></div>
+        <span class="sw"><i></i></span>
+      </div></div>
       <div class="sh">TUNNEL</div>
       <div class="card"><div class="row">
         <div class="tx"><div class="t">Tunnel</div><div class="s">Network Extension events</div></div>
@@ -1369,8 +1375,10 @@
         <span style="font-size:12.5px;color:var(--m-mut)">42 KB</span>
         <svg class="icon muted"><use href="#i-chev"/></svg>
       </div></div>
+      <div class="btn out" style="margin-top:20px"><svg class="icon s"><use href="#i-copy"/></svg>Save all logs (.zip)</div>
+      <div class="btn err"><svg class="icon s"><use href="#i-trash"/></svg>Clear all logs</div>
     </div></div>
-    <p class="cap"><span class="id">LogsScreen</span><b>Хаб журналов.</b> Размер буфера перед шевроном, отступ 16.</p>
+    <p class="cap"><span class="id">LogsScreen</span><b>Хаб журналов.</b> Размер буфера перед шевроном, отступ 16. Свитчер сверху — единственный выключатель на все три журнала: смысл в том, чтобы перестать писать, а не спрятать написанное, поэтому строки остаются доступными и при выключенном сборе. Переключение действует сразу, в том числе на поднятом туннеле: уровень логов уходит в работающее ядро по IPC, а не ждёт переподключения. Кнопки внизу, 48&nbsp;pt: сохранение упаковывает все журналы в один архив и спрашивает, куда его девать — в файловую систему или в «Поделиться»; очистка деструктивная, поэтому в error-цвете и с подтверждением.</p>
   </div>
 
   <div class="board">
@@ -1397,6 +1405,57 @@ time="13:29:05" level=info msg="[TCP] 10.0.0.4:52320 --> api.telegram.org:443 ma
       <div class="center">Empty</div>
     </div></div>
     <p class="cap"><span class="id">LogViewerScreen · empty</span><b>Пусто.</b> «Empty» по центру, 15&nbsp;pt.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Logs</span></div>
+      <div class="sh">COLLECTION</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-doc"/></svg>
+        <div class="tx"><div class="t">Collect logs</div><div class="s multi">Off: the app, the tunnel and the core stop writing. Existing files stay readable.</div></div>
+        <span class="sw off"><i></i></span>
+      </div></div>
+      <div class="sh">TUNNEL</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Tunnel</div><div class="s">Network Extension events</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <div class="head">
+          <svg class="icon muted"><use href="#i-trash"/></svg>
+          <h4>Clear all logs?</h4>
+        </div>
+        <div class="body msg">The app, tunnel and core logs will be deleted from this device. The tunnel and core logs can only be cleared while the VPN is connected.</div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Clear</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">LogsScreen · destination</span><b>Куда сохранить.</b> Кнопка не решает за пользователя: обычный шит выбора с двумя пунктами. «Save to file…» открывает системный диалог сохранения (на macOS — окно «Сохранить как», на iOS — «Файлы»), «Share…» отдаёт архив системному листу. Порядок такой: файл — то, что просили, «поделиться» — то, что удобно отправить в поддержку.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Logs</span></div>
+      <div class="sh">APP</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Application</div><div class="s">Client-side events</div></div>
+        <span style="font-size:12.5px;color:var(--m-mut)">42 KB</span>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Save all logs</div>
+        <div class="row"><svg class="icon muted"><use href="#i-file"/></svg>
+          <div class="tx"><div class="t">Save to file…</div><div class="s">Pick a folder on this device</div></div></div>
+        <div class="row"><svg class="icon muted"><use href="#i-copy"/></svg>
+          <div class="tx"><div class="t">Share…</div><div class="s">Send the archive somewhere</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">LogsScreen · clear</span><b>Подтверждение очистки.</b> Обычный диалог с двумя кнопками — сбор логов при этом уже выключен, поэтому свитчер в положении off. Текст честно предупреждает: журналы туннеля и ядра лежат в контейнере расширения, и стереть их можно только при поднятом туннеле.</p>
   </div>
 </div>
 

@@ -41,6 +41,17 @@ func MihomoSetHomeDir(path *C.char) {
 	setEngineHomeDir(C.GoString(path))
 }
 
+// MihomoSetLogLevel applies a mihomo log level ("silent", "error", "warning",
+// "info", "debug") to the running engine. Used by the app's "Collect logs"
+// switch, which must take effect without reconnecting.
+//
+//export MihomoSetLogLevel
+func MihomoSetLogLevel(level *C.char) {
+	mu.Lock()
+	defer mu.Unlock()
+	setEngineLogLevel(C.GoString(level))
+}
+
 //export MihomoStart
 func MihomoStart(fd C.int, configJSON *C.char) *C.char {
 	mu.Lock()
