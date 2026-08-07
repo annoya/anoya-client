@@ -33,6 +33,7 @@ class ProfilesState {
     this.activeId,
     this.selectedLocationId,
     this.loading = false,
+    this.switching = false,
     this.error,
   });
 
@@ -40,6 +41,11 @@ class ProfilesState {
   final String? activeId;
   final String? selectedLocationId;
   final bool loading;
+
+  /// A hot switch is in flight: the tunnel is up and the engine is being
+  /// swapped onto another location/profile. Rows ignore taps meanwhile.
+  final bool switching;
+
   final AppError? error;
 
   bool get hasProfiles => profiles.isNotEmpty;
@@ -66,6 +72,7 @@ class ProfilesState {
     String? activeId,
     String? selectedLocationId,
     bool? loading,
+    bool? switching,
     AppError? error,
   }) =>
       ProfilesState(
@@ -73,6 +80,7 @@ class ProfilesState {
         activeId: activeId ?? this.activeId,
         selectedLocationId: selectedLocationId ?? this.selectedLocationId,
         loading: loading ?? this.loading,
+        switching: switching ?? this.switching,
         error: error, // reset each transition unless passed
       );
 }
@@ -238,12 +246,39 @@ class ProfilesController extends Notifier<ProfilesState> {
       activeId: id,
       selectedLocationId: p == null || p.locations.isEmpty ? null : p.locations.first.id,
     );
-    await syncTunnelConfig();
+    await _applySelection();
   }
 
   Future<void> selectLocation(String id) async {
     state = state.copyWith(selectedLocationId: id);
-    await syncTunnelConfig();
+    await _applySelection();
+  }
+
+  /// Pushes the new selection to the tunnel. On a live session this is a hot
+  /// reload — the engine swaps configs under the standing NE session, so the
+  /// VPN never drops and no traffic escapes mid-switch. Otherwise the change
+  /// only needs to reach the persisted config for the next start.
+  Future<void> _applySelection() async {
+    final core = ref.read(vpnCoreProvider);
+    if (core.status != VpnStatus.connected) {
+      await syncTunnelConfig();
+      return;
+    }
+    final p = state.active;
+    final loc = state.selectedLocation;
+    if (p == null || loc == null) return;
+    state = state.copyWith(switching: true);
+    try {
+      await core.reload(await _normConfig(p), loc.id);
+      state = state.copyWith(switching: false);
+    } catch (e) {
+      Log.e('hot switch failed', '$e');
+      state = state.copyWith(
+        switching: false,
+        error: const AppError('Couldn’t switch',
+            detail: 'The tunnel kept the previous server. Try again, or reconnect.'),
+      );
+    }
   }
 
   // --- refresh ---

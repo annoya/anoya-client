@@ -68,6 +68,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   bool get _busy => _status == VpnStatus.connected || _status == VpnStatus.connecting;
 
+  /// When the pickers refuse taps. A connected tunnel is NOT locked: switching
+  /// is a hot reload under the live session. Locked only while the initial
+  /// connect is in flight, or during the (brief) hot switch itself.
+  bool get _locked =>
+      _status == VpnStatus.connecting || ref.read(profilesControllerProvider).switching;
+
   Future<void> _toggle() async {
     final ctrl = ref.read(profilesControllerProvider.notifier);
     if (_busy) {
@@ -163,6 +169,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final vpn = context.vpnColors;
     // "· auto" only when the OS confirmed it is auto-connecting.
     final auto = ref.watch(onDemandProvider).systemArmed ? ' · auto' : '';
+    if (ref.watch(profilesControllerProvider.select((s) => s.switching))) {
+      // The ring stays green (the session never dropped); the status line is
+      // the only telltale of the in-flight switch.
+      return Text('Switching server…',
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(color: vpn.connecting, fontWeight: FontWeight.w600));
+    }
     final (text, color) = switch (_status) {
       VpnStatus.connected => ('Connected${_session()}$auto', vpn.connected),
       VpnStatus.connecting => ('Connecting…', vpn.connecting),
@@ -219,9 +234,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           if (pickable)
-            _busy ? const Icon(Icons.lock_outline, size: 18) : const Icon(Icons.expand_more),
+            _status == VpnStatus.connecting
+                ? const Icon(Icons.lock_outline, size: 18)
+                : const Icon(Icons.expand_more),
         ]),
-        onTap: (!pickable || _busy) ? null : () => _pickProfile(st),
+        onTap: (!pickable || _locked) ? null : () => _pickProfile(st),
       ),
     );
   }
@@ -239,10 +256,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         subtitle: loc != null ? Text('${loc.proxyType} · ${loc.proxy['server']}') : null,
         trailing: !pickable
             ? null
-            : _busy
+            : _status == VpnStatus.connecting
                 ? const Icon(Icons.lock_outline, size: 18)
                 : const Icon(Icons.chevron_right),
-        onTap: (!pickable || _busy) ? null : () => _pickLocation(st, active),
+        onTap: (!pickable || _locked) ? null : () => _pickLocation(st, active),
       ),
     );
   }
