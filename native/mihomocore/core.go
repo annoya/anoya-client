@@ -62,6 +62,21 @@ func MihomoStart(fd C.int, configJSON *C.char) *C.char {
 	return C.CString("")
 }
 
+// MihomoReload swaps the running engine onto a new config without touching the
+// tunnel fd — the switch happens under a live NE session, so the connection
+// never drops. Returns "" on success or an error message (in which case the
+// engine keeps running on the previous config).
+//
+//export MihomoReload
+func MihomoReload(fd C.int, configJSON *C.char) *C.char {
+	mu.Lock()
+	defer mu.Unlock()
+	if err := reloadEngine(int(fd), C.GoString(configJSON)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString("")
+}
+
 //export MihomoStop
 func MihomoStop() {
 	mu.Lock()

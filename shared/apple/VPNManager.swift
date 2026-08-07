@@ -49,17 +49,14 @@ final class VPNManager {
     /// launches the extension with no options) has something to run. Only
     /// writes when it actually changed — saving preferences on a live session
     /// makes the system re-assert the tunnel.
-    private func persist(config: String, serverIp: String?, logEnabled: Bool,
+    private func persist(config: String, logEnabled: Bool,
                          into m: NETunnelProviderManager) async throws {
         guard let proto = m.protocolConfiguration as? NETunnelProviderProtocol else { return }
         let current = proto.providerConfiguration
         let changed = (current?["Config"] as? String) != config
-            || (current?["ServerIP"] as? String) != (serverIp ?? "")
             || (current?["LogEnabled"] as? Bool) != logEnabled
         guard changed else { return }
-        proto.providerConfiguration = [
-            "Config": config, "ServerIP": serverIp ?? "", "LogEnabled": logEnabled,
-        ]
+        proto.providerConfiguration = ["Config": config, "LogEnabled": logEnabled]
         try await m.saveToPreferences()
         try await m.loadFromPreferences()
         NSLog("VPN-NATIVE: persisted tunnel config (\(config.count) bytes)")
@@ -71,7 +68,7 @@ final class VPNManager {
     /// and that belongs to an explicit Connect (or to arming on-demand), not to
     /// merely adding a configuration. With no profile yet there is nothing to
     /// keep in step anyway — the first Connect writes it.
-    func syncConfig(config: String, serverIp: String?, logEnabled: Bool) async throws {
+    func syncConfig(config: String, logEnabled: Bool) async throws {
         let managers = try await NETunnelProviderManager.loadAllFromPreferences()
         guard let m = managers.first else {
             NSLog("VPN-NATIVE: no VPN profile yet, skipping config sync")
@@ -79,7 +76,7 @@ final class VPNManager {
         }
         self.manager = m
         observe(m)
-        try await persist(config: config, serverIp: serverIp, logEnabled: logEnabled, into: m)
+        try await persist(config: config, logEnabled: logEnabled, into: m)
     }
 
     /// Remove the VPN profile from the system entirely — the user deleted the
@@ -104,24 +101,21 @@ final class VPNManager {
         NSLog("VPN-NATIVE: removed VPN profile from system preferences")
     }
 
-    func start(config: String, serverIp: String?, logEnabled: Bool) async throws {
+    func start(config: String, logEnabled: Bool) async throws {
         let m = try await loadOrCreate()
         NSLog("VPN-NATIVE: loadOrCreate ok, status=\(currentStatus()), enabled=\(m.isEnabled)")
-        try await persist(config: config, serverIp: serverIp, logEnabled: logEnabled, into: m)
+        try await persist(config: config, logEnabled: logEnabled, into: m)
 
         guard let session = m.connection as? NETunnelProviderSession else {
             throw NSError(domain: "vpn", code: 1, userInfo: [NSLocalizedDescriptionKey: "no tunnel session"])
         }
-        var options: [String: NSObject] = [
+        let options: [String: NSObject] = [
             "Config": config as NSString,
             "LogEnabled": NSNumber(value: logEnabled),
         ]
-        if let serverIp, !serverIp.isEmpty {
-            options["ServerIP"] = serverIp as NSString
-        }
         do {
             try session.startTunnel(options: options)
-            NSLog("VPN-NATIVE: startTunnel called (config \(config.count) bytes, server \(serverIp ?? "-"))")
+            NSLog("VPN-NATIVE: startTunnel called (config \(config.count) bytes)")
         } catch {
             NSLog("VPN-NATIVE: startTunnel threw: \(error.localizedDescription)")
             throw error
@@ -154,7 +148,6 @@ final class VPNManager {
         rules: [[String: Any]],
         disconnectOnSleep: Bool,
         config: String?,
-        serverIp: String?,
         logEnabled: Bool
     ) async throws -> Bool {
         // Arming may create the profile (the approval dialog belongs to that
@@ -177,7 +170,7 @@ final class VPNManager {
         // Arming needs a config to start from; the caller passes the currently
         // selected one, which also updates the profile in one go.
         if let config, !config.isEmpty {
-            try await persist(config: config, serverIp: serverIp, logEnabled: logEnabled, into: m)
+            try await persist(config: config, logEnabled: logEnabled, into: m)
         }
         let compiled = rules.compactMap(compileRule)
         let hasConfig = !((m.protocolConfiguration as? NETunnelProviderProtocol)?
@@ -231,6 +224,41 @@ final class VPNManager {
             rule.probeURL = url
         }
         return rule
+    }
+
+    /// Hot-swap the running tunnel onto a new config: the extension applies it
+    /// to the engine under the live NE session (same utun fd), so the VPN never
+    /// disconnects and the OS routes keep every packet inside the tunnel for
+    /// the whole switch. Throws when the tunnel is not up or the engine
+    /// rejected the config — in both cases the previous config keeps working.
+    func reload(config: String, logEnabled: Bool) async throws {
+        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
+        guard let m = managers.first,
+              let session = m.connection as? NETunnelProviderSession,
+              session.status == .connected else {
+            throw NSError(domain: "vpn", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
+        }
+        let request = Data("reload:\(config)".utf8)
+        let failure: String = try await withCheckedThrowingContinuation { cont in
+            do {
+                try session.sendProviderMessage(request) { data in
+                    cont.resume(returning: data.flatMap { String(data: $0, encoding: .utf8) } ?? "")
+                }
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+        guard failure.isEmpty else {
+            throw NSError(domain: "vpn", code: 3,
+                          userInfo: [NSLocalizedDescriptionKey: failure])
+        }
+        self.manager = m
+        observe(m)
+        // The persisted copy is what an on-demand restart (or the next manual
+        // start) runs — keep it in step with what the engine now runs.
+        try await persist(config: config, logEnabled: logEnabled, into: m)
+        NSLog("VPN-NATIVE: hot-reloaded tunnel config (\(config.count) bytes)")
     }
 
     /// Tell the running extension whether to keep writing logs. The engine's

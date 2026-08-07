@@ -612,7 +612,35 @@
         </div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · connected</span><b>Подключено.</b> Таймер в статусе, кольцо зелёное. Несколько конфигураций: шестерёнка ведёт в настройки активной, шеврон вниз — выбор активной.</p>
+    <p class="cap"><span class="id">HomeScreen · connected</span><b>Подключено.</b> Таймер в статусе, кольцо зелёное. Несколько конфигураций: шестерёнка ведёт в настройки активной, шеврон вниз — выбор активной. Пикеры работают и на живом туннеле: смена сервера или конфигурации применяется горячо — сессия и маршруты ОС не трогаются, поэтому трафику некуда утечь во время переключения.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-warn)">Switching server…</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇯🇵</span>
+            <div class="tx"><div class="t">tokyo.nexus</div><div class="s">vless · 45.32.11.8</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · switching</span><b>Переключение.</b> Секундное состояние после выбора другого сервера или конфигурации на подключённом туннеле: движок применяет новый конфиг под живой сессией. Кольцо остаётся зелёным — соединение не рвалось; статус «Switching server…» в warn-цвете — единственная индикация, тапы по строкам на это время не принимаются (без замков — состояние слишком короткое для них). При ошибке — диалог, туннель продолжает работать на прежнем сервере.</p>
   </div>
 
   <div class="board">

@@ -75,25 +75,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
         if options?["Config"] == nil { log("startTunnel: on-demand start, using persisted config") }
 
-        let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
-        settings.mtu = 9000
-
-        let ipv4 = NEIPv4Settings(addresses: ["172.19.0.1"], subnetMasks: ["255.255.255.252"])
-        ipv4.includedRoutes = [NEIPv4Route.default()]
-        // Exclude the VPN server itself so mihomo's own connection to the worker
-        // bypasses the tunnel (otherwise it loops back into the utun → no traffic).
-        let serverIP = (options?["ServerIP"] as? String) ?? (persisted?["ServerIP"] as? String) ?? ""
-        if !serverIP.isEmpty {
-            ipv4.excludedRoutes = [NEIPv4Route(destinationAddress: serverIP, subnetMask: "255.255.255.255")]
-            log("excluding server route \(serverIP)")
-        }
-        settings.ipv4Settings = ipv4
-
-        let dns = NEDNSSettings(servers: ["1.1.1.1", "8.8.8.8"])
-        dns.matchDomains = [""]
-        settings.dnsSettings = dns
-
-        setTunnelNetworkSettings(settings) { [weak self] error in
+        applyNetworkSettings { [weak self] error in
             guard let self else { return }
             if let error {
                 self.log("setTunnelNetworkSettings error: \(error.localizedDescription)")
@@ -110,6 +92,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 return
             }
             self.log("got tun fd \(fd); starting mihomo")
+            self.tunFd = fd
             // Only wire up the engine's log file when we are collecting: with
             // the switch off the file should not even appear.
             if self.logEnabled { self.redirectStdoutToMihomoLog() }
@@ -139,12 +122,34 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// IPC from the host app. Protocol: a UTF-8 request string.
     ///   "log:<name>"      -> returns the bytes of <name>.log from our container
     ///   "clear-logs"      -> empties our log files
+    ///   "reload:<yaml>"   -> hot-swaps the engine onto a new config (same fd,
+    ///                        same network settings, session stays up)
     ///   "logging:<0|1>"   -> turns log writing off/on without reconnecting
     /// The host uses this to display tunnel/core logs without a shared
     /// container (which would be TCC-gated). Reading our OWN container is never
     /// TCC-gated. Only works while the tunnel is running (extension alive).
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
         let request = String(data: messageData, encoding: .utf8) ?? ""
+        if request.hasPrefix("reload:") {
+            let config = String(request.dropFirst("reload:".count))
+            guard tunFd > 0 else {
+                completionHandler?(Data("tunnel has no fd".utf8))
+                return
+            }
+            // The network settings stay exactly as installed at start: the engine
+            // reaches the new server on its own (see applyNetworkSettings).
+            let failure = reloadEngine(fd: tunFd, config: config)
+            // ApplyConfig resets the log level from the YAML; keep the runtime
+            // switch the last word, same as on start.
+            applyEngineLogLevel(logEnabled)
+            if let failure {
+                log("hot reload failed: \(failure)")
+            } else {
+                log("hot reload applied (\(config.count) bytes)")
+            }
+            completionHandler?(Data((failure ?? "").utf8))
+            return
+        }
         if request.hasPrefix("logging:") {
             let on = request.hasSuffix("1")
             logEnabled = on
@@ -179,6 +184,33 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         completionHandler?(messageData)
     }
 
+    /// The tunnel's network settings, installed once at start and never touched
+    /// again — a hot switch must not go near them, because
+    /// setTunnelNetworkSettings tears the current settings down before it
+    /// installs the new ones, and in that window the OS routes fall back to the
+    /// physical interface: a burst of real leaks on every switch.
+    ///
+    /// Nothing is excluded from the tunnel, not even the proxy server. The engine
+    /// binds its own dials to the physical interface (IP_BOUND_IF), so its
+    /// connection to the server leaves regardless of where the routes point,
+    /// while every other address — including servers we are not using — stays
+    /// inside. If that binding ever failed the tunnel would go silent instead of
+    /// leaking, which is the right direction to fail in.
+    private func applyNetworkSettings(completionHandler: @escaping (Error?) -> Void) {
+        let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
+        settings.mtu = 9000
+
+        let ipv4 = NEIPv4Settings(addresses: ["172.19.0.1"], subnetMasks: ["255.255.255.252"])
+        ipv4.includedRoutes = [NEIPv4Route.default()]
+        settings.ipv4Settings = ipv4
+
+        let dns = NEDNSSettings(servers: ["1.1.1.1", "8.8.8.8"])
+        dns.matchDomains = [""]
+        settings.dnsSettings = dns
+
+        setTunnelNetworkSettings(settings, completionHandler: completionHandler)
+    }
+
     /// Push the log level into the running engine: "info" while collecting,
     /// "silent" when the user turned logging off.
     private func applyEngineLogLevel(_ enabled: Bool) {
@@ -190,6 +222,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// container so we can read what the engine is doing (dials, DNS, etc.):
     ///   ~/Library/Containers/<ext-id>/Data/Library/Caches/mihomo.log
     private var stdoutRedirected = false
+
+    /// The utun fd the engine runs on, kept for hot reloads: a new config is
+    /// applied onto the same fd, so the NE session never notices the swap.
+    private var tunFd: Int32 = -1
 
     private func redirectStdoutToMihomoLog() {
         guard !stdoutRedirected else { return }
@@ -231,6 +267,19 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         log("mihomo home dir: \(home)")
         return config.withCString { cfgPtr -> String? in
             guard let res = MihomoStart(fd, UnsafeMutablePointer(mutating: cfgPtr)) else {
+                return nil
+            }
+            defer { FreeCString(res) }
+            let message = String(cString: res)
+            return message.isEmpty ? nil : message
+        }
+    }
+
+    /// Hot reload: same contract as startEngine — nil on success. On failure
+    /// the engine keeps running on the previous config, so the tunnel is fine.
+    private func reloadEngine(fd: Int32, config: String) -> String? {
+        config.withCString { cfgPtr -> String? in
+            guard let res = MihomoReload(fd, UnsafeMutablePointer(mutating: cfgPtr)) else {
                 return nil
             }
             defer { FreeCString(res) }
