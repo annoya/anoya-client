@@ -24,12 +24,10 @@ enum VpnChannel {
                     result(FlutterError(code: "bad_args", message: "config required", details: nil))
                     return
                 }
-                let serverIp = args?["server_ip"] as? String
                 let logEnabled = args?["log_enabled"] as? Bool ?? true
                 Task { @MainActor in
                     do {
-                        try await VPNManager.shared.start(
-                            config: config, serverIp: serverIp, logEnabled: logEnabled)
+                        try await VPNManager.shared.start(config: config, logEnabled: logEnabled)
                         result(nil)
                     }
                     catch { result(FlutterError(code: "start_failed", message: error.localizedDescription, details: nil)) }
@@ -51,11 +49,28 @@ enum VpnChannel {
                         let armed = try await VPNManager.shared.setOnDemand(
                             enabled: enabled, rules: rules, disconnectOnSleep: sleep,
                             config: args["config"] as? String,
-                            serverIp: args["server_ip"] as? String,
                             logEnabled: args["log_enabled"] as? Bool ?? true)
                         result(armed)
                     } catch {
                         result(FlutterError(code: "on_demand_failed",
+                                            message: error.localizedDescription, details: nil))
+                    }
+                }
+            case "reload":
+                // Hot-swap the running tunnel onto a new config (location or
+                // profile switch) without dropping the NE session.
+                let args = call.arguments as? [String: Any] ?? [:]
+                guard let config = args["config"] as? String else {
+                    result(FlutterError(code: "bad_args", message: "config required", details: nil))
+                    return
+                }
+                Task { @MainActor in
+                    do {
+                        try await VPNManager.shared.reload(
+                            config: config, logEnabled: args["log_enabled"] as? Bool ?? true)
+                        result(nil)
+                    } catch {
+                        result(FlutterError(code: "reload_failed",
                                             message: error.localizedDescription, details: nil))
                     }
                 }
@@ -70,8 +85,7 @@ enum VpnChannel {
                 Task { @MainActor in
                     do {
                         try await VPNManager.shared.syncConfig(
-                            config: config, serverIp: args["server_ip"] as? String,
-                            logEnabled: args["log_enabled"] as? Bool ?? true)
+                            config: config, logEnabled: args["log_enabled"] as? Bool ?? true)
                         result(nil)
                     } catch {
                         result(FlutterError(code: "sync_failed",

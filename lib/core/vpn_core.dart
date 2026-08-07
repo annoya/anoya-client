@@ -27,6 +27,14 @@ abstract class VpnCore {
   /// Tear the tunnel down.
   Future<void> disconnect();
 
+  /// Swap the running tunnel onto a new config (another location or profile)
+  /// without dropping the session — the tunnel interface and OS routes stay
+  /// up, so no traffic escapes during the switch. Only meaningful while
+  /// connected; cores that cannot do this throw and the caller falls back to
+  /// a plain sync (next connect picks the change up).
+  Future<void> reload(NormConfig config, String locationId) async =>
+      throw UnsupportedError('hot reload is not supported by this core');
+
   /// Connection status updates.
   Stream<VpnStatus> statusStream();
 

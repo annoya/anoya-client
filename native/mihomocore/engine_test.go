@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	"github.com/metacubex/mihomo/log"
@@ -15,7 +16,7 @@ import (
 func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 	var out bytes.Buffer
 	logrus.SetOutput(&out)
-	t.Cleanup(func() { logrus.SetOutput(nil) })
+	t.Cleanup(func() { logrus.SetOutput(os.Stderr) })
 
 	setEngineLogLevel("info")
 	log.Infoln("while collecting")
@@ -41,5 +42,24 @@ func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 	log.Infoln("back on")
 	if !bytes.Contains(out.Bytes(), []byte("back on")) {
 		t.Fatalf("expected logging to resume, got %q", out.String())
+	}
+}
+
+// A hot reload must never be able to take the running tunnel down: a config
+// that does not parse has to be rejected *before* anything is applied, leaving
+// the engine on the previous config. (Parse happens in full before ApplyConfig
+// in startEngine/reloadEngine, so a returned error means the engine was never
+// touched.)
+func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
+	// "{" is not parseable YAML; anything parseable would reach ApplyConfig,
+	// which starts real listeners — exactly what this test must not do.
+	if err := reloadEngine(5, "{"); err == nil {
+		t.Fatal("a config that does not parse must be rejected")
+	}
+	if err := reloadEngine(5, ""); err == nil {
+		t.Fatal("an empty config must be rejected")
+	}
+	if err := reloadEngine(0, "log-level: info"); err == nil {
+		t.Fatal("a missing fd must be rejected")
 	}
 }

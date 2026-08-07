@@ -70,21 +70,30 @@ class NetworkExtensionCore implements VpnCore {
     // while parsing the config, before it reads log-level out of it.
     final yaml = mihomoTunConfigYaml(location,
         routing: config.routing, stack: 'gvisor', collectLogs: Log.enabled);
-    final serverIp = location.proxy['server']?.toString() ?? '';
     final routing = config.routing;
     final routingDesc =
         routing == null ? 'none (full tunnel)' : '${routing.mode}, ${routing.rules.length} rule(s)';
-    Log.i('NE connect: location=${location.id} (${location.label}) server=$serverIp routing=$routingDesc');
+    Log.i('NE connect: location=${location.id} (${location.label}) routing=$routingDesc');
     try {
       await _control.invokeMethod<void>('start', {
         'config': yaml,
-        'server_ip': serverIp,
         'log_enabled': Log.enabled,
       });
     } on PlatformException catch (e) {
       Log.e('NE start failed', e.message ?? e.code);
       rethrow;
     }
+  }
+
+  @override
+  Future<void> reload(NormConfig config, String locationId) async {
+    final rendered = await _render(config, locationId);
+    if (rendered == null) throw StateError('unknown location $locationId');
+    Log.i('NE hot reload: location=$locationId');
+    await _control.invokeMethod<void>('reload', {
+      ...rendered,
+      'log_enabled': Log.enabled,
+    });
   }
 
   @override
@@ -105,7 +114,7 @@ class NetworkExtensionCore implements VpnCore {
     NormConfig? config,
     String? locationId,
   }) async {
-    final rendered = _render(config, locationId);
+    final rendered = await _render(config, locationId);
     try {
       final armed = await _control.invokeMethod<bool>('set_on_demand', {
         'enabled': prefs.armed,
@@ -124,7 +133,7 @@ class NetworkExtensionCore implements VpnCore {
 
   @override
   Future<void> syncConfig(NormConfig config, String locationId) async {
-    final rendered = _render(config, locationId);
+    final rendered = await _render(config, locationId);
     if (rendered == null) return;
     try {
       await _control.invokeMethod<void>('sync_config', {
@@ -148,9 +157,12 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// Renders the YAML the extension will run plus the server IP to exclude
-  /// from the tunnel. Null when there is nothing to render.
-  Map<String, String>? _render(NormConfig? config, String? locationId) {
+  /// Renders the YAML the extension will run. Null when there is nothing to
+  /// render. The proxy server is deliberately NOT singled out here: the engine
+  /// binds its own dials to the physical interface, so nothing has to be routed
+  /// around the tunnel — which also means the server's hostname is never
+  /// resolved outside it.
+  Future<Map<String, String>?> _render(NormConfig? config, String? locationId) async {
     if (config == null || locationId == null) return null;
     Location? location;
     for (final l in config.locations) {
@@ -161,7 +173,6 @@ class NetworkExtensionCore implements VpnCore {
       return {
         'config': mihomoTunConfigYaml(location,
             routing: config.routing, stack: 'gvisor', collectLogs: Log.enabled),
-        'server_ip': location.proxy['server']?.toString() ?? '',
       };
     } catch (e) {
       Log.e('config render failed', '$e');

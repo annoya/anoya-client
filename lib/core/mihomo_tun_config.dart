@@ -52,6 +52,12 @@ String mihomoTunConfigYaml(
     'tun:',
     '  enable: true',
     '  stack: $stack',
+    // Without this the engine forwards ICMP with a DIRECT outbound of its own
+    // — it opens a socket on the physical interface, so `ping` while the VPN is
+    // up leaks the real address (the request enters the tun and leaves again
+    // outside it). Disabled, the stack answers echo requests itself and nothing
+    // escapes.
+    '  disable-icmp-forwarding: true',
     '  dns-hijack:',
     '    - any:53',
     // NE owns OS routing; mihomo just reads the fd. Detect the physical
