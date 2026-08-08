@@ -107,17 +107,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		6E1CF7BF30088D52009BE363 /* tunnel */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = tunnel;
-			sourceTree = "<group>";
-		};
 		6E1CF7D630088D72009BE363 /* Tunnel */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -220,7 +209,6 @@
 			children = (
 				9740EEB11CF90186004384FC /* Flutter */,
 				97C146F01CF9000F007C117D /* Runner */,
-				6E1CF7BF30088D52009BE363 /* tunnel */,
 				6E1CF7D630088D72009BE363 /* Tunnel */,
 				6E1CF7BC30088D52009BE363 /* Frameworks */,
 				97C146EF1CF9000F007C117D /* Products */,
