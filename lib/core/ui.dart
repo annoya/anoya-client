@@ -183,6 +183,11 @@ const int kSearchThreshold = 6;
 /// what makes it dismissable by a tap, not only by a swipe.
 const double kSheetMaxHeightFraction = 0.8;
 
+/// Status chip on the home screen: shorter than a control, because it reports a
+/// state rather than asking to be operated — but still tappable, so it keeps a
+/// comfortable target through its 8pt horizontal gaps.
+const double kStatusChipHeight = 30;
+
 /// The app's single way to choose from a list: a bottom sheet with a title,
 /// the current value marked by a filled row, and disabled rows kept visible
 /// (greyed, with their reason in the subtitle) rather than hidden.

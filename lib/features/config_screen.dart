@@ -9,6 +9,7 @@ import '../core/rule_set.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
+import '../state/routing_status.dart';
 import 'routing_screen.dart';
 
 /// Settings of one configuration (any, not just the active one): source,
@@ -25,15 +26,10 @@ class ConfigScreen extends ConsumerStatefulWidget {
 
 class _ConfigScreenState extends ConsumerState<ConfigScreen> {
   bool _refreshing = false;
-  List<RuleSet> _sets = [];
 
-  @override
-  void initState() {
-    super.initState();
-    RuleSetStore.load().then((s) {
-      if (mounted) setState(() => _sets = s);
-    });
-  }
+  /// The sets come from a provider rather than a one-off load: editing a set
+  /// elsewhere has to change the policy shown here, not just on the next visit.
+  List<RuleSet> get _sets => ref.watch(ruleSetsProvider).value ?? const [];
 
   ProfilesController get _ctrl => ref.read(profilesControllerProvider.notifier);
 
@@ -51,6 +47,15 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
     } finally {
       if (mounted) setState(() => _refreshing = false);
     }
+  }
+
+  /// What the routing switch is doing right now, in the same words the home
+  /// screen's chip uses.
+  String _routingSummary(Profile p, RuleSet? set) {
+    if (!p.routingEnabled) return 'Off · everything through the VPN';
+    final mode = (set?.mode ?? 'full') == 'split' ? 'Split' : 'Full tunnel';
+    final rules = set?.rules.length ?? 0;
+    return '$mode · ${rules == 0 ? 'no rules' : '$rules rule${rules > 1 ? 's' : ''}'}';
   }
 
   Future<void> _pickRuleSet(Profile p) async {
@@ -207,13 +212,34 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
             else
               Card(
                 margin: kCardMargin,
-                child: ListTile(
-                  leading: const Icon(Icons.layers_outlined),
-                  title: const Text('Rule set'),
-                  subtitle: Text(ruleSet?.name ?? 'Default'),
-                  trailing: const Icon(Icons.expand_more),
-                  onTap: () => _pickRuleSet(profile),
-                ),
+                child: Column(children: [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.alt_route),
+                    title: const Text('Routing'),
+                    // The subtitle is the policy in force, not a description of
+                    // the switch: the set itself is named in the row below, and
+                    // repeating it here would say nothing new.
+                    subtitle: Text(_routingSummary(profile, ruleSet)),
+                    value: profile.routingEnabled,
+                    onChanged: (v) => _ctrl.setRoutingEnabled(profile.id, v),
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  // Kept visible while off — hiding it would make the switch
+                  // look like it controls nothing, and the chosen set is
+                  // remembered for when routing comes back on.
+                  Opacity(
+                    opacity: profile.routingEnabled ? 1 : 0.38,
+                    child: ListTile(
+                      leading: const Icon(Icons.layers_outlined),
+                      title: const Text('Rule set'),
+                      subtitle: Text(ruleSet?.name ?? 'Default'),
+                      trailing: const Icon(Icons.expand_more),
+                      // Reachable with routing off: picking a set is how it gets
+                      // turned on.
+                      onTap: () => _pickRuleSet(profile),
+                    ),
+                  ),
+                ]),
               ),
 
             const SizedBox(height: 20),
