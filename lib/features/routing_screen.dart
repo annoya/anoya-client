@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_error.dart';
 import '../core/country_flag.dart';
@@ -8,13 +9,15 @@ import '../core/norm_config.dart';
 import '../core/rule_set.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
+import '../state/profiles_controller.dart';
+import '../state/routing_status.dart';
 
 /// Rule-set editor / managed-policy viewer.
 ///
 /// [RoutingScreen.editSet] edits one global rule set (mode + ordered rules,
 /// geoip/geosite included). [RoutingScreen.managed] shows a server-delivered
 /// policy read-only.
-class RoutingScreen extends StatefulWidget {
+class RoutingScreen extends ConsumerStatefulWidget {
   const RoutingScreen.managed(Routing this.managedPolicy, {super.key}) : setId = null;
   const RoutingScreen.editSet(String this.setId, {super.key}) : managedPolicy = null;
 
@@ -22,10 +25,10 @@ class RoutingScreen extends StatefulWidget {
   final String? setId;
 
   @override
-  State<RoutingScreen> createState() => _RoutingScreenState();
+  ConsumerState<RoutingScreen> createState() => _RoutingScreenState();
 }
 
-class _RoutingScreenState extends State<RoutingScreen> {
+class _RoutingScreenState extends ConsumerState<RoutingScreen> {
   String _name = 'Split tunneling';
   String _mode = 'full';
   List<RoutingRule> _rules = [];
@@ -74,6 +77,15 @@ class _RoutingScreenState extends State<RoutingScreen> {
         s.id == widget.setId ? s.copyWith(mode: _mode, rules: _rules) : s,
     ];
     await RuleSetStore.save(updated);
+    await _announce();
+  }
+
+  /// The edited set is what some configuration routes by, so its new mode has
+  /// to reach both the status shown on the home screen and the config the
+  /// system starts from.
+  Future<void> _announce() async {
+    ref.read(ruleSetRevisionProvider.notifier).bump();
+    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
   }
 
   Future<void> _deleteSet() async {
@@ -91,6 +103,7 @@ class _RoutingScreenState extends State<RoutingScreen> {
     if (ok != true) return;
     final sets = await RuleSetStore.load();
     await RuleSetStore.save(sets.where((s) => s.id != widget.setId).toList());
+    await _announce();
     if (mounted) Navigator.of(context).pop();
   }
 

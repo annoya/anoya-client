@@ -276,7 +276,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       state = state.copyWith(
         switching: false,
         error: const AppError('Couldn’t switch',
-            detail: 'The tunnel kept the previous server. Try again, or reconnect.'),
+            detail: 'The tunnel kept the previous configuration. Try again, or reconnect.'),
       );
     }
   }
@@ -303,14 +303,24 @@ class ProfilesController extends Notifier<ProfilesState> {
     return updated;
   }
 
-  /// Apply a global rule set to a profile (takes effect on the next connect,
-  /// same as editing the set itself).
-  Future<void> setRuleSet(String profileId, String ruleSetId) async {
+  /// Apply a global rule set to a profile. Picking a set also turns routing on:
+  /// choosing one and seeing nothing happen would read as a bug.
+  Future<void> setRuleSet(String profileId, String ruleSetId) =>
+      _updateRouting(profileId, (p) => p.copyWith(ruleSetId: ruleSetId, routingEnabled: true));
+
+  /// Turn this configuration's rule set on or off. Off leaves the chosen set
+  /// remembered — it comes back when routing is switched on again.
+  Future<void> setRoutingEnabled(String profileId, bool enabled) =>
+      _updateRouting(profileId, (p) => p.copyWith(routingEnabled: enabled));
+
+  /// Routing changes reach the tunnel the same way a server switch does: hot on
+  /// a live session, persisted otherwise.
+  Future<void> _updateRouting(String profileId, Profile Function(Profile) change) async {
     final p = _byId(profileId);
     if (p == null) return;
-    _replaceProfile(p.copyWith(ruleSetId: ruleSetId));
+    _replaceProfile(change(p));
     await ProfileStore.save(state.profiles);
-    if (profileId == state.activeId) await syncTunnelConfig();
+    if (profileId == state.activeId) await _applySelection();
   }
 
   void _replaceProfile(Profile updated) {
@@ -400,11 +410,12 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// while the databases aren't downloaded — a rule that can't match must not
   /// stall the engine into fetching 20+ MB mid-connect.
   Future<NormConfig> _normConfig(Profile p) async {
-    Routing? routing = p.routing;
-    if (routing == null) {
-      final set = await RuleSetStore.byId(p.ruleSetId);
-      routing = set.toRouting();
-    }
+    // Routing is opt-in per configuration: with it off no rule set is read at
+    // all, so everything goes into the tunnel.
+    Routing routing = p.routing ??
+        (p.routingEnabled
+            ? (await RuleSetStore.byId(p.ruleSetId)).toRouting()
+            : const Routing(mode: 'full', rules: []));
 
     if (routing.rules.any((r) => r.needsGeoData) &&
         !(await GeoStore.status()).downloaded) {

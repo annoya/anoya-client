@@ -26,6 +26,7 @@ class Profile {
     this.account,
     this.routing,
     this.ruleSetId,
+    this.routingEnabled = false,
     this.refreshedAt,
   });
 
@@ -48,6 +49,13 @@ class Profile {
   /// when the server delivers a managed [routing] policy.
   final String? ruleSetId;
 
+  /// Whether [ruleSetId] applies at all. Routing is opt-in per configuration —
+  /// off means no rule set is used and everything goes into the tunnel — because
+  /// rule sets are device-global while "should this configuration route around
+  /// the tunnel" is a per-configuration decision. A server-managed [routing]
+  /// policy ignores this flag: the server owns that policy.
+  final bool routingEnabled;
+
   final DateTime? refreshedAt;
 
   /// A single-server source (link) shows no location picker.
@@ -66,6 +74,7 @@ class Profile {
     Account? account,
     Routing? routing,
     String? ruleSetId,
+    bool? routingEnabled,
     DateTime? refreshedAt,
   }) =>
       Profile(
@@ -78,6 +87,7 @@ class Profile {
         account: account ?? this.account,
         routing: routing ?? this.routing,
         ruleSetId: ruleSetId ?? this.ruleSetId,
+        routingEnabled: routingEnabled ?? this.routingEnabled,
         refreshedAt: refreshedAt ?? this.refreshedAt,
       );
 
@@ -97,6 +107,7 @@ class Profile {
             ? Routing.fromJson(Map<String, dynamic>.from(j['routing'] as Map))
             : null,
         ruleSetId: j['rule_set_id'] as String?,
+        routingEnabled: j['routing_enabled'] as bool? ?? false,
         refreshedAt:
             j['refreshed_at'] != null ? DateTime.tryParse(j['refreshed_at'] as String) : null,
       );
@@ -111,6 +122,7 @@ class Profile {
         if (account != null) 'account': account!.toJson(),
         if (routing != null) 'routing': routing!.toJson(),
         if (ruleSetId != null) 'rule_set_id': ruleSetId,
+        if (routingEnabled) 'routing_enabled': true,
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
       };
 }

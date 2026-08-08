@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
+import '../state/routing_status.dart';
 import 'routing_screen.dart';
 
 /// Global rule sets: created here, applied per configuration (see the
@@ -63,6 +64,7 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
       name: trimmed,
     );
     await RuleSetStore.save([..._sets, set]);
+    ref.read(ruleSetRevisionProvider.notifier).bump();
     if (!mounted) return;
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => RoutingScreen.editSet(set.id)));

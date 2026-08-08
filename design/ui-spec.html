@@ -223,6 +223,14 @@
   .chip{font-size:13px;font-weight:500;color:var(--m-ink);border:1px solid var(--m-line);
     border-radius:8px;padding:6px 12px}
   .chip.on{color:var(--m-onpric);background:var(--m-pric);border-color:transparent}
+  /* home status strip: what the tunnel does beyond "everything through the VPN,
+     nothing recorded" — one tap from each chip into the screen that owns it.
+     Chip 30 pt, r8, icon 16; tonal = the feature is doing something. */
+  .strip{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:8px 16px 4px}
+  .pill{display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;
+    border:1px solid var(--m-line);color:var(--m-mut);font-size:12.5px;font-weight:500}
+  .pill.on{color:var(--m-onpric);background:var(--m-pric);border-color:transparent}
+  .pill.warn{color:var(--m-warn);border-color:color-mix(in srgb, var(--m-warn) 45%, transparent)}
   .hint{font-size:12.5px;color:var(--m-mut);padding:10px 0 0;line-height:1.4}
   .errtext{font-size:13px;color:var(--m-err);padding:8px 0 0}
   /* toast: сам исчезает через 3 c, закрывается тапом по себе, без крестика */
@@ -261,6 +269,8 @@
   .btn.hover{background-image:linear-gradient(color-mix(in srgb, var(--m-ink) 8%, transparent),
     color-mix(in srgb, var(--m-ink) 8%, transparent))}
   .ic.hover{border-radius:50%;background:color-mix(in srgb, var(--m-ink) 10%, transparent)}
+  .pill.hover{background-image:linear-gradient(color-mix(in srgb, var(--m-ink) 10%, transparent),
+    color-mix(in srgb, var(--m-ink) 10%, transparent))}
   .ring.hover{background:color-mix(in srgb, var(--rc) 20%, transparent)}
   .tip{position:absolute;background:var(--m-ink);color:var(--m-surface);font-size:12px;font-weight:500;
     padding:6px 10px;border-radius:8px;white-space:nowrap;z-index:5}
@@ -311,6 +321,8 @@
   <symbol id="i-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 3 14.9 8.9 21.4 9.8 16.7 14.4 17.8 20.9 12 17.8 6.2 20.9 7.3 14.4 2.6 9.8 9.1 8.9 12 3"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h5"/><path d="M18 8v4a4 4 0 0 1-4 4H9"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></symbol>
   <symbol id="i-lang" viewBox="0 0 24 24"><path d="M4 5h10"/><path d="M9 3v2c0 5-2.5 8-5 9"/><path d="M6 11c0 3 3 5 7 6"/><path d="M13 21l4-10 4 10"/><path d="M14.5 17.5h5"/></symbol>
 </defs></svg>
 
@@ -377,6 +389,7 @@
       <tr><td>Иконка в аппбаре: центр от края</td><td>28 слева и справа</td></tr>
       <tr><td>FAB</td><td>56, r16</td></tr>
       <tr><td>Кольцо подключения</td><td>180, обводка 3</td></tr>
+      <tr><td>Чип статус-бара</td><td>30, r8, икона 16</td></tr>
     </table>
   </div>
 </div>
@@ -558,7 +571,7 @@
 
 <!-- ============ 2 ============ -->
 <h2>2 · Главный экран</h2>
-<p class="flowdesc">Кольцо 180&nbsp;pt со статусом 16&nbsp;pt над ним (отступ 28) занимает всё свободное место и центрируется в нём. Карточки конфигурации и сервера — 72&nbsp;pt, прижаты к низу экрана с отступом 16: до них дотягивается большой палец, и кольцо не прыгает, когда появляется баннер. Конфигурация показывается всегда, даже единственная: шестерёнка 40&nbsp;pt ведёт в её настройки, шеврон вниз (только когда конфигураций больше одной) — выбор активной.</p>
+<p class="flowdesc">Кольцо 180&nbsp;pt со статусом 16&nbsp;pt над ним (отступ 28) занимает всё свободное место и центрируется в нём. Карточки конфигурации и сервера — 72&nbsp;pt, прижаты к низу экрана с отступом 16: до них дотягивается большой палец, и кольцо не прыгает, когда появляется баннер. Конфигурация показывается всегда, даже единственная: шестерёнка 40&nbsp;pt ведёт в её настройки, шеврон вниз (только когда конфигураций больше одной) — выбор активной. Под аппбаром — статус-бар из трёх чипов (авто-подключение, роутинг, логи), он описан ниже отдельно.</p>
 <div class="rail">
 
   <div class="board">
@@ -708,6 +721,149 @@
       </div>
     </div></div>
     <p class="cap"><span class="id">HomeScreen · error</span><b>Ошибка.</b> Вместо красной строки — модальный диалог по центру: затемнение гасит экран, пока ошибку не закроют крестиком. Заголовок говорит, что случилось, текст — что с этим делать. Раскладка не сдвигается, и пропустить сообщение нельзя.</p>
+  </div>
+</div>
+
+<h3>Статус-бар</h3>
+<p class="flowdesc">Полоса из трёх чипов сразу под аппбаром: авто-подключение, роутинг, сбор логов. Это единственное место, где видно, чем текущий туннель отличается от «всё через VPN, ничего не пишем, ничего не автоматизируем» — иначе эти три состояния живут в трёх разных экранах настроек и о них забывают. Тональный чип = функция что-то делает, обводка = выключена, warn = включена, но сейчас не работает. Тап по чипу ведёт в экран, который им владеет, — включая выключенные, оттуда их и включают. Чипы переносятся на вторую строку, если не влезли по ширине.</p>
+<p class="flowdesc">У роутинга три состояния, потому что он включается на уровне конфигурации: <code>off</code> — ни один набор правил не применяется, весь трафик в туннеле; <code>full</code> — набор применяется, по умолчанию всё в туннель, правила это исключения; <code>split</code> — в туннель идёт только то, что попало под правила. Чип показывает роутинг активной конфигурации: переключил конфигурацию — чип меняется вместе с ней.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="strip">
+          <span class="pill on"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · on</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-route"/></svg>Routing · split</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-doc"/></svg>Logs · on</span>
+        </div>
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34 · auto</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · status strip</span><b>Всё включено.</b> Три тональных чипа: система поднимает туннель сама, часть трафика идёт по правилам мимо VPN, движок пишет лог. Слово в чипе — не название экрана, а состояние, поэтому «включено/выключено» не приходится угадывать по цвету: цвет здесь второй носитель смысла, а не единственный.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="strip">
+          <span class="pill"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · off</span>
+          <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Routing · off</span>
+          <span class="pill"><svg class="icon xs"><use href="#i-doc"/></svg>Logs · off</span>
+        </div>
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat muted">Not connected</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-link"/></svg>
+            <div class="tx"><div class="t">backup.single</div><div class="s">Single server</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · status strip · defaults</span><b>Состояние по умолчанию.</b> Ничего не включено — полоса не исчезает, а показывает обводки: пустое место читалось бы как «настроек нет», а не как «всё выключено». Это же и состояние новой конфигурации: роутинг выключен, пока его не включат на её экране, поэтому мимо туннеля не уходит ничего, кроме LAN — и то лишь если это разрешено отдельным переключателем в общих настройках.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:764px">
+        <div class="strip">
+          <span class="pill warn"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · paused</span>
+          <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Routing · off</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-doc"/></svg>Logs · on</span>
+        </div>
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat muted">Not connected</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card banner"><div class="row">
+            <svg class="icon muted"><use href="#i-bolt"/></svg>
+            <div class="tx"><div class="t">Auto-connect paused</div><div class="s">Press Connect to arm it again</div></div>
+          </div></div>
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · status strip · paused</span><b>Включено, но не работает.</b> Авто-подключение вооружено в настройках, однако пользователь отключился вручную — чип уходит в warn, а не в обводку: «выключено» и «включено, но сейчас не сработает» это разные вещи. Баннер остаётся: чип сообщает состояние, баннер объясняет причину и что с ней делать. То же для состояний «ещё не вооружено до первого подключения» (<code>Auto · not armed</code>) и «включено, но правил нет» (<code>Auto · no rules</code>): системе нечего сопоставлять, значит подключаться сама она не станет.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler mac"><div class="mac">
+      <div class="macbar">
+        <span class="macdot" style="background:#ff5f57"></span><span class="macdot" style="background:#febc2e"></span><span class="macdot" style="background:#28c840"></span>
+        <span style="flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--m-mut);margin-right:60px">vpn_client</span>
+      </div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:536px">
+        <div class="maccol"><div class="strip">
+          <span class="pill on hover"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · on</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-route"/></svg>Routing · full</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-doc"/></svg>Logs · on</span>
+        </div></div>
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:04:11 · auto</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot maccol">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-org"/></svg>
+            <div class="tx"><div class="t">Acme Corp VPN</div><div class="s">Self-hosted · 3 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇳🇱</span>
+            <div class="tx"><div class="t">Amsterdam</div><div class="s">vless · nl1.acme.dev</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap wide"><span class="id">HomeScreen · status strip · macOS</span><b>macOS.</b> Полоса центрируется в тех же 560&nbsp;pt, что и карточки. Первый чип показан под курсором: чипы кликабельны, поэтому у них есть ховер — иначе они читались бы как подписи. Роутинг здесь включён в режиме <code>full</code>, и чип тональный: набор применяется, просто его правила описывают исключения, а не то, что заворачивать в туннель.</p>
   </div>
 </div>
 
@@ -965,15 +1121,59 @@
         <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
       </div></div>
       <div class="sh">ROUTING</div>
-      <div class="card"><div class="row">
-        <svg class="icon muted"><use href="#i-layers"/></svg>
-        <div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div>
-        <svg class="icon muted"><use href="#i-exp"/></svg>
-      </div></div>
+      <div class="card">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">Routing</div><div class="s">Split · 12 rules</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg>
+        </div>
+      </div>
       <div class="btn out" style="margin-top:20px"><svg class="icon s"><use href="#i-check"/></svg>Set active</div>
       <div class="btn err"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen</span><b>Конфигурация.</b> Экран любой конфигурации, не только активной: сюда ведут и шестерёнка с главного, и строка из шита в настройках. «Set active» не закрывает экран — галочка переезжает в верхнюю карточку, а сама кнопка исчезает. Кнопки 48&nbsp;pt внизу с отступом 16.</p>
+    <p class="cap"><span class="id">ConfigScreen</span><b>Конфигурация.</b> Экран любой конфигурации, не только активной: сюда ведут и шестерёнка с главного, и строка из шита в настройках. «Set active» не закрывает экран — галочка переезжает в верхнюю карточку, а сама кнопка исчезает. Кнопки 48&nbsp;pt внизу с отступом 16. Роутинг включается тумблером именно здесь, на уровне конфигурации: наборы правил глобальные, а применять их к рабочей подписке и к личной обычно нужно по-разному. Подпись тумблера — действующая политика, а не название функции: набор виден строкой ниже, дублировать его нечем.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">nexus.13371488</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Source</div><div class="s">sub.nexus.13371488.xyz/s/a1b2c3</div></div>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">5 min ago · auto every 5 min</div></div>
+        <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div>
+          <span class="sw off"><i></i></span>
+        </div>
+        <div class="sep"></div>
+        <div class="row" style="opacity:.38">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg>
+        </div>
+      </div>
+      <div class="btn out" style="margin-top:20px"><svg class="icon s"><use href="#i-check"/></svg>Set active</div>
+      <div class="btn err"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · routing off</span><b>Роутинг выключен.</b> Ни один набор не применяется — весь трафик идёт в туннель. Строка набора остаётся видимой, но погашенной: спрятать её значило бы, что тумблер ничем не управляет, а выбранный набор при этом помнится и вернётся при включении. Выбор набора из шита включает тумблер сам — иначе выбор выглядел бы проигнорированным. «Local network direct» из общих настроек тумблеру не подчиняется: это отдельное решение про LAN, а не набор правил.</p>
   </div>
 
   <div class="board">
@@ -1000,7 +1200,7 @@
       </div></div>
       <div class="btn err" style="margin-top:20px"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · managed</span><b>Управляемая политика.</b> Вместо выбора набора — баннер на primary-container.</p>
+    <p class="cap"><span class="id">ConfigScreen · managed</span><b>Управляемая политика.</b> Вместо выбора набора — баннер на primary-container. Тумблера здесь нет: политикой владеет сервер, и локальный выключатель разошёлся бы с тем, что показывает управляющий сервис. Поэтому чип на главном у такой конфигурации никогда не бывает <code>off</code> — только действующий режим.</p>
   </div>
 
   <div class="board">
