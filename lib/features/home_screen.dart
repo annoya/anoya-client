@@ -14,7 +14,11 @@ import '../state/favorites_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
+import '../state/routing_status.dart';
 import 'config_screen.dart';
+import 'logs_screen.dart';
+import 'on_demand_screen.dart';
+import 'rule_sets_screen.dart';
 import 'settings_screen.dart';
 import 'start_screen.dart';
 
@@ -130,6 +134,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: IntrinsicHeight(
                 child: Column(
                   children: [
+                    _statusStrip(),
                     Expanded(
                       child: Center(
                         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -186,6 +191,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     };
     return Text(text,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color, fontWeight: FontWeight.w600));
+  }
+
+  void _push(Widget screen) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+
+  /// The three things that change how the tunnel behaves and otherwise live on
+  /// three separate settings screens: whether the system connects on its own,
+  /// whether any traffic is routed around the tunnel, and whether anything is
+  /// written to the log. Each chip opens the screen that owns it — the off ones
+  /// too, since that is where they get turned on.
+  Widget _statusStrip() {
+    final onDemand = ref.watch(onDemandProvider);
+    final collectLogs = ref.watch(appPrefsProvider).collectLogs;
+    final routing = ref.watch(routingStatusProvider).value;
+    final active = ref.watch(profilesControllerProvider).active;
+
+    // "Enabled but not currently working" is its own state: showing it as off
+    // would send the user to a screen where the switch is already on. Only the
+    // last case means the OS confirmed it is auto-connecting.
+    final (autoLabel, autoTone) = switch (onDemand) {
+      OnDemandPrefs(enabled: false) => ('off', _ChipTone.off),
+      OnDemandPrefs(paused: true) => ('paused', _ChipTone.pending),
+      OnDemandPrefs(rules: []) => ('no rules', _ChipTone.pending),
+      OnDemandPrefs(systemArmed: false) => ('not armed', _ChipTone.pending),
+      _ => ('on', _ChipTone.on),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(left: kGutter, right: kGutter, top: 8, bottom: 4),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _StatusChip(
+            icon: Icons.bolt_outlined,
+            label: 'Auto · $autoLabel',
+            tone: autoTone,
+            onTap: () => _push(const OnDemandScreen()),
+          ),
+          _StatusChip(
+            icon: Icons.alt_route,
+            // The value is unknown only until the rule set is read off disk, so
+            // it holds its place with an ellipsis instead of the chip appearing
+            // a frame late and shifting the row.
+            label: 'Routing · ${routing?.label ?? '…'}',
+            tone: routing == null || routing == RoutingStatus.off ? _ChipTone.off : _ChipTone.on,
+            // Routing is a per-configuration setting, so the chip leads to the
+            // active configuration; with none added yet, to the sets themselves.
+            onTap: () => _push(
+                active == null ? const RuleSetsScreen() : ConfigScreen(profileId: active.id)),
+          ),
+          _StatusChip(
+            icon: Icons.description_outlined,
+            label: 'Logs · ${collectLogs ? 'on' : 'off'}',
+            tone: collectLogs ? _ChipTone.on : _ChipTone.off,
+            onTap: () => _push(const LogsScreen()),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Explains why the system is not auto-connecting: either the user paused it
@@ -374,6 +440,67 @@ class _ConnectButton extends StatelessWidget {
                   Text(connected ? 'Disconnect' : 'Connect',
                       style: TextStyle(color: color, fontWeight: FontWeight.w600)),
                 ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Tone of a status chip: on = the feature is doing something, off = it is not,
+/// pending = it is switched on but not in effect right now.
+enum _ChipTone { on, off, pending }
+
+/// Reports one piece of tunnel state and opens the screen that owns it. Not a
+/// Material chip: those are sized for selection and filtering, and this one has
+/// to stay 30pt so three of them read as a status line rather than a toolbar.
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.icon,
+    required this.label,
+    required this.tone,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final _ChipTone tone;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final (fg, bg, border) = switch (tone) {
+      _ChipTone.on => (cs.onPrimaryContainer, cs.primaryContainer, null),
+      _ChipTone.off => (cs.onSurfaceVariant, null, cs.outlineVariant),
+      _ChipTone.pending => (
+          context.vpnColors.connecting,
+          null,
+          context.vpnColors.connecting.withValues(alpha: 0.45),
+        ),
+    };
+    return Material(
+      color: bg ?? Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: border == null ? BorderSide.none : BorderSide(color: border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: SizedBox(
+            height: kStatusChipHeight,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(color: fg, fontWeight: FontWeight.w500)),
+            ]),
+          ),
         ),
       ),
     );
