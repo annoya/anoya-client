@@ -27,6 +27,7 @@ class Profile {
     this.routing,
     this.ruleSetId,
     this.routingEnabled = false,
+    this.dns = const [],
     this.refreshedAt,
   });
 
@@ -56,6 +57,11 @@ class Profile {
   /// policy ignores this flag: the server owns that policy.
   final bool routingEnabled;
 
+  /// Resolvers this config brought along (a subscription's `dns.nameserver`,
+  /// a self-hosted bundle's `dns`). Empty means the app default. Refresh
+  /// replaces the whole list, so a source that drops its DNS drops ours too.
+  final List<String> dns;
+
   final DateTime? refreshedAt;
 
   /// A single-server source (link) shows no location picker.
@@ -75,6 +81,7 @@ class Profile {
     Routing? routing,
     String? ruleSetId,
     bool? routingEnabled,
+    List<String>? dns,
     DateTime? refreshedAt,
   }) =>
       Profile(
@@ -88,6 +95,7 @@ class Profile {
         routing: routing ?? this.routing,
         ruleSetId: ruleSetId ?? this.ruleSetId,
         routingEnabled: routingEnabled ?? this.routingEnabled,
+        dns: dns ?? this.dns,
         refreshedAt: refreshedAt ?? this.refreshedAt,
       );
 
@@ -108,6 +116,7 @@ class Profile {
             : null,
         ruleSetId: j['rule_set_id'] as String?,
         routingEnabled: j['routing_enabled'] as bool? ?? false,
+        dns: (j['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
         refreshedAt:
             j['refreshed_at'] != null ? DateTime.tryParse(j['refreshed_at'] as String) : null,
       );
@@ -123,6 +132,7 @@ class Profile {
         if (routing != null) 'routing': routing!.toJson(),
         if (ruleSetId != null) 'rule_set_id': ruleSetId,
         if (routingEnabled) 'routing_enabled': true,
+        if (dns.isNotEmpty) 'dns': dns,
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
       };
 }

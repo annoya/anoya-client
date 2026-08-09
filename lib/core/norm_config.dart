@@ -3,7 +3,12 @@
 // keyed by "type", which the active VpnCore knows how to translate.
 
 class NormConfig {
-  NormConfig({required this.version, required this.account, required this.locations, this.routing});
+  NormConfig(
+      {required this.version,
+      required this.account,
+      required this.locations,
+      this.routing,
+      this.dns = const []});
 
   final int version;
   final Account account;
@@ -12,6 +17,11 @@ class NormConfig {
   /// Split-tunneling policy. Set by the server ("managed") or filled in from
   /// the device-local rules before the config is handed to the core.
   final Routing? routing;
+
+  /// Resolvers the config ships with (mihomo nameserver syntax). Empty means
+  /// the app default; the tunnel config carries them, so switching configs
+  /// switches DNS with no extra plumbing.
+  final List<String> dns;
 
   factory NormConfig.fromJson(Map<String, dynamic> json) {
     final locs = (json['locations'] as List<dynamic>? ?? [])
@@ -23,11 +33,12 @@ class NormConfig {
       account: Account.fromJson(json['account'] as Map<String, dynamic>? ?? {}),
       locations: locs,
       routing: routingJson is Map ? Routing.fromJson(Map<String, dynamic>.from(routingJson)) : null,
+      dns: (json['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
     );
   }
 
-  NormConfig withRouting(Routing? routing) =>
-      NormConfig(version: version, account: account, locations: locations, routing: routing);
+  NormConfig withRouting(Routing? routing) => NormConfig(
+      version: version, account: account, locations: locations, routing: routing, dns: dns);
 }
 
 /// Split-tunneling policy: mode + ordered rules, first match wins (the same
