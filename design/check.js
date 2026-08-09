@@ -9,12 +9,13 @@
     return b?.querySelector('.cap .id')?.textContent?.trim() || '(no id)';
   };
 
-  // 1. frames must not overflow (phone 874, mac 630)
+  // 1. frames must not overflow (phone 393×852; macOS window 400×738 — its
+  //    default content area plus a 38pt title bar)
   document.querySelectorAll('.ph, .mac').forEach(f => {
-    const limit = f.classList.contains('ph') ? 874 : 630;
+    const limit = f.classList.contains('ph') ? 852 : 738;
     const over = f.scrollHeight - limit;
     if (over > 2) bad.push(`${label(f)}: content overflows frame by ${over}pt`);
-    const wide = f.scrollWidth - (f.classList.contains('ph') ? 402 : 700);
+    const wide = f.scrollWidth - (f.classList.contains('ph') ? 393 : 400);
     if (wide > 2) bad.push(`${label(f)}: content wider than frame by ${wide}pt`);
   });
 
@@ -119,7 +120,7 @@
   // 8. class-name collisions: a class used inside a canvas must not also be a
   // page-chrome class (".wrap" as a text modifier once inherited the page
   // container's 36/28/80 padding; ".ph" as a placeholder inherited the phone's
-  // 874pt height). Page chrome = anything outside .ph/.mac.
+  // 852pt height). Page chrome = anything outside .ph/.mac.
   const inside = new Set();
   document.querySelectorAll('.ph *, .mac *').forEach(el => {
     (el.classList || []).forEach(c => inside.add(c));

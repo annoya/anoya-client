@@ -6,9 +6,11 @@ class MainFlutterWindow: NSWindow {
     let flutterViewController = FlutterViewController()
     self.contentViewController = flutterViewController
 
-    // Default phone-ish window size; resizable, with a sane minimum.
-    self.setContentSize(NSSize(width: 400, height: 600))
-    self.minSize = NSSize(width: 360, height: 480)
+    // Phone-shaped by default (close to the 393×852 the screens are designed
+    // for), but the user resizes it freely — a locked window on a desktop is a
+    // nuisance, and the layouts already stretch.
+    self.setContentSize(NSSize(width: 400, height: 700))
+    self.contentMinSize = NSSize(width: 360, height: 480)
     self.center()
 
     RegisterGeneratedPlugins(registry: flutterViewController)
