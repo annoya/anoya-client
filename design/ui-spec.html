@@ -127,6 +127,10 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .s.multi{white-space:normal}
   .flag{font-size:26px;line-height:1;width:26px;text-align:center}
+  /* simple-routing catalog: brand glyph (Simple Icons, monochrome, theme-tinted)
+     with a letter fallback for categories that have no logo */
+  .avat{width:26px;height:26px;border-radius:50%;background:var(--m-pric);color:var(--m-onpric);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:0 0 auto}
   .sep{height:1px;background:var(--m-line);margin:0 16px}
   /* SectionHeader: 16/20/16/8, labelMedium 12 caps ls .8 */
   .sh{font-size:12px;font-weight:500;letter-spacing:.8px;color:var(--m-mut);padding:20px 16px 8px}
@@ -390,6 +394,7 @@
       <tr><td>FAB</td><td>56, r16</td></tr>
       <tr><td>Кольцо подключения</td><td>180, обводка 3</td></tr>
       <tr><td>Чип статус-бара</td><td>30, r8, икона 16</td></tr>
+      <tr><td>Аватар сервиса (simple-роутинг)</td><td>26, круг, буква 13/w700</td></tr>
     </table>
   </div>
 </div>
@@ -480,11 +485,11 @@
         <div class="row"><div class="tx"><div class="t">domain-keyword</div><div class="s">domain contains</div></div></div>
         <div class="row"><div class="tx"><div class="t">domain-exact</div><div class="s">exact domain</div></div></div>
         <div class="row"><div class="tx"><div class="t">ip-cidr</div><div class="s">IP range</div></div></div>
-        <div class="row"><div class="tx"><div class="t">process-name</div><div class="s">app (desktop only)</div></div></div>
+        <div class="row" style="opacity:.38"><div class="tx"><div class="t">process-name</div><div class="s">not available on this platform</div></div></div>
         <div class="row"><div class="tx"><div class="t">geoip</div><div class="s">country by IP</div></div></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">pickOption</span><b>Шит выбора.</b> Заголовок 16&nbsp;pt по центру, строки 72&nbsp;pt, галочка на текущем; недоступные — прозрачность .38 и причина в подписи.</p>
+    <p class="cap"><span class="id">pickOption</span><b>Шит выбора.</b> Заголовок 16&nbsp;pt по центру, строки 72&nbsp;pt, галочка на текущем; недоступные — прозрачность .38 и причина в подписи. Здесь это <code>process-name</code> на телефоне: правило «по приложению» требует узнать, какой процесс владеет соединением, а в песочнице расширения iOS/Android этого не видно. Правило, приехавшее с десктопа, из набора не удаляется — оно показывается строкой «inactive — desktop only» и не доходит до движка.</p>
   </div>
 </div>
 
@@ -1251,7 +1256,8 @@
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Default</span></div>
-      <div class="card" style="margin-top:8px"><div style="padding:16px">
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
         <div class="segm"><div class="on">Full tunnel</div><div>Split</div></div>
         <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">All traffic goes through the VPN; rules define exceptions.</div>
       </div></div>
@@ -1259,7 +1265,7 @@
       <div class="empty" style="padding:16px">No rules: all traffic goes through the VPN.</div>
       <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
     </div></div>
-    <p class="cap"><span class="id">RoutingScreen · empty</span><b>Пустой набор.</b> Сегмент внутри карточки с паддингом 16, пояснение 12.5&nbsp;pt.</p>
+    <p class="cap"><span class="id">RoutingScreen · empty</span><b>Пустой набор, Advanced.</b> Верхний сегмент — режим редактора, нижний (в карточке) — направление full/split. Пояснение 12.5&nbsp;pt под направлением.</p>
   </div>
 
   <div class="board">
@@ -1267,7 +1273,8 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
         <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
-      <div class="card" style="margin-top:8px"><div style="padding:16px">
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
         <div class="segm"><div class="on">Full tunnel</div><div>Split</div></div>
         <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">All traffic goes through the VPN; rules define exceptions.</div>
       </div></div>
@@ -1298,7 +1305,7 @@
       </div></div>
       <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
     </div></div>
-    <p class="cap"><span class="id">RoutingScreen · editSet</span><b>Редактор.</b> Строка правила 64&nbsp;pt: тег 46 · текст · две кнопки 40.</p>
+    <p class="cap"><span class="id">RoutingScreen · editSet</span><b>Advanced-редактор.</b> Прежний экспертный вид: упорядоченные правила всех типов (домены, ip-cidr, geo, block), «first match wins», перетаскивание. Строка правила 64&nbsp;pt: тег 46 · текст · две кнопки 40. Simple и Advanced — виды на один набор: сервисы из каталога здесь видны обычными geosite-правилами.</p>
   </div>
 
   <div class="board">
@@ -1306,6 +1313,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
         <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
       <div class="card warn" style="margin-top:12px">
         <div class="row"><svg class="icon" style="color:var(--m-warn)"><use href="#i-globe-off"/></svg>
           <div class="tx"><div class="t">Geo databases not downloaded</div><div class="s multi">geoip / geosite rules are inactive until then (~25 MB)</div></div></div>
@@ -1370,6 +1378,133 @@
 </div>
 
 <!-- ============ 5 ============ -->
+<h3>Простой режим редактора</h3>
+<p class="flowdesc">У редактора набора два режима: <b>Simple</b> — каталог из ~34 сервисов (в группах Streaming · Messengers · Social · Other) и стран, с переключателями, для человека, который не знает слов «geosite» и «first match wins»; <b>Advanced</b> — прежний список правил. Это два вида на одни и те же данные, а не два формата: включённый в каталоге сервис хранится обычным правилом <code>geosite</code>, страна — <code>geoip</code>, и в Advanced они видны как правила. Направление задаётся по-человечески: «Only selected» = split (в VPN идёт только выбранное), «All except selected» = full (в VPN идёт всё, выбранное — напрямую). Действие переключателей выводится из направления, пользователь его не выбирает. Режим редактора хранится в наборе; новый набор открывается в Simple.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Streaming</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div class="on">Simple</div><div>Advanced</div></div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
+        <div class="segm"><div class="on">Only selected</div><div>All except selected</div></div>
+        <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">Only the services you pick go through the VPN. Everything else connects directly.</div>
+      </div></div>
+      <div style="padding:8px 16px 0">
+        <div class="inp sel"><svg class="icon muted"><use href="#i-search"/></svg>
+          <div class="tx"><div class="vl plc">Search services</div></div></div>
+      </div>
+      <div class="sh">STREAMING</div>
+      <div class="card">
+        <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">YouTube</div></div><span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">N</span><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">S</span><div class="tx"><div class="t">Spotify</div></div><span class="sw off"><i></i></span></div>
+      </div>
+      <div class="sh">MESSENGERS</div>
+      <div class="card">
+        <div class="row one"><span class="avat">T</span><div class="tx"><div class="t">Telegram</div></div><span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">D</span><div class="tx"><div class="t">Discord</div></div><span class="sw off"><i></i></span></div>
+      </div>
+      <div class="hint" style="padding:10px 16px 0">2 services selected · everything else connects directly</div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · simple</span><b>Simple, «только выбранное».</b> Каталог — ~34 сервиса в четырёх группах (Streaming · Messengers · Social · Other), строки 56&nbsp;pt с аватаром 26 и переключателем. Аватар — монохромный глиф бренда (Simple Icons, CC0), тонированный в цвет темы; для категорий без логотипа — буква. Никаких сетевых запросов ради иконок: фавиконки в рантайме слили бы список интересующих пользователя сервисов ещё до поднятия туннеля. Никаких «PROXY/DIRECT»: действие следует из направления сверху. Поиск — от шести элементов, как во всех списках. Итоговая строка внизу повторяет смысл выбора словами.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Home</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div class="on">Simple</div><div>Advanced</div></div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
+        <div class="segm"><div>Only selected</div><div class="on">All except selected</div></div>
+        <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">Everything goes through the VPN. The services you pick connect directly.</div>
+      </div></div>
+      <div style="padding:8px 16px 0">
+        <div class="inp sel"><svg class="icon muted"><use href="#i-search"/></svg>
+          <div class="tx"><div class="vl plc">Search services</div></div></div>
+      </div>
+      <div class="sh">COUNTRIES</div>
+      <div class="card">
+        <div class="row one"><svg class="icon muted"><use href="#i-plus"/></svg><div class="tx"><div class="t muted">Add country</div></div></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="flag">🇷🇺</span><div class="tx"><div class="t">Russian websites</div></div>
+          <span class="iconbtn"><svg class="icon xs muted"><use href="#i-trash"/></svg></span></div>
+      </div>
+      <div class="sh">SERVICES</div>
+      <div class="card">
+        <div class="row one"><svg class="icon muted"><use href="#i-plus"/></svg><div class="tx"><div class="t muted">Add category</div></div></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">yandex</div></div>
+          <span class="iconbtn"><svg class="icon xs muted"><use href="#i-trash"/></svg></span></div>
+      </div>
+      <div class="card">
+        <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">YouTube</div></div><span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">N</span><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div>
+      </div>
+      <div class="hint" style="padding:10px 16px 0">1 selected · it connects directly, the rest goes through the VPN</div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · simple · exceptions</span><b>Simple, «всё, кроме выбранного».</b> Типовой сценарий: весь трафик в VPN, а сайты своей страны — напрямую (банки и госсайты, которые не любят иностранные адреса). Страна — это <code>geoip</code> с флагом; «Add country» и «Add category» стоят первыми строками своих секций — в хвосте каталога из тридцати позиций их не нашёл бы никто. «Add category» открывает тот же пикер по всей GeoSite.dat, что в Advanced: каталог — витрина, а не граница, и за любой категорией не нужно уходить в другой режим. Добавленное — страны и некаталожные категории — становится строкой прямо под своей кнопкой добавления, с корзиной вместо переключателя: у добавленного нет состояния «выключено, но оставить», а переключатель, чьё выключение стирает строку, именно об этом и врал бы. Каталожные сервисы наоборот остаются на месте выключенными — это постоянная витрина. Подпись направления и итоговая строка меняются вместе с сегментом — текст всегда говорит, что случится с невыбранным.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Streaming</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div class="on">Simple</div><div>Advanced</div></div></div>
+      <div class="card warn" style="margin-top:12px">
+        <div class="row"><svg class="icon" style="color:var(--m-warn)"><use href="#i-globe-off"/></svg>
+          <div class="tx"><div class="t">Download the site lists first</div><div class="s multi">Picking services needs the geo databases (~25 MB, one time)</div></div></div>
+        <div style="display:flex;justify-content:flex-end;padding:0 16px 12px">
+          <span class="act fill" style="background:var(--m-pric);color:var(--m-onpric)">Download</span></div>
+      </div>
+      <div class="sh">SERVICES</div>
+      <div class="card" style="opacity:.38">
+        <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">YouTube</div></div><span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">I</span><div class="tx"><div class="t">Instagram</div></div><span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">N</span><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · simple · no geo</span><b>Без geo-баз.</b> Simple целиком построен на geosite/geoip, поэтому без баз каталог не работает вовсе — переключатели погашены, баннер объясняет зачем скачивать. В Advanced без баз живут только не-geo правила; здесь таких нет, так что гейт честнее показать сразу.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div class="on">Simple</div><div>Advanced</div></div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
+        <div class="segm"><div class="on">Only selected</div><div>All except selected</div></div>
+        <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">Only the services you pick go through the VPN. Everything else connects directly.</div>
+      </div></div>
+      <div class="card banner"><div class="row">
+        <svg class="icon muted"><use href="#i-layers"/></svg>
+        <div class="tx"><div class="t">Advanced rules · 3</div><div class="s">Apply before the list below · edit in Advanced</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">SERVICES</div>
+      <div class="card">
+        <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">YouTube</div></div><span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">G</span><div class="tx"><div class="t">GitHub</div></div><span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">C</span><div class="tx"><div class="t">ChatGPT</div></div><span class="sw off"><i></i></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · simple · advanced</span><b>Набор с ручными правилами.</b> Simple — вид, а не фильтр с потерями: правила, которые каталогом не выражаются (домены, ip-cidr, block), не прячутся и не удаляются — они собраны в одну строку-ссылку в Advanced, с честным «apply before the list below». Переключение Simple ↔ Advanced ничего не стирает никогда.</p>
+  </div>
+</div>
+
 <h2>5 · Диалог правила</h2>
 <div class="rail">
 
@@ -1442,18 +1577,33 @@
         <h4>Add rule</h4>
         <div class="body">
           <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">geosite</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="inp focus" style="margin-top:8px"><div class="lb">Value</div><div class="vl">netflix</div></div>
-          <div class="chips">
-            <span class="chip on">netflix</span><span class="chip">youtube</span><span class="chip">telegram</span>
-            <span class="chip">google</span><span class="chip">category-ads-all</span>
-          </div>
+          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Category</div><div class="vl">netflix · 5 210 domains</div></div><svg class="icon muted"><use href="#i-chev"/></svg></div>
           <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
           <div class="hint">→ “netflix” domains (GeoSite list) connect directly, bypassing the VPN.</div>
         </div>
         <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">_RuleDialog · geosite</span><b>GeoSite.</b> Чипы 32&nbsp;pt, r8, с шагом 8.</p>
+    <p class="cap"><span class="id">_RuleDialog · geosite</span><b>GeoSite.</b> Та же форма, что у geoip: категория выбирается из пикера, не вводится руками — выбрать можно только то, что существует в скачанной базе, и класс ошибок «опечатка в категории ломает загрузку правил» исчезает. Свободного поля и чипов-подсказок больше нет.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="sheet" style="height:560px">
+        <div class="grab"></div>
+        <div style="padding:8px 16px 4px"><div class="inp focus"><div class="lb">Category</div><div class="vl">you</div></div></div>
+        <div class="sh">POPULAR</div>
+        <div class="row"><span class="avat">Y</span><div class="tx"><div class="t">youtube</div><div class="s">5 431 domains</div></div></div>
+        <div class="sh">ALL · 14 OF 1 520 MATCH</div>
+        <div class="row"><div class="tx"><div class="t">youku</div><div class="s">312 domains</div></div></div>
+        <div class="row"><div class="tx"><div class="t">yandex</div><div class="s">1 044 domains</div></div></div>
+        <div class="row"><div class="tx"><div class="t">category-youtube-music</div><div class="s">27 domains</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_GeositeSheet</span><b>Пикер категории.</b> Все категории из скачанной GeoSite.dat (~1 500), с числом доменов в подписи — видно, выбираешь ты сервис или три домена. Сверху POPULAR — те же ~34 позиции, что в каталоге Simple, с теми же аватарами; остальное по алфавиту, поиск фильтрует обе группы. Без скачанной базы geosite-правило не создать: поле «Category» ведёт на баннер загрузки — тот же гейт, что в Simple.</p>
   </div>
 
   <div class="board">
@@ -2022,6 +2172,99 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <tr><td>Скачивание гео не удалось</td><td>Базы не обновились · тост</td></tr>
       <tr><td>Всё остальное</td><td>Что-то пошло не так · подробности в логах · тост</td></tr>
     </table>
+  </div>
+</div>
+
+<h2>10 · Live Activity — Dynamic Island и экран блокировки (iOS)</h2>
+<p class="flowdesc">Опциональный вывод статуса туннеля на системные поверхности iOS: Dynamic Island (iPhone 14 Pro и новее) и карточка Live Activity на экране блокировки (любое устройство с iOS 16.1+). Включается тумблером в настройках; по умолчанию выключено — VPN-статус на всегда видимой поверхности это утечка приватности через плечо, такое включают осознанно. Поверхности системные: остров всегда чёрный и не следует теме приложения, цвета здесь — системные iOS (зелёный 30d158, янтарный ffd60a), а не наши токены.</p>
+<p class="flowdesc">Жизненный цикл: активность создаётся при подключении из приложения, обновляется при смене статуса, сервера и конфигурации (горячее переключение показывает «Switching…» и новый сервер), завершается при отключении и при выключении опции. Ограничение iOS: создать активность может только приложение на переднем плане — фоновое on-demand-подключение остров не зажжёт; активность досоздаётся при следующем открытии приложения. Пока приложение спит и не может обновлять контент, система по staleDate приглушает активность — остров не должен врать про статус, которого никто не подтверждал.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sh">COMPACT — 37 PT, ПО СТОРОНАМ ВЫРЕЗА</div>
+      <div style="display:flex;justify-content:center;padding:4px 0 16px">
+        <div class="isl" style="height:37px;border-radius:19px;padding:0 12px;gap:10px">
+          <svg class="icon xs" style="color:#30d158"><use href="#i-power"/></svg>
+          <span class="cam"></span>
+          <span style="font-size:13px;font-weight:600;color:#30d158;font-variant-numeric:tabular-nums">12:34</span>
+        </div>
+      </div>
+      <div class="sh">COMPACT · ПЕРЕКЛЮЧЕНИЕ</div>
+      <div style="display:flex;justify-content:center;padding:4px 0 16px">
+        <div class="isl" style="height:37px;border-radius:19px;padding:0 12px;gap:10px">
+          <svg class="icon xs" style="color:#ffd60a"><use href="#i-refresh"/></svg>
+          <span class="cam"></span>
+          <span style="font-size:13px;font-weight:600;color:#ffd60a">🇯🇵</span>
+        </div>
+      </div>
+      <div class="sh">MINIMAL — КОГДА АКТИВНОСТЕЙ ДВЕ</div>
+      <div style="display:flex;justify-content:center;padding:4px 0 16px">
+        <div class="isl" style="height:37px;width:45px;border-radius:19px;justify-content:center">
+          <svg class="icon xs" style="color:#30d158"><use href="#i-power"/></svg>
+        </div>
+      </div>
+      <div class="sh">EXPANDED — ДОЛГИЙ ТАП ПО ОСТРОВУ</div>
+      <div style="padding:4px 16px 0">
+        <div class="isl exp" style="border-radius:44px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="flag" style="font-size:30px;width:30px">🇩🇪</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600">h2.nexus</div>
+              <div style="font-size:12.5px;color:#98989f">nexus.13371488</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:20px;font-weight:600;color:#30d158;font-variant-numeric:tabular-nums">00:12:34</div>
+              <div style="font-size:12.5px;color:#98989f">Connected · auto</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">LiveActivity · island</span><b>Остров.</b> Compact: иконка питания в цвете статуса слева от выреза, таймер сессии справа — то, ради чего вообще смотрят на остров. При горячем переключении иконка меняется на янтарную стрелку, справа — флаг нового сервера; статус «переключаюсь» живёт секунды, поэтому без текста. Expanded (долгий тап): сервер с флагом и конфигурацией, крупный таймер, строка статуса; «· auto» — когда туннель держит система. Тап по любому виду открывает приложение.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph"><div class="lascreen">
+      <div class="sb" style="color:#fff"><span class="side">&nbsp;</span><span class="island" style="background:#111"></span><span class="side r">🛜 🔋</span></div>
+      <div style="padding-top:40px">
+        <div class="ladate">Friday, August 7</div>
+        <div class="laclock">13:37</div>
+      </div>
+      <div style="height:330px"></div>
+      <div class="lacard">
+        <div style="display:flex;align-items:center;gap:12px">
+          <svg class="icon" style="color:#30d158"><use href="#i-power"/></svg>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:600">Connected · 00:12:34</div>
+            <div style="font-size:12.5px;color:#98989f">🇩🇪 h2.nexus · nexus.13371488</div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <p class="cap"><span class="id">LiveActivity · lock screen</span><b>Экран блокировки.</b> Та же активность на устройствах без острова (и на всех — при заблокированном экране): карточка r24 с иконкой в цвете статуса, статусом с таймером и сервером. Никаких кнопок управления в MVP — карточка информирует и открывает приложение тапом; disconnect с экрана блокировки без Face ID был бы дырой.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">CONNECTION</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
+          <div class="tx"><div class="t">On demand</div><div class="s">On · 3 rules</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-theme"/></svg>
+          <div class="tx"><div class="t">Disconnect on sleep</div><div class="s">Drop the tunnel when the device sleeps</div></div>
+          <span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-globe"/></svg>
+          <div class="tx"><div class="t">Live Activity</div><div class="s">Status in the Dynamic Island and on the Lock Screen</div></div>
+          <span class="sw"><i></i></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · Live Activity</span><b>Опция в настройках.</b> Тумблер в секции CONNECTION, только на iOS 16.1+ — на macOS и старых iOS строки нет вовсе: выключенный тумблер, который нельзя включить, читался бы как сломанный. Выключение немедленно завершает текущую активность. Если Live Activities запрещены для приложения в системных настройках, подпись меняется на «Turned off in Settings» и тумблер погашен.</p>
   </div>
 </div>
 
