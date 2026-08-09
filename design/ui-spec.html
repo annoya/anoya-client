@@ -54,11 +54,11 @@
   /* ---------- device frames: 1pt = 1px, displayed scaled ---------- */
   .rail{display:flex;gap:14px;align-items:flex-start;overflow-x:auto;padding:10px 2px 18px}
   .board{flex:0 0 auto}
-  .scaler{width:249px;height:542px;overflow:hidden} /* 402*.62 x 874*.62 */
-  .scaler.mac{width:434px;height:390px}             /* 700*.62 x 630*.62 */
+  .scaler{width:244px;height:528px;overflow:hidden} /* 393*.62 x 852*.62 */
+  .scaler.mac{width:248px;height:458px}             /* 400*.62 x 738*.62 */
   .scaler > *{transform:scale(.62);transform-origin:top left}
-  .cap{max-width:249px;margin:10px 2px 0;font-size:12px;color:var(--mut);line-height:1.5}
-  .cap.wide{max-width:434px}
+  .cap{max-width:244px;margin:10px 2px 0;font-size:12px;color:var(--mut);line-height:1.5}
+  .cap.wide{max-width:248px}
   .cap b{color:var(--ink);font-weight:600}
   .cap .id{display:block;font:11px ui-monospace,Menlo,monospace;color:var(--acc);margin-bottom:3px}
 
@@ -82,18 +82,18 @@
     --m-dim:rgba(20,22,30,.4);
   }
 
-  /* device: iPhone 17 Pro logical size */
-  .ph{width:402px;height:874px;position:relative;overflow:hidden;
+  /* device: iPhone 14 Pro logical size — the standard for both platforms */
+  .ph{width:393px;height:852px;position:relative;overflow:hidden;
     background:var(--m-surface);color:var(--m-ink);
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
     border:1px solid var(--m-line);border-radius:24px}
   /* macOS window */
-  .mac{width:700px;height:630px;position:relative;overflow:hidden;
+  .mac{width:400px;height:738px;position:relative;overflow:hidden;
     background:var(--m-surface);color:var(--m-ink);border:1px solid var(--m-line);border-radius:12px;
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
   .macbar{display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-bottom:1px solid var(--m-line)}
   .macdot{width:12px;height:12px;border-radius:50%}
-  .maccol{width:560px;margin:0 auto}   /* kMaxContentWidth */
+  .maccol{width:100%;max-width:560px;margin:0 auto}   /* kMaxContentWidth */
 
   /* status bar 54, app bar 56 */
   .sb{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;
@@ -211,7 +211,7 @@
   .act.txt.ic{gap:6px}
   /* BottomSheet: r20 top, drag handle 32x4 */
   .sheet{position:absolute;left:0;right:0;bottom:0;z-index:3;background:var(--m-card);
-    border-radius:20px 20px 0 0;padding-bottom:16px;max-height:699px}   /* 80% экрана */
+    border-radius:20px 20px 0 0;padding-bottom:16px;max-height:682px}   /* 80% экрана */
   .grab{width:32px;height:4px;border-radius:2px;background:var(--m-mut);opacity:.4;margin:12px auto 4px}
   .sheet .stitle{font-size:16px;font-weight:500;padding:16px;text-align:center}
   .sheet .sepl{height:1px;background:var(--m-line);margin:6px 16px}
@@ -334,8 +334,9 @@
 <header>
   <div class="eyebrow">vpn2 · client · UI-спека, версия 3</div>
   <h1>Все экраны в реальных метриках</h1>
-  <p class="lede">Макеты нарисованы 1:1 в логических точках Flutter — рамка телефона это ровно 402×874&nbsp;pt
-  (iPhone 17 Pro), окно macOS 700×630 с контентом, ограниченным 560&nbsp;pt. Все отступы, высоты строк и
+  <p class="lede">Макеты нарисованы 1:1 в логических точках Flutter — рамка телефона это ровно 393×852&nbsp;pt
+  (iPhone 14 Pro), окно macOS — 400×700&nbsp;pt рабочей области плюс полоса заголовка 38. Размеры близкие,
+  поэтому раскладка одна на обе платформы; окно на маке пользователь волен менять как угодно. Все отступы, высоты строк и
   размеры шрифтов взяты из <code>core/theme.dart</code>, поэтому макет и приложение сверяются числами,
   а не на глаз. Отображение уменьшено до 62%.</p>
 </header>
@@ -364,7 +365,9 @@
       <tr><td>Радиус кнопок, полей</td><td>12</td></tr>
       <tr><td>Радиус диалогов, шитов</td><td>20</td></tr>
       <tr><td>Обводка (hairline)</td><td>1</td></tr>
-      <tr><td>Макс. ширина контента</td><td>560</td></tr>
+      <tr><td>Экран телефона</td><td>393 × 852</td></tr>
+      <tr><td>Окно macOS (по умолчанию)</td><td>400 × 700, свободный ресайз</td></tr>
+      <tr><td>Макс. ширина контента</td><td>560 (не срабатывает при 393)</td></tr>
     </table>
   </div>
   <div class="mt">
@@ -562,6 +565,27 @@
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Sign in</span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri);width:48px;height:48px"><use href="#i-org"/></svg></div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:10px 24px 20px">Your organization’s or personal server</div>
+      <div style="padding:0 24px;opacity:.38">
+        <div class="inp"><div class="lb">Server address</div><div class="vl">https://vpn.acme.dev</div></div>
+        <div class="inp" style="margin-top:12px"><div class="lb">Username</div><div class="vl">maria</div></div>
+        <div class="inp" style="margin-top:12px"><div class="lb">Password</div><div class="vl">••••••••</div></div>
+      </div>
+      <div style="padding:0 24px">
+        <div class="btn fill" style="margin:20px 0 8px">
+          <svg viewBox="0 0 20 20" style="width:20px;height:20px"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="38 13"/></svg>
+        </div>
+        <div class="btn out dis" style="margin:0"><svg class="icon s"><use href="#i-org"/></svg>Sign in with SSO</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SignInScreen · busy</span><b>Вход выполняется.</b> Поля и обе кнопки гаснут, спиннер живёт внутри основной кнопки — не поверх экрана: пользователь должен видеть, что именно выполняется, и что второй способ входа сейчас недоступен. Кнопка «назад» остаётся активной, сеть бывает медленной. Ошибка приходит модальным диалогом (раздел 9), а не текстом под полем: причина обычно про сервер целиком, а не про конкретное поле.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Sign in</span></div>
       <div class="dim"></div>
       <div class="sheet">
         <div class="grab"></div>
@@ -584,7 +608,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat muted">Not connected</span>
           <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
@@ -610,7 +634,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34</span>
           <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
@@ -638,7 +662,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-warn)">Switching server…</span>
           <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
@@ -666,7 +690,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-warn)">Connecting…</span>
           <div class="ring" style="--rc:var(--m-warn)">
@@ -696,7 +720,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-err)">Error</span>
           <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
@@ -739,7 +763,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="strip">
           <span class="pill on"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · on</span>
           <span class="pill on"><svg class="icon xs"><use href="#i-route"/></svg>Routing · split</span>
@@ -772,7 +796,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="strip">
           <span class="pill"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · off</span>
           <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Routing · off</span>
@@ -803,7 +827,7 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="strip">
           <span class="pill warn"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · paused</span>
           <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Routing · off</span>
@@ -843,7 +867,7 @@
       </div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:536px">
+      <div class="hbody" style="height:644px">
         <div class="maccol"><div class="strip">
           <span class="pill on hover"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · on</span>
           <span class="pill on"><svg class="icon xs"><use href="#i-route"/></svg>Routing · full</span>
@@ -868,7 +892,7 @@
         </div>
       </div>
     </div></div>
-    <p class="cap wide"><span class="id">HomeScreen · status strip · macOS</span><b>macOS.</b> Полоса центрируется в тех же 560&nbsp;pt, что и карточки. Первый чип показан под курсором: чипы кликабельны, поэтому у них есть ховер — иначе они читались бы как подписи. Роутинг здесь включён в режиме <code>full</code>, и чип тональный: набор применяется, просто его правила описывают исключения, а не то, что заворачивать в туннель.</p>
+    <p class="cap wide"><span class="id">HomeScreen · status strip · macOS</span><b>macOS.</b> Окно 400×700 по умолчанию и свободно меняется пользователем; ширина близка к телефонной, поэтому раскладка та же и центрировать контент незачем — он и так во всю ширину. Первый чип показан под курсором: чипы кликабельны, поэтому у них есть ховер — иначе они читались бы как подписи. Роутинг здесь включён в режиме <code>full</code>, и чип тональный: набор применяется, просто его правила описывают исключения, а не то, что заворачивать в туннель.</p>
   </div>
 </div>
 
@@ -966,7 +990,7 @@
       </div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:536px">
+      <div class="hbody" style="height:644px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-ok)">Connected · 00:04:11</span>
           <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
@@ -986,7 +1010,7 @@
         </div>
       </div>
     </div></div>
-    <p class="cap wide"><span class="id">HomeScreen · macOS</span><b>macOS.</b> Контент центрирован и ограничен 560&nbsp;pt; метрики строк те же, что на телефоне.</p>
+    <p class="cap wide"><span class="id">HomeScreen · macOS</span><b>macOS.</b> Окно 400×700 по умолчанию, пользователь меняет его свободно; вместо системной строки iOS — полоса заголовка. Метрики строк те же, ограничение в 560&nbsp;pt при такой ширине не срабатывает, но остаётся для широких окон.</p>
   </div>
 </div>
 
@@ -1107,6 +1131,34 @@
       </div>
     </div></div>
     <p class="cap"><span class="id">SettingsScreen · configurations</span><b>Шит конфигураций.</b> Тот же шит выбора, что на главном, в навигационном режиме: шеврон вправо в каждой строке, тап ведёт в настройки конфигурации, а не делает её активной — активная выбирается на главном. Заливка всё равно показывает, какая работает сейчас, а порядок и группы те же (избранные сверху); звёзд здесь нет — избранное редактируется там, где им пользуются. Поиск, как во всех шитах, появляется от шести элементов.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Frankfurt · vless</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">Frankfurt · vless</div><div class="s">Single server</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div>
+          <span class="sw off"><i></i></span>
+        </div>
+        <div class="sep"></div>
+        <div class="row" style="opacity:.38">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">Rule set</div><div class="s">Default</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg>
+        </div>
+      </div>
+      <div class="btn err" style="margin-top:20px"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · link</span><b>Одиночная ссылка.</b> У ссылки нет ни источника для обновления, ни аккаунта, поэтому строк «Source», «Last refreshed» и «Account» просто нет — вместо пустых заглушек экран сжимается до того, что у этой конфигурации действительно есть. Роутинг и удаление доступны всем трём типам одинаково, это и есть общая часть экрана. «Set active» отсутствует: конфигурация уже активна.</p>
   </div>
 
   <div class="board">
@@ -1385,6 +1437,41 @@
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">New set</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div class="on">Simple</div><div>Advanced</div></div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
+        <div class="segm"><div class="on">Only selected</div><div>All except selected</div></div>
+        <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">Only the services you pick go through the VPN. Everything else connects directly.</div>
+      </div></div>
+      <div style="padding:8px 16px 0">
+        <div class="inp sel"><svg class="icon muted"><use href="#i-search"/></svg>
+          <div class="tx"><div class="vl plc">Search services</div></div></div>
+      </div>
+      <div class="sh">COUNTRIES</div>
+      <div class="card">
+        <div class="row one"><svg class="icon muted"><use href="#i-plus"/></svg><div class="tx"><div class="t muted">Add country</div></div></div>
+      </div>
+      <div class="sh">SERVICES</div>
+      <div class="card">
+        <div class="row one"><svg class="icon muted"><use href="#i-plus"/></svg><div class="tx"><div class="t muted">Add category</div></div></div>
+      </div>
+      <div class="sh">STREAMING</div>
+      <div class="card">
+        <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">YouTube</div></div><span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">N</span><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row one"><span class="avat">S</span><div class="tx"><div class="t">Spotify</div></div><span class="sw off"><i></i></span></div>
+      </div>
+      <div class="hint" style="padding:10px 16px 0">Nothing selected · no traffic goes through the VPN yet</div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · simple · nothing selected</span><b>Новый набор.</b> Так открывается только что созданный набор правил, и это самое опасное состояние в Simple: «только выбранное» без выбранного означает, что в VPN не пойдёт ничего. Экран говорит это прямо — «no traffic goes through the VPN yet», — вместо того чтобы выглядеть готовым к работе. Пустых заглушек нет: каталог сам по себе показывает, что делать дальше, а обе кнопки добавления стоят на своих местах ещё до первого выбора.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Streaming</span>
         <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
       <div style="padding:0 16px;margin-top:8px"><div class="segm"><div class="on">Simple</div><div>Advanced</div></div></div>
@@ -1396,21 +1483,23 @@
         <div class="inp sel"><svg class="icon muted"><use href="#i-search"/></svg>
           <div class="tx"><div class="vl plc">Search services</div></div></div>
       </div>
+      <div class="sh">COUNTRIES</div>
+      <div class="card">
+        <div class="row one"><svg class="icon muted"><use href="#i-plus"/></svg><div class="tx"><div class="t muted">Add country</div></div></div>
+      </div>
+      <div class="sh">SERVICES</div>
+      <div class="card">
+        <div class="row one"><svg class="icon muted"><use href="#i-plus"/></svg><div class="tx"><div class="t muted">Add category</div></div></div>
+      </div>
       <div class="sh">STREAMING</div>
       <div class="card">
         <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">YouTube</div></div><span class="sw"><i></i></span></div>
-        <div class="sep"></div>
-        <div class="row one"><span class="avat">N</span><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div>
-        <div class="sep"></div>
-        <div class="row one"><span class="avat">S</span><div class="tx"><div class="t">Spotify</div></div><span class="sw off"><i></i></span></div>
       </div>
       <div class="sh">MESSENGERS</div>
       <div class="card">
         <div class="row one"><span class="avat">T</span><div class="tx"><div class="t">Telegram</div></div><span class="sw"><i></i></span></div>
-        <div class="sep"></div>
-        <div class="row one"><span class="avat">D</span><div class="tx"><div class="t">Discord</div></div><span class="sw off"><i></i></span></div>
       </div>
-      <div class="hint" style="padding:10px 16px 0">2 services selected · everything else connects directly</div>
+      <div class="hint" style="padding:10px 16px 0">2 selected · everything else connects directly</div>
     </div></div>
     <p class="cap"><span class="id">RoutingScreen · simple</span><b>Simple, «только выбранное».</b> Каталог — ~34 сервиса в четырёх группах (Streaming · Messengers · Social · Other), строки 56&nbsp;pt с аватаром 26 и переключателем. Аватар — монохромный глиф бренда (Simple Icons, CC0), тонированный в цвет темы; для категорий без логотипа — буква. Никаких сетевых запросов ради иконок: фавиконки в рантайме слили бы список интересующих пользователя сервисов ещё до поднятия туннеля. Никаких «PROXY/DIRECT»: действие следует из направления сверху. Поиск — от шести элементов, как во всех списках. Итоговая строка внизу повторяет смысл выбора словами.</p>
   </div>
@@ -1445,8 +1534,6 @@
       </div>
       <div class="card">
         <div class="row one"><span class="avat">Y</span><div class="tx"><div class="t">YouTube</div></div><span class="sw off"><i></i></span></div>
-        <div class="sep"></div>
-        <div class="row one"><span class="avat">N</span><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div>
       </div>
       <div class="hint" style="padding:10px 16px 0">1 selected · it connects directly, the rest goes through the VPN</div>
     </div></div>
@@ -1672,6 +1759,45 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">GeoIP &amp; GeoSite</span></div>
       <div class="sh">DATABASES</div>
+      <div class="card" style="opacity:.38"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoIP</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">not downloaded</span>
+          </div>
+          <div class="s">github.com/…/geoip.metadb</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="card" style="opacity:.38"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoSite</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">not downloaded</span>
+          </div>
+          <div class="s">github.com/…/geosite.dat</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="sh">UPDATES</div>
+      <div class="card">
+        <div class="row"><div class="tx"><div class="t">Last updated</div><div class="s">never</div></div></div>
+        <div class="sep"></div>
+        <div class="row"><div class="tx"><div class="t">Auto-update</div><div class="s">Weekly, when already downloaded</div></div><span class="sw"><i></i></span></div>
+      </div>
+      <div class="btn tonal dis" style="margin-top:16px">
+        <svg viewBox="0 0 20 20" style="width:16px;height:16px"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="38 13"/></svg>
+        Download (~25 MB)
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">GeoScreen · downloading</span><b>Идёт загрузка.</b> Спиннер 16&nbsp;pt заменяет иконку внутри той же кнопки, надпись не меняется — так не прыгает ширина и видно, какое именно действие выполняется. Строки баз гаснут: править источник посреди скачивания нечему. Тумблер авто-обновления остаётся живым, он ни на что не влияет прямо сейчас. Прогресса в процентах нет намеренно — источник его не отдаёт, а поддельная полоса хуже честного спиннера.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">GeoIP &amp; GeoSite</span></div>
+      <div class="sh">DATABASES</div>
       <div class="card"><div class="row">
         <div class="tx">
           <div style="display:flex;align-items:baseline;gap:8px">
@@ -1817,6 +1943,37 @@ time="13:29:05" level=info msg="[TCP] 10.0.0.4:52320 --> api.telegram.org:443 ma
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Logs</span></div>
+      <div class="sh">COLLECTION</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-doc"/></svg>
+        <div class="tx"><div class="t">Collect logs</div><div class="s multi">Off: the app, the tunnel and the core stop writing. Existing files stay readable.</div></div>
+        <span class="sw off"><i></i></span>
+      </div></div>
+      <div class="sh">TUNNEL</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Tunnel</div><div class="s">Network Extension events</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Core (mihomo)</div><div class="s">Engine log: dials, DNS, routing</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">APP</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Application</div><div class="s">Client-side events</div></div>
+        <span style="font-size:12.5px;color:var(--m-mut)">42 KB</span>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="btn out" style="margin-top:20px"><svg class="icon s"><use href="#i-copy"/></svg>Save all logs (.zip)</div>
+      <div class="btn err"><svg class="icon s"><use href="#i-trash"/></svg>Clear all logs</div>
+    </div></div>
+    <p class="cap"><span class="id">LogsScreen · collection off</span><b>Сбор выключен.</b> Записи прекращаются во всех трёх журналах сразу, включая живой туннель — уровень пушится в работающее ядро, а не ждёт переподключения. Уже собранное не прячется и не удаляется: строки журналов, сохранение и очистка остаются доступны, потому что «перестать писать» и «спрятать написанное» — разные просьбы. Вывод в консоль при этом продолжается, и в UI это намеренно никак не отражено: разработчику это и так известно, а пользователю знать незачем.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Logs</span></div>
       <div class="sh">APP</div>
       <div class="card"><div class="row">
         <div class="tx"><div class="t">Application</div><div class="s">Client-side events</div></div>
@@ -1880,6 +2037,23 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="card" style="margin-top:8px"><div class="row">
         <svg class="icon muted"><use href="#i-bolt"/></svg>
         <div class="tx"><div class="t">Enable on demand</div><div class="s">The system applies the first matching rule</div></div>
+        <span class="sw off"><i></i></span>
+      </div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="empty">No rules. Enabling on demand adds “Connect · Any network”.</div>
+      <div class="empty" style="padding-top:8px">Rules are evaluated top to bottom. If none matches, the tunnel is left as is.</div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">OnDemandScreen · empty</span><b>Состояние по умолчанию.</b> Так экран выглядит у всех, кто на него зашёл впервые: тумблер выключен, правил нет. Пустое место объясняет, что произойдёт при включении — система получит правило «подключаться в любой сети», — иначе включённый тумблер без правил читался бы как «включено, но ничего не делает». FAB на месте: правило можно добавить и до включения.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">On demand</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-bolt"/></svg>
+        <div class="tx"><div class="t">Enable on demand</div><div class="s">The system applies the first matching rule</div></div>
         <span class="sw"><i></i></span>
       </div></div>
       <div class="sh">RULES — FIRST MATCH WINS</div>
@@ -1908,7 +2082,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   </div>
 
   <div class="board">
-    <div class="scaler"><div class="ph" style="height:auto;min-height:874px">
+    <div class="scaler"><div class="ph" style="height:auto;min-height:852px">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">New rule</span></div>
       <div style="padding:0 16px">
@@ -1988,7 +2162,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34 · auto</span>
           <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
@@ -2014,7 +2188,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat muted">Not connected</span>
           <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
@@ -2060,7 +2234,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34</span>
           <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
@@ -2089,7 +2263,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="hbody" style="height:764px">
+      <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-err)">Error</span>
           <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
