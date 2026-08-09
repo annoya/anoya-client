@@ -45,6 +45,7 @@ final class SelfhostedSource extends ConfigSource {
       locations: cfg.locations,
       account: cfg.account,
       routing: cfg.routing,
+      dns: cfg.dns,
       refreshedAt: DateTime.now(),
     );
   }
@@ -63,7 +64,8 @@ final class SubscriptionSource extends ConfigSource {
     final body = await httpGet(profile.subscriptionUrl!);
     final locations = parseSubscription(body);
     if (locations.isEmpty) return profile;
-    return profile.copyWith(locations: locations, refreshedAt: DateTime.now());
+    return profile.copyWith(
+        locations: locations, dns: subscriptionDns(body), refreshedAt: DateTime.now());
   }
 }
 
