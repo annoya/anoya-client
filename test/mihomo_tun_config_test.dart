@@ -152,4 +152,51 @@ void main() {
     expect(rules, ['DOMAIN-SUFFIX,ok.example.com,PROXY', 'MATCH,DIRECT']);
     expect(yaml, isNot(contains('evil')));
   });
+
+  test('dns comes from the config; Cloudflare DoH is the fallback', () {
+    final fallback = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
+    expect((fallback['dns'] as YamlMap)['nameserver'], ['https://1.1.1.1/dns-query']);
+    expect((fallback['dns'] as YamlMap)['default-nameserver'], isNull);
+
+    final own = loadYaml(mihomoTunConfigYaml(vlessLoc(),
+        dns: ['10.0.0.53', 'tls://1.1.1.1:853'])) as YamlMap;
+    expect((own['dns'] as YamlMap)['nameserver'], ['10.0.0.53', 'tls://1.1.1.1:853']);
+    // Every resolver is IP-addressed: no bootstrap needed.
+    expect((own['dns'] as YamlMap)['default-nameserver'], isNull);
+  });
+
+  test('hostname resolvers get a plain-IP bootstrap', () {
+    final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(),
+        dns: ['https://dns.google/dns-query', '1.1.1.1'])) as YamlMap;
+    expect((doc['dns'] as YamlMap)['default-nameserver'], ['1.1.1.1']);
+  });
+
+  test('unusable dns entries are dropped, never interpolated', () {
+    final yaml = mihomoTunConfigYaml(vlessLoc(), dns: [
+      'evil"\n  - injected', // quote + escape
+      'bad entry with spaces',
+      'x\nrules: []', // newline
+      '', // empty
+    ]);
+    final doc = loadYaml(yaml) as YamlMap;
+    // Everything was dropped, so the fallback applies and nothing leaked in.
+    expect((doc['dns'] as YamlMap)['nameserver'], ['https://1.1.1.1/dns-query']);
+    expect(yaml, isNot(contains('injected')));
+  });
+
+  test('subscriptionDns mines dns.nameserver out of a Clash YAML body', () {
+    const clash = '''
+dns:
+  enable: true
+  nameserver:
+    - https://doh.example.net/dns-query
+    - 9.9.9.9
+proxies:
+  - {name: a, type: vless, server: 1.2.3.4, port: 443, uuid: u}
+''';
+    expect(subscriptionDns(clash),
+        ['https://doh.example.net/dns-query', '9.9.9.9']);
+    // Link lists carry no DNS.
+    expect(subscriptionDns('vless://u@h:443?security=none#x'), isEmpty);
+  });
 }

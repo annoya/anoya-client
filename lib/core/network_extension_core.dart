@@ -69,7 +69,7 @@ class NetworkExtensionCore implements VpnCore {
     // also gets it pushed straight into the engine, because the engine logs
     // while parsing the config, before it reads log-level out of it.
     final yaml = mihomoTunConfigYaml(location,
-        routing: config.routing, stack: 'gvisor', collectLogs: Log.enabled);
+        routing: config.routing, dns: config.dns, stack: 'gvisor', collectLogs: Log.enabled);
     final routing = config.routing;
     final routingDesc =
         routing == null ? 'none (full tunnel)' : '${routing.mode}, ${routing.rules.length} rule(s)';
@@ -172,7 +172,7 @@ class NetworkExtensionCore implements VpnCore {
     try {
       return {
         'config': mihomoTunConfigYaml(location,
-            routing: config.routing, stack: 'gvisor', collectLogs: Log.enabled),
+            routing: config.routing, dns: config.dns, stack: 'gvisor', collectLogs: Log.enabled),
       };
     } catch (e) {
       Log.e('config render failed', '$e');

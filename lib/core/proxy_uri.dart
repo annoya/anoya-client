@@ -61,6 +61,30 @@ List<Location> parseSubscription(String body) {
   return out;
 }
 
+/// Resolvers a Clash/mihomo-YAML subscription ships in `dns.nameserver`;
+/// empty for link lists and anything unparseable. Mined separately from the
+/// proxies because our tunnel config keeps its own dns block (fake-ip range
+/// and mode are app constants) and adopts only the resolvers.
+List<String> subscriptionDns(String body) {
+  final trimmed = body.trim();
+  if (!RegExp(r'(^|\n)\s*dns\s*:').hasMatch(trimmed)) return const [];
+  try {
+    final doc = loadYaml(trimmed);
+    if (doc is! Map) return const [];
+    final dns = doc['dns'];
+    if (dns is! Map) return const [];
+    final ns = dns['nameserver'];
+    if (ns is! List) return const [];
+    return [
+      for (final e in ns)
+        if (e != null && '$e'.trim().isNotEmpty) '$e'.trim(),
+    ];
+  } catch (e) {
+    Log.e('subscription dns parse failed', '$e');
+    return const [];
+  }
+}
+
 // --- per-protocol ---
 
 Location _parseVless(String s) {

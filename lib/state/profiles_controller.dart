@@ -154,6 +154,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       serverUrl: api.baseUrl,
       account: cfg.account,
       routing: cfg.routing,
+      dns: cfg.dns,
       refreshedAt: DateTime.now(),
     );
     await _append(profile);
@@ -170,6 +171,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       name: name.trim().isNotEmpty ? name.trim() : Uri.parse(url).host,
       locations: locations,
       subscriptionUrl: url,
+      dns: subscriptionDns(body),
       refreshedAt: DateTime.now(),
     ));
   }
@@ -190,6 +192,7 @@ class ProfilesController extends Notifier<ProfilesState> {
           ? name!.trim()
           : (single ? locations.first.label : 'Imported (${locations.length})'),
       locations: locations,
+      dns: subscriptionDns(text),
       refreshedAt: DateTime.now(),
     ));
   }
@@ -448,6 +451,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       account: p.account ?? Account(displayName: p.name, status: 'active'),
       locations: p.locations,
       routing: routing,
+      dns: p.dns,
     );
   }
 

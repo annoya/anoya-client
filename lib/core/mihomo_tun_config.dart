@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'log.dart';
 import 'norm_config.dart';
 
@@ -9,6 +11,10 @@ import 'norm_config.dart';
 /// [routing] is the split-tunneling policy (managed or device-local); null
 /// means "everything through the VPN".
 ///
+/// [dns] is the resolver list the config ships with (mihomo nameserver
+/// syntax); empty falls back to Cloudflare DoH. It rides the same YAML as
+/// everything else, so switching configs switches DNS too.
+///
 /// [stack] is the mihomo TUN network stack — "gvisor" on both macOS and iOS
 /// (fully userspace; the only stack that works inside the NE sandbox).
 ///
@@ -19,10 +25,12 @@ import 'norm_config.dart';
 String mihomoTunConfigYaml(
   Location location, {
   Routing? routing,
+  List<String> dns = const [],
   String stack = 'gvisor',
   bool collectLogs = true,
 }) {
   final proxy = _mihomoProxy(location);
+  final nameservers = _dnsNameservers(dns);
   final ruleLines = _routingRuleLines(routing);
   final hasProcessRules =
       routing?.rules.any((r) => r.type == 'process-name' && r.isValid) ?? false;
@@ -45,10 +53,19 @@ String mihomoTunConfigYaml(
     ],
     'dns:',
     '  enable: true',
+    // fake-ip settings are app constants, never per-config: the OS caches the
+    // fake addresses it handed out, so a range that moved on a hot switch
+    // would strand every cached answer.
     '  enhanced-mode: fake-ip',
     '  fake-ip-range: 198.18.0.1/16',
+    // A resolver addressed by hostname (DoH/DoT by name) needs a plain-IP
+    // bootstrap, or the engine would need DNS to set up DNS.
+    if (nameservers.any(_dnsNeedsBootstrap)) ...[
+      '  default-nameserver:',
+      '    - 1.1.1.1',
+    ],
     '  nameserver:',
-    '    - https://1.1.1.1/dns-query',
+    for (final ns in nameservers) '    - ${_scalar(ns)}',
     'tun:',
     '  enable: true',
     '  stack: $stack',
@@ -186,4 +203,45 @@ List<String> _routingRuleLines(Routing? routing) {
     out.add('  - $type,$value,$action$suffix');
   }
   return out;
+}
+
+/// The config's own resolvers, sanitized, or the Cloudflare DoH fallback when
+/// it names none. Entries land inside the engine YAML and can come from a
+/// subscription we don't control, so anything that couldn't be a nameserver —
+/// whitespace, quotes, non-ASCII — is dropped and logged, never escaped into
+/// the document.
+List<String> _dnsNameservers(List<String> dns) {
+  final out = <String>[];
+  for (final raw in dns) {
+    final ns = raw.trim();
+    if (ns.isEmpty) continue;
+    if (RegExp(r'[^\x21-\x7e]').hasMatch(ns) || ns.contains('"') || ns.contains(r'\')) {
+      Log.e('dns: skipping unusable nameserver', raw);
+      continue;
+    }
+    out.add(ns);
+  }
+  return out.isEmpty ? const ['https://1.1.1.1/dns-query'] : out;
+}
+
+/// True when the nameserver is addressed by hostname (https://dns.google/…)
+/// rather than by IP. Understands the mihomo forms: plain IP, host:port,
+/// scheme URLs, an optional `#ADAPTER` suffix, and the `system`/`dhcp://`
+/// pseudo-resolvers (which never need bootstrapping).
+bool _dnsNeedsBootstrap(String ns) {
+  final s = ns.split('#').first;
+  if (s == 'system') return false;
+  String host;
+  if (s.contains('://')) {
+    final u = Uri.tryParse(s);
+    if (u == null || u.scheme == 'dhcp') return false;
+    host = u.host;
+  } else if (InternetAddress.tryParse(s) != null) {
+    return false; // bare IP, IPv6 colons included
+  } else if (s.startsWith('[') && s.contains(']')) {
+    host = s.substring(1, s.indexOf(']'));
+  } else {
+    host = s.split(':').first;
+  }
+  return host.isNotEmpty && InternetAddress.tryParse(host) == null;
 }
