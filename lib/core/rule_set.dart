@@ -17,6 +17,7 @@ class RuleSet {
     required this.name,
     this.mode = 'full',
     this.rules = const [],
+    this.editor = 'simple',
   });
 
   static const defaultId = 'default';
@@ -29,13 +30,23 @@ class RuleSet {
   final String mode;
   final List<RoutingRule> rules;
 
+  /// Which editor view the set opens in: 'simple' (service catalog) or
+  /// 'advanced' (raw ordered rules). Views over the same rules, not formats —
+  /// switching never converts or discards anything.
+  final String editor;
+
   bool get isDefault => id == defaultId;
   bool get hasGeoRules => rules.any((r) => r.needsGeoData);
 
   Routing toRouting() => Routing(mode: mode, rules: rules);
 
-  RuleSet copyWith({String? name, String? mode, List<RoutingRule>? rules}) =>
-      RuleSet(id: id, name: name ?? this.name, mode: mode ?? this.mode, rules: rules ?? this.rules);
+  RuleSet copyWith({String? name, String? mode, List<RoutingRule>? rules, String? editor}) =>
+      RuleSet(
+          id: id,
+          name: name ?? this.name,
+          mode: mode ?? this.mode,
+          rules: rules ?? this.rules,
+          editor: editor ?? this.editor);
 
   factory RuleSet.fromJson(Map<String, dynamic> j) => RuleSet(
         id: j['id'] as String,
@@ -45,10 +56,16 @@ class RuleSet {
             .whereType<Map>()
             .map((e) => RoutingRule.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
+        editor: j['editor'] as String? ?? 'simple',
       );
 
-  Map<String, dynamic> toJson() =>
-      {'id': id, 'name': name, 'mode': mode, 'rules': rules.map((r) => r.toJson()).toList()};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'mode': mode,
+        'rules': rules.map((r) => r.toJson()).toList(),
+        'editor': editor,
+      };
 }
 
 /// Persists the global rule sets to rule_sets.json in the app-support

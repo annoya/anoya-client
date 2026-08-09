@@ -13,6 +13,7 @@ import '../core/oidc_login.dart';
 import '../core/profile.dart';
 import '../core/profile_store.dart';
 import '../core/proxy_uri.dart';
+import '../core/platform_support.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/vpn_core.dart';
@@ -423,6 +424,17 @@ class ProfilesController extends Notifier<ProfilesState> {
       routing = Routing(
         mode: routing.mode,
         rules: routing.rules.where((r) => !r.needsGeoData).toList(),
+      );
+    }
+
+    // A set authored on a desktop can travel to a phone (same account, same
+    // sets). Its process rules cannot match there, and leaving them in would
+    // turn find-process-mode on for nothing.
+    if (!supportsProcessRules && routing.rules.any((r) => r.type == 'process-name')) {
+      Log.e('routing', 'process rules skipped: this platform cannot resolve processes');
+      routing = Routing(
+        mode: routing.mode,
+        rules: routing.rules.where((r) => r.type != 'process-name').toList(),
       );
     }
 
