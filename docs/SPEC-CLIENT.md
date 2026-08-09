@@ -1,0 +1,252 @@
+# VPN Client — Specification
+
+> Owner: vk@amnezia.org · Describes the client as it stands on 2026-08-09.
+>
+> This document says what the client *is*. Why it is that way lives in
+> [`docs/decisions/`](decisions/README.md); the server product it can optionally
+> talk to is specified in [`SPEC-SERVICE.md`](SPEC-SERVICE.md).
+
+## 1. What this is
+
+A Flutter VPN client for macOS and iOS that establishes a system-wide tunnel
+through a swappable engine.
+
+It is a complete product on its own. Nothing in it requires the management
+service from this repository: a user who has only a subscription link or a
+share link installs the client and it works. The self-hosted account is one of
+three sources it serves, not its reason to exist.
+
+### 1.1 Three domains of authority
+
+The client serves three ways of being given a VPN, and they differ in **who has
+authority over the user's access** — not in file format.
+
+**1. Self-hosted.** The user signs in to a management service which owns
+identity, access and policy. Full capability: an account with status and quota,
+a centrally managed routing policy, revocation that takes effect immediately.
+
+**2. Existing panels, via subscription links.** Marzban, 3x-ui and the rest of
+that ecosystem already run people's servers, and they all speak the same one-way
+contract: a URL returns a list of servers. There is no account and no policy to
+receive — whoever runs that panel controls access by changing what the URL
+returns.
+
+**3. Bare configs, via share links.** A `vless://`-style link, or a file of
+them, describing one server and nothing else. No origin to ask, no account, no
+revocation — it carries exactly what is needed to bring up a tunnel.
+
+Capability degrades along that order, deliberately and visibly (§4). The engine
+and the tunnel are identical in all three; what differs is who decides what the
+user may do. See ADR-005.
+
+### 1.2 Guiding principles
+
+- **One abstraction seam.** `VpnCore` isolates the engine so it can be replaced
+  or ported. Everything else is direct.
+- **Simple, readable codebase.** Implement the requirement, not a platform.
+- **The app never claims authority it does not have.** A domain that cannot tell
+  us the account is expired must not show an account.
+- **Nothing leaves the tunnel unless the tunnel says so.** Privacy behaviour is
+  verified by packet capture, not by inspection (ADR-002).
+
+---
+
+## 2. Tech
+
+Flutter (macOS, iOS), Riverpod for state, `http`, `flutter_secure_storage` for
+tokens, `path_provider`, `crypto`, `yaml` (subscription parsing), `file_picker`,
+`archive` + `share_plus` (log export), `flutter_svg` (brand glyphs).
+
+```
+client/
+  lib/core        models, stores, VpnCore + NetworkExtensionCore, config
+                  rendering, rule sets, geo databases, logging
+  lib/state       Riverpod controllers
+  lib/features    screens
+  lib/api         management API client (self-hosted domain only)
+  shared/apple    Swift shared by macOS and iOS, symlinked into both projects
+  native/mihomocore   standalone Go module → MihomoCore.xcframework
+  design          ui-spec.html + check.js — the source of truth for UI geometry
+  scripts         build.sh, leak-check.sh
+  test            contract suites
+```
+
+The native module is deliberately outside the repository's Go workspace and
+builds with `GOWORK=off`.
+
+---
+
+## 3. Tunnel architecture
+
+The tunnel is an `NEPacketTunnelProvider` extension; mihomo is compiled into it
+as a Go c-archive (`MihomoCore.xcframework`, `-tags with_gvisor`). The host app
+stays sandboxed and shares an App Group with the extension, which doubles as the
+engine's home directory for geo databases. Swift shared by both platforms lives
+once in `client/shared/apple/` and is symlinked into the platform projects.
+Rationale and constraints: ADR-001.
+
+### 3.1 The `VpnCore` seam
+
+The app never references the engine. `VpnCore`
+(`client/lib/core/vpn_core.dart`):
+
+| Member | Purpose |
+|---|---|
+| `load(NormConfig)` | hand over the current bundle |
+| `connect(locationId)` / `disconnect()` | tunnel lifecycle |
+| `reload(NormConfig, locationId)` | swap config under a live session (ADR-002) |
+| `syncConfig(NormConfig, locationId)` | persist the config for a system-initiated start |
+| `applyOnDemand(OnDemandPrefs, …)` | install auto-connect rules; returns whether the system armed |
+| `removeSystemProfile()` | delete the OS VPN profile |
+| `status`, `statusStream()`, `statsStream()` | state and telemetry |
+| `engineVersion()` | diagnostics |
+
+`NetworkExtensionCore` implements it for macOS and iOS. Config translation
+(bundle → mihomo YAML) lives entirely inside the core implementation and is
+unit-tested (`client/lib/core/mihomo_tun_config.dart`). Other platforms throw
+`UnsupportedError` until their core is written.
+
+`statsStream()` currently yields nothing.
+
+### 3.2 Switching without leaks
+
+Changing server or configuration is a hot reload of the engine under the
+standing session: the NE session, the packet flow and the tunnel fd are never
+touched, so the OS routing table never changes and there is no window for
+traffic to escape. Nothing is excluded from the tunnel — the engine's own dial
+leaves through `IP_BOUND_IF`. Full decision, rejected alternatives and
+measurements: ADR-002.
+
+---
+
+## 4. Configurations
+
+The app holds a list of configurations, one active. Each belongs to one of the
+three domains of §1.1, and the domain determines what the app can offer:
+
+| | self-hosted | subscription | link |
+|---|---|---|---|
+| Source of truth | a management service | a third-party panel | none — a static snapshot |
+| Authentication | password or SSO, token in the Keychain | the secret in the URL | none |
+| Locations | per-user credentials from the server | a list, refreshed from the URL | one server |
+| Account state (status, quota, expiry) | yes | no | no |
+| Managed routing policy | yes, and it wins over local rules | no | no |
+| Refresh | before every connect, plus polling | polling | never — nothing to ask |
+| Revocation | immediate, server-side | by what the panel returns next | none |
+| Local rule sets apply | only when no managed policy | yes | yes |
+
+Concretely: a link configuration shows no account card and no server picker; a
+subscription shows a server picker but no account; only a self-hosted one can be
+told by its server that it may no longer connect.
+
+The differences live in a sealed `ConfigSource` hierarchy
+(`client/lib/core/config_source.dart`), so the controller orchestrates
+generically and adding a fourth domain is a subclass plus one `switch` arm.
+Favourites are stored per profile, keyed `profileId/locationId`.
+
+### 4.1 Accepted inputs
+
+- **Share links** — `vless://`, `vmess://`, `trojan://`, `ss://`, pasted or
+  opened from a file containing several.
+- **Subscription URLs** — returning either a base64 list of those URIs or a
+  Clash/mihomo YAML document.
+- **A management server address** plus credentials, or SSO when the server
+  advertises a provider.
+
+Unknown proxy types are rejected at parse time rather than at connect time.
+
+### 4.2 Synchronisation
+
+Self-hosted configurations re-fetch before every connect, so account status and
+rotated keys are enforced at the moment it matters. All refreshable sources are
+polled every 5 minutes. When a poll changes the active configuration's proxy or
+its managed routing policy, the tunnel re-applies it; when it reports the
+account can no longer connect, or the connected server disappeared, the tunnel
+disconnects. Re-applies are rate-limited so a flapping source cannot loop the
+tunnel.
+
+---
+
+## 5. Screens
+
+- **Start** — add a configuration: paste a link, open a file, or sign in.
+- **Sign in** — password and, when the server offers it, SSO.
+- **Home** — connect ring and status, a status strip (auto-connect, routing,
+  logs), the configuration and server pickers, account line.
+- **Settings** — configurations, connection (on-demand, disconnect on sleep),
+  routing (LAN direct, rule sets, geo databases), appearance and language, logs.
+- **Configuration** — source, refresh, account and quota, routing switch and
+  rule set, set active, remove.
+- **Rule sets** and **Routing editor** — simple (service catalog) and advanced
+  (ordered rules) views over the same rules.
+- **Geo databases**, **On-demand** (rules, values), **Logs** and **Log viewer**.
+
+`client/design/ui-spec.html` draws every screen 1:1 in Flutter logical points
+and is validated by `client/design/check.js`; the numbers there and in
+`client/lib/core/theme.dart` are the same numbers. A visible change starts with
+the mockup, not with the code.
+
+---
+
+## 6. Routing
+
+Rule sets are global to the device and applied per configuration; routing is
+opt-in per configuration; a server-managed policy takes precedence and cannot be
+switched off locally. LAN-direct is a separate device-level switch that applies
+under any policy. Geo rules require the GeoIP/GeoSite databases, which the app
+downloads into the shared container and refreshes weekly — the engine never
+fetches them itself. `process-name` rules work on desktop only and are dropped
+before rendering elsewhere. See ADR-003.
+
+The routing editor has two views over one rule list: **simple** (a catalog of
+~34 services and countries, with direction expressed as "only selected" /
+"all except selected") and **advanced** (ordered rules of every type). Switching
+views converts nothing.
+
+---
+
+## 7. Auto-connect
+
+On-demand rules (interface, SSID, DNS domains and servers, probe URL) are
+compiled into `NEOnDemandRule`s and evaluated by the system. The rendered config
+is persisted into `providerConfiguration` so a system-initiated start has
+something to run. Intent, pause and what the OS actually armed are three
+separate facts and all of them are shown. There is no kill switch. See ADR-004.
+
+---
+
+## 8. Diagnostics
+
+One switch controls collection for the app, tunnel and engine journals; console
+output continues regardless. Extension logs travel over IPC rather than through
+the shared container, and all three can be exported as a zip.
+`client/scripts/leak-check.sh` verifies on a live tunnel that nothing escapes
+the physical interface.
+
+---
+
+## 9. What a self-hosted server must provide
+
+The only contract between this client and a management service is one
+authenticated endpoint returning the normalized bundle (`normconfig.Bundle`,
+specified in [`SPEC-SERVICE.md`](SPEC-SERVICE.md) §4):
+
+```
+GET /api/client/config → { version, account, locations[], routing? }
+```
+
+plus `POST /api/client/login`, `POST /api/client/login/oidc` and
+`GET /api/client/auth-config` for authentication. `proxy` inside a location is
+an open map keyed by `type`; the client maps it to whatever the active core
+understands, so a server adding a protocol does not require a client change.
+
+---
+
+## 10. Security
+
+- Tokens are stored in the Keychain, one per self-hosted configuration, and
+  removed with the configuration.
+- No client secret ships in the app; SSO uses Authorization Code with PKCE.
+- Logs never contain tokens, passwords or full config bodies.
+- The client trusts no domain to be honest about its own capabilities: absence
+  of account data is presented as absence, never as "active".
