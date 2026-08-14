@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
@@ -93,13 +94,23 @@ class ProfilesState {
 class ProfilesController extends Notifier<ProfilesState> {
   Timer? _timer;
   DateTime _lastReapply = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// A poll found a change but the rate limit blocked the reapply; the next
+  /// poll owes one even if it sees no new diff.
+  bool _reapplyPending = false;
   int _idSeq = 0;
+
+  /// Mutations wait for the initial disk read. Worse than a memory revert:
+  /// _append saves `[...state.profiles, p]`, so an add that lands before the
+  /// load would persist a list missing every stored profile. Defaults to
+  /// completed so test doubles that override build() stay inert.
+  Future<void> _ready = Future.value();
 
   @override
   ProfilesState build() {
     _timer = Timer.periodic(kConfigPollInterval, (_) => _poll());
     ref.onDispose(() => _timer?.cancel());
-    Future.microtask(_init);
+    _ready = _init();
     return const ProfilesState(loading: true);
   }
 
@@ -109,8 +120,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     state = ProfilesState(
       profiles: profiles,
       activeId: profiles.isEmpty ? null : profiles.first.id,
-      selectedLocationId:
-          profiles.isEmpty || profiles.first.locations.isEmpty ? null : profiles.first.locations.first.id,
+      selectedLocationId: _firstLocation(profiles.isEmpty ? null : profiles.first),
     );
   }
 
@@ -198,12 +208,13 @@ class ProfilesController extends Notifier<ProfilesState> {
   }
 
   Future<void> _append(Profile p) async {
+    await _ready;
     final profiles = [...state.profiles, p];
     await ProfileStore.save(profiles);
     state = ProfilesState(
       profiles: profiles,
       activeId: p.id,
-      selectedLocationId: p.locations.isEmpty ? null : p.locations.first.id,
+      selectedLocationId: _firstLocation(p),
     );
     // A new configuration becomes the active one, so it is what on-demand
     // should bring up from now on.
@@ -217,7 +228,12 @@ class ProfilesController extends Notifier<ProfilesState> {
     return null;
   }
 
+  /// The default location selection for a profile — its first server, if any.
+  static String? _firstLocation(Profile? p) =>
+      p == null || p.locations.isEmpty ? null : p.locations.first.id;
+
   Future<void> removeProfile(String id) async {
+    await _ready;
     final removed = _byId(id);
     if (removed != null) await configSourceFor(removed).dispose();
     final wasActive = id == state.activeId;
@@ -228,8 +244,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     state = ProfilesState(
       profiles: profiles,
       activeId: newActive?.id,
-      selectedLocationId:
-          newActive == null || newActive.locations.isEmpty ? null : newActive.locations.first.id,
+      selectedLocationId: _firstLocation(newActive),
     );
     if (profiles.isEmpty) {
       // The user removed their last configuration: take the VPN profile out of
@@ -245,10 +260,16 @@ class ProfilesController extends Notifier<ProfilesState> {
   }
 
   Future<void> setActive(String id) async {
+    await _ready;
     final p = _byId(id);
-    state = state.copyWith(
+    // Not copyWith: it cannot null the selection out, and a zero-location
+    // profile must not inherit the previous profile's location id — ids are
+    // only unique within a profile, so a later refresh could turn the stale
+    // id into a selection the user never made.
+    state = ProfilesState(
+      profiles: state.profiles,
       activeId: id,
-      selectedLocationId: p == null || p.locations.isEmpty ? null : p.locations.first.id,
+      selectedLocationId: _firstLocation(p),
     );
     await _applySelection();
   }
@@ -274,6 +295,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     state = state.copyWith(switching: true);
     try {
       await core.reload(await _normConfig(p), loc.id);
+      _reapplyPending = false; // the core just got the current config
       state = state.copyWith(switching: false);
     } catch (e) {
       Log.e('hot switch failed', '$e');
@@ -297,14 +319,26 @@ class ProfilesController extends Notifier<ProfilesState> {
 
   /// Re-pull any profile by id (the per-configuration screen's manual refresh).
   Future<Profile> refreshProfile(String id) async {
+    await _ready;
     final p = _byId(id);
     if (p == null) throw StateError('unknown profile $id');
     final updated = await configSourceFor(p).refresh();
     if (identical(updated, p)) return p;
-    _replaceProfile(updated);
+    // The fetch ran against a snapshot taken when it started. Graft its
+    // remote-owned fields onto the profile as it is NOW — the user may have
+    // edited the local half (rule set, routing switch) while the request was
+    // in flight, and persisting the snapshot would silently revert that.
+    final merged = (_byId(id) ?? p).withBundle(
+      locations: updated.locations,
+      account: updated.account,
+      routing: updated.routing,
+      dns: updated.dns,
+      refreshedAt: updated.refreshedAt ?? DateTime.now(),
+    );
+    _replaceProfile(merged);
     await ProfileStore.save(state.profiles);
     if (id == state.activeId) await syncTunnelConfig();
-    return updated;
+    return merged;
   }
 
   /// Apply a global rule set to a profile. Picking a set also turns routing on:
@@ -320,6 +354,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// Routing changes reach the tunnel the same way a server switch does: hot on
   /// a live session, persisted otherwise.
   Future<void> _updateRouting(String profileId, Profile Function(Profile) change) async {
+    await _ready;
     final p = _byId(profileId);
     if (p == null) return;
     _replaceProfile(change(p));
@@ -335,7 +370,15 @@ class ProfilesController extends Notifier<ProfilesState> {
 
   // --- connect ---
 
-  Future<void> connect() async {
+  /// One connect at a time: the pre-connect refresh can take seconds, during
+  /// which the core still reports "disconnected" and the button stays live —
+  /// a second tap must join the first attempt, not start a parallel one.
+  Future<void>? _connecting;
+
+  Future<void> connect() => _connecting ??= _connect().whenComplete(() => _connecting = null);
+
+  Future<void> _connect() async {
+    await _ready;
     final core = ref.read(vpnCoreProvider);
     state = state.copyWith(error: null);
     try {
@@ -365,6 +408,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       await core.load(await _normConfig(p));
       await core.connect(loc.id);
       _lastReapply = DateTime.now();
+      _reapplyPending = false;
       // Re-arm (or arm) system auto-connect now that a working config is
       // persisted on the native side.
       await ref.read(onDemandProvider.notifier).onConnected();
@@ -458,21 +502,23 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<void> _poll() async {
     final p = state.active;
     if (p == null || !p.isRefreshable) return;
-    final before = p;
-    Profile after;
+    // The reapply stays inside the try: it can throw too (NE call, config
+    // build), and a Timer callback has no other catch above it — an escape
+    // here is an unhandled zone error instead of a logged poll failure.
     try {
-      after = await refreshActive();
+      final after = await refreshActive();
+      await maybeReapply(p, after);
     } catch (e) {
       Log.e('profile poll failed', '$e');
-      return;
     }
-    await _maybeReapply(before, after);
   }
 
   /// Reconnect the running tunnel when a refresh changed the active server's
   /// proxy or the managed routing; disconnect if the account went inactive or
-  /// the connected server disappeared. Rate-limited.
-  Future<void> _maybeReapply(Profile before, Profile after) async {
+  /// the connected server disappeared. Rate-limited. Public only for the
+  /// leak-invariant test — nothing outside _poll should call it.
+  @visibleForTesting
+  Future<void> maybeReapply(Profile before, Profile after) async {
     final core = ref.read(vpnCoreProvider);
     if (core.status != VpnStatus.connected) return;
 
@@ -491,15 +537,24 @@ class ProfilesController extends Notifier<ProfilesState> {
 
     final routingDiff = jsonEncode(before.routing?.toJson()) != jsonEncode(after.routing?.toJson());
     final proxyDiff = jsonEncode(_proxyOf(before, locId)) != jsonEncode(_proxyOf(after, locId));
-    if (!routingDiff && !proxyDiff) return;
+    if (!routingDiff && !proxyDiff && !_reapplyPending) return;
     if (DateTime.now().difference(_lastReapply) < kReapplyMinGap) {
-      Log.i('poll: active config changed, reapply skipped (rate limit)');
+      // refreshActive already persisted the new profile, so the next poll
+      // diffs new-against-new and sees no change — without this flag a
+      // rate-limited reapply would be dropped forever, leaving the live
+      // tunnel on dead credentials until a manual reconnect.
+      _reapplyPending = true;
+      Log.i('poll: active config changed, reapply deferred (rate limit)');
       return;
     }
-    Log.i('poll: active config changed — reconnecting to apply');
+    _reapplyPending = false;
+    // Hot reload, never load+connect: startTunnel on a live session does not
+    // deliver a config (options are read at extension launch only), and saving
+    // preferences on a live session makes the system re-assert the tunnel —
+    // the reconnect leak ADR-002 exists to avoid. Same path as a user switch.
+    Log.i('poll: active config changed — hot-reloading to apply');
     _lastReapply = DateTime.now();
-    await core.load(await _normConfig(after));
-    await core.connect(locId);
+    await core.reload(await _normConfig(after), locId);
   }
 
   Map<String, dynamic>? _proxyOf(Profile p, String locId) {

@@ -175,6 +175,124 @@ Future<void> showErrorDialog(BuildContext context, AppError error,
   onDismiss?.call();
 }
 
+/// The app's single text-input dialog. Owns its TextEditingController: at the
+/// call sites that used to build one inline, `controller.dispose()` on the
+/// line after `await showDialog` raced the dialog's fade-out, whose TextField
+/// still listens to the controller for those ~150 ms.
+Future<String?> promptText(
+  BuildContext context, {
+  required String title,
+  required String label,
+  required String confirmLabel,
+  String initial = '',
+  String? hint,
+  int maxLines = 1,
+  double? fontSize,
+  bool autocorrect = true,
+  String? resetLabel,
+  String? resetValue,
+}) {
+  return showDialog<String>(
+    context: context,
+    builder: (_) => _TextPromptDialog(
+      title: title,
+      label: label,
+      confirmLabel: confirmLabel,
+      initial: initial,
+      hint: hint,
+      maxLines: maxLines,
+      fontSize: fontSize,
+      autocorrect: autocorrect,
+      resetLabel: resetLabel,
+      resetValue: resetValue,
+    ),
+  );
+}
+
+class _TextPromptDialog extends StatefulWidget {
+  const _TextPromptDialog({
+    required this.title,
+    required this.label,
+    required this.confirmLabel,
+    required this.initial,
+    required this.hint,
+    required this.maxLines,
+    required this.fontSize,
+    required this.autocorrect,
+    required this.resetLabel,
+    required this.resetValue,
+  });
+
+  final String title;
+  final String label;
+  final String confirmLabel;
+  final String initial;
+  final String? hint;
+  final int maxLines;
+  final double? fontSize;
+  final bool autocorrect;
+  final String? resetLabel;
+  final String? resetValue;
+
+  @override
+  State<_TextPromptDialog> createState() => _TextPromptDialogState();
+}
+
+class _TextPromptDialogState extends State<_TextPromptDialog> {
+  late final TextEditingController _controller = TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          autocorrect: widget.autocorrect,
+          maxLines: widget.maxLines,
+          minLines: 1,
+          style: widget.fontSize == null ? null : TextStyle(fontSize: widget.fontSize),
+          decoration: InputDecoration(labelText: widget.label, hintText: widget.hint),
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+        ),
+        if (widget.resetLabel != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              icon: const Icon(Icons.restart_alt, size: 18),
+              label: Text(widget.resetLabel!),
+              onPressed: () => _controller.text = widget.resetValue ?? '',
+            ),
+          ),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        FilledButton(
+            onPressed: () => Navigator.of(context).pop(_controller.text),
+            child: Text(widget.confirmLabel)),
+      ],
+    );
+  }
+}
+
+/// One rendering for a byte count, everywhere a size is shown — the same
+/// number must not read "42 KB" on one screen and "0.0 MB" on another.
+String formatBytes(int n) {
+  const gb = 1024 * 1024 * 1024;
+  const mb = 1024 * 1024;
+  if (n >= gb) return '${(n / gb).toStringAsFixed(2)} GB';
+  if (n >= mb) return '${(n / mb).toStringAsFixed(1)} MB';
+  if (n >= 1024) return '${(n / 1024).toStringAsFixed(0)} KB';
+  return '$n B';
+}
+
 /// Search only earns its place once the list is long enough to scan — the same
 /// threshold the on-demand value lists use.
 const int kSearchThreshold = 6;

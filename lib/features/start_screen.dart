@@ -44,13 +44,16 @@ class _StartScreenState extends ConsumerState<StartScreen> {
 
   void _onChanged(String v) => setState(() => _detected = detectInput(v));
 
-  Future<void> _run(Future<void> Function() action) async {
+  /// The action returns true when a configuration was actually added; false
+  /// means the user backed out (cancelled a picker) — the screen must stay,
+  /// closing it would read as a phantom success.
+  Future<void> _run(Future<bool> Function() action) async {
     setState(() => _busy = true);
     try {
-      await action();
+      final added = await action();
       // First run: app.dart swaps to Home when a profile appears. Pushed from
       // home/settings: unwind whatever is above the root.
-      if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+      if (added && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } catch (e) {
       Log.e('add configuration failed', '$e');
       if (mounted) showErrorDialog(context, describeError(e, subject: _subject()));
@@ -90,15 +93,19 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       }
       return;
     }
-    await _run(() => _ctrl.addFromText(t));
+    await _run(() async {
+      await _ctrl.addFromText(t);
+      return true;
+    });
   }
 
   Future<void> _openFile() => _run(() async {
         final res = await FilePicker.platform.pickFiles(withData: true);
-        if (res == null) return;
+        if (res == null) return false; // cancelled — nothing added
         final bytes = res.files.single.bytes;
         if (bytes == null) throw const FormatException('Could not read the file.');
         await _ctrl.addFromText(utf8.decode(bytes), name: res.files.single.name);
+        return true;
       });
 
   @override

@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
 
-import 'log.dart';
 import 'norm_config.dart';
+import 'json_file_store.dart';
 
 /// Hidden rules prepended (ahead of any policy, managed included) when
 /// [RoutingPrefs.lanDirect] is on: private, link-local and multicast ranges
@@ -78,26 +75,11 @@ class RoutingPrefs {
 }
 
 class RoutingPrefsStore {
-  static Future<File> _file() async {
-    final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}/routing_prefs.json');
-  }
+  static final _store = JsonFileStore('routing_prefs.json');
 
-  static Future<RoutingPrefs> load() async {
-    try {
-      final f = await _file();
-      if (!await f.exists()) return const RoutingPrefs();
-      final json = jsonDecode(await f.readAsString());
-      if (json is! Map) return const RoutingPrefs();
-      return RoutingPrefs.fromJson(Map<String, dynamic>.from(json));
-    } catch (e) {
-      Log.e('routing prefs: could not load', '$e');
-      return const RoutingPrefs();
-    }
-  }
+  static Future<RoutingPrefs> load() => _store.load(
+      (j) => j is Map ? RoutingPrefs.fromJson(Map<String, dynamic>.from(j)) : const RoutingPrefs(),
+      const RoutingPrefs());
 
-  static Future<void> save(RoutingPrefs prefs) async {
-    final f = await _file();
-    await f.writeAsString(jsonEncode(prefs.toJson()));
-  }
+  static Future<void> save(RoutingPrefs prefs) => _store.save(prefs.toJson());
 }

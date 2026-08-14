@@ -37,34 +37,19 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
   }
 
   Future<void> _create() async {
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New rule set'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Name', hintText: 'Work'),
-          onSubmitted: (v) => Navigator.of(context).pop(v),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Create')),
-        ],
-      ),
-    );
-    controller.dispose();
+    final name = await promptText(context,
+        title: 'New rule set', label: 'Name', hint: 'Work', confirmLabel: 'Create');
     final trimmed = name?.trim() ?? '';
     if (trimmed.isEmpty) return;
     final set = RuleSet(
       id: 'rs${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}',
       name: trimmed,
     );
+    // Notifier before the await: the bump must land even if the user leaves
+    // the screen while the write is in flight (ref dies with the state).
+    final revision = ref.read(ruleSetRevisionProvider.notifier);
     await RuleSetStore.save([..._sets, set]);
-    ref.read(ruleSetRevisionProvider.notifier).bump();
+    revision.bump();
     if (!mounted) return;
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => RoutingScreen.editSet(set.id)));

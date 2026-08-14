@@ -40,34 +40,17 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
   late List<String> _values = _sorted(widget.values);
   String _query = '';
 
-  /// Search only earns its place once the list is long enough to scan.
-  static const _searchThreshold = 6;
 
   List<String> _sorted(List<String> v) =>
       [...v]..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
   Future<void> _add() async {
-    final controller = TextEditingController();
-    final value = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(widget.addTitle),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          autocorrect: false,
-          decoration: InputDecoration(labelText: 'Value', hintText: widget.addHint),
-          onSubmitted: (v) => Navigator.of(context).pop(v),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Add')),
-        ],
-      ),
-    );
-    controller.dispose();
+    final value = await promptText(context,
+        title: widget.addTitle,
+        label: 'Value',
+        hint: widget.addHint,
+        confirmLabel: 'Add',
+        autocorrect: false);
     final v = value?.trim() ?? '';
     if (v.isEmpty || _values.contains(v)) return;
     setState(() => _values = _sorted([..._values, v]));
@@ -97,7 +80,7 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
           child: ListView(
             padding: const EdgeInsets.only(bottom: 88),
             children: [
-              if (_values.length >= _searchThreshold)
+              if (_values.length >= kSearchThreshold)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
                   child: TextField(

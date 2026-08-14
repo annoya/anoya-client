@@ -25,6 +25,7 @@ test.
 | [005](ADR-005-multi-configuration-client.md) | client | Three domains of authority: self-hosted, subscription, link | why not one backend, capability degradation, `ConfigSource`, refetch policy |
 | [006](ADR-006-authentication-passwords-and-oidc.md) | both | Passwords plus generic OIDC, client-direct with PKCE | why not server-mediated, JIT provisioning, allowlists |
 | [007](ADR-007-worker-enrollment-and-self-recovery.md) | service | Reusable enrollment tokens so a worker recovers itself | why not single-use, rotation as revocation, what to revisit before production |
+| [008](ADR-008-dns-rides-the-config.md) | both | DNS resolvers ride the config; the OS-level DNS setting is a decoy | dns-hijack + fake-ip, per-source resolvers, Cloudflare DoH fallback, sanitation, bootstrap, `Bundle.DNS` |
 
 ## Writing a New One
 

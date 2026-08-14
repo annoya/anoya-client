@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'geo_store.dart';
@@ -24,7 +25,9 @@ class GeositeCategory {
 /// Only the entry names and the domain count are needed, so this is a plain
 /// wire-format walk (varint tags, length-delimited skips) rather than a
 /// protobuf dependency. The result is cached next to the database, keyed by
-/// its size — a ~25 MB scan should happen once per download, not per open.
+/// its size and mtime — a ~25 MB scan should happen once per download, not
+/// per open. (Size alone could accept a re-downloaded file of identical
+/// length with different categories.)
 class GeositeIndex {
   static const _cacheFile = 'geosite-index.json';
 
@@ -33,16 +36,20 @@ class GeositeIndex {
     if (dirPath == null) return const [];
     final dat = File('$dirPath/${GeoStore.geositeFile}');
     if (!await dat.exists()) return const [];
-    final size = await dat.length();
+    final stat = await dat.stat();
+    final key = '${stat.size}:${stat.modified.millisecondsSinceEpoch}';
 
     final cache = File('$dirPath/$_cacheFile');
-    final cached = await _readCache(cache, size);
+    final cached = await _readCache(cache, key);
     if (cached != null) return cached;
 
     final sw = Stopwatch()..start();
-    final list = scan(await dat.readAsBytes());
+    // Off the UI isolate: walking 25 MB of varints synchronously would jank
+    // the first picker open after a download.
+    final bytes = await dat.readAsBytes();
+    final list = await Isolate.run(() => scan(bytes));
     Log.i('geosite index: ${list.length} categories in ${sw.elapsedMilliseconds} ms');
-    await _writeCache(cache, size, list);
+    await _writeCache(cache, key, list);
     return list;
   }
 
@@ -86,11 +93,11 @@ class GeositeIndex {
     return GeositeCategory(name, domains);
   }
 
-  static Future<List<GeositeCategory>?> _readCache(File cache, int datSize) async {
+  static Future<List<GeositeCategory>?> _readCache(File cache, String datKey) async {
     try {
       if (!await cache.exists()) return null;
       final j = jsonDecode(await cache.readAsString()) as Map<String, dynamic>;
-      if (j['dat_size'] != datSize) return null;
+      if (j['dat_key'] != datKey) return null;
       return [
         for (final e in j['categories'] as List)
           GeositeCategory(e['n'] as String, e['d'] as int),
@@ -101,10 +108,10 @@ class GeositeIndex {
   }
 
   static Future<void> _writeCache(
-      File cache, int datSize, List<GeositeCategory> list) async {
+      File cache, String datKey, List<GeositeCategory> list) async {
     try {
       await cache.writeAsString(jsonEncode({
-        'dat_size': datSize,
+        'dat_key': datKey,
         'categories': [
           for (final c in list) {'n': c.name, 'd': c.domainCount},
         ],

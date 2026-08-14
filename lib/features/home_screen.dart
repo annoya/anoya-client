@@ -416,9 +416,13 @@ class _ConnectButton extends StatelessWidget {
             ? vpn.connecting
             : Theme.of(context).colorScheme.primary;
 
-    return GestureDetector(
-      onTap: connecting ? null : onTap,
-      child: AnimatedContainer(
+    return Semantics(
+      button: true,
+      enabled: !connecting,
+      label: connected ? 'Disconnect' : 'Connect',
+      child: GestureDetector(
+        onTap: connecting ? null : onTap,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
         width: 180,
@@ -440,6 +444,7 @@ class _ConnectButton extends StatelessWidget {
                   Text(connected ? 'Disconnect' : 'Connect',
                       style: TextStyle(color: color, fontWeight: FontWeight.w600)),
                 ]),
+          ),
         ),
       ),
     );

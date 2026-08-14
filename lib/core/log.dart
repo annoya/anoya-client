@@ -10,6 +10,7 @@ class Log {
 
   static const _max = 1000;
   static final ListQueue<String> _buffer = ListQueue<String>();
+  static int _bufferBytes = 0;
 
   /// Bumps whenever a line is added, so log views can rebuild live.
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
@@ -33,18 +34,23 @@ class Log {
     if (kDebugMode) debugPrint('vpn $line');
     if (!enabled) return;
     _buffer.addLast(line);
+    _bufferBytes += line.length + 1; // +1 for the join('\n') separator
     while (_buffer.length > _max) {
-      _buffer.removeFirst();
+      _bufferBytes -= _buffer.removeFirst().length + 1;
     }
     revision.value++;
   }
 
   static List<String> lines() => _buffer.toList();
   static String dump() => _buffer.join('\n');
-  static int get sizeBytes => dump().length;
+
+  /// Approximate buffer size, maintained incrementally — the Logs screen reads
+  /// this on every build, and joining 1000 lines per frame is real work.
+  static int get sizeBytes => _buffer.isEmpty ? 0 : _bufferBytes - 1;
 
   static void clear() {
     _buffer.clear();
+    _bufferBytes = 0;
     revision.value++;
   }
 }

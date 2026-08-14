@@ -1,11 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:path_provider/path_provider.dart';
 
-import 'log.dart';
 import 'profile.dart';
+import 'json_file_store.dart';
 
 /// Persists the list of [Profile]s and their secrets.
 ///
@@ -16,29 +13,13 @@ import 'profile.dart';
 class ProfileStore {
   static const _secure = FlutterSecureStorage();
 
-  static Future<File> _file() async {
-    final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}/profiles.json');
-  }
+  static final _store = JsonFileStore('profiles.json');
 
-  static Future<List<Profile>> load() async {
-    try {
-      final f = await _file();
-      if (!await f.exists()) return [];
-      final list = jsonDecode(await f.readAsString()) as List<dynamic>;
-      return list
-          .map((e) => Profile.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-    } catch (e) {
-      Log.e('profiles: load failed', '$e');
-      return [];
-    }
-  }
+  static Future<List<Profile>> load() => _store.load(
+      (j) => decodeListLenient(j, 'profiles', Profile.fromJson), <Profile>[]);
 
-  static Future<void> save(List<Profile> profiles) async {
-    final f = await _file();
-    await f.writeAsString(jsonEncode(profiles.map((p) => p.toJson()).toList()));
-  }
+  static Future<void> save(List<Profile> profiles) =>
+      _store.save(profiles.map((p) => p.toJson()).toList());
 
   // --- self-hosted session token (Keychain) ---
 

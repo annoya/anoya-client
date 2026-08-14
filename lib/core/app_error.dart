@@ -72,7 +72,8 @@ AppError describeAccountStatus(String status) => switch (status) {
           detail: 'Renew it in your account, then connect again.'),
       'limited' => const AppError('Traffic limit reached',
           detail: 'The plan is used up until it renews.'),
-      'disabled' => const AppError('Access disabled',
+      // The server's stored status is "deactivated" (shared/normconfig).
+      'deactivated' => const AppError('Access disabled',
           detail: 'The administrator turned this account off.'),
       'on_hold' => const AppError('Subscription not started',
           detail: 'It begins on the first connection — try again in a moment.'),
