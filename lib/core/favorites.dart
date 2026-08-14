@@ -1,9 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:path_provider/path_provider.dart';
-
-import 'log.dart';
+import 'json_file_store.dart';
 
 /// Pinned configurations and servers. Purely a display order: favourites come
 /// first in the pickers, nothing else about them differs.
@@ -68,26 +63,11 @@ extension on Set<String> {
 }
 
 class FavoritesStore {
-  static Future<File> _file() async {
-    final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}/favorites.json');
-  }
+  static final _store = JsonFileStore('favorites.json');
 
-  static Future<Favorites> load() async {
-    try {
-      final f = await _file();
-      if (!await f.exists()) return const Favorites();
-      final json = jsonDecode(await f.readAsString());
-      if (json is! Map) return const Favorites();
-      return Favorites.fromJson(Map<String, dynamic>.from(json));
-    } catch (e) {
-      Log.e('favorites: could not load', '$e');
-      return const Favorites();
-    }
-  }
+  static Future<Favorites> load() => _store.load(
+      (j) => j is Map ? Favorites.fromJson(Map<String, dynamic>.from(j)) : const Favorites(),
+      const Favorites());
 
-  static Future<void> save(Favorites favorites) async {
-    final f = await _file();
-    await f.writeAsString(jsonEncode(favorites.toJson()));
-  }
+  static Future<void> save(Favorites favorites) => _store.save(favorites.toJson());
 }

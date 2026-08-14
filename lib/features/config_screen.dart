@@ -8,7 +8,6 @@ import '../core/profile.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
-import '../state/providers.dart';
 import '../state/routing_status.dart';
 import 'routing_screen.dart';
 
@@ -92,7 +91,9 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
     final st = ref.read(profilesControllerProvider);
     if (st.activeId == p.id) {
       try {
-        await ref.read(vpnCoreProvider).disconnect();
+        // Through the controller, not the raw core: it records the on-demand
+        // pause first, so the home chips explain why auto-connect is off.
+        await _ctrl.disconnect();
       } catch (_) {/* ignore */}
     }
     await _ctrl.removeProfile(p.id);
@@ -178,7 +179,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(
-                          'Traffic: ${_bytes(profile.account!.usedBytes)} of ${_bytes(profile.account!.dataLimit)}',
+                          'Traffic: ${formatBytes(profile.account!.usedBytes)} of ${formatBytes(profile.account!.dataLimit)}',
                           style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(height: 8),
                       ClipRRect(
@@ -295,13 +296,6 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
     return 'Status: $status';
   }
 
-  String _bytes(int n) {
-    const gb = 1024 * 1024 * 1024;
-    const mb = 1024 * 1024;
-    if (n >= gb) return '${(n / gb).toStringAsFixed(2)} GB';
-    if (n >= mb) return '${(n / mb).toStringAsFixed(1)} MB';
-    return '${(n / 1024).toStringAsFixed(0)} KB';
-  }
 }
 
 IconData profileIcon(ProfileType t) => switch (t) {

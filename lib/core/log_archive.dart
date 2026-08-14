@@ -31,7 +31,10 @@ Future<File> buildLogArchive({required DateTime now}) async {
 
   final stamp = '${now.year}${_two(now.month)}${_two(now.day)}'
       '-${_two(now.hour)}${_two(now.minute)}${_two(now.second)}';
-  final dir = await getApplicationSupportDirectory();
+  // Temp dir, not app-support: the zip only exists to be shared/copied away,
+  // and app-support archives accumulated forever (and outlived "Clear all
+  // logs"). The OS reclaims the temp dir on its own.
+  final dir = await getTemporaryDirectory();
   final file = File('${dir.path}/vpn-logs-$stamp.zip');
   await file.writeAsBytes(ZipEncoder().encode(archive), flush: true);
   Log.i('log archive written: ${file.path}');

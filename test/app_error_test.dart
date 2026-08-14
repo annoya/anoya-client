@@ -49,6 +49,10 @@ void main() {
     test('account states are explained, not printed', () {
       expect(describeAccountStatus('expired').title, 'Subscription expired');
       expect(describeAccountStatus('limited').title, 'Traffic limit reached');
+      // "deactivated" is the exact string the server stores — a renamed case
+      // here silently downgrades the message to the generic fallback.
+      expect(describeAccountStatus('deactivated').title, 'Access disabled');
+      expect(describeAccountStatus('on_hold').title, 'Subscription not started');
       // Unknown states still read as a sentence rather than an enum.
       expect(describeAccountStatus('some_new_state').title, 'Account is some new state');
     });

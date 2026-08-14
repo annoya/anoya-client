@@ -201,7 +201,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   leading: const Icon(Icons.public),
                   title: const Text('GeoIP & GeoSite'),
                   subtitle: Text(_geo.downloaded
-                      ? 'downloaded · ${_bytes(_geo.geoipBytes + _geo.geositeBytes)}'
+                      ? 'downloaded · ${formatBytes(_geo.geoipBytes + _geo.geositeBytes)}'
                       : 'not downloaded'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _push(const GeoScreen()),
@@ -249,10 +249,3 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-String _bytes(int n) {
-  const gb = 1024 * 1024 * 1024;
-  const mb = 1024 * 1024;
-  if (n >= gb) return '${(n / gb).toStringAsFixed(2)} GB';
-  if (n >= mb) return '${(n / mb).toStringAsFixed(1)} MB';
-  return '${(n / 1024).toStringAsFixed(0)} KB';
-}

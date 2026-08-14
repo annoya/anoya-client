@@ -11,9 +11,15 @@ import 'providers.dart';
 class OnDemandController extends Notifier<OnDemandPrefs> {
   int _idSeq = 0;
 
+  /// Mutations wait for the disk read: an edit that lands first would be
+  /// silently overwritten when the load completes a moment later.
+  Future<void> _ready = Future.value();
+
   @override
   OnDemandPrefs build() {
-    Future.microtask(() async => state = await OnDemandStore.load());
+    _ready = OnDemandStore.load().then((v) {
+      state = v;
+    });
     return const OnDemandPrefs();
   }
 
@@ -46,7 +52,6 @@ class OnDemandController extends Notifier<OnDemandPrefs> {
   Future<void> onConnected() => _apply(state.copyWith(paused: false));
 
   /// The active configuration is gone — nothing to auto-connect to.
-  Future<void> disable() => _apply(state.copyWith(enabled: false, paused: false));
 
   /// Forget on-demand locally, without touching the system. Used when the VPN
   /// profile is being removed anyway: pushing a "disarm" first would recreate
@@ -89,6 +94,7 @@ class OnDemandController extends Notifier<OnDemandPrefs> {
   /// state falls back to "not armed" so the UI never claims auto-connect that
   /// isn't running.
   Future<void> _apply(OnDemandPrefs prefs) async {
+    await _ready;
     state = prefs;
     await OnDemandStore.save(prefs);
     bool armed = false;

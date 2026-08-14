@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -5,6 +6,11 @@ import 'package:http/http.dart' as http;
 
 import '../core/log.dart';
 import '../core/norm_config.dart';
+
+/// Ceiling for every HTTP call the app makes. Without one, a server behind a
+/// packet-dropping firewall hangs Connect (which awaits the pre-connect
+/// refresh) indefinitely, with no feedback and no way to retry.
+const kHttpTimeout = Duration(seconds: 15);
 
 /// ApiException carries the management service's error envelope.
 class ApiException implements Exception {
@@ -65,11 +71,13 @@ class ApiClient {
       '/api/client/login',
       body: {'username': username, 'password': password},
     );
-    return LoginResult(
-      data['token'] as String,
-      Account.fromJson(data['account'] as Map<String, dynamic>? ?? {}),
-    );
+    return _loginResult(data);
   }
+
+  static LoginResult _loginResult(Map<String, dynamic> data) => LoginResult(
+        data['token'] as String,
+        Account.fromJson(data['account'] as Map<String, dynamic>? ?? {}),
+      );
 
   /// Which auth methods this server offers (pre-login, no token needed).
   Future<AuthConfig> authConfig() async {
@@ -87,10 +95,7 @@ class ApiClient {
       '/api/client/login/oidc',
       body: {'provider_id': providerId, 'id_token': idToken},
     );
-    return LoginResult(
-      data['token'] as String,
-      Account.fromJson(data['account'] as Map<String, dynamic>? ?? {}),
-    );
+    return _loginResult(data);
   }
 
   Future<NormConfig> fetchConfig() async {
@@ -114,10 +119,15 @@ class ApiClient {
         if (auth && token != null) 'Authorization': 'Bearer $token',
       };
       if (method == 'GET') {
-        res = await http.get(uri, headers: headers);
+        res = await http.get(uri, headers: headers).timeout(kHttpTimeout);
       } else {
-        res = await http.post(uri, headers: headers, body: jsonEncode(body));
+        res = await http
+            .post(uri, headers: headers, body: jsonEncode(body))
+            .timeout(kHttpTimeout);
       }
+    } on TimeoutException {
+      Log.e('request to $uri timed out');
+      throw ApiException(0, 'timeout', 'No answer from $baseUrl — check the address and the network.');
     } on SocketException catch (e) {
       Log.e('network error reaching $uri', e);
       throw ApiException(0, 'network', 'Cannot reach $baseUrl — check the address/port and that the server is up.');
@@ -131,7 +141,17 @@ class ApiClient {
     }
 
     Log.i('$method $path -> ${res.statusCode} (${res.body.length} bytes)');
-    final parsed = res.body.isNotEmpty ? jsonDecode(res.body) as Map<String, dynamic> : <String, dynamic>{};
+    // Parse leniently: an error response is often not our JSON envelope at all
+    // (a reverse proxy's 502 HTML page) and must still surface as a
+    // status-coded ApiException, not a raw FormatException.
+    Map<String, dynamic> parsed;
+    try {
+      parsed = res.body.isNotEmpty
+          ? jsonDecode(res.body) as Map<String, dynamic>
+          : <String, dynamic>{};
+    } catch (_) {
+      parsed = <String, dynamic>{};
+    }
     if (res.statusCode ~/ 100 != 2) {
       final err = parsed['error'] as Map<String, dynamic>?;
       final code = err?['code'] as String? ?? 'error';

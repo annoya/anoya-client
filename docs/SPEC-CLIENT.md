@@ -117,6 +117,20 @@ traffic to escape. Nothing is excluded from the tunnel — the engine's own dial
 leaves through `IP_BOUND_IF`. Full decision, rejected alternatives and
 measurements: ADR-002.
 
+### 3.3 DNS
+
+The DNS servers in the NE settings are a decoy: their only job is to steer the
+OS's queries into the tunnel, where the engine's `any:53` hijack answers them
+in fake-ip mode. The real resolvers live in the engine config's `dns:` block
+and therefore switch with the configuration, through the same hot reload. A
+configuration supplies them at its source — the self-hosted bundle's `dns`
+field, a Clash-YAML subscription's `dns.nameserver` — and falls back to
+Cloudflare DoH (`https://1.1.1.1/dns-query`) when it names none; share links
+cannot carry DNS. Entries that could not be nameservers are dropped, never
+escaped into the YAML, and hostname-addressed resolvers get a plain-IP
+bootstrap. Fake-ip mode and range are app constants across configurations.
+Full decision: ADR-008.
+
 ---
 
 ## 4. Configurations

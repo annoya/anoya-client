@@ -144,7 +144,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
             _LogTile(
               title: 'Application',
               subtitle: 'Client-side events',
-              size: _human(Log.sizeBytes),
+              size: formatBytes(Log.sizeBytes),
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const LogViewerScreen(title: 'Application', appLog: true),
               )),
@@ -185,11 +185,6 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
     ));
   }
 
-  static String _human(int bytes) {
-    if (bytes < 1024) return '$bytes b';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
-    return '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
-  }
 }
 
 class _LogTile extends StatelessWidget {

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../api/api_client.dart';
 import 'log.dart';
 import 'network_extension_core.dart';
 import 'routing_prefs.dart';
@@ -57,20 +58,43 @@ class GeoStore {
     final prefs = await RoutingPrefsStore.load();
     await _fetchTo(prefs.geoipUrl, File('${dir.path}/$geoipFile'));
     await _fetchTo(prefs.geositeUrl, File('${dir.path}/$geositeFile'));
-    await RoutingPrefsStore.save(prefs.copyWith(geoUpdatedAt: DateTime.now()));
+    // Re-load before stamping: the two downloads take minutes on a slow link,
+    // and saving the snapshot from before them would silently revert any
+    // setting the user changed meanwhile (lanDirect, source URLs).
+    final fresh = await RoutingPrefsStore.load();
+    await RoutingPrefsStore.save(fresh.copyWith(geoUpdatedAt: DateTime.now()));
     Log.i('geo: databases updated');
   }
 
   static Future<void> _fetchTo(String url, File dest) async {
-    final res = await http.get(Uri.parse(url));
-    if (res.statusCode ~/ 100 != 2 || res.bodyBytes.isEmpty) {
-      throw http.ClientException('geo download failed (${res.statusCode})', Uri.parse(url));
+    // Stream to disk rather than buffering: each database is 4-20 MB, and two
+    // of them held in memory at once is real pressure on iOS. The timeout
+    // guards connect/headers; an established transfer is allowed to be slow.
+    final client = http.Client();
+    try {
+      final res = await client
+          .send(http.Request('GET', Uri.parse(url)))
+          .timeout(kHttpTimeout);
+      if (res.statusCode ~/ 100 != 2) {
+        throw http.ClientException('geo download failed (${res.statusCode})', Uri.parse(url));
+      }
+      // Write to a temp name then rename: keep the old database usable if we
+      // die mid-write.
+      final tmp = File('${dest.path}.tmp');
+      final sink = tmp.openWrite();
+      try {
+        await sink.addStream(res.stream);
+      } finally {
+        await sink.close();
+      }
+      if (await tmp.length() == 0) {
+        await tmp.delete();
+        throw http.ClientException('geo download was empty', Uri.parse(url));
+      }
+      await tmp.rename(dest.path);
+    } finally {
+      client.close();
     }
-    // Write to a temp name then rename: keep the old database usable if we die
-    // mid-write.
-    final tmp = File('${dest.path}.tmp');
-    await tmp.writeAsBytes(res.bodyBytes);
-    await tmp.rename(dest.path);
   }
 
   /// Weekly refresh of already-downloaded databases (never a first download —

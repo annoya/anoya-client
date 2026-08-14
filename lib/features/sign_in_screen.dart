@@ -40,11 +40,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     return h == null || h.isEmpty ? null : h;
   }
 
-  Future<void> _run(Future<void> Function() action) async {
+  /// The action returns true only when the sign-in actually happened; false
+  /// means the user backed out (dismissed the provider sheet) — the screen
+  /// stays, with the typed server address intact.
+  Future<void> _run(Future<bool> Function() action) async {
     setState(() => _busy = true);
     try {
-      await action();
-      if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+      final signedIn = await action();
+      if (signedIn && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } catch (e) {
       Log.e('sign in failed', '$e');
       if (mounted) showErrorDialog(context, describeError(e, subject: _host()));
@@ -53,8 +56,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     }
   }
 
-  Future<void> _signIn() =>
-      _run(() => _ctrl.addSelfhosted(_server.text, _username.text, _password.text));
+  Future<void> _signIn() => _run(() async {
+        await _ctrl.addSelfhosted(_server.text, _username.text, _password.text);
+        return true;
+      });
 
   Future<void> _ssoSignIn() => _run(() async {
         if (_server.text.trim().isEmpty) {
@@ -66,27 +71,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         }
         final provider =
             cfg.providers.length == 1 ? cfg.providers.first : await _pickProvider(cfg.providers);
-        if (provider == null) return;
+        if (provider == null) return false; // sheet dismissed — user backed out
         await _ctrl.addSelfhostedOIDC(_server.text, provider);
+        return true;
       });
 
-  Future<AuthProvider?> _pickProvider(List<AuthProvider> providers) {
-    return showModalBottomSheet<AuthProvider>(
-      context: context,
-      showDragHandle: true,
-      builder: (_) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Padding(padding: EdgeInsets.all(16), child: Text('Sign in with')),
-          ...providers.map((p) => ListTile(
-                leading: const Icon(Icons.login),
-                title: Text(p.name),
-                onTap: () => Navigator.of(context).pop(p),
-              )),
-          const SizedBox(height: 8),
-        ]),
-      ),
-    );
-  }
+  Future<AuthProvider?> _pickProvider(List<AuthProvider> providers) => pickOption(
+        context,
+        title: 'Sign in with',
+        options: [
+          for (final p in providers)
+            Option(p, p.name, leading: const Icon(Icons.login)),
+        ],
+      );
 
   @override
   Widget build(BuildContext context) {

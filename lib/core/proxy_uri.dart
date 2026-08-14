@@ -31,7 +31,9 @@ Location? parseProxyUri(String raw) {
         return null;
     }
   } catch (e) {
-    Log.e('proxy uri parse failed', '$s -> $e');
+    // Scheme only: the link's userinfo IS the credential (uuid/password), and
+    // this log line ends up in the support archive.
+    Log.e('proxy uri parse failed', '${s.split('://').first}:// -> $e');
     return null;
   }
 }

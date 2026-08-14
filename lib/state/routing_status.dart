@@ -50,7 +50,9 @@ final ruleSetsProvider = FutureProvider<List<RuleSet>>((ref) async {
 /// server-managed policy when there is one, otherwise its rule set — and only
 /// while routing is switched on for that configuration.
 final routingStatusProvider = FutureProvider<RoutingStatus>((ref) async {
-  final profile = ref.watch(profilesControllerProvider).active;
+  // select: re-running this (and its RuleSetStore disk read) on every
+  // switching/loading/error flip of the profiles state is pure waste.
+  final profile = ref.watch(profilesControllerProvider.select((s) => s.active));
   ref.watch(ruleSetRevisionProvider);
   if (profile == null) return RoutingStatus.off;
   // A managed policy is never "off": the server owns it, and the local switch

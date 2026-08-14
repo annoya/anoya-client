@@ -74,6 +74,33 @@ class Profile {
   bool get isRefreshable =>
       type == ProfileType.selfhosted || type == ProfileType.subscription;
 
+  /// The remote-owned half of a profile, replaced wholesale by a refresh:
+  /// what the source says, goes — verbatim. In particular `routing: null`
+  /// CLEARS a managed policy (the admin detached it) and an empty [dns] drops
+  /// ours (ADR-008: a source that drops its DNS drops ours too). copyWith's
+  /// null-keeps semantics cannot express either.
+  Profile withBundle({
+    required List<Location> locations,
+    required Account? account,
+    required Routing? routing,
+    required List<String> dns,
+    required DateTime refreshedAt,
+  }) =>
+      Profile(
+        id: id,
+        type: type,
+        name: name,
+        locations: locations,
+        serverUrl: serverUrl,
+        subscriptionUrl: subscriptionUrl,
+        account: account,
+        routing: routing,
+        ruleSetId: ruleSetId,
+        routingEnabled: routingEnabled,
+        dns: dns,
+        refreshedAt: refreshedAt,
+      );
+
   Profile copyWith({
     String? name,
     List<Location>? locations,

@@ -1,9 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:path_provider/path_provider.dart';
-
-import 'log.dart';
+import 'json_file_store.dart';
 
 /// One system on-demand rule (mirrors NEOnDemandRule). Conditions are ANDed;
 /// the OS applies the first rule whose conditions all match.
@@ -76,9 +71,11 @@ class OnDemandRule {
         interface: OnDemandInterface.values.firstWhere(
             (i) => i.name == (j['interface'] as String? ?? 'any'),
             orElse: () => OnDemandInterface.any),
-        ssids: (j['ssids'] as List<dynamic>? ?? []).cast<String>(),
-        dnsDomains: (j['dns_domains'] as List<dynamic>? ?? []).cast<String>(),
-        dnsServers: (j['dns_servers'] as List<dynamic>? ?? []).cast<String>(),
+        // whereType, not cast: cast() is a lazy view whose type error would
+        // surface far from load()'s try/catch — in the UI or on connect.
+        ssids: (j['ssids'] as List<dynamic>? ?? []).whereType<String>().toList(),
+        dnsDomains: (j['dns_domains'] as List<dynamic>? ?? []).whereType<String>().toList(),
+        dnsServers: (j['dns_servers'] as List<dynamic>? ?? []).whereType<String>().toList(),
         probeUrl: j['probe_url'] as String? ?? '',
       );
 
@@ -197,26 +194,11 @@ class OnDemandPrefs {
 }
 
 class OnDemandStore {
-  static Future<File> _file() async {
-    final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}/on_demand.json');
-  }
+  static final _store = JsonFileStore('on_demand.json');
 
-  static Future<OnDemandPrefs> load() async {
-    try {
-      final f = await _file();
-      if (!await f.exists()) return const OnDemandPrefs();
-      final json = jsonDecode(await f.readAsString());
-      if (json is! Map) return const OnDemandPrefs();
-      return OnDemandPrefs.fromJson(Map<String, dynamic>.from(json));
-    } catch (e) {
-      Log.e('on-demand: could not load', '$e');
-      return const OnDemandPrefs();
-    }
-  }
+  static Future<OnDemandPrefs> load() => _store.load(
+      (j) => j is Map ? OnDemandPrefs.fromJson(Map<String, dynamic>.from(j)) : const OnDemandPrefs(),
+      const OnDemandPrefs());
 
-  static Future<void> save(OnDemandPrefs prefs) async {
-    final f = await _file();
-    await f.writeAsString(jsonEncode(prefs.toJson()));
-  }
+  static Future<void> save(OnDemandPrefs prefs) => _store.save(prefs.toJson());
 }

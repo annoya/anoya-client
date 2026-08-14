@@ -36,9 +36,6 @@ class NormConfig {
       dns: (json['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
     );
   }
-
-  NormConfig withRouting(Routing? routing) => NormConfig(
-      version: version, account: account, locations: locations, routing: routing, dns: dns);
 }
 
 /// Split-tunneling policy: mode + ordered rules, first match wins (the same

@@ -41,7 +41,7 @@ final class SelfhostedSource extends ConfigSource {
     final token = await ProfileStore.token(profile.id);
     final api = ApiClient(profile.serverUrl!, token: token);
     final cfg = await api.fetchConfig();
-    return profile.copyWith(
+    return profile.withBundle(
       locations: cfg.locations,
       account: cfg.account,
       routing: cfg.routing,
@@ -64,8 +64,13 @@ final class SubscriptionSource extends ConfigSource {
     final body = await httpGet(profile.subscriptionUrl!);
     final locations = parseSubscription(body);
     if (locations.isEmpty) return profile;
-    return profile.copyWith(
-        locations: locations, dns: subscriptionDns(body), refreshedAt: DateTime.now());
+    return profile.withBundle(
+      locations: locations,
+      account: null,
+      routing: null,
+      dns: subscriptionDns(body),
+      refreshedAt: DateTime.now(),
+    );
   }
 }
 
@@ -81,10 +86,16 @@ ConfigSource configSourceFor(Profile p) => switch (p.type) {
     };
 
 /// GET a subscription body, throwing on a non-2xx status.
+///
+/// The error carries the host only, never the full URL: a subscription URL is
+/// a bearer-style credential, and exceptions from this path get logged (and
+/// shipped in the support archive) verbatim.
 Future<String> httpGet(String url) async {
-  final res = await http.get(Uri.parse(url));
+  final uri = Uri.parse(url);
+  final res = await http.get(uri).timeout(kHttpTimeout);
   if (res.statusCode ~/ 100 != 2) {
-    throw http.ClientException('subscription fetch failed (${res.statusCode})', Uri.parse(url));
+    throw http.ClientException(
+        'subscription fetch failed (${res.statusCode})', Uri(host: uri.host));
   }
   return res.body;
 }

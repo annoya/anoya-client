@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -25,17 +26,37 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
   late OnDemandRule _rule = widget.rule;
   late final TextEditingController _name = TextEditingController(text: widget.rule.name);
   late final TextEditingController _probe = TextEditingController(text: widget.rule.probeUrl);
+  Timer? _debounce;
 
   @override
   void dispose() {
+    // Flush a pending text edit instead of dropping it: leaving the screen is
+    // how editing ends, not a cancel.
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+      ref.read(onDemandProvider.notifier).upsertRule(_rule);
+    }
     _name.dispose();
     _probe.dispose();
     super.dispose();
   }
 
   Future<void> _update(OnDemandRule rule) async {
+    _debounce?.cancel();
     setState(() => _rule = rule);
     await ref.read(onDemandProvider.notifier).upsertRule(rule);
+  }
+
+  /// Text fields go through here: every upsert writes disk AND pushes the
+  /// NE profile into the system (an NEVPNManager save), and per-keystroke
+  /// native saves can complete out of order — the last one to finish wins,
+  /// which may be an older snapshot. Discrete controls keep the direct path.
+  void _updateDebounced(OnDemandRule rule) {
+    setState(() => _rule = rule);
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), () {
+      ref.read(onDemandProvider.notifier).upsertRule(_rule);
+    });
   }
 
   Future<void> _pickAction() async {
@@ -129,7 +150,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 controller: _name,
                 autocorrect: false,
                 decoration: const InputDecoration(labelText: 'Name (optional)', hintText: 'Office'),
-                onChanged: (v) => _update(_rule.copyWith(name: v.trim())),
+                onChanged: (v) => _updateDebounced(_rule.copyWith(name: v.trim())),
               ),
             ),
             const SizedBox(height: 8),
@@ -204,7 +225,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 decoration: const InputDecoration(
                     labelText: 'URL (optional)',
                     hintText: 'https://intranet.example.com/ping'),
-                onChanged: (v) => _update(_rule.copyWith(probeUrl: v.trim())),
+                onChanged: (v) => _updateDebounced(_rule.copyWith(probeUrl: v.trim())),
               ),
             ),
             _hint('The rule matches only if this URL returns 200 without redirects.'),

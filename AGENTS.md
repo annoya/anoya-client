@@ -34,11 +34,15 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    `excludedRoutes`, ever. The engine's own dial leaves through `IP_BOUND_IF`.
    An excluded route is a system-wide hole for every process, not just ours.
    See ADR-002.
-3. **The `tun` and `dns` sections of the rendered engine config are identical
-   across locations, protocols and routing policies.** That is the condition
-   under which mihomo keeps the TUN listener and the tunnel fd alive across a
-   reload. A per-location option sneaking in there silently turns switching
-   into a session drop. Pinned by `client/test/hot_switch_test.dart`.
+3. **The `tun` section of the rendered engine config is identical across
+   locations, protocols and routing policies.** That is the condition under
+   which mihomo keeps the TUN listener and the tunnel fd alive across a reload
+   (`Tun.Equal` compares exactly that section, `dns-hijack` included). A
+   per-location option sneaking in there silently turns switching into a
+   session drop. In the `dns` section the resolvers ride the config (ADR-008),
+   but the fake-ip mode and range are app constants — the OS caches the fake
+   addresses the engine handed out. Pinned by `client/test/hot_switch_test.dart`
+   and `client/test/mihomo_tun_config_test.dart`.
 4. **A failed switch never disconnects.** The tunnel keeps running on the
    previous config and the user is told. Dropping the session as error handling
    is the one thing that actually leaks.
