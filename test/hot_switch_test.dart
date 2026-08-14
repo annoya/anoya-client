@@ -135,6 +135,30 @@ void main() {
               'must stay up, or the OS routes fall back and traffic leaks');
     });
 
+    test('a poll reapply on a live tunnel is reload-only too', () async {
+      final (core, ctrl) = harness(VpnStatus.connected);
+
+      // The 5-minute poll found a rotated key for the connected server. On a
+      // live session startTunnel would not even deliver the config (options
+      // are read at extension launch only) — the only correct path is the
+      // same hot reload a user switch takes.
+      final before = profile('p1', 'nexus');
+      final after = Profile(
+        id: 'p1',
+        type: ProfileType.subscription,
+        name: 'nexus',
+        locations: [
+          Location(id: 'p1-a', label: 'Germany', proxy: {'type': 'vless', 'server': '9.9.9.9'}),
+          Location(id: 'p1-b', label: 'Japan', proxy: {'type': 'vless', 'server': '2.2.2.2'}),
+        ],
+      );
+      await ctrl.maybeReapply(before, after);
+
+      expect(core.calls, ['reload'],
+          reason: 'a background reapply must never stop/start or re-persist '
+              'the session — that is the reconnect leak ADR-002 closes');
+    });
+
     test('a failed switch leaves the running tunnel alone', () async {
       final (core, ctrl) = harness(VpnStatus.connected);
       core.failReload = true;
@@ -170,9 +194,13 @@ void main() {
 
     test('the tun section is identical across locations and routings', () {
       // mihomo only skips re-creating the TUN listener (and thus keeps the fd
-      // and the NE session) while the tun/dns sections do not change between
-      // configs. If a per-location option ever sneaks in there, hot switching
-      // silently turns into a session drop — this pins it.
+      // and the NE session) while the tun section does not change between
+      // configs (Tun.Equal in the engine compares exactly that section,
+      // dns-hijack included). If a per-location option ever sneaks in there,
+      // hot switching silently turns into a session drop — this pins it.
+      // The dns section is NOT part of that condition: resolvers legitimately
+      // ride the config (ADR-008); only the fake-ip mode/range must stay
+      // constant, which mihomo_tun_config_test.dart pins.
       String section(String yaml, String key) {
         final lines = yaml.split('\n');
         final start = lines.indexOf('$key:');
@@ -198,10 +226,17 @@ void main() {
       final a = mihomoTunConfigYaml(vless);
       final b = mihomoTunConfigYaml(trojan, routing: split);
       final c = mihomoTunConfigYaml(vless, collectLogs: false);
-      for (final other in [b, c]) {
+      final d = mihomoTunConfigYaml(vless, dns: ['https://dns.google/dns-query']);
+      for (final other in [b, c, d]) {
         expect(section(other, 'tun'), section(a, 'tun'));
+      }
+      // Same-DNS configs still render byte-identical dns sections…
+      for (final other in [b, c]) {
         expect(section(other, 'dns'), section(a, 'dns'));
       }
+      // …and a config-supplied resolver changes only the resolver lines.
+      expect(section(d, 'dns'), isNot(section(a, 'dns')));
+      expect(section(d, 'dns'), contains('fake-ip-range: 198.18.0.1/16'));
     });
   });
 }

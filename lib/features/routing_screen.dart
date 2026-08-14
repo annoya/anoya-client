@@ -54,6 +54,7 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
 
   Future<void> _load() async {
     final geo = await GeoStore.status();
+    if (!mounted) return;
     if (_isManaged) {
       final r = widget.managedPolicy!;
       setState(() {
@@ -80,21 +81,22 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
 
   Future<void> _persist() async {
     if (_isManaged) return;
+    // Grab the notifiers before any await: if the user leaves the screen while
+    // the writes are in flight, ref is disposed — and the announce below must
+    // still run, or the system's saved tunnel config keeps the old routing.
+    final revision = ref.read(ruleSetRevisionProvider.notifier);
+    final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
     final updated = [
       for (final s in sets)
         s.id == widget.setId ? s.copyWith(mode: _mode, rules: _rules) : s,
     ];
     await RuleSetStore.save(updated);
-    await _announce();
-  }
-
-  /// The edited set is what some configuration routes by, so its new mode has
-  /// to reach both the status shown on the home screen and the config the
-  /// system starts from.
-  Future<void> _announce() async {
-    ref.read(ruleSetRevisionProvider.notifier).bump();
-    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
+    // The edited set is what some configuration routes by, so its new mode has
+    // to reach both the status shown on the home screen and the config the
+    // system starts from.
+    revision.bump();
+    await profiles.syncTunnelConfig();
   }
 
   /// The category names present in the local GeoSite.dat; null while loading.
@@ -180,12 +182,7 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
   }
 
   Future<void> _addCountry() async {
-    final code = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (_) => const _CountrySheet(),
-    );
+    final code = await pickCountry(context);
     if (code != null) await _setOn('geoip', code.toLowerCase(), true);
   }
 
@@ -202,9 +199,13 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
       ),
     );
     if (ok != true) return;
+    // Same shape as _persist: notifiers first, they outlive the screen.
+    final revision = ref.read(ruleSetRevisionProvider.notifier);
+    final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
     await RuleSetStore.save(sets.where((s) => s.id != widget.setId).toList());
-    await _announce();
+    revision.bump();
+    await profiles.syncTunnelConfig();
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -344,7 +345,10 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
           onReorder: _reorder,
           children: [
             for (var i = 0; i < _rules.length; i++)
-              _ruleTile(i, _rules[i], key: ValueKey('rule_$i')),
+              // Keyed by item identity, not slot: a position key stays with
+              // the index after a drop, so the settle animation targets the
+              // wrong tile.
+              _ruleTile(i, _rules[i], key: ObjectKey(_rules[i])),
           ],
         ),
     ];
@@ -842,12 +846,7 @@ class _RuleDialogState extends State<_RuleDialog> {
   }
 
   Future<void> _pickCountry() async {
-    final code = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (_) => const _CountrySheet(),
-    );
+    final code = await pickCountry(context);
     if (code != null) setState(() => _value.text = code.toLowerCase());
   }
 
@@ -1001,59 +1000,20 @@ class _RuleDialogState extends State<_RuleDialog> {
   }
 }
 
-/// Country picker for geoip rules: searchable list built from the same
-/// country/alias table the flags use.
-class _CountrySheet extends StatefulWidget {
-  const _CountrySheet();
-
-  @override
-  State<_CountrySheet> createState() => _CountrySheetState();
-}
-
-class _CountrySheetState extends State<_CountrySheet> {
-  String _query = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final q = _query.trim().toLowerCase();
-    final items = geoCountries()
-        .where((c) => q.isEmpty || c.$2.toLowerCase().contains(q) || c.$1.toLowerCase() == q)
-        .toList();
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: Column(children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: TextField(
-                autofocus: true,
-                autocorrect: false,
-                decoration: const InputDecoration(
-                    labelText: 'Country', hintText: 'Name or ISO code'),
-                onChanged: (v) => setState(() => _query = v),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                children: items
-                    .map((c) => ListTile(
-                          leading: Text(flagEmoji(c.$1) ?? '',
-                              style: const TextStyle(fontSize: 22)),
-                          title: Text(c.$2),
-                          subtitle: Text(c.$1),
-                          onTap: () => Navigator.of(context).pop(c.$1),
-                        ))
-                    .toList(),
-              ),
-            ),
-          ]),
-        ),
-      ),
+/// Country picker for geoip rules: the shared sheet over the same
+/// country/alias table the flags use (ISO code in the subtitle so it is
+/// searchable by either).
+Future<String?> pickCountry(BuildContext context) => pickOption<String>(
+      context,
+      title: 'Country',
+      itemNoun: 'country',
+      options: [
+        for (final c in geoCountries())
+          Option(c.$1, c.$2,
+              subtitle: c.$1,
+              leading: Text(flagEmoji(c.$1) ?? '', style: const TextStyle(fontSize: 22))),
+      ],
     );
-  }
-}
 
 /// Geosite category picker: everything the local GeoSite.dat contains, with
 /// the curated catalog pinned as POPULAR (same names and avatars as Simple
@@ -1104,7 +1064,7 @@ class _GeositeSheetState extends State<_GeositeSheet> {
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.6,
+          height: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
           child: Column(children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

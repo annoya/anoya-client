@@ -184,6 +184,16 @@ void main() {
     expect(yaml, isNot(contains('injected')));
   });
 
+  test('fake-ip settings are app constants, whatever dns the config brings', () {
+    // The OS caches the fake addresses the engine handed out; a range that
+    // moved with the config would strand every cached answer on a hot switch.
+    for (final dns in [<String>[], ['10.0.0.53'], ['https://dns.google/dns-query']]) {
+      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(), dns: dns)) as YamlMap;
+      expect((doc['dns'] as YamlMap)['fake-ip-range'], '198.18.0.1/16');
+      expect((doc['dns'] as YamlMap)['enhanced-mode'], 'fake-ip');
+    }
+  });
+
   test('subscriptionDns mines dns.nameserver out of a Clash YAML body', () {
     const clash = '''
 dns:

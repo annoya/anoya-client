@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
 
-import 'log.dart';
 import 'norm_config.dart';
+import 'json_file_store.dart';
 
 /// A named, reusable split-tunneling policy. Rule sets are global (device
 /// level) and are applied to configurations individually via
@@ -72,29 +69,13 @@ class RuleSet {
 /// directory. Load always yields at least the Default set, in stable order
 /// (Default first).
 class RuleSetStore {
-  static Future<File> _file() async {
-    final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}/rule_sets.json');
-  }
+  static final _store = JsonFileStore('rule_sets.json');
 
   static const _defaultSet = RuleSet(id: RuleSet.defaultId, name: 'Default');
 
   static Future<List<RuleSet>> load() async {
-    List<RuleSet> sets = [];
-    try {
-      final f = await _file();
-      if (await f.exists()) {
-        final json = jsonDecode(await f.readAsString());
-        if (json is List) {
-          sets = json
-              .whereType<Map>()
-              .map((e) => RuleSet.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-        }
-      }
-    } catch (e) {
-      Log.e('rule sets: could not load', '$e');
-    }
+    final sets = await _store.load(
+        (j) => decodeListLenient(j, 'rule sets', RuleSet.fromJson), <RuleSet>[]);
     if (!sets.any((s) => s.isDefault)) {
       sets.insert(0, _defaultSet);
     } else {
@@ -103,10 +84,8 @@ class RuleSetStore {
     return sets;
   }
 
-  static Future<void> save(List<RuleSet> sets) async {
-    final f = await _file();
-    await f.writeAsString(jsonEncode(sets.map((s) => s.toJson()).toList()));
-  }
+  static Future<void> save(List<RuleSet> sets) =>
+      _store.save(sets.map((s) => s.toJson()).toList());
 
   static Future<RuleSet> byId(String? id) async {
     final sets = await load();

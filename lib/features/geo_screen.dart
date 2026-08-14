@@ -56,48 +56,26 @@ class _GeoScreenState extends State<GeoScreen> {
   }
 
   Future<void> _editUrl({required bool geoip}) async {
-    final controller =
-        TextEditingController(text: geoip ? _prefs.geoipUrl : _prefs.geositeUrl);
-    final url = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(geoip ? 'GeoIP source' : 'GeoSite source'),
-        // "Reset to default" lives in the content, not in actions: three
-        // buttons in the action bar wrap onto two lines on a phone.
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(
-            controller: controller,
-            autofocus: true,
-            autocorrect: false,
-            maxLines: 4,
-            minLines: 1,
-            style: const TextStyle(fontSize: 13),
-            decoration: const InputDecoration(labelText: 'Download URL'),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              icon: const Icon(Icons.restart_alt, size: 18),
-              label: const Text('Reset to default'),
-              onPressed: () => controller.text =
-                  geoip ? RoutingPrefs.defaultGeoipUrl : RoutingPrefs.defaultGeositeUrl,
-            ),
-          ),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Save')),
-        ],
-      ),
+    // "Reset to default" lives in the content, not in actions: three buttons
+    // in the action bar wrap onto two lines on a phone.
+    final url = await promptText(
+      context,
+      title: geoip ? 'GeoIP source' : 'GeoSite source',
+      label: 'Download URL',
+      confirmLabel: 'Save',
+      initial: geoip ? _prefs.geoipUrl : _prefs.geositeUrl,
+      maxLines: 4,
+      fontSize: 13,
+      autocorrect: false,
+      resetLabel: 'Reset to default',
+      resetValue: geoip ? RoutingPrefs.defaultGeoipUrl : RoutingPrefs.defaultGeositeUrl,
     );
-    controller.dispose();
-    if (url == null || url.isEmpty) return;
+    final trimmed = url?.trim() ?? '';
+    if (trimmed.isEmpty) return;
     final updated =
-        geoip ? _prefs.copyWith(geoipUrl: url) : _prefs.copyWith(geositeUrl: url);
+        geoip ? _prefs.copyWith(geoipUrl: trimmed) : _prefs.copyWith(geositeUrl: trimmed);
     await RoutingPrefsStore.save(updated);
-    setState(() => _prefs = updated);
+    if (mounted) setState(() => _prefs = updated);
   }
 
   /// One database row: name + size on the title line, the source URL on one
@@ -133,11 +111,7 @@ class _GeoScreenState extends State<GeoScreen> {
     return file.isEmpty ? u.host : '${u.host}/…/$file';
   }
 
-  String _bytes(int n) {
-    if (n <= 0) return 'not downloaded';
-    const mb = 1024 * 1024;
-    return n >= mb ? '${(n / mb).toStringAsFixed(1)} MB' : '${(n / 1024).toStringAsFixed(0)} KB';
-  }
+  String _bytes(int n) => n <= 0 ? 'not downloaded' : formatBytes(n);
 
   String _updatedAt() {
     final at = _prefs.geoUpdatedAt;
@@ -185,7 +159,7 @@ class _GeoScreenState extends State<GeoScreen> {
                         onChanged: (v) async {
                           final updated = _prefs.copyWith(geoAutoUpdate: v);
                           await RoutingPrefsStore.save(updated);
-                          setState(() => _prefs = updated);
+                          if (mounted) setState(() => _prefs = updated);
                         },
                       ),
                     ]),

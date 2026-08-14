@@ -64,13 +64,19 @@ Future<String> obtainOidcIdToken(AuthProvider provider) async {
   }
 
   final idToken = await _exchangeCode(tokenEndpoint, provider.clientId, code, verifier);
+  // Sending a nonce and not checking it is worse than not sending one — it
+  // implies a defense that isn't there. Reject a token minted for a different
+  // sign-in attempt.
+  if (idTokenNonce(idToken) != nonce) {
+    throw OidcException('Sign-in failed: the token does not match this sign-in attempt.');
+  }
   return idToken;
 }
 
 Future<Map<String, dynamic>> _discover(String issuer) async {
   final url = '${issuer.replaceAll(RegExp(r'/+$'), '')}/.well-known/openid-configuration';
   try {
-    final res = await http.get(Uri.parse(url));
+    final res = await http.get(Uri.parse(url)).timeout(kHttpTimeout);
     if (res.statusCode ~/ 100 != 2) {
       throw OidcException('Provider discovery failed (${res.statusCode}).');
     }
@@ -111,9 +117,15 @@ Future<String> _exchangeCode(String tokenEndpoint, String clientId, String code,
       'client_id': clientId,
       'code_verifier': verifier,
     },
-  );
+  ).timeout(kHttpTimeout);
   if (res.statusCode ~/ 100 != 2) {
-    Log.e('oidc token exchange failed', '${res.statusCode}: ${res.body}');
+    // Status + the provider's error code only: the raw body can carry tokens
+    // or account details, and this log ships in the support archive.
+    String? errCode;
+    try {
+      errCode = (jsonDecode(res.body) as Map<String, dynamic>)['error'] as String?;
+    } catch (_) {}
+    Log.e('oidc token exchange failed', '${res.statusCode}${errCode == null ? '' : ' ($errCode)'}');
     throw OidcException('Token exchange failed (${res.statusCode}).');
   }
   final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -122,6 +134,19 @@ Future<String> _exchangeCode(String tokenEndpoint, String clientId, String code,
     throw OidcException('Provider did not return an ID token.');
   }
   return idToken;
+}
+
+/// The `nonce` claim of an ID token, or null. The token's signature is the
+/// management server's job to verify; the nonce binds the token to THIS
+/// sign-in attempt, and only the client knows what it sent.
+String? idTokenNonce(String idToken) {
+  try {
+    final parts = idToken.split('.');
+    final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+    return (jsonDecode(payload) as Map<String, dynamic>)['nonce'] as String?;
+  } catch (_) {
+    return null;
+  }
 }
 
 // PKCE helpers: base64url without padding, per RFC 7636.

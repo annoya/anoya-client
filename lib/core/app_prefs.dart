@@ -1,10 +1,6 @@
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-
-import 'log.dart';
+import 'json_file_store.dart';
 
 /// UI languages the app ships with. Only English for now; the enum exists so
 /// adding a locale is a one-line change and the picker already has a shape.
@@ -67,26 +63,11 @@ class AppPrefs {
 }
 
 class AppPrefsStore {
-  static Future<File> _file() async {
-    final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}/app_prefs.json');
-  }
+  static final _store = JsonFileStore('app_prefs.json');
 
-  static Future<AppPrefs> load() async {
-    try {
-      final f = await _file();
-      if (!await f.exists()) return const AppPrefs();
-      final json = jsonDecode(await f.readAsString());
-      if (json is! Map) return const AppPrefs();
-      return AppPrefs.fromJson(Map<String, dynamic>.from(json));
-    } catch (e) {
-      Log.e('app prefs: could not load', '$e');
-      return const AppPrefs();
-    }
-  }
+  static Future<AppPrefs> load() => _store.load(
+      (j) => j is Map ? AppPrefs.fromJson(Map<String, dynamic>.from(j)) : const AppPrefs(),
+      const AppPrefs());
 
-  static Future<void> save(AppPrefs prefs) async {
-    final f = await _file();
-    await f.writeAsString(jsonEncode(prefs.toJson()));
-  }
+  static Future<void> save(AppPrefs prefs) => _store.save(prefs.toJson());
 }
