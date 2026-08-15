@@ -117,6 +117,13 @@ traffic to escape. Nothing is excluded from the tunnel — the engine's own dial
 leaves through `IP_BOUND_IF`. Full decision, rejected alternatives and
 measurements: ADR-002.
 
+IPv4 and IPv6 both have their default route claimed by the tunnel, and both are
+carried: the engine runs with IPv6 on and its own v6 fake-IP pool. An unclaimed
+family would keep the physical interface's route and leave in the clear; a
+claimed but unhandled one would break every v6 destination. Because fake-IP
+resolves back to the domain, an exit server without IPv6 still works — only
+connections to literal v6 addresses need v6 at the far end.
+
 ### 3.3 DNS
 
 The DNS servers in the NE settings are a decoy: their only job is to steer the

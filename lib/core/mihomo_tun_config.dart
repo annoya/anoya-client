@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'engine_config_text.dart';
 import 'log.dart';
 import 'norm_config.dart';
 
@@ -40,13 +41,30 @@ String mihomoTunConfigYaml(
     // extension's container, so there is no other way to keep it quiet.
     collectLogs ? 'log-level: info' : 'log-level: silent',
     'mode: rule',
-    'ipv6: false',
+    // Both families are handled, not just claimed. The tunnel owns the v6
+    // default route (ADR-002), so v6 has to work end to end here — with the
+    // engine's v6 off, the fake-ip pool would refuse AAAA and every v6
+    // destination would fail instead of being carried.
+    'ipv6: true',
     // Resolving a connection's owning process is only needed for PROCESS-NAME
     // rules; otherwise keep it off (it reads other processes' info).
     hasProcessRules ? 'find-process-mode: strict' : 'find-process-mode: "off"',
     // Geo rules read geoip.metadb / GeoSite.dat from the engine home dir (the
-    // app downloads them there). Never let the engine self-download: a 20+ MB
-    // fetch during tunnel start would hang connects.
+    // app downloads them there). The engine must never fetch them itself:
+    // `geo-auto-update: false` only stops periodic refreshes, but a missing or
+    // unverifiable database makes mihomo download it *while parsing the
+    // config*, with a 90-second timeout per file — inside startTunnel that
+    // overruns the system's tunnel-start deadline, and on a hot reload it
+    // holds the engine lock for the duration. Empty source URLs turn that into
+    // an immediate parse failure instead (measured: 2 ms, no request), which
+    // keeps the previous config running and leaves the app the only
+    // downloader. Emitted always, so the policy does not depend on which rules
+    // a configuration happens to carry.
+    'geox-url:',
+    "  geoip: ''",
+    "  geosite: ''",
+    "  mmdb: ''",
+    "  asn: ''",
     if (hasGeoRules) ...[
       'geodata-mode: false',
       'geo-auto-update: false',
@@ -57,7 +75,8 @@ String mihomoTunConfigYaml(
     // fake addresses it handed out, so a range that moved on a hot switch
     // would strand every cached answer.
     '  enhanced-mode: fake-ip',
-    '  fake-ip-range: 198.18.0.1/16',
+    '  fake-ip-range: $kFakeIpRange',
+    '  fake-ip-range6: $kFakeIpRange6',
     // A resolver addressed by hostname (DoH/DoT by name) needs a plain-IP
     // bootstrap, or the engine would need DNS to set up DNS.
     if (nameservers.any(_dnsNeedsBootstrap)) ...[
@@ -65,7 +84,7 @@ String mihomoTunConfigYaml(
       '    - 1.1.1.1',
     ],
     '  nameserver:',
-    for (final ns in nameservers) '    - ${_scalar(ns)}',
+    for (final ns in nameservers) '    - ${yamlScalar(ns)}',
     'tun:',
     '  enable: true',
     '  stack: $stack',
@@ -77,6 +96,12 @@ String mihomoTunConfigYaml(
     '  disable-icmp-forwarding: true',
     '  dns-hijack:',
     '    - any:53',
+    // Pinned rather than left to the engine's default: this line is part of
+    // what Tun.Equal compares, so an upstream default that changed under us
+    // would turn the next hot switch into a listener re-creation — i.e. a
+    // dropped session. The address is the engine's own documented default.
+    '  inet6-address:',
+    '    - $kTunInet6Address',
     // NE owns OS routing; mihomo just reads the fd. Detect the physical
     // interface so the proxy's own outbound does not loop back into the tun.
     '  auto-route: false',
@@ -96,6 +121,23 @@ String mihomoTunConfigYaml(
   return '${lines.join('\n')}\n';
 }
 
+/// Fake-IP pools. The engine answers DNS from these ranges and maps the
+/// address back to the domain when the connection arrives, so what leaves the
+/// device is a hostname, not one of these addresses.
+///
+/// App constants, never per-config: the OS caches the fake addresses the
+/// engine handed out, so a range that moved on a hot switch would strand every
+/// cached answer. The v4 range is the engine's default (RFC 2544 benchmarking
+/// space, unroutable on purpose); the v6 range is ULA space (RFC 4193), which
+/// has no engine default — mihomo requires one once IPv6 is on.
+const kFakeIpRange = '198.18.0.1/16';
+const kFakeIpRange6 = 'fc00::/18';
+
+/// The v6 address of the engine's own TUN stack. The Network Extension assigns
+/// the interface's addresses; this is what the userspace stack answers on, and
+/// it must exist for the stack to accept v6 packets at all.
+const kTunInet6Address = 'fdfe:dcba:9876::1/126';
+
 const _supportedProxyTypes = {'vless', 'vmess', 'trojan', 'ss'};
 
 /// Normalizes a Location's proxy into a single mihomo proxy map named "proxy".
@@ -108,7 +150,10 @@ Map<String, dynamic> _mihomoProxy(Location location) {
   }
   final p = location.proxy;
   // Self-hosted vless+reality shape → mihomo keys (matches the old output).
-  if (p['reality'] is Map) {
+  // A subscription proxy is already mihomo-shaped and spells this
+  // `reality-opts`, so the two never collide — but check for that key too,
+  // because taking this branch discards every other field the subscription set.
+  if (p['reality'] is Map && p['reality-opts'] == null) {
     final r = Map<String, dynamic>.from(p['reality'] as Map);
     final m = <String, dynamic>{
       'name': 'proxy',
@@ -148,26 +193,20 @@ List<String> _mapLines(Map<String, dynamic> m, int indent) {
   final pad = ' ' * indent;
   final out = <String>[];
   m.forEach((k, v) {
+    final key = yamlKey(k);
     if (v is Map) {
-      out.add('$pad$k:');
+      out.add('$pad$key:');
       out.addAll(_mapLines(v.cast<String, dynamic>(), indent + 2));
     } else if (v is List) {
-      out.add('$pad$k:');
+      out.add('$pad$key:');
       for (final e in v) {
-        out.add('${' ' * (indent + 2)}- ${_scalar(e)}');
+        out.add('${' ' * (indent + 2)}- ${yamlScalar(e)}');
       }
     } else {
-      out.add('$pad$k: ${_scalar(v)}');
+      out.add('$pad$key: ${yamlScalar(v)}');
     }
   });
   return out;
-}
-
-String _scalar(dynamic v) {
-  if (v is bool) return v ? 'true' : 'false';
-  if (v is num) return v.toString();
-  final s = v.toString().replaceAll('\\', r'\\').replaceAll('"', r'\"');
-  return '"$s"';
 }
 
 const _ruleTypeMap = {

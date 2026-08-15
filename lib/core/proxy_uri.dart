@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:yaml/yaml.dart';
 
+import 'engine_config_text.dart';
 import 'log.dart';
 import 'norm_config.dart';
 
@@ -38,11 +39,20 @@ Location? parseProxyUri(String raw) {
   }
 }
 
+/// Ceiling on a subscription body. A real one is kilobytes; anything past this
+/// is a mistake or a hostile server, and both parsers below (base64, YAML)
+/// build their whole result in memory.
+const _maxSubscriptionChars = 4 * 1024 * 1024;
+
 /// Parse a subscription body: Clash/mihomo YAML (has `proxies:`) or a (usually
 /// base64-encoded) newline/whitespace-separated list of share links.
 List<Location> parseSubscription(String body) {
   final trimmed = body.trim();
   if (trimmed.isEmpty) return [];
+  if (trimmed.length > _maxSubscriptionChars) {
+    Log.e('subscription rejected', 'body too large (${trimmed.length} chars)');
+    return [];
+  }
 
   // Clash/mihomo YAML?
   final clash = _tryParseClash(trimmed);
@@ -241,8 +251,26 @@ void _applyTransport(Map<String, dynamic> proxy, String net, String? path, Strin
   }
 }
 
-Location _loc(String uri, String label, Map<String, dynamic> proxy) =>
-    Location(id: 'link_${_hash(uri)}', label: label, proxy: proxy);
+/// Builds the Location, rejecting a proxy the engine could not dial anyway.
+/// Every parser funnels through here, so "server and port are sane" holds for
+/// anything that reaches the renderer — a port of 0 (what a malformed vmess
+/// `port` decodes to) would otherwise ship as a config the engine accepts and
+/// silently cannot use.
+Location _loc(String uri, String label, Map<String, dynamic> proxy) {
+  final server = (proxy['server'] as String?)?.trim() ?? '';
+  final port = proxy['port'] as int? ?? 0;
+  if (server.isEmpty) throw const FormatException('no server');
+  if (port < 1 || port > 65535) throw FormatException('port out of range: $port');
+  proxy['server'] = _bareHost(server);
+  return Location(id: 'link_${_hash(uri)}', label: label, proxy: proxy);
+}
+
+/// An IPv6 literal reaches us bracketed in the URI forms that carry host:port
+/// as text (ss://). mihomo brackets it itself when dialing, so leaving them in
+/// produces "[[::1]]:443" — strip them here, where every parser passes.
+String _bareHost(String host) => host.startsWith('[') && host.endsWith(']')
+    ? host.substring(1, host.length - 1)
+    : host;
 
 String _label(String frag, String host, int port) {
   final f = frag.trim();
@@ -330,11 +358,24 @@ String? _tryB64(String s) {
 }
 
 /// Recursively converts YamlMap/YamlList into plain `Map<String,dynamic>`/List.
+///
+/// A Clash/mihomo-YAML subscription is attacker-supplied (ADR-005), and its map
+/// keys flow into the engine config we render. A key carrying a newline would
+/// break out of its block and add top-level keys (`external-controller`,
+/// `allow-lan`…), so keys that are not plainly a config key are dropped here —
+/// the drop-not-escape stance ADR-003/ADR-008 take for values, extended to keys.
 dynamic _deepConvert(dynamic node) {
   if (node is YamlMap || node is Map) {
-    return <String, dynamic>{
-      for (final e in (node as Map).entries) e.key.toString(): _deepConvert(e.value),
-    };
+    final out = <String, dynamic>{};
+    for (final e in (node as Map).entries) {
+      final k = e.key.toString();
+      if (!isSafeConfigKey(k)) {
+        Log.e('clash yaml: dropped unsafe proxy key', k.replaceAll('\n', r'\n'));
+        continue;
+      }
+      out[k] = _deepConvert(e.value);
+    }
+    return out;
   }
   if (node is YamlList || node is List) {
     return [for (final e in (node as List)) _deepConvert(e)];

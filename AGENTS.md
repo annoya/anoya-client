@@ -30,10 +30,13 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    No `stop`/`start`, and no `setTunnelNetworkSettings` on a live session — it
    tears the current settings down before installing the new ones, and traffic
    escapes in that window. See ADR-002.
-2. **Nothing is excluded from the tunnel.** `includedRoutes = [default]`, no
-   `excludedRoutes`, ever. The engine's own dial leaves through `IP_BOUND_IF`.
-   An excluded route is a system-wide hole for every process, not just ours.
-   See ADR-002.
+2. **Nothing is excluded from the tunnel, and both address families are
+   claimed and carried.** `includedRoutes = [default]` for IPv4 *and* IPv6, no
+   `excludedRoutes`, ever, and the engine handles both families rather than
+   blackholing one. The engine's own dial leaves through `IP_BOUND_IF`
+   (`IPV6_BOUND_IF` for v6). An excluded route is a system-wide hole for every
+   process, not just ours; an unclaimed family is the same hole for everything
+   that resolves to it. See ADR-002.
 3. **The `tun` section of the rendered engine config is identical across
    locations, protocols and routing policies.** That is the condition under
    which mihomo keeps the TUN listener and the tunnel fd alive across a reload
@@ -46,11 +49,17 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
 4. **A failed switch never disconnects.** The tunnel keeps running on the
    previous config and the user is told. Dropping the session as error handling
    is the one thing that actually leaks.
-5. **Rule values are validated before they reach the engine config.** They are
-   interpolated into config text; `RoutingRule.isValid` mirrors the server-side
-   validation and both sides must stay in step.
+5. **Everything interpolated into the engine config is validated first —
+   values and keys alike.** Rule values go through `RoutingRule.isValid`, which
+   mirrors the server-side validation (both sides must stay in step). Map keys
+   from a Clash subscription go through the parser's key charset: keys are
+   structural, so one carrying a newline adds a top-level config key
+   (`external-controller` opens an unauthenticated control API). Drop, never
+   escape. Pinned by `client/test/mihomo_tun_config_test.dart`.
 6. **Logs never contain secrets.** No tokens, passwords, private keys or full
-   config bodies in app, tunnel or engine logs.
+   config bodies in app, tunnel or engine logs. This includes error text that
+   quotes them: subscription URLs, share links and engine parse errors are
+   reduced to a host, a scheme or a redacted message before they are logged.
 
 ## Essential Commands
 

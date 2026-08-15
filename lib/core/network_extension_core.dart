@@ -102,6 +102,8 @@ class NetworkExtensionCore implements VpnCore {
       await _control.invokeMethod<void>('stop');
     } on PlatformException catch (e) {
       Log.e('NE stop failed', e.message ?? e.code);
+    } on MissingPluginException {
+      Log.e('NE stop failed', 'no platform side');
     }
   }
 
@@ -144,6 +146,8 @@ class NetworkExtensionCore implements VpnCore {
       // Best-effort: the profile may not exist yet, or the user may have
       // revoked it. The next connect writes the config anyway.
       Log.e('NE sync_config failed', e.message ?? e.code);
+    } on MissingPluginException {
+      Log.e('NE sync_config failed', 'no platform side');
     }
   }
 
@@ -154,6 +158,8 @@ class NetworkExtensionCore implements VpnCore {
       Log.i('system VPN profile removed');
     } on PlatformException catch (e) {
       Log.e('NE remove_profile failed', e.message ?? e.code);
+    } on MissingPluginException {
+      Log.e('NE remove_profile failed', 'no platform side');
     }
   }
 
@@ -189,6 +195,10 @@ class NetworkExtensionCore implements VpnCore {
       return await _control.invokeMethod<String>('shared_dir');
     } on PlatformException catch (e) {
       Log.e('NE shared_dir failed', e.message ?? e.code);
+      return null;
+    } on MissingPluginException {
+      // No platform side at all (unsupported host, or tests): geo rules are
+      // simply unavailable, which the caller already handles.
       return null;
     }
   }

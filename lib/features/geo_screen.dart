@@ -64,8 +64,7 @@ class _GeoScreenState extends State<GeoScreen> {
       label: 'Download URL',
       confirmLabel: 'Save',
       initial: geoip ? _prefs.geoipUrl : _prefs.geositeUrl,
-      maxLines: 4,
-      fontSize: 13,
+      longValue: true, // a 90-character download URL
       autocorrect: false,
       resetLabel: 'Reset to default',
       resetValue: geoip ? RoutingPrefs.defaultGeoipUrl : RoutingPrefs.defaultGeositeUrl,

@@ -40,7 +40,18 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// Mirrors the app's "Collect logs" switch, carried in the start options and
     /// in providerConfiguration (an on-demand start has no options). Off means
     /// the file stops growing; what is already in it stays.
-    private var logEnabled = true
+    private var logEnabled: Bool {
+        get { stateLock.withLock { _logEnabled } }
+        set { stateLock.withLock { _logEnabled = newValue } }
+    }
+    private var _logEnabled = true
+
+    /// startTunnel's settings callback and handleAppMessage run on different
+    /// threads and both touch the three fields below, so they are read and
+    /// written under this lock. The interesting one is tunFd: a stop racing an
+    /// in-flight reload decides whether the engine gets restarted on a dead
+    /// descriptor.
+    private let stateLock = NSLock()
 
     private func log(_ message: String) {
         NSLog("TUNNEL: \(message)")
@@ -48,6 +59,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let path = sharedDir().appendingPathComponent("tunnel.log").path
         let line = "[\(Date())] \(message)\n"
         guard let data = line.data(using: .utf8) else { return }
+        rotateIfNeeded(path)
         let fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0o644)
         guard fd >= 0 else { return }
         data.withUnsafeBytes { raw in
@@ -101,7 +113,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             // before the engine applies the level from the YAML.
             self.applyEngineLogLevel(self.logEnabled)
             if let message = self.startEngine(fd: fd, config: config) {
-                self.log("mihomo start failed: \(message)")
+                // Not into the log: engine errors quote the offending config
+                // line, and config lines carry uuids and passwords. The app
+                // gets the detail through the start error, which it shows in a
+                // dialog and does not archive.
+                self.log("mihomo start failed")
+                self.tunFd = -1 // nothing is running on it; refuse late reloads
                 completionHandler(self.err("mihomo start failed: \(message)"))
                 return
             }
@@ -115,6 +132,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
         log("stopTunnel: reason \(reason.rawValue)")
+        // Before the stop: a reload message already in flight would otherwise
+        // still see a live fd and restart the engine on a descriptor the system
+        // is tearing down.
+        tunFd = -1
         MihomoStop()
         completionHandler()
     }
@@ -132,18 +153,24 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let request = String(data: messageData, encoding: .utf8) ?? ""
         if request.hasPrefix("reload:") {
             let config = String(request.dropFirst("reload:".count))
-            guard tunFd > 0 else {
+            // One read, then use that value: checking the property and reading
+            // it again would let a stop in between hand the engine an fd this
+            // very guard just rejected.
+            let fd = tunFd
+            guard fd > 0 else {
                 completionHandler?(Data("tunnel has no fd".utf8))
                 return
             }
             // The network settings stay exactly as installed at start: the engine
             // reaches the new server on its own (see applyNetworkSettings).
-            let failure = reloadEngine(fd: tunFd, config: config)
+            let failure = reloadEngine(fd: fd, config: config)
             // ApplyConfig resets the log level from the YAML; keep the runtime
             // switch the last word, same as on start.
             applyEngineLogLevel(logEnabled)
-            if let failure {
-                log("hot reload failed: \(failure)")
+            if failure != nil {
+                // Same reason as at start: the engine's message can quote the
+                // config. The app receives it below and shows it once.
+                log("hot reload failed")
             } else {
                 log("hot reload applied (\(config.count) bytes)")
             }
@@ -177,12 +204,73 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
         if request.hasPrefix("log:") {
             let name = String(request.dropFirst(4)).replacingOccurrences(of: "/", with: "")
-            let url = sharedDir().appendingPathComponent("\(name).log")
-            completionHandler?((try? Data(contentsOf: url)) ?? Data())
+            completionHandler?(tailOfLog(named: name))
             return
         }
-        completionHandler?(messageData)
+        // Unknown request: an empty reply, never an echo. Only the host app can
+        // reach this channel, so this is about being strict, not defensive.
+        completionHandler?(Data())
     }
+
+    /// Largest log slice we read into memory, and the size a log file is
+    /// allowed to reach before it is halved. The iOS extension's whole memory
+    /// budget is tens of megabytes, so reading an unbounded log to answer the
+    /// app would jetsam the extension — killing the VPN because someone opened
+    /// the Logs screen.
+    private static let logTailBytes = 512 * 1024
+    private static let logMaxBytes = 4 * 1024 * 1024
+
+    /// The last [logTailBytes] of a log file, cut at a line boundary.
+    private func tailOfLog(named name: String) -> Data {
+        let url = sharedDir().appendingPathComponent("\(name).log")
+        // The engine's own log is written by Go through a freopen'd stdout, so
+        // it never passes through log(); this is where it gets pruned. Append
+        // mode means the engine keeps writing correctly across the truncation.
+        rotateIfNeeded(url.path)
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return Data() }
+        defer { try? handle.close() }
+        let size = (try? handle.seekToEnd()) ?? 0
+        let take = UInt64(Self.logTailBytes)
+        if size > take {
+            try? handle.seek(toOffset: size - take)
+        } else {
+            try? handle.seek(toOffset: 0)
+        }
+        guard var data = try? handle.readToEnd() else { return Data() }
+        if size > take, let nl = data.firstIndex(of: 0x0a) {
+            data = data.suffix(from: data.index(after: nl))
+        }
+        return data
+    }
+
+    /// How much of a log survives a rotation. Keeping half means a rotation
+    /// happens once per half-cap of writing rather than on every line once the
+    /// cap is reached, which is what a "trim to exactly the cap" rule would do.
+    private static let logKeepFraction = 0.5
+
+    /// Trim a log that has grown past the cap, keeping the newest part. Called
+    /// on write; nothing else prunes these files (the app's "clear logs" is
+    /// manual), so without this a long-running tunnel grows one without bound.
+    private func rotateIfNeeded(_ path: String) {
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+              let size = attrs[.size] as? UInt64, size > UInt64(Self.logMaxBytes) else { return }
+        guard let handle = try? FileHandle(forUpdating: URL(fileURLWithPath: path)) else { return }
+        defer { try? handle.close() }
+        try? handle.seek(toOffset: UInt64(Double(size) * (1 - Self.logKeepFraction)))
+        guard let keep = try? handle.readToEnd() else { return }
+        try? handle.truncate(atOffset: 0)
+        try? handle.seek(toOffset: 0)
+        try? handle.write(contentsOf: keep)
+    }
+
+    /// The tunnel interface's own IPv6 address. The value is the engine's
+    /// documented default for its TUN stack, so the interface and the stack
+    /// running on it agree on one address instead of two invented ones; it is
+    /// ULA space (RFC 4193), which is what an address that must never appear
+    /// on the wire should be. What matters is that it is fixed: it is part of
+    /// the settings installed once at start and never re-applied.
+    private static let tunnelAddress6 = "fdfe:dcba:9876::1"
+    private static let tunnelPrefix6: NSNumber = 126
 
     /// The tunnel's network settings, installed once at start and never touched
     /// again — a hot switch must not go near them, because
@@ -204,6 +292,18 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         ipv4.includedRoutes = [NEIPv4Route.default()]
         settings.ipv4Settings = ipv4
 
+        // IPv6 is carried, not merely claimed: the engine runs with ipv6 on and
+        // its own v6 fake-IP pool, so AAAA answers resolve and v6 destinations
+        // are proxied like v4 ones. Without these settings the OS would keep
+        // the physical interface's v6 default route and everything reaching a
+        // v6 address — a literal address, or an AAAA an app resolved over its
+        // own DoH past the :53 hijack — would leave in the clear. Cellular is
+        // v6-primary, so that is the common case, not the exotic one.
+        let ipv6 = NEIPv6Settings(addresses: [Self.tunnelAddress6],
+                                  networkPrefixLengths: [Self.tunnelPrefix6])
+        ipv6.includedRoutes = [NEIPv6Route.default()]
+        settings.ipv6Settings = ipv6
+
         let dns = NEDNSSettings(servers: ["1.1.1.1", "8.8.8.8"])
         dns.matchDomains = [""]
         settings.dnsSettings = dns
@@ -221,11 +321,19 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// mihomo logs to stdout; redirect it to a file in the extension's
     /// container so we can read what the engine is doing (dials, DNS, etc.):
     ///   ~/Library/Containers/<ext-id>/Data/Library/Caches/mihomo.log
-    private var stdoutRedirected = false
+    private var stdoutRedirected: Bool {
+        get { stateLock.withLock { _stdoutRedirected } }
+        set { stateLock.withLock { _stdoutRedirected = newValue } }
+    }
+    private var _stdoutRedirected = false
 
     /// The utun fd the engine runs on, kept for hot reloads: a new config is
     /// applied onto the same fd, so the NE session never notices the swap.
-    private var tunFd: Int32 = -1
+    private var tunFd: Int32 {
+        get { stateLock.withLock { _tunFd } }
+        set { stateLock.withLock { _tunFd = newValue } }
+    }
+    private var _tunFd: Int32 = -1
 
     private func redirectStdoutToMihomoLog() {
         guard !stdoutRedirected else { return }

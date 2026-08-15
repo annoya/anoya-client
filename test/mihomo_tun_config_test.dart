@@ -153,6 +153,61 @@ void main() {
     expect(yaml, isNot(contains('evil')));
   });
 
+  test('IPv6 is carried end to end, not just claimed', () {
+    // The tunnel owns the v6 default route (ADR-002), so the engine has to
+    // handle v6: with it off, the fake-IP pool refuses AAAA and every v6
+    // destination fails instead of being proxied.
+    final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
+    expect(doc['ipv6'], true);
+    final dns = doc['dns'] as YamlMap;
+    expect(dns['fake-ip-range6'], kFakeIpRange6);
+    expect((doc['tun'] as YamlMap)['inet6-address'], [kTunInet6Address]);
+  });
+
+  test('the engine is forbidden from fetching geo databases itself', () {
+    // Not a preference: a missing database makes mihomo download it *while
+    // parsing*, 90s per file inside the engine lock — during startTunnel that
+    // overruns the system's deadline. Empty URLs make it fail immediately.
+    final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
+    final urls = doc['geox-url'] as YamlMap;
+    expect(urls.values, everyElement(''),
+        reason: 'every geo source must be empty, whatever rules the config has');
+  });
+
+  test('the single outbound is always named "proxy"', () {
+    // Both the PROXY group and the engine wrapper's egress probe (Go side,
+    // native/mihomocore/engine.go) look the outbound up by this exact name.
+    // A rename here would silently disable the probe rather than fail.
+    final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
+    expect((doc['proxies'] as YamlList).single['name'], 'proxy');
+    expect((doc['proxy-groups'] as YamlList).single['proxies'], ['proxy']);
+  });
+
+  test('a hostile subscription cannot add config keys of its own', () {
+    // Keys are structural: unlike values, a key carrying a newline escapes its
+    // block and lands at column 0. The payload here would open mihomo's
+    // unauthenticated control API to the network.
+    const body = '''
+proxies:
+  - name: pwn
+    type: ss
+    server: 1.2.3.4
+    port: 443
+    cipher: aes-128-gcm
+    password: x
+    "udp: true\\nexternal-controller: 0.0.0.0:9090": "z"
+    ws-opts:
+      headers:
+        "Host: a\\nallow-lan": "true"
+''';
+    final locations = parseSubscription(body);
+    expect(locations, hasLength(1), reason: 'the proxy itself is still usable');
+    final doc = loadYaml(mihomoTunConfigYaml(locations.single)) as YamlMap;
+    expect(doc.keys, isNot(contains('external-controller')));
+    expect(doc.keys, isNot(contains('allow-lan')));
+    expect(doc['proxies'], hasLength(1));
+  });
+
   test('dns comes from the config; Cloudflare DoH is the fallback', () {
     final fallback = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     expect((fallback['dns'] as YamlMap)['nameserver'], ['https://1.1.1.1/dns-query']);

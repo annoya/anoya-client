@@ -99,7 +99,7 @@ enum VpnChannel {
                                                 message: error.localizedDescription, details: nil)) }
                 }
             case "status":
-                result(VPNManager.shared.currentStatus())
+                Task { @MainActor in result(await VPNManager.shared.refreshStatus()) }
             case "shared_dir":
                 // App Group container shared with the tunnel extension — the
                 // engine's home dir, where GeoIP/GeoSite databases live. Dart
@@ -144,7 +144,12 @@ enum VpnChannel {
 private final class StatusStreamHandler: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         VPNManager.shared.onStatus = { status in events(status) }
-        events(VPNManager.shared.currentStatus()) // emit initial state
+        events(VPNManager.shared.currentStatus()) // what we know right now
+        // …and what is actually true: on a fresh launch the app has not touched
+        // the system profile yet, so the line above says "disconnected" even
+        // over a live tunnel. Adopting the existing profile publishes the real
+        // status (and starts the status observer) as soon as it loads.
+        Task { @MainActor in events(await VPNManager.shared.refreshStatus()) }
         return nil
     }
 

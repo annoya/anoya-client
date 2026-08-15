@@ -122,16 +122,57 @@ final class VPNManager {
         }
     }
 
+    /// Adopts the VPN profile the system already holds, if any, without
+    /// creating one. The app process is not the tunnel's owner — it quits on
+    /// window close (macOS) or gets killed while the extension keeps running —
+    /// so on a fresh launch over a live tunnel `manager` is nil and anything
+    /// reading it sees "no VPN". Every entry point that must reflect reality
+    /// goes through here first.
+    @discardableResult
+    private func adopt() async -> NETunnelProviderManager? {
+        if let manager { return manager }
+        guard let existing = try? await NETunnelProviderManager.loadAllFromPreferences().first
+        else { return nil }
+        manager = existing
+        observe(existing)
+        // The status the app was told at launch predates this; publish the real
+        // one now that there is something to read it from.
+        let status = currentStatus()
+        if status != lastStatus {
+            lastStatus = status
+            onStatus?(status)
+        }
+        return existing
+    }
+
+    /// The tunnel's current state. Loads the system's profile when the app has
+    /// not touched it yet, so a relaunch over a live tunnel does not report
+    /// "disconnected".
+    func refreshStatus() async -> String {
+        await adopt()
+        return currentStatus()
+    }
+
     /// Manual stop. When on-demand is armed the system would reconnect within
     /// seconds, so disarm first — the Dart side records this as "paused" and
     /// re-arms on the next connect.
     func stop() async {
-        if let m = manager, m.isOnDemandEnabled {
-            m.isOnDemandEnabled = false
-            try? await m.saveToPreferences()
-            NSLog("VPN-NATIVE: on-demand disarmed for manual stop")
+        guard let m = await adopt() else {
+            NSLog("VPN-NATIVE: no VPN profile, nothing to stop")
+            return
         }
-        manager?.connection.stopVPNTunnel()
+        if m.isOnDemandEnabled {
+            m.isOnDemandEnabled = false
+            do {
+                try await m.saveToPreferences()
+                NSLog("VPN-NATIVE: on-demand disarmed for manual stop")
+            } catch {
+                // Stopping without disarming means the system reconnects within
+                // seconds and the user's manual disconnect silently loses.
+                NSLog("VPN-NATIVE: could not disarm on-demand: \(error.localizedDescription)")
+            }
+        }
+        m.connection.stopVPNTunnel()
     }
 
     /// Arm or disarm system on-demand with the given rules, and set the
@@ -178,11 +219,21 @@ final class VPNManager {
         let arm = enabled && !compiled.isEmpty && hasConfig
 
         let wasArmed = m.isOnDemandEnabled
-        m.onDemandRules = compiled
-        m.isOnDemandEnabled = arm
-        m.protocolConfiguration?.disconnectOnSleep = disconnectOnSleep
-        try await m.saveToPreferences()
-        try await m.loadFromPreferences()
+        // Same constraint persist() respects: saving preferences on a live
+        // session makes the system re-assert the tunnel. This runs on every
+        // connect and on every rules edit, so save only on a real change —
+        // otherwise editing a rule name while connected flaps the session.
+        let ruleChange = !sameRules(m.onDemandRules ?? [], compiled)
+        let changed = ruleChange
+            || m.isOnDemandEnabled != arm
+            || m.protocolConfiguration?.disconnectOnSleep != disconnectOnSleep
+        if changed {
+            m.onDemandRules = compiled
+            m.isOnDemandEnabled = arm
+            m.protocolConfiguration?.disconnectOnSleep = disconnectOnSleep
+            try await m.saveToPreferences()
+            try await m.loadFromPreferences()
+        }
 
         // Only report real transitions: this runs on every connect (to carry
         // the sleep flag), and logging "disarmed" each time is just noise.
@@ -192,6 +243,68 @@ final class VPNManager {
             NSLog("VPN-NATIVE: on-demand \(arm ? "armed" : "disarmed"), \(compiled.count) rule(s), sleep=\(disconnectOnSleep)")
         }
         return arm
+    }
+
+    /// How long the extension gets to answer a provider message. Applying a
+    /// config is the slow one (parsing plus a full engine reload) and is well
+    /// under a second in practice; this is a deadline for a process that has
+    /// stopped answering, not a performance budget.
+    private static let providerMessageTimeout: TimeInterval = 10
+
+    /// One provider-IPC round trip, with a deadline.
+    ///
+    /// sendProviderMessage's reply handler is simply never called if the
+    /// extension dies before answering (a panic inside the engine while
+    /// applying a config, a jetsam). Without a deadline the continuation is
+    /// never resumed and the caller — a hot switch, a log fetch — hangs the UI
+    /// forever with no error to show.
+    private func ask(_ session: NETunnelProviderSession, _ message: String,
+                     timeout: TimeInterval = VPNManager.providerMessageTimeout) async throws -> String {
+        final class Once: @unchecked Sendable {
+            private let lock = NSLock()
+            private var done = false
+            func claim() -> Bool {
+                lock.lock(); defer { lock.unlock() }
+                if done { return false }
+                done = true
+                return true
+            }
+        }
+        let once = Once()
+        return try await withCheckedThrowingContinuation { cont in
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+                if once.claim() {
+                    cont.resume(throwing: NSError(domain: "vpn", code: 4, userInfo: [
+                        NSLocalizedDescriptionKey: "the tunnel extension did not respond",
+                    ]))
+                }
+            }
+            do {
+                try session.sendProviderMessage(Data(message.utf8)) { data in
+                    if once.claim() {
+                        cont.resume(returning: data.flatMap { String(data: $0, encoding: .utf8) } ?? "")
+                    }
+                }
+            } catch {
+                if once.claim() { cont.resume(throwing: error) }
+            }
+        }
+    }
+
+    /// NEOnDemandRule is not Equatable, so compare the fields we actually set.
+    private func sameRules(_ a: [NEOnDemandRule], _ b: [NEOnDemandRule]) -> Bool {
+        guard a.count == b.count else { return false }
+        for (x, y) in zip(a, b) {
+            if type(of: x) != type(of: y)
+                || x.interfaceTypeMatch != y.interfaceTypeMatch
+                || x.ssidMatch != y.ssidMatch
+                || x.dnsSearchDomainMatch != y.dnsSearchDomainMatch
+                || x.dnsServerAddressMatch != y.dnsServerAddressMatch
+                || x.probeURL != y.probeURL {
+                return false
+            }
+        }
+        return true
     }
 
     private func compileRule(_ dict: [String: Any]) -> NEOnDemandRule? {
@@ -239,16 +352,7 @@ final class VPNManager {
             throw NSError(domain: "vpn", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
         }
-        let request = Data("reload:\(config)".utf8)
-        let failure: String = try await withCheckedThrowingContinuation { cont in
-            do {
-                try session.sendProviderMessage(request) { data in
-                    cont.resume(returning: data.flatMap { String(data: $0, encoding: .utf8) } ?? "")
-                }
-            } catch {
-                cont.resume(throwing: error)
-            }
-        }
+        let failure = try await ask(session, "reload:\(config)")
         guard failure.isEmpty else {
             throw NSError(domain: "vpn", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: failure])
@@ -281,15 +385,7 @@ final class VPNManager {
             throw NSError(domain: "vpn", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
         }
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            do {
-                try session.sendProviderMessage(Data("clear-logs".utf8)) { _ in
-                    cont.resume()
-                }
-            } catch {
-                cont.resume(throwing: error)
-            }
-        }
+        _ = try await ask(session, "clear-logs")
     }
 
     /// Ask the running extension for one of its log files (e.g. "tunnel",
@@ -302,16 +398,7 @@ final class VPNManager {
             throw NSError(domain: "vpn", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
         }
-        let request = Data("log:\(name)".utf8)
-        return try await withCheckedThrowingContinuation { cont in
-            do {
-                try session.sendProviderMessage(request) { data in
-                    cont.resume(returning: data.flatMap { String(data: $0, encoding: .utf8) } ?? "")
-                }
-            } catch {
-                cont.resume(throwing: error)
-            }
-        }
+        return try await ask(session, "log:\(name)")
     }
 
     func currentStatus() -> String {
