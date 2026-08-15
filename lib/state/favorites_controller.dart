@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/favorites.dart';
 
 class FavoritesController extends Notifier<Favorites> {
-  /// Mutations wait for the disk read: a toggle that lands first would be
-  /// silently overwritten when the load completes a moment later.
+  /// Completes when the persisted favourites are in [state]; mutations await
+  /// it, or a toggle landing first would be overwritten when the load finishes
+  /// a moment later. Already complete until [build] replaces it — a controller
+  /// that never scheduled a load has nothing to wait for.
   Future<void> _ready = Future.value();
 
   @override
