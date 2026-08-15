@@ -45,7 +45,16 @@ replacement.
   is means nothing.
 - `email_verified` is required, and the email domain must be in the provider's
   allowlist — otherwise anyone with a Google account could enrol into someone
-  else's VPN.
+  else's VPN. The allowlist is mandatory for every provider and an empty one
+  denies: "no domains configured" is a misconfiguration, and reading it as "no
+  restriction" turns it into an open door.
+- A provider's issuer must be https. Management fetches the discovery document
+  and the JWKS from it, so over plaintext an on-path attacker supplies both and
+  the signature check passes — against their key.
+- The unauthenticated login routes are rate limited per client address. Every
+  attempt costs a bcrypt hash, so this bounds both guessing and CPU exhaustion,
+  and a failed lookup pays the same hashing cost as a wrong password so the
+  response time does not enumerate accounts.
 - Identity binding is by `sub`, not by email. Emails get reassigned.
 - No client secret ships in the app. A public client has none by construction.
 
