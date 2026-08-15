@@ -21,8 +21,10 @@ final vpnCoreProvider = Provider<VpnCore>((_) {
 /// Appearance + language, persisted. The app shell watches this so switching
 /// the theme repaints immediately.
 class AppPrefsController extends Notifier<AppPrefs> {
-  /// Mutations wait for the disk read: a setter that lands first would be
-  /// silently overwritten when the load completes a moment later.
+  /// Completes when the persisted prefs are in [state]; setters await it, or
+  /// one landing first would be overwritten when the load finishes a moment
+  /// later. Already complete until [build] replaces it — a controller that
+  /// never scheduled a load has nothing to wait for.
   Future<void> _ready = Future.value();
 
   @override

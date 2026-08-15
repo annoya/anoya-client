@@ -12,6 +12,12 @@ import '../core/norm_config.dart';
 /// refresh) indefinitely, with no feedback and no way to retry.
 const kHttpTimeout = Duration(seconds: 15);
 
+/// How long a download may deliver nothing before it is abandoned. Applies
+/// between chunks, not to the whole transfer: a geo database is tens of
+/// megabytes and may legitimately take minutes on a slow link, but a stalled
+/// connection must not hold the download open forever.
+const kDownloadStallTimeout = Duration(seconds: 30);
+
 /// ApiException carries the management service's error envelope.
 class ApiException implements Exception {
   ApiException(this.status, this.code, this.message);

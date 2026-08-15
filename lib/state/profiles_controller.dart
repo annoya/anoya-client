@@ -100,10 +100,14 @@ class ProfilesController extends Notifier<ProfilesState> {
   bool _reapplyPending = false;
   int _idSeq = 0;
 
-  /// Mutations wait for the initial disk read. Worse than a memory revert:
-  /// _append saves `[...state.profiles, p]`, so an add that lands before the
-  /// load would persist a list missing every stored profile. Defaults to
-  /// completed so test doubles that override build() stay inert.
+  /// Completes when the persisted state is in [state]. Mutations await it:
+  /// here the stakes are higher than a reverted field, because `_append` saves
+  /// `[...state.profiles, p]` — an add landing before the load would persist a
+  /// list missing every stored profile.
+  ///
+  /// Already complete until [build] replaces it, which is the truth for any
+  /// controller that never scheduled a load: its state is the default, and
+  /// there is nothing to wait for.
   Future<void> _ready = Future.value();
 
   @override

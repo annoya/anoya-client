@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -48,9 +49,35 @@ void main() {
     final store = JsonFileStore('atomic.json');
     await store.save({'v': 1});
     await store.save({'v': 2});
-    expect(File('${tmp.path}/atomic.json.tmp').existsSync(), isFalse,
-        reason: 'the temp file must not outlive the rename');
+    expect(tmp.listSync().where((e) => e.path.endsWith('.tmp')), isEmpty,
+        reason: 'the scratch file must not outlive the rename');
     expect(await store.load((j) => (j as Map)['v'], 0), 2);
+  });
+
+  test('concurrent saves never corrupt the file or throw', () async {
+    // A background refresh landing while the user edits is the ordinary case,
+    // and both go through the same store. Sharing one temp file made the
+    // second rename fail with PathNotFound and could leave a file that was
+    // half of each payload.
+    final store = JsonFileStore('race.json');
+    final big = {'v': List.filled(20000, 'xxxxxxxxxxxxxxxxxxxx')};
+    final small = {'v': 'small'};
+    for (var i = 0; i < 10; i++) {
+      await Future.wait([store.save(big), store.save(small)]);
+      final back = await store.load<Map?>((j) => j as Map, null);
+      expect(back, isNotNull, reason: 'round $i left an unparseable file');
+    }
+    expect(tmp.listSync().where((e) => e.path.endsWith('.tmp')), isEmpty,
+        reason: 'no scratch file may outlive its write');
+  });
+
+  test('a save that fails does not poison the next one', () async {
+    // The write chain has to survive an error, or one bad save would wedge
+    // every later save of that store.
+    final store = JsonFileStore('chain.json');
+    await expectLater(store.save(Object()), throwsA(isA<JsonUnsupportedObjectError>()));
+    await store.save({'v': 1});
+    expect(await store.load((j) => (j as Map)['v'], 0), 1);
   });
 
   test('round trip through the shared store', () async {

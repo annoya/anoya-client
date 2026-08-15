@@ -44,10 +44,11 @@ class GeositeIndex {
     if (cached != null) return cached;
 
     final sw = Stopwatch()..start();
-    // Off the UI isolate: walking 25 MB of varints synchronously would jank
-    // the first picker open after a download.
-    final bytes = await dat.readAsBytes();
-    final list = await Isolate.run(() => scan(bytes));
+    // Read AND parse in the worker isolate. Reading here and closing over the
+    // bytes would send 25 MB through the isolate port — the copy costs as much
+    // as the scan it was meant to move off the UI thread.
+    final path = dat.path;
+    final list = await Isolate.run(() => scan(File(path).readAsBytesSync()));
     Log.i('geosite index: ${list.length} categories in ${sw.elapsedMilliseconds} ms');
     await _writeCache(cache, key, list);
     return list;

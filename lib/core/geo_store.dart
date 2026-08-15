@@ -68,8 +68,7 @@ class GeoStore {
 
   static Future<void> _fetchTo(String url, File dest) async {
     // Stream to disk rather than buffering: each database is 4-20 MB, and two
-    // of them held in memory at once is real pressure on iOS. The timeout
-    // guards connect/headers; an established transfer is allowed to be slow.
+    // of them held in memory at once is real pressure on iOS.
     final client = http.Client();
     try {
       final res = await client
@@ -83,7 +82,11 @@ class GeoStore {
       final tmp = File('${dest.path}.tmp');
       final sink = tmp.openWrite();
       try {
-        await sink.addStream(res.stream);
+        // An idle timeout, not a total one: the transfer is allowed to be slow
+        // on a slow link, but a connection that stops delivering must not hold
+        // the download (and the UI's busy state) open indefinitely — which is
+        // what the header timeout above does not cover.
+        await sink.addStream(res.stream.timeout(kDownloadStallTimeout));
       } finally {
         await sink.close();
       }
@@ -92,6 +95,11 @@ class GeoStore {
         throw http.ClientException('geo download was empty', Uri.parse(url));
       }
       await tmp.rename(dest.path);
+    } catch (_) {
+      // Leave no half-written file behind for the next run to find.
+      final tmp = File('${dest.path}.tmp');
+      if (await tmp.exists()) await tmp.delete();
+      rethrow;
     } finally {
       client.close();
     }

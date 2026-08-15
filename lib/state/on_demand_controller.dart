@@ -11,8 +11,10 @@ import 'providers.dart';
 class OnDemandController extends Notifier<OnDemandPrefs> {
   int _idSeq = 0;
 
-  /// Mutations wait for the disk read: an edit that lands first would be
-  /// silently overwritten when the load completes a moment later.
+  /// Completes when the persisted prefs are in [state]; mutations await it, or
+  /// an edit landing first would be overwritten when the load finishes a moment
+  /// later. Already complete until [build] replaces it — a controller that
+  /// never scheduled a load has nothing to wait for.
   Future<void> _ready = Future.value();
 
   @override
