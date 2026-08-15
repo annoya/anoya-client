@@ -35,13 +35,31 @@ class JsonFileStore {
     }
   }
 
-  /// Atomic write: temp file + rename (+flush), so a crash at any point leaves
-  /// either the old content or the new — never a truncated file.
+  /// Distinguishes the scratch files of overlapping writes. Two callers saving
+  /// at once is the ordinary case here — a background refresh landing while the
+  /// user edits — and a shared scratch name means the second rename fails
+  /// outright while the file itself can end up half of each payload.
+  ///
+  /// A queue would serialize them instead, but it couples the calls: one write
+  /// that never finishes (a stalled disk, or a test that starts one in a fake
+  /// async zone) would hold every later write of that store forever. Giving
+  /// each write its own file keeps them independent — rename is atomic, so the
+  /// target is always one writer's complete document, and the last rename wins
+  /// exactly as two concurrent savers would expect.
+  int _writeSeq = 0;
+
+  /// Atomic write: scratch file + rename (+flush), so a crash at any point
+  /// leaves either the old content or the new — never a truncated file.
   Future<void> save(Object json) async {
     final f = await _file();
-    final tmp = File('${f.path}.tmp');
-    await tmp.writeAsString(jsonEncode(json), flush: true);
-    await tmp.rename(f.path);
+    final tmp = File('${f.path}.${_writeSeq++}.tmp');
+    try {
+      await tmp.writeAsString(jsonEncode(json), flush: true);
+      await tmp.rename(f.path);
+    } catch (e) {
+      if (await tmp.exists()) await tmp.delete();
+      rethrow;
+    }
   }
 }
 
