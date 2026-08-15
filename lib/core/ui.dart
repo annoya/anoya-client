@@ -186,8 +186,7 @@ Future<String?> promptText(
   required String confirmLabel,
   String initial = '',
   String? hint,
-  int maxLines = 1,
-  double? fontSize,
+  bool longValue = false,
   bool autocorrect = true,
   String? resetLabel,
   String? resetValue,
@@ -200,8 +199,7 @@ Future<String?> promptText(
       confirmLabel: confirmLabel,
       initial: initial,
       hint: hint,
-      maxLines: maxLines,
-      fontSize: fontSize,
+      longValue: longValue,
       autocorrect: autocorrect,
       resetLabel: resetLabel,
       resetValue: resetValue,
@@ -216,8 +214,7 @@ class _TextPromptDialog extends StatefulWidget {
     required this.confirmLabel,
     required this.initial,
     required this.hint,
-    required this.maxLines,
-    required this.fontSize,
+    required this.longValue,
     required this.autocorrect,
     required this.resetLabel,
     required this.resetValue,
@@ -228,8 +225,10 @@ class _TextPromptDialog extends StatefulWidget {
   final String confirmLabel;
   final String initial;
   final String? hint;
-  final int maxLines;
-  final double? fontSize;
+  /// The value is a URL or another long unbreakable string: it wraps over a
+  /// few lines in a smaller size instead of scrolling sideways through a
+  /// single-line field, where only the tail would ever be visible.
+  final bool longValue;
   final bool autocorrect;
   final String? resetLabel;
   final String? resetValue;
@@ -256,9 +255,9 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
           controller: _controller,
           autofocus: true,
           autocorrect: widget.autocorrect,
-          maxLines: widget.maxLines,
+          maxLines: widget.longValue ? kLongValueMaxLines : 1,
           minLines: 1,
-          style: widget.fontSize == null ? null : TextStyle(fontSize: widget.fontSize),
+          style: widget.longValue ? Theme.of(context).textTheme.bodySmall : null,
           decoration: InputDecoration(labelText: widget.label, hintText: widget.hint),
           onSubmitted: (v) => Navigator.of(context).pop(v),
         ),
@@ -296,6 +295,20 @@ String formatBytes(int n) {
 /// Search only earns its place once the list is long enough to scan — the same
 /// threshold the on-demand value lists use.
 const int kSearchThreshold = 6;
+
+/// How many lines a long value (a URL) may wrap over in a prompt dialog before
+/// it scrolls. Enough to read a typical download URL whole; past that the
+/// dialog would dwarf everything else on a phone.
+const int kLongValueMaxLines = 4;
+
+/// How long a text field waits after the last keystroke before its value is
+/// persisted. Only for fields whose every save has a cost beyond writing a
+/// file — the on-demand editor pushes the whole VPN profile into the system on
+/// each one, and those native saves can land out of order. Long enough to
+/// cover typing, short enough that leaving the screen right after typing feels
+/// immediate (the editor also flushes on dispose, so nothing is lost either
+/// way).
+const kTextEditDebounce = Duration(milliseconds: 600);
 
 /// A sheet never covers the whole screen: the strip of scrim left above it is
 /// what makes it dismissable by a tap, not only by a swipe.

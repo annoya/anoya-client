@@ -54,7 +54,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
   void _updateDebounced(OnDemandRule rule) {
     setState(() => _rule = rule);
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 600), () {
+    _debounce = Timer(kTextEditDebounce, () {
       ref.read(onDemandProvider.notifier).upsertRule(_rule);
     });
   }

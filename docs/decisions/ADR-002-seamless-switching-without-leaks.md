@@ -34,6 +34,30 @@ traffic to escape.
 `setTunnelNetworkSettings` tears the current settings down before installing
 the new ones; on a live session that is a real leak, not a theoretical one.
 
+**Both address families are claimed, and both are carried.** `NEIPv4Settings`
+and `NEIPv6Settings` each install the default route, and the engine runs with
+`ipv6: true` plus its own v6 fake-IP pool. Without the v6 settings the OS keeps
+the physical interface's v6 default route, and everything reaching an IPv6
+address — a literal address, or an AAAA an application resolved over its own
+DoH past the `:53` hijack — leaves in the clear; cellular is v6-primary, so
+that is the ordinary case. Claiming the route without handling v6 in the engine
+would be fail-closed rather than leaking, but it fails a lot: the fake-IP pool
+refuses AAAA, so every v6 destination breaks instead of being proxied.
+
+Enabling v6 does not depend on the exit server having it. Fake-IP maps the
+answer back to the *domain*, so what leaves the device is a hostname and the
+server chooses the family; only connections made to a literal v6 address need
+v6 at the far end.
+
+This forces one engine-wide setting. `config.parseIPV6` probes the host's
+interfaces and, finding no global v6 address, strips `tun.inet6-address` and
+`dns.fake-ip-range6` from the parsed config — which would make the `tun`
+section a function of the current network and break the invariant below the
+first time a device moved between a v4-only and a v6 network. The wrapper sets
+`SKIP_SYSTEM_IPV6_CHECK=1` before any config is parsed. The probe asks whether
+the host has IPv6; for a VPN that supplies IPv6 over its own interface, that is
+the wrong question.
+
 **Nothing is excluded from the tunnel.** `includedRoutes = [default]` and no
 `excludedRoutes` at all — not for the current server, not for any other. The
 engine reaches its server because mihomo binds each outbound socket to the
@@ -62,10 +86,20 @@ the user gets a dialog.
 
 - No code on the switch path calls `stop`, `start`, or
   `setTunnelNetworkSettings`, in any outcome including failure.
-- `includedRoutes` is the default route and `excludedRoutes` is empty.
-- The `tun` and `dns` sections of the rendered config are byte-identical across
-  locations, protocols and routing policies — that is what keeps mihomo from
-  re-creating the TUN listener, and with it the fd and the session.
+- `includedRoutes` is the default route for IPv4 **and** IPv6, and
+  `excludedRoutes` is empty.
+- The `tun` section of the rendered config is byte-identical across locations,
+  protocols and routing policies — that is what keeps mihomo from re-creating
+  the TUN listener, and with it the fd and the session. (The `dns` section
+  carries per-config resolvers, see ADR-008; only its fake-ip mode and range
+  are constant.)
+- The `tun` section does not vary with the machine's own addresses: the
+  host-IPv6 probe is disabled before the first parse. Pinned by
+  `TestTunSectionDoesNotDependOnHostIPv6`.
+- A reload that reports success has a live TUN listener behind it. mihomo's
+  `ApplyConfig` returns nothing and logs apply-stage failures instead — including
+  a TUN re-creation that closed our fd and could not rebuild — so the wrapper
+  checks `listener.GetTunConf().Enable` before calling a reload successful.
 - If the interface binding ever fails, the tunnel goes silent rather than
   leaking. Fail-closed is the intended direction.
 
@@ -162,7 +196,8 @@ never gave it to the tunnel" can be told apart from "it went out both ways".
   `[egress]` probe.
 - `client/shared/apple/PacketTunnelProvider.swift` — `applyNetworkSettings`
   (start only) and the `reload:` handler.
-- `client/lib/state/profiles_controller.dart` — `_applySelection`.
+- `client/lib/state/profiles_controller.dart` — `_applySelection`, and
+  `maybeReapply` (the background poll takes the same reload-only path).
 - `client/lib/core/mihomo_tun_config.dart` — identical `tun`/`dns` sections,
   `disable-icmp-forwarding`.
 - Tests: `client/test/hot_switch_test.dart` (group `leak invariants`),

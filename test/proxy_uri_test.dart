@@ -123,4 +123,27 @@ rules:
     expect((locs[0].proxy['ws-opts'] as Map)['path'], '/ray');
     expect(locs[1].proxy['cipher'], 'aes-256-gcm');
   });
+  test('an IPv6 literal loses its brackets, whichever form carried it', () {
+    // ss:// carries host:port as text; vless:// goes through Uri, which
+    // already strips them. Both must land on the bare address.
+    final ss = parseProxyUri('ss://YWVzLTEyOC1nY206cGFzcw==@[2001:db8::1]:8388#v6')!;
+    expect(ss.proxy['server'], '2001:db8::1');
+    final vless = parseProxyUri('vless://uuid@[2001:db8::2]:443?security=tls#v6')!;
+    expect(vless.proxy['server'], '2001:db8::2');
+  });
+
+  test('a proxy with an unusable port is rejected, not emitted with port 0', () {
+    // {"add":"1.2.3.4","port":"bad","id":"x"} — a vmess payload whose port is
+    // not a number at all.
+    expect(parseProxyUri('vmess://eyJhZGQiOiIxLjIuMy40IiwicG9ydCI6ImJhZCIsImlkIjoieCJ9'), isNull);
+    expect(parseProxyUri('vless://uuid@host:99999?security=tls'), isNull);
+  });
+
+  test('an oversized subscription body is refused before parsing', () {
+    final huge = 'vless://uuid@host:443#x\n' * 200000;
+    expect(huge.length, greaterThan(4 * 1024 * 1024));
+    expect(parseSubscription(huge), isEmpty);
+  });
+
 }
+

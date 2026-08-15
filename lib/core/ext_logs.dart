@@ -18,11 +18,17 @@ Future<String> fetchExtensionLog(String name) async {
     final t = text ?? '';
     return t.trim().isEmpty ? 'No log yet.' : t;
   } on PlatformException {
-    return 'Logs are available only while the VPN is connected.\n'
-        '(The tunnel extension keeps its logs in its own container and '
-        'streams them to the app over IPC.)';
+    return _unavailable;
+  } on MissingPluginException {
+    // Thrown instead of PlatformException when no handler is registered — the
+    // same "nothing is running" situation, and not a PlatformException subtype.
+    return _unavailable;
   }
 }
+
+const _unavailable = 'Logs are available only while the VPN is connected.\n'
+    '(The tunnel extension keeps its logs in its own container and '
+    'streams them to the app over IPC.)';
 
 /// Names of the logs the extension keeps in its container.
 const extensionLogNames = ['tunnel', 'mihomo'];
@@ -38,6 +44,8 @@ Future<bool> clearExtensionLogs() async {
   } on PlatformException catch (e) {
     Log.e('clear extension logs failed', e.message ?? e.code);
     return false;
+  } on MissingPluginException {
+    return false;
   }
 }
 
@@ -49,5 +57,7 @@ Future<void> setExtensionLogging(bool enabled) async {
     await _control.invokeMethod<void>('set_logging', {'enabled': enabled});
   } on PlatformException catch (e) {
     Log.e('set extension logging failed', e.message ?? e.code);
+  } on MissingPluginException {
+    Log.e('set extension logging failed', 'no platform side');
   }
 }
