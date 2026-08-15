@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
@@ -10,6 +11,10 @@ class Log {
 
   static const _max = 1000;
   static final ListQueue<String> _buffer = ListQueue<String>();
+
+  /// Sum of the buffered lines' encoded sizes, kept as they are added and
+  /// removed. The Logs screen reads the total on every build, and joining a
+  /// thousand lines per frame to measure them is work with no result.
   static int _bufferBytes = 0;
 
   /// Bumps whenever a line is added, so log views can rebuild live.
@@ -34,9 +39,9 @@ class Log {
     if (kDebugMode) debugPrint('vpn $line');
     if (!enabled) return;
     _buffer.addLast(line);
-    _bufferBytes += line.length + 1; // +1 for the join('\n') separator
+    _bufferBytes += _encodedSize(line);
     while (_buffer.length > _max) {
-      _bufferBytes -= _buffer.removeFirst().length + 1;
+      _bufferBytes -= _encodedSize(_buffer.removeFirst());
     }
     revision.value++;
   }
@@ -44,9 +49,16 @@ class Log {
   static List<String> lines() => _buffer.toList();
   static String dump() => _buffer.join('\n');
 
-  /// Approximate buffer size, maintained incrementally — the Logs screen reads
-  /// this on every build, and joining 1000 lines per frame is real work.
-  static int get sizeBytes => _buffer.isEmpty ? 0 : _bufferBytes - 1;
+  /// Size of what [dump] would produce, in bytes. Real bytes, not code units:
+  /// the number is shown next to a file size, and a log full of Cyrillic would
+  /// otherwise read as half its actual size.
+  static int get sizeBytes =>
+      _buffer.isEmpty ? 0 : _bufferBytes - _separatorBytes;
+
+  /// dump() joins with newlines, so the last line has no separator after it.
+  static const _separatorBytes = 1;
+
+  static int _encodedSize(String line) => utf8.encode(line).length + _separatorBytes;
 
   static void clear() {
     _buffer.clear();
