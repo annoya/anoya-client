@@ -100,6 +100,8 @@ enum VpnChannel {
                 }
             case "status":
                 Task { @MainActor in result(await VPNManager.shared.refreshStatus()) }
+            case "device_info":
+                result(deviceInfo())
             case "shared_dir":
                 // App Group container shared with the tunnel extension — the
                 // engine's home dir, where GeoIP/GeoSite databases live. Dart
@@ -139,6 +141,38 @@ enum VpnChannel {
         let status = FlutterEventChannel(name: "vpn/status", binaryMessenger: messenger)
         status.setStreamHandler(StatusStreamHandler())
     }
+}
+
+/// What this device is, for the subscription panels that count devices.
+///
+/// The model comes from sysctl rather than the host name: `hw.model` is
+/// "MacBookPro18,3", while the host name is routinely "Ivan's MacBook Pro" —
+/// which would hand a third-party panel the user's name for nothing.
+private func deviceInfo() -> [String: String] {
+    let v = ProcessInfo.processInfo.operatingSystemVersion
+    var model = ""
+    #if os(macOS)
+    let key = "hw.model"
+    #else
+    let key = "hw.machine"
+    #endif
+    var size = 0
+    if sysctlbyname(key, nil, &size, nil, 0) == 0, size > 0 {
+        var buf = [CChar](repeating: 0, count: size)
+        if sysctlbyname(key, &buf, &size, nil, 0) == 0 {
+            model = String(cString: buf)
+        }
+    }
+    #if os(macOS)
+    let os = "macOS"
+    #else
+    let os = "iOS"
+    #endif
+    return [
+        "os": os,
+        "version": "\(v.majorVersion).\(v.minorVersion)" + (v.patchVersion > 0 ? ".\(v.patchVersion)" : ""),
+        "model": model,
+    ]
 }
 
 private final class StatusStreamHandler: NSObject, FlutterStreamHandler {

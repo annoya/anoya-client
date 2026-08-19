@@ -15,7 +15,7 @@ import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import '../state/routing_status.dart';
-import 'config_screen.dart';
+import 'config/config_screen.dart';
 import 'logs_screen.dart';
 import 'on_demand_screen.dart';
 import 'rule_sets_screen.dart';

@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/proxy_uri.dart';
+import 'package:vpn_client/core/parsers/share_link.dart';
+import 'package:vpn_client/core/parsers/subscription.dart';
 
 void main() {
   test('vless reality link → mihomo proxy', () {

@@ -5,7 +5,8 @@ import 'package:yaml/yaml.dart';
 
 import 'package:vpn_client/core/mihomo_tun_config.dart';
 import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/proxy_uri.dart';
+import 'package:vpn_client/core/parsers/share_link.dart';
+import 'package:vpn_client/core/parsers/subscription.dart';
 
 void main() {
   test('mihomoTunConfigYaml renders a tun inbound + vless proxy', () {

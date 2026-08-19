@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_error.dart';
 import '../core/log.dart';
-import '../core/proxy_uri.dart';
+import '../core/parsers/subscription.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
 import 'sign_in_screen.dart';
@@ -51,6 +51,10 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     setState(() => _busy = true);
     try {
       final added = await action();
+      // Before the pop, and deliberately: the toast lives in the root
+      // ScaffoldMessenger, so it survives the unwind and lands on the screen
+      // the user ends up looking at.
+      if (added) _warnIfRefused();
       // First run: app.dart swaps to Home when a profile appears. Pushed from
       // home/settings: unwind whatever is above the root.
       if (added && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
@@ -59,6 +63,17 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       if (mounted) showErrorDialog(context, describeError(e, subject: _subject()));
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// A subscription can be added successfully and still be refused: the panel
+  /// answers with placeholders instead of servers. The add succeeds (that is
+  /// what the panel returned), and this is how the user learns why the list
+  /// reads the way it does.
+  void _warnIfRefused() {
+    final p = ref.read(profilesControllerProvider).profiles.lastOrNull;
+    if (p != null && p.deviceLimitReached && mounted) {
+      showToast(context, kDeviceLimitReached.line);
     }
   }
 
@@ -72,6 +87,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       setState(() => _busy = true);
       try {
         await _ctrl.addSubscriptionUrl('', t);
+        _warnIfRefused();
         if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
       } on FormatException catch (fe) {
         try {

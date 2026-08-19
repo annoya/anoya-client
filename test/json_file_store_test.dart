@@ -80,6 +80,21 @@ void main() {
     expect(await store.load((j) => (j as Map)['v'], 0), 1);
   });
 
+  test('what the panel said about device counting survives a restart', () async {
+    // The subscription screen reads this to decide whether to mention the
+    // device slot at all; re-asking the panel on every screen open would be
+    // both slow and, when it is unreachable, wrong.
+    final p = Profile(
+        id: 's',
+        type: ProfileType.subscription,
+        name: 'Sub',
+        locations: const [],
+        subscriptionUrl: 'https://panel.example/sub/abc',
+        deviceLimitActive: true);
+    await ProfileStore.save([p]);
+    expect((await ProfileStore.load()).single.deviceLimitActive, isTrue);
+  });
+
   test('round trip through the shared store', () async {
     final p = Profile(
         id: 'x', type: ProfileType.link, name: 'One', locations: const []);
