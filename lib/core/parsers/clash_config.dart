@@ -2,8 +2,10 @@ import 'package:yaml/yaml.dart';
 
 import '../engine_config_text.dart';
 import '../log.dart';
+import '../mihomo_tun_config.dart';
 import '../norm_config.dart';
 import 'base64_text.dart';
+import 'subscription.dart';
 
 /// Clash / mihomo YAML, the second shape a subscription body arrives in.
 ///
@@ -11,20 +13,30 @@ import 'base64_text.dart';
 /// with keys chosen by whoever wrote the document — which is why key sanitation
 /// (AGENTS invariant 5) lives in this file and not in the renderer alone.
 
-List<Location>? parseClashProxies(String body) {
+ParsedSubscription? parseClashProxies(String body) {
   if (!RegExp(r'(^|\n)\s*proxies\s*:').hasMatch(body)) return null;
   try {
     final doc = loadYaml(body);
     if (doc is! Map || doc['proxies'] is! List) return null;
     final out = <Location>[];
+    final unsupported = <String, int>{};
     var i = 0;
     for (final p in (doc['proxies'] as List)) {
       final m = _deepConvert(p);
       if (m is! Map<String, dynamic> || m['type'] == null || m['server'] == null) continue;
+      final type = m['type'].toString();
+      // Filtered here rather than left to the renderer: an entry we cannot
+      // render would otherwise reach the server picker and fail only when the
+      // user taps Connect, which is the worst possible moment to find out.
+      if (!kSupportedProxyTypes.contains(type)) {
+        unsupported[type] = (unsupported[type] ?? 0) + 1;
+        continue;
+      }
       final name = m['name']?.toString() ?? '${m['server']}:${m['port']}';
       out.add(Location(id: 'sub_${i++}_${shortDigest(name)}', label: name, proxy: m));
     }
-    return out.isEmpty ? null : out;
+    if (out.isEmpty && unsupported.isEmpty) return null;
+    return ParsedSubscription(locations: out, unsupported: unsupported);
   } catch (e) {
     Log.e('clash yaml parse failed', '$e');
     return null;

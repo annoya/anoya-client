@@ -126,7 +126,9 @@ void main() {
   });
 
   test('rejects unknown proxy types (renderer)', () {
-    final loc = Location.fromJson({'id': 'x', 'label': 'y', 'proxy': {'type': 'hysteria2'}});
+    // tuic, not hysteria2: hysteria2 is supported now, and a test whose
+    // "unsupported" example quietly became supported stops testing anything.
+    final loc = Location.fromJson({'id': 'x', 'label': 'y', 'proxy': {'type': 'tuic'}});
     expect(() => mihomoTunConfigYaml(loc), throwsStateError);
   });
 
@@ -173,6 +175,22 @@ void main() {
     final urls = doc['geox-url'] as YamlMap;
     expect(urls.values, everyElement(''),
         reason: 'every geo source must be empty, whatever rules the config has');
+  });
+
+  test('renders a parsed hysteria2 proxy', () {
+    // QUIC-based: no transport section, and alpn is a list rather than a string.
+    final loc = parseProxyUri(
+        'hysteria2://pw@h.example:30443/?sni=h.example&alpn=h3&insecure=1#HY')!;
+    final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
+    final proxy = (doc['proxies'] as YamlList).single as YamlMap;
+    expect(proxy['type'], 'hysteria2');
+    expect(proxy['password'], 'pw');
+    expect(proxy['port'], 30443);
+    expect(proxy['sni'], 'h.example');
+    expect(proxy['alpn'], ['h3']);
+    expect(proxy['skip-cert-verify'], true);
+    expect(proxy.containsKey('network'), isFalse,
+        reason: 'a transport would be meaningless for QUIC');
   });
 
   test('the single outbound is always named "proxy"', () {

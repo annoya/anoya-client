@@ -61,6 +61,7 @@ class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScr
           const SizedBox(height: 8),
           ProfileHeaderCard(profile: p, isActive: widget.isActive),
           if (p.deviceLimitReached) const DeviceLimitCard(),
+          if (p.unsupportedServers.isNotEmpty) UnsupportedServersCard(profile: p),
           if (p.subscriptionUrl != null)
             SourceCard(
               value: p.subscriptionUrl!,

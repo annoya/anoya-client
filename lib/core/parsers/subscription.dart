@@ -20,14 +20,49 @@ export 'clash_config.dart' show subscriptionDns;
 /// build their whole result in memory.
 const _maxSubscriptionChars = 4 * 1024 * 1024;
 
+/// The outcome of reading one subscription body: the servers we can run, and
+/// an account of the ones we cannot.
+///
+/// The count matters as much as the list. A panel shows the user 306 servers;
+/// if the app shows 294 and says nothing, the twelve missing ones read as a bug
+/// in the app — or worse, as the provider shortchanging them. Naming what was
+/// skipped turns a silent discrepancy into a fact with a reason.
+class ParsedSubscription {
+  const ParsedSubscription({
+    required this.locations,
+    this.unsupported = const {},
+  });
+
+  final List<Location> locations;
+
+  /// What was recognisably a server and how many of it we could not run, keyed
+  /// by the name the body used — a URI scheme (`tuic`) or a Clash `type`
+  /// (`wireguard`). That is what the user is told, because it is what they can
+  /// look up.
+  final Map<String, int> unsupported;
+
+  int get unsupportedCount => unsupported.values.fold(0, (a, b) => a + b);
+
+  /// How many servers the body offered, ours and not.
+  int get total => locations.length + unsupportedCount;
+
+  bool get hasUnsupported => unsupported.isNotEmpty;
+
+  /// "hysteria2, tuic" — for saying which, not how many.
+  String get unsupportedList {
+    final kinds = unsupported.keys.toList()..sort();
+    return kinds.join(', ');
+  }
+}
+
 /// Parse a subscription body: Clash/mihomo YAML (has `proxies:`) or a (usually
 /// base64-encoded) newline/whitespace-separated list of share links.
-List<Location> parseSubscription(String body) {
+ParsedSubscription parseSubscriptionBody(String body) {
   final trimmed = body.trim();
-  if (trimmed.isEmpty) return [];
+  if (trimmed.isEmpty) return const ParsedSubscription(locations: []);
   if (trimmed.length > _maxSubscriptionChars) {
     Log.e('subscription rejected', 'body too large (${trimmed.length} chars)');
-    return [];
+    return const ParsedSubscription(locations: []);
   }
 
   // Clash/mihomo YAML?
@@ -41,13 +76,29 @@ List<Location> parseSubscription(String body) {
     if (decoded != null && decoded.contains('://')) text = decoded;
   }
   final out = <Location>[];
+  final unsupported = <String, int>{};
   for (final line in text.split(RegExp(r'[\r\n\s]+'))) {
     if (line.isEmpty) continue;
-    final loc = parseProxyUri(line);
-    if (loc != null) out.add(loc);
+    final parsed = parseShareLink(line);
+    final loc = parsed.location;
+    if (loc != null) {
+      out.add(loc);
+      continue;
+    }
+    // The parser names what stopped it — a scheme we have no protocol for, or a
+    // transport the engine cannot run. Junk (a comment, a stray token) is not
+    // counted: it was never a server, and counting it would accuse the panel of
+    // losing one.
+    final why = parsed.unsupported;
+    if (why != null && why.length <= 24) {
+      unsupported[why] = (unsupported[why] ?? 0) + 1;
+    }
   }
-  return out;
+  return ParsedSubscription(locations: out, unsupported: unsupported);
 }
+
+/// Just the servers, for the callers that only need those.
+List<Location> parseSubscription(String body) => parseSubscriptionBody(body).locations;
 
 
 /// What a pasted string on the add screen turned out to be — drives the live
@@ -79,7 +130,7 @@ DetectedInput? detectInput(String raw) {
   // A share link is a single token; multi-line vless:// lists are a
   // subscription and fall through to the parser below.
   final singleToken = !t.contains(RegExp(r'\s'));
-  if (singleToken && const {'vless', 'vmess', 'trojan', 'ss'}.contains(scheme)) {
+  if (singleToken && kShareLinkSchemes.contains(scheme)) {
     final loc = parseProxyUri(t);
     return loc == null
         ? null

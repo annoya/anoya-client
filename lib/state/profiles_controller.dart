@@ -178,8 +178,10 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// Add a subscription by URL (fetched now and on the poll timer).
   Future<void> addSubscriptionUrl(String name, String url) async {
     final res = await fetchSubscription(url);
-    final locations = parseSubscription(res.body);
-    if (locations.isEmpty) throw const FormatException('No servers found in the subscription.');
+    final parsed = parseSubscriptionBody(res.body);
+    if (parsed.locations.isEmpty) {
+      throw const FormatException('No servers found in the subscription.');
+    }
     // The panel's own name for the subscription beats a hostname, and the user's
     // beats both — they typed it on purpose.
     final title = res.info.title.trim();
@@ -189,11 +191,12 @@ class ProfilesController extends Notifier<ProfilesState> {
       name: name.trim().isNotEmpty
           ? name.trim()
           : (title.isNotEmpty ? title : Uri.parse(url).host),
-      locations: locations,
+      locations: parsed.locations,
       subscriptionUrl: url,
       dns: subscriptionDns(res.body),
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
+      unsupportedServers: parsed.unsupported,
       providerInfo: res.info.isEmpty ? null : res.info,
       refreshedAt: DateTime.now(),
     ));
@@ -203,7 +206,8 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// `link` profile (no location picker); multiple servers become a static
   /// `subscription` snapshot (no refresh URL).
   Future<void> addFromText(String text, {String? name}) async {
-    final locations = parseSubscription(text);
+    final parsed = parseSubscriptionBody(text);
+    final locations = parsed.locations;
     if (locations.isEmpty) {
       throw const FormatException('No valid vless://vmess://trojan://ss:// link or subscription found.');
     }
@@ -216,6 +220,7 @@ class ProfilesController extends Notifier<ProfilesState> {
           : (single ? locations.first.label : 'Imported (${locations.length})'),
       locations: locations,
       dns: subscriptionDns(text),
+      unsupportedServers: parsed.unsupported,
       refreshedAt: DateTime.now(),
     ));
   }
@@ -348,6 +353,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       dns: updated.dns,
       deviceLimitActive: updated.deviceLimitActive,
       deviceLimitReached: updated.deviceLimitReached,
+      unsupportedServers: updated.unsupportedServers,
       providerInfo: updated.providerInfo,
       refreshedAt: updated.refreshedAt ?? DateTime.now(),
     );
