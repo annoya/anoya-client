@@ -19,7 +19,7 @@ import 'norm_config.dart';
 /// [stack] is the mihomo TUN network stack — "gvisor" on both macOS and iOS
 /// (fully userspace; the only stack that works inside the NE sandbox).
 ///
-/// Supports vless / vmess / trojan / ss. The selected location's `proxy` is
+/// Supports vless / vmess / trojan / ss / hysteria2. The selected location's `proxy` is
 /// either the self-hosted vless+reality shape (custom `reality` key) or a
 /// mihomo-format map (from a share link / subscription); both are normalized
 /// to a single mihomo proxy here. Pure + top-level so it can be unit-tested.
@@ -138,14 +138,17 @@ const kFakeIpRange6 = 'fc00::/18';
 /// it must exist for the stack to accept v6 packets at all.
 const kTunInet6Address = 'fdfe:dcba:9876::1/126';
 
-const _supportedProxyTypes = {'vless', 'vmess', 'trojan', 'ss'};
+/// Proxy types this renderer can turn into an engine config. Public because
+/// the subscription parsers consult it: keeping a proxy we cannot render would
+/// put a server in the picker that fails only when the user taps Connect.
+const kSupportedProxyTypes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2'};
 
 /// Normalizes a Location's proxy into a single mihomo proxy map named "proxy".
 /// The self-hosted bundle uses a custom `reality` sub-map; share-link and
 /// subscription proxies are already mihomo-shaped (see proxy_uri.dart).
 Map<String, dynamic> _mihomoProxy(Location location) {
   final type = location.proxyType;
-  if (!_supportedProxyTypes.contains(type)) {
+  if (!kSupportedProxyTypes.contains(type)) {
     throw StateError('unsupported proxy type: $type');
   }
   final p = location.proxy;
