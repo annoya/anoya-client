@@ -188,8 +188,18 @@ fetched keep working.
 
 ### 4.2 Accepted inputs
 
-- **Share links** — `vless://`, `vmess://`, `trojan://`, `ss://`, pasted or
-  opened from a file containing several.
+- **Share links** — `vless://`, `vmess://`, `trojan://`, `ss://`,
+  `hysteria2://` (and its `hy2://` alias), pasted or opened from a file
+  containing several. Transports: plain tcp, tcp with an HTTP header, ws,
+  httpupgrade, grpc, h2 and xhttp — each mapped to how the engine expresses it,
+  which for two of them differs from the URI (an HTTP header makes it the
+  engine's `http` network; httpupgrade is a websocket with the handshake
+  skipped).
+
+  A server the engine cannot run is **counted and named**, never quietly
+  dropped or degraded to plain tcp: the source's own count is what the user saw
+  in their provider's panel, so the configuration screen reads "294 of 306
+  servers" and says which protocol or transport accounts for the difference.
 - **Subscription URLs** — returning either a base64 list of those URIs or a
   Clash/mihomo YAML document.
 - **A management server address** plus credentials, or SSO when the server

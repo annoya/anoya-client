@@ -61,15 +61,16 @@ final class SubscriptionSource extends ConfigSource {
   @override
   Future<Profile> refresh() async {
     final res = await fetchSubscription(profile.subscriptionUrl!);
-    final locations = parseSubscription(res.body);
-    if (locations.isEmpty) return profile;
+    final parsed = parseSubscriptionBody(res.body);
+    if (parsed.locations.isEmpty) return profile;
     return profile.withBundle(
-      locations: locations,
+      locations: parsed.locations,
       account: null,
       routing: null,
       dns: subscriptionDns(res.body),
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
+      unsupportedServers: parsed.unsupported,
       providerInfo: res.info.isEmpty ? null : res.info,
       refreshedAt: DateTime.now(),
     );

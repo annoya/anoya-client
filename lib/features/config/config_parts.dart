@@ -26,10 +26,20 @@ IconData profileIcon(ProfileType t) => switch (t) {
     };
 
 String profileKind(Profile p) => switch (p.type) {
-      ProfileType.selfhosted => 'Self-hosted · ${p.locations.length} servers',
-      ProfileType.subscription => 'Subscription · ${p.locations.length} servers',
+      ProfileType.selfhosted => 'Self-hosted · ${_servers(p)}',
+      ProfileType.subscription => 'Subscription · ${_servers(p)}',
       ProfileType.link => 'Single server',
     };
+
+/// "12 servers", or "294 of 306 servers" when the source offered protocols this
+/// app cannot run. The second form exists so the number here matches what the
+/// provider's own panel shows, minus an explanation the card below supplies.
+String _servers(Profile p) {
+  final offered = p.offeredServers;
+  final ours = p.locations.length;
+  final noun = offered == 1 ? 'server' : 'servers';
+  return ours == offered ? '$ours $noun' : '$ours of $offered $noun';
+}
 
 /// Identity card at the top of every configuration screen. The check mark is
 /// how "set active" reports itself: the button below disappears and the mark
@@ -97,6 +107,36 @@ class SourceCard extends StatelessWidget {
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: value));
     if (context.mounted) showToast(context, 'Link copied');
+  }
+}
+
+/// Names the servers the source offered and this app cannot run.
+///
+/// Dropping them silently is the tempting option and the wrong one: the user
+/// counted the locations in their provider's panel, and a smaller number here
+/// with no reason given reads as the app losing them. A warning, not an error —
+/// the rest of the servers work and connecting is available right now.
+class UnsupportedServersCard extends StatelessWidget {
+  const UnsupportedServersCard({super.key, required this.profile});
+
+  final Profile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final skipped = profile.offeredServers - profile.locations.length;
+    final kinds = (profile.unsupportedServers.keys.toList()..sort()).join(', ');
+    return Card(
+      margin: kCardMargin,
+      color: cs.tertiaryContainer.withValues(alpha: 0.35),
+      child: ListTile(
+        leading: Icon(Icons.info_outline, color: cs.onSurfaceVariant),
+        title: Text('$skipped of ${profile.offeredServers} servers unsupported'),
+        subtitle: Text('They use $kinds, which this app cannot run yet. '
+            'The other ${profile.locations.length} are available.'),
+        isThreeLine: true,
+      ),
+    );
   }
 }
 

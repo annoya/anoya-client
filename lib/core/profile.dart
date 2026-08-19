@@ -31,6 +31,7 @@ class Profile {
     this.dns = const [],
     this.deviceLimitActive = false,
     this.deviceLimitReached = false,
+    this.unsupportedServers = const {},
     this.providerInfo,
     this.refreshedAt,
   });
@@ -76,6 +77,12 @@ class Profile {
   /// placeholders carrying its message.
   final bool deviceLimitReached;
 
+  /// Servers the source offered that this app cannot run, by the name the body
+  /// used (`hysteria2`, `wireguard`). Kept so the screen can account for the
+  /// difference between what the provider's panel shows and what is here — an
+  /// unexplained gap reads as the app losing servers.
+  final Map<String, int> unsupportedServers;
+
   /// What the subscription's panel reported about itself on the last fetch —
   /// plan, message, support link (ADR-005: its words, not a verdict). Null for
   /// the other two domains, which have no panel to speak for them.
@@ -88,6 +95,11 @@ class Profile {
 
   /// Only self-hosted profiles have an account (status, quota, expiry).
   bool get hasAccount => type == ProfileType.selfhosted;
+
+  /// Servers offered, ours and not. Equals [locations].length unless the source
+  /// carried protocols this app cannot run.
+  int get offeredServers =>
+      locations.length + unsupportedServers.values.fold(0, (a, b) => a + b);
 
   /// Refreshable from a remote source (self-hosted API / subscription URL).
   bool get isRefreshable =>
@@ -106,6 +118,7 @@ class Profile {
     required DateTime refreshedAt,
     bool deviceLimitActive = false,
     bool deviceLimitReached = false,
+    Map<String, int> unsupportedServers = const {},
     SubscriptionInfo? providerInfo,
   }) =>
       Profile(
@@ -122,6 +135,7 @@ class Profile {
         dns: dns,
         deviceLimitActive: deviceLimitActive,
         deviceLimitReached: deviceLimitReached,
+        unsupportedServers: unsupportedServers,
         providerInfo: providerInfo,
         refreshedAt: refreshedAt,
       );
@@ -150,6 +164,7 @@ class Profile {
         dns: dns ?? this.dns,
         deviceLimitActive: deviceLimitActive,
         deviceLimitReached: deviceLimitReached,
+        unsupportedServers: unsupportedServers,
         providerInfo: providerInfo,
         refreshedAt: refreshedAt ?? this.refreshedAt,
       );
@@ -174,6 +189,9 @@ class Profile {
         dns: (j['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
         deviceLimitActive: j['device_limit_active'] as bool? ?? false,
         deviceLimitReached: j['device_limit_reached'] as bool? ?? false,
+        unsupportedServers: (j['unsupported_servers'] as Map?)
+                ?.map((k, v) => MapEntry('$k', v is int ? v : 0)) ??
+            const {},
         providerInfo: j['provider_info'] is Map
             ? SubscriptionInfo.fromJson(Map<String, dynamic>.from(j['provider_info'] as Map))
             : null,
@@ -195,6 +213,7 @@ class Profile {
         if (dns.isNotEmpty) 'dns': dns,
         if (deviceLimitActive) 'device_limit_active': true,
         if (deviceLimitReached) 'device_limit_reached': true,
+        if (unsupportedServers.isNotEmpty) 'unsupported_servers': unsupportedServers,
         if (providerInfo != null) 'provider_info': providerInfo!.toJson(),
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
       };

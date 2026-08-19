@@ -146,5 +146,170 @@ rules:
     expect(parseSubscription(huge), isEmpty);
   });
 
+  group('hysteria2', () {
+    test('a hysteria2 link becomes a mihomo hysteria2 proxy', () {
+      // The shape a live panel sends: password in the userinfo, sni + alpn +
+      // insecure in the query, and no transport — it is QUIC.
+      final loc = parseProxyUri(
+          'hysteria2://s3cret@de.example.com:30443/?sni=de.example.com&alpn=h3&insecure=0#DE')!;
+      expect(loc.proxy['type'], 'hysteria2');
+      expect(loc.proxy['server'], 'de.example.com');
+      expect(loc.proxy['port'], 30443);
+      expect(loc.proxy['password'], 's3cret');
+      expect(loc.proxy['sni'], 'de.example.com');
+      expect(loc.proxy['alpn'], ['h3'], reason: 'a list in mihomo, comma-separated in the URI');
+      expect(loc.proxy.containsKey('skip-cert-verify'), isFalse,
+          reason: 'insecure=0 must not become skip-cert-verify');
+      expect(loc.label, 'DE');
+    });
+
+    test('the hy2:// alias is the same protocol', () {
+      final loc = parseProxyUri('hy2://pw@h.example:443?sni=h.example')!;
+      expect(loc.proxy['type'], 'hysteria2');
+    });
+
+    test('insecure=1, obfs and port hopping are carried through', () {
+      final loc = parseProxyUri(
+          'hy2://pw@h.example:443?insecure=1&obfs=salamander&obfs-password=o&mport=30000-31000')!;
+      expect(loc.proxy['skip-cert-verify'], isTrue);
+      expect(loc.proxy['obfs'], 'salamander');
+      expect(loc.proxy['obfs-password'], 'o');
+      expect(loc.proxy['ports'], '30000-31000', reason: 'mport is the other spelling');
+    });
+
+    test('multiple alpn values stay a list', () {
+      final loc = parseProxyUri('hy2://pw@h.example:443?alpn=h3,http/1.1')!;
+      expect(loc.proxy['alpn'], ['h3', 'http/1.1']);
+    });
+  });
+
+  group('unsupported servers are counted, not dropped in silence', () {
+    test('a link list reports what it could not use, by scheme', () {
+      final parsed = parseSubscriptionBody([
+        'vless://u@a.example:443?security=tls',
+        'hysteria2://p@b.example:443',
+        'tuic://p@c.example:443',
+        'anytls://p@d.example:443',
+        'tuic://p@e.example:443',
+        '# a comment, not a server',
+      ].join('\n'));
+      expect(parsed.locations, hasLength(2), reason: 'vless and hysteria2 are ours');
+      expect(parsed.unsupported, {'tuic': 2, 'anytls': 1});
+      expect(parsed.total, 5, reason: 'the comment is noise, not a skipped server');
+      expect(parsed.unsupportedList, 'anytls, tuic');
+    });
+
+    test('a Clash body drops what the engine cannot render, and says so', () {
+      // Left in, these would reach the server picker and fail only on Connect.
+      final parsed = parseSubscriptionBody('proxies:\n'
+          '  - {name: ok, type: vless, server: a.example, port: 443, uuid: u}\n'
+          '  - {name: wg, type: wireguard, server: b.example, port: 51820}\n'
+          '  - {name: tu, type: tuic, server: c.example, port: 443}\n');
+      expect(parsed.locations.map((l) => l.label), ['ok']);
+      expect(parsed.unsupported, {'wireguard': 1, 'tuic': 1});
+      expect(parsed.total, 3);
+    });
+
+    test('a body of nothing but unsupported servers is still accounted for', () {
+      final parsed = parseSubscriptionBody('tuic://p@c.example:443');
+      expect(parsed.locations, isEmpty);
+      expect(parsed.unsupported, {'tuic': 1});
+    });
+  });
+
+  group('transports the engine expresses differently from the URI', () {
+    test('tcp with an HTTP header is a different network, not plain tcp', () {
+      // Dropping the header used to leave network: tcp — a server expecting
+      // HTTP obfuscation then refuses, with the server still listed as fine.
+      final loc = parseProxyUri(
+          'vless://u@h.example:443?security=tls&type=tcp&headerType=http&path=/p&host=h.example')!;
+      expect(loc.proxy['network'], 'http');
+      expect((loc.proxy['http-opts'] as Map)['path'], ['/p'],
+          reason: 'a list in the engine, one value in the URI');
+      expect(((loc.proxy['http-opts'] as Map)['headers'] as Map)['Host'], ['h.example']);
+    });
+
+    test('httpupgrade is a websocket with the handshake skipped', () {
+      final loc = parseProxyUri(
+          'vless://u@h.example:443?security=tls&type=httpupgrade&path=/up&host=h.example')!;
+      expect(loc.proxy['network'], 'ws', reason: 'the engine has no separate network for it');
+      final ws = loc.proxy['ws-opts'] as Map;
+      expect(ws['path'], '/up');
+      expect(ws['v2ray-http-upgrade'], isTrue);
+    });
+
+    test('xhttp carries its path, host and mode', () {
+      final loc = parseProxyUri(
+          'vless://u@h.example:443?security=tls&type=xhttp&path=/x&host=h.example&mode=packet-up')!;
+      expect(loc.proxy['network'], 'xhttp');
+      expect(loc.proxy['xhttp-opts'], {'path': '/x', 'host': 'h.example', 'mode': 'packet-up'});
+    });
+
+    test('an xhttp server with a split download channel is refused, not guessed', () {
+      // Two channels dialed as one fails in a way no message could explain, so
+      // it is counted as unsupported instead.
+      final r = parseShareLink('vless://u@h.example:443?security=tls&type=xhttp&path=/x'
+          '&extra=%7B%22downloadSettings%22%3A%7B%22address%22%3A%22d.example%22%7D%7D');
+      expect(r.location, isNull);
+      expect(r.unsupported, contains('xhttp'));
+    });
+
+    test('a transport the engine has no adapter for is named, not degraded', () {
+      final r = parseShareLink('vless://u@h.example:443?security=tls&type=kcp&mtu=1350');
+      expect(r.location, isNull);
+      expect(r.unsupported, 'kcp');
+    });
+
+    test('trojan is held to what the engine allows it', () {
+      // The engine's trojan adapter carries only ws and grpc; emitting xhttp
+      // for it would produce a config it rejects.
+      expect(parseShareLink('trojan://p@h.example:443?type=xhttp&path=/x').unsupported, 'xhttp');
+      expect(parseShareLink('trojan://p@h.example:443?type=ws&path=/w').location, isNotNull);
+    });
+
+    test('a malformed link of a known scheme is junk, not an unsupported protocol', () {
+      // "vless unsupported" would be a lie, and would put vless in the count
+      // the user is shown.
+      final r = parseShareLink('vless://u@h.example:99999?security=tls');
+      expect(r.location, isNull);
+      expect(r.unsupported, isNull);
+    });
+  });
+
+  group('TLS parameters that decide whether the handshake succeeds', () {
+    test('alpn is carried for vless and trojan, as a list', () {
+      // A server expecting h2 refuses a client that offers nothing else.
+      expect(parseProxyUri('vless://u@h.example:443?security=tls&alpn=h2,http/1.1')!.proxy['alpn'],
+          ['h2', 'http/1.1']);
+      expect(parseProxyUri('trojan://p@h.example:443?alpn=h3')!.proxy['alpn'], ['h3']);
+    });
+
+    test('post-quantum reality is passed through', () {
+      final loc = parseProxyUri(
+          'vless://u@h.example:443?security=reality&pbk=K&sid=00&pqv=1')!;
+      expect((loc.proxy['reality-opts'] as Map)['support-x25519mlkem768'], isTrue,
+          reason: 'ignoring the flag silently negotiates the classical curve');
+    });
+
+    test('a fingerprint on trojan is not dropped', () {
+      expect(parseProxyUri('trojan://p@h.example:443?fp=chrome')!.proxy['client-fingerprint'],
+          'chrome');
+    });
+  });
+
+  test('unsupported transports are counted by transport, not by protocol', () {
+    final parsed = parseSubscriptionBody([
+      'vless://u@a.example:443?security=tls&type=ws&path=/w',
+      'vless://u@b.example:443?security=tls&type=kcp',
+      'vless://u@c.example:443?security=tls&type=kcp',
+      'trojan://p@d.example:443?type=xhttp',
+      'tuic://p@e.example:443',
+    ].join('\n'));
+    expect(parsed.locations, hasLength(1));
+    expect(parsed.unsupported, {'kcp': 2, 'xhttp': 1, 'tuic': 1},
+        reason: 'vless is supported; its transport was not — say which');
+    expect(parsed.total, 5);
+  });
+
 }
 

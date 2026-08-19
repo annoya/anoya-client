@@ -110,6 +110,25 @@ void main() {
     expect(find.byType(SwitchListTile), findsNothing);
   });
 
+  testWidgets('servers the app cannot run are counted in the header and explained',
+      (tester) async {
+    // The user counted locations in their provider's panel. A smaller number
+    // here with no reason reads as the app losing them.
+    await pump(
+        tester,
+        profile(ProfileType.subscription).copyWithUnsupported({'hysteria2': 12}));
+    expect(find.text('Subscription · 1 of 13 servers'), findsOneWidget);
+    expect(find.text('12 of 13 servers unsupported'), findsOneWidget);
+    expect(find.textContaining('hysteria2'), findsOneWidget);
+  });
+
+  testWidgets('a configuration with nothing skipped says only how many it has',
+      (tester) async {
+    await pump(tester, profile(ProfileType.subscription));
+    expect(find.text('Subscription · 1 server'), findsOneWidget);
+    expect(find.textContaining('unsupported'), findsNothing);
+  });
+
   testWidgets('a refused device is stated on the screen, not only in a toast',
       (tester) async {
     // The toast leaves after three seconds; the condition does not. Without a
@@ -130,6 +149,17 @@ void main() {
 }
 
 extension on Profile {
+  /// A source that offered protocols this app cannot run.
+  Profile copyWithUnsupported(Map<String, int> kinds) => Profile(
+        id: id,
+        type: type,
+        name: name,
+        locations: locations,
+        subscriptionUrl: subscriptionUrl,
+        unsupportedServers: kinds,
+        refreshedAt: refreshedAt,
+      );
+
   /// The shape a refused refresh leaves behind: the panel's placeholders as
   /// locations, and the flag that explains why they read like that.
   Profile copyWithDeviceLimitReached() => Profile(
