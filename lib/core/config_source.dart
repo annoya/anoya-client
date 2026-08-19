@@ -1,9 +1,8 @@
-import 'package:http/http.dart' as http;
-
 import '../api/api_client.dart';
 import 'profile.dart';
 import 'profile_store.dart';
-import 'proxy_uri.dart';
+import 'parsers/subscription.dart';
+import 'subscription_fetch.dart';
 
 /// The provenance of a profile's config — where its locations / account /
 /// routing come from and how (if at all) they are re-pulled. One implementation
@@ -61,14 +60,17 @@ final class SubscriptionSource extends ConfigSource {
 
   @override
   Future<Profile> refresh() async {
-    final body = await httpGet(profile.subscriptionUrl!);
-    final locations = parseSubscription(body);
+    final res = await fetchSubscription(profile.subscriptionUrl!);
+    final locations = parseSubscription(res.body);
     if (locations.isEmpty) return profile;
     return profile.withBundle(
       locations: locations,
       account: null,
       routing: null,
-      dns: subscriptionDns(body),
+      dns: subscriptionDns(res.body),
+      deviceLimitActive: res.deviceLimitActive,
+      deviceLimitReached: res.deviceLimitReached,
+      providerInfo: res.info.isEmpty ? null : res.info,
       refreshedAt: DateTime.now(),
     );
   }
@@ -85,17 +87,3 @@ ConfigSource configSourceFor(Profile p) => switch (p.type) {
       ProfileType.link => LinkSource(p),
     };
 
-/// GET a subscription body, throwing on a non-2xx status.
-///
-/// The error carries the host only, never the full URL: a subscription URL is
-/// a bearer-style credential, and exceptions from this path get logged (and
-/// shipped in the support archive) verbatim.
-Future<String> httpGet(String url) async {
-  final uri = Uri.parse(url);
-  final res = await http.get(uri).timeout(kHttpTimeout);
-  if (res.statusCode ~/ 100 != 2) {
-    throw http.ClientException(
-        'subscription fetch failed (${res.statusCode})', Uri(host: uri.host));
-  }
-  return res.body;
-}

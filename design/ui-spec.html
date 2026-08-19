@@ -2442,6 +2442,331 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   </div>
 </div>
 
+<!-- ============ 11 ============ -->
+<h2>11 · Подписка от панели (Marzban · 3x-ui · Remnawave)</h2>
+<p class="flowdesc">Проверено на двух живых подписках Remnawave. Панель присылает <b>заголовками</b> куда больше, чем список серверов: имя профиля (часто в <code>base64:</code>), остаток трафика и срок (<code>subscription-userinfo</code>), сообщение от провайдера (<code>announce</code>), ссылку в поддержку (<code>support-url</code>), страницу для человека (<code>profile-web-page-url</code>), период обновления и <b>правила маршрутизации</b> (<code>routing</code>). Сейчас клиент читает только тело и выбрасывает всё это.<br><br>Обратно панель ждёт от клиента <b>идентификацию устройства</b>: обязательный <code>x-hwid</code> плюс необязательные <code>x-device-os</code>, <code>x-ver-os</code>, <code>x-device-model</code>. Ими она считает устройства в лимите подписки; при включённом лимите запрос без <code>x-hwid</code> получает <b>404</b>, а при переполнении — <code>x-hwid-max-devices-reached</code>. Это не про имя клиента, а про умение говорить на этом протоколе.<br><br>Граница из ADR-005 остаётся: у подписки <b>нет аккаунта</b>. Панель не говорит нам «этому запрещено» — она просто возвращает другой список. Поэтому всё, что пришло в заголовках, живёт в секции «FROM YOUR PROVIDER» и подписано как их слова, а не как состояние, которым мы управляем.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">КОПАТЫЧ VPN</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">КОПАТЫЧ VPN</div><div class="s">Subscription · 12 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">Source</div><div class="s">sub.example.ru/…/a1b2c3</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-copy"/></svg></span>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">5 min ago · daily, set by the provider</div></div>
+        <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+      </div></div>
+      <div class="sh">FROM YOUR PROVIDER</div>
+      <div class="card"><div style="padding:16px 16px 14px">
+        <div style="font-size:14px;line-height:1.4">КОПАТЫЧ ВПН — интернет без сорняков<br>@kopatychvpn_bot</div>
+      </div></div>
+      <div class="card"><div style="padding:16px">
+        <div style="font-size:14px">Traffic: 38.2 GB of 100 GB</div>
+        <div class="prog"><i></i></div>
+        <div class="hint">Active until 12 Sep 2026 · what the subscription reports, not verified here</div>
+      </div></div>
+      <div class="card"><div class="row one">
+        <svg class="icon muted"><use href="#i-org"/></svg>
+        <div class="tx"><div class="t">Contact your provider</div></div>
+        <svg class="icon muted"><use href="#i-link"/></svg>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · plan</span><b>Всё, что сказала панель.</b> Шесть заголовков, снятых с живой подписки: <code>profile-title</code> (с распаковкой <code>base64:</code>) даёт имя, <code>subscription-userinfo</code> — трафик и срок, <code>announce</code> — сообщение провайдера, <code>support-url</code> — строку связи, <code>profile-update-interval</code> — период, <code>profile-web-page-url</code> — куда ведёт тап по Source. Сообщение стоит <b>первым в секции и без иконки-предупреждения</b>: это голос провайдера, а не состояние системы — там бывает и «интернет без сорняков», и реклама. Своей иконкой мы придали бы ему авторитет, которого у него нет.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 13 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">Source</div><div class="s">subs.example.uk/…/d4e5f6</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-copy"/></svg></span>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">just now · every 12 days, set by the provider</div></div>
+        <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+      </div></div>
+      <div class="sh">FROM YOUR PROVIDER</div>
+      <div class="card"><div style="padding:16px">
+        <div style="font-size:14px">Used 240.1 GB · no limit</div>
+        <div class="hint">No expiry date given</div>
+      </div></div>
+      <div class="empty">This subscription sets no quota and no expiry, so there is nothing to run out.</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · unlimited</span><b>Панель не назвала ни лимита, ни срока.</b> Реальный случай со второй проверенной подписки: <code>total=0; expire=0</code> — по конвенции это «без ограничений». Полосы прогресса нет: доля от нуля не считается, а пустая полоса читалась бы как «всё израсходовано». Потраченное всё равно показываем — это единственная честная цифра, которая тут есть. Секция не исчезает целиком: её отсутствие ничем не отличалось бы от «панель ничего не прислала», а это разные вещи.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">КОПАТЫЧ VPN</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">КОПАТЫЧ VPN</div><div class="s">Subscription · 12 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card warn"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">Your plan has expired</div><div class="s multi">Says your provider. Servers keep working until it stops returning them.</div></div>
+      </div></div>
+      <div class="sh">FROM YOUR PROVIDER</div>
+      <div class="card"><div style="padding:16px">
+        <div style="font-size:14px">Traffic: 100 GB of 100 GB</div>
+        <div class="prog"><i style="width:100%;background:var(--m-warn)"></i></div>
+        <div class="hint">Expired 26 Jul 2026 · what the subscription reports, not verified here</div>
+      </div></div>
+      <div class="card"><div class="row one">
+        <svg class="icon muted"><use href="#i-org"/></svg>
+        <div class="tx"><div class="t">Contact your provider</div></div>
+        <svg class="icon muted"><use href="#i-link"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">just now · daily, set by the provider</div></div>
+        <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · expired</span><b>Срок истёк — по словам панели.</b> Это ровно та граница, ради которой цифры отделены от аккаунта: у self-hosted исчерпанный срок <b>запрещает</b> подключение (сервер так решил и сам это обеспечит), здесь — только сообщает. Кнопку Connect не блокируем: панель по-прежнему отдаёт серверы, и они, скорее всего, работают. Заблокировать значило бы принять решение за того, у кого на это есть право, и при расхождении часов оставить человека без VPN. Строка «Contact your provider» поднимается к предупреждению — в этот момент она и нужна.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Add a connection</span></div>
+      <div class="card warn" style="margin-top:8px"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">Your provider sent a message</div><div class="s multi">Not servers: every entry points nowhere. Their text is below.</div></div>
+      </div></div>
+      <div class="card"><div style="padding:16px 16px 14px">
+        <div style="font-size:14px;line-height:1.5">Приложение не поддерживается.<br>Используйте рекомендованные клиенты<br>Happ, v2RayTun</div>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Nothing was added. Open the subscription page to see what your provider offers.</div>
+      <div style="padding:16px">
+        <div class="btn out"><svg class="icon s"><use href="#i-link"/></svg>Open subscription page</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen · error · provider message</span><b>Панель прислала не серверы, а текст в их именах.</b> Снято с живой подписки: при незнакомом клиенте Remnawave отдаёт три валидные <code>vless://</code>-ссылки на <code>0.0.0.0:1</code>, чьи <b>имена и есть сообщение</b>. Сегодня клиент импортировал бы их как три локации, которые никогда не подключатся. Признак однозначный — все адреса нероутируемые (<code>0.0.0.0</code>, <code>127.0.0.1</code>); тогда мы не добавляем ничего и показываем их текст как текст. Кнопка ведёт на <code>profile-web-page-url</code> — страницу, которую панель и просила открыть.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 9 of 13 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card warn"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">4 of 13 servers unsupported</div><div class="s multi">They use xhttp, which this app cannot run yet. The other 9 are available.</div></div>
+      </div></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">Source</div><div class="s">subs.example.uk/…/d4e5f6</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-copy"/></svg></span>
+      </div></div>
+      <div class="sh">FROM YOUR PROVIDER</div>
+      <div class="card"><div style="padding:16px">
+        <div style="font-size:14px">Used 240.1 GB · no limit</div>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · partial</span><b>Часть серверов мы не умеем.</b> Подписки приносят транспорты, которых у нас нет. Молча их выбросить нельзя: пользователь видел в панели тринадцать локаций, а в приложении девять, и без объяснения это выглядит как потеря. Счётчик в заголовке становится «9 of 13», под ним — причина. Предупреждение, а не ошибка: девять работают, подключаться можно сейчас.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Frankfurt · vless</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">Frankfurt · vless</div><div class="s">Single server</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">Source</div><div class="s">vless://…@203.0.113.10:443</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-copy"/></svg></span>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-route"/></svg>
+        <div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div>
+        <span class="sw off"><i></i></span>
+      </div></div>
+      <div class="toast"><div class="tt">Link copied</div></div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · link · source copied</span><b>Тап по Source делает то, что здесь уместно.</b> У подписки это открытие страницы провайдера в браузере (<code>profile-web-page-url</code>, иначе сам URL подписки); у одиночной ссылки открывать нечего — она копируется в буфер, с тостом-подтверждением. Иконка справа называет действие заранее, поэтому одна строка ведёт себя по-разному без сюрприза. Сам секрет в подписи усечён с середины: строка нужна для узнавания, а не для чтения, и целиком светить её в интерфейсе незачем.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 15 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card banner">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Full tunnel · no exceptions</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+        <div class="sep"></div>
+        <div class="row one">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">See what they route</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg>
+        </div>
+      </div>
+      <div class="card" style="opacity:.38">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">Rule set</div><div class="s">Work · replaced by the provider’s routes</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg>
+        </div>
+      </div>
+      <div class="hint" style="padding:12px 16px 0">Turn the switch off to use your own rule set instead. Your provider cannot enforce this either way.</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · provider routes</span><b>Маршруты пришли вместе с подпиской.</b> Панель присылает их заголовком <code>routing</code>: направление (<code>GlobalProxy</code>), порядок разбора (<code>RouteOrder</code>) и шесть списков — сайты и IP на proxy, direct и block. Применяем их, но говорим, чьи они: карточка на primary-container, как у managed-политики, и в заголовке прямо «from your provider».<br><br>И одно отличие от self-hosted, которое здесь принципиально: <b>тумблер есть</b>. У организации политика неотключаема — сервер её задал и сам обеспечит. У подписки такой власти нет (ADR-005): она может не отдать сервер, но не может заставить нас гнать трафик по её правилам. Поэтому маршруты по умолчанию включены (иначе зачем провайдер их прислал), а решение остаётся за пользователем — и строка про это написана словами, а не подразумевается.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Provider’s routes</span></div>
+      <div class="card banner" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">Sent by ТСПУ Дронов</div><div class="s multi">Read-only. Refreshing the subscription replaces them.</div></div>
+      </div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
+        <div style="font-size:14px">Everything through the VPN</div>
+        <div class="hint">Direction set by the provider (GlobalProxy)</div>
+      </div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-err)">BLOCK</span>
+        <div class="tx"><div class="t">ads.example</div><div class="s">domain-suffix</div></div>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">ru</div><div class="s">geoip</div></div>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">category-ru</div><div class="s">geosite</div></div>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Order comes from the provider too (block → proxy → direct).</div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingScreen · provider</span><b>Что именно они маршрутизируют.</b> Тот же экран, что показывает managed-политику организации, с другой подписью источника: правила только читаются, а обновление подписки их заменит — редактировать то, что перезапишется на следующем рефреше, было бы ловушкой. Порядок разбора тоже их: <code>RouteOrder: block-proxy-direct</code> ложится на наш «first match wins» без перевода. Пустые списки — обычный случай (на проверенной подписке все шесть пусты): тогда экран показывает одно направление и ни одного правила, и это честнее, чем прятать экран целиком.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">КОПАТЫЧ VPN</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">КОПАТЫЧ VPN</div><div class="s">Subscription · 12 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="sh">FROM YOUR PROVIDER</div>
+      <div class="card"><div style="padding:16px">
+        <div style="font-size:14px">Traffic: 38.2 GB of 100 GB</div>
+        <div class="prog"><i></i></div>
+        <div class="hint">Active until 12 Sep 2026 · what the subscription reports, not verified here</div>
+      </div></div>
+      <div class="sh">THIS DEVICE</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-lock"/></svg>
+        <div class="tx"><div class="t">iPhone16,1 · iOS 18.0</div><div class="s">Identified to your provider, which counts devices</div></div>
+      </div></div>
+      <div class="hint" style="padding:10px 16px 0">Your provider counts devices by an id this app generates once and keeps. Reinstalling makes a new one, which takes another slot.</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · device</span><b>Чем мы представляемся панели.</b> Отправляем то, чего она ждёт по протоколу: обязательный <code>x-hwid</code> и три необязательных поля об устройстве. Секция появляется <b>только когда панель сама сказала</b>, что считает устройства (<code>x-hwid-active</code>) — показывать её там, где лимита нет, значит выдумывать ограничение. Числа «столько-то из стольких» здесь нет намеренно: панель <b>не присылает ни счётчика, ни лимита</b> — только флаги «считаю» и «мест нет». Написать «1 of 3» значило бы придумать цифру, которой у нас нет.<br><br>Идентификатор <b>случайный и генерируется один раз при установке</b>, не выводится из железа. Панели нужно ровно одно — отличать устройства друг от друга, и для этого случайного числа достаточно; аппаратный серийник дал бы всем провайдерам общий ключ, по которому нас можно сшить между подписками. Цена честная и названа словами: переустановка занимает новый слот, и пользователь узнаёт об этом здесь, а не когда упрётся в лимит.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">КОПАТЫЧ VPN</span></div>
+      <div class="card" style="margin-top:8px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">КОПАТЫЧ VPN</div><div class="s">Subscription · 12 servers</div></div>
+        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+      </div></div>
+      <div class="card warn"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">Device limit reached</div><div class="s multi">Your provider’s device limit is full, so it sent a placeholder instead of your servers.</div></div>
+      </div></div>
+      <div class="card"><div class="row one">
+        <svg class="icon muted"><use href="#i-link"/></svg>
+        <div class="tx"><div class="t">Free a slot with your provider</div></div>
+        <svg class="icon muted"><use href="#i-link"/></svg>
+      </div></div>
+      <div class="sh">SERVERS FROM YOUR PROVIDER</div>
+      <div class="card"><div class="row one">
+        <svg class="icon muted"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">Устройств больше, чем разрешено</div></div>
+      </div></div>
+      <div class="card"><div class="row one">
+        <svg class="icon muted"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">Отключите лишнее устройство</div></div>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">2 days ago · refresh is failing</div></div>
+        <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · device limit</span><b>Слотов не осталось.</b> Панель отвечает <code>x-hwid-max-devices-reached</code> и телом, в котором вместо серверов — заглушки на <code>0.0.0.0</code>, а <b>сообщение лежит в их именах</b>. Мы это тело принимаем: список локаций становится тем, что подписка теперь и возвращает, и сообщение провайдера доходит туда, куда человек и смотрит. Отбросить его значило бы показывать серверы, которых подписка больше не отдаёт.<br><br>Отсюда два уведомления, а не одно: <b>тост</b> в момент обновления и <b>эта карточка</b> на экране. Тост уходит через три секунды, а состояние остаётся — и список из заглушек без объяснения рядом читался бы как поломка приложения. Цена решения названа честно: рабочие серверы из прошлого ответа при этом теряются, поэтому обновление и не делается молча.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-plus"/></svg></span><span class="ttl c">VPN</span><span class="ic"><svg class="icon"><use href="#i-gear"/></svg></span></div>
+      <div class="strip">
+        <span class="pill"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · off</span>
+        <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Full tunnel</span>
+      </div>
+      <div style="text-align:center;padding:56px 0 0;font-size:16px;font-weight:600;color:var(--m-conn)">Connected · 00:12:34</div>
+      <div style="display:flex;justify-content:center;padding:28px 0 0">
+        <div class="ring"><svg class="icon big" style="color:var(--m-conn);width:56px;height:56px"><use href="#i-power"/></svg>
+          <div style="font-size:15px;font-weight:600;color:var(--m-conn);padding-top:8px">Disconnect</div></div>
+      </div>
+      <div class="card" style="margin-top:96px"><div class="row">
+        <svg class="icon muted"><use href="#i-folder"/></svg>
+        <div class="tx"><div class="t">КОПАТЫЧ VPN</div><div class="s">38.2 of 100 GB · until 12 Sep</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+        <svg class="icon muted"><use href="#i-exp"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <span class="flag">🇩🇪</span>
+        <div class="tx"><div class="t">Frankfurt</div><div class="s">vless · 203.0.113.10</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · subscription plan</span><b>На главном — одной строкой.</b> Остаток плана попадает в подпись строки конфигурации, где сейчас стоит «Subscription · 12 servers». Отдельной карточки, как у self-hosted аккаунта, не появляется: главный экран отвечает на вопрос «подключён ли я и через что», а не «сколько осталось», и второй счётчик рядом с кольцом соревновался бы с ним за внимание. Сообщение провайдера сюда тоже не поднимается — его место в настройках конфигурации, где на него можно отреагировать.</p>
+  </div>
+</div>
+
 <footer>
   Макет и код используют одни числа: раздел «Метрики» — источник правды, значения в нём совпадают с
   <code>core/theme.dart</code> и <code>core/ui.dart</code>. Правила: карточки плоские с обводкой 1&nbsp;pt;
@@ -2451,6 +2776,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
 </footer>
 </div>
 </div>
+
 
 <script>
   const mocks = document.getElementById('mocks');

@@ -12,7 +12,7 @@ import 'package:vpn_client/core/routing_prefs.dart';
 import 'package:vpn_client/core/rule_set.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/vpn_core.dart';
-import 'package:vpn_client/features/config_screen.dart';
+import 'package:vpn_client/features/config/config_screen.dart';
 import 'package:vpn_client/features/home_screen.dart';
 import 'package:vpn_client/features/logs_screen.dart';
 import 'package:vpn_client/features/on_demand_screen.dart';

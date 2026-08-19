@@ -27,6 +27,13 @@ test.
 | [007](ADR-007-worker-enrollment-and-self-recovery.md) | service | Reusable enrollment tokens so a worker recovers itself | why not single-use, rotation as revocation, what to revisit before production |
 | [008](ADR-008-dns-rides-the-config.md) | both | DNS resolvers ride the config; the OS-level DNS setting is a decoy | dns-hijack + fake-ip, per-source resolvers, Cloudflare DoH fallback, sanitation, bootstrap, `Bundle.DNS` |
 
+## Open Questions
+
+[OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) holds the decisions that are *not* made
+yet — the ones the code reviews surfaced and left to a product, deployment or
+timing call. It is the complement of the records above: an entry leaves that
+file by becoming an ADR, not by being quietly implemented.
+
 ## Writing a New One
 
 Copy the shape of an existing record:

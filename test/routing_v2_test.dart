@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/mihomo_tun_config.dart';
 import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/proxy_uri.dart';
+import 'package:vpn_client/core/parsers/subscription.dart';
 import 'package:vpn_client/core/routing_prefs.dart';
 import 'package:vpn_client/core/rule_set.dart';
 
