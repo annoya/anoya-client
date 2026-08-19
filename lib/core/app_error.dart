@@ -22,6 +22,28 @@ class AppError {
   String get line => detail == null ? title : '$title — $detail';
 }
 
+/// An error that already knows how to present itself, thrown by a layer that
+/// understood exactly what went wrong. [describeError] passes it through
+/// untouched, so a precise diagnosis is never flattened into a generic one.
+class AppErrorException implements Exception {
+  const AppErrorException(this.error);
+
+  final AppError error;
+
+  @override
+  String toString() => error.line;
+}
+
+/// The provider refused this device because its device limit is full.
+///
+/// Its own message travels in the entries it sends instead of servers, so this
+/// says the one thing those entries cannot: what to do about it.
+const kDeviceLimitReached = AppError(
+  'Device limit reached',
+  detail: 'Your provider’s device limit is full, so it sent a placeholder '
+      'instead of your servers. Free a slot with your provider, then refresh.',
+);
+
 /// Translates whatever the layers below threw into something a person can act
 /// on. [subject] names what failed — a host, a subscription URL — so the second
 /// line can be specific instead of "connection error".
@@ -31,6 +53,7 @@ AppError describeError(Object error, {String? subject}) {
   AppError err(String title, String? detail) => AppError(title, detail: detail);
 
   return switch (error) {
+    AppErrorException(:final error) => error,
     SocketException() || TimeoutException() => err(
         'Server didn’t answer',
         'Couldn’t reach $what. Check your network, or pick another server.',

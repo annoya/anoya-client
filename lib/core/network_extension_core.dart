@@ -188,6 +188,21 @@ class NetworkExtensionCore implements VpnCore {
 
   /// App Group container shared with the tunnel extension — the engine's home
   /// dir. GeoIP/GeoSite databases are downloaded here so mihomo (whose home is
+  /// What the platform says this device is: os, version, model. Null when
+  /// there is no platform side (unsupported host, or tests).
+  static Future<Map<String, String>?> deviceInfo() async {
+    try {
+      final info = await _control.invokeMethod<Map<dynamic, dynamic>>('device_info');
+      if (info == null) return null;
+      return info.map((k, v) => MapEntry('$k', '$v'));
+    } on PlatformException catch (e) {
+      Log.e('NE device_info failed', e.message ?? e.code);
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
   /// set to the same path) can read them. Null when the platform side has no
   /// group container (then geo rules are unavailable).
   static Future<String?> sharedDir() async {

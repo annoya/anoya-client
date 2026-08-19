@@ -13,8 +13,9 @@ import '../core/norm_config.dart';
 import '../core/oidc_login.dart';
 import '../core/profile.dart';
 import '../core/profile_store.dart';
-import '../core/proxy_uri.dart';
+import '../core/parsers/subscription.dart';
 import '../core/platform_support.dart';
+import '../core/subscription_fetch.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/vpn_core.dart';
@@ -176,16 +177,24 @@ class ProfilesController extends Notifier<ProfilesState> {
 
   /// Add a subscription by URL (fetched now and on the poll timer).
   Future<void> addSubscriptionUrl(String name, String url) async {
-    final body = await httpGet(url);
-    final locations = parseSubscription(body);
+    final res = await fetchSubscription(url);
+    final locations = parseSubscription(res.body);
     if (locations.isEmpty) throw const FormatException('No servers found in the subscription.');
+    // The panel's own name for the subscription beats a hostname, and the user's
+    // beats both — they typed it on purpose.
+    final title = res.info.title.trim();
     await _append(Profile(
       id: _newId(),
       type: ProfileType.subscription,
-      name: name.trim().isNotEmpty ? name.trim() : Uri.parse(url).host,
+      name: name.trim().isNotEmpty
+          ? name.trim()
+          : (title.isNotEmpty ? title : Uri.parse(url).host),
       locations: locations,
       subscriptionUrl: url,
-      dns: subscriptionDns(body),
+      dns: subscriptionDns(res.body),
+      deviceLimitActive: res.deviceLimitActive,
+      deviceLimitReached: res.deviceLimitReached,
+      providerInfo: res.info.isEmpty ? null : res.info,
       refreshedAt: DateTime.now(),
     ));
   }
@@ -337,6 +346,9 @@ class ProfilesController extends Notifier<ProfilesState> {
       account: updated.account,
       routing: updated.routing,
       dns: updated.dns,
+      deviceLimitActive: updated.deviceLimitActive,
+      deviceLimitReached: updated.deviceLimitReached,
+      providerInfo: updated.providerInfo,
       refreshedAt: updated.refreshedAt ?? DateTime.now(),
     );
     _replaceProfile(merged);

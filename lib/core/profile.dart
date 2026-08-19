@@ -1,4 +1,5 @@
 import 'norm_config.dart';
+import 'subscription_info.dart';
 
 /// A configuration source the user has added. The app holds a list of these;
 /// each has one or more locations (servers) to connect through.
@@ -28,6 +29,9 @@ class Profile {
     this.ruleSetId,
     this.routingEnabled = false,
     this.dns = const [],
+    this.deviceLimitActive = false,
+    this.deviceLimitReached = false,
+    this.providerInfo,
     this.refreshedAt,
   });
 
@@ -62,6 +66,21 @@ class Profile {
   /// replaces the whole list, so a source that drops its DNS drops ours too.
   final List<String> dns;
 
+  /// The subscription's panel told us it counts devices (`x-hwid-active`).
+  /// Remembered from the last fetch so the settings screen can say that this
+  /// installation occupies a slot, without asking the panel again.
+  final bool deviceLimitActive;
+
+  /// The panel refused this device on the last fetch: its device limit is
+  /// full. The locations below are then whatever it sent instead — usually
+  /// placeholders carrying its message.
+  final bool deviceLimitReached;
+
+  /// What the subscription's panel reported about itself on the last fetch —
+  /// plan, message, support link (ADR-005: its words, not a verdict). Null for
+  /// the other two domains, which have no panel to speak for them.
+  final SubscriptionInfo? providerInfo;
+
   final DateTime? refreshedAt;
 
   /// A single-server source (link) shows no location picker.
@@ -85,6 +104,9 @@ class Profile {
     required Routing? routing,
     required List<String> dns,
     required DateTime refreshedAt,
+    bool deviceLimitActive = false,
+    bool deviceLimitReached = false,
+    SubscriptionInfo? providerInfo,
   }) =>
       Profile(
         id: id,
@@ -98,6 +120,9 @@ class Profile {
         ruleSetId: ruleSetId,
         routingEnabled: routingEnabled,
         dns: dns,
+        deviceLimitActive: deviceLimitActive,
+        deviceLimitReached: deviceLimitReached,
+        providerInfo: providerInfo,
         refreshedAt: refreshedAt,
       );
 
@@ -123,6 +148,9 @@ class Profile {
         ruleSetId: ruleSetId ?? this.ruleSetId,
         routingEnabled: routingEnabled ?? this.routingEnabled,
         dns: dns ?? this.dns,
+        deviceLimitActive: deviceLimitActive,
+        deviceLimitReached: deviceLimitReached,
+        providerInfo: providerInfo,
         refreshedAt: refreshedAt ?? this.refreshedAt,
       );
 
@@ -144,6 +172,11 @@ class Profile {
         ruleSetId: j['rule_set_id'] as String?,
         routingEnabled: j['routing_enabled'] as bool? ?? false,
         dns: (j['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
+        deviceLimitActive: j['device_limit_active'] as bool? ?? false,
+        deviceLimitReached: j['device_limit_reached'] as bool? ?? false,
+        providerInfo: j['provider_info'] is Map
+            ? SubscriptionInfo.fromJson(Map<String, dynamic>.from(j['provider_info'] as Map))
+            : null,
         refreshedAt:
             j['refreshed_at'] != null ? DateTime.tryParse(j['refreshed_at'] as String) : null,
       );
@@ -160,6 +193,9 @@ class Profile {
         if (ruleSetId != null) 'rule_set_id': ruleSetId,
         if (routingEnabled) 'routing_enabled': true,
         if (dns.isNotEmpty) 'dns': dns,
+        if (deviceLimitActive) 'device_limit_active': true,
+        if (deviceLimitReached) 'device_limit_reached': true,
+        if (providerInfo != null) 'provider_info': providerInfo!.toJson(),
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
       };
 }

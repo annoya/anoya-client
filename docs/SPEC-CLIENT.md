@@ -165,7 +165,28 @@ The differences live in a sealed `ConfigSource` hierarchy
 generically and adding a fourth domain is a subclass plus one `switch` arm.
 Favourites are stored per profile, keyed `profileId/locationId`.
 
-### 4.1 Accepted inputs
+### 4.1 Device identification
+
+A subscription panel that enforces a device limit identifies a device by an
+`x-hwid` header (with `x-device-os`, `x-ver-os` and `x-device-model` as optional
+detail), and answers 404 to a request without one. The client therefore sends
+these on every subscription request — a panel that does not care ignores them.
+
+The id is random and generated once per installation, not derived from
+hardware: a panel needs only to tell devices apart, while a hardware identifier
+would additionally give unrelated providers a common key for the same device.
+It survives restarts, so launching the app does not consume a device slot;
+reinstalling generates a new one, which does, and the configuration screen says
+so rather than leaving it to be discovered at the limit.
+
+When the panel reports that it counts devices (`x-hwid-active`), the
+configuration screen shows what this device is identified as. No count is
+shown, because none is sent — the panel reports only that it counts and, via
+`x-hwid-max-devices-reached`, that it is full. That case is named as itself
+instead of a generic refresh failure, and states that the servers already
+fetched keep working.
+
+### 4.2 Accepted inputs
 
 - **Share links** — `vless://`, `vmess://`, `trojan://`, `ss://`, pasted or
   opened from a file containing several.
@@ -176,7 +197,7 @@ Favourites are stored per profile, keyed `profileId/locationId`.
 
 Unknown proxy types are rejected at parse time rather than at connect time.
 
-### 4.2 Synchronisation
+### 4.3 Synchronisation
 
 Self-hosted configurations re-fetch before every connect, so account status and
 rotated keys are enforced at the moment it matters. All refreshable sources are
