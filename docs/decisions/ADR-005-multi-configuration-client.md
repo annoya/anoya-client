@@ -32,12 +32,58 @@ one of three domains:
   policy that overrides local rules, immediate revocation, and a re-fetch before
   every connect so all of that is enforced at the moment it matters.
 - **Subscription** — a third-party panel owns access, and the only contract is
-  one-way: a URL returns a list of servers (base64 URI list or Clash/mihomo
-  YAML). No account, no policy; the panel revokes by changing what the URL
-  returns, so the client only polls.
+  one-way: a URL returns a list of servers (base64 URI list, Clash/mihomo YAML
+  or Xray JSON). No account; the panel revokes by changing what the URL returns,
+  so the client only polls. It may also send **routing** — as a `routing:`
+  header, as a Clash `rules:` list, or in the Xray rendering of the same
+  subscription — which the client applies **by default but under a switch**.
 - **Link** — nobody owns anything. A `vless://` / `vmess://` / `trojan://` /
   `ss://` link is a static snapshot of one server; there is no origin to ask and
   nothing to refresh.
+
+**A panel's routing is offered, not imposed.** It is translated into our own
+rule model rather than adopted: rules with no equivalent here are dropped and
+*counted*, and the count is shown, since a partial policy that reads as complete
+is worse than none. The switch is the line between the domains: a self-hosted
+server both sets and enforces its policy, while a panel can only change what it
+returns. It has no authority over where this device's traffic goes, so the user
+keeps the decision and gets their own rule set back the moment they turn the
+provider's routes off. The Xray rendering is requested **by name**
+(`<url>/json`, a documented panel feature), never by impersonating another
+client's User-Agent.
+
+What "no equivalent" means was settled against the engine's source
+(`rules/parser.go` in the pinned mihomo), not from memory. Three different
+reasons, and only one of them is a gap in this app:
+
+- **Nothing to match.** `inboundTag`, `SRC-*`, `IN-*`, `UID`: they describe
+  which of a proxy server's many inbounds a connection arrived on. We have one
+  input, the tunnel interface, and DNS is hijacked in the engine. Xray's
+  sniffed `protocol` has no rule form in mihomo at all.
+- **The data is not here.** Xray's `ext:` names a file on the panel server's
+  own disk — no address, nothing to fetch, unsupported at any setting. Clash's
+  `RULE-SET` does have an address, which is why it became a decision rather
+  than a limitation (below).
+- **Our model was narrower than the engine.** `DOMAIN-REGEX` exists and we were
+  discarding `regexp:` for nothing; it is now `domain-regex`. `DST-PORT`,
+  `NETWORK`, `IP-SUFFIX` and `IP-ASN` exist too and are still unmapped —
+  deliberately deferred, since each one is a rule type in the editors as well
+  as the parser.
+
+**Holding a provider's rule lists is a second, separate decision.** A
+`rule-list` rule points at a file the provider hosts. Applying their rules is
+one thing; keeping their files on the device and re-downloading them weekly is
+another, so it has its own switch, off by default, on the configuration rather
+than in global settings — trust in lists is trust in a particular provider.
+
+The files are downloaded by the app, never by the engine, and handed over as
+`type: file`. mihomo would do it itself: `loadProvider` in
+`hub/executor/executor.go` runs the initial fetch inside `ApplyConfig` under a
+`wg.Wait()` with a 20 s timeout per file — a stalled connect, exactly what the
+geo databases taught us (ADR-003) — and since `ApplyConfig` returns nothing, a
+failed fetch is only logged, leaving a rule that **silently matches nothing**.
+Downloading here means the outcome is known: a list that did not arrive has its
+rule left out and the screen says which list and which host.
 
 **Capability degrades along that order, deliberately and visibly.** A link shows
 no account card and no server picker; a subscription shows servers but no
@@ -67,6 +113,12 @@ does not understand, rather than assuming the self-hosted VLESS+Reality shape.
   the only one.
 - A configuration that cannot connect (inactive account, expired quota) says so
   before the tunnel is attempted.
+- Routing that came from outside the device is always attributed to its source
+  on screen, and a rule that could not be translated is never silently dropped:
+  either it is applied or its absence is counted where the policy is summarised.
+- The engine never fetches anything while applying a config. Every external
+  file it reads — geo databases, rule lists — is already on disk, put there by
+  the app, which is therefore the only party that has to report a failure.
 
 ## Alternatives Considered
 
@@ -119,9 +171,17 @@ no business seeing.
 ## Where It Lives
 
 - `client/lib/core/profile.dart`, `config_source.dart`, `profile_store.dart`.
-- `client/lib/core/proxy_uri.dart` — link and subscription parsing.
+- `client/lib/core/routing_policy.dart` — the three policy classes.
+- `client/lib/core/rule_list_store.dart` — the provider's list files.
+- `client/lib/core/parsers/` — `share_link.dart` (single links),
+  `clash_config.dart`, `subscription.dart` (format dispatch),
+  `provider_routing.dart` (a panel's rules → our model).
+- `client/lib/core/subscription_fetch.dart` — the fetch, the device headers and
+  the routing lookup.
 - `client/lib/state/profiles_controller.dart` — the list, the active profile,
   the connect path, polling.
 - `client/lib/features/start_screen.dart` — the two ways in.
-- Tests: `client/test/proxy_uri_test.dart`,
+- Tests: `client/test/parsers_test.dart`,
+  `client/test/provider_routing_test.dart`, `client/test/routing_policy_test.dart`,
+  `client/test/rule_list_store_test.dart`, `client/test/config_screen_test.dart`,
   `client/test/settings_configurations_test.dart`, `client/test/home_layout_test.dart`.

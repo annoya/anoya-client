@@ -32,6 +32,11 @@ class Profile {
     this.deviceLimitActive = false,
     this.deviceLimitReached = false,
     this.unsupportedServers = const {},
+    this.providerRouting,
+    this.providerRoutingSkipped = 0,
+    this.providerRoutingEnabled = true,
+    this.providerRuleListsEnabled = false,
+    this.providerRoutingProbed = false,
     this.providerInfo,
     this.refreshedAt,
   });
@@ -83,6 +88,30 @@ class Profile {
   /// unexplained gap reads as the app losing servers.
   final Map<String, int> unsupportedServers;
 
+  /// Routing the subscription's panel wants applied. Null when it sent none.
+  ///
+  /// Applied but not enforced: unlike a self-hosted policy, a panel has no
+  /// authority over this device (ADR-005) — it can stop returning servers, but
+  /// it cannot decide where our traffic goes. Hence the switch below.
+  final Routing? providerRouting;
+
+  /// Rules the panel sent that this app cannot express, so the screen can say
+  /// the policy is partial rather than presenting it as complete.
+  final int providerRoutingSkipped;
+
+  /// Whether the panel's routing is in force. On by default — a provider that
+  /// sent rules meant them — and the user's to turn off.
+  final bool providerRoutingEnabled;
+
+  /// Whether the user agreed to hold the provider's rule-list files on this
+  /// device. Off by default: applying someone's rules and storing someone's
+  /// files are different decisions, and only the second one downloads.
+  final bool providerRuleListsEnabled;
+
+  /// The paid-for routing lookup was already made for this source, so the poll
+  /// does not repeat it every five minutes when there is nothing there.
+  final bool providerRoutingProbed;
+
   /// What the subscription's panel reported about itself on the last fetch —
   /// plan, message, support link (ADR-005: its words, not a verdict). Null for
   /// the other two domains, which have no panel to speak for them.
@@ -119,6 +148,9 @@ class Profile {
     bool deviceLimitActive = false,
     bool deviceLimitReached = false,
     Map<String, int> unsupportedServers = const {},
+    Routing? providerRouting,
+    int providerRoutingSkipped = 0,
+    bool providerRoutingProbed = false,
     SubscriptionInfo? providerInfo,
   }) =>
       Profile(
@@ -136,12 +168,21 @@ class Profile {
         deviceLimitActive: deviceLimitActive,
         deviceLimitReached: deviceLimitReached,
         unsupportedServers: unsupportedServers,
+        providerRouting: providerRouting,
+        providerRoutingSkipped: providerRoutingSkipped,
+        // The user's choices survive a refresh; only the rules themselves come
+        // from the panel.
+        providerRoutingEnabled: providerRoutingEnabled,
+        providerRuleListsEnabled: providerRuleListsEnabled,
+        providerRoutingProbed: providerRoutingProbed,
         providerInfo: providerInfo,
         refreshedAt: refreshedAt,
       );
 
   Profile copyWith({
     String? name,
+    bool? providerRoutingEnabled,
+    bool? providerRuleListsEnabled,
     List<Location>? locations,
     Account? account,
     Routing? routing,
@@ -165,6 +206,12 @@ class Profile {
         deviceLimitActive: deviceLimitActive,
         deviceLimitReached: deviceLimitReached,
         unsupportedServers: unsupportedServers,
+        providerRouting: providerRouting,
+        providerRoutingSkipped: providerRoutingSkipped,
+        providerRoutingEnabled: providerRoutingEnabled ?? this.providerRoutingEnabled,
+        providerRuleListsEnabled:
+            providerRuleListsEnabled ?? this.providerRuleListsEnabled,
+        providerRoutingProbed: providerRoutingProbed,
         providerInfo: providerInfo,
         refreshedAt: refreshedAt ?? this.refreshedAt,
       );
@@ -189,6 +236,13 @@ class Profile {
         dns: (j['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
         deviceLimitActive: j['device_limit_active'] as bool? ?? false,
         deviceLimitReached: j['device_limit_reached'] as bool? ?? false,
+        providerRouting: j['provider_routing'] is Map
+            ? Routing.fromJson(Map<String, dynamic>.from(j['provider_routing'] as Map))
+            : null,
+        providerRoutingSkipped: j['provider_routing_skipped'] as int? ?? 0,
+        providerRoutingEnabled: j['provider_routing_enabled'] as bool? ?? true,
+        providerRuleListsEnabled: j['provider_rule_lists_enabled'] as bool? ?? false,
+        providerRoutingProbed: j['provider_routing_probed'] as bool? ?? false,
         unsupportedServers: (j['unsupported_servers'] as Map?)
                 ?.map((k, v) => MapEntry('$k', v is int ? v : 0)) ??
             const {},
@@ -214,6 +268,11 @@ class Profile {
         if (deviceLimitActive) 'device_limit_active': true,
         if (deviceLimitReached) 'device_limit_reached': true,
         if (unsupportedServers.isNotEmpty) 'unsupported_servers': unsupportedServers,
+        if (providerRouting != null) 'provider_routing': providerRouting!.toJson(),
+        if (providerRoutingSkipped > 0) 'provider_routing_skipped': providerRoutingSkipped,
+        if (!providerRoutingEnabled) 'provider_routing_enabled': false,
+        if (providerRuleListsEnabled) 'provider_rule_lists_enabled': true,
+        if (providerRoutingProbed) 'provider_routing_probed': true,
         if (providerInfo != null) 'provider_info': providerInfo!.toJson(),
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
       };

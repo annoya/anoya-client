@@ -268,6 +268,63 @@ proxies:
     }
   });
 
+  group('rule lists', () {
+    const list = RuleList(
+      name: 'reject',
+      url: 'https://lists.example/reject.yaml',
+      behavior: 'domain',
+    );
+    const routing = Routing(mode: 'split', rules: [
+      RoutingRule(type: 'rule-list', value: 'reject', action: 'block'),
+      RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
+    ], lists: [list]);
+
+    test('a downloaded list is handed over as a local file', () {
+      // Never `type: http`: mihomo fetches providers inside config apply, 20 s
+      // per file under a wait group, which is a stalled connect — and a failure
+      // there is only logged, leaving a rule that matches nothing.
+      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(),
+          routing: routing,
+          listPaths: {'reject': '/tmp/group/rulelists/abc.yaml'})) as YamlMap;
+      final provider = (doc['rule-providers'] as YamlMap)['reject'] as YamlMap;
+      expect(provider['type'], 'file');
+      expect(provider['path'], '/tmp/group/rulelists/abc.yaml');
+      expect(provider['behavior'], 'domain');
+      expect(provider['format'], 'yaml');
+      expect((doc['rules'] as YamlList).map((e) => '$e'),
+          contains('RULE-SET,reject,REJECT'));
+    });
+
+    test('without the file the rule is left out, not left dangling', () {
+      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing)) as YamlMap;
+      expect(doc['rule-providers'], isNull);
+      final rules = (doc['rules'] as YamlList).map((e) => '$e').toList();
+      expect(rules.any((r) => r.startsWith('RULE-SET')), isFalse,
+          reason: 'a rule pointing at nothing silently matches nothing');
+      expect(rules, contains('DOMAIN-SUFFIX,ip.me,PROXY'),
+          reason: 'one missing list must not cost the other rules');
+    });
+
+    test('a regex rule reaches the engine as DOMAIN-REGEX', () {
+      const r = Routing(mode: 'full', rules: [
+        RoutingRule(type: 'domain-regex', value: r'^.*[.]ads[.]example$', action: 'block'),
+      ]);
+      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: r)) as YamlMap;
+      expect((doc['rules'] as YamlList).map((e) => '$e'),
+          contains(r'DOMAIN-REGEX,^.*[.]ads[.]example$,REJECT'));
+    });
+
+    test('a list name that is not YAML-safe never reaches the config', () {
+      const bad = Routing(mode: 'full', rules: [
+        RoutingRule(type: 'rule-list', value: 'a: b', action: 'block'),
+      ], lists: [RuleList(name: 'a: b', url: 'https://x.example/l', behavior: 'domain')]);
+      final yaml = mihomoTunConfigYaml(vlessLoc(),
+          routing: bad, listPaths: {'a: b': '/tmp/x.yaml'});
+      expect(yaml, isNot(contains('a: b')));
+      loadYaml(yaml); // must still parse
+    });
+  });
+
   test('subscriptionDns mines dns.nameserver out of a Clash YAML body', () {
     const clash = '''
 dns:

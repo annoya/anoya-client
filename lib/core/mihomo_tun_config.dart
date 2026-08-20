@@ -16,6 +16,12 @@ import 'norm_config.dart';
 /// syntax); empty falls back to Cloudflare DoH. It rides the same YAML as
 /// everything else, so switching configs switches DNS too.
 ///
+/// [listPaths] maps a `rule-list` rule's name to the file the app downloaded
+/// for it. A rule whose list is absent here is dropped: the engine would
+/// happily accept a provider it has to fetch itself, and that fetch runs inside
+/// config apply with a 20 s timeout per file, then fails by only logging —
+/// leaving a rule that matches nothing at all.
+///
 /// [stack] is the mihomo TUN network stack — "gvisor" on both macOS and iOS
 /// (fully userspace; the only stack that works inside the NE sandbox).
 ///
@@ -27,12 +33,14 @@ String mihomoTunConfigYaml(
   Location location, {
   Routing? routing,
   List<String> dns = const [],
+  Map<String, String> listPaths = const {},
   String stack = 'gvisor',
   bool collectLogs = true,
 }) {
   final proxy = _mihomoProxy(location);
   final nameservers = _dnsNameservers(dns);
-  final ruleLines = _routingRuleLines(routing);
+  final ruleLines = _routingRuleLines(routing, listPaths);
+  final listLines = _ruleProviderLines(routing, listPaths);
   final hasProcessRules =
       routing?.rules.any((r) => r.type == 'process-name' && r.isValid) ?? false;
   final hasGeoRules = routing?.rules.any((r) => r.needsGeoData && r.isValid) ?? false;
@@ -113,6 +121,7 @@ String mihomoTunConfigYaml(
     '  - name: PROXY',
     '    type: select',
     '    proxies: [proxy]',
+    ...listLines,
     'rules:',
     ...ruleLines,
     // Unmatched traffic: full mode tunnels it, split mode sends it direct.
@@ -216,31 +225,67 @@ const _ruleTypeMap = {
   'domain-suffix': 'DOMAIN-SUFFIX',
   'domain-keyword': 'DOMAIN-KEYWORD',
   'domain-exact': 'DOMAIN',
+  'domain-regex': 'DOMAIN-REGEX',
   'ip-cidr': 'IP-CIDR',
   'process-name': 'PROCESS-NAME',
   'geoip': 'GEOIP',
   'geosite': 'GEOSITE',
+  'rule-list': 'RULE-SET',
 };
 
 const _actionMap = {'proxy': 'PROXY', 'direct': 'DIRECT', 'block': 'REJECT'};
 
+/// Renders the `rule-providers:` block for the lists a policy's `rule-list`
+/// rules point at, as local files. `type: file` and nothing else: the engine
+/// must not do network at apply time.
+List<String> _ruleProviderLines(Routing? routing, Map<String, String> paths) {
+  if (routing == null) return const [];
+  final used = routing.rules
+      .where((r) => r.needsRuleList && r.isValid && paths.containsKey(r.value))
+      .map((r) => r.value)
+      .toSet();
+  if (used.isEmpty) return const [];
+  final out = <String>['rule-providers:'];
+  for (final name in used) {
+    final list = routing.listNamed(name);
+    if (list == null || !list.isValid) continue;
+    out.addAll([
+      '  ${yamlKey(name)}:',
+      '    type: file',
+      '    path: ${yamlScalar(paths[name])}',
+      '    behavior: ${list.behavior}',
+      '    format: ${list.format}',
+    ]);
+  }
+  return out.length == 1 ? const [] : out;
+}
+
 /// Renders ordered routing rules to mihomo rule lines. Invalid rules are
 /// skipped (and logged), never interpolated: values come from the server or
 /// the local editor, and a malformed one must not corrupt the YAML.
-List<String> _routingRuleLines(Routing? routing) {
+List<String> _routingRuleLines(Routing? routing, [Map<String, String> paths = const {}]) {
   if (routing == null) return const [];
   final out = <String>[];
   for (final r in routing.rules) {
     final type = _ruleTypeMap[r.type];
     final action = _actionMap[r.action];
+    // A list rule without its file is a rule that cannot match. Dropping it
+    // here is the same choice as for geo rules: the caller has already been
+    // told, and a rule that silently matches nothing is worse than one absent.
+    if (r.needsRuleList && !paths.containsKey(r.value)) {
+      Log.e('routing: skipping rule-list rule', 'no local copy of ${r.value}');
+      continue;
+    }
     if (type == null || action == null || !r.isValid) {
       Log.e('routing: skipping invalid rule', '${r.type},${r.value},${r.action}');
       continue;
     }
     // no-resolve: IP-based rules must not force DNS resolution of domain
     // traffic. Always on for ip-cidr; opt-in per geoip rule.
-    final suffix =
-        (r.type == 'ip-cidr' || (r.type == 'geoip' && r.noResolve)) ? ',no-resolve' : '';
+    final suffix = (r.type == 'ip-cidr' ||
+            ((r.type == 'geoip' || r.type == 'rule-list') && r.noResolve))
+        ? ',no-resolve'
+        : '';
     final value = r.type == 'geoip' ? r.value.toUpperCase() : r.value;
     out.add('  - $type,$value,$action$suffix');
   }
