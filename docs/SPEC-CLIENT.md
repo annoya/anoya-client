@@ -233,6 +233,16 @@ tunnel.
   (ordered rules) views over the same rules.
 - **Geo databases**, **On-demand** (rules, values), **Logs** and **Log viewer**.
 
+On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
+the system): a status line, show/hide the app, connect, disconnect, quit. It is
+the only view of the tunnel while the window is closed, so closing the window no
+longer quits — the app stays in the menu bar and the Dock. Show, hide and quit
+are handled natively without a round trip to Dart; connect and disconnect are
+forwarded to the app, which owns refresh-before-connect and error reporting.
+State (including the item's icon, which carries status by shape because the
+system tints template images itself) is composed in Dart so the menu says what
+the home screen says.
+
 `client/design/ui-spec.html` draws every screen 1:1 in Flutter logical points
 and is validated by `client/design/check.js`; the numbers there and in
 `client/lib/core/theme.dart` are the same numbers. A visible change starts with

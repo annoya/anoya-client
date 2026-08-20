@@ -13,6 +13,7 @@ import '../core/vpn_core.dart';
 import '../state/favorites_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
+import '../state/session.dart';
 import '../state/providers.dart';
 import '../state/routing_status.dart';
 import 'config/config_screen.dart';
@@ -30,34 +31,20 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  VpnStatus _status = VpnStatus.disconnected;
-  StreamSubscription<VpnStatus>? _statusSub;
-  DateTime? _connectedAt;
   Timer? _sessionTimer;
 
-  @override
-  void initState() {
-    super.initState();
-    final core = ref.read(vpnCoreProvider);
-    _status = core.status;
-    _onStatus(core.status);
-    _statusSub = core.statusStream().listen((s) {
-      if (!mounted) return;
-      setState(() => _status = s);
-      _onStatus(s);
-    });
-  }
+  /// Status and session start are owned by [sessionProvider] — the menu bar
+  /// shows the same clock, and two owners print two durations for one tunnel.
+  /// What stays here is the once-a-second repaint, which is this screen's own
+  /// business: nothing else needs a frame per second.
+  VpnStatus get _status => ref.watch(sessionProvider).status;
 
-  /// Track the session start so the label can show "Connected · 00:12:34";
-  /// tick once a second only while connected.
-  void _onStatus(VpnStatus s) {
+  void _tick(VpnStatus s) {
     if (s == VpnStatus.connected) {
-      _connectedAt ??= DateTime.now();
       _sessionTimer ??= Timer.periodic(const Duration(seconds: 1), (_) {
         if (mounted) setState(() {});
       });
     } else {
-      _connectedAt = null;
       _sessionTimer?.cancel();
       _sessionTimer = null;
     }
@@ -65,7 +52,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
-    _statusSub?.cancel();
     _sessionTimer?.cancel();
     super.dispose();
   }
@@ -91,6 +77,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final st = ref.watch(profilesControllerProvider);
     final active = st.active;
+    // The clock only ticks while there is a session to time.
+    _tick(ref.watch(sessionProvider).status);
 
     // A connect failure floats above the screen until dismissed: the layout
     // must not jump, and a cause that vanished on its own tells the user
@@ -163,11 +151,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   String _session() {
-    final at = _connectedAt;
-    if (at == null) return '';
-    final d = DateTime.now().difference(at);
-    String two(int n) => n.toString().padLeft(2, '0');
-    return ' · ${two(d.inHours)}:${two(d.inMinutes % 60)}:${two(d.inSeconds % 60)}';
+    final clock = sessionClock(ref.read(sessionProvider).startedAt);
+    return clock.isEmpty ? '' : ' · $clock';
   }
 
   Widget _statusLabel() {
