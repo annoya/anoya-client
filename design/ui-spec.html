@@ -95,6 +95,25 @@
   .macdot{width:12px;height:12px;border-radius:50%}
   .maccol{width:100%;max-width:560px;margin:0 auto}   /* kMaxContentWidth */
 
+  /* macOS menu bar extra + NSMenu. System-drawn surfaces: metrics are
+     AppKit's (24pt bar, 22pt item, 13pt text), not ours. */
+  .mbar{height:24px;display:flex;align-items:center;justify-content:flex-end;gap:16px;
+    padding:0 12px;background:var(--m-card);border-bottom:1px solid var(--m-line)}
+  .mbar .mextra{display:flex;align-items:center;color:var(--m-ink);opacity:.85}
+  .mbar .mextra.on{background:var(--m-pri);color:var(--m-onpri);opacity:1;
+    border-radius:4px;padding:1px 4px;margin:0 -4px}
+  .menu{width:236px;margin:4px 12px 0 auto;padding:5px 0;border-radius:6px;
+    background:var(--m-card);border:1px solid var(--m-line);
+    box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .mitem{height:22px;display:flex;align-items:center;gap:8px;padding:0 14px;font-size:13px}
+  .mitem.hi{background:var(--m-pri);color:var(--m-onpri)}
+  .mitem.off{color:var(--m-mut)}
+  .mitem .key{margin-left:auto;font-size:12px;opacity:.7}
+  .msep{height:1px;background:var(--m-line);margin:5px 0}
+  .mnote{padding:2px 14px 2px;font-size:11px;color:var(--m-mut)}
+  .iconrow{display:flex;align-items:center;gap:14px;padding:10px 16px}
+  .iconrow .what{font-size:12px;color:var(--m-mut)}
+
   /* status bar 54, app bar 56 */
   .sb{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;
     font-size:15px;font-weight:600}
@@ -367,6 +386,7 @@
       <tr><td>Обводка (hairline)</td><td>1</td></tr>
       <tr><td>Экран телефона</td><td>393 × 852</td></tr>
       <tr><td>Окно macOS (по умолчанию)</td><td>400 × 700, свободный ресайз</td></tr>
+      <tr><td>Menu bar (macOS)</td><td>полоса 24, пункт меню 22, текст 13 — метрики AppKit, не наши</td></tr>
       <tr><td>Макс. ширина контента</td><td>560 (не срабатывает при 393)</td></tr>
     </table>
   </div>
@@ -2848,6 +2868,94 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
     </div></div>
     <p class="cap"><span class="id">HomeScreen · subscription plan</span><b>На главном — одной строкой.</b> Остаток плана попадает в подпись строки конфигурации, где сейчас стоит «Subscription · 12 servers». Отдельной карточки, как у self-hosted аккаунта, не появляется: главный экран отвечает на вопрос «подключён ли я и через что», а не «сколько осталось», и второй счётчик рядом с кольцом соревновался бы с ним за внимание. Сообщение провайдера сюда тоже не поднимается — его место в настройках конфигурации, где на него можно отреагировать.</p>
   </div>
+</div>
+
+<h2>12 · Меню в строке состояния (macOS)</h2>
+<p class="flowdesc">Иконка в menu bar и её меню — единственный способ управлять туннелем, не разворачивая окно. Четыре действия: показать/спрятать окно, подключиться к активной конфигурации, отключиться, выйти. Поверхность системная: <code>NSStatusItem</code> плюс <code>NSMenu</code>, метрики AppKit (полоса 24&nbsp;pt, пункт 22&nbsp;pt, текст 13&nbsp;pt), и стилизовать их мы не можем и не пытаемся — это не наш экран, а системный.</p>
+<p class="flowdesc">Отсюда следует ограничение, которое определило дизайн иконки: template-изображение в menu bar <b>перекрашивается системой</b> в чёрный или белый, и цветом состояние передать нельзя вообще. Не «нежелательно», как в наших экранах, а невозможно. Поэтому состояние несёт <b>форма</b>: залитый щит — туннель поднят, контурный — опущен, контурный со точкой — идёт подключение. Слова про состояние живут в первой строке меню, где место для них есть.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler mac"><div class="mac">
+      <div class="mbar">
+        <svg class="icon xs muted"><use href="#i-wifi"/></svg>
+        <span class="mextra on"><svg class="icon xs" style="fill:currentColor"><use href="#i-shield"/></svg></span>
+        <span style="font-size:11px;color:var(--m-mut)">9:41</span>
+      </div>
+      <div class="menu">
+        <div class="mitem off">Connected · Germany</div>
+        <div class="mitem off">00:04:11 · ТСПУ Дронов</div>
+        <div class="msep"></div>
+        <div class="mitem">Hide vpn2</div>
+        <div class="msep"></div>
+        <div class="mitem off">Connect</div>
+        <div class="mitem hi">Disconnect</div>
+        <div class="msep"></div>
+        <div class="mitem">Quit vpn2<span class="key">⌘Q</span></div>
+        <div class="mnote">Quitting leaves the tunnel connected</div>
+      </div>
+    </div></div>
+    <p class="cap wide"><span class="id">MenuBar · connected</span><b>Подключено.</b> Первые две строки — не действия, а состояние: статус, сервер, время сессии и имя конфигурации. Без них иконка сообщает только «поднят/опущен», а «Connect» и «Disconnect» становятся кнопками неизвестно к чему. Две строки вместо одной потому, что в 236&nbsp;pt четыре факта в одну строку не влезают, а сокращать до «Connected» значит выбросить именно то, что человек хочет проверить, не разворачивая окно.<br><br>«Connect» и «Disconnect» — два отдельных пункта, а не один переключающийся: так просили, и так честнее — пункт, который меняет название под состояние, заставляет читать его каждый раз, чтобы понять, что он сейчас сделает. Неприменимый пункт <b>погашен, но виден</b>: исчезающие пункты меняют геометрию меню, и мышечная память попадает не туда.<br><br>Строка под «Quit» — про факт, который иначе становится сюрпризом: туннель живёт в системном расширении, и выход из приложения его не роняет (а при включённом on-demand система его же и поднимет заново). Молча оставить VPN работать без единого видимого окна нельзя. Строка появляется только когда туннель поднят.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler mac"><div class="mac">
+      <div class="mbar">
+        <svg class="icon xs muted"><use href="#i-wifi"/></svg>
+        <span class="mextra"><svg class="icon xs"><use href="#i-shield"/></svg></span>
+        <span style="font-size:11px;color:var(--m-mut)">9:41</span>
+      </div>
+      <div class="menu">
+        <div class="mitem off">Not connected</div>
+        <div class="mitem off">ТСПУ Дронов</div>
+        <div class="msep"></div>
+        <div class="mitem hi">Show vpn2</div>
+        <div class="msep"></div>
+        <div class="mitem">Connect</div>
+        <div class="mitem off">Disconnect</div>
+        <div class="msep"></div>
+        <div class="mitem">Quit vpn2<span class="key">⌘Q</span></div>
+      </div>
+    </div></div>
+    <p class="cap wide"><span class="id">MenuBar · disconnected · окно спрятано</span><b>Отключено, окно закрыто.</b> Пункт называется тем, что он сделает — «Show», когда окна не видно, «Hide», когда видно; переключатель с одним названием («Window») заставлял бы угадывать. Вторая строка держит имя конфигурации даже без подключения: «Connect» подключает к активной, и какой именно — это надо видеть до нажатия, а не после.<br><br>Изменение, которого тут не видно, но которое обязательно: <b>закрытие окна больше не закрывает приложение</b>. Иначе «развернуть» из меню было бы нечего, а иконка исчезала бы вместе с окном. Приложение остаётся и в Dock, и в menu bar — прятать его из Dock (accessory-режим) значит менять весь способ запуска, а не добавлять меню.<br><br>Строки про туннель под «Quit» здесь нет: врать про «leaves the tunnel connected», когда туннель опущен, хуже, чем молчать.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler mac"><div class="mac">
+      <div class="sh" style="margin-top:8px">ИКОНКА — ФОРМА, НЕ ЦВЕТ</div>
+      <div class="iconrow"><span class="mextra on"><svg class="icon xs" style="fill:currentColor"><use href="#i-shield"/></svg></span>
+        <span class="what">Connected — залитый щит</span></div>
+      <div class="iconrow"><span class="mextra"><svg class="icon xs"><use href="#i-refresh"/></svg></span>
+        <span class="what">Connecting / Switching — контур со стрелками</span></div>
+      <div class="iconrow"><span class="mextra"><svg class="icon xs"><use href="#i-shield"/></svg></span>
+        <span class="what">Disconnected — контурный щит</span></div>
+      <div class="sh">НЕТ КОНФИГУРАЦИЙ</div>
+      <div class="menu" style="margin:4px 12px 0 auto">
+        <div class="mitem off">No configuration</div>
+        <div class="msep"></div>
+        <div class="mitem">Show vpn2</div>
+        <div class="msep"></div>
+        <div class="mitem off">Connect</div>
+        <div class="mitem off">Disconnect</div>
+        <div class="msep"></div>
+        <div class="mitem">Quit vpn2<span class="key">⌘Q</span></div>
+      </div>
+      <div class="sh">ПОДКЛЮЧЕНИЕ ИДЁТ</div>
+      <div class="menu" style="margin:4px 12px 0 auto">
+        <div class="mitem off">Connecting… · Germany</div>
+        <div class="mitem off">ТСПУ Дронов</div>
+        <div class="msep"></div>
+        <div class="mitem">Hide vpn2</div>
+        <div class="msep"></div>
+        <div class="mitem off">Connect</div>
+        <div class="mitem">Disconnect</div>
+        <div class="msep"></div>
+        <div class="mitem">Quit vpn2<span class="key">⌘Q</span></div>
+      </div>
+    </div></div>
+    <p class="cap wide"><span class="id">MenuBar · состояния</span><b>Крайние случаи.</b> Без конфигураций «Connect» и «Disconnect» погашены, а первая строка говорит почему — так «Show vpn2» становится единственным осмысленным действием, и оно же ведёт туда, где конфигурацию добавляют. Во время подключения «Disconnect» уже активен (отменить попытку — законное желание), а «Connect» нет: повторное нажатие во время подключения не ускоряет его, а перезапускает.<br><br>Три формы иконки, а не три цвета: система перекрашивает template-изображение сама, и жёлтого «подключаюсь» в menu bar не бывает. Стрелки обновления для промежуточного состояния взяты из того же набора, что и в приложении, — «Switching…» при горячем переключении сервера выглядит так же, потому что это то же состояние.</p>
+  </div>
+
 </div>
 
 <footer>

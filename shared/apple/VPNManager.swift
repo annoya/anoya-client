@@ -94,10 +94,10 @@ final class VPNManager {
             self.statusObserver = nil
         }
         manager = nil
-        lastStatus = nil
-        // onStatus feeds a Flutter EventChannel, which must be driven from the
-        // platform thread — this runs inside a Task, so hop to main explicitly.
-        await MainActor.run { self.onStatus?("disconnected") }
+        // Forced: the last published status may already be "disconnected" (the
+        // profile can be removed while the tunnel is down), and the Dart side
+        // still has to hear that there is no profile any more.
+        publish("disconnected", force: true)
         NSLog("VPN-NATIVE: removed VPN profile from system preferences")
     }
 
@@ -137,11 +137,7 @@ final class VPNManager {
         observe(existing)
         // The status the app was told at launch predates this; publish the real
         // one now that there is something to read it from.
-        let status = currentStatus()
-        if status != lastStatus {
-            lastStatus = status
-            onStatus?(status)
-        }
+        publish(currentStatus())
         return existing
     }
 
@@ -420,14 +416,39 @@ final class VPNManager {
             forName: .NEVPNStatusDidChange, object: m.connection, queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            let status = self.currentStatus()
-            guard status != self.lastStatus else { return }
-            self.lastStatus = status
-            NSLog("VPN-NATIVE: status changed -> \(status)")
-            self.onStatus?(status)
+            self.publish(self.currentStatus())
         }
     }
 
+    /// Publishes a status change to the Flutter side, from the main thread and
+    /// nowhere else.
+    ///
+    /// [onStatus] feeds a Flutter EventChannel, and platform-channel messages
+    /// must be sent on the platform thread — Flutter warns that a send from
+    /// anywhere else may lose the message or crash. Getting that wrong is easy
+    /// here: this class is not actor-isolated, so a `nonisolated async` method
+    /// like [adopt] runs on the cooperative pool even when its caller started
+    /// on `@MainActor`. Every publication goes through this one door instead of
+    /// each call site remembering to hop.
+    ///
+    /// The dedup lives on the far side of the hop so [lastStatus] is only ever
+    /// touched on the main thread.
+    private func publish(_ status: String, force: Bool = false) {
+        if Thread.isMainThread {
+            deliver(status, force: force)
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.deliver(status, force: force) }
+        }
+    }
+
+    private func deliver(_ status: String, force: Bool) {
+        guard force || status != lastStatus else { return }
+        lastStatus = status
+        NSLog("VPN-NATIVE: status changed -> \(status)")
+        onStatus?(status)
+    }
+
+    /// Last status handed to Dart. Main thread only — see [publish].
     private var lastStatus: String?
 
     private func statusString(_ s: NEVPNStatus) -> String {

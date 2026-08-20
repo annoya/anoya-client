@@ -66,7 +66,13 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    dropped and the user is told. Pinned by
    `client/test/mihomo_tun_config_test.dart` and
    `client/test/rule_list_store_test.dart`.
-7. **Logs never contain secrets.** No tokens, passwords, private keys or full
+7. **Status reaches Dart from the platform thread only.** `onStatus` feeds the
+   `vpn/status` EventChannel, and Flutter drops or crashes on a channel message
+   sent from anywhere else. `VPNManager` is not actor-isolated, so a
+   `nonisolated async` method runs on the cooperative pool even when its caller
+   started on `@MainActor` — every publication goes through `publish()`, which
+   hops, and `lastStatus` is touched only on the far side of that hop.
+8. **Logs never contain secrets.** No tokens, passwords, private keys or full
    config bodies in app, tunnel or engine logs. This includes error text that
    quotes them: subscription URLs, share links and engine parse errors are
    reduced to a host, a scheme or a redacted message before they are logged.

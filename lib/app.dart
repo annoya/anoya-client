@@ -5,6 +5,7 @@ import 'core/log.dart';
 import 'core/theme.dart';
 import 'features/start_screen.dart';
 import 'features/home_screen.dart';
+import 'state/menu_bar_controller.dart';
 import 'state/profiles_controller.dart';
 import 'state/providers.dart';
 
@@ -24,6 +25,9 @@ class _VpnAppState extends ConsumerState<VpnApp> {
     ref.read(vpnCoreProvider).engineVersion().then((v) {
       Log.i('vpn engine: ${v ?? 'unavailable'}');
     });
+    // The menu bar item must answer while the window is closed, which is
+    // exactly when no screen is watching anything — so the shell holds it.
+    ref.read(menuBarProvider);
   }
 
   @override
