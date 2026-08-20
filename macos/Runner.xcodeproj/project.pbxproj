@@ -33,6 +33,7 @@
 		6E0B63A22FF2CF9A00464F13 /* Tunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6E0B63982FF2CF9A00464F13 /* Tunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9227CCD9FFF6D305C6440BBB /* VpnChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1441E21D385E0FFDC7055046 /* VpnChannel.swift */; };
 		99797FD5735E9477D73A29DD /* WebAuthChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC6C5EE46FF78FE87AD5D9D /* WebAuthChannel.swift */; };
+		A1B2C3D40002MENUBAR00002 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40001MENUBAR00001 /* MenuBarController.swift */; };
 		C6C5FAD35E657B72447E8D33 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B94C26CD213FA714A45BBEB6 /* Pods_RunnerTests.framework */; };
 		F94F5E7CFA1F7A67FCF0301D /* MihomoCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218C4BD64141A24AB0952AEA /* MihomoCore.xcframework */; };
 /* End PBXBuildFile section */
@@ -105,6 +106,7 @@
 		33E51914231749380026EE4D /* Release.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = Release.entitlements; sourceTree = "<group>"; };
 		33E5194F232828860026EE4D /* AppInfo.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppInfo.xcconfig; sourceTree = "<group>"; };
 		3DC6C5EE46FF78FE87AD5D9D /* WebAuthChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebAuthChannel.swift; sourceTree = "<group>"; };
+		A1B2C3D40001MENUBAR00001 /* MenuBarController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		5E17CF0B677978887D0BB245 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		6E0B63982FF2CF9A00464F13 /* Tunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Tunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E0B63992FF2CF9A00464F13 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
@@ -249,6 +251,7 @@
 				33BA886A226E78AF003329D5 /* Configs */,
 				7983ACC197A4F24E414E0333 /* VPN */,
 				3DC6C5EE46FF78FE87AD5D9D /* WebAuthChannel.swift */,
+				A1B2C3D40001MENUBAR00001 /* MenuBarController.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -554,6 +557,7 @@
 				631070EFAFE18AF4046AD2EB /* VPNManager.swift in Sources */,
 				9227CCD9FFF6D305C6440BBB /* VpnChannel.swift in Sources */,
 				99797FD5735E9477D73A29DD /* WebAuthChannel.swift in Sources */,
+				A1B2C3D40002MENUBAR00002 /* MenuBarController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
