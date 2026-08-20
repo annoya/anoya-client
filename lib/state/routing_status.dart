@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/routing_policy.dart';
 import '../core/rule_set.dart';
 import 'profiles_controller.dart';
 
@@ -55,10 +56,10 @@ final routingStatusProvider = FutureProvider<RoutingStatus>((ref) async {
   final profile = ref.watch(profilesControllerProvider.select((s) => s.active));
   ref.watch(ruleSetRevisionProvider);
   if (profile == null) return RoutingStatus.off;
-  // A managed policy is never "off": the server owns it, and the local switch
-  // does not exist for such configurations.
-  final managed = profile.routing;
-  if (managed != null) return RoutingStatus.ofMode(managed.mode);
-  if (!profile.routingEnabled) return RoutingStatus.off;
-  return RoutingStatus.ofMode((await RuleSetStore.byId(profile.ruleSetId)).mode);
+  // Which of the three policies is in force answers this: a policy someone
+  // else set is never "off" (its author owns it), and a local one is off until
+  // the user turns it on.
+  final policy = routingPolicyFor(profile, loadRuleSet: RuleSetStore.byId);
+  if (policy is LocalRoutingPolicy && !policy.enabled) return RoutingStatus.off;
+  return RoutingStatus.ofMode((await policy.resolve()).mode);
 });

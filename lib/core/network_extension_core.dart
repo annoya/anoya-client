@@ -6,6 +6,7 @@ import 'log.dart';
 import 'mihomo_tun_config.dart';
 import 'norm_config.dart';
 import 'on_demand.dart';
+import 'rule_list_store.dart';
 import 'vpn_core.dart';
 
 /// NetworkExtensionCore drives a real system VPN via the macOS/iOS
@@ -69,7 +70,11 @@ class NetworkExtensionCore implements VpnCore {
     // also gets it pushed straight into the engine, because the engine logs
     // while parsing the config, before it reads log-level out of it.
     final yaml = mihomoTunConfigYaml(location,
-        routing: config.routing, dns: config.dns, stack: 'gvisor', collectLogs: Log.enabled);
+        routing: config.routing,
+        dns: config.dns,
+        listPaths: await RuleListStore.availablePaths(config.routing?.lists ?? const []),
+        stack: 'gvisor',
+        collectLogs: Log.enabled);
     final routing = config.routing;
     final routingDesc =
         routing == null ? 'none (full tunnel)' : '${routing.mode}, ${routing.rules.length} rule(s)';
@@ -176,9 +181,15 @@ class NetworkExtensionCore implements VpnCore {
     }
     if (location == null) return null;
     try {
+      final listPaths =
+          await RuleListStore.availablePaths(config.routing?.lists ?? const []);
       return {
         'config': mihomoTunConfigYaml(location,
-            routing: config.routing, dns: config.dns, stack: 'gvisor', collectLogs: Log.enabled),
+            routing: config.routing,
+            dns: config.dns,
+            listPaths: listPaths,
+            stack: 'gvisor',
+            collectLogs: Log.enabled),
       };
     } catch (e) {
       Log.e('config render failed', '$e');

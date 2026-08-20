@@ -2626,7 +2626,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="card banner">
         <div class="row">
           <svg class="icon muted"><use href="#i-route"/></svg>
-          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Full tunnel · no exceptions</div></div>
+          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Split · 9 rules · 2 need their lists</div></div>
           <span class="sw"><i></i></span>
         </div>
         <div class="sep"></div>
@@ -2634,6 +2634,12 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
           <svg class="icon muted"><use href="#i-layers"/></svg>
           <div class="tx"><div class="t">See what they route</div></div>
           <svg class="icon muted"><use href="#i-chev"/></svg>
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <svg class="icon muted"><use href="#i-doc"/></svg>
+          <div class="tx"><div class="t">Their rule lists</div><div class="s">Off · 2 of their rules need them</div></div>
+          <span class="sw off"><i></i></span>
         </div>
       </div>
       <div class="card" style="opacity:.38">
@@ -2645,7 +2651,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div>
       <div class="hint" style="padding:12px 16px 0">Turn the switch off to use your own rule set instead. Your provider cannot enforce this either way.</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · subscription · provider routes</span><b>Маршруты пришли вместе с подпиской.</b> Панель присылает их заголовком <code>routing</code>: направление (<code>GlobalProxy</code>), порядок разбора (<code>RouteOrder</code>) и шесть списков — сайты и IP на proxy, direct и block. Применяем их, но говорим, чьи они: карточка на primary-container, как у managed-политики, и в заголовке прямо «from your provider».<br><br>И одно отличие от self-hosted, которое здесь принципиально: <b>тумблер есть</b>. У организации политика неотключаема — сервер её задал и сам обеспечит. У подписки такой власти нет (ADR-005): она может не отдать сервер, но не может заставить нас гнать трафик по её правилам. Поэтому маршруты по умолчанию включены (иначе зачем провайдер их прислал), а решение остаётся за пользователем — и строка про это написана словами, а не подразумевается.</p>
+    <p class="cap"><span class="id">ConfigScreen · subscription · provider routes</span><b>Маршруты пришли вместе с подпиской.</b> Приходят они из трёх мест, и заголовок <code>routing</code> (направление <code>GlobalProxy</code> плюс шесть списков — сайты и IP на proxy, direct и block) — только одно из них. Живая проверка показала, что чаще правил там нет вовсе: панель кладёт их в <b>Xray-рендер той же подписки</b>, который клиент запрашивает по имени формата (<code>&lt;url&gt;/json</code>) — честно, а не подделывая юзер-агент. Третий случай — тело в формате Clash, где <code>rules:</code> уже на языке нашего ядра.<br><br>Переводим, а не перенимаем: в чужих наборах есть понятия, которых у нас нет — inbound-теги, порты, регулярки. Правило, которое мы не умеем выразить, <b>отбрасывается, а не приближается</b> (маршрут «почти туда» уводит трафик туда, куда пользователь не соглашался), и число отброшенных подписано в строке — иначе частичная политика выглядела бы полной. Направление берём из catch-all: «остальное direct» — это split, иначе full.<br><br>Применяем их, но говорим, чьи они: карточка на primary-container, как у managed-политики, и в заголовке прямо «from your provider».<br><br>И одно отличие от self-hosted, которое здесь принципиально: <b>тумблер есть</b>. У организации политика неотключаема — сервер её задал и сам обеспечит. У подписки такой власти нет (ADR-005): она может не отдать сервер, но не может заставить нас гнать трафик по её правилам. Поэтому маршруты по умолчанию включены (иначе зачем провайдер их прислал), а решение остаётся за пользователем — и строка про это написана словами, а не подразумевается.<br><br><b>Третья строка — про чужие файлы, и она выключена по умолчанию.</b> Часть правил (<code>RULE-SET</code> у Clash) ссылается не на домен, а на <b>список, который хостит провайдер</b>. Пока строка выключена, такие правила попадают в счётчик «not supported» — и счётчик называет причину своими словами — «2 need their lists», а не безличное «not supported», потому что первое лечится одним тумблером, а второе не лечится вообще. Включение означает: скачать чужие файлы на устройство и обновлять их раз в неделю. Это другое по сути решение, чем «применить их правила», поэтому и тумблер отдельный.<br><br>Тумблер живёт <b>в конфигурации, а не в общих настройках</b>: доверие к спискам — это доверие к конкретному провайдеру, и одному можно доверять, а другому нет. Обещать он должен ровно то, что делает: Xray-шные <code>ext:</code> он не включает никогда — это файл на диске сервера панели, у него нет адреса, скачивать нечего.</p>
   </div>
 
   <div class="board">
@@ -2654,28 +2660,105 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Provider’s routes</span></div>
       <div class="card banner" style="margin-top:8px"><div class="row">
         <svg class="icon muted"><use href="#i-folder"/></svg>
-        <div class="tx"><div class="t">Sent by ТСПУ Дронов</div><div class="s multi">Read-only. Refreshing the subscription replaces them.</div></div>
+        <div class="tx"><div class="t">Sent by ТСПУ Дронов</div><div class="s multi">Read-only. Refreshing the subscription replaces them. 1 more rule could not be translated for this app and is not applied.</div></div>
       </div></div>
       <div class="card" style="margin-top:12px"><div style="padding:16px">
-        <div style="font-size:14px">Everything through the VPN</div>
-        <div class="hint">Direction set by the provider (GlobalProxy)</div>
+        <div style="font-size:14px">Split tunneling</div>
+        <div class="hint">Everything else goes direct — the provider's own catch-all</div>
       </div></div>
       <div class="sh">RULES — FIRST MATCH WINS</div>
       <div class="card"><div class="rule">
         <span class="tag" style="color:var(--m-err)">BLOCK</span>
-        <div class="tx"><div class="t">ads.example</div><div class="s">domain-suffix</div></div>
+        <div class="tx"><div class="t">doubleclick.net</div><div class="s">domain-suffix</div></div>
       </div></div>
       <div class="card"><div class="rule">
-        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
-        <div class="tx"><div class="t">ru</div><div class="s">geoip</div></div>
+        <span class="tag" style="color:var(--m-err)">BLOCK</span>
+        <div class="tx"><div class="t">googlesyndication.com</div><div class="s">domain-suffix</div></div>
       </div></div>
       <div class="card"><div class="rule">
-        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
-        <div class="tx"><div class="t">category-ru</div><div class="s">geosite</div></div>
+        <span class="tag" style="color:var(--m-pri)">PROXY</span>
+        <div class="tx"><div class="t">ip.me</div><div class="s">domain-suffix</div></div>
       </div></div>
-      <div class="hint" style="padding:12px 16px 0">Order comes from the provider too (block → proxy → direct).</div>
+      <div class="card" style="opacity:.45"><div class="rule">
+        <span class="tag" style="color:var(--m-err)">BLOCK</span>
+        <div class="tx"><div class="t">ads-extra</div><div class="s">rule list · inactive — lists are off</div></div>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Order comes from the provider too — first match wins, exactly as in our own sets.</div>
     </div></div>
-    <p class="cap"><span class="id">RoutingScreen · provider</span><b>Что именно они маршрутизируют.</b> Тот же экран, что показывает managed-политику организации, с другой подписью источника: правила только читаются, а обновление подписки их заменит — редактировать то, что перезапишется на следующем рефреше, было бы ловушкой. Порядок разбора тоже их: <code>RouteOrder: block-proxy-direct</code> ложится на наш «first match wins» без перевода. Пустые списки — обычный случай (на проверенной подписке все шесть пусты): тогда экран показывает одно направление и ни одного правила, и это честнее, чем прятать экран целиком.</p>
+    <p class="cap"><span class="id">RoutingScreen · provider</span><b>Что именно они маршрутизируют.</b> Тот же экран, что показывает managed-политику организации, с другой подписью источника: правила только читаются, а обновление подписки их заменит — редактировать то, что перезапишется на следующем рефреше, было бы ловушкой. Порядок их же: «first match wins» — то, как правила и так работают у нас, так что переводить нечего.<br><br>Правила на канвасе — с живой подписки (блок трёх рекламных доменов, <code>ip.me</code> через прокси, остальное direct), а не выдуманные. Пустой набор — тоже обычный случай: панель может прислать одно направление без исключений, и тогда экран показывает его и ни одного правила. Строка про непереведённые правила появляется только когда они были: молчание здесь означает «показано всё, что панель прислала».<br><br>Правило, зависящее от чужого списка, показано <b>погашенным с причиной</b> («inactive — lists are off»), а не спрятано. Спрятать значило бы соврать про полноту: правило в политике есть, оно просто не действует, и пользователь должен видеть, что именно он получит, если включит списки.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
+      <div class="sh" style="margin-top:8px">ROUTING</div>
+      <div class="card banner">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Split · 11 rules</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+        <div class="sep"></div>
+        <div class="row one">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">See what they route</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg>
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <svg class="icon muted"><use href="#i-doc"/></svg>
+          <div class="tx"><div class="t">Their rule lists</div><div class="s">2 lists · 412 KB · updated 2 h ago</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+      </div>
+      <div class="hint" style="padding:12px 16px 16px">Downloaded to this device and refreshed weekly. Fetched through the tunnel when it is up.</div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-err)">BLOCK</span>
+        <div class="tx"><div class="t">reject-list</div><div class="s">rule list · 38 214 entries · from your provider</div></div>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">^.*\.(ru|su)$</div><div class="s">domain-regex</div></div>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · rule lists on</span><b>Списки включены — и счётчик «not supported» исчез.</b> Именно так и должно читаться: строка не пугала абстрактной несовместимостью, а называла условие, при котором правила заработают. Теперь на её месте факты — сколько списков, сколько они занимают, когда обновлялись. Размер здесь не украшение: это чужие файлы на устройстве пользователя, и он вправе знать, сколько их.<br><br>Скачиваем <b>мы, а не ядро</b>, и это не мелочь. По исходникам mihomo (<code>hub/executor/executor.go</code>, <code>loadProvider</code>) первичная загрузка провайдеров идёт внутри <code>ApplyConfig</code> под <code>wg.Wait()</code> с таймаутом 20&nbsp;с на файл — то есть коннект встал бы на 20 секунд, ровно как это было с гео-базами. Хуже: <code>ApplyConfig</code> возвращает void, ошибку он только логирует, и упавший список превращается в правило, которое <b>молча не матчит ничего</b>. Поэтому файлы качаем сами, кладём в общий контейнер и отдаём ядру как <code>type: file</code> — тогда о провале знаем мы, а не только лог.<br><br>Правило-список показано как правило: тег действия, имя списка и число записей. Список из <code>rule-providers</code> той же подписки — не наш, поэтому подписан «from your provider» здесь же, в строке, а не только в баннере экрана.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
+      <div class="sh" style="margin-top:8px">ROUTING</div>
+      <div class="card banner">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Split · 10 rules · 1 list unavailable</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+        <div class="sep"></div>
+        <div class="row one">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">See what they route</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg>
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <svg class="icon muted"><use href="#i-doc"/></svg>
+          <div class="tx"><div class="t">Their rule lists</div><div class="s">1 of 2 downloaded · 214 KB</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+      </div>
+      <div class="card warn">
+        <div class="row"><svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+          <div class="tx"><div class="t">One list could not be downloaded</div><div class="s multi">«ads-extra» from lists.example — the rule that uses it is not applied</div></div></div>
+        <div style="display:flex;justify-content:flex-end;padding:0 16px 12px">
+          <span class="act fill" style="background:var(--m-pric);color:var(--m-onpric)">Try again</span></div>
+      </div>
+      <div class="hint" style="padding:12px 16px 0">The rest of the provider’s routes are applied as usual.</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · a list failed</span><b>Провал списка — новость, а не тишина.</b> Ядро на этом месте молчит: правило со ненайденным списком просто не совпадает ни с чем, трафик проваливается в следующее правило, и политика тихо меняется. Поэтому решение симметрично гео-правилам: правило, чьи данные не пришли, <b>не применяем и говорим об этом</b> — в сводке («1 list unavailable»), в отдельной карточке с именем списка и хостом, и с кнопкой повтора.<br><br>Остальные маршруты при этом работают: один недокачанный файл не повод выбрасывать девять исправных правил. Это ровно тот выбор, который я вынес на решение раньше — частичное применение с честным счётчиком против «всё или ничего», — и здесь он проведён до конца: частичность всегда названа, но работать не мешает.</p>
   </div>
 
   <div class="board">

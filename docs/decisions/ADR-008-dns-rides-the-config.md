@@ -139,7 +139,7 @@ A user-facing override on top remains open — it would slot into the same
 
 - Renderer (`dns` parameter, sanitation, bootstrap, fallback):
   `client/lib/core/mihomo_tun_config.dart`
-- Subscription mining: `subscriptionDns` in `client/lib/core/proxy_uri.dart`
+- Subscription mining: `subscriptionDns` in `client/lib/core/parsers/clash_config.dart`
 - Persistence and plumbing: `client/lib/core/profile.dart`,
   `client/lib/core/norm_config.dart`, `client/lib/core/config_source.dart`,
   `client/lib/state/profiles_controller.dart`,

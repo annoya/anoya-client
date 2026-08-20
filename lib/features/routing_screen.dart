@@ -22,10 +22,26 @@ import '../state/routing_status.dart';
 /// geoip/geosite included). [RoutingScreen.managed] shows a server-delivered
 /// policy read-only.
 class RoutingScreen extends ConsumerStatefulWidget {
-  const RoutingScreen.managed(Routing this.managedPolicy, {super.key}) : setId = null;
-  const RoutingScreen.editSet(String this.setId, {super.key}) : managedPolicy = null;
+  const RoutingScreen.managed(Routing this.managedPolicy,
+      {this.origin = PolicyOrigin.organization, this.listsAvailable, super.key})
+      : setId = null;
+  const RoutingScreen.editSet(String this.setId, {super.key})
+      : managedPolicy = null,
+        origin = PolicyOrigin.organization,
+        listsAvailable = null;
 
   final Routing? managedPolicy;
+
+  /// Whose policy this is. A read-only screen has to answer that before
+  /// anything else: the rules are identical whoever sent them, and only the
+  /// author decides whether the user is looking at an obligation or an offer.
+  final PolicyOrigin origin;
+
+  /// Names of the policy's rule lists this device actually holds. Null means
+  /// the user has not accepted them at all — a different thing from a download
+  /// that failed, and the row says which.
+  final Set<String>? listsAvailable;
+
   final String? setId;
 
   @override
@@ -46,6 +62,11 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
 
   bool get _isManaged => widget.managedPolicy != null;
 
+  /// Lists we actually hold, and whether the user has refused them outright.
+  /// A read-only policy is the only kind that can name them.
+  Set<String> _listNames = const {};
+  bool _listsOff = false;
+
   @override
   void initState() {
     super.initState();
@@ -57,10 +78,14 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
     if (!mounted) return;
     if (_isManaged) {
       final r = widget.managedPolicy!;
+      final held = widget.listsAvailable ?? const <String>{};
+      if (!mounted) return;
       setState(() {
         _mode = r.mode;
         _rules = List.of(r.rules);
         _geoReady = geo.downloaded;
+        _listNames = held;
+        _listsOff = widget.listsAvailable == null && r.lists.isNotEmpty;
         _loading = false;
       });
       return;
@@ -619,13 +644,15 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
   bool get _hasGeoRules => _rules.any((r) => r.needsGeoData);
 
   Widget _managedBanner(BuildContext context) {
+    final origin = widget.origin;
     return Card(
       margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
       color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
-      child: const ListTile(
-        leading: Icon(Icons.business_outlined),
-        title: Text('Managed by your organization'),
-        subtitle: Text('These rules are set on the server and cannot be changed here.'),
+      child: ListTile(
+        leading: Icon(origin.icon),
+        title: Text(origin.title),
+        subtitle: Text(origin.detail),
+        isThreeLine: origin.detail.length > 60,
       ),
     );
   }
@@ -711,15 +738,22 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
     // Kept visible rather than hidden: the set may have been authored on a
     // desktop, and silently dropping the row would look like data loss.
     final unsupported = rule.type == 'process-name' && !supportsProcessRules;
-    final inactive = noDatabase || unsupported;
+    // A list rule is only as good as the file behind it. Hiding it would claim
+    // a policy is smaller than it is; showing it as active would claim traffic
+    // is routed when nothing matches.
+    final noList = rule.needsRuleList && !_listNames.contains(rule.value);
+    final inactive = noDatabase || unsupported || noList;
     final title = rule.type == 'geoip' ? _geoipTitle(rule.value) : rule.value;
+    final kind = rule.type == 'rule-list' ? 'rule list' : rule.type;
     final subtitle = noDatabase
-        ? '${rule.type} · inactive — no database'
+        ? '$kind · inactive — no database'
         : unsupported
-            ? '${rule.type} · inactive — desktop only'
-            : rule.noResolve
-                ? '${rule.type} · no-resolve'
-                : rule.type;
+            ? '$kind · inactive — desktop only'
+            : noList
+                ? '$kind · inactive — ${_listsOff ? 'lists are off' : 'not downloaded'}'
+                : rule.noResolve
+                    ? '$kind · no-resolve'
+                    : kind;
     final cs = Theme.of(context).colorScheme;
     return Opacity(
       key: key,
@@ -811,6 +845,7 @@ class _RuleDialogState extends State<_RuleDialog> {
     'domain-exact': 'wiki.example.com',
     'ip-cidr': '10.0.0.0/8',
     'process-name': 'Slack',
+    'domain-regex': r'^.*\.example\.(com|net)$',
   };
 
   static const _typeDescriptions = {
@@ -821,6 +856,8 @@ class _RuleDialogState extends State<_RuleDialog> {
     'process-name': 'app by name',
     'geoip': 'country by IP',
     'geosite': 'domain lists',
+    'domain-regex': 'domain matches a pattern',
+    'rule-list': 'a list from your provider',
   };
 
   @override
@@ -865,7 +902,11 @@ class _RuleDialogState extends State<_RuleDialog> {
       context,
       title: 'Match',
       selected: _type,
-      options: RoutingRule.types.map((t) {
+      // rule-list is absent by design: a list rule is only meaningful next to
+      // the definition of where that list comes from, and only a provider's
+      // policy carries those. Offering it here would let the user author a
+      // rule that can never match.
+      options: RoutingRule.types.where((t) => t != 'rule-list').map((t) {
         final geoLocked = (t == 'geoip' || t == 'geosite') && !widget.geoReady;
         final unsupported = t == 'process-name' && !supportsProcessRules;
         return Option(
@@ -1116,4 +1157,33 @@ class _GeositeSheetState extends State<_GeositeSheet> {
       ),
     );
   }
+}
+
+/// Who authored a policy shown read-only, in the words its banner uses.
+class PolicyOrigin {
+  const PolicyOrigin({required this.icon, required this.title, required this.detail});
+
+  final IconData icon;
+  final String title;
+  final String detail;
+
+  /// A self-hosted deployment: the server both sets the policy and enforces it,
+  /// so there is nothing here for the user to decide.
+  static const organization = PolicyOrigin(
+    icon: Icons.business_outlined,
+    title: 'Managed by your organization',
+    detail: 'These rules are set on the server and cannot be changed here.',
+  );
+
+  /// A subscription's panel: it sent rules, and the next refresh may send
+  /// different ones, but it cannot make this device obey them (ADR-005).
+  static PolicyOrigin provider(String name, {int skipped = 0}) => PolicyOrigin(
+        icon: Icons.cloud_outlined,
+        title: 'Sent by $name',
+        detail: skipped == 0
+            ? 'Read-only. Refreshing the subscription replaces them.'
+            : 'Read-only. Refreshing the subscription replaces them. '
+                '$skipped more rule${skipped > 1 ? 's' : ''} could not be '
+                'translated for this app and ${skipped > 1 ? 'are' : 'is'} not applied.',
+      );
 }

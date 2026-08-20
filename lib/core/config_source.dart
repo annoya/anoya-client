@@ -1,6 +1,7 @@
 import '../api/api_client.dart';
 import 'profile.dart';
 import 'profile_store.dart';
+import 'rule_list_store.dart';
 import 'parsers/subscription.dart';
 import 'subscription_fetch.dart';
 
@@ -60,9 +61,27 @@ final class SubscriptionSource extends ConfigSource {
 
   @override
   Future<Profile> refresh() async {
-    final res = await fetchSubscription(profile.subscriptionUrl!);
+    // A panel that was already asked for routing and had none is not asked
+    // again on every poll; one that does publish rules is re-read every time,
+    // because rules change.
+    final probe = profile.providerRouting != null || !profile.providerRoutingProbed;
+    final res = await fetchSubscription(profile.subscriptionUrl!, probeRouting: probe);
     final parsed = parseSubscriptionBody(res.body);
     if (parsed.locations.isEmpty) return profile;
+    // Three outcomes: the panel sent routing, the panel was asked and has none,
+    // or we did not ask this time — the last keeps what it told us before,
+    // rather than silently dropping its policy.
+    final asked = res.routingProbed || profile.providerRoutingProbed;
+    final routing = res.routing?.routing ??
+        (res.routingProbed ? null : profile.providerRouting);
+    final skipped = res.routing?.skipped ??
+        (res.routingProbed ? 0 : profile.providerRoutingSkipped);
+    // Files first, profile second: the screen reads its status straight from
+    // disk, so a list that just arrived must already be there when the new
+    // profile appears.
+    if (profile.providerRuleListsEnabled && routing != null) {
+      await RuleListStore.sync(routing.lists);
+    }
     return profile.withBundle(
       locations: parsed.locations,
       account: null,
@@ -71,6 +90,9 @@ final class SubscriptionSource extends ConfigSource {
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
       unsupportedServers: parsed.unsupported,
+      providerRouting: routing,
+      providerRoutingSkipped: skipped,
+      providerRoutingProbed: asked,
       providerInfo: res.info.isEmpty ? null : res.info,
       refreshedAt: DateTime.now(),
     );

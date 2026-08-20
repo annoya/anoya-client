@@ -41,6 +41,22 @@ class SectionHeader extends StatelessWidget {
       );
 }
 
+/// Explanatory text under a section, in the muted body size the settings
+/// screens use for it.
+class SectionNote extends StatelessWidget {
+  const SectionNote(this.text, {super.key});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 0),
+        child: Text(text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                )),
+      );
+}
+
 /// A choice field that looks like the text fields next to it (same fill,
 /// radius and floating label) and opens a bottom sheet instead of a native
 /// dropdown menu — a popup menu would land over the dialog title with its own

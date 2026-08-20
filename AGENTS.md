@@ -56,7 +56,17 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    structural, so one carrying a newline adds a top-level config key
    (`external-controller` opens an unauthenticated control API). Drop, never
    escape. Pinned by `client/test/mihomo_tun_config_test.dart`.
-6. **Logs never contain secrets.** No tokens, passwords, private keys or full
+6. **The engine never fetches anything while applying a config.** Geo
+   databases and a provider's rule lists are downloaded by the app, into the
+   App Group container, and referenced as local files. mihomo will happily do
+   it itself — geo data during config *parse* (90 s per file), rule providers
+   inside `ApplyConfig` under a wait group (20 s per file) — which stalls a
+   connect, and then reports failure by only logging, leaving a rule that
+   silently matches nothing. If it is not on disk, the rule that needs it is
+   dropped and the user is told. Pinned by
+   `client/test/mihomo_tun_config_test.dart` and
+   `client/test/rule_list_store_test.dart`.
+7. **Logs never contain secrets.** No tokens, passwords, private keys or full
    config bodies in app, tunnel or engine logs. This includes error text that
    quotes them: subscription URLs, share links and engine parse errors are
    reduced to a host, a scheme or a redacted message before they are logged.
