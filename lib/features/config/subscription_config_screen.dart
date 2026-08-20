@@ -6,6 +6,7 @@ import '../../core/log.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
 import '../../state/profiles_controller.dart';
+import '../../core/rule_list_store.dart';
 import 'config_parts.dart';
 
 /// Settings of a subscription.
@@ -13,8 +14,9 @@ import 'config_parts.dart';
 /// A subscription is a feed of servers and nothing more (ADR-005): the panel on
 /// the other end controls access by changing what the URL returns, so there is
 /// no account to show and no status it could tell us. What it does have is an
-/// origin — hence the source and the refresh — and routing that stays the
-/// device's own.
+/// origin — hence the source and the refresh — and routing that is the device's
+/// own unless the panel sent rules, in which case both are offered and the user
+/// picks.
 class SubscriptionConfigScreen extends ConsumerStatefulWidget {
   const SubscriptionConfigScreen({super.key, required this.profile, required this.isActive});
 
@@ -54,6 +56,13 @@ class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScr
   @override
   Widget build(BuildContext context) {
     final p = widget.profile;
+    // Only a list the user asked for can be "missing": before the switch is on
+    // there is nothing to have failed.
+    final failedLists = p.providerRuleListsEnabled
+        ? (ref.watch(providerRuleListsProvider(p.id)).value ?? const [])
+            .where((s) => !s.available)
+            .toList()
+        : const <RuleListStatus>[];
     return Scaffold(
       appBar: AppBar(title: Text(p.name)),
       body: PageBody(
@@ -75,7 +84,23 @@ class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScr
           if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),
           if (p.deviceLimitActive) const ThisDeviceSection(),
           const SectionHeader('ROUTING'),
-          LocalRoutingCard(profile: p),
+          if (p.providerRouting != null) ...[
+            ProviderRoutingCard(profile: p),
+            if (failedLists.isNotEmpty)
+              RuleListFailureCard(profile: p, failed: failedLists),
+            // The local card stays reachable: turning the provider's routes off
+            // is only a real choice if the alternative is visible and pickable.
+            Opacity(
+              opacity: p.providerRoutingEnabled ? 0.38 : 1,
+              child: LocalRoutingCard(
+                profile: p,
+                overriddenBy: p.providerRoutingEnabled ? 'the provider’s routes' : null,
+              ),
+            ),
+            const SectionNote('Turn the switch off to use your own rule set '
+                'instead. Your provider cannot enforce this either way.'),
+          ] else
+            LocalRoutingCard(profile: p),
           ConfigActions(profile: p, isActive: widget.isActive),
         ]),
       ),

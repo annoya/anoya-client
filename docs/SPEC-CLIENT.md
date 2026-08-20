@@ -151,10 +151,10 @@ three domains of §1.1, and the domain determines what the app can offer:
 | Authentication | password or SSO, token in the Keychain | the secret in the URL | none |
 | Locations | per-user credentials from the server | a list, refreshed from the URL | one server |
 | Account state (status, quota, expiry) | yes | no | no |
-| Managed routing policy | yes, and it wins over local rules | no | no |
+| Managed routing policy | yes, and it wins over local rules | offered, and the user may switch it off | no |
 | Refresh | before every connect, plus polling | polling | never — nothing to ask |
 | Revocation | immediate, server-side | by what the panel returns next | none |
-| Local rule sets apply | only when no managed policy | yes | yes |
+| Local rule sets apply | only when no managed policy | unless the panel's routes are on | yes |
 
 Concretely: a link configuration shows no account card and no server picker; a
 subscription shows a server picker but no account; only a self-hosted one can be
@@ -245,7 +245,36 @@ the mockup, not with the code.
 Rule sets are global to the device and applied per configuration; routing is
 opt-in per configuration; a server-managed policy takes precedence and cannot be
 switched off locally. LAN-direct is a separate device-level switch that applies
-under any policy. Geo rules require the GeoIP/GeoSite databases, which the app
+under any policy.
+
+Whose rules apply is decided by one of three policy classes, not by branching:
+a self-hosted server's (unswitchable), a subscription panel's (switchable), or
+the device's own rule sets. See `client/lib/core/routing_policy.dart`.
+
+A subscription's panel may send routing of its own — as a `routing:` response
+header, as the `rules:` of a Clash body, or in the Xray rendering of the same
+subscription, which the app requests by name (`<url>/json`) rather than by
+impersonating another client. Those rules are translated into the app's model,
+never adopted wholesale: what has no equivalent here (external rule files,
+rules keyed on an inbound, a port or a sniffed protocol) is dropped and
+counted, and the count is shown, because a partial policy presented as complete
+would be worse than none. They are applied by default and attributed to the
+provider on screen, but — unlike an organization's policy — the user can switch
+them off, at which point the device's own rule set applies again: a panel
+controls what it returns, not where this device's traffic goes (ADR-005).
+
+Rule types are the client's own superset of the shared schema (like `geoip` and
+`geosite` before them): `domain-regex` maps to the engine's `DOMAIN-REGEX`, and
+`rule-list` names a file a provider hosts. Only a provider's policy can carry
+`rule-list`, and only with the configuration's **rule lists** switch on — off by
+default, because applying someone's rules and storing someone's files are
+different decisions. The app downloads those files itself into the App Group
+container and hands the engine `type: file`: mihomo's own provider fetch runs
+inside config apply, 20 s per file, and reports failure only by logging, which
+would stall a connect and then leave a rule that silently matches nothing. A
+list that did not arrive means its rule is not applied and the screen says so.
+Xray's `ext:` files stay unsupported at any setting — they live on the panel
+server's disk and have no address to fetch. Geo rules require the GeoIP/GeoSite databases, which the app
 downloads into the shared container and refreshes weekly — the engine never
 fetches them itself. `process-name` rules work on desktop only and are dropped
 before rendering elsewhere. See ADR-003.

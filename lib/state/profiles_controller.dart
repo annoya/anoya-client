@@ -17,6 +17,8 @@ import '../core/parsers/subscription.dart';
 import '../core/platform_support.dart';
 import '../core/subscription_fetch.dart';
 import '../core/routing_prefs.dart';
+import '../core/routing_policy.dart';
+import '../core/rule_list_store.dart';
 import '../core/rule_set.dart';
 import '../core/vpn_core.dart';
 import 'favorites_controller.dart';
@@ -354,11 +356,18 @@ class ProfilesController extends Notifier<ProfilesState> {
       deviceLimitActive: updated.deviceLimitActive,
       deviceLimitReached: updated.deviceLimitReached,
       unsupportedServers: updated.unsupportedServers,
+      providerRouting: updated.providerRouting,
+      providerRoutingSkipped: updated.providerRoutingSkipped,
+      providerRoutingProbed: updated.providerRoutingProbed,
       providerInfo: updated.providerInfo,
       refreshedAt: updated.refreshedAt ?? DateTime.now(),
     );
     _replaceProfile(merged);
     await ProfileStore.save(state.profiles);
+    // Pruned against every profile, not just this one: the list files are one
+    // shared directory, and pruning against a single policy would delete the
+    // files another configuration is using.
+    await RuleListStore.prune(_liveRuleLists());
     if (id == state.activeId) await syncTunnelConfig();
     return merged;
   }
@@ -372,6 +381,44 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// remembered — it comes back when routing is switched on again.
   Future<void> setRoutingEnabled(String profileId, bool enabled) =>
       _updateRouting(profileId, (p) => p.copyWith(routingEnabled: enabled));
+
+  /// Accept or refuse the routing a subscription's panel sent. Reaches the
+  /// tunnel exactly like the local switch — the rules differ only in authorship.
+  Future<void> setProviderRoutingEnabled(String profileId, bool enabled) =>
+      _updateRouting(profileId, (p) => p.copyWith(providerRoutingEnabled: enabled));
+
+  /// Accept or refuse holding the provider's rule-list files on this device.
+  ///
+  /// Turning it on downloads them before the tunnel is told anything: the
+  /// engine must never be handed a rule whose file it would have to fetch
+  /// itself, and the switch would otherwise report success while the rules it
+  /// enables still match nothing.
+  Future<void> setProviderRuleListsEnabled(String profileId, bool enabled) async {
+    await _ready;
+    final p = _byId(profileId);
+    if (p == null) return;
+    if (enabled) await syncRuleLists(profileId);
+    await _updateRouting(
+        profileId, (p) => p.copyWith(providerRuleListsEnabled: enabled));
+    if (!enabled) await RuleListStore.prune(_liveRuleLists());
+  }
+
+  /// Download whatever of a provider's lists we do not have. Also the retry
+  /// path: a list that failed is worth one more attempt on demand.
+  Future<List<RuleListStatus>> syncRuleLists(String profileId) async {
+    await _ready;
+    final lists = _byId(profileId)?.providerRouting?.lists ?? const <RuleList>[];
+    if (lists.isEmpty) return const [];
+    final status = await RuleListStore.sync(lists);
+    // A list that just arrived changes what the engine can run.
+    if (profileId == state.activeId) await _applySelection();
+    return status;
+  }
+
+  /// Every list any live configuration still refers to.
+  Iterable<RuleList> _liveRuleLists() => state.profiles
+      .where((p) => p.providerRuleListsEnabled)
+      .expand((p) => p.providerRouting?.lists ?? const <RuleList>[]);
 
   /// Routing changes reach the tunnel the same way a server switch does: hot on
   /// a live session, persisted otherwise.
@@ -480,12 +527,11 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// while the databases aren't downloaded — a rule that can't match must not
   /// stall the engine into fetching 20+ MB mid-connect.
   Future<NormConfig> _normConfig(Profile p) async {
-    // Routing is opt-in per configuration: with it off no rule set is read at
-    // all, so everything goes into the tunnel.
-    Routing routing = p.routing ??
-        (p.routingEnabled
-            ? (await RuleSetStore.byId(p.ruleSetId)).toRouting()
-            : const Routing(mode: 'full', rules: []));
+    // Whose rules apply is the policy's decision, not this method's: one of
+    // three classes answers it (ADR-005), and what is left here is the
+    // device-level trimming that applies to any of them.
+    final policy = routingPolicyFor(p, loadRuleSet: RuleSetStore.byId);
+    Routing routing = await policy.resolve();
 
     if (routing.rules.any((r) => r.needsGeoData) &&
         !(await GeoStore.status()).downloaded) {
@@ -493,6 +539,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       routing = Routing(
         mode: routing.mode,
         rules: routing.rules.where((r) => !r.needsGeoData).toList(),
+        lists: routing.lists,
       );
     }
 
@@ -504,12 +551,16 @@ class ProfilesController extends Notifier<ProfilesState> {
       routing = Routing(
         mode: routing.mode,
         rules: routing.rules.where((r) => r.type != 'process-name').toList(),
+        lists: routing.lists,
       );
     }
 
     final prefs = await RoutingPrefsStore.load();
     if (prefs.lanDirect) {
-      routing = Routing(mode: routing.mode, rules: [...kLanDirectRules, ...routing.rules]);
+      routing = Routing(
+          mode: routing.mode,
+          rules: [...kLanDirectRules, ...routing.rules],
+          lists: routing.lists);
     }
 
     return NormConfig(
