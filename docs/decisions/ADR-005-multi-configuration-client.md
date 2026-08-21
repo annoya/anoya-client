@@ -32,8 +32,8 @@ one of three domains:
   policy that overrides local rules, immediate revocation, and a re-fetch before
   every connect so all of that is enforced at the moment it matters.
 - **Subscription** — a third-party panel owns access, and the only contract is
-  one-way: a URL returns a list of servers (base64 URI list, Clash/mihomo YAML
-  or Xray JSON). No account; the panel revokes by changing what the URL returns,
+  one-way: a URL returns a list of servers in any of the four shapes the panels
+  serve (base64 URI list, Clash/mihomo YAML, Xray JSON, sing-box JSON). No account; the panel revokes by changing what the URL returns,
   so the client only polls. It may also send **routing** — as a `routing:`
   header, as a Clash `rules:` list, or in the Xray rendering of the same
   subscription — which the client applies **by default but under a switch**.
@@ -84,6 +84,16 @@ geo databases taught us (ADR-003) — and since `ApplyConfig` returns nothing, a
 failed fetch is only logged, leaving a rule that **silently matches nothing**.
 Downloading here means the outcome is known: a list that did not arrive has its
 rule left out and the screen says which list and which host.
+
+**All four formats are read, and a body that yields nothing says which kind of
+nothing it was.** Reading two of the four was invisible as a gap: an
+unparseable body produced zero servers and the message "No servers found in the
+subscription", which is a claim about the provider rather than about us and sent
+the user to check the one thing that was fine. Which template a panel serves is
+an admin's response rule keyed on User-Agent, so "ours works today" was never a
+property of the client. Now: unknown format, known format with an empty list,
+and known format whose every server needs a protocol we lack are three separate
+sentences, because they have three different fixes.
 
 **Capability degrades along that order, deliberately and visibly.** A link shows
 no account card and no server picker; a subscription shows servers but no
@@ -174,8 +184,10 @@ no business seeing.
 - `client/lib/core/routing_policy.dart` — the three policy classes.
 - `client/lib/core/rule_list_store.dart` — the provider's list files.
 - `client/lib/core/parsers/` — `share_link.dart` (single links),
-  `clash_config.dart`, `subscription.dart` (format dispatch),
-  `provider_routing.dart` (a panel's rules → our model).
+  `clash_config.dart`, `xray_config.dart`, `singbox_config.dart`,
+  `mihomo_proxy.dart` (the transport/TLS mapping all three share),
+  `subscription.dart` (format dispatch + the verdict), `provider_routing.dart`
+  (a panel's rules → our model).
 - `client/lib/core/subscription_fetch.dart` — the fetch, the device headers and
   the routing lookup.
 - `client/lib/state/profiles_controller.dart` — the list, the active profile,
@@ -183,5 +195,6 @@ no business seeing.
 - `client/lib/features/start_screen.dart` — the two ways in.
 - Tests: `client/test/parsers_test.dart`,
   `client/test/provider_routing_test.dart`, `client/test/routing_policy_test.dart`,
-  `client/test/rule_list_store_test.dart`, `client/test/config_screen_test.dart`,
+  `client/test/rule_list_store_test.dart`, `client/test/formats_test.dart`,
+  `client/test/config_screen_test.dart`,
   `client/test/settings_configurations_test.dart`, `client/test/home_layout_test.dart`.

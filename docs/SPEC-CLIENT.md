@@ -200,12 +200,29 @@ fetched keep working.
   dropped or degraded to plain tcp: the source's own count is what the user saw
   in their provider's panel, so the configuration screen reads "294 of 306
   servers" and says which protocol or transport accounts for the difference.
-- **Subscription URLs** — returning either a base64 list of those URIs or a
-  Clash/mihomo YAML document.
+- **Subscription URLs** — returning any of the four shapes the panels serve: a
+  base64 list of those URIs, a Clash/mihomo YAML document, an Xray JSON
+  subscription (a single config or an array of them, each naming itself in
+  `remarks`) or a sing-box JSON one. A Clash document may name its servers in
+  `proxy-providers` instead of carrying them; those lists are fetched over TLS,
+  and one that cannot be had is counted rather than dropped.
+  `ss://` links carry SIP003 plugins (`obfs`, `v2ray-plugin`); a plugin the
+  engine has no adapter for makes the server unsupported instead of being
+  dropped, since a server expecting obfuscation refuses a plain connection.
 - **A management server address** plus credentials, or SSO when the server
   advertises a provider.
 
 Unknown proxy types are rejected at parse time rather than at connect time.
+
+When nothing usable comes out, the app says which of three things happened,
+because they have three different fixes: the format was not one we read (the
+provider can change the template), the format was read and lists no servers at
+all (the account or its device limit is the reason), or every server in it uses
+something the engine cannot run (named, with the count). Entries whose addresses
+are all unroutable are not servers at all but a panel's message to a client it
+does not recognise — that text is shown as text and nothing is added, unless the
+device-limit headers explain them, in which case they are kept and the screen
+says why.
 
 ### 4.3 Synchronisation
 

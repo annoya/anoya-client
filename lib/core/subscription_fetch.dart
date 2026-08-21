@@ -5,6 +5,7 @@ import 'app_error.dart';
 import 'device_identity.dart';
 import 'log.dart';
 import 'parsers/provider_routing.dart';
+import 'parsers/subscription.dart';
 import 'subscription_info.dart';
 
 /// One fetch of a subscription URL: the body, plus what the panel said about
@@ -197,3 +198,38 @@ bool _flag(Map<String, String> headers, String name) {
   final v = headers[name]?.trim().toLowerCase();
   return v == 'true' || v == '1';
 }
+
+/// Fetches one `proxy-providers` list and reads the servers out of it.
+///
+/// Same rules as the subscription itself — TLS only, a timeout, a size ceiling —
+/// because it is the same kind of thing: a third party naming the servers our
+/// traffic will go to. Returns null when it cannot be had, which the caller
+/// reports rather than hides.
+Future<ParsedSubscription?> fetchProxyProvider(
+  ProxyProvider provider, {
+  http.Client? client,
+}) async {
+  if (!provider.isValid) return null;
+  final uri = Uri.parse(provider.url);
+  final c = client ?? http.Client();
+  try {
+    final res = await c.get(uri).timeout(kHttpTimeout);
+    if (res.statusCode ~/ 100 != 2) {
+      throw http.ClientException('proxy list fetch failed (${res.statusCode})');
+    }
+    if (res.bodyBytes.length > kMaxProxyListBytes) {
+      throw http.ClientException('proxy list exceeds ${kMaxProxyListBytes ~/ 1024} KB');
+    }
+    return parseSubscriptionBody(res.body);
+  } catch (e) {
+    // Host only: a provider URL can carry a token of its own.
+    Log.e('proxy list fetch failed', '${provider.name}: ${uri.host}: $e');
+    return null;
+  } finally {
+    if (client == null) c.close();
+  }
+}
+
+/// A proxy list is a few hundred entries of YAML at most. Past this it is not a
+/// proxy list any more, and we are being fed something else.
+const kMaxProxyListBytes = 4 * 1024 * 1024;

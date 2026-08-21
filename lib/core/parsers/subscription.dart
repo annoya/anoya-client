@@ -2,6 +2,8 @@ import '../log.dart';
 import '../norm_config.dart';
 import 'base64_text.dart';
 import 'clash_config.dart';
+import 'singbox_config.dart';
+import 'xray_config.dart';
 import 'share_link.dart';
 
 /// The DNS a Clash-YAML body declares is a property of the subscription, not of
@@ -31,6 +33,8 @@ class ParsedSubscription {
   const ParsedSubscription({
     required this.locations,
     this.unsupported = const {},
+    this.providers = const [],
+    this.format = SubscriptionFormat.unknown,
   });
 
   final List<Location> locations;
@@ -41,12 +45,33 @@ class ParsedSubscription {
   /// look up.
   final Map<String, int> unsupported;
 
+  /// Server lists this body points at instead of carrying. Fetched and merged
+  /// by the caller — see [ProxyProvider].
+  final List<ProxyProvider> providers;
+
+  /// Which shape this body turned out to be. Needed for the message when there
+  /// is nothing usable in it: "we could not read this" and "we read it and
+  /// cannot run any of it" send the user to two different places.
+  final SubscriptionFormat format;
+
   int get unsupportedCount => unsupported.values.fold(0, (a, b) => a + b);
 
   /// How many servers the body offered, ours and not.
   int get total => locations.length + unsupportedCount;
 
   bool get hasUnsupported => unsupported.isNotEmpty;
+
+  /// Every entry points nowhere — the shape a panel uses to say something to a
+  /// client it does not want to serve: valid links whose addresses are
+  /// unroutable and whose *names* are the message.
+  ///
+  /// Only meaningful when there is at least one entry: an empty list is not a
+  /// message, it is an empty list.
+  bool get allPlaceholders =>
+      locations.isNotEmpty && locations.every((l) => _isUnroutable('${l.proxy['server']}'));
+
+  /// The text such a panel sent, which is the entries' own names.
+  List<String> get placeholderLines => locations.map((l) => l.label).toList();
 
   /// "hysteria2, tuic" — for saying which, not how many.
   String get unsupportedList {
@@ -55,8 +80,36 @@ class ParsedSubscription {
   }
 }
 
-/// Parse a subscription body: Clash/mihomo YAML (has `proxies:`) or a (usually
-/// base64-encoded) newline/whitespace-separated list of share links.
+/// The shapes a panel can answer with. All four of the template families the
+/// panels ship (base64 links, Clash/mihomo, Xray JSON, sing-box) plus the one
+/// that matters most for the message: none of them.
+enum SubscriptionFormat {
+  links,
+  clash,
+  xray,
+  singbox,
+
+  /// Not a server list we can read. An HTML error page, a format we have no
+  /// parser for, or a body that is simply not what its provider thinks it is.
+  unknown;
+
+  /// What the user is told it was. Only reached when nothing usable came out,
+  /// so it names the format rather than describing it.
+  String get label => switch (this) {
+        SubscriptionFormat.links => 'a link list',
+        SubscriptionFormat.clash => 'a Clash / mihomo subscription',
+        SubscriptionFormat.xray => 'an Xray JSON subscription',
+        SubscriptionFormat.singbox => 'a sing-box subscription',
+        SubscriptionFormat.unknown => 'something unrecognised',
+      };
+}
+
+/// Parse a subscription body in whichever of the four formats it is.
+///
+/// Order is by how cheaply a format identifies itself, and every parser returns
+/// null rather than guessing: `proxies:` makes it Clash, `protocol` inside
+/// `outbounds` makes it Xray, `type` inside `outbounds` makes it sing-box, and
+/// a `://` anywhere makes it a link list.
 ParsedSubscription parseSubscriptionBody(String body) {
   final trimmed = body.trim();
   if (trimmed.isEmpty) return const ParsedSubscription(locations: []);
@@ -68,6 +121,13 @@ ParsedSubscription parseSubscriptionBody(String body) {
   // Clash/mihomo YAML?
   final clash = parseClashProxies(trimmed);
   if (clash != null) return clash;
+
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    final xray = parseXrayServers(trimmed);
+    if (xray != null) return xray;
+    final singbox = parseSingboxServers(trimmed);
+    if (singbox != null) return singbox;
+  }
 
   // Otherwise a link list — possibly base64-wrapped.
   var text = trimmed;
@@ -94,7 +154,16 @@ ParsedSubscription parseSubscriptionBody(String body) {
       unsupported[why] = (unsupported[why] ?? 0) + 1;
     }
   }
-  return ParsedSubscription(locations: out, unsupported: unsupported);
+  return ParsedSubscription(
+    locations: out,
+    unsupported: unsupported,
+    // A body with no link and nothing recognisable in it is not "an empty link
+    // list", it is a body we failed to identify — and the difference is the
+    // whole point of the message the user gets.
+    format: out.isEmpty && unsupported.isEmpty
+        ? SubscriptionFormat.unknown
+        : SubscriptionFormat.links,
+  );
 }
 
 /// Just the servers, for the callers that only need those.
@@ -150,3 +219,33 @@ DetectedInput? detectInput(String raw) {
           serverCount: locs.length);
 }
 
+/// Addresses that cannot be dialed anywhere. A server on one of these was
+/// never meant to be connected to.
+bool _isUnroutable(String host) {
+  final h = host.trim().toLowerCase();
+  return h == '0.0.0.0' ||
+      h == '127.0.0.1' ||
+      h == 'localhost' ||
+      h == '::' ||
+      h == '::1' ||
+      h.startsWith('127.');
+}
+
+/// A server list a Clash document points at rather than carrying.
+///
+/// The engine can fetch these itself and, as with rule lists, is not allowed
+/// to: it would do it while applying a config and report failure by logging
+/// (ADR-005). We fetch them, so an unreachable list is a fact we can state.
+class ProxyProvider {
+  const ProxyProvider({required this.name, required this.url});
+
+  final String name;
+  final String url;
+
+  /// Over TLS or not at all: this list decides which servers the user's traffic
+  /// goes to, so it does not arrive over a channel anyone can rewrite.
+  bool get isValid {
+    final uri = Uri.tryParse(url);
+    return name.isNotEmpty && uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
+  }
+}

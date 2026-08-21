@@ -2585,6 +2585,38 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Add a connection</span></div>
+      <div class="card warn" style="margin-top:8px"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">Couldn’t read this subscription</div><div class="s multi">Your provider sent a format this app does not recognise.</div></div>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Understood formats: base64 link list, Clash / mihomo, Xray JSON, sing-box. Nothing was added.</div>
+      <div style="padding:16px">
+        <div class="btn out"><svg class="icon s"><use href="#i-link"/></svg>Open subscription page</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen · error · unreadable format</span><b>«No servers found» — это было неправдой.</b> Сейчас тело, которое мы не умеем читать, даёт ровно такое сообщение: серверы там есть, просто в формате, который мы не разбираем, и пользователь идёт проверять ссылку — единственное, что в порядке. Панель отдаёт формат по своему правилу для User-Agent, так что «сегодня приходит base64» ничего не гарантирует.<br><br>Поэтому сообщение называет причину и перечисляет, что мы понимаем: список ссылок в base64, Clash/mihomo, Xray JSON, sing-box. Это не для разработчика — с этим списком человек идёт к провайдеру и просит нужный шаблон, а не угадывает. Кнопка ведёт на страницу подписки, где формат обычно и выбирается.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Add a connection</span></div>
+      <div class="card warn" style="margin-top:8px"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">None of the 15 servers can run here</div><div class="s multi">They use tuic and wireguard, which this app cannot run yet.</div></div>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Nothing was added. A subscription with even one supported server would have been.</div>
+      <div style="padding:16px">
+        <div class="btn out"><svg class="icon s"><use href="#i-link"/></svg>Open subscription page</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen · error · nothing we can run</span><b>Формат прочли, запускать нечего.</b> Отличается от предыдущего одним, но важным: мы поняли тело и посчитали серверы — значит можем назвать и их число, и протоколы. Это тот же счётчик, что живёт в карточке «N of M servers unsupported» на экране конфигурации; здесь он просто вырос до всех.<br><br>Вторая строка подсказки существует, чтобы снять вопрос «а почему вообще не добавилось»: одного поддерживаемого сервера хватило бы, и тогда остальные ушли бы в счётчик. Порог не «сколько-то процентов», а «хотя бы один» — иначе пришлось бы объяснять произвольное число.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
       <div class="card" style="margin-top:8px"><div class="row">
         <svg class="icon muted"><use href="#i-folder"/></svg>
