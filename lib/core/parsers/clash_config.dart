@@ -14,14 +14,17 @@ import 'subscription.dart';
 /// (AGENTS invariant 5) lives in this file and not in the renderer alone.
 
 ParsedSubscription? parseClashProxies(String body) {
-  if (!RegExp(r'(^|\n)\s*proxies\s*:').hasMatch(body)) return null;
+  final hasProxies = RegExp(r'(^|\n)\s*proxies\s*:').hasMatch(body);
+  final hasProviders = RegExp(r'(^|\n)\s*proxy-providers\s*:').hasMatch(body);
+  if (!hasProxies && !hasProviders) return null;
   try {
     final doc = loadYaml(body);
-    if (doc is! Map || doc['proxies'] is! List) return null;
+    if (doc is! Map) return null;
+    if (doc['proxies'] is! List && doc['proxy-providers'] is! Map) return null;
     final out = <Location>[];
     final unsupported = <String, int>{};
     var i = 0;
-    for (final p in (doc['proxies'] as List)) {
+    for (final p in (doc['proxies'] as List? ?? const [])) {
       final m = _deepConvert(p);
       if (m is! Map<String, dynamic> || m['type'] == null || m['server'] == null) continue;
       final type = m['type'].toString();
@@ -35,14 +38,42 @@ ParsedSubscription? parseClashProxies(String body) {
       final name = m['name']?.toString() ?? '${m['server']}:${m['port']}';
       out.add(Location(id: 'sub_${i++}_${shortDigest(name)}', label: name, proxy: m));
     }
-    if (out.isEmpty && unsupported.isEmpty) return null;
-    return ParsedSubscription(locations: out, unsupported: unsupported);
+    final providers = _proxyProviders(doc['proxy-providers']);
+    // No early return on an empty result: a document with `proxies: []` is
+    // recognisably Clash, and a panel does answer that way (an expired account,
+    // a full device limit). Calling it "a format we cannot read" would send the
+    // user to fix the one thing that is not wrong.
+    return ParsedSubscription(
+      locations: out,
+      unsupported: unsupported,
+      providers: providers,
+      format: SubscriptionFormat.clash,
+    );
   } catch (e) {
     Log.e('clash yaml parse failed', '$e');
     return null;
   }
 }
 
+
+/// Reads `proxy-providers:` — server lists the document does not carry itself
+/// but points at.
+///
+/// Declared here, fetched by the layer that owns the network: a parser that
+/// starts making requests is a parser you cannot test without one. Only remote
+/// providers survive — `file` points at the author's own disk, and `inline`
+/// carries its payload in a document we did not receive.
+List<ProxyProvider> _proxyProviders(Object? node) {
+  if (node is! Map) return const [];
+  final out = <ProxyProvider>[];
+  node.forEach((name, spec) {
+    if (spec is! Map) return;
+    if ('${spec['type']}' != 'http') return;
+    final p = ProxyProvider(name: '$name', url: '${spec['url'] ?? ''}');
+    if (p.isValid) out.add(p);
+  });
+  return out;
+}
 
 /// Resolvers a Clash/mihomo-YAML subscription ships in `dns.nameserver`;
 /// empty for link lists and anything unparseable. Mined separately from the

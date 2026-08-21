@@ -180,9 +180,21 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// Add a subscription by URL (fetched now and on the poll timer).
   Future<void> addSubscriptionUrl(String name, String url) async {
     final res = await fetchSubscription(url);
-    final parsed = parseSubscriptionBody(res.body);
+    var parsed = parseSubscriptionBody(res.body);
+    if (parsed.providers.isNotEmpty) parsed = await withProxyProviders(parsed);
+    final page = res.info.webPageUrl.isNotEmpty ? res.info.webPageUrl : url;
     if (parsed.locations.isEmpty) {
-      throw const FormatException('No servers found in the subscription.');
+      throw SubscriptionFormatException(_whyNothingUsable(parsed), openUrl: page);
+    }
+    // Placeholders are servers only when the panel told us why it sent them: a
+    // full device limit is a state the app shows and keeps (the entries carry
+    // the panel's message). Without that signal they are just text, and adding
+    // locations that can never connect would be the app's own invention.
+    if (parsed.allPlaceholders && !res.deviceLimitReached) {
+      throw SubscriptionFormatException(
+        providerMessageInstead(parsed.placeholderLines),
+        openUrl: page,
+      );
     }
     // The panel's own name for the subscription beats a hostname, and the user's
     // beats both — they typed it on purpose.
@@ -199,9 +211,28 @@ class ProfilesController extends Notifier<ProfilesState> {
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
       unsupportedServers: parsed.unsupported,
+      // The panel's routing was already fetched with the body; without this it
+      // would only appear after the first poll, which reads as the app losing it.
+      providerRouting: res.routing?.routing,
+      providerRoutingSkipped: res.routing?.skipped ?? 0,
+      providerRoutingProbed: res.routingProbed,
       providerInfo: res.info.isEmpty ? null : res.info,
       refreshedAt: DateTime.now(),
     ));
+  }
+
+  /// Which of the two "nothing usable" problems this was. They send the user to
+  /// different places — one to their provider for a different template, the
+  /// other to a client that speaks the protocols theirs uses.
+  AppError _whyNothingUsable(ParsedSubscription parsed) {
+    if (parsed.hasUnsupported) {
+      return noRunnableServers(parsed.total, parsed.unsupportedList);
+    }
+    // Read it and found nothing, versus could not read it at all: the first is
+    // the provider's answer, the second is the format.
+    return parsed.format == SubscriptionFormat.unknown
+        ? kUnreadableSubscription
+        : emptySubscription(parsed.format.label);
   }
 
   /// Add from pasted text or a file's contents: a single share link becomes a
@@ -211,7 +242,14 @@ class ProfilesController extends Notifier<ProfilesState> {
     final parsed = parseSubscriptionBody(text);
     final locations = parsed.locations;
     if (locations.isEmpty) {
-      throw const FormatException('No valid vless://vmess://trojan://ss:// link or subscription found.');
+      // Pasted text that is not a link at all keeps the generic message: at
+      // that point "we could not read this format" would be pedantic about
+      // something the user can see is a typo.
+      if (parsed.format == SubscriptionFormat.unknown && !text.contains('://')) {
+        throw const FormatException(
+            'No valid vless://vmess://trojan://ss:// link or subscription found.');
+      }
+      throw SubscriptionFormatException(_whyNothingUsable(parsed));
     }
     final single = locations.length == 1;
     await _append(Profile(

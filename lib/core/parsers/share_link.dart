@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../log.dart';
 import '../norm_config.dart';
 import 'base64_text.dart';
+import 'mihomo_proxy.dart';
 
 /// Share links: `vless://`, `vmess://`, `trojan://`, `ss://`.
 ///
@@ -85,7 +86,7 @@ ShareLink _parseVless(String s) {
   final sni = q['sni'] ?? q['host'];
   if (tls && sni != null && sni.isNotEmpty) proxy['servername'] = sni;
   if (q['fp'] != null && q['fp']!.isNotEmpty) proxy['client-fingerprint'] = q['fp'];
-  _applyAlpn(proxy, q['alpn']);
+  applyAlpn(proxy, q['alpn']);
   if (security == 'reality') {
     final r = <String, dynamic>{};
     if (q['pbk'] != null) r['public-key'] = q['pbk'];
@@ -96,9 +97,9 @@ ShareLink _parseVless(String s) {
     proxy['reality-opts'] = r;
   }
   if (q['allowInsecure'] == '1' || q['insecure'] == '1') proxy['skip-cert-verify'] = true;
-  final skip = _applyTransport(proxy, network, q, protocol: 'vless');
+  final skip = applyTransport(proxy, network, q, protocol: 'vless');
   if (skip != null) return ShareLink.unsupported(skip);
-  return ShareLink.server(_loc(s, _label(_safeDecode(u.fragment), u.host, u.port), proxy));
+  return ShareLink.server(locationFor(s, labelOr(safeDecode(u.fragment), u.host, u.port), proxy));
 }
 
 ShareLink _parseVmess(String s) {
@@ -119,16 +120,16 @@ ShareLink _parseVmess(String s) {
   };
   final sni = str('sni').isNotEmpty ? str('sni') : str('host');
   if (tls && sni.isNotEmpty) proxy['servername'] = sni;
-  _applyAlpn(proxy, str('alpn'));
+  applyAlpn(proxy, str('alpn'));
   // A vmess payload names the same things a URI query does, under its own keys.
-  final skip = _applyTransport(proxy, net, {
+  final skip = applyTransport(proxy, net, {
     'path': str('path'),
     'host': str('host'),
     'serviceName': str('path'), // grpc service name lives in `path` here
     'headerType': str('type'),
   }, protocol: 'vmess');
   if (skip != null) return ShareLink.unsupported(skip);
-  return ShareLink.server(_loc(s, _label(str('ps'), str('add'), _int(json['port'])), proxy));
+  return ShareLink.server(locationFor(s, labelOr(str('ps'), str('add'), _int(json['port'])), proxy));
 }
 
 ShareLink _parseTrojan(String s) {
@@ -146,11 +147,11 @@ ShareLink _parseTrojan(String s) {
   final sni = q['sni'] ?? q['peer'];
   if (sni != null && sni.isNotEmpty) proxy['sni'] = sni;
   if (q['fp'] != null && q['fp']!.isNotEmpty) proxy['client-fingerprint'] = q['fp'];
-  _applyAlpn(proxy, q['alpn']);
+  applyAlpn(proxy, q['alpn']);
   if (q['allowInsecure'] == '1' || q['insecure'] == '1') proxy['skip-cert-verify'] = true;
-  final skip = _applyTransport(proxy, network, q, protocol: 'trojan');
+  final skip = applyTransport(proxy, network, q, protocol: 'trojan');
   if (skip != null) return ShareLink.unsupported(skip);
-  return ShareLink.server(_loc(s, _label(_safeDecode(u.fragment), u.host, u.port), proxy));
+  return ShareLink.server(locationFor(s, labelOr(safeDecode(u.fragment), u.host, u.port), proxy));
 }
 
 ShareLink _parseShadowsocks(String s) {
@@ -190,7 +191,73 @@ ShareLink _parseShadowsocks(String s) {
     'password': password,
     'udp': true,
   };
-  return ShareLink.server(_loc(s, _label(frag, host, port), proxy));
+  // SIP003 plugin, if any. It is not decoration: a server behind obfuscation
+  // refuses a plain connection, so a dropped plugin is a listed server that
+  // always fails — which is why an unknown one is reported instead.
+  final query = body.contains('?') ? body.substring(body.indexOf('?') + 1) : '';
+  final plugin = Uri.splitQueryString(query)['plugin'] ?? '';
+  if (plugin.isNotEmpty) {
+    final skip = _applySsPlugin(proxy, plugin);
+    if (skip != null) return ShareLink.unsupported(skip);
+  }
+  return ShareLink.server(locationFor(s, labelOr(frag, host, port), proxy));
+}
+
+/// Translates a SIP003 `plugin=` into mihomo's `plugin` / `plugin-opts`.
+///
+/// The wire format is `name;k=v;flag`, and the two plugins the engine has
+/// adapters for spell their options differently from the URI (`obfs-local`'s
+/// `obfs=http` is mihomo's `mode: http`). Returns null on success, otherwise
+/// the name to count as unsupported.
+String? _applySsPlugin(Map<String, dynamic> proxy, String spec) {
+  final parts = spec.split(';');
+  final name = parts.first.trim();
+  final opts = <String, String>{};
+  for (final part in parts.skip(1)) {
+    if (part.isEmpty) continue;
+    final i = part.indexOf('=');
+    if (i < 0) {
+      opts[part.trim()] = 'true';
+    } else {
+      opts[part.substring(0, i).trim()] = part.substring(i + 1).trim();
+    }
+  }
+
+  switch (name) {
+    // simple-obfs, under the three names it ships as.
+    case 'obfs-local':
+    case 'simple-obfs':
+    case 'obfs':
+      final mode = opts['obfs'] ?? '';
+      // The engine accepts these two and errors on anything else, so a third
+      // value is refused here rather than at dial time.
+      if (mode != 'http' && mode != 'tls') return 'ss+obfs ($mode)';
+      proxy['plugin'] = 'obfs';
+      proxy['plugin-opts'] = {
+        'mode': mode,
+        if ((opts['obfs-host'] ?? '').isNotEmpty) 'host': opts['obfs-host'],
+      };
+      return null;
+
+    case 'v2ray-plugin':
+      // websocket is the only mode the engine implements.
+      final mode = opts['mode'] ?? 'websocket';
+      if (mode != 'websocket') return 'ss+v2ray-plugin ($mode)';
+      proxy['plugin'] = 'v2ray-plugin';
+      proxy['plugin-opts'] = {
+        'mode': 'websocket',
+        if ((opts['host'] ?? '').isNotEmpty) 'host': opts['host'],
+        if ((opts['path'] ?? '').isNotEmpty) 'path': opts['path'],
+        if (opts.containsKey('tls')) 'tls': true,
+      };
+      return null;
+
+    default:
+      // shadow-tls, kcptun, restls and friends: mihomo has adapters for some,
+      // but each needs its own option mapping, and guessing produces a server
+      // that fails at connect.
+      return 'ss+$name';
+  }
 }
 
 
@@ -225,166 +292,8 @@ ShareLink _parseHysteria2(String s) {
   final ports = q['ports'] ?? q['mport'];
   if (ports != null && ports.isNotEmpty) proxy['ports'] = ports;
   if ((q['pinSHA256'] ?? '').isNotEmpty) proxy['fingerprint'] = q['pinSHA256'];
-  return ShareLink.server(_loc(s, _label(_safeDecode(u.fragment), u.host, u.port), proxy));
+  return ShareLink.server(locationFor(s, labelOr(safeDecode(u.fragment), u.host, u.port), proxy));
 }
-
-/// ALPN is a list in the engine and comma-separated in a URI. Dropping it is
-/// not harmless: a server that expects h3 or h2 refuses the handshake outright
-/// when the client offers something else.
-void _applyAlpn(Map<String, dynamic> proxy, String? raw) {
-  final alpn = (raw ?? '').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-  if (alpn.isNotEmpty) proxy['alpn'] = alpn;
-}
-
-// --- helpers ---
-
-/// Which transports each protocol can actually run, per the engine's own
-/// adapters: vless and vmess carry the full set, trojan only ws and grpc.
-/// Declared rather than discovered, because emitting a transport the engine
-/// rejects turns a listed server into one that fails at connect time.
-const _transportsByProtocol = {
-  'vless': {'', 'tcp', 'ws', 'httpupgrade', 'grpc', 'http', 'h2', 'xhttp'},
-  'vmess': {'', 'tcp', 'ws', 'httpupgrade', 'grpc', 'http', 'h2'},
-  'trojan': {'', 'tcp', 'ws', 'httpupgrade', 'grpc'},
-};
-
-/// Fills in the transport section, or names what stopped it.
-///
-/// A share link's `type=` is the transport, and the engine expresses several of
-/// them differently from the URI: `headerType=http` on tcp is the engine's
-/// `http` network, and `httpupgrade` is a websocket with a flag. Getting that
-/// mapping wrong is invisible until a connection fails, so the ones we cannot
-/// express are reported as unsupported instead of silently degraded to plain
-/// tcp — which is what a dropped transport used to become.
-///
-/// Returns null on success, otherwise the transport's name for the count the
-/// user is shown.
-String? _applyTransport(
-  Map<String, dynamic> proxy,
-  String net,
-  Map<String, String> q, {
-  required String protocol,
-}) {
-  final allowed = _transportsByProtocol[protocol];
-  if (allowed != null && !allowed.contains(net)) return net.isEmpty ? 'tcp' : net;
-
-  final path = q['path'] ?? '';
-  final host = q['host'] ?? '';
-
-  switch (net) {
-    case '':
-    case 'tcp':
-      // Plain tcp needs nothing. With an HTTP header it is a different network
-      // in the engine, and the obfuscation is what the server expects.
-      if ((q['headerType'] ?? '') == 'http') {
-        proxy['network'] = 'http';
-        final opts = <String, dynamic>{};
-        if (path.isNotEmpty) opts['path'] = [path]; // a list in the engine
-        if (host.isNotEmpty) opts['headers'] = {'Host': [host]};
-        proxy['http-opts'] = opts;
-      }
-      return null;
-
-    case 'ws':
-    case 'httpupgrade':
-      final ws = <String, dynamic>{};
-      if (path.isNotEmpty) ws['path'] = path;
-      if (host.isNotEmpty) ws['headers'] = {'Host': host};
-      if (net == 'httpupgrade') {
-        // The engine has no separate httpupgrade network: it is a websocket
-        // that skips the WebSocket handshake, which is exactly what this flag
-        // does. (Remnawave's own mihomo output maps it the same way.)
-        proxy['network'] = 'ws';
-        ws['v2ray-http-upgrade'] = true;
-        ws['v2ray-http-upgrade-fast-open'] = true;
-      }
-      if (ws.isNotEmpty) proxy['ws-opts'] = ws;
-      return null;
-
-    case 'grpc':
-      final name = q['serviceName'] ?? '';
-      if (name.isNotEmpty) proxy['grpc-opts'] = {'grpc-service-name': name};
-      return null;
-
-    case 'h2':
-      final opts = <String, dynamic>{};
-      if (path.isNotEmpty) opts['path'] = path;
-      if (host.isNotEmpty) opts['host'] = [host];
-      if (opts.isNotEmpty) proxy['h2-opts'] = opts;
-      return null;
-
-    case 'xhttp':
-      // `extra` carries tuning (padding, xmux) plus, sometimes, a second
-      // channel for downloads. Tuning we can leave at the engine's defaults;
-      // a split download channel changes the topology, and dialing one channel
-      // when the server expects two fails in a way no message would explain.
-      if (_xhttpHasDownloadSettings(q['extra'])) return 'xhttp (split download)';
-      final opts = <String, dynamic>{};
-      if (path.isNotEmpty) opts['path'] = path;
-      if (host.isNotEmpty) opts['host'] = host;
-      final mode = q['mode'] ?? '';
-      if (mode.isNotEmpty) opts['mode'] = mode;
-      proxy['xhttp-opts'] = opts;
-      return null;
-
-    default:
-      // kcp, quic and whatever comes next: the engine has no adapter, and the
-      // panels that emit them filter them out for engine-based clients anyway.
-      return net;
-  }
-}
-
-bool _xhttpHasDownloadSettings(String? extra) {
-  if (extra == null || extra.isEmpty) return false;
-  try {
-    final j = jsonDecode(extra);
-    return j is Map && j['downloadSettings'] != null;
-  } catch (_) {
-    // Unreadable extra is not a reason to refuse the server; the fields it
-    // carries are optional to begin with.
-    return false;
-  }
-}
-
-/// Builds the Location, rejecting a proxy the engine could not dial anyway.
-/// Every parser funnels through here, so "server and port are sane" holds for
-/// anything that reaches the renderer — a port of 0 (what a malformed vmess
-/// `port` decodes to) would otherwise ship as a config the engine accepts and
-/// silently cannot use.
-Location _loc(String uri, String label, Map<String, dynamic> proxy) {
-  final server = (proxy['server'] as String?)?.trim() ?? '';
-  final port = proxy['port'] as int? ?? 0;
-  if (server.isEmpty) throw const FormatException('no server');
-  if (port < 1 || port > 65535) throw FormatException('port out of range: $port');
-  proxy['server'] = _bareHost(server);
-  return Location(id: 'link_${shortDigest(uri)}', label: label, proxy: proxy);
-}
-
-/// An IPv6 literal reaches us bracketed in the URI forms that carry host:port
-/// as text (ss://). mihomo brackets it itself when dialing, so leaving them in
-/// produces "[[::1]]:443" — strip them here, where every parser passes.
-String _bareHost(String host) => host.startsWith('[') && host.endsWith(']')
-    ? host.substring(1, host.length - 1)
-    : host;
-
-String _label(String frag, String host, int port) {
-  final f = frag.trim();
-  return f.isNotEmpty ? f : '$host:$port';
-}
-
-
-/// URI fragments are percent-encoded UTF-8 (remarks often carry a flag emoji +
-/// spaces). `Uri.fragment` returns the raw encoded form, so decode it here;
-/// fall back to the raw string if it isn't valid percent-encoding.
-String _safeDecode(String s) {
-  try {
-    return Uri.decodeComponent(s);
-  } catch (_) {
-    return s;
-  }
-}
-
-
 
 int _int(dynamic v) => v is int ? v : int.tryParse('$v') ?? 0;
 

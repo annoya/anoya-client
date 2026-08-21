@@ -1,4 +1,5 @@
 import '../api/api_client.dart';
+import 'log.dart';
 import 'profile.dart';
 import 'profile_store.dart';
 import 'rule_list_store.dart';
@@ -66,8 +67,21 @@ final class SubscriptionSource extends ConfigSource {
     // because rules change.
     final probe = profile.providerRouting != null || !profile.providerRoutingProbed;
     final res = await fetchSubscription(profile.subscriptionUrl!, probeRouting: probe);
-    final parsed = parseSubscriptionBody(res.body);
+    var parsed = parseSubscriptionBody(res.body);
+    // A Clash document may name its servers elsewhere. Merged before anything
+    // else looks at the result, so "how many servers does this subscription
+    // have" has one answer.
+    if (parsed.providers.isNotEmpty) parsed = await withProxyProviders(parsed);
     if (parsed.locations.isEmpty) return profile;
+    // Placeholders replace real servers only when the panel said why (a full
+    // device limit — then the entries are its message and the screen explains
+    // them). Otherwise the servers we already have are better than text that
+    // cannot connect.
+    if (parsed.allPlaceholders && !res.deviceLimitReached) {
+      Log.e('subscription refresh ignored',
+          '${Uri.parse(profile.subscriptionUrl!).host} sent placeholders only');
+      return profile;
+    }
     // Three outcomes: the panel sent routing, the panel was asked and has none,
     // or we did not ask this time — the last keeps what it told us before,
     // rather than silently dropping its policy.
@@ -97,6 +111,32 @@ final class SubscriptionSource extends ConfigSource {
       refreshedAt: DateTime.now(),
     );
   }
+}
+
+/// Fetches every `proxy-providers` list a document points at and folds the
+/// servers in.
+///
+/// A list that cannot be fetched is counted, not silently skipped: the user
+/// counted servers in their provider's panel, and a smaller number here with no
+/// reason reads as the app losing them.
+Future<ParsedSubscription> withProxyProviders(ParsedSubscription parsed) async {
+  final locations = [...parsed.locations];
+  final unsupported = {...parsed.unsupported};
+  for (final provider in parsed.providers) {
+    final fetched = await fetchProxyProvider(provider);
+    if (fetched == null) {
+      unsupported.update('unreachable list (${provider.name})', (n) => n + 1,
+          ifAbsent: () => 1);
+      continue;
+    }
+    locations.addAll(fetched.locations);
+    fetched.unsupported.forEach((k, v) => unsupported.update(k, (n) => n + v, ifAbsent: () => v));
+  }
+  return ParsedSubscription(
+    locations: locations,
+    unsupported: unsupported,
+    format: parsed.format,
+  );
 }
 
 /// Link / imported text: a static snapshot with no origin to re-pull.
