@@ -4,9 +4,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../core/app_error.dart';
 import '../core/log.dart';
 import '../core/parsers/subscription.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
 import 'sign_in_screen.dart';
@@ -42,7 +45,18 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     return Uri.tryParse(text)?.host.isNotEmpty == true ? Uri.parse(text).host : null;
   }
 
-  void _onChanged(String v) => setState(() => _detected = detectInput(v));
+  /// A body the panel answered with that we could not turn into servers.
+  ///
+  /// Shown inline rather than in the error dialog, because it is not a failure
+  /// the user can fix by retyping: it needs reading, and often a visit to the
+  /// provider's page. A modal that has to be dismissed to see the field again
+  /// would hide the one action that helps.
+  SubscriptionFormatException? _rejected;
+
+  void _onChanged(String v) => setState(() {
+        _detected = detectInput(v);
+        _rejected = null;
+      });
 
   /// The action returns true when a configuration was actually added; false
   /// means the user backed out (cancelled a picker) — the screen must stay,
@@ -58,6 +72,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       // First run: app.dart swaps to Home when a profile appears. Pushed from
       // home/settings: unwind whatever is above the root.
       if (added && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+    } on SubscriptionFormatException catch (e) {
+      Log.e('add configuration rejected', e.error.title);
+      if (mounted) setState(() => _rejected = e);
     } catch (e) {
       Log.e('add configuration failed', '$e');
       if (mounted) showErrorDialog(context, describeError(e, subject: _subject()));
@@ -93,7 +110,14 @@ class _StartScreenState extends ConsumerState<StartScreen> {
         try {
           await _ctrl.authConfig(t);
         } catch (_) {
-          if (mounted) showErrorDialog(context, describeError(fe, subject: _subject()));
+          if (!mounted) return;
+          // A panel that answered with something unusable gets the inline card;
+          // anything else is a plain error.
+          if (fe is SubscriptionFormatException) {
+            setState(() => _rejected = fe);
+          } else {
+            showErrorDialog(context, describeError(fe, subject: _subject()));
+          }
           return;
         }
         if (mounted) {
@@ -154,6 +178,13 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                           .bodySmall
                           ?.copyWith(color: cs.onSurfaceVariant)),
                   const SizedBox(height: 20),
+                  if (_rejected != null) ...[
+                    _RejectedCard(
+                      failure: _rejected!,
+                      onClose: () => setState(() => _rejected = null),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   TextField(
                     controller: _input,
                     minLines: 1,
@@ -216,6 +247,53 @@ class _StartScreenState extends ConsumerState<StartScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// What the panel answered with, when it was not servers.
+///
+/// A warning, not an error: nothing is broken on this device, and the text is
+/// often the provider's own words. The action is the provider's page — the one
+/// place where the format or the plan can actually be changed.
+class _RejectedCard extends StatelessWidget {
+  const _RejectedCard({required this.failure, required this.onClose});
+
+  final SubscriptionFormatException failure;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final warn = context.vpnColors.connecting;
+    final url = failure.openUrl;
+    return Card(
+      margin: EdgeInsets.zero,
+      color: warn.withValues(alpha: 0.12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        ListTile(
+          leading: Icon(Icons.warning_amber_outlined, color: warn),
+          title: Text(failure.error.title),
+          subtitle: failure.error.detail == null ? null : Text(failure.error.detail!),
+          isThreeLine: failure.error.detail != null,
+          trailing: IconButton(
+            icon: const Icon(Icons.close, size: 20),
+            tooltip: 'Dismiss',
+            color: cs.onSurfaceVariant,
+            onPressed: onClose,
+          ),
+        ),
+        if (url != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.link, size: 18),
+              label: const Text('Open subscription page'),
+              onPressed: () => launchUrl(Uri.parse(url),
+                  mode: LaunchMode.externalApplication),
+            ),
+          ),
+      ]),
     );
   }
 }

@@ -44,6 +44,68 @@ const kDeviceLimitReached = AppError(
       'instead of your servers. Free a slot with your provider, then refresh.',
 );
 
+/// A subscription body that produced no usable servers, with the reason already
+/// worded for the user and, when we know it, a page to send them to.
+///
+/// Still a [FormatException]: the add flow uses that type to decide whether the
+/// URL might be a management server instead, and a precise diagnosis must not
+/// cost the user the sign-in path.
+class SubscriptionFormatException extends FormatException {
+  SubscriptionFormatException(this.error, {this.openUrl}) : super(error.line);
+
+  final AppError error;
+
+  /// The provider's own page, when the panel named one. Where a person can see
+  /// what the app could not use.
+  final String? openUrl;
+}
+
+/// The panel answered with something that is not a server list we can read.
+///
+/// Naming the formats we do read is not developer detail: it is what turns
+/// "it does not work" into a sentence the user can take to their provider,
+/// who is the only party who can change the template.
+const kUnreadableSubscription = AppError(
+  'Couldn’t read this subscription',
+  detail: 'Your provider sent a format this app does not recognise. It reads '
+      'base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.',
+);
+
+/// The format was read and there are no servers in it at all.
+///
+/// A real answer from a panel, not a malformed one: an expired account, a full
+/// device limit or a user with nothing assigned all produce an empty list. The
+/// fix is with the provider, so the message says so instead of blaming the
+/// format.
+AppError emptySubscription(String what) => AppError(
+      'This subscription has no servers',
+      detail: 'Your provider answered with $what that lists none. That usually '
+          'means the account is out of days or its device limit is full — ask them.',
+    );
+
+/// The body was read and every server in it uses something we cannot run.
+///
+/// Distinct from [kUnreadableSubscription] on purpose: here we can count them
+/// and name what they use, which is a different problem with a different fix.
+AppError noRunnableServers(int total, String kinds) => AppError(
+      total == 1
+          ? 'The only server here cannot run'
+          : 'None of the $total servers can run here',
+      detail: 'They use $kinds, which this app cannot run yet. Nothing was added.',
+    );
+
+/// The panel sent entries that are not servers at all — every address is
+/// unroutable — and put its message in their names.
+///
+/// Seen on a live panel answering an unknown client. Importing them would give
+/// the user locations that can never connect; the honest reading is that this
+/// is text, so it is shown as text.
+AppError providerMessageInstead(Iterable<String> lines) => AppError(
+      'Your provider sent a message',
+      detail: '${lines.where((l) => l.trim().isNotEmpty).join('\n')}'
+          '\n\nNot servers: every entry points nowhere, so nothing was added.',
+    );
+
 /// Translates whatever the layers below threw into something a person can act
 /// on. [subject] names what failed — a host, a subscription URL — so the second
 /// line can be specific instead of "connection error".
@@ -53,6 +115,9 @@ AppError describeError(Object error, {String? subject}) {
   AppError err(String title, String? detail) => AppError(title, detail: detail);
 
   return switch (error) {
+    // A diagnosis made where the body was read, already worded — never
+    // flattened into the generic "doesn't look like a link" below.
+    SubscriptionFormatException(:final error) => error,
     AppErrorException(:final error) => error,
     SocketException() || TimeoutException() => err(
         'Server didn’t answer',
