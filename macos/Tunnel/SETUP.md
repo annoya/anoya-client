@@ -134,3 +134,17 @@ status; check egress with `curl https://api.ipify.org`.
 - **App can't find the extension at runtime** (Phase C) → bundle id mismatch
   between `NETunnelProviderProtocol.providerBundleIdentifier` and the actual
   extension bundle id `org.annoya.test.tunnel`.
+
+## Versions
+
+The extension takes its version from the app, which takes it from
+`pubspec.yaml` (`version: 1.0.0+3` → `CFBundleShortVersionString` 1.0.0,
+`CFBundleVersion` 3). Both `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` on
+the Tunnel target are `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)` — do
+not type numbers there. App Store submission rejects an extension whose versions
+differ from its containing app's, and hardcoded ones drift apart silently: a
+local build only warns.
+
+On iOS the target additionally has `Flutter/Tunnel.xcconfig` as its base
+configuration, because those variables are not visible there otherwise (on macOS
+the project-level config already includes Flutter's generated settings).
