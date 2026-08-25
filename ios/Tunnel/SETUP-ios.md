@@ -72,3 +72,17 @@ decides whether mihomo-in-NE is viable on iOS at all.
 - The client sends `stack: gvisor` (userspace) on iOS — the only stack that
   works in the NE sandbox; build the iOS xcframework slice WITH `with_gvisor`.
 - SSO (ASWebAuthenticationSession) is intentionally out of this spike.
+
+## Versions
+
+The extension takes its version from the app, which takes it from
+`pubspec.yaml` (`version: 1.0.0+3` → `CFBundleShortVersionString` 1.0.0,
+`CFBundleVersion` 3). Both `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` on
+the Tunnel target are `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)` — do
+not type numbers there. App Store submission rejects an extension whose versions
+differ from its containing app's, and hardcoded ones drift apart silently: a
+local build only warns.
+
+On iOS the target additionally has `Flutter/Tunnel.xcconfig` as its base
+configuration, because those variables are not visible there otherwise (on macOS
+the project-level config already includes Flutter's generated settings).
