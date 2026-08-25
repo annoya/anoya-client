@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/country_flag.dart';
+import '../core/mihomo_tun_config.dart';
 import '../core/norm_config.dart';
 import '../core/on_demand.dart';
 import '../core/profile.dart';
@@ -11,6 +12,7 @@ import '../core/theme.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
 import '../state/favorites_controller.dart';
+import '../state/group_member.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/session.dart';
@@ -295,16 +297,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _locationRow(ProfilesState st, Profile active) {
+    final group = st.selectedGroup;
     final loc = st.selectedLocation;
     // A single-server profile (a plain link) has nothing to pick between: show
     // the server but no dropdown affordance or picker.
-    final pickable = !active.isSingleServer && st.locations.length > 1;
+    final pickable =
+        !active.isSingleServer && (st.locations.length > 1 || active.groups.isNotEmpty);
+    final picked = group == null ? null : ref.watch(groupMemberProvider).value;
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: _flagOrIcon(loc?.label),
-        title: Text(loc != null ? stripLeadingFlag(loc.label) : 'No servers'),
-        subtitle: loc != null ? Text('${loc.proxyType} · ${loc.proxy['server']}') : null,
+        leading: group != null ? Icon(groupIcon(group.type)) : _flagOrIcon(loc?.label),
+        title: Text(group?.name ??
+            (loc != null ? stripLeadingFlag(loc.label) : 'No servers')),
+        // With a group, the name alone is a claim the user cannot check — they
+        // do not know where their traffic goes. So the line names the method
+        // and the result; until the engine has picked, it names only the method
+        // rather than a server from a previous session.
+        subtitle: group != null
+            ? Text(picked == null || picked.isEmpty ? 'auto' : 'auto · $picked')
+            : loc != null
+                ? Text('${loc.proxyType} · ${loc.proxy['server']}')
+                : null,
         trailing: !pickable
             ? null
             : _status == VpnStatus.connecting
@@ -358,8 +372,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final picked = await pickOption<String>(
       context,
       title: 'Server',
-      selected: st.selectedLocation?.id,
+      selected: st.selectionId,
       itemNoun: 'server',
+      // Groups first: for most people "the fastest one" is the answer they
+      // came for, and it is an answer to the same question as a country.
+      pinnedHeader: 'CHOSEN BY THE ENGINE',
+      pinned: active.groups
+          .map((g) => Option(
+                g.id,
+                g.name,
+                subtitle: _describeGroup(g, st),
+                leading: Icon(groupIcon(g.type)),
+              ))
+          .toList(),
       favorites: favorites.locationsOf(active.id),
       onToggleFavorite: (id) =>
           ref.read(favoritesProvider.notifier).toggleLocation(active.id, id),
@@ -375,6 +400,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (picked != null) ref.read(profilesControllerProvider.notifier).selectLocation(picked);
   }
 }
+
+/// How many of a group's members this device can actually run, and what the
+/// group does with them. The count is the live one, not the provider's: a group
+/// naming twelve servers of which we can run nine is a group of nine.
+String _describeGroup(ProxyGroup g, ProfilesState st) {
+  final ids = {for (final l in st.locations) l.id};
+  final n = g.members.where(ids.contains).length;
+  final every = g.type == 'url-test' || g.type == 'fallback' || g.type == 'load-balance';
+  final interval = Duration(seconds: g.intervalSeconds) < kMinGroupInterval
+      ? kMinGroupInterval
+      : Duration(seconds: g.intervalSeconds);
+  return every
+      ? '${g.describe(n)} · rechecks every ${interval.inMinutes} min'
+      : g.describe(n);
+}
+
+/// The shape that says what a group does. Colour cannot: the row is a list
+/// item like any other.
+IconData groupIcon(String type) => switch (type) {
+      'url-test' => Icons.bolt,
+      'fallback' => Icons.shield_outlined,
+      'load-balance' => Icons.balance,
+      'relay' => Icons.alt_route,
+      _ => Icons.groups_outlined,
+    };
 
 /// A country flag emoji for the location (rendered natively on Apple
 /// platforms), falling back to a globe icon when no country is inferred.

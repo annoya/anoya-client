@@ -33,10 +33,23 @@ class DeviceIdentity {
   /// Hardware model, e.g. "iPhone16,1". Empty when the platform did not say.
   final String model;
 
+  /// What this app calls itself to a panel.
+  ///
+  /// Ours, not the Dart SDK's default, and not another client's name. Panels
+  /// pick which template to answer with by matching this string, so it is both
+  /// an identity and a dependency: an admin who wants this app to get a
+  /// particular rendering keys their rule on it. That is also why the app asks
+  /// for a rendering by name where it can — a capability must not hinge on
+  /// somebody else's rule matching our version string.
+  ///
+  /// Keep the version in step with `pubspec.yaml`.
+  static const kUserAgent = 'AnnoyaTest/1.0';
+
   /// The headers a subscription request carries. Only `x-hwid` is required by
   /// the convention; the rest exist so the entry in the provider's panel is
   /// recognisable as *this* device instead of an opaque id.
   Map<String, String> get headers => {
+        'user-agent': kUserAgent,
         'x-hwid': hwid,
         if (os.isNotEmpty) 'x-device-os': os,
         if (osVersion.isNotEmpty) 'x-ver-os': osVersion,

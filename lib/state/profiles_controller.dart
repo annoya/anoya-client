@@ -26,7 +26,10 @@ import 'on_demand_controller.dart';
 import 'providers.dart';
 
 /// How often a refreshable profile (self-hosted / subscription) is re-pulled.
-const kConfigPollInterval = Duration(minutes: 5);
+/// How often the poll timer fires. Not how often a source is re-read: that is
+/// [refreshGapFor], which honours a panel's own cadence. The timer stays fast
+/// so a configuration whose provider asks for five minutes gets five minutes.
+const kConfigPollInterval = kMinRefreshGap;
 
 /// Minimum gap between automatic reconnects when a refresh changes the active
 /// server/routing while connected (so a flapping source can't loop the tunnel).
@@ -63,6 +66,32 @@ class ProfilesState {
   }
 
   List<Location> get locations => active?.locations ?? const [];
+
+  /// The group the selection names, when it names one. Groups and servers share
+  /// the one selection the app already has: the user answers a single question
+  /// — what carries my traffic — and a group is one of the answers.
+  ProxyGroup? get selectedGroup {
+    final id = selectedLocationId;
+    if (id == null || !ProxyGroup.isGroupId(id)) return null;
+    for (final g in active?.groups ?? const <ProxyGroup>[]) {
+      if (g.id == id) return g;
+    }
+    return null;
+  }
+
+  /// What the tunnel should carry traffic through: a group when one is chosen,
+  /// otherwise a server. Every path that hands an id to the core uses this —
+  /// [selectedLocation] falls back to the first server, which would silently
+  /// turn a chosen group into one of its members.
+  String? get selectionId => selectedGroup?.id ?? selectedLocation?.id;
+
+  /// The servers a selected group would pick from, in the provider's order.
+  List<Location> get selectedGroupMembers {
+    final g = selectedGroup;
+    if (g == null) return const [];
+    final byId = {for (final l in locations) l.id: l};
+    return [for (final id in g.members) if (byId[id] != null) byId[id]!];
+  }
 
   Location? get selectedLocation {
     final locs = locations;
@@ -211,6 +240,9 @@ class ProfilesController extends Notifier<ProfilesState> {
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
       unsupportedServers: parsed.unsupported,
+      groups: parsed.groups,
+      rendering: res.rendering,
+      renderingProbed: res.renderingProbed,
       // The panel's routing was already fetched with the body; without this it
       // would only appear after the first poll, which reads as the app losing it.
       providerRouting: res.routing?.routing,
@@ -348,11 +380,11 @@ class ProfilesController extends Notifier<ProfilesState> {
       return;
     }
     final p = state.active;
-    final loc = state.selectedLocation;
-    if (p == null || loc == null) return;
+    final selection = state.selectionId;
+    if (p == null || selection == null) return;
     state = state.copyWith(switching: true);
     try {
-      await core.reload(await _normConfig(p), loc.id);
+      await core.reload(await _normConfig(p), selection);
       _reapplyPending = false; // the core just got the current config
       state = state.copyWith(switching: false);
     } catch (e) {
@@ -394,10 +426,14 @@ class ProfilesController extends Notifier<ProfilesState> {
       deviceLimitActive: updated.deviceLimitActive,
       deviceLimitReached: updated.deviceLimitReached,
       unsupportedServers: updated.unsupportedServers,
+      groups: updated.groups,
       providerRouting: updated.providerRouting,
       providerRoutingSkipped: updated.providerRoutingSkipped,
       providerRoutingProbed: updated.providerRoutingProbed,
       providerInfo: updated.providerInfo,
+      usedFallback: updated.usedFallback,
+      rendering: updated.rendering,
+      renderingProbed: updated.renderingProbed,
       refreshedAt: updated.refreshedAt ?? DateTime.now(),
     );
     _replaceProfile(merged);
@@ -505,15 +541,15 @@ class ProfilesController extends Notifier<ProfilesState> {
         state = state.copyWith(error: describeAccountStatus(p.account!.status));
         return;
       }
-      final loc = state.selectedLocation;
-      if (loc == null) {
+      final selection = state.selectionId;
+      if (selection == null) {
         state = state.copyWith(
             error: const AppError('This configuration has no servers',
                 detail: 'Refresh it, or add another configuration.'));
         return;
       }
       await core.load(await _normConfig(p));
-      await core.connect(loc.id);
+      await core.connect(selection);
       _lastReapply = DateTime.now();
       _reapplyPending = false;
       // Re-arm (or arm) system auto-connect now that a working config is
@@ -544,10 +580,10 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// approval dialog at a surprising moment).
   Future<void> syncTunnelConfig() async {
     final p = state.active;
-    final loc = state.selectedLocation;
-    if (p == null || loc == null) return;
+    final selection = state.selectionId;
+    if (p == null || selection == null) return;
     try {
-      await ref.read(vpnCoreProvider).syncConfig(await _normConfig(p), loc.id);
+      await ref.read(vpnCoreProvider).syncConfig(await _normConfig(p), selection);
     } catch (e) {
       Log.e('tunnel config sync failed', '$e');
     }
@@ -605,6 +641,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       version: 1,
       account: p.account ?? Account(displayName: p.name, status: 'active'),
       locations: p.locations,
+      groups: p.groups,
       routing: routing,
       dns: p.dns,
     );
@@ -613,6 +650,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<void> _poll() async {
     final p = state.active;
     if (p == null || !p.isRefreshable) return;
+    if (!isDueForRefresh(p)) return;
     // The reapply stays inside the try: it can throw too (NE call, config
     // build), and a Timer callback has no other catch above it — an escape
     // here is an unhandled zone error instead of a logged poll failure.
@@ -638,9 +676,12 @@ class ProfilesController extends Notifier<ProfilesState> {
       await core.disconnect();
       return;
     }
-    final locId = state.selectedLocation?.id;
+    final locId = state.selectionId;
     if (locId == null) return;
-    if (after.locations.every((l) => l.id != locId)) {
+    final gone = ProxyGroup.isGroupId(locId)
+        ? after.groups.every((g) => g.id != locId)
+        : after.locations.every((l) => l.id != locId);
+    if (gone) {
       Log.i('poll: connected server disappeared — disconnecting');
       await core.disconnect();
       return;
@@ -668,7 +709,20 @@ class ProfilesController extends Notifier<ProfilesState> {
     await core.reload(await _normConfig(after), locId);
   }
 
-  Map<String, dynamic>? _proxyOf(Profile p, String locId) {
+  /// What the selection resolves to, for diffing one poll against the next.
+  ///
+  /// For a group that is the group itself plus every member's proxy: a provider
+  /// rotating one member's credentials must reapply, and comparing only the
+  /// group would miss it.
+  Object? _proxyOf(Profile p, String locId) {
+    if (ProxyGroup.isGroupId(locId)) {
+      for (final g in p.groups) {
+        if (g.id != locId) continue;
+        final byId = {for (final l in p.locations) l.id: l.proxy};
+        return [g.toJson(), for (final m in g.members) byId[m]];
+      }
+      return null;
+    }
     for (final l in p.locations) {
       if (l.id == locId) return l.proxy;
     }
