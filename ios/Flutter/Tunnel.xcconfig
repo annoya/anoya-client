@@ -1,0 +1,8 @@
+// The tunnel extension's version comes from the same place the app's does.
+//
+// App Store submission requires an extension's CFBundleShortVersionString and
+// CFBundleVersion to match its containing app's, and the app's come from
+// pubspec.yaml via Flutter's generated settings. Without this include the
+// extension target cannot see them, and its numbers were hardcoded — drifting
+// further from the app's with every release.
+#include "Generated.xcconfig"
