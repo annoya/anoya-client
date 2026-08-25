@@ -8,7 +8,7 @@
 	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.nt.vpnClient</string>
+		<string>group.org.annoya.test</string>
 	</array>
 </dict>
 </plist>

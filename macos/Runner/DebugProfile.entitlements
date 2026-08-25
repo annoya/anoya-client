@@ -25,13 +25,13 @@
 	<!-- Shared container with the extension (logs + stats). -->
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.nt.vpnClient</string>
+		<string>group.org.annoya.test</string>
 	</array>
 	<!-- Data-protection keychain access group (required for flutter_secure_storage
 	     under the sandbox). $(AppIdentifierPrefix) expands to the team ID. -->
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.nt.vpnClient</string>
+		<string>$(AppIdentifierPrefix)org.annoya.test</string>
 	</array>
 </dict>
 </plist>

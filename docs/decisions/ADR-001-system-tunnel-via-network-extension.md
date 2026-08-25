@@ -25,7 +25,7 @@ it as a Go c-archive (`MihomoCore.xcframework`, `-tags with_gvisor`) rather than
 shipped as a separate executable.
 
 - The host app stays sandboxed. It shares an App Group with the extension
-  (`group.com.nt.vpnClient`), which is also the engine's home directory for the
+  (`group.org.annoya.test`), which is also the engine's home directory for the
   geo databases.
 - The host learns that directory from the native side over the `shared_dir`
   channel. It cannot derive it: under the sandbox its own `HOME` points

@@ -1,5 +1,14 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '15.0'
+
+# file_picker only ever opens a document here (a config file on the start screen,
+# the log archive in the logs screen) — never media. Left on, its media subspec
+# links DKImagePickerController (Photos) and its audio path links MediaPlayer,
+# whose API references make App Store validation demand purpose strings for
+# prompts the app can never show — NSPhotoLibraryUsageDescription cost us
+# ITMS-90683. A bare `PICKER_MEDIA = false` here would land in Pod::Podfile,
+# where the podspec's `Pod.const_defined?` cannot see it.
+Pod.const_set(:PICKER_MEDIA, false)
+Pod.const_set(:PICKER_AUDIO, false)
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

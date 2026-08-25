@@ -13,7 +13,7 @@ import MihomoCore
 /// mihomo. Same code path on macOS and iOS.
 class PacketTunnelProvider: NEPacketTunnelProvider {
 
-    static let appGroup = "group.com.nt.vpnClient"
+    static let appGroup = "group.org.annoya.test"
 
     /// Directory the extension writes its logs to.
     ///
@@ -397,7 +397,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     private func err(_ message: String) -> NSError {
-        NSError(domain: "com.example.vpnClient.tunnel", code: 1,
+        NSError(domain: "org.annoya.test.tunnel", code: 1,
                 userInfo: [NSLocalizedDescriptionKey: message])
     }
 }
