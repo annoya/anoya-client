@@ -1036,6 +1036,61 @@
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Server</div>
+        <div class="sh">ALL · 6 SERVERS</div>
+        <div class="row act-fill"><span class="flag">🇳🇱</span>
+          <div class="tx"><div class="t">Нидерланды</div><div class="s">до 10 Гбит/с · 94.159.101.110</div></div>
+          <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
+        <div class="row"><span class="flag">🇸🇪</span>
+          <div class="tx"><div class="t">Швеция</div><div class="s">для игр, низкий пинг · 45.80.12.7</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
+        <div class="row"><span class="flag">🇩🇪</span>
+          <div class="tx"><div class="t">Германия</div><div class="s">если VLESS заблокирован, работае… · 78.17.229.219</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
+        <div class="row"><span class="flag">🇺🇸</span>
+          <div class="tx"><div class="t">США</div><div class="s">vless · 38.99.23.140</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation · описания провайдера</span><b>Описание занимает место протокола, но не адреса.</b> <code>serverDescription</code> — текст провайдера под именем сервера; у Happ он заменяет собой всю техническую подпись («VMess»). Мы отдаём ему только её первую половину.<br><br>Почему не всю строку: <b>адрес — единственное, чем внешне различаются одинаковые записи.</b> На живой подписке мы это уже видели: семь записей с разными именами сидели на двух конфигурациях, и понять, что «Авто» и «Если другие не работают» — один и тот же сервер, можно было только по адресу. Отдать провайдеру всю подпись значит отнять у пользователя последний факт о том, куда он подключается. А протокол внутри одной подписки почти всегда одинаковый и сообщает мало — это и есть та половина, которой не жалко.<br><br>Последняя строка — сервер <b>без</b> описания: подпись остаётся прежней. Смешанный список — обычный случай, и он не должен выглядеть так, будто у части серверов что-то отвалилось. Длинное описание обрезается многоточием на своей половине строки, адрес не сдвигается: он всегда на своём месте, иначе взгляд не может его найти.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:742px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:03:20</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">КОПАТЫЧ VPN</div><div class="s">Subscription · 6 servers</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇳🇱</span>
+            <div class="tx"><div class="t">Нидерланды</div><div class="s">до 10 Гбит/с · 94.159.101.110</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · сервер с описанием</span><b>Та же подпись на главном.</b> Строка сервера на главном экране и строка в пикере — один и тот же факт в двух местах, и расходиться им нельзя: человек выбирает по описанию в списке, а потом видит на главном другое — и не понимает, то ли он выбрал.<br><br>Одно последствие разбора, которое стоит записать здесь: описание приезжает <b>внутри фрагмента ссылки</b> — <code>#Нидерланды?serverDescription=&lt;base64&gt;</code>. Сегодня всё после <code>#</code> целиком становится именем, поэтому такая ссылка уже сейчас показала бы «Нидерланды?serverDescription=0LTQvi4uLg==» вместо имени. То есть это не только новая возможность, но и починка того, что ломается без неё. В JSON-форматах то же поле лежит нормально — <code>"meta": {"serverDescription": "…"}</code> — и base64 там не нужен.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
       <div class="hbody" style="height:742px">
         <div class="strip">
           <span class="pill"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · off</span>

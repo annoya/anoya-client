@@ -206,6 +206,12 @@ fetched keep working.
   `remarks`) or a sing-box JSON one. A Clash document may name its servers in
   `proxy-providers` instead of carrying them; those lists are fetched over TLS,
   and one that cannot be had is counted rather than dropped.
+  A server may also come with the provider's own caption
+  (`serverDescription`): base64 after the name in a link's fragment
+  (`#Name?serverDescription=…`), plain text in `meta` in the JSON formats. It is
+  shown **in place of the protocol, never of the address** — the address is the
+  only thing that tells two identically named entries apart, and a panel does
+  serve those. A server without one keeps showing its protocol.
   `ss://` links carry SIP003 plugins (`obfs`, `v2ray-plugin`); a plugin the
   engine has no adapter for makes the server unsupported instead of being
   dropped, since a server expecting obfuscation refuses a plain connection.

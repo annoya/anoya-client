@@ -136,13 +136,19 @@ bool _xhttpHasDownloadSettings(String? extra) {
 /// anything that reaches the renderer — a port of 0 (what a malformed vmess
 /// `port` decodes to) would otherwise ship as a config the engine accepts and
 /// silently cannot use.
-Location locationFor(String uri, String label, Map<String, dynamic> proxy) {
+Location locationFor(String uri, String label, Map<String, dynamic> proxy,
+    {String description = ''}) {
   final server = (proxy['server'] as String?)?.trim() ?? '';
   final port = proxy['port'] as int? ?? 0;
   if (server.isEmpty) throw const FormatException('no server');
   if (port < 1 || port > 65535) throw FormatException('port out of range: $port');
   proxy['server'] = bareHost(server);
-  return Location(id: 'link_${shortDigest(uri)}', label: label, proxy: proxy);
+  return Location(
+    id: 'link_${shortDigest(uri)}',
+    label: label,
+    proxy: proxy,
+    description: description,
+  );
 }
 
 /// An IPv6 literal reaches us bracketed in the URI forms that carry host:port
@@ -169,5 +175,40 @@ String safeDecode(String s) {
   }
 }
 
+/// A share link's fragment, split into the name and what a provider hung off
+/// it: `#Netherlands?serverDescription=<base64>`.
+///
+/// Only split on a `?` that is followed by parameters we know. A name is free
+/// text — "Why not?" is a legal one — and cutting it at the first question mark
+/// would rename servers for everyone to serve one convention.
+({String name, String description}) splitFragment(String fragment) {
+  final at = fragment.indexOf('?');
+  if (at < 0) return (name: fragment, description: '');
+  final query = fragment.substring(at + 1);
+  // A query we cannot read is still recognisably one when it opens with a
+  // parameter we know: the name is then what it always was, and only the
+  // parameter is lost. Showing "Germany?serverDescription=%%%" as the server's
+  // name would be a worse answer than showing "Germany".
+  final looksLikeParams = kFragmentParams.any((k) => query.startsWith('$k='));
+  Map<String, String> params;
+  try {
+    params = Uri.splitQueryString(query);
+  } catch (_) {
+    params = const {};
+  }
+  if (!looksLikeParams && !params.keys.any(kFragmentParams.contains)) {
+    return (name: fragment, description: '');
+  }
+  final raw = params['serverDescription'] ?? '';
+  return (
+    name: fragment.substring(0, at),
+    // base64 here, plain text in the JSON formats. Undecodable is not a reason
+    // to lose the name that came with it.
+    description: raw.isEmpty ? '' : (tryDecodeLooseBase64(raw) ?? raw),
+  );
+}
 
-
+/// Parameters a provider may hang off a link's fragment. `title` is the name
+/// itself, which is what the fragment already is; it is listed so a link
+/// carrying only that is still recognised as carrying parameters.
+const kFragmentParams = {'serverDescription', 'title'};

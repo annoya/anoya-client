@@ -68,6 +68,9 @@ ParsedSubscription? parseSingboxServers(String body) {
         labelOr('${ob['tag'] ?? ''}'.trim(), '${proxy['server']}',
             proxy['port'] as int? ?? 0),
         proxy,
+        description: ob['meta'] is Map
+            ? '${(ob['meta'] as Map)['serverDescription'] ?? ''}'.trim()
+            : '',
       ));
     } catch (e) {
       Log.e('sing-box: unusable outbound', '$kind -> $e');

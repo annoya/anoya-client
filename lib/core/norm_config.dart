@@ -367,19 +367,46 @@ class Account {
 }
 
 class Location {
-  Location({required this.id, required this.label, required this.proxy});
+  Location({
+    required this.id,
+    required this.label,
+    required this.proxy,
+    this.description = '',
+  });
 
   final String id;
   final String label;
   final Map<String, dynamic> proxy;
 
+  /// What the provider says this server is for (`serverDescription`). Their
+  /// words, shown in place of the protocol — never inside [proxy], which is
+  /// rendered into the engine config key by key.
+  final String description;
+
   String get proxyType => proxy['type'] as String? ?? '';
+
+  /// The line under the server's name: the provider's description when there is
+  /// one, otherwise the protocol — and the address either way. The address
+  /// stays because it is the only thing that tells two identically named
+  /// entries apart.
+  String get subtitle {
+    final what = description.isNotEmpty ? description : proxyType;
+    final server = proxy['server'];
+    if (server == null || '$server'.isEmpty) return what;
+    return what.isEmpty ? '$server' : '$what · $server';
+  }
 
   factory Location.fromJson(Map<String, dynamic> json) => Location(
         id: json['id'] as String? ?? '',
         label: json['label'] as String? ?? '',
         proxy: Map<String, dynamic>.from(json['proxy'] as Map? ?? {}),
+        description: json['description'] as String? ?? '',
       );
 
-  Map<String, dynamic> toJson() => {'id': id, 'label': label, 'proxy': proxy};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        'proxy': proxy,
+        if (description.isNotEmpty) 'description': description,
+      };
 }

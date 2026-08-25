@@ -317,7 +317,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         subtitle: group != null
             ? Text(picked == null || picked.isEmpty ? 'auto' : 'auto · $picked')
             : loc != null
-                ? Text('${loc.proxyType} · ${loc.proxy['server']}')
+                ? Text(loc.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis)
                 : null,
         trailing: !pickable
             ? null
@@ -392,7 +392,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .map((l) => Option(
                 l.id,
                 stripLeadingFlag(l.label),
-                subtitle: '${l.proxyType} · ${l.proxy['server']}',
+                subtitle: l.subtitle,
                 leading: _flagOrIcon(l.label),
               ))
           .toList(),

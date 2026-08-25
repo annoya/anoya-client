@@ -48,6 +48,8 @@ ParsedSubscription? parseXrayServers(String body) {
   for (final cfg in configs) {
     if (cfg is! Map) continue;
     final label = '${cfg['remarks'] ?? ''}'.trim();
+    // Plain text here, unlike the base64 a share link's fragment carries.
+    final description = _metaDescription(cfg['meta']);
     for (final ob in (cfg['outbounds'] as List? ?? const [])) {
       if (ob is! Map) continue;
       final protocol = '${ob['protocol'] ?? ''}'.toLowerCase();
@@ -71,6 +73,8 @@ ParsedSubscription? parseXrayServers(String body) {
           labelOr(label.isNotEmpty ? label : tag, '${proxy['server']}',
               proxy['port'] as int? ?? 0),
           proxy,
+          description:
+              description.isNotEmpty ? description : _metaDescription(ob['meta']),
         ));
       } catch (e) {
         // Never the outbound itself: it carries the uuid or password.
@@ -207,3 +211,8 @@ String? _applyStream(Map<String, dynamic> proxy, String protocol, Object? stream
 }
 
 int _int(Object? v) => v is int ? v : int.tryParse('$v') ?? 0;
+
+/// `"meta": {"serverDescription": "…"}` — the provider's own caption, which the
+/// JSON formats carry as text rather than as the fragment's base64.
+String _metaDescription(Object? meta) =>
+    meta is Map ? '${meta['serverDescription'] ?? ''}'.trim() : '';

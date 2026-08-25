@@ -250,4 +250,53 @@ proxy-providers:
       expect(p.locations, isEmpty, reason: 'the fetch belongs to the network layer');
     });
   });
+
+  group('what the provider calls a server', () {
+    test('a description rides in the fragment, base64, after the name', () {
+      const link = 'vless://u@de.example:443?security=none'
+          '#🇳🇱%20Нидерланды?serverDescription=0LTQviAxMCDQk9Cx0LjRgi/RgQ%3D%3D';
+      final loc = parseShareLink(link).location!;
+      expect(loc.label, '🇳🇱 Нидерланды', reason: 'the name stops at the parameters');
+      expect(loc.description, 'до 10 Гбит/с');
+      expect(loc.subtitle, 'до 10 Гбит/с · de.example',
+          reason: 'it takes the protocol\'s place, never the address\'s');
+    });
+
+    test('a name that merely contains a question mark is left alone', () {
+      // "Why not?" is a legal name. Splitting every fragment at the first `?`
+      // would rename servers for everyone to serve one convention.
+      const link = 'vless://u@de.example:443?security=none#Why%20not%3F';
+      final loc = parseShareLink(link).location!;
+      expect(loc.label, 'Why not?');
+      expect(loc.description, isEmpty);
+      expect(loc.subtitle, 'vless · de.example');
+    });
+
+    test('a server without one keeps the protocol', () {
+      const link = 'vless://u@de.example:443?security=none#Germany';
+      expect(parseShareLink(link).location!.subtitle, 'vless · de.example');
+    });
+
+    test('the JSON formats carry it as text, next to the name', () {
+      const xray = '''
+[{"remarks": "Netherlands", "meta": {"serverDescription": "10 Gbit/s"},
+  "outbounds": [{"protocol": "vless", "tag": "proxy",
+    "settings": {"vnext": [{"address": "nl.example", "port": 443,
+      "users": [{"id": "u"}]}]}}]}]''';
+      final loc = parseSubscriptionBody(xray).locations.single;
+      expect(loc.description, '10 Gbit/s');
+      expect(loc.subtitle, '10 Gbit/s · nl.example');
+
+      const singbox = '''
+{"outbounds": [{"tag": "NL", "type": "vless", "server": "nl.example",
+  "server_port": 443, "uuid": "u", "meta": {"serverDescription": "for gaming"}}]}''';
+      expect(parseSubscriptionBody(singbox).locations.single.description, 'for gaming');
+    });
+
+    test('an undecodable description costs the description, not the name', () {
+      const link = 'vless://u@de.example:443?security=none#Germany?serverDescription=%%%';
+      final loc = parseShareLink(link).location!;
+      expect(loc.label, 'Germany');
+    });
+  });
 }
