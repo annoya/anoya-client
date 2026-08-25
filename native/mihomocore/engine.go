@@ -21,6 +21,7 @@ import (
 	"github.com/metacubex/mihomo/listener"
 	LC "github.com/metacubex/mihomo/listener/config"
 	"github.com/metacubex/mihomo/log"
+	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
@@ -208,4 +209,30 @@ func stopEngine() {
 	// carries nothing. Zeroing the remembered conf forces the next start to
 	// build a real listener.
 	listener.ReCreateTun(LC.Tun{}, nil)
+}
+
+// selectedGroupMember returns the member a proxy group is currently sending
+// traffic through, or "" when there is no such group.
+//
+// Read in process, deliberately: mihomo also exposes this over its HTTP API,
+// but `external-controller` opens an unauthenticated control surface inside the
+// extension's container, which AGENTS forbids. A group's pick is one map lookup
+// away, so there is nothing to justify the API.
+//
+// The name returned is the engine-side one (`p0`, `p1`, …) that the renderer
+// generated; the app maps it back to the label the provider gave. Provider text
+// never has to cross this boundary.
+func selectedGroupMember(group string) string {
+	proxies := tunnel.Proxies()
+	p, ok := proxies[group]
+	if !ok {
+		return ""
+	}
+	// Every engine-picking group (url-test, fallback, load-balance, relay)
+	// answers Now(); a plain proxy does not, and neither does `select` before
+	// anything selected it.
+	if g, ok := p.Adapter().(interface{ Now() string }); ok {
+		return g.Now()
+	}
+	return ""
 }

@@ -39,6 +39,7 @@ ParsedSubscription? parseClashProxies(String body) {
       out.add(Location(id: 'sub_${i++}_${shortDigest(name)}', label: name, proxy: m));
     }
     final providers = _proxyProviders(doc['proxy-providers']);
+    final groups = _proxyGroups(doc['proxy-groups'], out);
     // No early return on an empty result: a document with `proxies: []` is
     // recognisably Clash, and a panel does answer that way (an expired account,
     // a full device limit). Calling it "a format we cannot read" would send the
@@ -47,6 +48,7 @@ ParsedSubscription? parseClashProxies(String body) {
       locations: out,
       unsupported: unsupported,
       providers: providers,
+      groups: groups,
       format: SubscriptionFormat.clash,
     );
   } catch (e) {
@@ -55,6 +57,48 @@ ParsedSubscription? parseClashProxies(String body) {
   }
 }
 
+
+/// Reads `proxy-groups:` — the sets whose member the engine picks.
+///
+/// Members are resolved to the servers we actually parsed, so a group naming a
+/// proxy we cannot run comes out smaller, and one left with nothing comes out
+/// not at all: offering a choice that cannot work is worse than not offering it.
+List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
+  if (node is! List) return const [];
+  final byName = {for (final l in locations) l.label: l.id};
+  final out = <ProxyGroup>[];
+  for (final raw in node) {
+    final g = _deepConvert(raw);
+    if (g is! Map<String, dynamic>) continue;
+    final type = '${g['type'] ?? ''}'.toLowerCase();
+    // `select` is a human's choice, which our own picker already is.
+    if (!ProxyGroup.types.contains(type)) continue;
+
+    // `include-all` (and its older spellings) means "every proxy in this
+    // document" — the shape Remnawave's own template uses.
+    final all = g['include-all'] == true ||
+        g['include-all-proxies'] == true ||
+        g['include-all-providers'] == true;
+    final named = (g['proxies'] as List? ?? const []).map((e) => '$e').toList();
+    final members = all
+        ? locations.map((l) => l.id).toList()
+        : [for (final n in named) if (byName[n] != null) byName[n]!];
+
+    final group = ProxyGroup(
+      name: '${g['name'] ?? ''}'.trim(),
+      type: type,
+      members: members,
+      testUrl: '${g['url'] ?? ''}',
+      intervalSeconds: (g['interval'] as num?)?.toInt() ?? 0,
+      tolerance: (g['tolerance'] as num?)?.toInt() ?? 0,
+      strategy: ProxyGroup.strategies.contains('${g['strategy'] ?? ''}')
+          ? '${g['strategy']}'
+          : '',
+    );
+    if (group.isValid) out.add(group);
+  }
+  return out;
+}
 
 /// Reads `proxy-providers:` — server lists the document does not carry itself
 /// but points at.

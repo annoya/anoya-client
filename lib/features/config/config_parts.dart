@@ -30,7 +30,7 @@ IconData profileIcon(ProfileType t) => switch (t) {
 
 String profileKind(Profile p) => switch (p.type) {
       ProfileType.selfhosted => 'Self-hosted · ${_servers(p)}',
-      ProfileType.subscription => 'Subscription · ${_servers(p)}',
+      ProfileType.subscription => 'Subscription · ${_servers(p)}${_groups(p)}',
       ProfileType.link => 'Single server',
     };
 
@@ -42,6 +42,17 @@ String _servers(Profile p) {
   final ours = p.locations.length;
   final noun = offered == 1 ? 'server' : 'servers';
   return ours == offered ? '$ours $noun' : '$ours of $offered $noun';
+}
+
+/// "· 3 groups", when the subscription offered sets the engine picks from.
+///
+/// Counted where the servers are counted, because a section appearing in the
+/// picker that was not there before otherwise reads as a new feature of the app
+/// rather than as something the provider sent.
+String _groups(Profile p) {
+  final n = p.groups.length;
+  if (n == 0) return '';
+  return ' · $n group${n > 1 ? 's' : ''}';
 }
 
 /// Identity card at the top of every configuration screen. The check mark is
@@ -78,12 +89,23 @@ class ProfileHeaderCard extends StatelessWidget {
 /// The value is shown elided in the middle: this is a credential, and the row
 /// exists for recognition, not for reading it off the screen.
 class SourceCard extends StatelessWidget {
-  const SourceCard({super.key, required this.value, this.openUrl});
+  const SourceCard({
+    super.key,
+    required this.value,
+    this.openUrl,
+    this.viaFallback = false,
+  });
 
   final String value;
 
   /// The page to open on tap. Null → the value is copied instead.
   final String? openUrl;
+
+  /// The last refresh came from the provider's backup address. The row keeps
+  /// showing the address the user added — that is what they chose and what they
+  /// would share — and says the backup carried it underneath. Swapping the line
+  /// silently would hide that their provider's main address is unreachable.
+  final bool viaFallback;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +115,16 @@ class SourceCard extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.link),
         title: const Text('Source'),
-        subtitle: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
+            if (viaFallback)
+              Text('Last refresh used your provider’s backup address',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          ],
+        ),
+        isThreeLine: viaFallback,
         trailing: Icon(opens ? Icons.open_in_new : Icons.copy_all_outlined, size: 18),
         onTap: () => opens ? _open(context, openUrl!) : _copy(context),
       ),
@@ -330,15 +361,19 @@ String refreshedAtLabel(Profile p) {
   return '$ago · $every';
 }
 
-/// How often this configuration re-pulls. A panel may ask for a cadence
-/// (`profile-update-interval`, in days); we say what we actually do, which is
-/// its interval only where it is slower than our own polling — a panel must not
-/// be able to make the app call it every minute.
+/// How often this configuration re-pulls — what the app actually does, which
+/// is the panel's own cadence (`profile-update-interval`, in **hours**) where
+/// that is slower than our polling floor.
+///
+/// It used to say "every 5 min" always, and read the header as days: a panel
+/// asking for 12 hours was shown as "every 12 days" and polled 144 times inside
+/// each of those hours.
 String _cadence(Profile p) {
-  final days = p.providerInfo?.updateInterval;
-  if (days == null || days <= 0) return 'auto every 5 min';
-  return 'auto every 5 min · your provider asks for '
-      '${days == 1 ? 'daily' : 'every $days days'}';
+  final gap = refreshGapFor(p);
+  if (gap.inMinutes < 60) return 'auto every ${gap.inMinutes} min';
+  if (gap.inHours < 24) return 'auto every ${gap.inHours} h';
+  final days = gap.inDays;
+  return 'auto every ${days == 1 ? 'day' : '$days days'}';
 }
 
 /// The routing section for a subscription whose panel sent rules of its own.

@@ -212,6 +212,36 @@ fetched keep working.
 - **A management server address** plus credentials, or SSO when the server
   advertises a provider.
 
+Which of the four a panel serves is decided by a rule its admin wrote against
+the app's User-Agent (`AnnoyaTest/<version>` — ours, never another client's
+name). That makes the *amount* we get depend on somebody else's rule, so where a
+panel supports it the app asks for the rendering it wants by name: after a body
+that carries no groups, it tries `<url>/mihomo` (Remnawave), `<url>/clash-meta`
+(Marzban — it has no "mihomo") and, for 3x-ui, the sibling path `/clash/<id>`
+next to `/sub/<id>`. First one that answers with groups wins and is remembered
+on the profile; a panel with none is asked once, never again, and its own body
+is kept. A rendering that later dies falls back to the plain address.
+
+A Clash subscription may also offer **groups** whose member the engine picks:
+`url-test` (lowest latency), `fallback` (first that answers), `load-balance` and
+`relay` (a chain). They appear in the same server picker, above the servers,
+because they answer the same question. `select` groups are not carried — they
+mean "let a human choose", which the picker already is. A group's members are
+resolved to servers this app can actually run, and a group left with none is not
+offered at all.
+
+Choosing a group renders every member as a proxy plus the group itself; the
+rules keep pointing at `PROXY`, so nothing about routing or the `tun` section
+changes. Member names in the rendered config are positional (`p0…pN`) — a
+provider's label is display text and must not become a YAML key. The health
+check the group runs is the provider's URL (https only, else ours) at the
+provider's interval, floored at five minutes: the probe runs from the user's
+device, through the tunnel, once per member per round.
+
+While a group is selected, the home screen shows which member the engine chose,
+read from the engine in process — never over `external-controller`, which would
+open an unauthenticated control API inside the extension.
+
 Unknown proxy types are rejected at parse time rather than at connect time.
 
 When nothing usable comes out, the app says which of three things happened,
@@ -227,8 +257,20 @@ says why.
 ### 4.3 Synchronisation
 
 Self-hosted configurations re-fetch before every connect, so account status and
-rotated keys are enforced at the moment it matters. All refreshable sources are
-polled every 5 minutes. When a poll changes the active configuration's proxy or
+rotated keys are enforced at the moment it matters. The poll runs every 5
+minutes, which is also the floor for how often any one source is re-read: a
+subscription's panel may ask for its own cadence (`profile-update-interval`, in
+**hours**) and gets it where it is slower than that floor. A manual refresh
+never waits.
+
+Two more of the panel's own statements are honoured, within bounds the app sets:
+`subscription-request-timeout` (clamped to 5–15 s) and `fallback-url` — an https
+address tried once when the main one does not answer at all. A refresh that came
+from the backup says so under the source, because it means the provider's main
+address is unreachable from this device; the source row keeps showing the
+address the user added, since that is what they chose and would share. When both
+fail, the error names the main address: the backup is the provider's
+arrangement, and the user has never seen it. When a poll changes the active configuration's proxy or
 its managed routing policy, the tunnel re-applies it; when it reports the
 account can no longer connect, or the connected server disappeared, the tunnel
 disconnects. Re-applies are rate-limited so a flapping source cannot loop the

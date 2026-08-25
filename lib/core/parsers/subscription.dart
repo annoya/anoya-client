@@ -34,6 +34,7 @@ class ParsedSubscription {
     required this.locations,
     this.unsupported = const {},
     this.providers = const [],
+    this.groups = const [],
     this.format = SubscriptionFormat.unknown,
   });
 
@@ -48,6 +49,9 @@ class ParsedSubscription {
   /// Server lists this body points at instead of carrying. Fetched and merged
   /// by the caller — see [ProxyProvider].
   final List<ProxyProvider> providers;
+
+  /// Sets whose member the engine picks, offered by this body.
+  final List<ProxyGroup> groups;
 
   /// Which shape this body turned out to be. Needed for the message when there
   /// is nothing usable in it: "we could not read this" and "we read it and

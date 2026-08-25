@@ -16,6 +16,10 @@ import 'norm_config.dart';
 /// syntax); empty falls back to Cloudflare DoH. It rides the same YAML as
 /// everything else, so switching configs switches DNS too.
 ///
+/// [group] and [members] render a provider's group instead of a single server:
+/// every member becomes a proxy and the group decides which of them carries the
+/// traffic. [location] is ignored then.
+///
 /// [listPaths] maps a `rule-list` rule's name to the file the app downloaded
 /// for it. A rule whose list is absent here is dropped: the engine would
 /// happily accept a provider it has to fetch itself, and that fetch runs inside
@@ -31,6 +35,8 @@ import 'norm_config.dart';
 /// to a single mihomo proxy here. Pure + top-level so it can be unit-tested.
 String mihomoTunConfigYaml(
   Location location, {
+  ProxyGroup? group,
+  List<Location> members = const [],
   Routing? routing,
   List<String> dns = const [],
   Map<String, String> listPaths = const {},
@@ -39,6 +45,22 @@ String mihomoTunConfigYaml(
 }) {
   final proxy = _mihomoProxy(location);
   final nameservers = _dnsNameservers(dns);
+  // A single server, or a group whose member the engine picks. Either way the
+  // rules keep pointing at PROXY: what changes is what PROXY contains, so the
+  // rest of the config — and the `tun` section above all — is untouched.
+  final proxyLines = <String>[];
+  final groupLines = <String>[];
+  final String entry;
+  if (group == null) {
+    proxyLines.addAll(_emitProxy(proxy));
+    entry = 'proxy';
+  } else {
+    for (var i = 0; i < members.length; i++) {
+      proxyLines.addAll(_emitProxy({..._mihomoProxy(members[i]), 'name': 'p$i'}));
+    }
+    groupLines.addAll(_emitGroup(group, members.length));
+    entry = kGroupName;
+  }
   final ruleLines = _routingRuleLines(routing, listPaths);
   final listLines = _ruleProviderLines(routing, listPaths);
   final hasProcessRules =
@@ -116,11 +138,12 @@ String mihomoTunConfigYaml(
     '  auto-detect-interface: true',
     '  mtu: 9000',
     'proxies:',
-    ..._emitProxy(proxy),
+    ...proxyLines,
     'proxy-groups:',
+    ...groupLines,
     '  - name: PROXY',
     '    type: select',
-    '    proxies: [proxy]',
+    '    proxies: [$entry]',
     ...listLines,
     'rules:',
     ...ruleLines,
@@ -129,6 +152,50 @@ String mihomoTunConfigYaml(
   ];
   return '${lines.join('\n')}\n';
 }
+
+/// The name the rendered group takes. Ours, not the provider's: the provider's
+/// name is display text and can hold anything, while this ends up as a YAML key
+/// and a rule target.
+const kGroupName = 'group';
+
+/// The engine's own health check runs from the user's device, through the
+/// tunnel, once per interval per member. A provider asking for ten seconds
+/// would have a phone probing their URL 8640 times a day; the floor is ours to
+/// set, and mihomo's `lazy` default (skip a round when nothing used the group)
+/// already covers idle time.
+const kMinGroupInterval = Duration(minutes: 5);
+
+/// Renders the provider's group. Members are named `p0…pN` rather than by their
+/// own labels: a label is the provider's text, and these are YAML keys.
+List<String> _emitGroup(ProxyGroup group, int memberCount) {
+  final out = <String>[
+    '  - name: $kGroupName',
+    '    type: ${group.type}',
+  ];
+  if (group.type == 'load-balance' && group.strategy.isNotEmpty) {
+    out.add('    strategy: ${group.strategy}');
+  }
+  if (group.type != 'relay') {
+    // relay chains its members and has nothing to measure.
+    final url = Uri.tryParse(group.testUrl);
+    final safe = url != null && url.scheme == 'https' && url.host.isNotEmpty
+        ? group.testUrl
+        : kDefaultGroupTestUrl;
+    out.add('    url: ${yamlScalar(safe)}');
+    final asked = Duration(seconds: group.intervalSeconds);
+    final interval = asked < kMinGroupInterval ? kMinGroupInterval : asked;
+    out.add('    interval: ${interval.inSeconds}');
+    if (group.type == 'url-test' && group.tolerance > 0) {
+      out.add('    tolerance: ${group.tolerance}');
+    }
+  }
+  out.add('    proxies: [${[for (var i = 0; i < memberCount; i++) 'p$i'].join(', ')}]');
+  return out;
+}
+
+/// Where the engine measures a member when the provider named nothing usable.
+/// A 204 endpoint, because the check is about reaching the internet at all.
+const kDefaultGroupTestUrl = 'https://cp.cloudflare.com/generate_204';
 
 /// Fake-IP pools. The engine answers DNS from these ranges and maps the
 /// address back to the domain when the connection arrives, so what leaves the
