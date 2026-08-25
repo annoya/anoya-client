@@ -58,27 +58,13 @@ class NetworkExtensionCore implements VpnCore {
   Future<void> connect(String locationId) async {
     final config = _config;
     if (config == null) throw StateError('no config loaded');
-    final location = config.locations.firstWhere(
-      (l) => l.id == locationId,
-      orElse: () => throw StateError('unknown location $locationId'),
-    );
-    // gvisor on both macOS and iOS: it's fully userspace (no socket binds), the
-    // only stack that works inside the iOS NE sandbox. (The `system` stack
-    // fails there trying to bind the fake-ip gateway.)
-    // Log.enabled is the "collect logs" switch. The level in the config is what
-    // an on-demand start (no app involved) will use; a start driven from here
-    // also gets it pushed straight into the engine, because the engine logs
-    // while parsing the config, before it reads log-level out of it.
-    final yaml = mihomoTunConfigYaml(location,
-        routing: config.routing,
-        dns: config.dns,
-        listPaths: await RuleListStore.availablePaths(config.routing?.lists ?? const []),
-        stack: 'gvisor',
-        collectLogs: Log.enabled);
+    final rendered = await _render(config, locationId);
+    if (rendered == null) throw StateError('unknown location $locationId');
+    final yaml = rendered['config']!;
     final routing = config.routing;
     final routingDesc =
         routing == null ? 'none (full tunnel)' : '${routing.mode}, ${routing.rules.length} rule(s)';
-    Log.i('NE connect: location=${location.id} (${location.label}) routing=$routingDesc');
+    Log.i('NE connect: selection=$locationId routing=$routingDesc');
     try {
       await _control.invokeMethod<void>('start', {
         'config': yaml,
@@ -173,18 +159,46 @@ class NetworkExtensionCore implements VpnCore {
   /// binds its own dials to the physical interface, so nothing has to be routed
   /// around the tunnel — which also means the server's hostname is never
   /// resolved outside it.
+  /// Renders the config for one selection — a server, or a group whose member
+  /// the engine picks.
+  ///
+  /// gvisor on both macOS and iOS: it is fully userspace (no socket binds), the
+  /// only stack that works inside the iOS NE sandbox (the `system` stack fails
+  /// there trying to bind the fake-ip gateway). Log.enabled is the "collect
+  /// logs" switch; the level rendered here is what an on-demand start (no app
+  /// involved) will use.
   Future<Map<String, String>?> _render(NormConfig? config, String? locationId) async {
     if (config == null || locationId == null) return null;
+
+    ProxyGroup? group;
+    var members = const <Location>[];
     Location? location;
-    for (final l in config.locations) {
-      if (l.id == locationId) location = l;
+    if (ProxyGroup.isGroupId(locationId)) {
+      for (final g in config.groups) {
+        if (g.id == locationId) group = g;
+      }
+      if (group == null) return null;
+      final byId = {for (final l in config.locations) l.id: l};
+      members = [for (final id in group.members) if (byId[id] != null) byId[id]!];
+      // A group whose members all disappeared from the subscription would
+      // render an empty `proxies:` list, which the engine rejects — and it
+      // would reject it while applying, i.e. with the tunnel already down.
+      if (members.isEmpty) return null;
+      location = members.first;
+    } else {
+      for (final l in config.locations) {
+        if (l.id == locationId) location = l;
+      }
+      if (location == null) return null;
     }
-    if (location == null) return null;
+
     try {
       final listPaths =
           await RuleListStore.availablePaths(config.routing?.lists ?? const []);
       return {
         'config': mihomoTunConfigYaml(location,
+            group: group,
+            members: members,
             routing: config.routing,
             dns: config.dns,
             listPaths: listPaths,
@@ -194,6 +208,24 @@ class NetworkExtensionCore implements VpnCore {
     } catch (e) {
       Log.e('config render failed', '$e');
       return null;
+    }
+  }
+
+  /// Which member of the rendered proxy group the engine currently uses.
+  ///
+  /// Empty when nothing is running, when the config has no group, or before the
+  /// first health check has landed — all of which mean the same thing to the
+  /// caller: not known yet, so say "auto" and nothing more.
+  static Future<String> groupMember(String group) async {
+    try {
+      final res = await _control
+          .invokeMethod<String>('group_member', {'group': group});
+      return res ?? '';
+    } on PlatformException catch (e) {
+      Log.e('NE group_member failed', e.message ?? e.code);
+      return '';
+    } on MissingPluginException {
+      return '';
     }
   }
 

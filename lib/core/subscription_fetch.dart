@@ -24,6 +24,9 @@ class SubscriptionResponse {
     required this.deviceLimitReached,
     this.routing,
     this.routingProbed = false,
+    this.usedFallback = false,
+    this.rendering = '',
+    this.renderingProbed = false,
   });
 
   final String body;
@@ -45,6 +48,40 @@ class SubscriptionResponse {
   /// A routing probe was made and came back empty, so there is no point
   /// repeating it every five minutes.
   final bool routingProbed;
+
+  /// The same answer, marked as having come from the backup address.
+  SubscriptionResponse viaFallback() => _with(usedFallback: true);
+
+  SubscriptionResponse _with({
+    String? body,
+    bool? usedFallback,
+    String? rendering,
+    bool? renderingProbed,
+  }) =>
+      SubscriptionResponse(
+        body: body ?? this.body,
+        info: info,
+        deviceLimitActive: deviceLimitActive,
+        deviceLimitReached: deviceLimitReached,
+        routing: routing,
+        routingProbed: routingProbed,
+        usedFallback: usedFallback ?? this.usedFallback,
+        rendering: rendering ?? this.rendering,
+        renderingProbed: renderingProbed ?? this.renderingProbed,
+      );
+
+  /// Which named rendering answered, if the plain URL was not the one used
+  /// ('mihomo', 'clash-meta', …). Empty when the panel's own choice was taken.
+  final String rendering;
+
+  /// The renderings were tried and none of them carried groups, so there is no
+  /// point asking again on every refresh.
+  final bool renderingProbed;
+
+  /// The main address did not answer and this came from the provider's backup.
+  /// Worth telling the user: a provider whose main domain is blocked for good
+  /// otherwise looks untouched, while they are down to one road of two.
+  final bool usedFallback;
 }
 
 /// GET a subscription, identifying this device the way panels expect.
@@ -63,12 +100,55 @@ Future<SubscriptionResponse> fetchSubscription(
   String url, {
   http.Client? client,
   bool probeRouting = true,
+  String fallbackUrl = '',
+  Duration? timeout,
+  String rendering = '',
+  bool probeRenderings = true,
 }) async {
   final uri = Uri.parse(url);
   final identity = await DeviceIdentityStore.load();
   final http.Client c = client ?? http.Client();
+  final wait = _boundedTimeout(timeout);
   try {
-    return await _fetch(uri, identity, c, probeRouting);
+    try {
+      // A rendering that worked before is asked for directly: it is where the
+      // servers, the groups and the rules came from last time, and going back
+      // to the plain URL first would fetch a body we are about to discard.
+      if (rendering.isNotEmpty) {
+        final named = renderingUrl(uri, rendering);
+        if (named != null) {
+          try {
+            final res = await _fetch(named, identity, c, probeRouting, wait);
+            return res._with(rendering: rendering, renderingProbed: true);
+          } catch (e) {
+            // The panel dropped the template, or the path stopped working. The
+            // plain URL is what the user added, so it is the answer of record.
+            Log.e('named rendering failed, falling back to the plain address',
+                '${uri.host}/$rendering: $e');
+          }
+        }
+      }
+      final plain = await _fetch(uri, identity, c, probeRouting, wait);
+      return await _withGroups(plain, uri, identity, c, wait, probeRenderings);
+    } catch (e, stack) {
+      // The backup address exists for exactly this: the main one is blocked or
+      // down. Tried once, and only when the provider named one — a retry loop
+      // against a dead host is not resilience, it is a slower failure.
+      final backup = Uri.tryParse(fallbackUrl);
+      if (backup == null || backup.scheme != 'https' || backup.host.isEmpty) rethrow;
+      Log.e('subscription fetch failed, trying the backup address',
+          '${uri.host} -> ${backup.host}');
+      try {
+        final res = await _fetch(backup, identity, c, probeRouting, wait);
+        return res.viaFallback();
+      } catch (_) {
+        // Both are gone: the message names the address the user added. The
+        // backup is the provider's arrangement — an address the user has never
+        // seen, and naming it would be a diagnosis they cannot act on. That the
+        // backup was tried is in the log line above.
+        Error.throwWithStackTrace(e, stack);
+      }
+    }
   } finally {
     // Closed once, after the routing lookup as well: a client closed between
     // the two requests fails the second one, and the failure looks exactly like
@@ -82,8 +162,9 @@ Future<SubscriptionResponse> _fetch(
   DeviceIdentity identity,
   http.Client c,
   bool probeRouting,
+  Duration timeout,
 ) async {
-  final res = await c.get(uri, headers: identity.headers).timeout(kHttpTimeout);
+  final res = await c.get(uri, headers: identity.headers).timeout(timeout);
 
   final reached = _flag(res.headers, 'x-hwid-max-devices-reached') ||
       _flag(res.headers, 'x-hwid-limit'); // the older name, still sent
@@ -123,6 +204,85 @@ Future<SubscriptionResponse> _fetch(
     routingProbed: probed,
   );
 }
+
+/// Asks the panel for a Clash rendering when the body it chose has no groups.
+///
+/// Which body a panel serves is decided by a rule its admin wrote against our
+/// User-Agent, so what we get is their choice about a client they may never
+/// have heard of. Every panel that has renderings also lets a client name one,
+/// which is the honest way to ask for the format our engine speaks — and the
+/// only one that carries `proxy-groups`.
+///
+/// Costs one request, once: the outcome is remembered on the profile either
+/// way. The plain body is kept whenever nothing better answers, because it is
+/// what the user's provider decided to send them.
+Future<SubscriptionResponse> _withGroups(
+  SubscriptionResponse plain,
+  Uri uri,
+  DeviceIdentity identity,
+  http.Client c,
+  Duration wait,
+  bool probe,
+) async {
+  if (!probe) return plain;
+  if (_hasGroups(plain.body)) return plain.renderingProbed ? plain : plain._with(renderingProbed: true);
+
+  for (final name in kClashRenderings) {
+    final url = renderingUrl(uri, name);
+    if (url == null) continue;
+    try {
+      final res = await _fetch(url, identity, c, false, wait);
+      if (!_hasGroups(res.body)) continue;
+      Log.i('subscription: using the $name rendering (it carries groups)');
+      return res._with(rendering: name, renderingProbed: true);
+    } catch (e) {
+      // A 404 is the normal answer from a panel that has no such rendering.
+      Log.e('rendering not available', '${uri.host}/$name');
+    }
+  }
+  return plain._with(renderingProbed: true);
+}
+
+bool _hasGroups(String body) =>
+    RegExp(r'(^|\n)\s*proxy-groups\s*:').hasMatch(body) &&
+    RegExp(r'(^|\n)\s*proxies\s*:').hasMatch(body);
+
+/// The names each panel gives its Clash/mihomo rendering, in the order they are
+/// tried. Remnawave calls it `mihomo`, Marzban `clash-meta` (it has no
+/// "mihomo"); 3x-ui serves it from a different path prefix instead, which
+/// [renderingUrl] handles.
+const kClashRenderings = ['mihomo', 'clash-meta', 'clash'];
+
+/// The URL that asks for one named rendering, or null when this address cannot
+/// express it.
+Uri? renderingUrl(Uri uri, String name) {
+  final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+  if (segments.isEmpty) return null;
+  // 3x-ui: the format is a path prefix, not a suffix — /sub/<id> next to
+  // /clash/<id> and /json/<id>.
+  if (segments.first == 'sub' && segments.length >= 2) {
+    if (name != 'clash') return null;
+    return uri.replace(pathSegments: ['clash', ...segments.skip(1)]);
+  }
+  if (kSubscriptionRenderings.contains(segments.last.toLowerCase())) return null;
+  return uri.replace(pathSegments: [...segments, name]);
+}
+
+/// What the panel asked us to wait, bounded by what the app is willing to.
+///
+/// A panel that asks for a minute would hold a manual refresh — and the user
+/// staring at it — open for that long; one that asks for a second would fail on
+/// any slow link. The window is the convention's own (5–15 s), and no header
+/// means our default.
+Duration _boundedTimeout(Duration? asked) {
+  if (asked == null) return kHttpTimeout;
+  if (asked < kMinSubscriptionTimeout) return kMinSubscriptionTimeout;
+  if (asked > kMaxSubscriptionTimeout) return kMaxSubscriptionTimeout;
+  return asked;
+}
+
+const kMinSubscriptionTimeout = Duration(seconds: 5);
+const kMaxSubscriptionTimeout = Duration(seconds: 15);
 
 /// Renderings a panel serves the same subscription as, named in the URL's last
 /// segment. A URL that already asks for one is not asked to render itself

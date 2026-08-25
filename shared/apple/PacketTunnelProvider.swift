@@ -177,6 +177,21 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             completionHandler?(Data((failure ?? "").utf8))
             return
         }
+        if request.hasPrefix("group:") {
+            // Which member the engine currently sends traffic through. Asked by
+            // the app while it shows a group, because "auto" without a server
+            // name is a claim the user cannot check.
+            let name = String(request.dropFirst("group:".count))
+            let member = name.withCString { ptr -> String in
+                guard let res = MihomoGroupMember(UnsafeMutablePointer(mutating: ptr)) else {
+                    return ""
+                }
+                defer { FreeCString(res) }
+                return String(cString: res)
+            }
+            completionHandler?(Data(member.utf8))
+            return
+        }
         if request.hasPrefix("logging:") {
             let on = request.hasSuffix("1")
             logEnabled = on

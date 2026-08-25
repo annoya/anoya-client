@@ -358,6 +358,8 @@ Future<T?> pickOption<T>(
   ValueChanged<T>? onOpenSettings,
   bool navigational = false,
   String itemNoun = 'item',
+  List<Option<T>> pinned = const [],
+  String pinnedHeader = '',
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -375,6 +377,8 @@ Future<T?> pickOption<T>(
       onOpenSettings: onOpenSettings,
       navigational: navigational,
       itemNoun: itemNoun,
+      pinned: pinned,
+      pinnedHeader: pinnedHeader,
     ),
   );
 }
@@ -389,6 +393,8 @@ class _PickSheet<T> extends StatefulWidget {
     required this.onOpenSettings,
     required this.navigational,
     required this.itemNoun,
+    required this.pinned,
+    required this.pinnedHeader,
   });
 
   final String title;
@@ -399,6 +405,12 @@ class _PickSheet<T> extends StatefulWidget {
   final ValueChanged<T>? onOpenSettings;
   final bool navigational;
   final String itemNoun;
+
+  /// Choices of a different kind, shown above everything and never counted with
+  /// the rest: they are answers to the same question, not more of the same
+  /// thing. Not favouritable — a favourite is a server you keep coming back to.
+  final List<Option<T>> pinned;
+  final String pinnedHeader;
 
   @override
   State<_PickSheet<T>> createState() => _PickSheetState<T>();
@@ -431,12 +443,12 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     widget.onOpenSettings!(value);
   }
 
-  Widget _row(Option<T> o) {
+  Widget _row(Option<T> o, {bool favouritable = true}) {
     final cs = Theme.of(context).colorScheme;
     final favorite = _favorites.contains(o.value);
     final selected = o.value == widget.selected;
     final actions = <Widget>[
-      if (widget.onToggleFavorite != null)
+      if (widget.onToggleFavorite != null && favouritable)
         IconButton(
           icon: Icon(favorite ? Icons.star : Icons.star_border, size: 20),
           color: favorite ? cs.primary : cs.onSurfaceVariant,
@@ -479,6 +491,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final shown = widget.options.where(_matches).toList();
+    final pinnedShown = widget.pinned.where(_matches).toList();
     final favorites = shown.where((o) => _favorites.contains(o.value)).toList();
     final rest = shown.where((o) => !_favorites.contains(o.value)).toList();
     final searching = _query.trim().isNotEmpty;
@@ -515,6 +528,10 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
                 child: ListView(
                   shrinkWrap: true,
                   children: [
+                    if (pinnedShown.isNotEmpty) ...[
+                      SectionHeader(widget.pinnedHeader),
+                      ...pinnedShown.map((o) => _row(o, favouritable: false)),
+                    ],
                     if (!_grouped)
                       ...shown.map(_row)
                     else ...[

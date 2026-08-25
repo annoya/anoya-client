@@ -60,6 +60,9 @@ void main() {
   test('headers carry the id always and the device detail when known', () async {
     final id = await DeviceIdentityStore.load();
     expect(id.headers['x-hwid'], id.hwid);
+    // Ours, not the Dart SDK's default: panels key their template rules on this
+    // string, so it is part of the app's contract with them.
+    expect(id.headers['user-agent'], DeviceIdentity.kUserAgent);
     expect(id.headers['x-device-os'], 'iOS');
     expect(id.headers['x-ver-os'], '18.0');
     expect(id.headers['x-device-model'], 'iPhone16,1');
@@ -72,7 +75,8 @@ void main() {
     debugSetDeviceIdentity(
         const DeviceIdentity(hwid: 'abcdef0123', os: '', osVersion: '', model: ''));
     final id = await DeviceIdentityStore.load();
-    expect(id.headers.keys, ['x-hwid']);
+    expect(id.headers.keys, ['user-agent', 'x-hwid'],
+        reason: 'the app names itself even when it knows nothing about the device');
     expect(id.label, 'This device');
   });
 }

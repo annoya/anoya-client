@@ -388,6 +388,18 @@ final class VPNManager {
     /// "mihomo") over the provider IPC channel. Only works while the tunnel is
     /// up; throws otherwise (the extension process is the log's only reader,
     /// since it lives in the extension's own sandbox container).
+    /// Which member of a proxy group the engine is currently using, or "" when
+    /// there is no running tunnel or no such group.
+    ///
+    /// Never throws: this feeds a subtitle, and a missing answer means "not
+    /// known yet", which the app shows as plain "auto" rather than an error.
+    func groupMember(_ group: String) async -> String {
+        let managers = try? await NETunnelProviderManager.loadAllFromPreferences()
+        guard let session = managers?.first?.connection as? NETunnelProviderSession,
+              session.status == .connected else { return "" }
+        return (try? await ask(session, "group:\(group)")) ?? ""
+    }
+
     func fetchLog(_ name: String) async throws -> String {
         let managers = try await NETunnelProviderManager.loadAllFromPreferences()
         guard let session = managers.first?.connection as? NETunnelProviderSession else {

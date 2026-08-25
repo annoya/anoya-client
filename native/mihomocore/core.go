@@ -90,3 +90,15 @@ func MihomoStop() {
 func FreeCString(s *C.char) {
 	C.free(unsafe.Pointer(s))
 }
+
+// MihomoGroupMember returns which member of a proxy group the engine is
+// currently using ("" when the running config has no such group). The app polls
+// it to show what "auto" resolved to, since a group's name alone tells the user
+// nothing about where their traffic goes.
+//
+//export MihomoGroupMember
+func MihomoGroupMember(group *C.char) *C.char {
+	mu.Lock()
+	defer mu.Unlock()
+	return C.CString(selectedGroupMember(C.GoString(group)))
+}

@@ -95,6 +95,27 @@ property of the client. Now: unknown format, known format with an empty list,
 and known format whose every server needs a protocol we lack are three separate
 sentences, because they have three different fixes.
 
+**The app asks for the format it wants instead of hoping to be recognised.**
+A panel chooses what to send by matching the client's User-Agent, so a
+capability like groups otherwise depends on an admin having written a rule for
+this app — measured on a live panel: our old Dart-SDK default matched one, and
+renaming ourselves to `AnnoyaTest/1.0` silently dropped us to base64, losing
+groups and provider routing with nothing in the code to show for it. Asking by
+name (a documented feature of every panel that has renderings) removes the
+dependency. It also overrides what the admin's rule intended for us, which is
+the trade: we prefer a capability we can rely on over a choice made for a client
+the admin may never have heard of.
+
+**A subscription's groups are carried, and the engine keeps the choice.** A
+`url-test` group is not something we reimplement in Dart: mihomo measures each
+member through itself, switches only when a new leader beats the current one by
+more than `tolerance`, re-picks per dial (so a switch never tears down live
+connections) and re-checks off-schedule after repeated dial failures. Reproducing
+that above the engine would be a second, worse implementation of it. What is
+ours is the boundary: which groups are offered (only the ones where the engine
+chooses), which members exist (only servers we can run), the interval floor, and
+the fact that the picked member is displayed rather than left as "auto".
+
 **Capability degrades along that order, deliberately and visibly.** A link shows
 no account card and no server picker; a subscription shows servers but no
 account; only a self-hosted configuration can be told by its server to stop
@@ -182,6 +203,7 @@ no business seeing.
 
 - `client/lib/core/profile.dart`, `config_source.dart`, `profile_store.dart`.
 - `client/lib/core/routing_policy.dart` — the three policy classes.
+- `client/lib/state/group_member.dart` — what a selected group resolved to.
 - `client/lib/core/rule_list_store.dart` — the provider's list files.
 - `client/lib/core/parsers/` — `share_link.dart` (single links),
   `clash_config.dart`, `xray_config.dart`, `singbox_config.dart`,
@@ -196,5 +218,6 @@ no business seeing.
 - Tests: `client/test/parsers_test.dart`,
   `client/test/provider_routing_test.dart`, `client/test/routing_policy_test.dart`,
   `client/test/rule_list_store_test.dart`, `client/test/formats_test.dart`,
+  `client/test/proxy_groups_test.dart`,
   `client/test/config_screen_test.dart`,
   `client/test/settings_configurations_test.dart`, `client/test/home_layout_test.dart`.

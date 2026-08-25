@@ -45,7 +45,8 @@ void main() {
       sent = req.headers;
       return http.Response('vless://x', 200);
     });
-    await fetchSubscription('https://panel.example/sub/abc', client: client);
+    await fetchSubscription('https://panel.example/sub/abc',
+        probeRenderings: false, client: client);
     expect(sent['x-hwid'], 'aaaabbbbccccdddd');
     expect(sent['x-device-os'], 'iOS');
     expect(sent['x-ver-os'], '18.0');
@@ -60,7 +61,8 @@ void main() {
       'vless://x@0.0.0.0:1#Device%20limit%20reached',
       headers: {'x-hwid-max-devices-reached': 'true'},
     );
-    final res = await fetchSubscription('https://panel.example/sub/abc', client: client);
+    final res = await fetchSubscription('https://panel.example/sub/abc',
+        probeRenderings: false, client: client);
     expect(res.deviceLimitReached, isTrue);
     expect(res.body, contains('0.0.0.0'), reason: 'the placeholder is the message');
     expect(res.deviceLimitActive, isTrue,
@@ -69,6 +71,7 @@ void main() {
 
   test('the older header name for the same condition is honoured', () async {
     final res = await fetchSubscription('https://panel.example/sub/abc',
+        probeRenderings: false,
         client: answering('vless://x', headers: {'x-hwid-limit': 'true'}));
     expect(res.deviceLimitReached, isTrue);
   });
@@ -80,13 +83,15 @@ void main() {
 
   test('a panel that counts devices is remembered, so the app can say so', () async {
     final client = answering('vless://x', headers: {'x-hwid-active': 'true'});
-    final res = await fetchSubscription('https://panel.example/sub/abc', client: client);
+    final res = await fetchSubscription('https://panel.example/sub/abc',
+        probeRenderings: false, client: client);
     expect(res.deviceLimitActive, isTrue);
     expect(res.body, 'vless://x');
   });
 
   test('a panel that says nothing about devices claims no limit', () async {
     final res = await fetchSubscription('https://panel.example/sub/abc',
+        probeRenderings: false,
         client: answering('vless://x'));
     expect(res.deviceLimitActive, isFalse);
   });
@@ -94,7 +99,8 @@ void main() {
   test('the subscription secret never travels in an error', () async {
     final client = answering('nope', status: 500);
     try {
-      await fetchSubscription('https://panel.example/sub/s3cr3t-token', client: client);
+      await fetchSubscription('https://panel.example/sub/s3cr3t-token',
+        probeRenderings: false, client: client);
       fail('a 500 must throw');
     } catch (e) {
       expect('$e', isNot(contains('s3cr3t-token')));

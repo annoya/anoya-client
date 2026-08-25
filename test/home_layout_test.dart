@@ -27,6 +27,32 @@ void main() {
         ],
       );
 
+  /// A subscription that offers what this panel offers: several servers plus
+  /// sets whose member the engine picks.
+  Profile withGroups() => Profile(
+        id: 'sub',
+        type: ProfileType.subscription,
+        name: 'Remnawave',
+        subscriptionUrl: 'https://sub.example/t',
+        locations: [
+          for (var i = 1; i <= 3; i++)
+            Location(id: 's$i', label: 'VLESS Reality $i', proxy: {
+              'type': 'vless',
+              'server': '10.0.0.$i',
+            }),
+        ],
+        groups: const [
+          ProxyGroup(
+            name: '⚡️ Fastest',
+            type: 'url-test',
+            members: ['s1', 's2', 's3'],
+            intervalSeconds: 300,
+            tolerance: 150,
+          ),
+          ProxyGroup(name: '🛟 Failover', type: 'fallback', members: ['s1', 's2', 's3']),
+        ],
+      );
+
   Future<void> pump(WidgetTester tester, List<Profile> profiles) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
@@ -72,6 +98,34 @@ void main() {
         reason: 'the last card hugs the bottom edge (16 padding + card margin)');
 
     expect(tester.getRect(find.text('Connect')).bottom, lessThan(serverRow.top));
+  });
+  testWidgets('a subscription\'s groups reach the picker, above the servers',
+      (tester) async {
+    // Parsing them is not the same as offering them: the whole point of a group
+    // is that the user can choose it.
+    await pump(tester, [withGroups()]);
+    await tester.tap(find.byIcon(Icons.chevron_right).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHOSEN BY THE ENGINE'), findsOneWidget);
+    expect(find.text('⚡️ Fastest'), findsOneWidget);
+    expect(find.text('🛟 Failover'), findsOneWidget);
+    expect(find.textContaining('Lowest latency of 3'), findsOneWidget,
+        reason: 'the row says what the group does, not what its type is called');
+    // Twice: the sheet lists it, and the row behind the sheet still names the
+    // current selection.
+    expect(find.text('VLESS Reality 1'), findsNWidgets(2),
+        reason: 'the servers are still there, below');
+
+    final header = tester.getTopLeft(find.text('CHOSEN BY THE ENGINE')).dy;
+    expect(header, lessThan(tester.getTopLeft(find.text('VLESS Reality 1').last).dy));
+  });
+
+  testWidgets('the configuration line counts the groups it offers', (tester) async {
+    // A section appearing in the picker that was not there before otherwise
+    // reads as a new feature of the app rather than as what the provider sent.
+    await pump(tester, [withGroups()]);
+    expect(find.textContaining('3 servers · 2 groups'), findsOneWidget);
   });
 }
 

@@ -7,12 +7,16 @@ class NormConfig {
       {required this.version,
       required this.account,
       required this.locations,
+      this.groups = const [],
       this.routing,
       this.dns = const []});
 
   final int version;
   final Account account;
   final List<Location> locations;
+
+  /// Groups a subscription offered, whose member the engine picks.
+  final List<ProxyGroup> groups;
 
   /// Split-tunneling policy. Set by the server ("managed") or filled in from
   /// the device-local rules before the config is handed to the core.
@@ -73,6 +77,98 @@ class Routing {
         'mode': mode,
         'rules': rules.map((r) => r.toJson()).toList(),
         if (lists.isNotEmpty) 'lists': lists.map((l) => l.toJson()).toList(),
+      };
+}
+
+/// A set of servers whose member the **engine** picks, not the user.
+///
+/// Comes from a subscription's `proxy-groups`. Only the types where the choice
+/// is the engine's are carried: `url-test` (lowest latency), `fallback` (first
+/// that answers), `load-balance` and `relay` (a chain). A `select` group means
+/// "let a human choose", which is what our own server picker already is —
+/// carrying it would put a picker inside a picker.
+class ProxyGroup {
+  const ProxyGroup({
+    required this.name,
+    required this.type,
+    required this.members,
+    this.testUrl = '',
+    this.intervalSeconds = 0,
+    this.tolerance = 0,
+    this.strategy = '',
+  });
+
+  /// The provider's own name, shown to the user. Never interpolated into the
+  /// engine config — the renderer generates safe names for that.
+  final String name;
+
+  /// `url-test` | `fallback` | `load-balance` | `relay`.
+  final String type;
+
+  /// Ids of the [Location]s in this group, in the provider's order. Order is
+  /// meaning, not decoration: `fallback` takes the first that answers.
+  final List<String> members;
+
+  /// What the engine fetches to measure a member. The provider's choice; a
+  /// test against a URL nobody uses measures nothing useful.
+  final String testUrl;
+
+  /// How often the provider wants members re-measured.
+  final int intervalSeconds;
+
+  /// Milliseconds a new leader must beat the current one by before the engine
+  /// switches. Without it two servers a few ms apart would trade the traffic
+  /// on every round.
+  final int tolerance;
+
+  /// `load-balance` only: how the engine spreads traffic across members.
+  /// Empty means the engine's own default (consistent-hashing).
+  ///
+  /// Carried and validated rather than passed through: mihomo rejects an
+  /// unknown strategy, and it rejects it while applying the config — which
+  /// would take the whole tunnel down over one field a provider mistyped.
+  final String strategy;
+
+  static const types = ['url-test', 'fallback', 'load-balance', 'relay'];
+  static const strategies = ['round-robin', 'consistent-hashing', 'sticky-sessions'];
+
+  /// A group id is a location id in the picker's eyes, so both can share the
+  /// one selection the app already has.
+  String get id => 'group:$name';
+
+  static bool isGroupId(String id) => id.startsWith('group:');
+
+  bool get isValid =>
+      name.isNotEmpty && types.contains(type) && members.isNotEmpty;
+
+  /// What the row says the group does. The type name from someone else's YAML
+  /// tells the user nothing; this is the same fact in words they can act on.
+  String describe(int memberCount) => switch (type) {
+        'url-test' => 'Lowest latency of $memberCount',
+        'fallback' => 'First of $memberCount that answers · in their order',
+        'load-balance' => 'Spread across $memberCount',
+        'relay' => 'Chain of $memberCount',
+        _ => '$memberCount servers',
+      };
+
+  factory ProxyGroup.fromJson(Map<String, dynamic> json) => ProxyGroup(
+        name: json['name'] as String? ?? '',
+        type: json['type'] as String? ?? '',
+        members: (json['members'] as List? ?? const []).map((e) => '$e').toList(),
+        testUrl: json['url'] as String? ?? '',
+        intervalSeconds: (json['interval'] as num?)?.toInt() ?? 0,
+        tolerance: (json['tolerance'] as num?)?.toInt() ?? 0,
+        strategy: json['strategy'] as String? ?? '',
+      );
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'type': type,
+        'members': members,
+        if (testUrl.isNotEmpty) 'url': testUrl,
+        if (intervalSeconds > 0) 'interval': intervalSeconds,
+        if (tolerance > 0) 'tolerance': tolerance,
+        if (strategy.isNotEmpty) 'strategy': strategy,
       };
 }
 

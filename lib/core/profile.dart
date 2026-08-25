@@ -32,10 +32,14 @@ class Profile {
     this.deviceLimitActive = false,
     this.deviceLimitReached = false,
     this.unsupportedServers = const {},
+    this.groups = const [],
     this.providerRouting,
     this.providerRoutingSkipped = 0,
     this.providerRoutingEnabled = true,
     this.providerRuleListsEnabled = false,
+    this.usedFallback = false,
+    this.rendering = '',
+    this.renderingProbed = false,
     this.providerRoutingProbed = false,
     this.providerInfo,
     this.refreshedAt,
@@ -88,6 +92,11 @@ class Profile {
   /// unexplained gap reads as the app losing servers.
   final Map<String, int> unsupportedServers;
 
+  /// Sets of servers the subscription offered whose member the engine picks
+  /// (`url-test`, `fallback`, `load-balance`, `relay`). Empty for every other
+  /// kind of configuration: only a subscription can describe them.
+  final List<ProxyGroup> groups;
+
   /// Routing the subscription's panel wants applied. Null when it sent none.
   ///
   /// Applied but not enforced: unlike a self-hosted policy, a panel has no
@@ -107,6 +116,23 @@ class Profile {
   /// device. Off by default: applying someone's rules and storing someone's
   /// files are different decisions, and only the second one downloads.
   final bool providerRuleListsEnabled;
+
+  /// The last refresh came from the provider's backup address, not the one the
+  /// user added. Shown, because it means their provider's main address is
+  /// unreachable from here — a fact about their connection, not ours.
+  final bool usedFallback;
+
+  /// The named rendering this subscription is read from ('mihomo',
+  /// 'clash-meta', …), or empty when the panel's own choice is taken.
+  ///
+  /// Which body a panel serves is decided by a rule matching our User-Agent, so
+  /// a capability like groups would otherwise depend on an admin having heard
+  /// of this app. Asking by name is the documented way not to.
+  final String rendering;
+
+  /// The renderings were tried and none carried groups. Remembered so the probe
+  /// costs one request per source, not one per refresh.
+  final bool renderingProbed;
 
   /// The paid-for routing lookup was already made for this source, so the poll
   /// does not repeat it every five minutes when there is nothing there.
@@ -148,9 +174,13 @@ class Profile {
     bool deviceLimitActive = false,
     bool deviceLimitReached = false,
     Map<String, int> unsupportedServers = const {},
+    List<ProxyGroup> groups = const [],
     Routing? providerRouting,
     int providerRoutingSkipped = 0,
     bool providerRoutingProbed = false,
+    bool usedFallback = false,
+    String rendering = '',
+    bool renderingProbed = false,
     SubscriptionInfo? providerInfo,
   }) =>
       Profile(
@@ -168,6 +198,7 @@ class Profile {
         deviceLimitActive: deviceLimitActive,
         deviceLimitReached: deviceLimitReached,
         unsupportedServers: unsupportedServers,
+        groups: groups,
         providerRouting: providerRouting,
         providerRoutingSkipped: providerRoutingSkipped,
         // The user's choices survive a refresh; only the rules themselves come
@@ -176,6 +207,9 @@ class Profile {
         providerRuleListsEnabled: providerRuleListsEnabled,
         providerRoutingProbed: providerRoutingProbed,
         providerInfo: providerInfo,
+        usedFallback: usedFallback,
+        rendering: rendering,
+        renderingProbed: renderingProbed,
         refreshedAt: refreshedAt,
       );
 
@@ -206,6 +240,7 @@ class Profile {
         deviceLimitActive: deviceLimitActive,
         deviceLimitReached: deviceLimitReached,
         unsupportedServers: unsupportedServers,
+        groups: groups,
         providerRouting: providerRouting,
         providerRoutingSkipped: providerRoutingSkipped,
         providerRoutingEnabled: providerRoutingEnabled ?? this.providerRoutingEnabled,
@@ -213,6 +248,9 @@ class Profile {
             providerRuleListsEnabled ?? this.providerRuleListsEnabled,
         providerRoutingProbed: providerRoutingProbed,
         providerInfo: providerInfo,
+        usedFallback: usedFallback,
+        rendering: rendering,
+        renderingProbed: renderingProbed,
         refreshedAt: refreshedAt ?? this.refreshedAt,
       );
 
@@ -236,6 +274,10 @@ class Profile {
         dns: (j['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
         deviceLimitActive: j['device_limit_active'] as bool? ?? false,
         deviceLimitReached: j['device_limit_reached'] as bool? ?? false,
+        groups: (j['groups'] as List? ?? const [])
+            .whereType<Map>()
+            .map((e) => ProxyGroup.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
         providerRouting: j['provider_routing'] is Map
             ? Routing.fromJson(Map<String, dynamic>.from(j['provider_routing'] as Map))
             : null,
@@ -243,6 +285,9 @@ class Profile {
         providerRoutingEnabled: j['provider_routing_enabled'] as bool? ?? true,
         providerRuleListsEnabled: j['provider_rule_lists_enabled'] as bool? ?? false,
         providerRoutingProbed: j['provider_routing_probed'] as bool? ?? false,
+        usedFallback: j['used_fallback'] as bool? ?? false,
+        rendering: j['rendering'] as String? ?? '',
+        renderingProbed: j['rendering_probed'] as bool? ?? false,
         unsupportedServers: (j['unsupported_servers'] as Map?)
                 ?.map((k, v) => MapEntry('$k', v is int ? v : 0)) ??
             const {},
@@ -268,12 +313,40 @@ class Profile {
         if (deviceLimitActive) 'device_limit_active': true,
         if (deviceLimitReached) 'device_limit_reached': true,
         if (unsupportedServers.isNotEmpty) 'unsupported_servers': unsupportedServers,
+        if (groups.isNotEmpty) 'groups': groups.map((g) => g.toJson()).toList(),
         if (providerRouting != null) 'provider_routing': providerRouting!.toJson(),
         if (providerRoutingSkipped > 0) 'provider_routing_skipped': providerRoutingSkipped,
         if (!providerRoutingEnabled) 'provider_routing_enabled': false,
         if (providerRuleListsEnabled) 'provider_rule_lists_enabled': true,
         if (providerRoutingProbed) 'provider_routing_probed': true,
+        if (usedFallback) 'used_fallback': true,
+        if (rendering.isNotEmpty) 'rendering': rendering,
+        if (renderingProbed) 'rendering_probed': true,
         if (providerInfo != null) 'provider_info': providerInfo!.toJson(),
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
       };
 }
+
+/// How often the app re-reads a refreshable configuration.
+///
+/// A subscription's panel may ask for its own cadence
+/// (`profile-update-interval`, in **hours** — the convention's unit). We honour
+/// it where it is slower than our own polling and floor it at [kMinRefreshGap]:
+/// a panel must not be able to make the app call it every minute, and a panel
+/// asking for twelve hours should not be called 144 times in between.
+Duration refreshGapFor(Profile p) {
+  final hours = p.providerInfo?.updateInterval;
+  if (hours == null || hours <= 0) return kMinRefreshGap;
+  final asked = Duration(hours: hours);
+  return asked < kMinRefreshGap ? kMinRefreshGap : asked;
+}
+
+/// Whether the poll should re-read this configuration yet.
+bool isDueForRefresh(Profile p, {DateTime? now}) {
+  final at = p.refreshedAt;
+  if (at == null) return true;
+  return (now ?? DateTime.now()).difference(at) >= refreshGapFor(p);
+}
+
+/// The fastest the app polls anything, whatever a provider asks for.
+const kMinRefreshGap = Duration(minutes: 5);

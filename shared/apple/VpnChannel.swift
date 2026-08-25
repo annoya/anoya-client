@@ -100,6 +100,9 @@ enum VpnChannel {
                 }
             case "status":
                 Task { @MainActor in result(await VPNManager.shared.refreshStatus()) }
+            case "group_member":
+                let name = (call.arguments as? [String: Any])?["group"] as? String ?? ""
+                Task { @MainActor in result(await VPNManager.shared.groupMember(name)) }
             case "device_info":
                 result(deviceInfo())
             case "shared_dir":

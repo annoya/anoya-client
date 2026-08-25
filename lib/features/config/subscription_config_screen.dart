@@ -79,6 +79,7 @@ class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScr
               openUrl: p.providerInfo?.webPageUrl.isNotEmpty == true
                   ? p.providerInfo!.webPageUrl
                   : p.subscriptionUrl,
+              viaFallback: p.usedFallback,
             ),
           RefreshCard(profile: p, refreshing: _refreshing, onRefresh: _refresh),
           if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),

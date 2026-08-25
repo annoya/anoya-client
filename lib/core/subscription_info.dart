@@ -22,6 +22,8 @@ class SubscriptionInfo {
     this.supportUrl = '',
     this.webPageUrl = '',
     this.updateInterval,
+    this.fallbackUrl = '',
+    this.requestTimeout,
   });
 
   /// `profile-title` — what the provider calls this subscription.
@@ -46,7 +48,19 @@ class SubscriptionInfo {
   final String webPageUrl;
 
   /// `profile-update-interval`, in days. Null when the panel did not say.
+  /// How often the panel wants the subscription re-read, **in hours** — the
+  /// convention's unit (Happ: "the interval is set in hours and must be a
+  /// multiple of one hour"). Null when it said nothing.
   final int? updateInterval;
+
+  /// Where to ask when the main address does not answer. A subscription URL
+  /// like any other, so it is a credential: it never reaches a log or an error
+  /// message beyond its host.
+  final String fallbackUrl;
+
+  /// How long the panel wants us to wait for it, in seconds. Bounded on use —
+  /// a panel does not get to hold the app's refresh open for a minute.
+  final int? requestTimeout;
 
   bool get hasPlan => usedBytes > 0 || totalBytes > 0 || expiresAt != null;
   bool get unlimited => totalBytes <= 0;
@@ -67,6 +81,8 @@ class SubscriptionInfo {
         if (supportUrl.isNotEmpty) 'support_url': supportUrl,
         if (webPageUrl.isNotEmpty) 'web_page_url': webPageUrl,
         if (updateInterval != null) 'update_interval': updateInterval,
+        if (fallbackUrl.isNotEmpty) 'fallback_url': fallbackUrl,
+        if (requestTimeout != null) 'request_timeout': requestTimeout,
       };
 
   factory SubscriptionInfo.fromJson(Map<String, dynamic> j) => SubscriptionInfo(
@@ -78,6 +94,8 @@ class SubscriptionInfo {
         supportUrl: j['support_url'] as String? ?? '',
         webPageUrl: j['web_page_url'] as String? ?? '',
         updateInterval: j['update_interval'] as int?,
+        fallbackUrl: j['fallback_url'] as String? ?? '',
+        requestTimeout: j['request_timeout'] as int?,
       );
 
   /// Reads the convention out of one response's headers.
@@ -96,7 +114,18 @@ class SubscriptionInfo {
       supportUrl: (headers['support-url'] ?? '').trim(),
       webPageUrl: (headers['profile-web-page-url'] ?? '').trim(),
       updateInterval: int.tryParse((headers['profile-update-interval'] ?? '').trim()),
+      // https only: this address decides which servers the app trusts, so it
+      // does not arrive over a channel anyone can rewrite.
+      fallbackUrl: _url(headers['fallback-url']),
+      requestTimeout:
+          int.tryParse((headers['subscription-request-timeout'] ?? '').trim()),
     );
+  }
+
+  static String _url(String? raw) {
+    final v = (raw ?? '').trim();
+    final uri = Uri.tryParse(v);
+    return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty ? v : '';
   }
 
   /// A header that may arrive as `base64:<payload>` — the convention's way of

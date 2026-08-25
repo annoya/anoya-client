@@ -244,7 +244,8 @@ rules:
         }
         return http.Response('vless://x', 200);
       });
-      final res = await fetchSubscription('https://sub.example/tok3n', client: client);
+      final res = await fetchSubscription('https://sub.example/tok3n',
+        probeRenderings: false, client: client);
       expect(asked, ['/tok3n', '/tok3n/json'],
           reason: 'asking for a format by name beats impersonating another app');
       expect(res.routing!.routing.rules.single.value, 'ip.me');
@@ -257,7 +258,8 @@ rules:
         asked.add(req.url.path);
         return http.Response('{"routing":{"rules":[]}}', 200);
       });
-      await fetchSubscription('https://sub.example/tok3n/mihomo', client: client);
+      await fetchSubscription('https://sub.example/tok3n/mihomo',
+        probeRenderings: false, client: client);
       expect(asked, ['/tok3n/mihomo']);
     });
 
@@ -272,7 +274,8 @@ rules:
         return http.Response('vless://x', 200,
             headers: {'routing': 'happ://routing/add/$payload'});
       });
-      final res = await fetchSubscription('https://sub.example/tok3n', client: client);
+      final res = await fetchSubscription('https://sub.example/tok3n',
+        probeRenderings: false, client: client);
       expect(asked, ['/tok3n']);
       expect(res.routing!.routing.rules.single.value, 'ads.example');
     });
@@ -281,7 +284,8 @@ rules:
       final client = MockClient((req) async => req.url.path.endsWith('/json')
           ? http.Response('nope', 500)
           : http.Response('vless://x', 200));
-      final res = await fetchSubscription('https://sub.example/tok3n', client: client);
+      final res = await fetchSubscription('https://sub.example/tok3n',
+        probeRenderings: false, client: client);
       expect(res.body, 'vless://x');
       expect(res.routing, isNull);
       expect(res.routingProbed, isTrue, reason: 'do not repeat it every five minutes');
@@ -294,6 +298,7 @@ rules:
         return http.Response('vless://x', 200);
       });
       final res = await fetchSubscription('https://sub.example/tok3n',
+        probeRenderings: false,
           client: client, probeRouting: false);
       expect(asked, ['/tok3n']);
       expect(res.routingProbed, isFalse);

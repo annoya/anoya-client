@@ -66,7 +66,21 @@ final class SubscriptionSource extends ConfigSource {
     // again on every poll; one that does publish rules is re-read every time,
     // because rules change.
     final probe = profile.providerRouting != null || !profile.providerRoutingProbed;
-    final res = await fetchSubscription(profile.subscriptionUrl!, probeRouting: probe);
+    // Both come from the last successful answer: a panel's own statement of how
+    // long to wait for it and where to ask if it does not answer at all.
+    final info = profile.providerInfo;
+    final res = await fetchSubscription(
+      profile.subscriptionUrl!,
+      probeRouting: probe,
+      // Asked once per source: either a rendering answered and we go straight
+      // to it, or none did and we stop asking.
+      rendering: profile.rendering,
+      probeRenderings: !profile.renderingProbed,
+      fallbackUrl: info?.fallbackUrl ?? '',
+      timeout: info?.requestTimeout == null
+          ? null
+          : Duration(seconds: info!.requestTimeout!),
+    );
     var parsed = parseSubscriptionBody(res.body);
     // A Clash document may name its servers elsewhere. Merged before anything
     // else looks at the result, so "how many servers does this subscription
@@ -104,10 +118,14 @@ final class SubscriptionSource extends ConfigSource {
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
       unsupportedServers: parsed.unsupported,
+      groups: parsed.groups,
       providerRouting: routing,
       providerRoutingSkipped: skipped,
       providerRoutingProbed: asked,
       providerInfo: res.info.isEmpty ? null : res.info,
+      usedFallback: res.usedFallback,
+      rendering: res.rendering,
+      renderingProbed: res.renderingProbed || profile.renderingProbed,
       refreshedAt: DateTime.now(),
     );
   }
