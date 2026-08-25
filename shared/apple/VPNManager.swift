@@ -9,7 +9,7 @@ final class VPNManager {
     static let shared = VPNManager()
 
     // Extension bundle id is the host app's id + ".tunnel" (adapts to whatever
-    // bundle id the app is signed with, e.g. com.nt.vpnClient.tunnel).
+    // bundle id the app is signed with, e.g. org.annoya.test.tunnel).
     private var tunnelBundleId: String {
         (Bundle.main.bundleIdentifier ?? "") + ".tunnel"
     }

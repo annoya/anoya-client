@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = vpn_client
+PRODUCT_NAME = AnnoyaTest
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.nt.vpnClient
+PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.nt. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 org.annoya. All rights reserved.
