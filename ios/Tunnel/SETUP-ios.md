@@ -6,8 +6,8 @@ NE has a hard ~50 MB cap; we use mihomo's lighter `system` TUN stack (the iOS
 xcframework slice is built without gVisor). **If it fits, we build out full iOS.
 If it OOMs, we rethink the core.**
 
-Same Apple team as macOS. Bundle ids: app `com.nt.vpnClient`, extension
-`com.nt.vpnClient.tunnel`, App Group `group.com.nt.vpnClient`.
+Same Apple team as macOS. Bundle ids: app `org.annoya.test`, extension
+`org.annoya.test.tunnel`, App Group `group.org.annoya.test`.
 
 ## Gate 1 — does mihomo even compile for iOS?
 
@@ -23,13 +23,13 @@ decides whether mihomo-in-NE is viable on iOS at all.
 ## Xcode wiring (open `client/ios/Runner.xcworkspace`)
 
 1. **Runner target → Signing & Capabilities**: team = your Apple dev team,
-   bundle id `com.nt.vpnClient`; add capabilities **Network Extensions**
-   (Packet Tunnel) and **App Groups** (`group.com.nt.vpnClient`). Set
+   bundle id `org.annoya.test`; add capabilities **Network Extensions**
+   (Packet Tunnel) and **App Groups** (`group.org.annoya.test`). Set
    `Runner/Runner.entitlements` as the target's `CODE_SIGN_ENTITLEMENTS`.
 
 2. **Add the extension target**: File → New → Target → **Network Extension** →
    Packet Tunnel Provider. Name it `Tunnel`, bundle id
-   `com.nt.vpnClient.tunnel`, same team. Xcode generates a template
+   `org.annoya.test.tunnel`, same team. Xcode generates a template
    `PacketTunnelProvider.swift`, `Info.plist`, entitlements and auto-embeds the
    appex in Runner.
 
@@ -40,7 +40,7 @@ decides whether mihomo-in-NE is viable on iOS at all.
      and `ios/Tunnel/Tunnel.entitlements` (or copy their contents). Ensure the
      Tunnel target's `INFOPLIST_FILE` / `CODE_SIGN_ENTITLEMENTS` point at them.
    - On the Tunnel target add capabilities **Network Extensions** + **App
-     Groups** (`group.com.nt.vpnClient`).
+     Groups** (`group.org.annoya.test`).
 
 4. **Host-side channel** — add to the **Runner** target:
    `ios/Runner/VPN/VPNManager.swift` and `ios/Runner/VPN/VpnChannel.swift`

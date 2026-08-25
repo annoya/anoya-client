@@ -69,5 +69,6 @@ non-goals:
 - IdP group synchronisation into user lists (ADR-006).
 - Incremental user provisioning on the worker; today adding a user rewrites the
   config and restarts Xray, dropping everyone's sessions.
-- Live Activity / Dynamic Island on iOS — designed, not built.
+- Live Activity / Dynamic Island on iOS. It was designed and never built; the
+  design was removed from the mockup rather than left as a promise.
 - Android, Windows, Linux clients.

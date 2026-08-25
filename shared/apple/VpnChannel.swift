@@ -108,7 +108,7 @@ enum VpnChannel {
                 // writes there with dart:io (POSIX), which avoids the macOS
                 // "access data from other apps" TCC probe.
                 let url = FileManager.default.containerURL(
-                    forSecurityApplicationGroupIdentifier: "group.com.nt.vpnClient")
+                    forSecurityApplicationGroupIdentifier: "group.org.annoya.test")
                 result(url?.path)
             case "set_logging":
                 let on = (call.arguments as? [String: Any])?["enabled"] as? Bool ?? true

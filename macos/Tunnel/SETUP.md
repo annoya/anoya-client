@@ -6,9 +6,9 @@ team. After this, `flutter build macos` (or building in Xcode) should compile +
 link + embed the extension. (Actually *starting* the tunnel comes with Phase C.)
 
 Identifiers used throughout:
-- App: `com.nt.vpnClient`
-- Extension: `com.nt.vpnClient.tunnel`
-- App Group: `group.com.nt.vpnClient`
+- App: `org.annoya.test`
+- Extension: `org.annoya.test.tunnel`
+- App Group: `group.org.annoya.test`
 
 ## 1. Build the Go core xcframework
 ```sh
@@ -49,7 +49,7 @@ We already have the real files in `client/macos/Tunnel/`:
 - In the **Tunnel** target → Build Settings:
   - **Info.plist File** → `Tunnel/Info.plist`
   - **Code Signing Entitlements** → `Tunnel/Tunnel.entitlements`
-- Confirm the Tunnel target **Bundle Identifier** = `com.nt.vpnClient.tunnel`.
+- Confirm the Tunnel target **Bundle Identifier** = `org.annoya.test.tunnel`.
 
 ## 5. Link MihomoCore.xcframework
 - Drag `client/native/mihomocore/MihomoCore.xcframework` into the project
@@ -67,7 +67,7 @@ We already have the real files in `client/macos/Tunnel/`:
 ## 6. Capabilities (Signing & Capabilities tab)
 Select each target → **Signing & Capabilities** → **+ Capability** (the
 "+" / capability library button). On **both** `Runner` (main app) and `Tunnel`:
-- **App Groups** → add `group.com.nt.vpnClient`
+- **App Groups** → add `group.org.annoya.test`
 - **Network Extensions** → enable **Packet Tunnel**
 
 (Our `Tunnel.entitlements` already lists these; adding the capability in Xcode
@@ -87,8 +87,8 @@ Copy Files Phase, Destination = Plug-ins/Extensions) and add `Tunnel.appex`.
 ## 8. Signing
 - Both targets → Signing & Capabilities → **Automatically manage signing**,
   Team = nethiuswork@gmail.com.
-- Let Xcode register App IDs `com.nt.vpnClient` and
-  `com.nt.vpnClient.tunnel` with the **App Group** and **Network
+- Let Xcode register App IDs `org.annoya.test` and
+  `org.annoya.test.tunnel` with the **App Group** and **Network
   Extensions** capabilities. If automatic signing fails on App Group/NE, create
   the App IDs + App Group manually in the Apple Developer portal, then retry.
 
@@ -133,4 +133,4 @@ status; check egress with `curl https://api.ipify.org`.
   both App IDs; ensure the team is nethiuswork@gmail.com.
 - **App can't find the extension at runtime** (Phase C) → bundle id mismatch
   between `NETunnelProviderProtocol.providerBundleIdentifier` and the actual
-  extension bundle id `com.nt.vpnClient.tunnel`.
+  extension bundle id `org.annoya.test.tunnel`.

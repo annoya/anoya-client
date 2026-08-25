@@ -57,8 +57,8 @@ server has an OIDC provider configured.
 - A **paid Apple Developer account** (Network Extension capability + App Group).
 - iOS: a **real device** — the NE does not run in the Simulator.
 
-Bundle ids: app `com.nt.vpnClient`, extension `com.nt.vpnClient.tunnel`, App
-Group `group.com.nt.vpnClient`.
+Bundle ids: app `org.annoya.test`, extension `org.annoya.test.tunnel`, App
+Group `group.org.annoya.test`.
 
 ## Bootstrap (one-time, already done)
 
