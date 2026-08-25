@@ -99,7 +99,10 @@ ShareLink _parseVless(String s) {
   if (q['allowInsecure'] == '1' || q['insecure'] == '1') proxy['skip-cert-verify'] = true;
   final skip = applyTransport(proxy, network, q, protocol: 'vless');
   if (skip != null) return ShareLink.unsupported(skip);
-  return ShareLink.server(locationFor(s, labelOr(safeDecode(u.fragment), u.host, u.port), proxy));
+  final meta = splitFragment(safeDecode(u.fragment));
+  return ShareLink.server(locationFor(
+      s, labelOr(meta.name, u.host, u.port), proxy,
+      description: meta.description));
 }
 
 ShareLink _parseVmess(String s) {
@@ -129,7 +132,10 @@ ShareLink _parseVmess(String s) {
     'headerType': str('type'),
   }, protocol: 'vmess');
   if (skip != null) return ShareLink.unsupported(skip);
-  return ShareLink.server(locationFor(s, labelOr(str('ps'), str('add'), _int(json['port'])), proxy));
+  final meta = splitFragment(str('ps'));
+  return ShareLink.server(locationFor(
+      s, labelOr(meta.name, str('add'), _int(json['port'])), proxy,
+      description: meta.description));
 }
 
 ShareLink _parseTrojan(String s) {
@@ -151,7 +157,10 @@ ShareLink _parseTrojan(String s) {
   if (q['allowInsecure'] == '1' || q['insecure'] == '1') proxy['skip-cert-verify'] = true;
   final skip = applyTransport(proxy, network, q, protocol: 'trojan');
   if (skip != null) return ShareLink.unsupported(skip);
-  return ShareLink.server(locationFor(s, labelOr(safeDecode(u.fragment), u.host, u.port), proxy));
+  final meta = splitFragment(safeDecode(u.fragment));
+  return ShareLink.server(locationFor(
+      s, labelOr(meta.name, u.host, u.port), proxy,
+      description: meta.description));
 }
 
 ShareLink _parseShadowsocks(String s) {
@@ -200,7 +209,9 @@ ShareLink _parseShadowsocks(String s) {
     final skip = _applySsPlugin(proxy, plugin);
     if (skip != null) return ShareLink.unsupported(skip);
   }
-  return ShareLink.server(locationFor(s, labelOr(frag, host, port), proxy));
+  final meta = splitFragment(frag);
+  return ShareLink.server(locationFor(s, labelOr(meta.name, host, port), proxy,
+      description: meta.description));
 }
 
 /// Translates a SIP003 `plugin=` into mihomo's `plugin` / `plugin-opts`.
@@ -292,7 +303,10 @@ ShareLink _parseHysteria2(String s) {
   final ports = q['ports'] ?? q['mport'];
   if (ports != null && ports.isNotEmpty) proxy['ports'] = ports;
   if ((q['pinSHA256'] ?? '').isNotEmpty) proxy['fingerprint'] = q['pinSHA256'];
-  return ShareLink.server(locationFor(s, labelOr(safeDecode(u.fragment), u.host, u.port), proxy));
+  final meta = splitFragment(safeDecode(u.fragment));
+  return ShareLink.server(locationFor(
+      s, labelOr(meta.name, u.host, u.port), proxy,
+      description: meta.description));
 }
 
 int _int(dynamic v) => v is int ? v : int.tryParse('$v') ?? 0;
