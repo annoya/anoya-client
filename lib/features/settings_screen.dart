@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_prefs.dart';
+import '../core/app_version.dart';
 import '../core/geo_store.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
@@ -10,6 +11,7 @@ import '../state/favorites_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
+import 'about_screen.dart';
 import 'config/config_screen.dart';
 import 'geo_screen.dart';
 import 'logs_screen.dart';
@@ -241,6 +243,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => _push(const LogsScreen()),
               ),
             ),
+            const SectionHeader('ABOUT'),
+            Card(
+              margin: kCardMargin,
+              child: ListTile(
+                leading: const Icon(Icons.shield_outlined),
+                title: const Text('About'),
+                // The version in the subtitle is what most visits come for, so
+                // it is readable without opening anything — and it marks the
+                // row as a reference rather than a setting.
+                subtitle: Text('$kAppName $appVersionLabel'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _push(const AboutScreen()),
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -248,4 +264,3 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
-
