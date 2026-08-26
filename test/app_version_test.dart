@@ -43,10 +43,8 @@ void main() {
   });
 
   group('what the About section reads out', () {
-    test('the engine line names the version and the commit, not the whole pin', () {
-      // The full pseudo-version is 44 characters of timestamp; the version and
-      // the commit are the two halves anyone acts on.
-      expect(engineVersionLabel, 'mihomo 1.19.28-24b6de71fc1c');
+    test('a release tag reads as a plain version', () {
+      expect(engineVersionLabel, 'mihomo 1.19.30');
     });
 
     test('the app line pairs version and build, the way Apple shows it', () {
