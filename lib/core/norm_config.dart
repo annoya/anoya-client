@@ -385,12 +385,37 @@ class Location {
 
   String get proxyType => proxy['type'] as String? ?? '';
 
-  /// The line under the server's name: the provider's description when there is
-  /// one, otherwise the protocol — and the address either way. The address
-  /// stays because it is the only thing that tells two identically named
-  /// entries apart.
+  /// How the connection is carried, when that is worth saying: `xhttp`, `ws`,
+  /// `grpc`… Empty for plain TCP, whose name tells the reader nothing and only
+  /// takes room from the address, and for protocols that have no transport to
+  /// choose (hysteria2 is QUIC).
+  ///
+  /// One value is not the engine's own: `httpupgrade` is stored as a websocket
+  /// with a flag, and calling it `ws` would name a transport the server is not
+  /// configured for.
+  String get transport {
+    final network = '${proxy['network'] ?? ''}'.toLowerCase();
+    if (network.isEmpty || network == 'tcp') return '';
+    if (network == 'ws') {
+      final ws = proxy['ws-opts'];
+      final upgrade = ws is Map && ws['v2ray-http-upgrade'] == true;
+      return upgrade ? 'httpupgrade' : 'ws';
+    }
+    return network;
+  }
+
+  /// The line under the server's name: what it is, then where it is.
+  ///
+  /// "What it is" is the protocol and the transport — the pair every other
+  /// client shows, because within one subscription the protocol alone is the
+  /// same on every row and the transport is what tells them apart. A provider's
+  /// description replaces that whole technical half; the address survives
+  /// either way, being the only thing that separates two identically named
+  /// entries.
   String get subtitle {
-    final what = description.isNotEmpty ? description : proxyType;
+    final what = description.isNotEmpty
+        ? description
+        : [proxyType, transport].where((s) => s.isNotEmpty).join(' · ');
     final server = proxy['server'];
     if (server == null || '$server'.isEmpty) return what;
     return what.isEmpty ? '$server' : '$what · $server';
