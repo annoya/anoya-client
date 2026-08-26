@@ -199,12 +199,15 @@ class DeviceLimitCard extends StatelessWidget {
   }
 }
 
-/// Everything the subscription's panel reported, marked as its own voice.
+/// Everything the subscription's panel reported, in its own voice.
 ///
-/// It sits under a header that names the source rather than the subject: the
-/// same numbers under "ACCOUNT" would claim an authority a subscription does
-/// not have (ADR-005). The panel can stop returning servers; it cannot tell us
-/// a verdict, and nothing here gates connecting.
+/// The header is neutral because the rows already carry the attribution: the
+/// provider's message stands without an icon of ours, and the plan's numbers
+/// say "what the subscription reports, not verified here". Naming the section
+/// after the source said it a third time, and in testing it read as the name of
+/// some separate thing rather than as "details of this subscription". What must
+/// not happen is the opposite — calling it ACCOUNT, which would claim an
+/// authority a subscription does not have (ADR-005).
 class ProviderSection extends StatelessWidget {
   const ProviderSection({super.key, required this.info});
 
@@ -214,7 +217,7 @@ class ProviderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionHeader('FROM YOUR PROVIDER'),
+      const SectionHeader('DETAILS'),
       if (info.announce.isNotEmpty)
         Card(
           margin: kCardMargin,

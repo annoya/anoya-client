@@ -127,6 +127,55 @@ void main() {
     await pump(tester, [withGroups()]);
     expect(find.textContaining('3 servers · 2 groups'), findsOneWidget);
   });
+
+  testWidgets('a refreshable configuration can be refreshed from the home screen',
+      (tester) async {
+    // The button also lives on the configuration screen; this is a duplicate,
+    // because that is not where it gets pressed.
+    await pump(tester, [
+      Profile(
+        id: 'sub',
+        type: ProfileType.subscription,
+        name: 'Remnawave',
+        subscriptionUrl: 'https://sub.example/t',
+        locations: [
+          Location(id: 's1', label: 'Germany', proxy: {'type': 'vless', 'server': '1.2.3.4'}),
+        ],
+      ),
+    ]);
+    final card = find.widgetWithText(Card, 'Remnawave');
+    expect(find.descendant(of: card, matching: find.byIcon(Icons.refresh)), findsOneWidget);
+    expect(find.descendant(of: card, matching: find.byIcon(Icons.settings_outlined)),
+        findsOneWidget,
+        reason: 'refresh sits beside the gear, it does not replace it');
+  });
+
+  testWidgets('a single link has no refresh button, having nothing to re-ask',
+      (tester) async {
+    await pump(tester, [profile('a', 'Config')]);
+    expect(find.byIcon(Icons.refresh), findsNothing);
+  });
+
+  testWidgets('the server row names the transport, not just the protocol',
+      (tester) async {
+    await pump(tester, [
+      Profile(
+        id: 'sub',
+        type: ProfileType.subscription,
+        name: 'Remnawave',
+        subscriptionUrl: 'https://sub.example/t',
+        locations: [
+          Location(id: 's1', label: 'Germany', proxy: {
+            'type': 'vless',
+            'server': '1.2.3.4',
+            'network': 'xhttp',
+          }),
+        ],
+      ),
+    ]);
+    expect(find.text('vless · xhttp · 1.2.3.4'), findsOneWidget);
+  });
+
 }
 
 class _FixedProfiles extends ProfilesController {
