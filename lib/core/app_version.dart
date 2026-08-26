@@ -24,10 +24,11 @@ const kAppBuild = '4';
 /// `constant.Version = "1.10.0"` in its source and only replaces it at release
 /// build time, so asking the running engine would show a version that has
 /// nothing to do with the commit we build against.
-const kEnginePin = 'v1.19.28-0.20260626090957-24b6de71fc1c';
+const kEnginePin = 'v1.19.30';
 
-/// The engine line for the About section: version plus the commit that pins it,
-/// which is what a bug report needs. The full pin is what gets copied.
+/// The engine line for the About section. A release tag reads as a version; a
+/// pseudo-version (a tag, a date and a commit) is shortened to the version and
+/// the commit, which are the two halves anyone acts on.
 String get engineVersionLabel {
   final parts = kEnginePin.split('-');
   final version = parts.first.replaceFirst('v', '');
