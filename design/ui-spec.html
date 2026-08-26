@@ -1237,7 +1237,7 @@
         <svg class="icon muted"><use href="#i-chev"/></svg>
       </div></div>
     </div></div>
-    <p class="cap"><span class="id">SettingsScreen · одна конфигурация</span><b>Одна конфигурация.</b> Шит из одной строки — лишний шаг, поэтому строка называется самой конфигурацией и ведёт прямо в её настройки: шеврон вправо вместо шеврона вниз. Геобазы живут в роутинге, ядро и его версия нигде не упоминаются.</p>
+    <p class="cap"><span class="id">SettingsScreen · одна конфигурация</span><b>Одна конфигурация.</b> Шит из одной строки — лишний шаг, поэтому строка называется самой конфигурацией и ведёт прямо в её настройки: шеврон вправо вместо шеврона вниз. Геобазы живут в роутинге; ядро упоминается ровно в одном месте — в секции ABOUT, где его версия нужна для баг-репорта, а не для настройки.</p>
   </div>
 
   <div class="board">
@@ -1268,6 +1268,50 @@
       </div>
     </div></div>
     <p class="cap"><span class="id">SettingsScreen · configurations</span><b>Шит конфигураций.</b> Тот же шит выбора, что на главном, в навигационном режиме: шеврон вправо в каждой строке, тап ведёт в настройки конфигурации, а не делает её активной — активная выбирается на главном. Заливка всё равно показывает, какая работает сейчас, а порядок и группы те же (избранные сверху); звёзд здесь нет — избранное редактируется там, где им пользуются. Поиск, как во всех шитах, появляется от шести элементов.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">DIAGNOSTICS</div>
+      <div class="card"><div class="row one">
+        <svg class="icon muted"><use href="#i-doc"/></svg><div class="tx"><div class="t">Logs</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">ABOUT</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-shield"/></svg>
+        <div class="tx"><div class="t">About</div><div class="s">AnnoyaTest 1.0.0 (3)</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · ABOUT</span><b>Одна строка вместо секции.</b> Всё, что было в секции — версии и два юридических документа — уехало на свой экран, а здесь осталась строка с шевроном, как у Logs и наборов правил. Настройки — это то, что <b>меняют</b>; About ничего не меняет, и полторы карточки статичного текста в конце списка настроек только удлиняли скролл до вещей, за которыми сюда приходят.<br><br>Подзаголовок строки — имя и версия: то, ради чего в About заходят в девяти случаях из десяти, видно не заходя. Это же и подсказка, что за строкой не настройка, а справка.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">About</span></div>
+      <div style="text-align:center;padding:28px 16px 20px">
+        <svg class="icon" style="width:56px;height:56px;color:var(--m-pri)"><use href="#i-shield"/></svg>
+        <div style="font-size:22px;font-weight:600;margin-top:12px">AnnoyaTest</div>
+        <div style="font-size:13px;color:var(--m-mut);margin-top:4px">Version 1.0.0 (3)</div>
+      </div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-bolt"/></svg>
+        <div class="tx"><div class="t">Engine</div><div class="s">mihomo 1.19.28-24b6de71fc1c</div></div>
+        <span class="iconbtn"><svg class="icon xs muted"><use href="#i-copy"/></svg></span>
+      </div></div>
+      <div class="card">
+        <div class="row" style="opacity:.38"><svg class="icon muted"><use href="#i-doc"/></svg>
+          <div class="tx"><div class="t">Terms of Service</div><div class="s">Not published yet</div></div></div>
+        <div class="sep"></div>
+        <div class="row" style="opacity:.38"><svg class="icon muted"><use href="#i-lock"/></svg>
+          <div class="tx"><div class="t">Privacy Policy</div><div class="s">Not published yet</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">AboutScreen</span><b>Экран, у которого одна работа — назвать себя.</b> Шапка с иконкой приложения, именем и версией: то же, что показывает любое «About», и то же, что просят приложить к обращению в поддержку. Строк-действий здесь нет вовсе, кроме копирования версии — поэтому шапка и не карточка: карточка обещала бы, что по ней можно нажать.<br><br><b>Версия ядра — наша, а не та, что скажет ядро.</b> У mihomo в исходниках <code>constant.Version = "1.10.0"</code>: настоящую строку подставляют при релизной сборке, в модуле остаётся заглушка. Спросить движок значило бы показать «1.10.0» вместо реального пина <code>v1.19.28-0.20260626090957-24b6de71fc1c</code>. Берём пин из <code>go.mod</code>, в строке — версия и хеш коммита, кнопка копирует полный пин вместе с версией приложения. Побочно: строка есть и при опущенном туннеле, IPC не нужен.<br><br><b>ToS и Privacy Policy погашены со словами «Not published yet».</b> Документов пока нет. Строка, которая выглядит рабочей и ничего не делает, читается как поломка; спрятанная не даёт понять, что пункт вообще будет. Погашенная с причиной говорит и то, и другое — и загорится сама, когда в константах появятся адреса.</p>
   </div>
 
   <div class="board">
