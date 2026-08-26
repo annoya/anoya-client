@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vpn_client/core/app_version.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/on_demand.dart';
 import 'package:vpn_client/core/profile.dart';
 import 'package:vpn_client/core/theme.dart';
+import 'package:vpn_client/features/about_screen.dart';
 import 'package:vpn_client/features/settings_screen.dart';
 import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
@@ -67,6 +69,38 @@ void main() {
           matching: find.byIcon(Icons.chevron_right),
         ),
         findsNWidgets(3));
+  });
+
+  testWidgets('About is one row that already names the build', (tester) async {
+    // Settings is what the user changes; About changes nothing, so it is a row
+    // into its own screen rather than a tail of static text.
+    await pump(tester, [profile('a', 'Config')]);
+    await tester.scrollUntilVisible(find.text('About'), 200);
+
+    expect(find.text('$kAppName $appVersionLabel'), findsOneWidget,
+        reason: 'the version is what most visits come for');
+    expect(find.text('Not published yet'), findsNothing,
+        reason: 'the documents live on the About screen now');
+  });
+
+  testWidgets('the row opens the About screen', (tester) async {
+    await pump(tester, [profile('a', 'Config')]);
+    await tester.scrollUntilVisible(find.text('About'), 200);
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AboutScreen), findsOneWidget);
+    expect(find.text(kAppName), findsOneWidget);
+    expect(find.text('Version $appVersionLabel'), findsOneWidget);
+    // Ours, not the engine's own constant, which says 1.10.0 in the source we
+    // build from — see app_version.dart.
+    expect(find.text(engineVersionLabel), findsOneWidget);
+
+    for (final title in ['Terms of Service', 'Privacy Policy']) {
+      final tile = tester.widget<ListTile>(find.widgetWithText(ListTile, title));
+      expect(tile.onTap, isNull, reason: '$title has nowhere to go yet');
+    }
+    expect(find.text('Not published yet'), findsNWidgets(2));
   });
 }
 

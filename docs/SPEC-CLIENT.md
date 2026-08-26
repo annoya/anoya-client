@@ -298,6 +298,19 @@ tunnel.
   (ordered rules) views over the same rules.
 - **Geo databases**, **On-demand** (rules, values), **Logs** and **Log viewer**.
 
+Settings ends with an **About** row — the version in its subtitle, the rest on
+its own screen, because settings are what the user changes and About changes
+nothing. **About** shows the app's name, version and build, and the engine we
+are pinned to. The engine line comes from `native/mihomocore/go.mod`, not
+from the engine — mihomo carries `constant.Version = "1.10.0"` in its source and
+only substitutes the real one at release build time, so asking it would report a
+version we do not run. Terms of Service and Privacy Policy sit there in their own card,
+dimmed and inert while their addresses are empty, saying "Not published yet"
+rather than looking tappable or being hidden. The app's name, version and engine
+pin live in one file (`lib/core/app_version.dart`) with a test that checks them
+against `pubspec.yaml`, `go.mod` and the bundle's `PRODUCT_NAME`; the
+User-Agent is built from the same two strings.
+
 On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
 the system): a status line, show/hide the app, connect, disconnect, quit. It is
 the only view of the tunnel while the window is closed, so closing the window no

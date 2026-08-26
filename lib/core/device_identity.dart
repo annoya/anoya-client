@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import 'app_version.dart';
 import 'json_file_store.dart';
 import 'network_extension_core.dart';
 
@@ -42,8 +43,9 @@ class DeviceIdentity {
   /// for a rendering by name where it can — a capability must not hinge on
   /// somebody else's rule matching our version string.
   ///
-  /// Keep the version in step with `pubspec.yaml`.
-  static const kUserAgent = 'AnnoyaTest/1.0';
+  /// Built from the app's own name and version, so there is one place to
+  /// change and a test that keeps it in step with `pubspec.yaml`.
+  static const kUserAgent = '$kAppName/$kAppVersion';
 
   /// The headers a subscription request carries. Only `x-hwid` is required by
   /// the convention; the rest exist so the entry in the provider's panel is
