@@ -12,3 +12,9 @@ PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 org.annoya. All rights reserved.
+
+// App Store category. Mandatory for the Mac App Store — an archive without
+// LSApplicationCategoryType is rejected on upload with error 90242. Must stay a
+// UTI from Apple's published list; it also has to agree with the primary
+// category chosen in App Store Connect.
+PRODUCT_APP_CATEGORY = public.app-category.utilities
