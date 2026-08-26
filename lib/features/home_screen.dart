@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/app_error.dart';
 import '../core/country_flag.dart';
+import '../core/log.dart';
 import '../core/mihomo_tun_config.dart';
 import '../core/norm_config.dart';
 import '../core/on_demand.dart';
@@ -270,6 +272,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// The active configuration is always on screen, even when it is the only
   /// one: the gear jumps straight into its settings, while the chevron (and the
   /// row tap) only offer a choice when there is something to choose between.
+  /// A refresh is in flight. Kept here rather than in the controller: it is
+  /// about this button's own appearance, and the poll timer refreshes without
+  /// anyone watching.
+  bool _refreshing = false;
+
+  /// The same call the configuration screen makes, reporting the same way: a
+  /// toast when the panel refused the device, a toast when it failed, and
+  /// silence when it worked — the new list of servers is the answer.
+  Future<void> _refresh(Profile active) async {
+    setState(() => _refreshing = true);
+    try {
+      final updated =
+          await ref.read(profilesControllerProvider.notifier).refreshProfile(active.id);
+      if (updated.deviceLimitReached && mounted) {
+        showToast(context, kDeviceLimitReached.line);
+      }
+    } catch (e) {
+      Log.e('manual refresh failed', '$e');
+      if (mounted) {
+        showToast(context,
+            'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}');
+      }
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
+    }
+  }
+
   Widget _profileRow(ProfilesState st, Profile active) {
     final pickable = st.profiles.length > 1;
     return Card(
@@ -279,6 +308,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: Text(active.name),
         subtitle: Text(profileKind(active)),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          // A duplicate of the button on the configuration screen, not a move:
+          // that is where it belongs, next to "last refreshed", but it is
+          // pressed from here — the servers ran out or the provider changed
+          // something, and the user is already looking at this screen.
+          if (active.isRefreshable)
+            _refreshing
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14),
+                    child: SizedBox(
+                        height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: 'Refresh now',
+                    onPressed: () => _refresh(active),
+                  ),
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 20),
             tooltip: 'Configuration settings',

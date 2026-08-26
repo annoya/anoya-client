@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/parsers/share_link.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';
 
@@ -297,6 +298,57 @@ proxy-providers:
       const link = 'vless://u@de.example:443?security=none#Germany?serverDescription=%%%';
       final loc = parseShareLink(link).location!;
       expect(loc.label, 'Germany');
+    });
+  });
+
+  group('what the row says a server is', () {
+    Location loc(Map<String, dynamic> proxy, {String description = ''}) =>
+        Location(id: 'x', label: 'X', proxy: proxy, description: description);
+
+    test('the transport is named next to the protocol', () {
+      // Within one subscription the protocol is the same on every row; the
+      // transport is what tells them apart — and what Clash Verge and Happ show.
+      expect(
+        loc({'type': 'vless', 'server': 'de.example', 'network': 'xhttp'}).subtitle,
+        'vless · xhttp · de.example',
+      );
+      expect(
+        loc({'type': 'vmess', 'server': 'de.example', 'network': 'grpc'}).subtitle,
+        'vmess · grpc · de.example',
+      );
+    });
+
+    test('plain tcp is not worth a word', () {
+      // "tcp" tells the reader nothing and takes room from the address.
+      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'tcp'}).subtitle,
+          'vless · de.example');
+      expect(loc({'type': 'vless', 'server': 'de.example'}).subtitle, 'vless · de.example');
+    });
+
+    test('a protocol with no transport to choose gets none', () {
+      // hysteria2 is QUIC: there is nothing to select.
+      expect(loc({'type': 'hysteria2', 'server': 'de.example'}).subtitle,
+          'hysteria2 · de.example');
+    });
+
+    test('httpupgrade is named as itself, not as the websocket it is stored as', () {
+      final proxy = {
+        'type': 'vless',
+        'server': 'de.example',
+        'network': 'ws',
+        'ws-opts': {'path': '/', 'v2ray-http-upgrade': true},
+      };
+      expect(loc(proxy).transport, 'httpupgrade',
+          reason: 'calling it ws would name a transport the server is not set up for');
+      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'ws'}).transport, 'ws');
+    });
+
+    test('a provider description replaces the whole technical half', () {
+      expect(
+        loc({'type': 'vless', 'server': 'de.example', 'network': 'xhttp'},
+            description: 'до 10 Гбит/с').subtitle,
+        'до 10 Гбит/с · de.example',
+      );
     });
   });
 }

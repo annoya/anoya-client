@@ -289,7 +289,13 @@ tunnel.
 - **Start** — add a configuration: paste a link, open a file, or sign in.
 - **Sign in** — password and, when the server offers it, SSO.
 - **Home** — connect ring and status, a status strip (auto-connect, routing,
-  logs), the configuration and server pickers, account line.
+  logs), the configuration and server pickers, account line. The configuration
+  row carries a refresh button for sources that have one — a duplicate of the
+  button on the configuration screen, since that is where it lives but not where
+  it is pressed. A server row reads `<protocol> · <transport> · <address>`, with
+  the transport named only when there is one to choose (plain TCP and QUIC
+  protocols say nothing) and a provider's `serverDescription` replacing that
+  whole technical half.
 - **Settings** — configurations, connection (on-demand, disconnect on sleep),
   routing (LAN direct, rule sets, geo databases), appearance and language, logs.
 - **Configuration** — source, refresh, account and quota, routing switch and
