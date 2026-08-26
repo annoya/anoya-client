@@ -15,8 +15,8 @@ Same Apple team as macOS. Bundle ids: app `org.annoya.test`, extension
 cd client/native/mihomocore
 ./build-xcframework.sh          # now also builds the ios-arm64 slice
 ```
-This must produce `MihomoCore.xcframework` with **both** `macos-arm64` and
-`ios-arm64` slices (`ls MihomoCore.xcframework`). If the iOS `go build` fails on
+This must produce `MihomoCore.xcframework` with **both** `macos-arm64_x86_64`
+and `ios-arm64` slices (`ls MihomoCore.xcframework`). If the iOS `go build` fails on
 a dependency, stop here and report the error — that's the real risk, and it
 decides whether mihomo-in-NE is viable on iOS at all.
 

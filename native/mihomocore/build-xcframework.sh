@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
 # Build the mihomo Go core as a macOS .xcframework (static c-archive) for the
-# Network Extension to link. arm64 by default; set UNIVERSAL=1 to also build
-# x86_64 and produce a fat library.
+# Network Extension to link. Universal (arm64 + x86_64) by default; set
+# UNIVERSAL=0 for an arm64-only library.
+#
+# The macOS slices pin -mmacosx-version-min explicitly, exactly as the iOS ones
+# do. Without it the c-archive inherits the host SDK's default (macOS 26 on this
+# toolchain) and every link warns "object file was built for newer macOS version
+# than being linked"; the archive then claims a floor the app does not have.
+#
+# 12.0 is not a preference, it is mihomo's real floor: its certstore dependency
+# calls SecTrustCopyCertificateChain, introduced in macOS 12. Built lower, that
+# call compiles with an unguarded-availability warning and is a null deref on an
+# older system. Keep in step with MACOSX_DEPLOYMENT_TARGET in
+# macos/Runner.xcodeproj — the app cannot claim a floor below the engine's.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+MACOS_MIN="${MACOS_MIN:-12.0}"
 
 # Standalone module (CGO + mihomo deps), not part of the repo go.work.
 export GOWORK=off
@@ -15,6 +28,7 @@ mkdir -p "$OUT/arm64" "$OUT/headers"
 echo ">> building darwin/arm64 c-archive"
 # with_gvisor: include the gVisor TUN network stack (required for tun mode).
 CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 \
+  CC="clang -arch arm64 -mmacosx-version-min=$MACOS_MIN" \
   go build -tags with_gvisor -buildmode=c-archive -o "$OUT/arm64/libmihomocore.a" .
 cp "$OUT/arm64/libmihomocore.h" "$OUT/headers/mihomocore.h"
 
@@ -27,11 +41,12 @@ module MihomoCore {
 MAP
 
 LIB="$OUT/arm64/libmihomocore.a"
-if [ "${UNIVERSAL:-0}" = "1" ]; then
+if [ "${UNIVERSAL:-1}" = "1" ]; then
   echo ">> building darwin/amd64 c-archive"
   mkdir -p "$OUT/amd64" "$OUT/universal"
   CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 \
-    SDKROOT="$(xcrun --sdk macosx --show-sdk-path)" CC="clang -arch x86_64" \
+    SDKROOT="$(xcrun --sdk macosx --show-sdk-path)" \
+    CC="clang -arch x86_64 -mmacosx-version-min=$MACOS_MIN" \
     go build -tags with_gvisor -buildmode=c-archive -o "$OUT/amd64/libmihomocore.a" .
   lipo -create "$OUT/arm64/libmihomocore.a" "$OUT/amd64/libmihomocore.a" \
     -output "$OUT/universal/libmihomocore.a"
