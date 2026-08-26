@@ -23,7 +23,8 @@ screen or state code changes.
 
 `native/mihomocore/` is a standalone Go module (mihomo pinned, CGO,
 `-tags with_gvisor`). `build-xcframework.sh` builds `MihomoCore.xcframework`
-with a `macos-arm64` slice and (on a Mac with the iOS SDK) an `ios-arm64` slice.
+with a universal `macos-arm64_x86_64` slice (set `UNIVERSAL=0` for arm64 only)
+and (on a Mac with the iOS SDK) an `ios-arm64` slice.
 The xcframework is **not committed** (129 MB, over GitHub's file limit) — it is
 built on demand (see below).
 

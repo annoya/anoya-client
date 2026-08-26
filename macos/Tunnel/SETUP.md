@@ -13,7 +13,7 @@ Identifiers used throughout:
 ## 1. Build the Go core xcframework
 ```sh
 cd client/native/mihomocore
-./build-xcframework.sh        # produces ./MihomoCore.xcframework (macos-arm64)
+./build-xcframework.sh        # produces ./MihomoCore.xcframework (macos-arm64_x86_64)
 ```
 
 ## 2. Open the macOS project in Xcode
@@ -61,7 +61,7 @@ We already have the real files in `client/macos/Tunnel/`:
   static library — linked, not embedded).
 - The xcframework ships a `module.modulemap`, so `import MihomoCore` resolves
   automatically. If Xcode reports "No such module", add the framework's
-  `…/MihomoCore.xcframework/macos-arm64/Headers` to the Tunnel target's
+  `…/MihomoCore.xcframework/macos-arm64_x86_64/Headers` to the Tunnel target's
   **Import Paths** (`SWIFT_INCLUDE_PATHS`) / **Header Search Paths**.
 
 ## 6. Capabilities (Signing & Capabilities tab)
