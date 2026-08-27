@@ -114,7 +114,7 @@ final class SubscriptionSource extends ConfigSource {
       locations: parsed.locations,
       account: null,
       routing: null,
-      dns: subscriptionDns(res.body),
+      dns: parsed.dns,
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
       unsupportedServers: parsed.unsupported,

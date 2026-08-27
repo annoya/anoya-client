@@ -50,17 +50,43 @@ String mihomoTunConfigYaml(
   // rest of the config — and the `tun` section above all — is untouched.
   final proxyLines = <String>[];
   final groupLines = <String>[];
+  final rendered = <Map<String, dynamic>>[];
   final String entry;
   if (group == null) {
+    rendered.add(proxy);
     proxyLines.addAll(_emitProxy(proxy));
     entry = 'proxy';
   } else {
     for (var i = 0; i < members.length; i++) {
-      proxyLines.addAll(_emitProxy({..._mihomoProxy(members[i]), 'name': 'p$i'}));
+      final m = {..._mihomoProxy(members[i]), 'name': 'p$i'};
+      rendered.add(m);
+      proxyLines.addAll(_emitProxy(m));
     }
     groupLines.addAll(_emitGroup(group, members.length));
     entry = kGroupName;
   }
+  // mihomo's `udp` is off unless the proxy says otherwise, and a datagram dial
+  // through an outbound that cannot carry one is an error, not a fallback.
+  final carriesUdp = rendered.isNotEmpty && rendered.every((p) => p['udp'] == true);
+  // Every outbound name this config actually defines, so a nameserver pinned to
+  // an adapter can be checked against something instead of being trusted.
+  final outbounds = <String>{
+    kTunnelOutbound,
+    'DIRECT',
+    'REJECT',
+    if (group == null) 'proxy' else ...[
+      kGroupName,
+      for (var i = 0; i < members.length; i++) 'p$i',
+    ],
+  };
+  final kept = [
+    for (final ns in nameservers) ?_dnsForQueries(ns, outbounds, carriesUdp),
+  ];
+  // Dropping an uncarryable resolver can empty the list, and an empty
+  // `nameserver:` is not "no opinion" to the engine — it is a resolver list of
+  // none, which answers nothing.
+  final queryServers = kept.isEmpty ? const [kFallbackNameserver] : kept;
+  final bootstrapServers = <String>{for (final ns in nameservers) _dnsUnpinned(ns)};
   final ruleLines = _routingRuleLines(routing, listPaths);
   final listLines = _ruleProviderLines(routing, listPaths);
   final hasProcessRules =
@@ -109,12 +135,24 @@ String mihomoTunConfigYaml(
     '  fake-ip-range6: $kFakeIpRange6',
     // A resolver addressed by hostname (DoH/DoT by name) needs a plain-IP
     // bootstrap, or the engine would need DNS to set up DNS.
-    if (nameservers.any(_dnsNeedsBootstrap)) ...[
+    if (bootstrapServers.any(_dnsNeedsBootstrap)) ...[
       '  default-nameserver:',
       '    - 1.1.1.1',
     ],
+    // The proxy's own address is usually a hostname, and resolving it must
+    // never depend on the proxy. Without this block mihomo resolves proxy
+    // hostnames with the main resolver, so a subscription whose nameserver is
+    // pinned to the tunnel (`...#PROXY`, which panels ship to keep DNS off the
+    // local network) deadlocks: the query needs the tunnel, the tunnel needs
+    // the query, and every dial fails with "couldn't find ip" — a connected
+    // VPN that carries nothing. `default-nameserver` does not rescue it; the
+    // engine only uses that to resolve a *nameserver's* own hostname.
+    // Same resolvers as below, minus the pin: the provider's choice of
+    // resolver is kept, only the loop is cut.
+    '  proxy-server-nameserver:',
+    for (final ns in bootstrapServers) '    - ${yamlScalar(ns)}',
     '  nameserver:',
-    for (final ns in nameservers) '    - ${yamlScalar(ns)}',
+    for (final ns in queryServers) '    - ${yamlScalar(ns)}',
     'tun:',
     '  enable: true',
     '  stack: $stack',
@@ -141,7 +179,7 @@ String mihomoTunConfigYaml(
     ...proxyLines,
     'proxy-groups:',
     ...groupLines,
-    '  - name: PROXY',
+    '  - name: $kTunnelOutbound',
     '    type: select',
     '    proxies: [$entry]',
     ...listLines,
@@ -157,6 +195,31 @@ String mihomoTunConfigYaml(
 /// name is display text and can hold anything, while this ends up as a YAML key
 /// and a rule target.
 const kGroupName = 'group';
+
+/// The one outbound every rendered config has, whatever the source: the select
+/// group the rules point at. Public because the subscription parsers translate
+/// a source's "send this through the proxy" into a pin on this name — the
+/// provider's own outbound names do not survive into our config.
+const kTunnelOutbound = 'PROXY';
+
+/// Resolver schemes mihomo knows (`config/config.go`, `parseNameServer`). An
+/// unknown one is not skipped by the engine — it fails the *whole* config, so
+/// one exotic entry in a subscription's `dns:` block would cost every server
+/// and every rule. Anything with no scheme at all is fine: the engine reads it
+/// as `udp://`.
+const kMihomoDnsSchemes = {
+  'udp',
+  'tcp',
+  'tls',
+  'http',
+  'https',
+  'quic',
+  'system',
+  'dhcp',
+  'rcode',
+  'ts',
+  'tailscale',
+};
 
 /// The engine's own health check runs from the user's device, through the
 /// tunnel, once per interval per member. A provider asking for ten seconds
@@ -364,18 +427,101 @@ List<String> _routingRuleLines(Routing? routing, [Map<String, String> paths = co
 /// subscription we don't control, so anything that couldn't be a nameserver —
 /// whitespace, quotes, non-ASCII — is dropped and logged, never escaped into
 /// the document.
+///
+/// Only the address is held to that standard. The `#pin` after it is a display
+/// name in practice ("🇷🇺 Direct"), and judging the whole string would throw
+/// away a perfectly good resolver over the decoration on its end — leaving the
+/// provider's DNS silently replaced by ours. [_dnsPinned] decides the pin's
+/// fate separately, and only ever keeps one that names an outbound we render.
 List<String> _dnsNameservers(List<String> dns) {
   final out = <String>[];
   for (final raw in dns) {
     final ns = raw.trim();
     if (ns.isEmpty) continue;
-    if (RegExp(r'[^\x21-\x7e]').hasMatch(ns) || ns.contains('"') || ns.contains(r'\')) {
+    final addr = ns.split('#').first;
+    if (addr.isEmpty ||
+        RegExp(r'[^\x21-\x7e]').hasMatch(addr) ||
+        addr.contains('"') ||
+        addr.contains(r'\')) {
       Log.e('dns: skipping unusable nameserver', raw);
       continue;
     }
+    // A scheme the engine does not know is not a bad entry, it is a bad
+    // *config*: mihomo fails the parse and the tunnel never starts, so one
+    // `h3://` in a subscription would cost every server and every rule.
+    final at = addr.indexOf('://');
+    if (at > 0 && !kMihomoDnsSchemes.contains(addr.substring(0, at).toLowerCase())) {
+      Log.e('dns: skipping nameserver with a scheme the engine rejects', addr);
+      continue;
+    }
+    if (out.contains(ns)) continue;
+    if (out.length >= kMaxNameservers) {
+      Log.e('dns: too many resolvers, keeping the first $kMaxNameservers',
+          '${dns.length} offered');
+      break;
+    }
     out.add(ns);
   }
-  return out.isEmpty ? const ['https://1.1.1.1/dns-query'] : out;
+  return out.isEmpty ? const [kFallbackNameserver] : out;
+}
+
+/// What a configuration that names no usable resolver gets. Encrypted, so a
+/// query that has to leave the tunnel still says nothing to the local network.
+const kFallbackNameserver = 'https://1.1.1.1/dns-query';
+
+/// mihomo queries every resolver in the list at once and takes the first
+/// answer, so a long list is latency and sockets, not redundancy. Real configs
+/// name two or three; this is a ceiling on a body we do not control (ADR-005),
+/// not a judgement about a reasonable one.
+const kMaxNameservers = 8;
+
+/// A nameserver's `#suffix` pins its queries to one outbound. Null when the
+/// entry cannot be sent at all.
+///
+/// Two things can be wrong with a pin. It can name an outbound we did not
+/// render — the provider's own group names, which we replace with ours — and
+/// mihomo reads an unknown one as a network *interface* to bind the socket to,
+/// sending every query out of a device that isn't there; the pin goes, the
+/// resolver stays. Or it can be honourable but uncarryable: a plain `udp://`
+/// or `quic://` resolver pinned to an outbound with no UDP support is not a
+/// slow query, it is an error on every attempt, and a config whose resolvers
+/// all fail that way connects and then resolves nothing — the failure this
+/// whole block exists to prevent. There the *resolver* goes, and the encrypted
+/// fallback takes over: an unpinned plaintext query would put every domain the
+/// user visits on the local network, which is worse than substituting a
+/// resolver.
+///
+/// `RULES` is the engine's own keyword for "route it like traffic" — honoured,
+/// and held to the same UDP test, since the rules may well pick the tunnel.
+String? _dnsForQueries(String ns, Set<String> outbounds, bool carriesUdp) {
+  final at = ns.indexOf('#');
+  if (at < 0) return ns;
+  final address = ns.substring(0, at);
+  final pin = ns.substring(at + 1);
+  if (pin != 'RULES' && !outbounds.contains(pin)) {
+    Log.e('dns: dropping unknown adapter pin', pin);
+    return address;
+  }
+  if (!carriesUdp && _dnsOverUdp(address)) {
+    Log.e('dns: dropping a resolver the tunnel cannot carry', address);
+    return null;
+  }
+  return ns;
+}
+
+/// True when reaching this resolver means sending datagrams. No scheme is
+/// `udp://` to the engine; QUIC and DHCP are datagrams by construction.
+bool _dnsOverUdp(String address) {
+  final at = address.indexOf('://');
+  if (at < 0) return true;
+  final scheme = address.substring(0, at).toLowerCase();
+  return scheme == 'udp' || scheme == 'quic' || scheme == 'dhcp';
+}
+
+/// The same resolver with no pin at all — reachable without an outbound.
+String _dnsUnpinned(String ns) {
+  final at = ns.indexOf('#');
+  return at < 0 ? ns : ns.substring(0, at);
 }
 
 /// True when the nameserver is addressed by hostname (https://dns.google/…)

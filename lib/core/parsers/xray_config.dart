@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../log.dart';
 import '../norm_config.dart';
+import 'dns_servers.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
 
@@ -87,8 +88,41 @@ ParsedSubscription? parseXrayServers(String body) {
   return ParsedSubscription(
     locations: out,
     unsupported: unsupported,
+    dns: _dnsServers(configs),
     format: SubscriptionFormat.xray,
   );
+}
+
+/// The resolvers an Xray body declares, in mihomo's spelling.
+///
+/// Xray writes the routing decision into the scheme: `https+local://…` is
+/// issued by the DNS module itself, plain `https://…` goes out through the
+/// config's routing — which is how a panel keeps DNS inside the tunnel. We
+/// render one outbound, so "not issued locally" becomes a pin on it. Reading
+/// that as direct instead would quietly undo the provider's choice, which is
+/// the one thing a DNS block is usually there to make.
+List<String> _dnsServers(List configs) {
+  final out = <String>[];
+  for (final cfg in configs) {
+    if (cfg is! Map) continue;
+    final dns = cfg['dns'];
+    if (dns is! Map) continue;
+    for (final entry in (dns['servers'] as List? ?? const [])) {
+      // A string, or an object that carries the same string plus the domain
+      // filters we have no equivalent for.
+      final address = switch (entry) {
+        String() => entry,
+        Map() => '${entry['address'] ?? ''}',
+        _ => '',
+      };
+      var s = address.trim();
+      final local = s.contains('+local://');
+      if (local) s = s.replaceFirst('+local://', '://');
+      final ns = mihomoNameserver(s, viaTunnel: !local);
+      if (ns != null && !out.contains(ns)) out.add(ns);
+    }
+  }
+  return out;
 }
 
 /// The protocol-specific half: credentials and address. Null for a protocol we

@@ -6,9 +6,6 @@ import 'singbox_config.dart';
 import 'xray_config.dart';
 import 'share_link.dart';
 
-/// The DNS a Clash-YAML body declares is a property of the subscription, not of
-/// the YAML parser, so it is part of this façade.
-export 'clash_config.dart' show subscriptionDns;
 
 /// A subscription body: whatever a panel returns for a subscription URL.
 ///
@@ -35,6 +32,7 @@ class ParsedSubscription {
     this.unsupported = const {},
     this.providers = const [],
     this.groups = const [],
+    this.dns = const [],
     this.format = SubscriptionFormat.unknown,
   });
 
@@ -52,6 +50,16 @@ class ParsedSubscription {
 
   /// Sets whose member the engine picks, offered by this body.
   final List<ProxyGroup> groups;
+
+  /// The resolvers this body wants used while connected, already translated
+  /// into mihomo's nameserver syntax — including the pin that says whether a
+  /// query rides the tunnel. Read here rather than by a second pass over the
+  /// body: which format this is has just been decided, and asking again would
+  /// mean guessing it a second time from a different angle.
+  ///
+  /// Empty for a link list, which has nowhere to put one, and for a body whose
+  /// DNS block named nothing we could send. The renderer's fallback covers it.
+  final List<String> dns;
 
   /// Which shape this body turned out to be. Needed for the message when there
   /// is nothing usable in it: "we could not read this" and "we read it and
@@ -172,6 +180,9 @@ ParsedSubscription parseSubscriptionBody(String body) {
 
 /// Just the servers, for the callers that only need those.
 List<Location> parseSubscription(String body) => parseSubscriptionBody(body).locations;
+
+/// Just the resolvers, for the callers that only need those.
+List<String> subscriptionDns(String body) => parseSubscriptionBody(body).dns;
 
 
 /// What a pasted string on the add screen turned out to be — drives the live

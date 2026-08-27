@@ -49,6 +49,7 @@ ParsedSubscription? parseClashProxies(String body) {
       unsupported: unsupported,
       providers: providers,
       groups: groups,
+      dns: _dnsServers(doc['dns']),
       format: SubscriptionFormat.clash,
     );
   } catch (e) {
@@ -119,28 +120,24 @@ List<ProxyProvider> _proxyProviders(Object? node) {
   return out;
 }
 
-/// Resolvers a Clash/mihomo-YAML subscription ships in `dns.nameserver`;
-/// empty for link lists and anything unparseable. Mined separately from the
-/// proxies because our tunnel config keeps its own dns block (fake-ip range
-/// and mode are app constants) and adopts only the resolvers.
-List<String> subscriptionDns(String body) {
-  final trimmed = body.trim();
-  if (!RegExp(r'(^|\n)\s*dns\s*:').hasMatch(trimmed)) return const [];
-  try {
-    final doc = loadYaml(trimmed);
-    if (doc is! Map) return const [];
-    final dns = doc['dns'];
-    if (dns is! Map) return const [];
-    final ns = dns['nameserver'];
-    if (ns is! List) return const [];
-    return [
-      for (final e in ns)
-        if (e != null && '$e'.trim().isNotEmpty) '$e'.trim(),
-    ];
-  } catch (e) {
-    Log.e('subscription dns parse failed', '$e');
-    return const [];
+/// Resolvers a Clash/mihomo-YAML subscription ships in `dns.nameserver`.
+///
+/// The only format that already speaks the target syntax, so the entries pass
+/// through as written — including a `#pin`, which here names one of the
+/// provider's own proxy groups and is judged by the renderer against the
+/// outbounds we actually define. What does not pass through is the rest of the
+/// block: our `dns:` section owns fake-ip and the bootstrap, and adopting a
+/// foreign `enhanced-mode` would strand every fake address the OS has cached.
+List<String> _dnsServers(Object? node) {
+  if (node is! Map) return const [];
+  final ns = node['nameserver'];
+  if (ns is! List) return const [];
+  final out = <String>[];
+  for (final e in ns) {
+    final s = '${e ?? ''}'.trim();
+    if (s.isNotEmpty && !out.contains(s)) out.add(s);
   }
+  return out;
 }
 
 

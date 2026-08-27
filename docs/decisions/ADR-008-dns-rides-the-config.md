@@ -66,6 +66,55 @@ applies.
 resolver by domain (`https://dns.google/dns-query`) would need DNS to set up
 DNS; the renderer detects the case and adds `default-nameserver: [1.1.1.1]`.
 
+**The proxy's own hostname is always resolvable without the proxy.** The
+renderer always emits `proxy-server-nameserver` — the same resolvers, with any
+`#pin` removed. This is what mihomo uses to resolve a proxy's server address;
+without the block it falls back to the main resolver
+(`hub/executor/executor.go`), so a subscription pinning its resolver to the
+tunnel deadlocks the whole engine. `default-nameserver` does not cover this:
+the engine uses it only to resolve a *nameserver's* own hostname
+(`dns/resolver.go`, where it is handed to the nameserver clients and nowhere
+else).
+
+**Every format's DNS block is read, and the routing intent is translated.**
+Clash already speaks mihomo's syntax and passes through as written. The two
+JSON formats do not: sing-box names an outbound tag in `detour`, Xray marks a
+scheme `+local`, and neither vocabulary survives into our config. Both reduce
+to one question — is this query issued here, or sent out through the proxy? —
+and we render exactly one outbound to answer it with. Reading a non-local
+resolver as local would quietly undo the thing a DNS block is usually there to
+do. Entries naming a *mechanism* (`local`, `fakeip`, `rcode://`, `dhcp://`) are
+dropped rather than translated: mihomo accepts them as `udp://<word>` and they
+then never answer, and `local` in particular is the tunnel's own DNS setting
+inside the extension, so asking it loops back to the engine that asked.
+
+**A `#pin` is honoured only when it names an outbound we render.** mihomo
+parses the fragment as a proxy name and, failing to find one, binds the DNS
+socket to a network *interface* of that name (`tunnel/dns_dialer.go`). A
+provider's own group names do not survive into our config — we render `PROXY`,
+`group` and `p0…pN` — so an unrecognised pin is stripped and logged, and the
+resolver is kept. Only the address is held to the sanitation standard above:
+pins are decoration ("🇷🇺 Direct") and judging the whole string would throw
+away a good resolver over its label, silently replacing the provider's DNS
+with ours.
+
+**A resolver the tunnel cannot carry is replaced, not left to fail.** mihomo's
+`udp` is off unless a proxy says otherwise, and a datagram dial through an
+outbound without it is an error on every attempt — so a plain `udp://` or
+`quic://` resolver pinned to such a tunnel means no DNS at all. The entry is
+dropped and the encrypted fallback stands in. Unpinning it instead would be
+the worse trade: a plaintext query on the local network exposes every domain
+the user visits, which is what the pin was there to prevent.
+
+**A scheme the engine does not know is dropped before it reaches the engine.**
+`config.Parse` answers an unknown scheme with an error for the *whole*
+document, so one `h3://` line in a subscription's DNS block would cost every
+server and every rule — the tunnel simply would not start. `h3` and `h2c` are
+translated (HTTP/3 is a transport choice, which mihomo spells `prefer-h3`);
+anything else is dropped with a log line. The list is also deduplicated and
+capped: the engine queries every resolver at once and takes the first answer,
+so length is cost, not redundancy.
+
 ## Invariants
 
 - The `tun` section of the rendered engine config is identical across
@@ -81,6 +130,16 @@ DNS; the renderer detects the case and adds `default-nameserver: [1.1.1.1]`.
   ("unusable dns entries are dropped, never interpolated").
 - An empty or fully-rejected DNS list falls back to `https://1.1.1.1/dns-query`.
   Pinned by `client/test/mihomo_tun_config_test.dart`.
+- `proxy-server-nameserver` is always present and never carries a pin, and no
+  pin survives that names an outbound the config does not define. Pinned by
+  `client/test/mihomo_tun_config_test.dart` ("resolving the proxy never needs
+  the proxy", "a pin we cannot honour is dropped, its resolver kept").
+- No nameserver reaches the rendered config with a scheme `config.Parse`
+  rejects, whatever format it came from. Pinned by
+  `client/test/dns_sources_test.dart`.
+- A source that says "through the proxy" comes out pinned, and one that says
+  "issued here" comes out unpinned — in every format that can say either.
+  Pinned by `client/test/dns_sources_test.dart`.
 
 ## Alternatives Considered
 
@@ -121,25 +180,43 @@ A user-facing override on top remains open — it would slot into the same
 ## Consequences
 
 - Resolver dials follow mihomo's defaults: direct (outside the tunnel, bound
-  to the physical interface) unless the entry says otherwise. That is fine for
-  encrypted DoH/DoT; a resolver that must be reached *through* the tunnel is
-  expressed in mihomo's own syntax (`10.0.0.53#PROXY`), which passes the
-  sanitizer untouched.
+  to the physical interface) unless the entry says otherwise. A resolver that
+  must be reached *through* the tunnel is expressed in mihomo's own syntax
+  (`10.0.0.53#PROXY`). This record originally claimed such an entry "passes
+  the sanitizer untouched" and left it there — which was true and useless: the
+  pin was honoured, the proxy's hostname then had no way to resolve, and the
+  tunnel connected and carried nothing. Real subscriptions ship this (a panel
+  pins `nameserver` to `#PROXY` and pairs it with its own
+  `proxy-server-nameserver`, which we did not adopt). Hence the two additions
+  to the Decision above.
 - The self-hosted service has the schema field (`Bundle.DNS`) but no admin
   surface that sets it yet; until that exists, self-hosted users get the
   fallback.
-- Raw xray-JSON configs are not a gap here: the client does not parse that
-  format at all (they fail import before DNS could matter). Supporting them
-  would be a new parser feature.
+- Every format that can carry resolvers now does: Clash `dns.nameserver`,
+  Xray `dns.servers`, sing-box `dns.servers` (both schema generations), and
+  the self-hosted `Bundle.DNS`. A link list has nowhere to put one and gets the
+  fallback. The DNS is read by the parser that already identified the format
+  and travels on `ParsedSubscription`, so the format is decided once instead of
+  being guessed again from a different angle.
+- `Bundle.DNS` is still never set: the schema field exists, no admin surface
+  writes it, so self-hosted configurations get the fallback in practice.
+- What does *not* survive the translation is the per-domain part of a JSON DNS
+  block — Xray's `domains`/`expectIPs` filters, sing-box's `dns.rules`. mihomo
+  expresses that as `nameserver-policy`, and adopting it would mean adopting a
+  second routing language from a body we do not control. The resolver list is
+  taken; the filters are not.
 - The decoy `1.1.1.1/8.8.8.8` in NEDNSSettings looks meaningful to a reader of
   the Swift code; the comment there and this record are the defence against
   someone "fixing" per-config DNS by editing it.
 
 ## Where It Lives
 
-- Renderer (`dns` parameter, sanitation, bootstrap, fallback):
-  `client/lib/core/mihomo_tun_config.dart`
-- Subscription mining: `subscriptionDns` in `client/lib/core/parsers/clash_config.dart`
+- Renderer (`dns` parameter, sanitation, scheme check, pins, bootstrap,
+  fallback): `client/lib/core/mihomo_tun_config.dart`
+- Shared translation into mihomo's spelling:
+  `client/lib/core/parsers/dns_servers.dart`
+- Per-format mining: `_dnsServers` in `clash_config.dart`, `xray_config.dart`
+  and `singbox_config.dart`; carried on `ParsedSubscription.dns`
 - Persistence and plumbing: `client/lib/core/profile.dart`,
   `client/lib/core/norm_config.dart`, `client/lib/core/config_source.dart`,
   `client/lib/state/profiles_controller.dart`,
@@ -147,5 +224,5 @@ A user-facing override on top remains open — it would slot into the same
 - Bundle schema: `shared/normconfig/normconfig.go` (`Bundle.DNS`)
 - OS-level decoy: `applyNetworkSettings` in
   `client/shared/apple/PacketTunnelProvider.swift`
-- Tests: `client/test/mihomo_tun_config_test.dart`,
-  `client/test/hot_switch_test.dart`
+- Tests: `client/test/dns_sources_test.dart`,
+  `client/test/mihomo_tun_config_test.dart`, `client/test/hot_switch_test.dart`

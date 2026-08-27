@@ -211,6 +211,24 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
+  /// Why the tunnel last stopped, as the system recorded it.
+  ///
+  /// Empty when there is nothing to tell. A failure inside the extension never
+  /// reaches the call that started it — the app only sees the status fall back
+  /// — so this is how a refused config stops looking like a connect that gave
+  /// up on its own.
+  @override
+  Future<String> lastDisconnectError() async {
+    try {
+      return await _control.invokeMethod<String>('disconnect_error') ?? '';
+    } on PlatformException catch (e) {
+      Log.e('NE disconnect_error failed', e.message ?? e.code);
+      return '';
+    } on MissingPluginException {
+      return '';
+    }
+  }
+
   /// Which member of the rendered proxy group the engine currently uses.
   ///
   /// Empty when nothing is running, when the config has no group, or before the
