@@ -70,4 +70,12 @@ abstract class VpnCore {
   /// configuration, so the app should leave nothing behind in the system's VPN
   /// settings. Recreated on the next connect.
   Future<void> removeSystemProfile() async {}
+  /// Why the tunnel last stopped on its own, as the platform recorded it.
+  ///
+  /// Empty when there is nothing to tell — an ordinary stop, a platform too old
+  /// to keep the reason, or an extension the system killed without one. Part of
+  /// this seam rather than reached for directly, because a failure that only
+  /// the platform knows about is exactly what a fake core has to be able to
+  /// stand in for.
+  Future<String> lastDisconnectError() async => '';
 }

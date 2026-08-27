@@ -388,6 +388,27 @@ final class VPNManager {
     /// "mihomo") over the provider IPC channel. Only works while the tunnel is
     /// up; throws otherwise (the extension process is the log's only reader,
     /// since it lives in the extension's own sandbox container).
+    /// Why the tunnel stopped, when the system knows.
+    ///
+    /// A packet-tunnel provider that fails inside `startTunnel` reports it to
+    /// the *system*, not to us: the app sees the status go connecting →
+    /// disconnected and nothing else, which is why an engine that refuses a
+    /// config looked like a connect that ran forever and then gave up. This is
+    /// the one API that hands that reason back.
+    ///
+    /// Empty when the platform is too old to have it (macOS 13 / iOS 16), when
+    /// the stop was ordinary, or when the system kept no reason — a killed
+    /// extension (memory) is one of those.
+    func lastDisconnectError() async -> String {
+        guard let m = await adopt() else { return "" }
+        guard #available(macOS 13.0, iOS 16.0, *) else { return "" }
+        return await withCheckedContinuation { continuation in
+            m.connection.fetchLastDisconnectError { error in
+                continuation.resume(returning: error?.localizedDescription ?? "")
+            }
+        }
+    }
+
     /// Which member of a proxy group the engine is currently using, or "" when
     /// there is no running tunnel or no such group.
     ///

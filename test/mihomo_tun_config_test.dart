@@ -245,6 +245,45 @@ proxies:
     expect((doc['dns'] as YamlMap)['default-nameserver'], ['1.1.1.1']);
   });
 
+  test('resolving the proxy never needs the proxy', () {
+    // A panel pins its resolver to the tunnel so DNS does not leak to the local
+    // network. Honouring that pin without saying how proxy hostnames resolve
+    // deadlocks the engine: the query waits on the tunnel, the tunnel waits on
+    // the query, and every dial dies with "couldn't find ip" — a VPN that
+    // connects and carries nothing.
+    final dns = (loadYaml(mihomoTunConfigYaml(vlessLoc(),
+        dns: ['https://dns.quad9.net/dns-query#PROXY'])) as YamlMap)['dns'] as YamlMap;
+    expect(dns['nameserver'], ['https://dns.quad9.net/dns-query#PROXY'],
+        reason: "the provider's pin is kept: DNS still rides the tunnel");
+    final bootstrap = (dns['proxy-server-nameserver'] as YamlList).map((e) => '$e');
+    expect(bootstrap, isNotEmpty);
+    expect(bootstrap.every((ns) => !ns.contains('#')), isTrue,
+        reason: 'a pinned resolver here would rebuild the same loop');
+  });
+
+  test('a pin we cannot honour is dropped, its resolver kept', () {
+    // mihomo reads an unknown pin as an interface name and binds the socket to
+    // it, so a provider group name we replaced with ours would send every query
+    // out of a device that does not exist.
+    final dns = (loadYaml(mihomoTunConfigYaml(vlessLoc(), dns: [
+      'https://dns.quad9.net/dns-query#\u{1F680} Auto',
+      'tls://dns.google#RULES',
+    ])) as YamlMap)['dns'] as YamlMap;
+    expect(dns['nameserver'], [
+      'https://dns.quad9.net/dns-query',
+      'tls://dns.google#RULES',
+    ]);
+  });
+
+  test('a group member can be pinned to, because we render it', () {
+    const g = ProxyGroup(name: 'auto', type: 'url-test', members: ['a']);
+    final dns = (loadYaml(mihomoTunConfigYaml(vlessLoc(),
+        group: g,
+        members: [vlessLoc()],
+        dns: ['tls://dns.google#p0'])) as YamlMap)['dns'] as YamlMap;
+    expect(dns['nameserver'], ['tls://dns.google#p0']);
+  });
+
   test('unusable dns entries are dropped, never interpolated', () {
     final yaml = mihomoTunConfigYaml(vlessLoc(), dns: [
       'evil"\n  - injected', // quote + escape
