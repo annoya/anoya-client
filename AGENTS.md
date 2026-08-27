@@ -46,17 +46,24 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    but the fake-ip mode and range are app constants — the OS caches the fake
    addresses the engine handed out. Pinned by `client/test/hot_switch_test.dart`
    and `client/test/mihomo_tun_config_test.dart`.
-4. **A failed switch never disconnects.** The tunnel keeps running on the
+4. **A tunnel that stops on its own says why.** A packet-tunnel provider that
+   refuses a config reports it to the *system*, never to the call that started
+   it: the app sees the status fall back to disconnected and nothing else,
+   which reads as a connect that hung. `VpnCore.lastDisconnectError` (the
+   platform's `fetchLastDisconnectError`) is how that reason reaches the user,
+   and every stop the app did not ask for goes through it. Pinned by
+   `client/test/silent_failure_test.dart`.
+5. **A failed switch never disconnects.** The tunnel keeps running on the
    previous config and the user is told. Dropping the session as error handling
    is the one thing that actually leaks.
-5. **Everything interpolated into the engine config is validated first —
+6. **Everything interpolated into the engine config is validated first —
    values and keys alike.** Rule values go through `RoutingRule.isValid`, which
    mirrors the server-side validation (both sides must stay in step). Map keys
    from a Clash subscription go through the parser's key charset: keys are
    structural, so one carrying a newline adds a top-level config key
    (`external-controller` opens an unauthenticated control API). Drop, never
    escape. Pinned by `client/test/mihomo_tun_config_test.dart`.
-6. **The engine never fetches anything while applying a config.** Geo
+7. **The engine never fetches anything while applying a config.** Geo
    databases and a provider's rule lists are downloaded by the app, into the
    App Group container, and referenced as local files. mihomo will happily do
    it itself — geo data during config *parse* (90 s per file), rule providers
@@ -66,13 +73,27 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    dropped and the user is told. Pinned by
    `client/test/mihomo_tun_config_test.dart` and
    `client/test/rule_list_store_test.dart`.
-7. **Status reaches Dart from the platform thread only.** `onStatus` feeds the
+8. **Resolving the proxy's own address never goes through the proxy.** Panels
+   pin their resolver to the tunnel (`...#PROXY`) so DNS does not leak to the
+   local network, and mihomo resolves proxy hostnames with the main resolver
+   unless `proxy-server-nameserver` says otherwise — so honouring that pin
+   without an unpinned bootstrap deadlocks: the query waits on the tunnel, the
+   tunnel waits on the query, and every dial fails with `couldn't find ip`. The
+   renderer always emits `proxy-server-nameserver`, always without a pin, and
+   drops any pin naming an outbound it did not render (mihomo reads an unknown
+   pin as an interface to bind the socket to). `default-nameserver` is not a
+   substitute: the engine uses it only to resolve a *nameserver's* own
+   hostname. A scheme `config.Parse` does not know is dropped for the same
+   family of reasons: the engine rejects the *whole* document over it. Pinned
+   by `client/test/mihomo_tun_config_test.dart` and
+   `client/test/dns_sources_test.dart`.
+9. **Status reaches Dart from the platform thread only.** `onStatus` feeds the
    `vpn/status` EventChannel, and Flutter drops or crashes on a channel message
    sent from anywhere else. `VPNManager` is not actor-isolated, so a
    `nonisolated async` method runs on the cooperative pool even when its caller
    started on `@MainActor` — every publication goes through `publish()`, which
    hops, and `lastStatus` is touched only on the far side of that hop.
-8. **Logs never contain secrets.** No tokens, passwords, private keys or full
+10. **Logs never contain secrets.** No tokens, passwords, private keys or full
    config bodies in app, tunnel or engine logs. This includes error text that
    quotes them: subscription URLs, share links and engine parse errors are
    reduced to a host, a scheme or a redacted message before they are logged.

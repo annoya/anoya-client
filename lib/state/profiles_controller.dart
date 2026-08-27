@@ -132,6 +132,11 @@ class ProfilesController extends Notifier<ProfilesState> {
   bool _reapplyPending = false;
   int _idSeq = 0;
 
+  /// The user asked for this stop, so a status falling back to disconnected is
+  /// the answer rather than a failure to explain.
+  bool _stopExpected = false;
+  StreamSubscription<VpnStatus>? _statusSub;
+
   /// Completes when the persisted state is in [state]. Mutations await it:
   /// here the stakes are higher than a reverted field, because `_append` saves
   /// `[...state.profiles, p]` — an add landing before the load would persist a
@@ -146,6 +151,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   ProfilesState build() {
     _timer = Timer.periodic(kConfigPollInterval, (_) => _poll());
     ref.onDispose(() => _timer?.cancel());
+    _watchForSilentFailures();
     _ready = _init();
     return const ProfilesState(loading: true);
   }
@@ -236,7 +242,7 @@ class ProfilesController extends Notifier<ProfilesState> {
           : (title.isNotEmpty ? title : Uri.parse(url).host),
       locations: parsed.locations,
       subscriptionUrl: url,
-      dns: subscriptionDns(res.body),
+      dns: parsed.dns,
       deviceLimitActive: res.deviceLimitActive,
       deviceLimitReached: res.deviceLimitReached,
       unsupportedServers: parsed.unsupported,
@@ -291,7 +297,7 @@ class ProfilesController extends Notifier<ProfilesState> {
           ? name!.trim()
           : (single ? locations.first.label : 'Imported (${locations.length})'),
       locations: locations,
-      dns: subscriptionDns(text),
+      dns: parsed.dns,
       unsupportedServers: parsed.unsupported,
       refreshedAt: DateTime.now(),
     ));
@@ -567,10 +573,39 @@ class ProfilesController extends Notifier<ProfilesState> {
   void clearError() => state = state.copyWith(error: null);
 
   Future<void> disconnect() async {
+    _stopExpected = true;
     // The native stop disarms the system side; record the pause so the UI
     // explains why auto-connect is not active and the next connect re-arms.
     await ref.read(onDemandProvider.notifier).pause();
     await ref.read(vpnCoreProvider).disconnect();
+  }
+
+  /// Watches for a tunnel that stopped on its own and says why.
+  ///
+  /// A packet-tunnel provider that refuses a config reports it to the system,
+  /// not to the call that started it: the app used to see the status go
+  /// connecting → disconnected and nothing more, which reads as a connect that
+  /// hung and then gave up. The system does keep the reason.
+  void _watchForSilentFailures() {
+    final core = ref.read(vpnCoreProvider);
+    var previous = core.status;
+    _statusSub = core.statusStream().listen((status) async {
+      final wasComing =
+          previous == VpnStatus.connecting || previous == VpnStatus.connected;
+      previous = status;
+      if (status != VpnStatus.disconnected || !wasComing) return;
+      if (_stopExpected) {
+        _stopExpected = false;
+        return;
+      }
+      final reason = await core.lastDisconnectError();
+      if (reason.isEmpty) return;
+      Log.e('tunnel stopped on its own', reason);
+      state = state.copyWith(
+        error: AppError('The tunnel stopped', detail: reason),
+      );
+    });
+    ref.onDispose(() => _statusSub?.cancel());
   }
 
   /// Mirror the current selection into the system's saved tunnel config, so an

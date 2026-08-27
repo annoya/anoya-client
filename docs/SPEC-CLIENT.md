@@ -131,12 +131,26 @@ OS's queries into the tunnel, where the engine's `any:53` hijack answers them
 in fake-ip mode. The real resolvers live in the engine config's `dns:` block
 and therefore switch with the configuration, through the same hot reload. A
 configuration supplies them at its source — the self-hosted bundle's `dns`
-field, a Clash-YAML subscription's `dns.nameserver` — and falls back to
-Cloudflare DoH (`https://1.1.1.1/dns-query`) when it names none; share links
-cannot carry DNS. Entries that could not be nameservers are dropped, never
-escaped into the YAML, and hostname-addressed resolvers get a plain-IP
-bootstrap. Fake-ip mode and range are app constants across configurations.
-Full decision: ADR-008.
+field, a Clash-YAML subscription's `dns.nameserver`, an Xray or sing-box
+body's `dns.servers` — and falls back to Cloudflare DoH
+(`https://1.1.1.1/dns-query`) when it names none; share links cannot carry
+DNS. Entries that could not be nameservers are dropped, never escaped into the
+YAML, and hostname-addressed resolvers get a plain-IP bootstrap. Fake-ip mode
+and range are app constants across configurations.
+
+Each format also says whether a query is issued locally or sent out through
+the proxy — a `#pin` in Clash, a `detour` tag in sing-box, a `+local` scheme
+in Xray — and that intent is translated rather than dropped, because it is
+usually the reason the DNS block exists. It becomes a pin on the one outbound
+the config renders. A pin naming anything else is removed (mihomo reads an
+unknown one as a network interface to bind to), and a resolver the tunnel
+cannot carry — plain UDP through an outbound without UDP — is dropped in
+favour of the encrypted fallback rather than left to fail on every query.
+
+Alongside that the config always carries `proxy-server-nameserver`: the same
+resolvers with no pin, which is what the engine uses to resolve the proxy's
+own hostname. Without it a pinned resolver deadlocks the tunnel — the query
+waits on the proxy and the proxy waits on the query. Full decision: ADR-008.
 
 ---
 
@@ -277,6 +291,14 @@ address is unreachable from this device; the source row keeps showing the
 address the user added, since that is what they chose and would share. When both
 fail, the error names the main address: the backup is the provider's
 arrangement, and the user has never seen it. When a poll changes the active configuration's proxy or
+
+A tunnel that stops without being asked to explains itself. A packet-tunnel
+provider that refuses a config reports the reason to the system, not to the call
+that started it, so the app asks the system for it
+(`fetchLastDisconnectError`, macOS 13 / iOS 16) whenever a connecting or
+connected tunnel falls back to disconnected on its own. Before that, an engine
+that would not run a config looked exactly like a connect that hung and then
+gave up.
 its managed routing policy, the tunnel re-applies it; when it reports the
 account can no longer connect, or the connected server disappeared, the tunnel
 disconnects. Re-applies are rate-limited so a flapping source cannot loop the

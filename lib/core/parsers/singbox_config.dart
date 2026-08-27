@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../log.dart';
 import '../norm_config.dart';
+import 'dns_servers.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
 
@@ -81,8 +82,57 @@ ParsedSubscription? parseSingboxServers(String body) {
   return ParsedSubscription(
     locations: out,
     unsupported: unsupported,
+    dns: _dnsServers(decoded['dns'], list),
     format: SubscriptionFormat.singbox,
   );
+}
+
+/// The resolvers a sing-box body declares, in mihomo's spelling.
+///
+/// `detour` names the outbound the query rides, so unlike Xray there is no
+/// guessing: look the tag up among the outbounds we just read. A detour to a
+/// server is the provider asking for DNS inside the tunnel; a detour to
+/// `direct` — or no detour, which is sing-box's default — is the opposite.
+///
+/// Two schema generations are in the wild and both appear in panel templates:
+/// up to sing-box 1.11 a server is one `address` URL, from 1.12 it is a `type`
+/// with the address split across fields. Reading only one of them would look
+/// like the format being unsupported rather than half-supported.
+List<String> _dnsServers(Object? node, List outbounds) {
+  if (node is! Map) return const [];
+  final servers = node['servers'];
+  if (servers is! List) return const [];
+
+  // Tags whose outbound does not leave the device. `block` is in here for the
+  // same reason as `direct`: neither is the tunnel, and both mean "no pin".
+  final onTheDevice = <String>{
+    for (final ob in outbounds)
+      if (ob is Map && (ob['type'] == 'direct' || ob['type'] == 'block'))
+        '${ob['tag'] ?? ''}',
+  };
+
+  final out = <String>[];
+  for (final entry in servers) {
+    if (entry is! Map) continue;
+    final detour = '${entry['detour'] ?? ''}'.trim();
+    final viaTunnel = detour.isNotEmpty && !onTheDevice.contains(detour);
+    final ns = mihomoNameserver(_address(entry), viaTunnel: viaTunnel);
+    if (ns != null && !out.contains(ns)) out.add(ns);
+  }
+  return out;
+}
+
+/// One server's address, whichever generation of the schema it is written in.
+String _address(Map entry) {
+  final type = '${entry['type'] ?? ''}'.trim();
+  if (type.isEmpty) return '${entry['address'] ?? ''}'; // <= 1.11
+  final host = '${entry['server'] ?? ''}'.trim();
+  // `local`, `fakeip`, `hosts` and friends name a mechanism and carry no
+  // server; handing the scheme over alone is enough for it to be turned away.
+  if (host.isEmpty) return '$type://';
+  final port = entry['server_port'];
+  final path = '${entry['path'] ?? ''}';
+  return '$type://$host${port == null ? '' : ':$port'}$path';
 }
 
 Map<String, dynamic> _proxyFor(String type, Map ob) {
