@@ -16,13 +16,16 @@ class SessionState {
 
   final VpnStatus status;
 
-  /// When this session began, as observed by the app. Null unless connected.
+  /// When this session began. Null unless connected.
   ///
-  /// Observed, not authoritative: a tunnel the system started on its own
-  /// (on-demand) was already up when the app first heard about it, so the
-  /// clock starts from when we learned, not from when it did. The extension
-  /// does not report a start time, and inventing one would be worse than a
-  /// clock that is honestly short.
+  /// The system's own answer where it has one (`NEVPNConnection.connectedDate`),
+  /// because the app is not always present at the start: a tunnel raised from
+  /// the system's VPN switch, or by an on-demand rule, was running long before
+  /// the app was opened. Stamping the moment we first looked made the clock
+  /// count from the wrong event — it read seconds for a session hours old.
+  ///
+  /// The app's own first sighting is the fallback, for a platform that cannot
+  /// say. A clock that is honestly short beats no clock.
   final DateTime? startedAt;
 
   bool get connected => status == VpnStatus.connected;
@@ -37,6 +40,7 @@ class SessionController extends Notifier<SessionState> {
     final core = ref.watch(vpnCoreProvider);
     _sub = core.statusStream().listen(_onStatus);
     ref.onDispose(() => _sub?.cancel());
+    if (core.status == VpnStatus.connected) unawaited(_askTheSystem());
     return SessionState(
       status: core.status,
       startedAt: core.status == VpnStatus.connected ? DateTime.now() : null,
@@ -44,11 +48,33 @@ class SessionController extends Notifier<SessionState> {
   }
 
   void _onStatus(VpnStatus s) {
-    if (s == VpnStatus.connected) {
-      state = SessionState(status: s, startedAt: state.startedAt ?? DateTime.now());
-    } else {
+    if (s != VpnStatus.connected) {
       state = SessionState(status: s);
+      return;
     }
+    // The status is applied at once — the ring must not wait on a round trip
+    // to the platform — with our own sighting standing in until the system's
+    // answer arrives a frame or two later.
+    state = SessionState(status: s, startedAt: state.startedAt ?? DateTime.now());
+    unawaited(_askTheSystem());
+  }
+
+  /// Replaces the provisional start with the system's, when it has one and it
+  /// differs. Guarded on still being connected: the answer can arrive after the
+  /// tunnel has gone down, and a start time on a dead session would restart the
+  /// clock on the next one.
+  Future<void> _askTheSystem() async {
+    final core = ref.read(vpnCoreProvider);
+    final since = await core.connectedSince();
+    // The provider can be gone by the time the platform answers — a rebuild, a
+    // container torn down — and touching state then throws rather than being
+    // ignored.
+    if (!ref.mounted || since == null || !state.connected) return;
+    final known = state.startedAt;
+    if (known != null && known.difference(since).abs() < const Duration(seconds: 1)) {
+      return;
+    }
+    state = SessionState(status: state.status, startedAt: since);
   }
 }
 
