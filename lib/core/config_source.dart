@@ -72,10 +72,11 @@ final class SubscriptionSource extends ConfigSource {
     final res = await fetchSubscription(
       profile.subscriptionUrl!,
       probeRouting: probe,
-      // Asked once per source: either a rendering answered and we go straight
-      // to it, or none did and we stop asking.
+      // A rendering that answered is fetched directly; when none has, we keep
+      // looking. See [shouldProbeRenderings] for why the second half is not
+      // remembered as firmly as the first.
       rendering: profile.rendering,
-      probeRenderings: !profile.renderingProbed,
+      probeRenderings: shouldProbeRenderings(profile.rendering),
       fallbackUrl: info?.fallbackUrl ?? '',
       timeout: info?.requestTimeout == null
           ? null

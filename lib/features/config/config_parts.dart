@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/device_identity.dart';
+import '../../core/dns_plan.dart';
 import '../../core/app_error.dart';
 import '../../core/log.dart';
+import '../../core/mihomo_tun_config.dart';
 import '../../core/norm_config.dart';
 import '../../core/subscription_info.dart';
 import '../../core/profile.dart';
@@ -15,6 +17,8 @@ import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/routing_status.dart';
+import '../dns_screen.dart';
+import 'routing_config_screen.dart';
 import '../routing_screen.dart';
 
 /// Pieces every configuration screen shares. The three domains (ADR-005) differ in
@@ -120,7 +124,7 @@ class SourceCard extends StatelessWidget {
           children: [
             Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
             if (viaFallback)
-              Text('Last refresh used your provider’s backup address',
+              Text('Last refresh used the subscription’s backup address',
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
@@ -235,7 +239,7 @@ class ProviderSection extends StatelessWidget {
           margin: kCardMargin,
           child: ListTile(
             leading: const Icon(Icons.support_agent_outlined),
-            title: const Text('Contact your provider'),
+            title: const Text('Get support'),
             trailing: const Icon(Icons.open_in_new, size: 18),
             onTap: () async {
               final uri = Uri.tryParse(info.supportUrl);
@@ -248,7 +252,7 @@ class ProviderSection extends StatelessWidget {
       if (!info.hasPlan && info.announce.isEmpty && info.supportUrl.isEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(kGutter, 4, kGutter, 0),
-          child: Text('Your provider reported no plan details.',
+          child: Text('Your subscription reported no plan details.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted)),
         ),
     ]);
@@ -386,13 +390,37 @@ String _cadence(Profile p) {
 /// organization's server both sets and enforces its policy, while a panel can
 /// only stop returning servers (ADR-005). It cannot decide where this device's
 /// traffic goes, so the decision is stated in words rather than implied.
-class ProviderRoutingCard extends ConsumerWidget {
+class ProviderRoutingCard extends ConsumerStatefulWidget {
   const ProviderRoutingCard({super.key, required this.profile});
 
   final Profile profile;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProviderRoutingCard> createState() => _ProviderRoutingCardState();
+}
+
+class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
+  /// A dozen files from someone else's hosts is seconds, and more on a phone.
+  /// The switch cannot move until they are here — a rule whose list is missing
+  /// matches nothing, so an early "on" would be a lie — so the row carries the
+  /// state instead of leaving the tap unanswered.
+  bool _downloading = false;
+
+  Future<void> _setLists(bool enabled) async {
+    if (enabled) setState(() => _downloading = true);
+    try {
+      await ref
+          .read(profilesControllerProvider.notifier)
+          .setProviderRuleListsEnabled(widget.profile.id, enabled);
+      ref.invalidate(providerRuleListsProvider(widget.profile.id));
+    } finally {
+      if (mounted) setState(() => _downloading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = widget.profile;
     final cs = Theme.of(context).colorScheme;
     final routing = profile.providerRouting!;
     final on = profile.providerRoutingEnabled;
@@ -405,8 +433,12 @@ class ProviderRoutingCard extends ConsumerWidget {
       child: Column(children: [
         SwitchListTile(
           secondary: const Icon(Icons.alt_route),
-          title: const Text('Routes from your provider'),
-          subtitle: Text(summary(profile, lists)),
+          // Named like the device's own controls below it. Whose policy this
+          // is comes from the section header, once, instead of from every row —
+          // the width a repeated "from your provider" costs is width the
+          // subtitle needs for facts.
+          title: const Text('Routing'),
+          subtitle: Text(providerRoutingSummary(profile, lists)),
           value: on,
           onChanged: (v) => ctrl.setProviderRoutingEnabled(profile.id, v),
         ),
@@ -415,7 +447,7 @@ class ProviderRoutingCard extends ConsumerWidget {
         // else's rules requires seeing them first.
         ListTile(
           leading: const Icon(Icons.layers_outlined),
-          title: const Text('See what they route'),
+          title: const Text('Rule set'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
             builder: (_) => RoutingScreen.managed(
@@ -441,60 +473,72 @@ class ProviderRoutingCard extends ConsumerWidget {
         if (needLists > 0) ...[
           const Divider(height: 1, indent: 16, endIndent: 16),
           SwitchListTile(
-            secondary: const Icon(Icons.description_outlined),
-            title: const Text('Their rule lists'),
-            subtitle: Text(_listSummary(profile, needLists, lists)),
+            // The spinner takes the icon's place rather than the switch's, so
+            // the row does not change width and it stays clear which operation
+            // is running — the same shape as the refresh card.
+            secondary: _downloading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2.5))
+                : const Icon(Icons.description_outlined),
+            title: const Text('Rule lists'),
+            subtitle: Text(_downloading
+                ? 'Downloading ${needLists == 1 ? 'one list' : '$needLists lists'}…'
+                : _listSummary(profile, needLists, lists)),
             value: profile.providerRuleListsEnabled,
-            onChanged: (v) => ctrl.setProviderRuleListsEnabled(profile.id, v),
+            // A second tap would not hurry the first, and two writers on the
+            // same files is how half a list ends up on disk.
+            onChanged: _downloading ? null : _setLists,
           ),
         ],
       ]),
     );
   }
+}
 
-  /// The line under the switch. Says what is in force, and — when something is
-  /// missing — says that too, because a summary that reads as complete is the
-  /// one place this could mislead.
-  static String summary(Profile profile, List<RuleListStatus>? lists) {
-    final routing = profile.providerRouting!;
-    final mode = routing.mode == 'split' ? 'Split' : 'Full tunnel';
-    final applied = routing.rules
-        .where((r) => !r.needsRuleList || _isAvailable(profile, r.value, lists))
-        .length;
-    final rules = applied == 0 ? 'no exceptions' : '$applied rule${applied > 1 ? 's' : ''}';
-    final parts = ['$mode · $rules'];
-    final skipped = profile.providerRoutingSkipped;
-    if (skipped > 0) parts.add('$skipped not supported');
-    final missing = routing.rules.length - applied;
-    if (missing > 0) {
-      parts.add(profile.providerRuleListsEnabled
-          ? '$missing list${missing > 1 ? 's' : ''} unavailable'
-          : '$missing need${missing > 1 ? '' : 's'} their lists');
-    }
-    return parts.join(' · ');
+/// The line under the switch. Says what is in force, and — when something is
+/// missing — says that too, because a summary that reads as complete is the
+/// one place this could mislead.
+String providerRoutingSummary(Profile profile, List<RuleListStatus>? lists) {
+  final routing = profile.providerRouting!;
+  final mode = routing.mode == 'split' ? 'Split' : 'Full tunnel';
+  final applied = routing.rules
+      .where((r) => !r.needsRuleList || _isAvailable(profile, r.value, lists))
+      .length;
+  final rules = applied == 0 ? 'no exceptions' : '$applied rule${applied > 1 ? 's' : ''}';
+  final parts = ['$mode · $rules'];
+  final skipped = profile.providerRoutingSkipped;
+  if (skipped > 0) parts.add('$skipped not supported');
+  final missing = routing.rules.length - applied;
+  if (missing > 0) {
+    parts.add(profile.providerRuleListsEnabled
+        ? '$missing list${missing > 1 ? 's' : ''} unavailable'
+        : '$missing need${missing > 1 ? '' : 's'} their lists');
   }
+  return parts.join(' · ');
+}
 
-  static bool _isAvailable(Profile p, String name, List<RuleListStatus>? lists) {
-    if (!p.providerRuleListsEnabled) return false;
-    // Unknown status is not the same as absent: while the read is in flight,
-    // assume what the user asked for rather than flashing a failure.
-    if (lists == null) return true;
-    return lists.any((s) => s.list.name == name && s.available);
-  }
+bool _isAvailable(Profile p, String name, List<RuleListStatus>? lists) {
+  if (!p.providerRuleListsEnabled) return false;
+  // Unknown status is not the same as absent: while the read is in flight,
+  // assume what the user asked for rather than flashing a failure.
+  if (lists == null) return true;
+  return lists.any((s) => s.list.name == name && s.available);
+}
 
-  static String _listSummary(Profile p, int needed, List<RuleListStatus>? lists) {
-    if (!p.providerRuleListsEnabled) {
-      return 'Off · $needed of their rules need them';
-    }
-    if (lists == null) return 'Checking…';
-    final have = lists.where((s) => s.available).toList();
-    if (have.isEmpty) return 'None downloaded yet';
-    final kb = have.fold<int>(0, (a, s) => a + s.bytes) ~/ 1024;
-    final count = have.length == lists.length
-        ? '${have.length} list${have.length > 1 ? 's' : ''}'
-        : '${have.length} of ${lists.length} downloaded';
-    return '$count · $kb KB';
+String _listSummary(Profile p, int needed, List<RuleListStatus>? lists) {
+  if (!p.providerRuleListsEnabled) {
+    return 'Off · $needed rule${needed > 1 ? 's' : ''} need${needed > 1 ? '' : 's'} them';
   }
+  if (lists == null) return 'Checking…';
+  final have = lists.where((s) => s.available).toList();
+  if (have.isEmpty) return 'None downloaded yet';
+  final kb = have.fold<int>(0, (a, s) => a + s.bytes) ~/ 1024;
+  final count = have.length == lists.length
+      ? '${have.length} list${have.length > 1 ? 's' : ''}'
+      : '${have.length} of ${lists.length} downloaded';
+  return '$count · $kb KB';
 }
 
 /// Shown when the provider named a list we could not fetch.
@@ -503,6 +547,7 @@ class ProviderRoutingCard extends ConsumerWidget {
 /// nothing, traffic falls through to the next rule, and the policy quietly
 /// changes. So this is the same choice as for geo rules — the rule is not
 /// applied and the fact is stated, with the one action that can fix it.
+
 class RuleListFailureCard extends ConsumerStatefulWidget {
   const RuleListFailureCard({super.key, required this.profile, required this.failed});
 
@@ -619,7 +664,7 @@ class LocalRoutingCard extends ConsumerWidget {
           // here would say nothing new.
           subtitle: Text(overriddenBy != null
               ? 'Replaced by $overriddenBy'
-              : _summary(profile, ruleSet)),
+              : localRoutingSummary(profile, ruleSet)),
           value: profile.routingEnabled,
           onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
         ),
@@ -642,12 +687,6 @@ class LocalRoutingCard extends ConsumerWidget {
     );
   }
 
-  String _summary(Profile p, RuleSet? set) {
-    if (!p.routingEnabled) return 'Off · everything through the VPN';
-    final mode = (set?.mode ?? 'full') == 'split' ? 'Split' : 'Full tunnel';
-    final rules = set?.rules.length ?? 0;
-    return '$mode · ${rules == 0 ? 'no rules' : '$rules rule${rules > 1 ? 's' : ''}'}';
-  }
 
   Future<void> _pick(BuildContext context, WidgetRef ref, List<RuleSet> sets) async {
     final picked = await pickOption<String>(
@@ -769,13 +808,13 @@ class ThisDeviceSection extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.smartphone_outlined),
               title: Text(id.label),
-              subtitle: const Text('Identified to your provider, which counts devices'),
+              subtitle: const Text('Identified to your subscription, which counts devices'),
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(kGutter, 10, kGutter, 0),
             child: Text(
-              'Your provider counts devices by an id this app generates once and '
+              'Your subscription counts devices by an id this app generates once and '
               'keeps. Reinstalling makes a new one, which takes another slot.',
               style: Theme.of(context)
                   .textTheme
@@ -786,5 +825,179 @@ class ThisDeviceSection extends StatelessWidget {
         ]);
       },
     );
+  }
+}
+
+/// Which resolvers this configuration uses, and a way to see why some of them
+/// are not being used.
+///
+/// A section of its own rather than a line inside `ROUTING`: routing decides
+/// where a connection goes, this decides who is asked for the address, and the
+/// two are answered by different halves of the engine config. The subtitle
+/// names the resolver and how it is reached, because "1 resolver" answers
+/// neither of the questions a person opens this for.
+class NamesSection extends ConsumerWidget {
+  const NamesSection({super.key, required this.profile});
+
+  final Profile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(profilesControllerProvider);
+    final active = state.active?.id == profile.id;
+    final group = active ? state.selectedGroup : null;
+    final members = active ? state.selectedGroupMembers : const <Location>[];
+    final location = (active ? state.selectedLocation : null) ??
+        (profile.locations.isEmpty ? null : profile.locations.first);
+    final shape = location == null
+        ? (outbounds: const <String>{}, carriesUdp: false)
+        : engineShape(location, group: group, members: members);
+    final plan = dnsPlanFor(
+      dns: profile.dns,
+      outbounds: shape.outbounds,
+      carriesUdp: shape.carriesUdp,
+    );
+    final first = plan.resolvers.first;
+
+    return Column(
+      // Without this a Column hands its children their intrinsic width and
+      // centres them — which is exactly what happened to this header while
+      // every other one on the page stayed flush left.
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+      const SectionHeader('DNS'),
+      Card(
+        margin: kCardMargin,
+        child: ListTile(
+          leading: const Icon(Icons.language_outlined),
+          title: const Text('DNS'),
+          // Host and routing, not a count: the first is what the user came to
+          // check, the second is the one that decides who else sees the query.
+          subtitle: Text('${_host(first.address)} · ${first.routing}'
+              '${plan.resolvers.length > 1 ? ' · +${plan.resolvers.length - 1} more' : ''}'),
+          // Refusals are the reason this row leads anywhere at all, so they are
+          // announced before the screen is opened.
+          trailing: plan.dropped.isEmpty
+              ? const Icon(Icons.chevron_right)
+              : Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text('${plan.dropped.length} dropped',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error)),
+                  const Icon(Icons.chevron_right),
+                ]),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => DnsScreen(profile: profile))),
+        ),
+      ),
+    ]);
+  }
+
+  /// The host alone. A DoH resolver's path (`/dns-query`) is the same on every
+  /// server that has one and only costs the row the width it needs for the name.
+  String _host(String address) {
+    final at = address.indexOf('://');
+    if (at < 0) return address;
+    return Uri.tryParse(address)?.host ?? address.substring(at + 3);
+  }
+}
+
+/// The policy a device's own rule set puts in force, in one line.
+String localRoutingSummary(Profile p, RuleSet? set) {
+  if (!p.routingEnabled) return 'Off · everything through the VPN';
+  final mode = (set?.mode ?? 'full') == 'split' ? 'Split' : 'Full tunnel';
+  final rules = set?.rules.length ?? 0;
+  return '$mode · ${rules == 0 ? 'no rules' : '$rules rule${rules > 1 ? 's' : ''}'}';
+}
+
+/// A policy the organization owns: shown, never switched.
+class ManagedRoutingCard extends StatelessWidget {
+  const ManagedRoutingCard({super.key, required this.routing});
+
+  final Routing routing;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        margin: kCardMargin,
+        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
+        child: ListTile(
+          leading: const Icon(Icons.business_outlined),
+          title: const Text('Managed by your organization'),
+          subtitle: Text(
+              '${routing.mode == 'split' ? 'Split' : 'Full tunnel'} · ${routing.rules.length} rules, set on the server'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => openManagedRouting(context, routing),
+        ),
+      );
+}
+
+/// The one row that stands in for everything about where traffic goes and who
+/// names the addresses.
+///
+/// Both used to sit on the configuration screen and were the largest thing on
+/// it, while being the part almost nobody opens. The subtitle carries the two
+/// facts a passer-by would have read off those sections — the policy in force
+/// and whose resolvers — so moving them costs no one an answer they used to
+/// get for free.
+class RoutingRow extends ConsumerWidget {
+  const RoutingRow({super.key, required this.profile});
+
+  final Profile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final plan = dnsPlanForProfile(ref, profile);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader('ROUTING'),
+        Card(
+      margin: kCardMargin,
+      child: ListTile(
+        leading: const Icon(Icons.alt_route),
+        title: const Text('Routing'),
+        subtitle: Text.rich(TextSpan(children: [
+          TextSpan(text: '${_routing(ref)} · '),
+          // The refusals were just taken out of a log file nobody reads.
+          // Leaving them two taps away would put them back — in words, and in
+          // the one place a passer-by looks.
+          if (plan.dropped.isEmpty)
+            // "DNS app default" reads as a typo; the app is the one origin
+            // that needs a preposition of its own.
+            TextSpan(
+                text: plan.usingFallback
+                    ? 'DNS by the app'
+                    : 'DNS ${dnsOriginLabel(profile, plan)}')
+          else
+            TextSpan(
+              text: 'DNS: ${plan.dropped.length} refused',
+              style: TextStyle(color: cs.error),
+            ),
+        ])),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => RoutingConfigScreen(profileId: profile.id))),
+      ),
+        ),
+      ],
+    );
+  }
+
+  /// Whichever of the three policies is actually in force.
+  String _routing(WidgetRef ref) {
+    // Named rather than summarised: a row that leads to something the user
+    // cannot change should say so before it is tapped.
+    if (profile.routing != null) {
+      final mode = profile.routing!.mode == 'split' ? 'Split' : 'Full tunnel';
+      return '$mode · set by your organization';
+    }
+    if (profile.providerRouting != null && profile.providerRoutingEnabled) {
+      return providerRoutingSummary(
+          profile, ref.watch(providerRuleListsProvider(profile.id)).value);
+    }
+    final sets = ref.watch(ruleSetsProvider).value ?? const <RuleSet>[];
+    final set =
+        sets.where((s) => s.id == (profile.ruleSetId ?? RuleSet.defaultId)).firstOrNull;
+    return localRoutingSummary(profile, set);
   }
 }

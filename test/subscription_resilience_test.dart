@@ -220,7 +220,7 @@ proxy-groups:
       expect(res.rendering, isEmpty, reason: 'the panel already sent what we need');
     });
 
-    test('a panel with no such rendering is asked once, and then never again',
+    test('a panel with no such rendering costs three requests and keeps its body',
         () async {
       final asked = <String>[];
       final client = MockClient((req) async {
@@ -228,16 +228,27 @@ proxy-groups:
         if (req.url.pathSegments.length > 1) return http.Response('Not Found', 404);
         return http.Response('vless://u@h.example:443?security=none#DE', 200);
       });
-      final first = await fetchSubscription('https://sub.example/tok3n',
+      final res = await fetchSubscription('https://sub.example/tok3n',
           client: client, probeRouting: false);
       expect(asked, ['/tok3n', '/tok3n/mihomo', '/tok3n/clash-meta', '/tok3n/clash']);
-      expect(first.renderingProbed, isTrue);
-      expect(first.body, contains('vless://'), reason: 'the plain body is kept');
+      expect(res.body, contains('vless://'), reason: 'the plain body is kept');
+      expect(res.rendering, isEmpty);
+    });
 
-      asked.clear();
-      await fetchSubscription('https://sub.example/tok3n',
-          client: client, probeRouting: false, probeRenderings: false);
-      expect(asked, ['/tok3n'], reason: 'remembered, so it costs one request per source');
+    group('what the next refresh asks for', () {
+      // Only the positive outcome is worth remembering. "Nothing answered" used
+      // to be remembered just as firmly, and one 404 during a bad minute pinned
+      // a subscription to its plain body for good — for a panel like Remnawave
+      // that body is a base64 link list, so the policy fell through to the Xray
+      // probe and arrived as a fraction of itself, with no way back from the
+      // interface.
+      test('a rendering that answered is gone to directly', () {
+        expect(shouldProbeRenderings('mihomo'), isFalse);
+      });
+
+      test('nothing having answered is not a final answer', () {
+        expect(shouldProbeRenderings(''), isTrue);
+      });
     });
 
     test('a known rendering is asked for directly, and falls back when it dies',

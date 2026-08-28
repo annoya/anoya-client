@@ -223,6 +223,11 @@ ProviderRouting? parseClashRules(List<String> lines, {List<RuleList> lists = con
       'GEOIP' => 'geoip',
       'GEOSITE' => 'geosite',
       'DOMAIN-REGEX' => 'domain-regex',
+      // Desktop-only, and the renderer drops it on platforms that cannot
+      // resolve a connection's process. Dropping it *here* was the wrong place
+      // to make that decision: a provider routing their game launcher lost the
+      // rule on macOS too, where it works.
+      'PROCESS-NAME' => 'process-name',
       // Only nameable if the body also defined where the list comes from: a
       // rule pointing at a list we cannot fetch matches nothing, which reads
       // as "not routed" rather than "broken".

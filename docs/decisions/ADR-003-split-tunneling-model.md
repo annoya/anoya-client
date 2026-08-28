@@ -118,6 +118,17 @@ disabled with the reason costs one line and answers the question.
 - `client/lib/core/routing_prefs.dart` — device-level prefs and LAN rules.
 - `client/lib/core/geo_store.dart`, `geosite_index.dart` — databases.
 - `client/lib/core/platform_support.dart` — `supportsProcessRules`.
+- `client/lib/core/rule_list_store.dart` — the provider's list files, on disk in
+  the App Group container, refreshed weekly. Turning the switch off stops
+  applying them but does not delete them: the switch promises to apply their
+  rules, not to manage the disk, and deleting made changing one's mind cost the
+  whole download again. The sweep for files nothing points at any more runs
+  after a refresh, where a provider may genuinely have dropped a list.
+- `client/lib/features/config/routing_config_screen.dart` — the page holding the
+  controls for all three kinds of policy, reached by one row (`RoutingRow` in
+  `config_parts.dart`) from every configuration screen. Split off because these
+  controls were the largest thing on a screen that answers a different question,
+  and the part fewest people open.
 - `management/internal/store/routingprofiles.go`, `shared/normconfig/routing.go`
   — the server half.
 - Tests: `client/test/routing_simple_test.dart`, `client/test/status_strip_test.dart`
