@@ -201,7 +201,13 @@ no business seeing.
 
 ## Where It Lives
 
-- `client/lib/core/profile.dart`, `config_source.dart`, `profile_store.dart`.
+- `client/lib/core/profile.dart`, `config_source.dart`, `profile_store.dart` —
+  the last also remembers which configuration was active and what it connected
+  through, in `selection.json` beside the list. Kept out of `profiles.json`
+  because that file is a bare JSON array: turning it into an object to hold two
+  more fields would make every existing file unreadable, costing the profiles
+  and not just the selection. Restored only when the ids still name something,
+  and only onto the configuration they were saved for.
 - `client/lib/core/routing_policy.dart` — the three policy classes.
 - `client/lib/state/group_member.dart` — what a selected group resolved to.
 - `client/lib/core/rule_list_store.dart` — the provider's list files.
