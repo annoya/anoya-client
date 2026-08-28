@@ -1,3 +1,4 @@
+import '../dns_plan.dart';
 import '../log.dart';
 import '../mihomo_tun_config.dart';
 

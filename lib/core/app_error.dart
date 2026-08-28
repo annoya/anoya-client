@@ -40,8 +40,8 @@ class AppErrorException implements Exception {
 /// says the one thing those entries cannot: what to do about it.
 const kDeviceLimitReached = AppError(
   'Device limit reached',
-  detail: 'Your provider’s device limit is full, so it sent a placeholder '
-      'instead of your servers. Free a slot with your provider, then refresh.',
+  detail: 'Your subscription’s device limit is full, so it sent a placeholder '
+      'instead of your servers. Free a slot in your subscription, then refresh.',
 );
 
 /// A subscription body that produced no usable servers, with the reason already
@@ -67,7 +67,7 @@ class SubscriptionFormatException extends FormatException {
 /// who is the only party who can change the template.
 const kUnreadableSubscription = AppError(
   'Couldn’t read this subscription',
-  detail: 'Your provider sent a format this app does not recognise. It reads '
+  detail: 'Your subscription sent a format this app does not recognise. It reads '
       'base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.',
 );
 
@@ -79,7 +79,7 @@ const kUnreadableSubscription = AppError(
 /// format.
 AppError emptySubscription(String what) => AppError(
       'This subscription has no servers',
-      detail: 'Your provider answered with $what that lists none. That usually '
+      detail: 'Your subscription answered with $what that lists none. That usually '
           'means the account is out of days or its device limit is full — ask them.',
     );
 
@@ -101,7 +101,7 @@ AppError noRunnableServers(int total, String kinds) => AppError(
 /// the user locations that can never connect; the honest reading is that this
 /// is text, so it is shown as text.
 AppError providerMessageInstead(Iterable<String> lines) => AppError(
-      'Your provider sent a message',
+      'Your subscription sent a message',
       detail: '${lines.where((l) => l.trim().isNotEmpty).join('\n')}'
           '\n\nNot servers: every entry points nowhere, so nothing was added.',
     );

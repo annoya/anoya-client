@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
+import 'package:vpn_client/core/dns_plan.dart';
 import 'package:vpn_client/core/mihomo_tun_config.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';

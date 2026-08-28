@@ -211,8 +211,18 @@ A user-facing override on top remains open — it would slot into the same
 
 ## Where It Lives
 
-- Renderer (`dns` parameter, sanitation, scheme check, pins, bootstrap,
-  fallback): `client/lib/core/mihomo_tun_config.dart`
+- The decision itself — sanitation, scheme check, pins, the UDP test, the
+  bootstrap list, the fallback, and the record of what was refused:
+  `client/lib/core/dns_plan.dart`. The renderer emits this plan rather than
+  deciding again, and the DNS screen reads the same object; that is what keeps
+  the screen from describing a configuration the engine never got.
+- Renderer (`dns` parameter, `engineShape`):
+  `client/lib/core/mihomo_tun_config.dart`
+- Screen and the two rows that lead to it:
+  `client/lib/features/dns_screen.dart`, `NamesSection` on the routing page
+  (`client/lib/features/config/routing_config_screen.dart`), and `RoutingRow`
+  on the configuration screen — which carries the refusal count itself, so
+  moving DNS a level deeper did not put it back out of sight
 - Shared translation into mihomo's spelling:
   `client/lib/core/parsers/dns_servers.dart`
 - Per-format mining: `_dnsServers` in `clash_config.dart`, `xray_config.dart`
@@ -224,5 +234,6 @@ A user-facing override on top remains open — it would slot into the same
 - Bundle schema: `shared/normconfig/normconfig.go` (`Bundle.DNS`)
 - OS-level decoy: `applyNetworkSettings` in
   `client/shared/apple/PacketTunnelProvider.swift`
-- Tests: `client/test/dns_sources_test.dart`,
+- Tests: `client/test/dns_screen_test.dart`,
+  `client/test/dns_sources_test.dart`,
   `client/test/mihomo_tun_config_test.dart`, `client/test/hot_switch_test.dart`

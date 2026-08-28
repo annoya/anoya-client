@@ -16,7 +16,7 @@ const kAppVersion = '1.0.0';
 
 /// The build number — `version:` after the `+`, and what App Store Connect
 /// counts uploads by.
-const kAppBuild = '4';
+const kAppBuild = '6';
 
 /// The engine we are pinned to, from `native/mihomocore/go.mod`.
 ///

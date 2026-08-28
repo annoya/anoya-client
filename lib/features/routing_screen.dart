@@ -857,7 +857,7 @@ class _RuleDialogState extends State<_RuleDialog> {
     'geoip': 'country by IP',
     'geosite': 'domain lists',
     'domain-regex': 'domain matches a pattern',
-    'rule-list': 'a list from your provider',
+    'rule-list': 'a list from your subscription',
   };
 
   @override
