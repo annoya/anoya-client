@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'log.dart';
+import 'mihomo_tun_config.dart';
 
 /// What a configuration's resolvers become, and what happened to the ones that
 /// did not make it.
@@ -34,9 +35,31 @@ const kMihomoDnsSchemes = {
   'tailscale',
 };
 
-/// What a configuration that names no usable resolver gets. Encrypted, so a
-/// query that has to leave the tunnel still says nothing to the local network.
+/// What a configuration that names no usable resolver gets, unless the user
+/// chose otherwise. Encrypted, and addressed by IP: a resolver named by domain
+/// would itself need resolving before it could resolve anything.
 const kFallbackNameserver = 'https://1.1.1.1/dns-query';
+
+/// Resolvers used to find the proxy's own address when the configuration named
+/// none of its own.
+///
+/// Three, where the query list gets one, and the asymmetry is the point. This
+/// list resolves exactly one name — the server being connected to, which the
+/// local network watches you connect to anyway — so a second and third operator
+/// learn nothing they could not already see, and buy the tunnel a way up when
+/// the first is blocked. The query list carries every domain the user visits,
+/// and mihomo asks *all* of its entries at once (`batchExchange`), so an extra
+/// entry there is an extra company reading everything. Redundancy is cheap here
+/// and expensive there.
+///
+/// Only when the configuration brought nothing. A configuration that named its
+/// own resolver gets that one and no additions: handing its provider's hostname
+/// to three parties it never chose is not ours to do.
+const kFallbackBootstrap = [
+  'https://1.1.1.1/dns-query',
+  'https://8.8.8.8/dns-query',
+  'https://9.9.9.9/dns-query',
+];
 
 /// mihomo queries every resolver in the list at once and takes the first
 /// answer, so a long list is latency and sockets, not redundancy. Real configs
@@ -177,6 +200,7 @@ DnsPlan dnsPlanFor({
   required List<String> dns,
   required Set<String> outbounds,
   required bool carriesUdp,
+  String fallback = kFallbackNameserver,
 }) {
   final dropped = <DnsDrop>[];
   final sane = <String>[];
@@ -224,15 +248,30 @@ DnsPlan dnsPlanFor({
 
   final usingFallback = resolvers.isEmpty;
   final kept = usingFallback
-      ? const [DnsResolver(address: kFallbackNameserver)]
+      // Pinned to the tunnel when there is one. Unpinned, the query leaves on
+      // the physical interface: the local network sees which resolver is being
+      // used, and the resolver sees the queries beside the user's own address.
+      // Through the tunnel it sees neither — and a network that blocks this
+      // resolver, which is a plausible reason to be running a VPN at all, stops
+      // mattering. Reaching the proxy does not depend on this: that is what the
+      // unpinned bootstrap below is for.
+      ? [
+          DnsResolver(
+            address: fallback,
+            pin: outbounds.contains(kTunnelOutbound) ? kTunnelOutbound : '',
+          )
+        ]
       : List<DnsResolver>.unmodifiable(resolvers);
   // Bootstrap comes from everything that survived sanitation, not only from
   // what we send: reaching the proxy is a separate job from answering queries,
   // and a resolver the tunnel cannot carry over the proxy is still fine for the
-  // direct dial this list is for. It only needs the fallback when sanitation
+  // direct dial this list is for. It only needs a fallback when sanitation
   // left nothing at all — an empty block here is what deadlocks the tunnel.
   final bootstrap = <String>{for (final ns in sane) ns.split('#').first};
-  if (bootstrap.isEmpty) bootstrap.add(kFallbackNameserver);
+  if (bootstrap.isEmpty) {
+    bootstrap.add(fallback);
+    bootstrap.addAll(kFallbackBootstrap);
+  }
 
   // One line, not one per entry: a hostile body can name hundreds, and the
   // screen is where the detail belongs now.
@@ -281,4 +320,54 @@ bool _needsBootstrap(String address) {
     host = address.split(':').first;
   }
   return host.isNotEmpty && InternetAddress.tryParse(host) == null;
+}
+
+/// One of the resolvers offered as the app's default, and what tells them apart
+/// beyond the address.
+class DnsPreset {
+  const DnsPreset(this.name, this.address, [this.note = '']);
+
+  final String name;
+  final String address;
+
+  /// Why someone would pick this one over the neighbours. Two of them filter,
+  /// which changes what the user can reach — a fact that belongs before the
+  /// choice, not after it.
+  final String note;
+}
+
+/// The defaults offered without typing. All addressed by IP: a resolver named
+/// by domain has to be resolved before it can resolve anything, and that first
+/// step has nowhere to go.
+const kDnsPresets = [
+  DnsPreset('Cloudflare', 'https://1.1.1.1/dns-query'),
+  DnsPreset('Google', 'https://8.8.8.8/dns-query'),
+  DnsPreset('Quad9', 'https://9.9.9.9/dns-query', 'filters known-malicious domains'),
+  DnsPreset('AdGuard', 'https://94.140.14.14/dns-query', 'filters ads and trackers'),
+];
+
+/// The preset's name for an address, or the address itself when it is not one
+/// of ours. What the settings row shows, so a chosen preset reads as a choice
+/// rather than as a URL.
+String dnsPresetName(String address) {
+  for (final p in kDnsPresets) {
+    if (p.address == address) return p.name;
+  }
+  return address;
+}
+
+/// Whether a string can be used as the app's default resolver.
+///
+/// The same standard the renderer applies to a subscription's, for the same
+/// reason — it ends up in a config we assemble as text — plus one the renderer
+/// cannot enforce: a default addressed by hostname would need resolving before
+/// it could resolve, and there is nothing behind it to do that.
+String? dnsDefaultError(String address) {
+  final plan = dnsPlanFor(dns: [address], outbounds: const {}, carriesUdp: true);
+  if (plan.usingFallback) return plan.dropped.firstOrNull?.explanation ?? 'Not a resolver address.';
+  if (plan.needsBootstrapNameserver) {
+    return 'Addressed by name, so it would need resolving before it could '
+        'resolve anything. Use its IP address.';
+  }
+  return null;
 }

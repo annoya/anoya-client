@@ -227,10 +227,20 @@ proxies:
     expect(doc['proxies'], hasLength(1));
   });
 
-  test('dns comes from the config; Cloudflare DoH is the fallback', () {
+  test('dns comes from the config; the app default rides the tunnel', () {
     final fallback = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
-    expect((fallback['dns'] as YamlMap)['nameserver'], ['https://1.1.1.1/dns-query']);
-    expect((fallback['dns'] as YamlMap)['default-nameserver'], isNull);
+    // Pinned, unlike a resolver the configuration chose: unpinned it would go
+    // out on the physical interface, telling the local network which resolver
+    // this device uses and the resolver which addresses are asking. Through the
+    // tunnel it says neither, and a network blocking it stops mattering.
+    expect((fallback['dns'] as YamlMap)['nameserver'],
+        ['https://1.1.1.1/dns-query#PROXY']);
+    // Reaching the proxy is the one job that cannot ride the tunnel, so it gets
+    // its own unpinned list — and three operators rather than one, because it
+    // resolves a single hostname the local network already watched us dial.
+    expect((fallback['dns'] as YamlMap)['proxy-server-nameserver'], hasLength(3));
+    expect((fallback['dns'] as YamlMap)['default-nameserver'], isNull,
+        reason: 'every default is addressed by IP, so nothing needs bootstrapping');
 
     final own = loadYaml(mihomoTunConfigYaml(vlessLoc(),
         dns: ['10.0.0.53', 'tls://1.1.1.1:853'])) as YamlMap;
@@ -293,7 +303,7 @@ proxies:
     ]);
     final doc = loadYaml(yaml) as YamlMap;
     // Everything was dropped, so the fallback applies and nothing leaked in.
-    expect((doc['dns'] as YamlMap)['nameserver'], ['https://1.1.1.1/dns-query']);
+    expect((doc['dns'] as YamlMap)['nameserver'], ['https://1.1.1.1/dns-query#PROXY']);
     expect(yaml, isNot(contains('injected')));
   });
 

@@ -100,6 +100,67 @@ void main() {
     });
   });
 
+  group('the app default', () {
+    test('reaches the tunnel, not the local network', () {
+      // Unpinned it would leave on the physical interface: the network sees
+      // which resolver this device trusts, the resolver sees the queries next
+      // to the user's own address, and a network that blocks it — a plausible
+      // reason to be running a VPN — takes DNS down with it.
+      final shape = engineShape(server());
+      final plan = dnsPlanFor(
+          dns: const [], outbounds: shape.outbounds, carriesUdp: true);
+      expect(plan.usingFallback, isTrue);
+      expect(plan.resolvers.single.wire, 'https://1.1.1.1/dns-query#PROXY');
+    });
+
+    test('reaching the proxy gets more than one operator, and the queries do not',
+        () {
+      // The bootstrap resolves one hostname the local network already watched
+      // us dial, so a second and third operator learn nothing new and buy a way
+      // up when the first is blocked. The query list carries every domain and
+      // mihomo asks all of its entries at once, so an extra entry there is an
+      // extra company reading everything.
+      final shape = engineShape(server());
+      final plan = dnsPlanFor(
+          dns: const [], outbounds: shape.outbounds, carriesUdp: true);
+      expect(plan.resolvers, hasLength(1));
+      expect(plan.bootstrap, hasLength(greaterThan(1)));
+      expect(plan.bootstrap.every((b) => !b.contains('#')), isTrue,
+          reason: 'a pin here is what deadlocked the tunnel');
+    });
+
+    test('a configuration with its own resolver gets no company it did not pick',
+        () {
+      final shape = engineShape(server());
+      final plan = dnsPlanFor(
+          dns: const ['tls://dns.quad9.net'],
+          outbounds: shape.outbounds,
+          carriesUdp: true);
+      expect(plan.bootstrap, ['tls://dns.quad9.net'],
+          reason: 'handing its provider’s hostname to three parties it never '
+              'chose is not ours to do');
+    });
+
+    test('the user’s choice is what stands in', () {
+      final shape = engineShape(server());
+      final plan = dnsPlanFor(
+        dns: const [],
+        outbounds: shape.outbounds,
+        carriesUdp: true,
+        fallback: 'https://9.9.9.9/dns-query',
+      );
+      expect(plan.resolvers.single.address, 'https://9.9.9.9/dns-query');
+    });
+
+    test('a default addressed by name is refused, having nothing to resolve it',
+        () {
+      expect(dnsDefaultError('https://dns.google/dns-query'),
+          contains('Use its IP address'));
+      expect(dnsDefaultError('not a resolver'), isNotNull);
+      expect(dnsDefaultError('https://8.8.8.8/dns-query'), isNull);
+    });
+  });
+
   test('the screen and the engine read the same decision', () {
     // The contract that makes the screen trustworthy. Both sides are asked for
     // the same configuration and must agree resolver for resolver — if the

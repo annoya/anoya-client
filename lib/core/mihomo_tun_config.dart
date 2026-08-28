@@ -38,6 +38,7 @@ String mihomoTunConfigYaml(
   List<Location> members = const [],
   Routing? routing,
   List<String> dns = const [],
+  String defaultDns = kFallbackNameserver,
   Map<String, String> listPaths = const {},
   String stack = 'gvisor',
   bool collectLogs = true,
@@ -70,6 +71,7 @@ String mihomoTunConfigYaml(
     dns: dns,
     outbounds: shape.outbounds,
     carriesUdp: shape.carriesUdp,
+    fallback: defaultDns,
   );
   final ruleLines = _routingRuleLines(routing, listPaths);
   final listLines = _ruleProviderLines(routing, listPaths);

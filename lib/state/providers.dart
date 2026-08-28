@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_prefs.dart';
+import '../core/routing_prefs.dart';
 import '../core/log.dart';
 import '../core/network_extension_core.dart';
 import '../core/vpn_core.dart';
@@ -57,3 +58,9 @@ class AppPrefsController extends Notifier<AppPrefs> {
 }
 
 final appPrefsProvider = NotifierProvider<AppPrefsController, AppPrefs>(AppPrefsController.new);
+
+/// The device's own routing preferences, for the screens that only need to read
+/// them. The settings screen still owns writing: it holds the whole object and
+/// saves it, and invalidating this after a save is what keeps the readers in
+/// step.
+final routingPrefsProvider = FutureProvider<RoutingPrefs>((_) => RoutingPrefsStore.load());

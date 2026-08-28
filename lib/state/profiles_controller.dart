@@ -691,6 +691,11 @@ class ProfilesController extends Notifier<ProfilesState> {
       groups: p.groups,
       routing: routing,
       dns: p.dns,
+      // Only reaches the engine when the configuration named nothing; the
+      // renderer decides that, so the value travels rather than being folded in
+      // here — folded in, the DNS screen would report the app's own resolver as
+      // the subscription's choice.
+      defaultDns: prefs.defaultDns,
     );
   }
 
