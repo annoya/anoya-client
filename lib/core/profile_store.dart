@@ -29,4 +29,30 @@ class ProfileStore {
       _secure.write(key: 'token_$profileId', value: token);
 
   static Future<void> deleteToken(String profileId) => _secure.delete(key: 'token_$profileId');
+
+  // --- which configuration and server were in use ---
+
+  /// Kept beside the profiles rather than inside them: `profiles.json` is a
+  /// bare JSON array, and turning it into an object to hold two more fields
+  /// would make every existing file unreadable — the profiles would be gone,
+  /// not just the selection.
+  static final _selection = JsonFileStore('selection.json');
+
+  /// The last active configuration and what it was connecting through, or two
+  /// nulls. Nothing is validated here: ids outlive the things they name — a
+  /// server can vanish on the next refresh — so the caller checks them against
+  /// what it actually loaded.
+  static Future<({String? profileId, String? selectionId})> loadSelection() =>
+      _selection.load(
+        (j) => j is Map
+            ? (
+                profileId: j['profile_id'] as String?,
+                selectionId: j['selection_id'] as String?
+              )
+            : (profileId: null, selectionId: null),
+        (profileId: null, selectionId: null),
+      );
+
+  static Future<void> saveSelection(String? profileId, String? selectionId) =>
+      _selection.save({'profile_id': ?profileId, 'selection_id': ?selectionId});
 }
