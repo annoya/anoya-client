@@ -26,8 +26,7 @@ class LinkConfigScreen extends ConsumerWidget {
         child: ListView(children: [
           const SizedBox(height: 8),
           ProfileHeaderCard(profile: profile, isActive: isActive),
-          const SectionHeader('ROUTING'),
-          LocalRoutingCard(profile: profile),
+          RoutingRow(profile: profile),
           ConfigActions(profile: profile, isActive: isActive),
         ]),
       ),

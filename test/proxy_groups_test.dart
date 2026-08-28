@@ -67,6 +67,83 @@ rules:
       expect(p.unsupported, {'tuic': 1});
     });
 
+    group('membership by pattern', () {
+      // A provider that writes `exclude-filter: 🇷🇺` is saying "not through a
+      // Russian exit". Read without the pattern, the group is built from every
+      // server in the document and sends the user exactly where they were being
+      // steered away from — so this is not cosmetic, and a group we cannot
+      // build correctly is dropped rather than widened.
+      const filtered = '''
+proxies:
+  - {name: "🇩🇪 Germany", type: vless, server: de.example, port: 443, uuid: u1}
+  - {name: "🇷🇺 Moscow", type: vless, server: ru.example, port: 443, uuid: u2}
+  - {name: "🏳️ Direct-ish", type: vless, server: wl.example, port: 443, uuid: u3}
+proxy-groups:
+  - name: Abroad
+    type: url-test
+    include-all: true
+    exclude-filter: 🇷🇺|🏳️
+  - name: White lists
+    type: url-test
+    include-all: true
+    filter: 🏳️
+  - name: Listed
+    type: url-test
+    proxies: ["🇩🇪 Germany", "🇷🇺 Moscow"]
+    exclude-filter: 🇷🇺
+''';
+
+      List<String> labels(String name) {
+        final p = parseSubscriptionBody(filtered);
+        final g = p.groups.firstWhere((g) => g.name == name);
+        return [
+          for (final id in g.members) p.locations.firstWhere((l) => l.id == id).label
+        ];
+      }
+
+      test('exclude-filter removes what the provider excluded', () {
+        expect(labels('Abroad'), ['🇩🇪 Germany']);
+      });
+
+      test('filter selects from include-all rather than from nothing', () {
+        expect(labels('White lists'), ['🏳️ Direct-ish']);
+      });
+
+      test('exclude-filter applies to an explicit list too', () {
+        // The engine skips `filter` for a hand-written list but not
+        // `exclude-filter` — it runs over the membership however it was built.
+        expect(labels('Listed'), ['🇩🇪 Germany']);
+      });
+
+      test('a pattern we cannot run drops the group, never widens it', () {
+        const broken = '''
+proxies:
+  - {name: "A", type: vless, server: a.example, port: 443, uuid: u1}
+proxy-groups:
+  - name: Broken
+    type: url-test
+    include-all: true
+    exclude-filter: "[unclosed"
+''';
+        expect(parseSubscriptionBody(broken).groups, isEmpty);
+      });
+
+      test('exclude-type is the same statement about the protocol', () {
+        const byType = '''
+proxies:
+  - {name: "A", type: vless, server: a.example, port: 443, uuid: u1}
+  - {name: "B", type: hysteria2, server: b.example, port: 443, password: p}
+proxy-groups:
+  - name: No QUIC
+    type: url-test
+    include-all: true
+    exclude-type: hysteria2
+''';
+        final p = parseSubscriptionBody(byType);
+        expect(p.groups.single.members.length, 1);
+      });
+    });
+
     test('a group left with nothing runnable is not offered at all', () {
       expect(parseSubscriptionBody(body).groups.map((g) => g.name),
           isNot(contains('💀 Dead')));

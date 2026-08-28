@@ -124,6 +124,13 @@ claimed but unhandled one would break every v6 destination. Because fake-IP
 resolves back to the domain, an exit server without IPv6 still works — only
 connections to literal v6 addresses need v6 at the far end.
 
+A word about the copy: everything a subscription supplies is attributed to
+**the subscription**, never to "your provider". ADR-005 is why — a subscription
+is a feed of servers with no account behind it, so naming a company introduces a
+party the model does not have, and everything the app knows arrived in the
+subscription's own answer. The one place "provider" survives is the SSO
+*identity provider*, which is a different thing entirely.
+
 ### 3.3 DNS
 
 The DNS servers in the NE settings are a decoy: their only job is to steer the
@@ -150,7 +157,27 @@ favour of the encrypted fallback rather than left to fail on every query.
 Alongside that the config always carries `proxy-server-nameserver`: the same
 resolvers with no pin, which is what the engine uses to resolve the proxy's
 own hostname. Without it a pinned resolver deadlocks the tunnel — the query
-waits on the proxy and the proxy waits on the query. Full decision: ADR-008.
+waits on the proxy and the proxy waits on the query.
+
+Every configuration screen carries a **ROUTING** section — one row naming the
+policy in force and whose resolvers — placed above the panel's own details,
+because it is the configuration's behaviour and the rest is background to it.
+The row opens a page holding both halves under their own owners:
+**SUBSCRIPTION ROUTING** / **ORGANIZATION ROUTING** for a policy someone else
+sent, **DEVICE ROUTING** for the device's own, and a **DNS** section naming the
+resolver. While a provider's routes are on, the device's card is visible but
+takes no input: dimming alone left a switch that moved and changed nothing. That section opens a read-only **DNS** screen: the
+resolvers in effect with their protocol, routing and origin, and — the reason
+the screen exists — the ones the app refused, each with its reason in words.
+Three refusals are possible: a scheme the engine would reject (which costs the
+whole configuration, not the line), a plain-UDP resolver the tunnel cannot
+carry, and a pin naming an outbound this config does not define. All three used
+to be log lines, so a configuration could lose the DNS its provider chose and
+look untouched. The screen and the renderer read the same computed plan, so the
+screen cannot name a resolver the engine never received. When a resolver was
+refused, the count travels back up to the configuration screen's row in words
+(`DNS: 1 refused`): a refusal moved one level deeper is the same silence at a
+different depth. Full decision: ADR-008.
 
 ---
 

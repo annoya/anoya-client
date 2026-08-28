@@ -641,7 +641,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
           </div></div>
         </div>
       </div>
@@ -662,7 +662,8 @@
         <div class="hbot">
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
@@ -690,14 +691,14 @@
         <div class="hbot">
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">КОПАТЫЧ VPN</div><div class="s">Subscription · 12 servers</div></div>
-            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg viewBox="0 0 20 20" style="width:18px;height:18px"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="38 13" opacity=".55"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
           <div class="card"><div class="row">
-            <span class="flag">🇳🇱</span>
-            <div class="tx"><div class="t">Нидерланды</div><div class="s">vless · xhttp · 94.159.101.110</div></div>
+            <span class="flag">🇵🇱</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · poland.nexus.13371488.xyz</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -729,11 +730,11 @@
           <div class="tx"><div class="t">Токио</div><div class="s">hysteria2 · 45.32.11.8</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇺🇸</span>
-          <div class="tx"><div class="t">США</div><div class="s">до 10 Гбит/с · 38.99.23.140</div></div>
+          <div class="tx"><div class="t">США</div><div class="s">до 10 Гбит/с · 45.130.41.9</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · _pickLocation · транспорт</span><b>Транспорт рядом с протоколом — как в Clash Verge и Happ.</b> «vless» на всех строках подписки одинаков и почти ничего не сообщает; различает их именно транспорт, и когда провайдер держит один и тот же сервер на ws и на xhttp, без него две строки неразличимы.<br><br><b>Показываем только то, что не по умолчанию.</b> Третья строка — обычный tcp, и слова «tcp» там нет: оно не сообщает ничего, а место в строке отнимает у адреса. У hysteria2 транспорта нет вовсе — это QUIC, выбирать нечего, поэтому четвёртая строка тоже из двух частей.<br><br>Одно место, где мы не повторяем движок дословно: <code>httpupgrade</code> хранится как <code>ws</code> с флагом, и показать «ws» значило бы назвать не тот транспорт, который настроен на сервере — пишем «httpupgrade».<br><br>Последняя строка — сервер с описанием провайдера: описание занимает место <b>всей технической половины</b>, включая транспорт. Решение прежнее и по той же причине: провайдеру отдаём то, что ему есть чем заменить, а адрес остаётся, потому что это единственное, чем различаются одинаково названные записи.</p>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation · транспорт</span><b>Другая подписка — намеренно.</b> Все четырнадцать серверов «ТСПУ Дронов» ходят по голому tcp, так что на ней эта половина строки не появляется ни разу; показывать транспорт на ней было бы нечем. Здесь провайдер, у которого транспорты разные.<br><br><b>Транспорт рядом с протоколом — как в Clash Verge и Happ.</b> «vless» на всех строках подписки одинаков и почти ничего не сообщает; различает их именно транспорт, и когда провайдер держит один и тот же сервер на ws и на xhttp, без него две строки неразличимы.<br><br><b>Показываем только то, что не по умолчанию.</b> Третья строка — обычный tcp, и слова «tcp» там нет: оно не сообщает ничего, а место в строке отнимает у адреса. У hysteria2 транспорта нет вовсе — это QUIC, выбирать нечего, поэтому четвёртая строка тоже из двух частей.<br><br>Одно место, где мы не повторяем движок дословно: <code>httpupgrade</code> хранится как <code>ws</code> с флагом, и показать «ws» значило бы назвать не тот транспорт, который настроен на сервере — пишем «httpupgrade».<br><br>Последняя строка — сервер с описанием провайдера: описание занимает место <b>всей технической половины</b>, включая транспорт. Решение прежнее и по той же причине: провайдеру отдаём то, что ему есть чем заменить, а адрес остаётся, потому что это единственное, чем различаются одинаково названные записи.</p>
   </div>
 
   <div class="board">
@@ -749,13 +750,14 @@
         <div class="hbot">
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
           <div class="card"><div class="row">
-            <span class="flag">🇯🇵</span>
-            <div class="tx"><div class="t">tokyo.nexus</div><div class="s">vless · 45.32.11.8</div></div>
+            <span class="flag">🇭🇰</span>
+            <div class="tx"><div class="t">HostVDS</div><div class="s">vless · hongkong.hostvds.13371488.xyz</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -779,7 +781,7 @@
         <div class="hbot">
           <div class="card" style="opacity:.5"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon s muted"><use href="#i-lock"/></svg>
           </div></div>
@@ -813,7 +815,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -855,7 +857,8 @@
         <div class="hbot">
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
@@ -893,7 +896,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
           </div></div>
         </div>
       </div>
@@ -923,7 +926,8 @@
           </div></div>
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
@@ -992,7 +996,7 @@
         </div>
         <div class="sh">FAVORITES</div>
         <div class="row act-fill"><svg class="icon" style="color:var(--m-pri)"><use href="#i-folder"/></svg>
-          <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+          <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span></div>
         <div class="sh">ALL</div>
@@ -1022,23 +1026,26 @@
           <div class="inp sel focus"><svg class="icon" style="color:var(--m-pri)"><use href="#i-search"/></svg>
             <div class="tx"><div class="vl">nexus</div></div></div>
         </div>
+        <div class="sh">CHOSEN BY THE ENGINE · 1 OF 2 MATCH</div>
+        <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
+          <div class="tx"><div class="t">PROXY</div><div class="s">Lowest latency of 10 · rechecks every 5 min</div></div></div>
         <div class="sh">FAVORITES</div>
         <div class="row act-fill"><span class="flag">🇩🇪</span>
           <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
-        <div class="row"><span class="flag">🇯🇵</span>
-          <div class="tx"><div class="t">tokyo.nexus</div><div class="s">vless · 45.32.11.8</div></div>
+        <div class="row"><span class="flag">🇵🇱</span>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · poland.nexus.13371488.xyz</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
-        <div class="sh">ALL · 2 OF 8 MATCH</div>
-        <div class="row"><span class="flag">🇳🇱</span>
-          <div class="tx"><div class="t">ams.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+        <div class="sh">ALL · 4 OF 14 MATCH</div>
+        <div class="row"><span class="flag">🇩🇪</span>
+          <div class="tx"><div class="t">h2.nexus 2</div><div class="s">vless · germany2.nexus.13371488.xyz</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
-        <div class="row"><span class="flag">🇺🇸</span>
-          <div class="tx"><div class="t">us-east.nexus</div><div class="s">vless · 38.99.23.140</div></div>
+        <div class="row"><span class="flag">🇫🇮</span>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · finland.nexus.13371488.xyz</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · _pickLocation</span><b>Выбор сервера.</b> Флаг 26&nbsp;pt. Тот же маркер активного, что в пикере конфигураций — заливка строки. Шестерёнки здесь нет: у сервера нет своего экрана настроек. Поиск фильтрует обе группы по имени и адресу; счётчик в заголовке «ALL» показывает, сколько из всех серверов подошло. Подошедшее избранное остаётся наверху.</p>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation</span><b>Выбор сервера.</b> Флаг 26&nbsp;pt. Тот же маркер активного, что в пикере конфигураций — заливка строки. Шестерёнки здесь нет: у сервера нет своего экрана настроек. Поиск фильтрует <b>все три</b> секции по имени и адресу, включая группы: счётчики в заголовках показывают, сколько подошло из каждой. Подошедшее избранное остаётся наверху. Группы стоят первыми и в отфильтрованном списке — они отвечают на тот же вопрос, что и серверы, и прятать их за совпадениями значило бы делать «самый быстрый» менее доступным, чем конкретный город.</p>
   </div>
 
   <div class="board">
@@ -1055,7 +1062,7 @@
             <div class="tx"><div class="vl">reykjavik</div></div></div>
         </div>
         <div class="sh">ALL · NOTHING MATCHES</div>
-        <div class="empty">No server matches “reykjavik”. Clear the search to see all 8.</div>
+        <div class="empty">No server matches “reykjavik”. Clear the search to see all 14.</div>
       </div>
     </div></div>
     <p class="cap"><span class="id">HomeScreen · _pickLocation · поиск пуст</span><b>Поиск без совпадений.</b> Поиск фильтрует обе группы, поэтому не подошедшее избранное тоже уходит вместе с заголовком «FAVORITES» — иначе список врал бы, что что-то нашлось. Текст называет запрос и общее число серверов.</p>
@@ -1072,22 +1079,23 @@
         <div class="stitle">Server</div>
         <div class="sh">CHOSEN BY THE ENGINE</div>
         <div class="row act-fill"><svg class="icon" style="color:var(--m-pri)"><use href="#i-bolt"/></svg>
-          <div class="tx"><div class="t">⚡️ Fastest</div><div class="s">Lowest latency of 12 · rechecks every 5 min</div></div></div>
-        <div class="row"><svg class="icon muted"><use href="#i-shield"/></svg>
-          <div class="tx"><div class="t">🛟 Failover</div><div class="s">First of 12 that answers · in their order</div></div></div>
-        <div class="row"><svg class="icon muted"><use href="#i-route"/></svg>
-          <div class="tx"><div class="t">🔗 Via Germany</div><div class="s">Chain · Germany → Tokyo</div></div></div>
+          <div class="tx"><div class="t">PROXY</div><div class="s">Lowest latency of 10 · rechecks every 5 min</div></div></div>
+        <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
+          <div class="tx"><div class="t">WHITE LISTS</div><div class="s">Lowest latency of 2 · rechecks every 5 min</div></div></div>
         <div class="sh">FAVORITES</div>
         <div class="row"><span class="flag">🇩🇪</span>
           <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
-        <div class="sh">ALL · 12 SERVERS</div>
-        <div class="row"><span class="flag">🇳🇱</span>
-          <div class="tx"><div class="t">ams.nexus</div><div class="s">vless · 94.159.101.110</div></div>
+        <div class="sh">ALL · 14 SERVERS</div>
+        <div class="row"><span class="flag">🇵🇱</span>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · poland.nexus.13371488.xyz</div></div>
+          <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
+        <div class="row"><span class="flag">🏳️</span>
+          <div class="tx"><div class="t">White lists Timeweb</div><div class="s">hysteria2 · wl-timeweb.13371488.xyz</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · _pickLocation · группы</span><b>Группы — записи того же пикера, а не отдельный экран.</b> Вопрос у пользователя один: «через что я подключаюсь». «Самый быстрый» — такой же ответ на него, как «Амстердам», и разносить их по двум местам значит заставлять выбирать сначала способ выбора. Секция стоит первой, потому что для большинства это и есть нужный ответ.<br><br>Подпись каждой строки говорит, <b>что группа делает</b>, а не как она называется в конфиге: «lowest latency of 12 · rechecks every 5 min» вместо «url-test». Тип из чужого YAML пользователю ничего не сообщает, а «перепроверяет раз в 5 минут» — сообщает, и это же объясняет, почему сервер может смениться сам.<br><br><b>`select`-группы провайдера мы не показываем.</b> Они означают «пусть выберет человек» — это ровно то, чем уже является список ниже; вторая такая же строка была бы вторым пикером внутри пикера. Разворачиваем их в участников и показываем только те типы, где выбор делает движок: url-test, fallback, load-balance и relay (цепочка).<br><br>Группа, у которой после фильтрации не осталось ни одного запускаемого сервера, не показывается вовсе: выбор, который не может сработать, хуже отсутствующего. Звезды у групп нет — избранное про серверы, а шеврона нет намеренно: тап по строке выбирает группу, а не открывает экран, и стрелка обещала бы второе.</p>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation · группы</span><b>Группы — записи того же пикера, а не отдельный экран.</b> Вопрос у пользователя один: «через что я подключаюсь». «Самый быстрый» — такой же ответ на него, как «Амстердам», и разносить их по двум местам значит заставлять выбирать сначала способ выбора. Секция стоит первой, потому что для большинства это и есть нужный ответ.<br><br>Подпись каждой строки говорит, <b>что группа делает</b>, а не как она называется в конфиге: «Lowest latency of 10 · rechecks every 5 min» вместо «url-test». Тип из чужого YAML пользователю ничего не сообщает, а «перепроверяет раз в 5 минут» — сообщает, и это же объясняет, почему сервер может смениться сам.<br><br><b>`select`-группы провайдера мы не показываем.</b> Они означают «пусть выберет человек» — это ровно то, чем уже является список ниже; вторая такая же строка была бы вторым пикером внутри пикера. Разворачиваем их в участников и показываем только те типы, где выбор делает движок: url-test, fallback, load-balance и relay (цепочка).<br><br>Группа, у которой после фильтрации не осталось ни одного запускаемого сервера, не показывается вовсе: выбор, который не может сработать, хуже отсутствующего. Звезды у групп нет — избранное про серверы, а шеврона нет намеренно: тап по строке выбирает группу, а не открывает экран, и стрелка обещала бы второе.<br><br><b>Здесь ровно то, что прислала живая подписка</b>, и это полезнее выдуманного примера. Групп в теле три; в пикере их две. <code>RUSSIA</code> — <code>select</code>, и по правилу выше её нет. Остальные две — <code>url-test</code>, и у обеих провайдер написал <code>interval: 10</code>: раз в десять секунд опрашивать чужой URL с чужого устройства мы не станем, поэтому в подписи стоит «5 min», а не то, что просили.<br><br><b>Состав считается с фильтрами, а не по списку.</b> У <code>PROXY</code> стоит <code>exclude-filter: 🇷🇺|🏳️</code> — из четырнадцати перечисленных участников остаётся десять; у <code>WHITE LISTS</code> — <code>include-all</code> с <code>filter: 🏳️</code>, и это те самые два. Игнорировать фильтры нельзя не из аккуратности: <code>exclude-filter</code> здесь означает «не выпускай этот трафик через российский сервер», и группа, набранная без него, отправила бы человека ровно туда, откуда провайдер его уводил.<br><br><b>Имя — провайдерское, и мы его не улучшаем.</b> «PROXY» сообщает мало, но переименовать значит разойтись с тем, что человек видит у того же провайдера в других клиентах и в поддержке. Работу группы объясняет подпись, для этого она и есть.</p>
   </div>
 
   <div class="board">
@@ -1110,11 +1118,11 @@
           <div class="tx"><div class="t">Германия</div><div class="s">если VLESS заблокирован, работае… · 78.17.229.219</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇺🇸</span>
-          <div class="tx"><div class="t">США</div><div class="s">vless · 38.99.23.140</div></div>
+          <div class="tx"><div class="t">США</div><div class="s">vless · 45.130.41.9</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · _pickLocation · описания провайдера</span><b>Описание занимает место протокола, но не адреса.</b> <code>serverDescription</code> — текст провайдера под именем сервера; у Happ он заменяет собой всю техническую подпись («VMess»). Мы отдаём ему только её первую половину.<br><br>Почему не всю строку: <b>адрес — единственное, чем внешне различаются одинаковые записи.</b> На живой подписке мы это уже видели: семь записей с разными именами сидели на двух конфигурациях, и понять, что «Авто» и «Если другие не работают» — один и тот же сервер, можно было только по адресу. Отдать провайдеру всю подпись значит отнять у пользователя последний факт о том, куда он подключается. А протокол внутри одной подписки почти всегда одинаковый и сообщает мало — это и есть та половина, которой не жалко.<br><br>Последняя строка — сервер <b>без</b> описания: подпись остаётся прежней. Смешанный список — обычный случай, и он не должен выглядеть так, будто у части серверов что-то отвалилось. Длинное описание обрезается многоточием на своей половине строки, адрес не сдвигается: он всегда на своём месте, иначе взгляд не может его найти.</p>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation · описания провайдера</span><b>И здесь другая подписка.</b> <code>serverDescription</code> «ТСПУ Дронов» не присылает — у неё имена серверов и есть всё описание. Поле встречается у других панелей, и вот как это выглядит.<br><br><b>Описание занимает место протокола, но не адреса.</b> <code>serverDescription</code> — текст провайдера под именем сервера; у Happ он заменяет собой всю техническую подпись («VMess»). Мы отдаём ему только её первую половину.<br><br>Почему не всю строку: <b>адрес — единственное, чем внешне различаются одинаковые записи.</b> На живой подписке мы это уже видели: семь записей с разными именами сидели на двух конфигурациях, и понять, что «Авто» и «Если другие не работают» — один и тот же сервер, можно было только по адресу. Отдать провайдеру всю подпись значит отнять у пользователя последний факт о том, куда он подключается. А протокол внутри одной подписки почти всегда одинаковый и сообщает мало — это и есть та половина, которой не жалко.<br><br>Последняя строка — сервер <b>без</b> описания: подпись остаётся прежней. Смешанный список — обычный случай, и он не должен выглядеть так, будто у части серверов что-то отвалилось. Длинное описание обрезается многоточием на своей половине строки, адрес не сдвигается: он всегда на своём месте, иначе взгляд не может его найти.</p>
   </div>
 
   <div class="board">
@@ -1163,19 +1171,20 @@
         <div class="hbot">
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 12 servers · 3 groups</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
           <div class="card"><div class="row">
             <svg class="icon" style="color:var(--m-pri)"><use href="#i-bolt"/></svg>
-            <div class="tx"><div class="t">⚡️ Fastest</div><div class="s">auto · 🇩🇪 h2.nexus</div></div>
+            <div class="tx"><div class="t">PROXY</div><div class="s">auto · 🇵🇱 h2.nexus</div></div>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
         </div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · группа активна</span><b>Имя группы и то, что она выбрала.</b> «⚡️ Fastest» без второй строки — это утверждение, которое пользователь не может проверить: он не знает, куда идёт его трафик. Поэтому подпись называет и способ, и результат: <code>auto · 🇩🇪 h2.nexus</code>. Пока ядро ещё ничего не набрало, там честное <code>auto</code> без второй половины, а не имя из прошлого сеанса.<br><br>Как мы это узнаём — решение, которое стоит проговорить: у выбранной группы в mihomo есть текущий участник, и читается он <b>внутренним вызовом в наш Go-слой</b>. Не через <code>external-controller</code>: он поднимает HTTP-API без аутентификации в контейнере расширения, и AGENTS запрещает его именно поэтому. Иконка группы вместо флага: флаг означал бы страну, а страна тут меняется сама.<br><br>Строка конфигурации получает «· 3 groups» — иначе появление в пикере секции, которой раньше не было, выглядело бы как новая функция приложения, а не как то, что прислал провайдер. Один параметр группы мы <b>не берём как есть</b>: интервал проверки. Провайдер, попросивший <code>interval: 10</code>, получил бы опрос чужого URL каждые десять секунд с устройства пользователя — интервал зажимаем снизу, и это тот же класс решения, что и внешние списки правил.</p>
+    <p class="cap"><span class="id">HomeScreen · группа активна</span><b>Имя группы и то, что она выбрала.</b> «PROXY» без второй строки — это утверждение, которое пользователь не может проверить: он не знает, куда идёт его трафик. Поэтому подпись называет и способ, и результат: <code>auto · 🇵🇱 h2.nexus</code>. Пока ядро ещё ничего не набрало, там честное <code>auto</code> без второй половины, а не имя из прошлого сеанса.<br><br>Как мы это узнаём — решение, которое стоит проговорить: у выбранной группы в mihomo есть текущий участник, и читается он <b>внутренним вызовом в наш Go-слой</b>. Не через <code>external-controller</code>: он поднимает HTTP-API без аутентификации в контейнере расширения, и AGENTS запрещает его именно поэтому. Иконка группы вместо флага: флаг означал бы страну, а страна тут меняется сама.<br><br>Строка конфигурации получает «· 2 groups» — иначе появление в пикере секции, которой раньше не было, выглядело бы как новая функция приложения, а не как то, что прислал провайдер. Один параметр группы мы <b>не берём как есть</b>: интервал проверки. Провайдер, попросивший <code>interval: 10</code>, получил бы опрос чужого URL каждые десять секунд с устройства пользователя — интервал зажимаем снизу, и это тот же класс решения, что и внешние списки правил.</p>
   </div>
 
   <div class="board">
@@ -1315,7 +1324,7 @@
         <div class="stitle">Configurations</div>
         <div class="sh">FAVORITES</div>
         <div class="row"><svg class="icon muted"><use href="#i-folder"/></svg>
-          <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+          <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
           <svg class="icon muted"><use href="#i-chev"/></svg></div>
         <div class="sh">ALL</div>
         <div class="row act-fill"><svg class="icon" style="color:var(--m-pri)"><use href="#i-org"/></svg>
@@ -1383,54 +1392,38 @@
         <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
       </div></div>
       <div class="sh">ROUTING</div>
-      <div class="card">
-        <div class="row">
-          <svg class="icon muted"><use href="#i-route"/></svg>
-          <div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div>
-          <span class="sw off"><i></i></span>
-        </div>
-        <div class="sep"></div>
-        <div class="row" style="opacity:.38">
-          <svg class="icon muted"><use href="#i-layers"/></svg>
-          <div class="tx"><div class="t">Rule set</div><div class="s">Default</div></div>
-          <svg class="icon muted"><use href="#i-exp"/></svg>
-        </div>
-      </div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-route"/></svg>
+        <div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN · DNS by the app</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
       <div class="btn err" style="margin-top:20px"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · link</span><b>Одиночная ссылка.</b> У ссылки нет ни источника для обновления, ни аккаунта, поэтому строк «Source», «Last refreshed» и «Account» просто нет — вместо пустых заглушек экран сжимается до того, что у этой конфигурации действительно есть. Роутинг и удаление доступны всем трём типам одинаково, это и есть общая часть экрана. «Set active» отсутствует: конфигурация уже активна.</p>
+    <p class="cap"><span class="id">ConfigScreen · link</span><b>Одиночная ссылка.</b> У ссылки нет ни источника для обновления, ни аккаунта, поэтому строк «Source», «Last refreshed» и «Account» просто нет — вместо пустых заглушек экран сжимается до того, что у этой конфигурации действительно есть. Роутинг и удаление доступны всем трём типам одинаково, это и есть общая часть экрана. У ссылки в подписи стоит «DNS by the app»: своих резолверов она нести не может, и это единственный тип, у которого фолбэк — норма, а не случайность. «Set active» отсутствует: конфигурация уже активна.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">nexus.13371488</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
       <div class="card" style="margin-top:8px"><div class="row">
         <svg class="icon muted"><use href="#i-folder"/></svg>
-        <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+        <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
         <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
       </div></div>
       <div class="card"><div class="row">
         <div class="tx"><div class="t">Source</div><div class="s">sub.nexus.13371488.xyz/s/a1b2c3</div></div>
       </div></div>
       <div class="card"><div class="row">
-        <div class="tx"><div class="t">Last refreshed</div><div class="s">5 min ago · auto every 5 min</div></div>
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">40 min ago · auto every 12 h</div></div>
         <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
       </div></div>
       <div class="sh">ROUTING</div>
-      <div class="card">
-        <div class="row">
-          <svg class="icon muted"><use href="#i-route"/></svg>
-          <div class="tx"><div class="t">Routing</div><div class="s">Split · 12 rules</div></div>
-          <span class="sw"><i></i></span>
-        </div>
-        <div class="sep"></div>
-        <div class="row">
-          <svg class="icon muted"><use href="#i-layers"/></svg>
-          <div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div>
-          <svg class="icon muted"><use href="#i-exp"/></svg>
-        </div>
-      </div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-route"/></svg>
+        <div class="tx"><div class="t">Routing</div><div class="s">Split · 12 rules · DNS from your subscription</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
       <div class="btn out" style="margin-top:20px"><svg class="icon s"><use href="#i-check"/></svg>Set active</div>
       <div class="btn err"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
     </div></div>
@@ -1448,14 +1441,14 @@
       </div></div>
       <div class="card"><div class="row">
         <svg class="icon muted"><use href="#i-link"/></svg>
-        <div class="tx"><div class="t">Source</div><div class="s multi">sub.example/a1b2c3<br>Last refresh used your provider’s backup address</div></div>
+        <div class="tx"><div class="t">Source</div><div class="s multi">sub.example/a1b2c3<br>Last refresh used the subscription’s backup address</div></div>
         <span class="iconbtn"><svg class="icon xs muted"><use href="#i-chev"/></svg></span>
       </div></div>
       <div class="card"><div class="row">
         <div class="tx"><div class="t">Last refreshed</div><div class="s">2 h ago · auto every 12 h</div></div>
         <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
       </div></div>
-      <div class="hint" style="padding:12px 16px 0">Your provider sets how often to check. Refresh now with the button — that never waits.</div>
+      <div class="hint" style="padding:12px 16px 0">Your subscription sets how often to check. Refresh now with the button — that never waits.</div>
     </div></div>
     <p class="cap"><span class="id">ConfigScreen · subscription · cadence and backup</span><b>Три заголовка про устойчивость подписки, и все три меняют поведение, а не текст.</b> <code>profile-update-interval</code> — в <b>часах</b> (у Happ: «the interval is set in hours and must be a multiple of one hour»; живая панель присылает 12). Мы его парсили и игнорировали, опрашивая раз в 5 минут — то есть в 144 раза чаще, чем провайдер просил. Теперь строка показывает реальную частоту, а не нашу; снизу она всё равно зажата пятью минутами, чтобы панель не могла попросить опрос каждую минуту.<br><br><code>fallback-url</code> — резервный адрес подписки, если основной не отвечает. Про него важно, что <b>он не подменяет источник молча</b>: строка Source остаётся прежней (это то, что человек добавлял и чем поделится), а вторая строка сообщает, что последнее обновление прошло по запасному. Иначе провайдер, у которого основной домен заблокирован навсегда, выглядел бы как ни в чём не бывало, и пользователь не узнал бы, что у него осталась одна дорога из двух.<br><br><code>subscription-request-timeout</code> — сколько ждать ответа (5–15 с). Единственный из трёх, который вообще не виден в интерфейсе: у него нет состояния, о котором стоило бы рассказывать, — он либо успел, либо мы пошли на запасной адрес и рассказали об этом строкой выше.</p>
   </div>
@@ -1463,20 +1456,8 @@
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">nexus.13371488</span></div>
-      <div class="card" style="margin-top:8px"><div class="row">
-        <svg class="icon muted"><use href="#i-folder"/></svg>
-        <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
-        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
-      </div></div>
-      <div class="card"><div class="row">
-        <div class="tx"><div class="t">Source</div><div class="s">sub.nexus.13371488.xyz/s/a1b2c3</div></div>
-      </div></div>
-      <div class="card"><div class="row">
-        <div class="tx"><div class="t">Last refreshed</div><div class="s">5 min ago · auto every 5 min</div></div>
-        <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
-      </div></div>
-      <div class="sh">ROUTING</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Routing</span></div>
+      <div class="sh" style="margin-top:8px">DEVICE ROUTING</div>
       <div class="card">
         <div class="row">
           <svg class="icon muted"><use href="#i-route"/></svg>
@@ -1490,10 +1471,15 @@
           <svg class="icon muted"><use href="#i-exp"/></svg>
         </div>
       </div>
-      <div class="btn out" style="margin-top:20px"><svg class="icon s"><use href="#i-check"/></svg>Set active</div>
-      <div class="btn err"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
+      <div class="sh">DNS</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-globe"/></svg>
+        <div class="tx"><div class="t">DNS</div><div class="s">dns.quad9.net · through the tunnel</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · routing off</span><b>Роутинг выключен.</b> Ни один набор не применяется — весь трафик идёт в туннель. Строка набора остаётся видимой, но погашенной: спрятать её значило бы, что тумблер ничем не управляет, а выбранный набор при этом помнится и вернётся при включении. Выбор набора из шита включает тумблер сам — иначе выбор выглядел бы проигнорированным. «Local network direct» из общих настроек тумблеру не подчиняется: это отдельное решение про LAN, а не набор правил.</p>
+    <p class="cap wide"><span class="id">RoutingConfigScreen · your own rules</span><b>Своя страница, потому что это две настройки одного вопроса — и обе нужны не всем.</b> Экран конфигурации отвечает на «что это за подписка и жива ли она»: имя, источник, обновление, план. Маршруты и резолверы отвечают на «куда пойдёт трафик и кто назовёт адреса» — сюда заходят единицы, а места на экране это занимало больше, чем всё остальное вместе.<br><br><b>Роутинг выключен.</b> Ни один набор не применяется — весь трафик идёт в туннель. Строка набора остаётся видимой, но погашенной: спрятать её значило бы, что тумблер ничем не управляет, а выбранный набор при этом помнится и вернётся при включении. Выбор набора из шита включает тумблер сам — иначе выбор выглядел бы проигнорированным. «Local network direct» из общих настроек тумблеру не подчиняется: это отдельное решение про LAN, а не набор правил.<br><br><b>DNS оказался здесь не по родству, а по частоте.</b> Разрешение имён — не маршрутизация, и заголовок секции остался свой. Но открывают их по одному и тому же поводу — «почему трафик идёт не туда» — и держать их на разных экранах значило бы заставлять искать вторую половину ответа.<br><br><b>Секция называется <code>DNS</code>, а не <code>NAMES</code>.</b> «NAMES» было точнее по смыслу и хуже по узнаванию: аббревиатуру ищут глазами, а описательное слово приходится читать. Повтора с заголовком строки внутри при этом нет — строка теперь одна и в секции, где всё про неё.<br><br><b>Заголовок секции — «DEVICE ROUTING», а не «ROUTING».</b> На странице подписки таких секций две, и без владельца в заголовке они выглядят как одна настройка, продублированная дважды.</p>
   </div>
 
   <div class="board">
@@ -1513,20 +1499,41 @@
         <div class="prog"><i></i></div>
       </div></div>
       <div class="sh">ROUTING</div>
-      <div class="card banner"><div class="row">
-        <svg class="icon muted"><use href="#i-org"/></svg>
-        <div class="tx"><div class="t">Managed by your organization</div><div class="s">Full tunnel · 3 rules, set on the server</div></div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-route"/></svg>
+        <div class="tx"><div class="t">Routing</div><div class="s">Full tunnel · set by your organization</div></div>
         <svg class="icon muted"><use href="#i-chev"/></svg>
       </div></div>
       <div class="btn err" style="margin-top:20px"><svg class="icon s"><use href="#i-trash"/></svg>Remove configuration</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · managed</span><b>Управляемая политика.</b> Вместо выбора набора — баннер на primary-container. Тумблера здесь нет: политикой владеет сервер, и локальный выключатель разошёлся бы с тем, что показывает управляющий сервис. Поэтому чип на главном у такой конфигурации никогда не бывает <code>off</code> — только действующий режим.</p>
+    <p class="cap"><span class="id">ConfigScreen · managed</span><b>Управляемая политика — и та же одна строка.</b> Подпись сразу называет владельца: «set by your organization», — так за строкой не оказывается сюрприза, человек знает, что там читают, а не настраивают, ещё до тапа. Тумблера нет и на самой странице: политикой владеет сервер, и локальный выключатель разошёлся бы с тем, что показывает управляющий сервис. Поэтому чип на главном у такой конфигурации никогда не бывает <code>off</code> — только действующий режим.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">nexus.13371488</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Routing</span></div>
+      <div class="sh" style="margin-top:8px">ORGANIZATION ROUTING</div>
+      <div class="card banner"><div class="row">
+        <svg class="icon muted"><use href="#i-org"/></svg>
+        <div class="tx"><div class="t">Managed by your organization</div><div class="s">Full tunnel · 3 rules, set on the server</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">DNS</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-globe"/></svg>
+        <div class="tx"><div class="t">DNS</div><div class="s">10.0.0.53 · through the tunnel</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Your organization sets both. You can see what they are; changing them is done on their side.</div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingConfigScreen · managed</span><b>Та же страница, читать можно, менять нечего.</b> Ни тумблера, ни выбора набора: политикой владеет сервер, и локальный выключатель разошёлся бы с тем, что показывает управляющий сервис. Пустой страницы при этом не получается — <b>смотреть здесь есть на что</b>, и в этом весь смысл: организация решает за пользователя, а он вправе знать, что именно решили.<br><br>Резолвер тут обычно внутренний (<code>10.0.0.53</code>) — тот случай, ради которого DNS вообще стоит показывать: если корпоративные имена не открываются, ответ находится здесь, а не в поддержке.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
       <div class="dim"></div>
       <div class="dlg">
         <h4>Remove nexus.13371488?</h4>
@@ -2505,7 +2512,8 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <div class="hbot">
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
@@ -2534,7 +2542,8 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <div class="hbot">
           <div class="card"><div class="row">
             <svg class="icon muted"><use href="#i-folder"/></svg>
-            <div class="tx"><div class="t">nexus.13371488</div><div class="s">Subscription · 8 servers</div></div>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
             <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
             <svg class="icon muted"><use href="#i-exp"/></svg>
           </div></div>
@@ -2631,7 +2640,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <span class="iconbtn"><svg class="icon s muted"><use href="#i-copy"/></svg></span>
       </div></div>
       <div class="card"><div class="row">
-        <div class="tx"><div class="t">Last refreshed</div><div class="s">5 min ago · daily, set by the provider</div></div>
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">5 min ago · daily, set by the subscription</div></div>
         <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
       </div></div>
       <div class="sh">DETAILS</div>
@@ -2645,7 +2654,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div></div>
       <div class="card"><div class="row one">
         <svg class="icon muted"><use href="#i-org"/></svg>
-        <div class="tx"><div class="t">Contact your provider</div></div>
+        <div class="tx"><div class="t">Get support</div></div>
         <svg class="icon muted"><use href="#i-link"/></svg>
       </div></div>
     </div></div>
@@ -2658,7 +2667,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
       <div class="card" style="margin-top:8px"><div class="row">
         <svg class="icon muted"><use href="#i-folder"/></svg>
-        <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 13 servers</div></div>
+        <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
         <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
       </div></div>
       <div class="card"><div class="row">
@@ -2667,12 +2676,18 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <span class="iconbtn"><svg class="icon s muted"><use href="#i-copy"/></svg></span>
       </div></div>
       <div class="card"><div class="row">
-        <div class="tx"><div class="t">Last refreshed</div><div class="s">just now · every 12 days, set by the provider</div></div>
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">just now · every 12 h, set by the subscription</div></div>
         <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
+      </div></div>
+      <div class="sh">ROUTING</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-route"/></svg>
+        <div class="tx"><div class="t">Routing</div><div class="s">Split · 27 rules · DNS from your subscription</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
       </div></div>
       <div class="sh">DETAILS</div>
       <div class="card"><div style="padding:16px">
-        <div style="font-size:14px">Used 240.1 GB · no limit</div>
+        <div style="font-size:14px">Used 322.9 GB · no limit</div>
         <div class="hint">No expiry date given</div>
       </div></div>
       <div class="empty">This subscription sets no quota and no expiry, so there is nothing to run out.</div>
@@ -2691,7 +2706,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div></div>
       <div class="card warn"><div class="row">
         <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
-        <div class="tx"><div class="t">Your plan has expired</div><div class="s multi">Says your provider. Servers keep working until it stops returning them.</div></div>
+        <div class="tx"><div class="t">Your plan has expired</div><div class="s multi">Says your subscription. Servers keep working until it stops returning them.</div></div>
       </div></div>
       <div class="sh">DETAILS</div>
       <div class="card"><div style="padding:16px">
@@ -2701,11 +2716,11 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div></div>
       <div class="card"><div class="row one">
         <svg class="icon muted"><use href="#i-org"/></svg>
-        <div class="tx"><div class="t">Contact your provider</div></div>
+        <div class="tx"><div class="t">Get support</div></div>
         <svg class="icon muted"><use href="#i-link"/></svg>
       </div></div>
       <div class="card"><div class="row">
-        <div class="tx"><div class="t">Last refreshed</div><div class="s">just now · daily, set by the provider</div></div>
+        <div class="tx"><div class="t">Last refreshed</div><div class="s">just now · daily, set by the subscription</div></div>
         <span class="iconbtn"><svg class="icon muted"><use href="#i-refresh"/></svg></span>
       </div></div>
     </div></div>
@@ -2718,17 +2733,17 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Add a connection</span></div>
       <div class="card warn" style="margin-top:8px"><div class="row">
         <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
-        <div class="tx"><div class="t">Your provider sent a message</div><div class="s multi">Not servers: every entry points nowhere. Their text is below.</div></div>
+        <div class="tx"><div class="t">Your subscription sent a message</div><div class="s multi">Not servers: every entry points nowhere. Their text is below.</div></div>
       </div></div>
       <div class="card"><div style="padding:16px 16px 14px">
         <div style="font-size:14px;line-height:1.5">Приложение не поддерживается.<br>Используйте рекомендованные клиенты<br>Happ, v2RayTun</div>
       </div></div>
-      <div class="hint" style="padding:12px 16px 0">Nothing was added. Open the subscription page to see what your provider offers.</div>
+      <div class="hint" style="padding:12px 16px 0">Nothing was added. Open the subscription page to see what it offers.</div>
       <div style="padding:16px">
         <div class="btn out"><svg class="icon s"><use href="#i-link"/></svg>Open subscription page</div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">StartScreen · error · provider message</span><b>Панель прислала не серверы, а текст в их именах.</b> Снято с живой подписки: при незнакомом клиенте Remnawave отдаёт три валидные <code>vless://</code>-ссылки на <code>0.0.0.0:1</code>, чьи <b>имена и есть сообщение</b>. Сегодня клиент импортировал бы их как три локации, которые никогда не подключатся. Признак однозначный — все адреса нероутируемые (<code>0.0.0.0</code>, <code>127.0.0.1</code>); тогда мы не добавляем ничего и показываем их текст как текст. Кнопка ведёт на <code>profile-web-page-url</code> — страницу, которую панель и просила открыть.</p>
+    <p class="cap"><span class="id">StartScreen · error · subscription message</span><b>Панель прислала не серверы, а текст в их именах.</b> Снято с живой подписки: при незнакомом клиенте Remnawave отдаёт три валидные <code>vless://</code>-ссылки на <code>0.0.0.0:1</code>, чьи <b>имена и есть сообщение</b>. Сегодня клиент импортировал бы их как три локации, которые никогда не подключатся. Признак однозначный — все адреса нероутируемые (<code>0.0.0.0</code>, <code>127.0.0.1</code>); тогда мы не добавляем ничего и показываем их текст как текст. Кнопка ведёт на <code>profile-web-page-url</code> — страницу, которую панель и просила открыть.</p>
   </div>
 
   <div class="board">
@@ -2737,7 +2752,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Add a connection</span></div>
       <div class="card warn" style="margin-top:8px"><div class="row">
         <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
-        <div class="tx"><div class="t">Couldn’t read this subscription</div><div class="s multi">Your provider sent a format this app does not recognise.</div></div>
+        <div class="tx"><div class="t">Couldn’t read this subscription</div><div class="s multi">Your subscription sent a format this app does not recognise.</div></div>
       </div></div>
       <div class="hint" style="padding:12px 16px 0">Understood formats: base64 link list, Clash / mihomo, Xray JSON, sing-box. Nothing was added.</div>
       <div style="padding:16px">
@@ -2783,7 +2798,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div></div>
       <div class="sh">DETAILS</div>
       <div class="card"><div style="padding:16px">
-        <div style="font-size:14px">Used 240.1 GB · no limit</div>
+        <div style="font-size:14px">Used 322.9 GB · no limit</div>
       </div></div>
     </div></div>
     <p class="cap"><span class="id">ConfigScreen · subscription · partial</span><b>Часть серверов мы не умеем.</b> Подписки приносят протоколы, которых у нас нет — на живой подписке это были 12 серверов из 306. Молча их выбросить нельзя: пользователь считал локации в панели провайдера, и меньшее число здесь без объяснения читается как потеря. Счётчик в заголовке становится «294 of 306», под ним — какой именно протокол и сколько осталось. Предупреждение, а не ошибка: остальные работают, подключаться можно сейчас. Название протокола берётся из тела как есть (<code>tuic</code>, <code>wireguard</code>) — это то, что пользователь может загуглить.</p>
@@ -2817,55 +2832,57 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
-      <div class="card" style="margin-top:8px"><div class="row">
-        <svg class="icon muted"><use href="#i-folder"/></svg>
-        <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 15 servers</div></div>
-        <svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg>
-      </div></div>
-      <div class="sh">ROUTING</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Routing</span></div>
+      <div class="sh" style="margin-top:8px">SUBSCRIPTION ROUTING</div>
       <div class="card banner">
         <div class="row">
           <svg class="icon muted"><use href="#i-route"/></svg>
-          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Split · 9 rules · 2 need their lists</div></div>
+          <div class="tx"><div class="t">Routing</div><div class="s">Split · 27 rules · 13 need their lists</div></div>
           <span class="sw"><i></i></span>
         </div>
         <div class="sep"></div>
         <div class="row one">
           <svg class="icon muted"><use href="#i-layers"/></svg>
-          <div class="tx"><div class="t">See what they route</div></div>
+          <div class="tx"><div class="t">Rule set</div></div>
           <svg class="icon muted"><use href="#i-chev"/></svg>
         </div>
         <div class="sep"></div>
         <div class="row">
           <svg class="icon muted"><use href="#i-doc"/></svg>
-          <div class="tx"><div class="t">Their rule lists</div><div class="s">Off · 2 of their rules need them</div></div>
+          <div class="tx"><div class="t">Rule lists</div><div class="s">Off · 13 rules need them</div></div>
           <span class="sw off"><i></i></span>
         </div>
       </div>
+      <div class="sh">DEVICE ROUTING</div>
       <div class="card" style="opacity:.38">
         <div class="row">
           <svg class="icon muted"><use href="#i-layers"/></svg>
-          <div class="tx"><div class="t">Rule set</div><div class="s">Work · replaced by the provider’s routes</div></div>
+          <div class="tx"><div class="t">Rule set</div><div class="s">Work · replaced by the subscription’s routes</div></div>
           <svg class="icon muted"><use href="#i-exp"/></svg>
         </div>
       </div>
-      <div class="hint" style="padding:12px 16px 0">Turn the switch off to use your own rule set instead. Your provider cannot enforce this either way.</div>
+      <div class="sh">DNS</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-globe"/></svg>
+        <div class="tx"><div class="t">DNS</div><div class="s">dns.quad9.net · through the tunnel</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Turn the switch off to use your own rule set instead. Your subscription cannot enforce this either way.</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · subscription · provider routes</span><b>Маршруты пришли вместе с подпиской.</b> Приходят они из трёх мест, и заголовок <code>routing</code> (направление <code>GlobalProxy</code> плюс шесть списков — сайты и IP на proxy, direct и block) — только одно из них. Живая проверка показала, что чаще правил там нет вовсе: панель кладёт их в <b>Xray-рендер той же подписки</b>, который клиент запрашивает по имени формата (<code>&lt;url&gt;/json</code>) — честно, а не подделывая юзер-агент. Третий случай — тело в формате Clash, где <code>rules:</code> уже на языке нашего ядра.<br><br>Переводим, а не перенимаем: в чужих наборах есть понятия, которых у нас нет — inbound-теги, порты, регулярки. Правило, которое мы не умеем выразить, <b>отбрасывается, а не приближается</b> (маршрут «почти туда» уводит трафик туда, куда пользователь не соглашался), и число отброшенных подписано в строке — иначе частичная политика выглядела бы полной. Направление берём из catch-all: «остальное direct» — это split, иначе full.<br><br>Применяем их, но говорим, чьи они: карточка на primary-container, как у managed-политики, и в заголовке прямо «from your provider».<br><br>И одно отличие от self-hosted, которое здесь принципиально: <b>тумблер есть</b>. У организации политика неотключаема — сервер её задал и сам обеспечит. У подписки такой власти нет (ADR-005): она может не отдать сервер, но не может заставить нас гнать трафик по её правилам. Поэтому маршруты по умолчанию включены (иначе зачем провайдер их прислал), а решение остаётся за пользователем — и строка про это написана словами, а не подразумевается.<br><br><b>Третья строка — про чужие файлы, и она выключена по умолчанию.</b> Часть правил (<code>RULE-SET</code> у Clash) ссылается не на домен, а на <b>список, который хостит провайдер</b>. Пока строка выключена, такие правила попадают в счётчик «not supported» — и счётчик называет причину своими словами — «2 need their lists», а не безличное «not supported», потому что первое лечится одним тумблером, а второе не лечится вообще. Включение означает: скачать чужие файлы на устройство и обновлять их раз в неделю. Это другое по сути решение, чем «применить их правила», поэтому и тумблер отдельный.<br><br>Тумблер живёт <b>в конфигурации, а не в общих настройках</b>: доверие к спискам — это доверие к конкретному провайдеру, и одному можно доверять, а другому нет. Обещать он должен ровно то, что делает: Xray-шные <code>ext:</code> он не включает никогда — это файл на диске сервера панели, у него нет адреса, скачивать нечего.</p>
+    <p class="cap"><span class="id">RoutingConfigScreen · from your subscription</span><b>Во всех текстах — «subscription», а не «provider».</b> У приложения нет отношений с компанией: по ADR-005 подписка — это лента серверов, аккаунта за ней нет, и всё, что мы про неё знаем, приехало в её же ответе. «Your subscription sent a message» звучит метонимией ровно один раз; «your provider» вводило второе действующее лицо, которого в модели нет, и рядом с заголовком <code>SUBSCRIPTION ROUTING</code> читалось как что-то ещё. Исключение одно и оно не про подписку: identity provider в SSO — другая сущность, там слово остаётся.<br><br><b>Строки называются так же, как у устройства, — и это не косметика.</b> Было «Routes from your provider», «See what they route», «Their rule lists»: три формулировки, повторяющие «чьё» в каждой, при том что заголовок секции уже это сказал. Стало <code>Routing</code>, <code>Rule set</code>, <code>Rule lists</code> — те же слова, что в <code>DEVICE ROUTING</code> ниже. Две секции на одном экране отвечают на один вопрос из разных источников, и когда строки в них названы по-разному, сравнить источники глазами нельзя: приходится сначала переводить.<br><br>Владелец остаётся в заголовке секции, где он сказан один раз и относится ко всему, что под ним. Повторять его в каждой строке значило бы тратить ширину на то, что и так известно, — а ширина здесь уходит у подписи, которая несёт факты.<br><br><b>Два владельца — два заголовка, и нижний по-настоящему заперт.</b> «SUBSCRIPTION ROUTING» и «DEVICE ROUTING» отвечают на один вопрос из двух источников, и пока верхний включён, нижний не просто погашен: он <b>не принимает нажатий</b>. Раньше он их принимал — тумблер щёлкал, набор открывался, а на маршруты это не влияло никак. Управляющий элемент, который переключается и ничего не делает, хуже отсутствующего: он учит не доверять интерфейсу. Настоящий переключатель здесь один — верхний, и подпись под карточками говорит именно это.<br><br><b>Маршруты пришли вместе с подпиской.</b> Приходят они из трёх мест, и заголовок <code>routing</code> (направление <code>GlobalProxy</code> плюс шесть списков — сайты и IP на proxy, direct и block) — только одно из них. Живая проверка показала, что чаще правил там нет вовсе: панель кладёт их в <b>Xray-рендер той же подписки</b>, который клиент запрашивает по имени формата (<code>&lt;url&gt;/json</code>) — честно, а не подделывая юзер-агент. Третий случай — тело в формате Clash, где <code>rules:</code> уже на языке нашего ядра.<br><br>Переводим, а не перенимаем: в чужих наборах есть понятия, которых у нас нет — inbound-теги, порты, регулярки. Правило, которое мы не умеем выразить, <b>отбрасывается, а не приближается</b> (маршрут «почти туда» уводит трафик туда, куда пользователь не соглашался), и число отброшенных подписано в строке — иначе частичная политика выглядела бы полной. Направление берём из catch-all: «остальное direct» — это split, иначе full.<br><br>Применяем их, но говорим, чьи они: карточка на primary-container, как у managed-политики, и в заголовке прямо «from your subscription».<br><br>И одно отличие от self-hosted, которое здесь принципиально: <b>тумблер есть</b>. У организации политика неотключаема — сервер её задал и сам обеспечит. У подписки такой власти нет (ADR-005): она может не отдать сервер, но не может заставить нас гнать трафик по её правилам. Поэтому маршруты по умолчанию включены (иначе зачем провайдер их прислал), а решение остаётся за пользователем — и строка про это написана словами, а не подразумевается.<br><br><b>Третья строка — про чужие файлы, и она выключена по умолчанию.</b> Часть правил (<code>RULE-SET</code> у Clash) ссылается не на домен, а на <b>список, который хостит провайдер</b>. Пока строка выключена, такие правила попадают в счётчик «not supported» — и счётчик называет причину своими словами — «2 need their lists», а не безличное «not supported», потому что первое лечится одним тумблером, а второе не лечится вообще. Включение означает: скачать чужие файлы на устройство и обновлять их раз в неделю. Это другое по сути решение, чем «применить их правила», поэтому и тумблер отдельный.<br><br><b>Выключение файлы не стирает.</b> Сначала стирало — и это выглядело последовательным («отказался держать чужое — не держим»), пока не выяснилась цена: у живой подписки тринадцать списков, и передумать стоило полной перекачки. Тумблер называется «применять их правила», а не «удалить их файлы»; обещания про диск он не даёт, а сами файлы протухают через неделю и уберутся сами. Уборка осталась там, где она про мусор: после обновления подписки, где провайдер мог убрать список из политики и файл остался бы ничей.<br><br>Тумблер живёт <b>в конфигурации, а не в общих настройках</b>: доверие к спискам — это доверие к конкретному провайдеру, и одному можно доверять, а другому нет. Обещать он должен ровно то, что делает: Xray-шные <code>ext:</code> он не включает никогда — это файл на диске сервера панели, у него нет адреса, скачивать нечего.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Provider’s routes</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Subscription’s routes</span></div>
       <div class="card banner" style="margin-top:8px"><div class="row">
         <svg class="icon muted"><use href="#i-folder"/></svg>
         <div class="tx"><div class="t">Sent by ТСПУ Дронов</div><div class="s multi">Read-only. Refreshing the subscription replaces them. 1 more rule could not be translated for this app and is not applied.</div></div>
       </div></div>
       <div class="card" style="margin-top:12px"><div style="padding:16px">
         <div style="font-size:14px">Split tunneling</div>
-        <div class="hint">Everything else goes direct — the provider's own catch-all</div>
+        <div class="hint">Everything else goes direct — the subscription's own catch-all</div>
       </div></div>
       <div class="sh">RULES — FIRST MATCH WINS</div>
       <div class="card"><div class="rule">
@@ -2884,32 +2901,61 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <span class="tag" style="color:var(--m-err)">BLOCK</span>
         <div class="tx"><div class="t">ads-extra</div><div class="s">rule list · inactive — lists are off</div></div>
       </div></div>
-      <div class="hint" style="padding:12px 16px 0">Order comes from the provider too — first match wins, exactly as in our own sets.</div>
+      <div class="hint" style="padding:12px 16px 0">Order comes from the subscription too — first match wins, exactly as in our own sets.</div>
     </div></div>
-    <p class="cap"><span class="id">RoutingScreen · provider</span><b>Что именно они маршрутизируют.</b> Тот же экран, что показывает managed-политику организации, с другой подписью источника: правила только читаются, а обновление подписки их заменит — редактировать то, что перезапишется на следующем рефреше, было бы ловушкой. Порядок их же: «first match wins» — то, как правила и так работают у нас, так что переводить нечего.<br><br>Правила на канвасе — с живой подписки (блок трёх рекламных доменов, <code>ip.me</code> через прокси, остальное direct), а не выдуманные. Пустой набор — тоже обычный случай: панель может прислать одно направление без исключений, и тогда экран показывает его и ни одного правила. Строка про непереведённые правила появляется только когда они были: молчание здесь означает «показано всё, что панель прислала».<br><br>Правило, зависящее от чужого списка, показано <b>погашенным с причиной</b> («inactive — lists are off»), а не спрятано. Спрятать значило бы соврать про полноту: правило в политике есть, оно просто не действует, и пользователь должен видеть, что именно он получит, если включит списки.</p>
+    <p class="cap"><span class="id">RoutingScreen · subscription</span><b>Что именно они маршрутизируют.</b> Тот же экран, что показывает managed-политику организации, с другой подписью источника: правила только читаются, а обновление подписки их заменит — редактировать то, что перезапишется на следующем рефреше, было бы ловушкой. Порядок их же: «first match wins» — то, как правила и так работают у нас, так что переводить нечего.<br><br>Правила на канвасе — с живой подписки (блок трёх рекламных доменов, <code>ip.me</code> через прокси, остальное direct), а не выдуманные. Пустой набор — тоже обычный случай: панель может прислать одно направление без исключений, и тогда экран показывает его и ни одного правила. Строка про непереведённые правила появляется только когда они были: молчание здесь означает «показано всё, что панель прислала».<br><br>Правило, зависящее от чужого списка, показано <b>погашенным с причиной</b> («inactive — lists are off»), а не спрятано. Спрятать значило бы соврать про полноту: правило в политике есть, оно просто не действует, и пользователь должен видеть, что именно он получит, если включит списки.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
-      <div class="sh" style="margin-top:8px">ROUTING</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Routing</span></div>
+      <div class="sh" style="margin-top:8px">SUBSCRIPTION ROUTING</div>
       <div class="card banner">
         <div class="row">
           <svg class="icon muted"><use href="#i-route"/></svg>
-          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Split · 11 rules</div></div>
+          <div class="tx"><div class="t">Routing</div><div class="s">Split · 27 rules · 13 need their lists</div></div>
           <span class="sw"><i></i></span>
         </div>
         <div class="sep"></div>
         <div class="row one">
           <svg class="icon muted"><use href="#i-layers"/></svg>
-          <div class="tx"><div class="t">See what they route</div></div>
+          <div class="tx"><div class="t">Rule set</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg>
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <svg class="icon muted" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="42 15"/></svg>
+          <div class="tx"><div class="t">Rule lists</div><div class="s">Downloading 13 lists…</div></div>
+          <span class="sw off" style="opacity:.38"><i></i></span>
+        </div>
+      </div>
+      <div class="hint" style="padding:12px 16px 0">Their files have to be here before the rules that need them can run, so the switch waits for the download rather than turning on ahead of it.</div>
+    </div></div>
+    <p class="cap wide"><span class="id">RoutingConfigScreen · lists downloading</span><b>Тумблер ждёт файлы, а не наоборот — и теперь об этом видно.</b> Тринадцать списков по чужим адресам — это секунды, а на мобильной сети и больше. Раньше на всё это время строка не менялась ничем: тап, тишина, потом внезапно включённый тумблер. Пользователь в такой паузе жмёт второй раз.<br><br><b>Порядок остаётся прежним: сначала файлы, потом флаг.</b> Включить флаг сразу было бы приятнее на вид и означало бы ложь — правило, чей список ещё не приехал, у mihomo <b>молча не матчит ничего</b>, и тумблер отрапортовал бы об успехе там, где включённые им правила не действуют. Поэтому тумблер остаётся в положении «выкл» и гаснет, а состояние несёт строка.<br><br>Спиннер занимает место иконки — тот же приём, что в карточке обновления и на экране гео-баз: ширина строки не прыгает, и видно, какая именно операция идёт. Подпись называет число списков, потому что это единственное, что объясняет длительность.<br><br>Повторный тап в это время не проходит: строка не принимает нажатий, пока идёт загрузка. Второй запрос не ускорил бы первый, а параллельная запись в те же файлы — верный способ получить половину списка на диске.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Routing</span></div>
+      <div class="sh" style="margin-top:8px">SUBSCRIPTION ROUTING</div>
+      <div class="card banner">
+        <div class="row">
+          <svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">Routing</div><div class="s">Split · 11 rules</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+        <div class="sep"></div>
+        <div class="row one">
+          <svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">Rule set</div></div>
           <svg class="icon muted"><use href="#i-chev"/></svg>
         </div>
         <div class="sep"></div>
         <div class="row">
           <svg class="icon muted"><use href="#i-doc"/></svg>
-          <div class="tx"><div class="t">Their rule lists</div><div class="s">2 lists · 412 KB · updated 2 h ago</div></div>
+          <div class="tx"><div class="t">Rule lists</div><div class="s">2 lists · 412 KB · updated 2 h ago</div></div>
           <span class="sw"><i></i></span>
         </div>
       </div>
@@ -2917,37 +2963,37 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="sh">RULES — FIRST MATCH WINS</div>
       <div class="card"><div class="rule">
         <span class="tag" style="color:var(--m-err)">BLOCK</span>
-        <div class="tx"><div class="t">reject-list</div><div class="s">rule list · 38 214 entries · from your provider</div></div>
+        <div class="tx"><div class="t">reject-list</div><div class="s">rule list · 38 214 entries · from your subscription</div></div>
       </div></div>
       <div class="card"><div class="rule">
         <span class="tag" style="color:var(--m-dir)">DIRECT</span>
         <div class="tx"><div class="t">^.*\.(ru|su)$</div><div class="s">domain-regex</div></div>
       </div></div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · subscription · rule lists on</span><b>Списки включены — и счётчик «not supported» исчез.</b> Именно так и должно читаться: строка не пугала абстрактной несовместимостью, а называла условие, при котором правила заработают. Теперь на её месте факты — сколько списков, сколько они занимают, когда обновлялись. Размер здесь не украшение: это чужие файлы на устройстве пользователя, и он вправе знать, сколько их.<br><br>Скачиваем <b>мы, а не ядро</b>, и это не мелочь. По исходникам mihomo (<code>hub/executor/executor.go</code>, <code>loadProvider</code>) первичная загрузка провайдеров идёт внутри <code>ApplyConfig</code> под <code>wg.Wait()</code> с таймаутом 20&nbsp;с на файл — то есть коннект встал бы на 20 секунд, ровно как это было с гео-базами. Хуже: <code>ApplyConfig</code> возвращает void, ошибку он только логирует, и упавший список превращается в правило, которое <b>молча не матчит ничего</b>. Поэтому файлы качаем сами, кладём в общий контейнер и отдаём ядру как <code>type: file</code> — тогда о провале знаем мы, а не только лог.<br><br>Правило-список показано как правило: тег действия, имя списка и число записей. Список из <code>rule-providers</code> той же подписки — не наш, поэтому подписан «from your provider» здесь же, в строке, а не только в баннере экрана.</p>
+    <p class="cap"><span class="id">RoutingConfigScreen · rule lists on</span><b>Списки включены — и счётчик «not supported» исчез.</b> Именно так и должно читаться: строка не пугала абстрактной несовместимостью, а называла условие, при котором правила заработают. Теперь на её месте факты — сколько списков, сколько они занимают, когда обновлялись. Размер здесь не украшение: это чужие файлы на устройстве пользователя, и он вправе знать, сколько их.<br><br>Скачиваем <b>мы, а не ядро</b>, и это не мелочь. По исходникам mihomo (<code>hub/executor/executor.go</code>, <code>loadProvider</code>) первичная загрузка провайдеров идёт внутри <code>ApplyConfig</code> под <code>wg.Wait()</code> с таймаутом 20&nbsp;с на файл — то есть коннект встал бы на 20 секунд, ровно как это было с гео-базами. Хуже: <code>ApplyConfig</code> возвращает void, ошибку он только логирует, и упавший список превращается в правило, которое <b>молча не матчит ничего</b>. Поэтому файлы качаем сами, кладём в общий контейнер и отдаём ядру как <code>type: file</code> — тогда о провале знаем мы, а не только лог.<br><br>Правило-список показано как правило: тег действия, имя списка и число записей. Список из <code>rule-providers</code> той же подписки — не наш, поэтому подписан «from your provider» здесь же, в строке, а не только в баннере экрана.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
-      <div class="sh" style="margin-top:8px">ROUTING</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Routing</span></div>
+      <div class="sh" style="margin-top:8px">SUBSCRIPTION ROUTING</div>
       <div class="card banner">
         <div class="row">
           <svg class="icon muted"><use href="#i-route"/></svg>
-          <div class="tx"><div class="t">Routes from your provider</div><div class="s">Split · 10 rules · 1 list unavailable</div></div>
+          <div class="tx"><div class="t">Routing</div><div class="s">Split · 10 rules · 1 list unavailable</div></div>
           <span class="sw"><i></i></span>
         </div>
         <div class="sep"></div>
         <div class="row one">
           <svg class="icon muted"><use href="#i-layers"/></svg>
-          <div class="tx"><div class="t">See what they route</div></div>
+          <div class="tx"><div class="t">Rule set</div></div>
           <svg class="icon muted"><use href="#i-chev"/></svg>
         </div>
         <div class="sep"></div>
         <div class="row">
           <svg class="icon muted"><use href="#i-doc"/></svg>
-          <div class="tx"><div class="t">Their rule lists</div><div class="s">1 of 2 downloaded · 214 KB</div></div>
+          <div class="tx"><div class="t">Rule lists</div><div class="s">1 of 2 downloaded · 214 KB</div></div>
           <span class="sw"><i></i></span>
         </div>
       </div>
@@ -2957,9 +3003,9 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <div style="display:flex;justify-content:flex-end;padding:0 16px 12px">
           <span class="act fill" style="background:var(--m-pric);color:var(--m-onpric)">Try again</span></div>
       </div>
-      <div class="hint" style="padding:12px 16px 0">The rest of the provider’s routes are applied as usual.</div>
+      <div class="hint" style="padding:12px 16px 0">The rest of the subscription’s routes are applied as usual.</div>
     </div></div>
-    <p class="cap"><span class="id">ConfigScreen · subscription · a list failed</span><b>Провал списка — новость, а не тишина.</b> Ядро на этом месте молчит: правило со ненайденным списком просто не совпадает ни с чем, трафик проваливается в следующее правило, и политика тихо меняется. Поэтому решение симметрично гео-правилам: правило, чьи данные не пришли, <b>не применяем и говорим об этом</b> — в сводке («1 list unavailable»), в отдельной карточке с именем списка и хостом, и с кнопкой повтора.<br><br>Остальные маршруты при этом работают: один недокачанный файл не повод выбрасывать девять исправных правил. Это ровно тот выбор, который я вынес на решение раньше — частичное применение с честным счётчиком против «всё или ничего», — и здесь он проведён до конца: частичность всегда названа, но работать не мешает.</p>
+    <p class="cap"><span class="id">RoutingConfigScreen · a list failed</span><b>Провал списка — новость, а не тишина.</b> Ядро на этом месте молчит: правило со ненайденным списком просто не совпадает ни с чем, трафик проваливается в следующее правило, и политика тихо меняется. Поэтому решение симметрично гео-правилам: правило, чьи данные не пришли, <b>не применяем и говорим об этом</b> — в сводке («1 list unavailable»), в отдельной карточке с именем списка и хостом, и с кнопкой повтора.<br><br>Остальные маршруты при этом работают: один недокачанный файл не повод выбрасывать девять исправных правил. Это ровно тот выбор, который я вынес на решение раньше — частичное применение с честным счётчиком против «всё или ничего», — и здесь он проведён до конца: частичность всегда названа, но работать не мешает.</p>
   </div>
 
   <div class="board">
@@ -2980,9 +3026,9 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="sh">THIS DEVICE</div>
       <div class="card"><div class="row">
         <svg class="icon muted"><use href="#i-lock"/></svg>
-        <div class="tx"><div class="t">iPhone16,1 · iOS 18.0</div><div class="s">Identified to your provider, which counts devices</div></div>
+        <div class="tx"><div class="t">iPhone16,1 · iOS 18.0</div><div class="s">Identified to your subscription, which counts devices</div></div>
       </div></div>
-      <div class="hint" style="padding:10px 16px 0">Your provider counts devices by an id this app generates once and keeps. Reinstalling makes a new one, which takes another slot.</div>
+      <div class="hint" style="padding:10px 16px 0">Your subscription counts devices by an id this app generates once and keeps. Reinstalling makes a new one, which takes another slot.</div>
     </div></div>
     <p class="cap"><span class="id">ConfigScreen · subscription · device</span><b>Чем мы представляемся панели.</b> Отправляем то, чего она ждёт по протоколу: обязательный <code>x-hwid</code> и три необязательных поля об устройстве. Секция появляется <b>только когда панель сама сказала</b>, что считает устройства (<code>x-hwid-active</code>) — показывать её там, где лимита нет, значит выдумывать ограничение. Числа «столько-то из стольких» здесь нет намеренно: панель <b>не присылает ни счётчика, ни лимита</b> — только флаги «считаю» и «мест нет». Написать «1 of 3» значило бы придумать цифру, которой у нас нет.<br><br>Идентификатор <b>случайный и генерируется один раз при установке</b>, не выводится из железа. Панели нужно ровно одно — отличать устройства друг от друга, и для этого случайного числа достаточно; аппаратный серийник дал бы всем провайдерам общий ключ, по которому нас можно сшить между подписками. Цена честная и названа словами: переустановка занимает новый слот, и пользователь узнаёт об этом здесь, а не когда упрётся в лимит.</p>
   </div>
@@ -2998,11 +3044,11 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div></div>
       <div class="card warn"><div class="row">
         <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
-        <div class="tx"><div class="t">Device limit reached</div><div class="s multi">Your provider’s device limit is full, so it sent a placeholder instead of your servers.</div></div>
+        <div class="tx"><div class="t">Device limit reached</div><div class="s multi">Your subscription’s device limit is full, so it sent a placeholder instead of your servers.</div></div>
       </div></div>
       <div class="card"><div class="row one">
         <svg class="icon muted"><use href="#i-link"/></svg>
-        <div class="tx"><div class="t">Free a slot with your provider</div></div>
+        <div class="tx"><div class="t">Free a slot in your subscription</div></div>
         <svg class="icon muted"><use href="#i-link"/></svg>
       </div></div>
       <div class="sh">SERVERS FROM YOUR PROVIDER</div>
@@ -3047,7 +3093,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <svg class="icon muted"><use href="#i-chev"/></svg>
       </div></div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · subscription plan</span><b>На главном — одной строкой.</b> Остаток плана попадает в подпись строки конфигурации, где сейчас стоит «Subscription · 12 servers». Отдельной карточки, как у self-hosted аккаунта, не появляется: главный экран отвечает на вопрос «подключён ли я и через что», а не «сколько осталось», и второй счётчик рядом с кольцом соревновался бы с ним за внимание. Сообщение провайдера сюда тоже не поднимается — его место в настройках конфигурации, где на него можно отреагировать.</p>
+    <p class="cap"><span class="id">HomeScreen · subscription plan</span><b>На главном — одной строкой.</b> Остаток плана попадает в подпись строки конфигурации, где сейчас стоит «Subscription · 14 servers · 2 groups». Отдельной карточки, как у self-hosted аккаунта, не появляется: главный экран отвечает на вопрос «подключён ли я и через что», а не «сколько осталось», и второй счётчик рядом с кольцом соревновался бы с ним за внимание. Сообщение провайдера сюда тоже не поднимается — его место в настройках конфигурации, где на него можно отреагировать.</p>
   </div>
 </div>
 
@@ -3138,6 +3184,129 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   </div>
 
 </div>
+
+<h2>12 · DNS</h2>
+<p class="flowdesc">Резолверы едут вместе с конфигурацией, переопределения по доменам — вместе с набором правил. Экран показывает результат сложения и, что важнее, то, что мы <b>молча выбросили</b>.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
+      <div class="sh">ROUTING</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-route"/></svg>
+        <div class="tx"><div class="t">Routing</div><div class="s">Split · 27 rules · <span style="color:var(--m-warn)">DNS: 1 refused</span></div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Where traffic goes, and who answers when an app asks for an address.</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · routing row</span><b>Одна строка вместо двух секций.</b> Маршруты и резолверы — самая объёмная часть экрана конфигурации и самая редко нужная: их открывают единицы, а места они занимали больше, чем имя, источник, план и обновление вместе. Строка уводит обе на свою страницу.<br><br><b>Вход остаётся в конфигурации, а не в общих настройках</b>, и это не изменилось. И маршруты, и резолверы едут вместе с конфигом (ADR-008, ADR-003) и переключаются тем же горячим релоадом: у рабочей подписки и у личной они разные, и общая настройка соврала бы про обе.<br><br><b>Подпись несёт оба факта, а не название функции.</b> «Split · 27 rules» — действующая политика; «DNS from your subscription» — чей резолвер. Ни одно из двух не выводится из слова «Routing», и человек, зашедший проверить, увидит ответ, не открывая страницу.<br><br><b>И вот ради чего вторая половина подписи меняется.</b> Когда мы отказались от чужого резолвера, вместо происхождения встаёт «DNS: 1 refused» — янтарным, но <b>словом</b>. Это то самое, что раньше было строчкой в логе: конфигурация теряла DNS провайдера и выглядела нетронутой. Спрятать это на страницу, до которой два тапа, значило бы вернуть ту же немоту, только на уровень глубже.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">DNS</span></div>
+      <div class="sh">IN EFFECT</div>
+      <div class="card">
+        <div class="row">
+          <div class="tx">
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <span class="t" style="flex:1">dns.quad9.net</span>
+              <span style="font-size:12.5px;color:var(--m-ok)">through the tunnel</span>
+            </div>
+            <div class="s">DNS over HTTPS · from your subscription</div>
+          </div>
+        </div>
+      </div>
+      <div class="hint" style="padding:10px 16px 0">Their <code>direct-nameserver</code> is not adopted: it applies to traffic we route ourselves.</div>
+      <div class="sh">DROPPED</div>
+      <div class="card warn"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">h3://dns.google</div><div class="s multi">The engine has no scheme for HTTP/3. Keeping it would have failed the whole configuration.</div></div>
+      </div></div>
+      <div class="sh">PER-DOMAIN</div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">*.corp.local</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">direct</span>
+          </div>
+          <div class="s">10.0.0.53 · from “Work”</div>
+        </div>
+      </div></div>
+      <div class="hint" style="padding:10px 16px 0">The proxy’s own address is always resolved directly — it has to be, or nothing could reach the tunnel.</div>
+    </div></div>
+    <p class="cap wide"><span class="id">DnsScreen · from your subscription</span><b>Три секции — три разных вопроса, и средняя из них и есть причина существования экрана.</b><br><br><b>Реализовано пока без <code>PER-DOMAIN</code>.</b> Первые две секции работают: экран и движок читают один и тот же расчёт, так что показать резолвер, которого движок не получил, он не может. Третья появится вместе с самими переопределениями — рисовать пустую секцию с обещанием «сюда можно добавить» раньше, чем добавлять станет куда, значит соврать.<br><br><code>IN EFFECT</code>: что реально спрашивают. Справа на первой строке — <b>направление</b>, потому что это единственное свойство резолвера, которое меняет, кто видит запрос. Зелёное «through the tunnel» и приглушённое «direct» — цвет здесь второй сигнал, слово первый.<br><br><code>DROPPED</code> — то, ради чего всё затевалось. Мы отбрасываем чужие резолверы в трёх случаях: неизвестная движку схема (иначе <code>config.Parse</code> отклоняет <b>весь</b> документ, и туннель не поднимается вообще), plain-UDP резолвер, пришпиленный к аутбаунду без UDP (дозвон падает на каждой попытке — это «подключено, но ничего не резолвится»), и пин на группу, которой у нас нет. Сейчас всё это уходит строчкой в лог, которую никто не читает. Это ровно тот же класс дефекта, что и туннель, падавший молча: поведение верное, объяснения нет. Секции нет, когда выбрасывать было нечего — пустая рамка «всё хорошо» отучает на неё смотреть.<br><br><code>PER-DOMAIN</code> приходит из набора правил, и подпись называет набор. Здесь это только чтение: правка — там, где живёт вторая половина той же задачи (трафик в 10.0.0.0/8 мимо туннеля). Разнести редактирование по двум экранам значит гарантировать, что однажды настроят одну половину.<br><br>Подсказка внизу про адрес прокси стоит не для красоты: непинованный <code>proxy-server-nameserver</code> — то, чего у нас не было, и его отсутствие давало «подключается и не работает». Строка объясняет, почему один запрос всегда идёт наружу, — до того, как кто-нибудь сочтёт это утечкой и «починит».</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">DNS</span></div>
+      <div class="sh">IN EFFECT</div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">1.1.1.1</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">direct</span>
+          </div>
+          <div class="s">DNS over HTTPS · app default</div>
+        </div>
+      </div></div>
+      <div class="hint" style="padding:10px 16px 0">This configuration names no resolver of its own, so the app uses one. Encrypted, so the local network still learns nothing.</div>
+      <div class="sh">PER-DOMAIN</div>
+      <div class="empty">No rule set is attached, so no domain is resolved anywhere special.</div>
+    </div></div>
+    <p class="cap"><span class="id">DnsScreen · app default</span><b>Подстановка названа подстановкой.</b> Ссылки и часть подписок DNS не несут вовсе, и тогда мы молча ставим Cloudflare DoH. Молча — и есть дефект: пользователь уверен, что резолвер ему дал провайдер. Подпись «app default» и следом фраза о том, почему это не страшно (шифрованный канал), закрывают вопрос до того, как он возникнет.<br><br>Пустая <code>PER-DOMAIN</code> объясняет отсутствие через <b>причину</b> — набор не прикреплён, — а не через «пусто». Разница в том, что первое говорит, куда идти.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">10.0.0.0/8</div><div class="s">ip-cidr · no-resolve</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="sh">DNS — ORDER DOES NOT MATTER</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">*.corp.local</div><div class="s">10.0.0.53 · real IP, not fake</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Names only. Traffic still follows the rules above — the 10.0.0.0/8 rule is what keeps it off the VPN.</div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap wide"><span class="id">RoutingScreen · dns</span><b>Переопределения живут здесь, а не в конфигурации, и это не произвол.</b> <code>nameserver-policy</code> в движке <b>аддитивна</b>: она вырезает домены, не заменяя резолверы конфигурации, — поэтому один набор правил, применённый к двум подпискам, ни с одной из них не подерётся. Список резолверов, положенный в набор, подрался бы с обеими.<br><br>Настоящая причина соседства — <b>задача одна</b>. «Корпоративный DNS» — это два утверждения сразу: <code>*.corp.local</code> спрашивать у 10.0.0.53, и трафик в 10.0.0.0/8 вести мимо туннеля. Разнеси их по экранам — настроят первое, забудут второе, и симптом будет невнятный. Подсказка внизу прямо называет вторую половину и показывает пальцем на правило выше.<br><br><b>Заголовок секции спорит с соседним намеренно.</b> У правил «first match wins», у DNS порядка нет вовсе — движок держит домены в дереве и берёт самое частное совпадение. Поэтому здесь нет ручки перетаскивания, и её отсутствие — не упущение, а утверждение. Молчать об этом значило бы предложить пользователю ложную модель: он бы «поднял правило повыше» и не понял, почему ничего не изменилось.<br><br>Тег слева читается тем же словарём, что и в правилах: где отвечают на вопрос. <code>DIRECT</code> — резолвер в локальной сети, спрашиваем напрямую; корпоративный сервер иначе и недостижим.<br><br>«real IP, not fake» — про <code>fake-ip-filter</code>, который мы включаем для этих же доменов автоматически. Отдельного тумблера нет: SMB, Kerberos и половина корпоративного софта на подставном адресе ломаются, так что «резолвить у своего сервера» и «отдавать настоящий адрес» — одно намерение, а не два. Строка сообщает о последствии, не спрашивая.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>Resolve elsewhere</h4>
+        <div class="body">
+          <div class="inp focus"><div class="lb">Domains</div><div class="vl">*.corp.local</div></div>
+          <div class="inp" style="margin-top:8px"><div class="lb">Resolver</div><div class="vl">10.0.0.53</div></div>
+          <div class="hint">→ Names under corp.local are asked at 10.0.0.53, directly, and answered with their real addresses.</div>
+        </div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_DnsRuleDialog</span><b>Два поля, потому что вопросов ровно два.</b> Схемы резолвера (<code>tls://</code>, <code>https://</code>) принимаются, но не требуются: голый адрес движок читает как обычный DNS, и для сервера в локальной сети это верный случай по умолчанию.<br><br>Резюме внизу — той же формы, что у диалога правила, и договаривает <b>третье</b>, о чём не спросили: «directly» и «real addresses». Оба следствия выведены, а не выбраны, поэтому им место в резюме, а не в отдельных полях.</p>
+  </div>
+
+</div>
+
 
 <footer>
   Макет и код используют одни числа: раздел «Метрики» — источник правды, значения в нём совпадают с

@@ -81,9 +81,42 @@ List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
         g['include-all-proxies'] == true ||
         g['include-all-providers'] == true;
     final named = (g['proxies'] as List? ?? const []).map((e) => '$e').toList();
-    final members = all
-        ? locations.map((l) => l.id).toList()
-        : [for (final n in named) if (byName[n] != null) byName[n]!];
+
+    // A group that names its membership by pattern and is read without the
+    // patterns is not a smaller mistake than a missing group — it is a larger
+    // one. On the live subscription `exclude-filter: 🇷🇺|🏳️` is the provider
+    // saying "not through a Russian exit", and a group built without it sends
+    // the user exactly where they were being steered away from. So a pattern we
+    // cannot compile drops the group rather than widening it.
+    final List<RegExp>? keep, drop;
+    try {
+      keep = _patterns(g['filter']);
+      drop = _patterns(g['exclude-filter']);
+    } on FormatException catch (e) {
+      Log.e('clash yaml: group filter is not a pattern we can run',
+          '${g['name']}: $e');
+      continue;
+    }
+    final byId = {for (final l in locations) l.id: l};
+    // Explicit names first, then what `include-all` adds, matching the engine's
+    // own order. The filter applies only to the second half: mihomo skips it for
+    // an explicit list ("compatible provider unneeded filter").
+    final picked = <String>[
+      for (final n in named) ?byName[n],
+      if (all)
+        for (final l in locations)
+          if (keep == null || keep.any((r) => r.hasMatch(l.label))) l.id,
+    ];
+    final members = <String>[];
+    for (final id in picked) {
+      if (members.contains(id)) continue;
+      // `exclude-filter` is applied to the whole membership however it was
+      // assembled, which is what the engine does in `GroupBase.GetProxies`.
+      final label = byId[id]?.label ?? '';
+      if (drop != null && drop.any((r) => r.hasMatch(label))) continue;
+      if (_excludedType(g['exclude-type'], byId[id])) continue;
+      members.add(id);
+    }
 
     final group = ProxyGroup(
       name: '${g['name'] ?? ''}'.trim(),
@@ -167,3 +200,38 @@ dynamic _deepConvert(dynamic node) {
   return node;
 }
 
+/// The name patterns a group's `filter` / `exclude-filter` holds.
+///
+/// mihomo splits the field on a backtick and treats each part as its own
+/// regular expression, matching if any of them does. The dialect is .NET
+/// (`regexp2`) rather than Dart's; the shapes panels actually use — alternation
+/// over flags and country emoji — are common to both, and the one construct
+/// that turns up and does not exist here is the inline `(?i)`, which is the
+/// same request as a case-insensitive match.
+///
+/// Throws [FormatException] when a part will not compile, because the caller
+/// must not carry on with a membership the provider did not describe.
+List<RegExp>? _patterns(Object? node) {
+  final raw = '${node ?? ''}'.trim();
+  if (raw.isEmpty) return null;
+  final out = <RegExp>[];
+  for (final part in raw.split('`')) {
+    if (part.isEmpty) continue;
+    var body = part;
+    var sensitive = true;
+    if (body.startsWith('(?i)')) {
+      body = body.substring(4);
+      sensitive = false;
+    }
+    out.add(RegExp(body, caseSensitive: sensitive));
+  }
+  return out.isEmpty ? null : out;
+}
+
+/// `exclude-type: vless|hysteria2` — the same statement as `exclude-filter`,
+/// made about the protocol instead of the name, and just as wrong to ignore.
+bool _excludedType(Object? node, Location? location) {
+  final raw = '${node ?? ''}'.trim();
+  if (raw.isEmpty || location == null) return false;
+  return raw.split('|').map((t) => t.trim().toLowerCase()).contains(location.proxyType);
+}

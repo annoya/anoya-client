@@ -467,12 +467,21 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<void> setProviderRoutingEnabled(String profileId, bool enabled) =>
       _updateRouting(profileId, (p) => p.copyWith(providerRoutingEnabled: enabled));
 
-  /// Accept or refuse holding the provider's rule-list files on this device.
+  /// Apply or stop applying the provider's rule lists.
   ///
   /// Turning it on downloads them before the tunnel is told anything: the
   /// engine must never be handed a rule whose file it would have to fetch
   /// itself, and the switch would otherwise report success while the rules it
-  /// enables still match nothing.
+  /// enables still match nothing. That is also why the flag is set *after* the
+  /// download rather than optimistically — the caller shows progress instead.
+  ///
+  /// Turning it off does not delete the files. It used to, which looked
+  /// consistent until the cost showed: a live subscription carries a dozen
+  /// lists, so changing one's mind cost the whole download again. The switch
+  /// promises to apply their rules, not to manage this device's disk; the files
+  /// go stale in a week on their own, and the sweep that removes what nothing
+  /// points at any more belongs to a refresh, where a provider may genuinely
+  /// have dropped a list.
   Future<void> setProviderRuleListsEnabled(String profileId, bool enabled) async {
     await _ready;
     final p = _byId(profileId);
@@ -480,7 +489,6 @@ class ProfilesController extends Notifier<ProfilesState> {
     if (enabled) await syncRuleLists(profileId);
     await _updateRouting(
         profileId, (p) => p.copyWith(providerRuleListsEnabled: enabled));
-    if (!enabled) await RuleListStore.prune(_liveRuleLists());
   }
 
   /// Download whatever of a provider's lists we do not have. Also the retry
@@ -495,10 +503,14 @@ class ProfilesController extends Notifier<ProfilesState> {
     return status;
   }
 
-  /// Every list any live configuration still refers to.
-  Iterable<RuleList> _liveRuleLists() => state.profiles
-      .where((p) => p.providerRuleListsEnabled)
-      .expand((p) => p.providerRouting?.lists ?? const <RuleList>[]);
+  /// Every list any live configuration still names.
+  ///
+  /// Not filtered by the switch: a configuration whose lists are switched off
+  /// still refers to them, and its files are worth keeping so turning the
+  /// switch back on is free. What this excludes is what nothing points at — a
+  /// list the provider dropped, or a configuration the user removed.
+  Iterable<RuleList> _liveRuleLists() =>
+      state.profiles.expand((p) => p.providerRouting?.lists ?? const <RuleList>[]);
 
   /// Routing changes reach the tunnel the same way a server switch does: hot on
   /// a live session, persisted otherwise.

@@ -153,6 +153,22 @@ void main() {
       expect(r.routing.rules[1].noResolve, isTrue);
     });
 
+    test("a provider's process rules survive to the platform that can run them",
+        () {
+      // They were dropped in the translation, which put the platform decision
+      // in the wrong place: the renderer already removes them where a
+      // connection's process cannot be resolved, and on macOS they work. A
+      // provider routing their game launcher lost the rule everywhere.
+      final r = parseClashRules(const [
+        'PROCESS-NAME,EscapeFromTarkov.exe,DIRECT',
+        'DOMAIN-SUFFIX,ip.me,PROXY',
+        'MATCH,DIRECT',
+      ])!;
+      expect(r.routing.rules.map((x) => x.type), ['process-name', 'domain-suffix']);
+      expect(r.routing.rules.first.value, 'EscapeFromTarkov.exe');
+      expect(r.skipped, 0, reason: 'nothing was skipped, so nothing is counted');
+    });
+
     test('a rules list that is only MATCH says nothing', () {
       // What a panel's own Clash rendering usually carries: one line pointing
       // everything at its proxy group. That is not a policy, it is the default.

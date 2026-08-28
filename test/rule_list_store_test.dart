@@ -103,6 +103,19 @@ void main() {
         reason: 'nothing points at a half-written file');
   });
 
+  test('a file already held is not fetched again', () async {
+    // The download only happens for what is missing or a week stale, so
+    // switching the provider's lists back on costs nothing. Reachable without a
+    // network stub precisely because nothing goes out: a request here would
+    // fail the test rather than succeed quietly.
+    await place(reject, 'payload: []\n');
+    final before = await File((await RuleListStore.pathFor(reject))!).stat();
+    final status = await RuleListStore.sync(const [reject]);
+    expect(status.single.available, isTrue);
+    expect((await File((await RuleListStore.pathFor(reject))!).stat()).modified,
+        before.modified);
+  });
+
   test('a list the app cannot validate is never fetched', () async {
     // http, not https: a rule list decides where traffic goes, so it does not
     // arrive over a channel anyone can rewrite.

@@ -54,6 +54,7 @@ class _SelfhostedConfigScreenState extends ConsumerState<SelfhostedConfigScreen>
           ProfileHeaderCard(profile: p, isActive: widget.isActive),
           if (p.serverUrl != null) SourceCard(value: p.serverUrl!),
           RefreshCard(profile: p, refreshing: _refreshing, onRefresh: _refresh),
+          RoutingRow(profile: p),
           if (account != null) ...[
             Card(
               margin: kCardMargin,
@@ -64,13 +65,6 @@ class _SelfhostedConfigScreenState extends ConsumerState<SelfhostedConfigScreen>
             ),
             if (account.dataLimit > 0) _TrafficCard(account: account),
           ],
-          const SectionHeader('ROUTING'),
-          // A server-set policy replaces the local one entirely: the switch and
-          // the rule set would promise control this configuration does not have.
-          if (p.routing != null)
-            _ManagedRoutingCard(routing: p.routing!)
-          else
-            LocalRoutingCard(profile: p),
           ConfigActions(profile: p, isActive: widget.isActive),
         ]),
       ),
@@ -114,22 +108,3 @@ class _TrafficCard extends StatelessWidget {
       );
 }
 
-class _ManagedRoutingCard extends StatelessWidget {
-  const _ManagedRoutingCard({required this.routing});
-
-  final Routing routing;
-
-  @override
-  Widget build(BuildContext context) => Card(
-        margin: kCardMargin,
-        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
-        child: ListTile(
-          leading: const Icon(Icons.business_outlined),
-          title: const Text('Managed by your organization'),
-          subtitle: Text(
-              '${routing.mode == 'split' ? 'Split' : 'Full tunnel'} · ${routing.rules.length} rules, set on the server'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => openManagedRouting(context, routing),
-        ),
-      );
-}

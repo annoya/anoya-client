@@ -183,8 +183,8 @@ Future<SubscriptionResponse> _fetch(
   // their URL.
   if (res.statusCode == 404 && _flag(res.headers, 'x-hwid-not-supported')) {
     throw const AppErrorException(AppError(
-      'Your provider did not accept this device',
-      detail: 'It requires a device id this app did send. Contact your provider.',
+      'Your subscription did not accept this device',
+      detail: 'It requires a device id this app did send. Ask your subscription’s support.',
     ));
   }
   if (res.statusCode ~/ 100 != 2) {
@@ -393,3 +393,19 @@ Future<ParsedSubscription?> fetchProxyProvider(
 /// A proxy list is a few hundred entries of YAML at most. Past this it is not a
 /// proxy list any more, and we are being fed something else.
 const kMaxProxyListBytes = 4 * 1024 * 1024;
+
+/// Whether a refresh should go looking for a better rendering.
+///
+/// Only the *positive* outcome of a past probe is worth remembering: a
+/// rendering that answered is fetched directly and there is nothing left to
+/// look for. "Nothing answered" used to be remembered just as firmly, and that
+/// was the wrong asymmetry — a 404 during one bad minute pinned the
+/// subscription to its plain body for good. For a panel like Remnawave that
+/// body is a base64 link list: no groups, and no `rules:` either, so the policy
+/// falls through to the Xray probe and arrives as a fraction of itself. Nothing
+/// in the interface could undo it, refresh included.
+///
+/// The price of asking again is up to three 404s per refresh for a panel that
+/// genuinely has no Clash rendering. The price of not asking is a configuration
+/// that is quietly worse forever, which is not a trade.
+bool shouldProbeRenderings(String rendering) => rendering.isEmpty;

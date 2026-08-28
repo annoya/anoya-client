@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +22,9 @@ import 'package:vpn_client/state/profiles_controller.dart';
 /// children their intrinsic width — so the action buttons quietly stopped
 /// spanning the content and no test noticed.
 void main() {
-  Profile profile(ProfileType type, {Account? account, Routing? routing}) => Profile(
+  Profile profile(ProfileType type,
+          {Account? account, Routing? routing, List<String> dns = const []}) =>
+      Profile(
         id: 'p1',
         type: type,
         name: 'Config',
@@ -31,15 +35,17 @@ void main() {
         subscriptionUrl: type == ProfileType.subscription ? 'https://panel.example/s/a' : null,
         account: account,
         routing: routing,
+        dns: dns,
         refreshedAt: DateTime.now(),
       );
 
   Future<void> pump(WidgetTester tester, Profile p,
-      {List<RuleListStatus>? lists}) async {
+      {List<RuleListStatus>? lists, Future<void> Function(bool)? onSetLists}) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         onDemandProvider.overrideWith(_QuietOnDemand.new),
-        profilesControllerProvider.overrideWith(() => _FixedProfiles([p])),
+        profilesControllerProvider
+            .overrideWith(() => _FixedProfiles([p], onSetLists: onSetLists)),
         // The real one reads the App Group container over a platform channel.
         // A widget test has neither, and what is under test here is what the
         // screen does with the answer, not how it is obtained.
@@ -52,6 +58,15 @@ void main() {
       ),
     ));
     await tester.pump();
+  }
+
+  /// Routing and DNS live one tap away now. Reaching them is part of what
+  /// these tests assert: a control that exists but cannot be found from the
+  /// configuration screen is not a control the user has.
+  Future<void> openRouting(WidgetTester tester) async {
+    await tester.scrollUntilVisible(find.text('Routing'), 200);
+    await tester.tap(find.text('Routing'));
+    await tester.pumpAndSettle();
   }
 
   /// Every button on the screen spans the content width, so a stack of them
@@ -95,6 +110,50 @@ void main() {
     await expectFullWidthButtons(tester);
   });
 
+  group('the routing row', () {
+    testWidgets('carries both facts the sections it replaced used to show',
+        (tester) async {
+      // Neither the policy nor whose resolvers it is follows from the word
+      // "Routing", and both were readable at a glance before the move. A row
+      // that only names itself would make the move a loss.
+      await pump(tester, profile(ProfileType.subscription,
+          dns: ['https://dns.quad9.net/dns-query#PROXY']));
+      await tester.scrollUntilVisible(find.text('Routing'), 200);
+      expect(
+          find.text('Off · everything through the VPN · DNS from your subscription'),
+          findsOneWidget);
+    });
+
+    testWidgets('a refusal stays on the configuration screen, not behind a tap',
+        (tester) async {
+      // These refusals were just taken out of a log nobody reads. Putting them
+      // one level deeper would be the same silence at a different depth.
+      await pump(tester, profile(ProfileType.subscription,
+          dns: ['h3://dns.google/dns-query', 'tls://9.9.9.9']));
+      await tester.scrollUntilVisible(find.text('Routing'), 200);
+      expect(find.textContaining('DNS: 1 refused'), findsOneWidget);
+    });
+
+    testWidgets('a link says the DNS is the app\u2019s, because it always is',
+        (tester) async {
+      await pump(tester, profile(ProfileType.link));
+      await tester.scrollUntilVisible(find.text('Routing'), 200);
+      expect(find.textContaining('DNS by the app'), findsOneWidget);
+    });
+
+    testWidgets('the resolver itself is one tap away', (tester) async {
+      await pump(tester, profile(ProfileType.subscription,
+          dns: ['https://dns.quad9.net/dns-query#PROXY']));
+      await openRouting(tester);
+      // The section header carries the same word, so the row is named by what
+      // it is rather than by its text.
+      await tester.tap(find.widgetWithText(ListTile, 'DNS'));
+      await tester.pumpAndSettle();
+      expect(find.text('https://dns.quad9.net/dns-query'), findsOneWidget);
+      expect(find.text('through the tunnel'), findsOneWidget);
+    });
+  });
+
   testWidgets('a self-hosted configuration is the only one with an account',
       (tester) async {
     await pump(
@@ -112,6 +171,9 @@ void main() {
         tester,
         profile(ProfileType.selfhosted,
             routing: const Routing(mode: 'full', rules: [])));
+    expect(find.textContaining('set by your organization'), findsOneWidget,
+        reason: 'the row says who owns the policy before it is opened');
+    await openRouting(tester);
     expect(find.text('Managed by your organization'), findsOneWidget);
     expect(find.text('Rule set'), findsNothing,
         reason: 'offering a rule set would promise control this config lacks');
@@ -149,42 +211,97 @@ void main() {
     expect(find.textContaining('Free a slot'), findsOneWidget);
   });
 
-  testWidgets('a provider\'s routes are applied, attributed and switchable',
+  testWidgets('a subscription\'s routes are applied, attributed and switchable',
       (tester) async {
     // The difference from a self-hosted policy is the switch: a panel can stop
     // returning servers, but it cannot decide where this device's traffic goes
     // (ADR-005), so the choice has to exist and be visible.
     await pump(tester, profile(ProfileType.subscription).copyWithProviderRoutes());
-    expect(find.text('Routes from your provider'), findsOneWidget);
+    await openRouting(tester);
+    expect(find.text('SUBSCRIPTION ROUTING'), findsOneWidget);
     expect(find.text('Split · 2 rules · 1 not supported'), findsOneWidget,
         reason: 'a summary that reads as complete is the one place this misleads');
-    expect(find.text('See what they route'), findsOneWidget);
-    final sw = tester.widget<SwitchListTile>(
-        find.widgetWithText(SwitchListTile, 'Routes from your provider'));
+    expect(find.text('Rule set'), findsNWidgets(2),
+        reason: 'one row per owner, named the same on both halves');
+    // The rows are named the same on both halves of the page now, so the
+    // provider's switch is found by what only it says.
+    final sw = tester.widget<SwitchListTile>(find.ancestor(
+      of: find.text('Split · 2 rules · 1 not supported'),
+      matching: find.byType(SwitchListTile),
+    ));
     expect(sw.value, isTrue, reason: 'a provider that sent rules meant them');
-    expect(find.text('Replaced by the provider\u2019s routes'), findsOneWidget,
+    expect(find.text('Replaced by the subscription\u2019s routes'), findsOneWidget,
         reason: 'the local set must say why it is dimmed, not just look disabled');
   });
 
-  testWidgets('a rule that needs the provider\'s lists says so and offers the switch',
+  testWidgets('the device\'s routing is out of reach while the provider\'s is on',
+      (tester) async {
+    // Dimming alone left the switch tappable and the rule set openable, and
+    // neither changed anything: the provider's policy is what the engine gets.
+    // A control that moves and does nothing teaches the user to distrust every
+    // other control on the screen.
+    await pump(tester, profile(ProfileType.subscription).copyWithProviderRoutes());
+    await openRouting(tester);
+    expect(_ignoringLocalCard(tester), isTrue);
+  });
+
+  testWidgets('and it takes input again the moment the subscription\'s switch is off',
+      (tester) async {
+    // The whole reason the card stays visible is that taking over must be one
+    // tap away; blocked forever it would be decoration.
+    await pump(tester,
+        profile(ProfileType.subscription).copyWithProviderRoutes(enabled: false));
+    await openRouting(tester);
+    expect(_ignoringLocalCard(tester), isFalse);
+    expect(find.text('Replaced by the subscription\u2019s routes'), findsNothing);
+  });
+
+  testWidgets('a rule that needs the subscription\'s lists says so and offers the switch',
       (tester) async {
     // The count is the point: "not supported" that names its own remedy is
     // actionable, while a bare number only discourages.
     await pump(tester, profile(ProfileType.subscription).copyWithProviderLists(),
         lists: const []);
+    await openRouting(tester);
     expect(find.text('Split · 1 rule · 1 needs their lists'), findsOneWidget);
-    expect(find.text('Their rule lists'), findsOneWidget);
-    expect(find.text('Off · 1 of their rules need them'), findsOneWidget);
+    expect(find.text('Rule lists'), findsOneWidget);
+    expect(find.text('Off · 1 rule needs them'), findsOneWidget);
     final sw = tester.widget<SwitchListTile>(
-        find.widgetWithText(SwitchListTile, 'Their rule lists'));
+        find.widgetWithText(SwitchListTile, 'Rule lists'));
     expect(sw.value, isFalse,
         reason: 'holding someone else\'s files is a separate decision');
+  });
+
+  testWidgets('turning their lists on says so, and refuses a second tap',
+      (tester) async {
+    // A dozen files from someone else's hosts is seconds, more on a phone, and
+    // the switch cannot move until they are here — a rule whose list is missing
+    // matches nothing, so an early "on" would be a lie. Without a word from the
+    // row the tap simply goes unanswered, and an unanswered tap gets repeated.
+    final gate = Completer<void>();
+    await pump(tester, profile(ProfileType.subscription).copyWithProviderLists(),
+        lists: const [], onSetLists: (_) => gate.future);
+    await openRouting(tester);
+    await tester.tap(find.widgetWithText(SwitchListTile, 'Rule lists'));
+    await tester.pump();
+
+    expect(find.text('Downloading one list…'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    final sw = tester.widget<SwitchListTile>(
+        find.widgetWithText(SwitchListTile, 'Rule lists'));
+    expect(sw.onChanged, isNull,
+        reason: 'a second request would not hurry the first, and two writers on '
+            'the same files is how half a list lands on disk');
+
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
   testWidgets('a policy with no external lists is offered no switch for them',
       (tester) async {
     await pump(tester, profile(ProfileType.subscription).copyWithProviderRoutes());
-    expect(find.text('Their rule lists'), findsNothing,
+    expect(find.text('Rule lists'), findsNothing,
         reason: 'a switch that governs nothing is worse than no switch');
   });
 
@@ -203,7 +320,7 @@ void main() {
         ),
       ],
     );
-    await tester.pumpAndSettle();
+    await openRouting(tester);
     expect(find.text('One list could not be downloaded'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
     expect(find.text('Split · 1 rule · 1 list unavailable'), findsOneWidget,
@@ -222,17 +339,20 @@ void main() {
         ),
       ],
     );
-    await tester.pumpAndSettle();
+    await openRouting(tester);
     expect(find.text('Split · 2 rules'), findsOneWidget);
     expect(find.text('1 list · 214 KB'), findsOneWidget);
     expect(find.text('One list could not be downloaded'), findsNothing);
   });
 
-  testWidgets('a subscription with no provider routes keeps its own controls',
+  testWidgets('a subscription with no routes of its own keeps the device controls',
       (tester) async {
     await pump(tester, profile(ProfileType.subscription));
-    expect(find.text('Routes from your provider'), findsNothing);
-    expect(find.text('Routing'), findsOneWidget);
+    await openRouting(tester);
+    expect(find.text('SUBSCRIPTION ROUTING'), findsNothing,
+        reason: 'nothing came from the panel, so it gets no section');
+    expect(find.text('DEVICE ROUTING'), findsOneWidget);
+    expect(find.text('Rule set'), findsOneWidget);
   });
 
   testWidgets('the active configuration offers no "set active" button', (tester) async {
@@ -255,7 +375,7 @@ extension on Profile {
       );
 
   /// A panel that sent routing, one rule of which we could not translate.
-  Profile copyWithProviderRoutes() => Profile(
+  Profile copyWithProviderRoutes({bool enabled = true}) => Profile(
         id: id,
         type: type,
         name: name,
@@ -266,6 +386,7 @@ extension on Profile {
           RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
         ]),
         providerRoutingSkipped: 1,
+        providerRoutingEnabled: enabled,
         refreshedAt: refreshedAt,
       );
 
@@ -310,12 +431,33 @@ extension on Profile {
       );
 }
 
+/// Whether the device's own routing card is currently taking input. Read off
+/// the tree rather than by tapping: with the card blocked there is nothing to
+/// observe from a tap, which is exactly the property under test.
+bool _ignoringLocalCard(WidgetTester tester) {
+  final card = find.ancestor(
+    of: find.widgetWithText(SwitchListTile, 'Routing'),
+    matching: find.byType(IgnorePointer),
+  );
+  return tester.widgetList<IgnorePointer>(card).any((w) => w.ignoring);
+}
+
 class _FixedProfiles extends ProfilesController {
-  _FixedProfiles(this.profiles);
+  _FixedProfiles(this.profiles, {this.onSetLists});
   final List<Profile> profiles;
+
+  /// Held open by a test that wants to look at the screen mid-download. The
+  /// real one reaches the network and the shared container.
+  final Future<void> Function(bool)? onSetLists;
 
   @override
   ProfilesState build() => ProfilesState(profiles: profiles, activeId: profiles.first.id);
+
+  @override
+  Future<void> setProviderRuleListsEnabled(String profileId, bool enabled) async {
+    if (onSetLists == null) return;
+    await onSetLists!(enabled);
+  }
 }
 
 class _QuietOnDemand extends OnDemandController {

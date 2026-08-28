@@ -209,7 +209,11 @@ no business seeing.
   `clash_config.dart`, `xray_config.dart`, `singbox_config.dart`,
   `mihomo_proxy.dart` (the transport/TLS mapping all three share),
   `subscription.dart` (format dispatch + the verdict), `provider_routing.dart`
-  (a panel's rules → our model).
+  (a panel's rules → our model). A group's membership is read with its
+  `filter` / `exclude-filter` / `exclude-type` honoured, and a pattern that
+  will not compile drops the group instead of widening it: `exclude-filter`
+  is how a provider says "not through this exit", and a membership assembled
+  without it sends the user exactly where they were being steered away from.
 - `client/lib/core/subscription_fetch.dart` — the fetch, the device headers and
   the routing lookup.
 - `client/lib/state/profiles_controller.dart` — the list, the active profile,
