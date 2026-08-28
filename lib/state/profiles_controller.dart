@@ -152,18 +152,63 @@ class ProfilesController extends Notifier<ProfilesState> {
     _timer = Timer.periodic(kConfigPollInterval, (_) => _poll());
     ref.onDispose(() => _timer?.cancel());
     _watchForSilentFailures();
+    _rememberSelection();
     _ready = _init();
     return const ProfilesState(loading: true);
+  }
+
+  /// Persists the active configuration and what it connects through, from the
+  /// one place every change passes through.
+  ///
+  /// Not at the call sites: the selection moves in six of them — adding,
+  /// removing, setting active, picking a server, and twice while refreshing —
+  /// and a seventh added later would have silently gone back to forgetting.
+  void _rememberSelection() {
+    String? lastProfile;
+    String? lastSelection;
+    listenSelf((_, next) {
+      if (next.loading) return;
+      final profileId = next.active?.id;
+      final selectionId = next.selectionId;
+      if (profileId == lastProfile && selectionId == lastSelection) return;
+      lastProfile = profileId;
+      lastSelection = selectionId;
+      unawaited(ProfileStore.saveSelection(profileId, selectionId));
+    });
   }
 
   Future<void> _init() async {
     unawaited(GeoStore.maybeAutoUpdate()); // weekly refresh, never a first download
     final profiles = await ProfileStore.load();
+    final saved = await ProfileStore.loadSelection();
+    // Ids outlive what they name: a configuration can be gone and a server can
+    // disappear from the next refresh of the list it came from. Both are
+    // checked against what actually loaded, and the old first-in-the-list
+    // behaviour is what remains when either check fails.
+    final active = profiles.where((p) => p.id == saved.profileId).firstOrNull ??
+        (profiles.isEmpty ? null : profiles.first);
+    // The saved selection belongs to the saved configuration. When that one is
+    // gone and another takes its place, the id is not carried over even if it
+    // happens to match something there — a server chosen inside one
+    // subscription is not a choice about a different one.
+    final restored = active?.id == saved.profileId
+        ? _knownSelection(active, saved.selectionId)
+        : null;
     state = ProfilesState(
       profiles: profiles,
-      activeId: profiles.isEmpty ? null : profiles.first.id,
-      selectedLocationId: _firstLocation(profiles.isEmpty ? null : profiles.first),
+      activeId: active?.id,
+      selectedLocationId: restored ?? _firstLocation(active),
     );
+  }
+
+  /// The saved selection if the configuration still offers it — as a group or
+  /// as a server, since one id names either.
+  static String? _knownSelection(Profile? p, String? id) {
+    if (p == null || id == null) return null;
+    if (ProxyGroup.isGroupId(id)) {
+      return p.groups.any((g) => g.id == id) ? id : null;
+    }
+    return p.locations.any((l) => l.id == id) ? id : null;
   }
 
   String _newId() => 'p${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}_${_idSeq++}';

@@ -124,6 +124,11 @@ claimed but unhandled one would break every v6 destination. Because fake-IP
 resolves back to the domain, an exit server without IPv6 still works — only
 connections to literal v6 addresses need v6 at the far end.
 
+The active configuration and the server or group it connects through survive a
+restart. Both are validated on load — a configuration can be removed and a
+server can disappear from the next refresh of the list it came from — and the
+first-in-the-list default is what remains when either check fails.
+
 A word about the copy: everything a subscription supplies is attributed to
 **the subscription**, never to "your provider". ADR-005 is why — a subscription
 is a feed of servers with no account behind it, so naming a company introduces a
