@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/app_prefs.dart';
 import '../core/app_version.dart';
 import '../core/geo_store.dart';
+import '../core/dns_plan.dart';
 import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
@@ -57,6 +58,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Rule sets and geo databases both change what the tunnel would run, and
     // those screens don't know about profiles — resync here on the way back.
     if (mounted) await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
+  }
+
+  /// The one resolver the user owns: it applies only where nobody else chose.
+  ///
+  /// Presets rather than a bare field — a typo here breaks every name lookup on
+  /// the device, and four addresses cover almost everyone. "Custom" is the door
+  /// for a private resolver, held to the same standard the renderer holds a
+  /// subscription's to, plus one the renderer cannot check: a default named by
+  /// domain would need resolving before it could resolve.
+  Future<void> _pickDefaultDns() async {
+    const custom = '__custom__';
+    final picked = await pickOption<String>(
+      context,
+      title: 'Default DNS',
+      selected: kDnsPresets.any((p) => p.address == _prefs.defaultDns)
+          ? _prefs.defaultDns
+          : custom,
+      options: [
+        for (final p in kDnsPresets)
+          Option(p.address, p.name,
+              subtitle: p.note.isEmpty ? p.address : '${p.address} · ${p.note}'),
+        const Option(custom, 'Custom…', subtitle: 'any address the engine accepts'),
+      ],
+    );
+    if (picked == null || !mounted) return;
+
+    var value = picked;
+    if (picked == custom) {
+      final typed = await promptText(
+        context,
+        title: 'Default DNS',
+        label: 'Resolver',
+        confirmLabel: 'Save',
+        initial: _prefs.defaultDns,
+        hint: 'https://1.1.1.1/dns-query',
+        autocorrect: false,
+        resetLabel: 'Use Cloudflare',
+        resetValue: kFallbackNameserver,
+      );
+      if (typed == null || !mounted) return;
+      final error = dnsDefaultError(typed.trim());
+      if (error != null) {
+        showToast(context, error);
+        return;
+      }
+      value = typed.trim();
+    }
+
+    final updated = _prefs.copyWith(defaultDns: value);
+    await RoutingPrefsStore.save(updated);
+    if (!mounted) return;
+    setState(() => _prefs = updated);
+    ref.invalidate(routingPrefsProvider);
+    // Only some configurations are affected, but the engine holds one config at
+    // a time and the cheapest correct thing is to re-render the live one.
+    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
   }
 
   Future<void> _pickTheme() async {
@@ -197,6 +254,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   subtitle: Text('$_setCount set${_setCount > 1 ? 's' : ''}'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _push(const RuleSetsScreen()),
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                ListTile(
+                  leading: const Icon(Icons.language_outlined),
+                  title: const Text('Default DNS'),
+                  // Says when it applies, because most configurations bring
+                  // their own and this setting then does nothing at all.
+                  subtitle: Text('${dnsPresetName(_prefs.defaultDns)} · '
+                      'used when a configuration brings none'),
+                  trailing: const Icon(Icons.expand_more),
+                  onTap: _pickDefaultDns,
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 ListTile(

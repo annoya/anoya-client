@@ -47,8 +47,25 @@ YAML. Switching configs switches DNS through the same hot reload as everything
 else. A refresh replaces the whole list, so a source that drops its DNS drops
 ours too.
 
-**No DNS in the config means Cloudflare DoH.** The fallback is
-`https://1.1.1.1/dns-query` — encrypted, and the pre-existing behaviour.
+**No DNS in the config means the app's default, and the default is the user's
+to change.** It ships as `https://1.1.1.1/dns-query` and is settable in
+Settings — a preset or a typed address, held to the renderer's standard plus
+one it cannot enforce: a resolver named by domain would need resolving before
+it could resolve anything, so the default must be addressed by IP. This is not
+a fourth source arguing with the three: it applies only where none of them made
+a choice, and a default nobody chose is exactly what a user may change.
+
+**The default rides the tunnel; reaching the proxy does not, and gets company.**
+Pinned, the query says nothing to the local network and reaches the resolver
+from the exit's address rather than the user's — and a network that blocks that
+resolver, which is a plausible reason to be running a VPN, stops mattering.
+The unpinned `proxy-server-nameserver` behind it carries three operators rather
+than one, because it resolves a single hostname the local network already
+watched the device dial: redundancy is nearly free there and expensive in the
+query list, where mihomo asks every entry at once and each extra one is another
+company reading every domain. A configuration that named its own resolver gets
+no additions — handing its provider's hostname to parties it never chose is not
+ours to do.
 
 **Only the resolvers are adopted, never the whole foreign `dns:` block.**
 `enhanced-mode: fake-ip` and `fake-ip-range: 198.18.0.1/16` are app constants:

@@ -1242,6 +1242,10 @@
         <div class="row"><svg class="icon muted"><use href="#i-layers"/></svg>
           <div class="tx"><div class="t">Rule sets</div><div class="s">3 sets</div></div>
           <svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-globe"/></svg>
+          <div class="tx"><div class="t">Default DNS</div><div class="s">Cloudflare · used when a configuration brings none</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
       </div>
       <div class="sh">GENERAL</div>
       <div class="card">
@@ -1255,6 +1259,24 @@
       </div>
     </div></div>
     <p class="cap"><span class="id">SettingsScreen</span><b>Селфхостед.</b> Порядок секций: конфигурации → подключение → роутинг → общие → диагностика: сначала всё про туннель, потом настройки самого приложения. Конфигурации — одна строка со счётчиком и шевроном вниз: список открывается шитом, чтобы полсотни конфигураций не превращали настройки в бесконечный скролл. Активная выбирается на главном экране, здесь только навигация.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="stitle">Default DNS</div>
+        <div class="row act-fill"><div class="tx"><div class="t">Cloudflare</div><div class="s">https://1.1.1.1/dns-query</div></div></div>
+        <div class="row"><div class="tx"><div class="t">Google</div><div class="s">https://8.8.8.8/dns-query</div></div></div>
+        <div class="row"><div class="tx"><div class="t">Quad9</div><div class="s">https://9.9.9.9/dns-query · filters known-malicious domains</div></div></div>
+        <div class="row"><div class="tx"><div class="t">AdGuard</div><div class="s">https://94.140.14.14/dns-query · filters ads and trackers</div></div></div>
+        <div class="row"><div class="tx"><div class="t">Custom…</div><div class="s">any address the engine accepts</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap wide"><span class="id">SettingsScreen · _pickDefaultDns</span><b>Единственный DNS, который принадлежит пользователю, а не источнику.</b> Резолверы едут с конфигурацией (ADR-008), и этого мы не меняем: настройка вступает в силу <b>только когда конфигурация не назвала своего</b> — у ссылки всегда, у части подписок. Это не четвёртый источник, спорящий с тремя, а умолчание там, где выбора никто не сделал; умолчание пользователь вправе поменять.<br><br><b>Пресеты, а не голое поле.</b> Свободный ввод для DNS — приглашение опечататься в том, от чего зависит вся работа сети; четыре готовых адреса закрывают почти всех, а «Custom…» открывает поле для тех, у кого NextDNS или свой резолвер. Подписи называют не только адрес, но и то, чем оператор отличается: Quad9 и AdGuard фильтруют, и человек вправе знать это до выбора, а не после.<br><br><b>Все четыре адресованы по IP, и это не случайность.</b> Резолвер, названный именем, сам требует бутстрапа — движку пришлось бы разрешать имя, чтобы начать разрешать имена. С адресом по IP этот шаг исчезает, и в отрендеренном конфиге не появляется <code>default-nameserver</code>.<br><br>Настройка в общих настройках, а не на экране DNS: экран DNS — про конфигурацию, а это про устройство, как «Local network direct» и гео-базы. На самом экране строка «app default» ведёт сюда — так она находится ровно тогда, когда стала интересна.</p>
   </div>
 
   <div class="board">

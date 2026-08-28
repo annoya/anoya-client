@@ -9,7 +9,8 @@ class NormConfig {
       required this.locations,
       this.groups = const [],
       this.routing,
-      this.dns = const []});
+      this.dns = const [],
+      this.defaultDns = ''});
 
   final int version;
   final Account account;
@@ -27,6 +28,11 @@ class NormConfig {
   /// switches DNS with no extra plumbing.
   final List<String> dns;
 
+  /// The resolver to use when [dns] is empty — the device's own setting, which
+  /// belongs to the app rather than to any of the three sources. Empty means
+  /// "whatever the renderer's own default is".
+  final String defaultDns;
+
   factory NormConfig.fromJson(Map<String, dynamic> json) {
     final locs = (json['locations'] as List<dynamic>? ?? [])
         .map((e) => Location.fromJson(e as Map<String, dynamic>))
@@ -38,6 +44,7 @@ class NormConfig {
       locations: locs,
       routing: routingJson is Map ? Routing.fromJson(Map<String, dynamic>.from(routingJson)) : null,
       dns: (json['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
+      defaultDns: json['default_dns'] as String? ?? '',
     );
   }
 }
