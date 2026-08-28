@@ -259,8 +259,8 @@ proxy-providers:
       final loc = parseShareLink(link).location!;
       expect(loc.label, '🇳🇱 Нидерланды', reason: 'the name stops at the parameters');
       expect(loc.description, 'до 10 Гбит/с');
-      expect(loc.subtitle, 'до 10 Гбит/с · de.example',
-          reason: 'it takes the protocol\'s place, never the address\'s');
+      expect(loc.subtitle, 'до 10 Гбит/с',
+          reason: 'the description is what the line is for; nothing else is on it');
     });
 
     test('a name that merely contains a question mark is left alone', () {
@@ -270,12 +270,12 @@ proxy-providers:
       final loc = parseShareLink(link).location!;
       expect(loc.label, 'Why not?');
       expect(loc.description, isEmpty);
-      expect(loc.subtitle, 'vless · de.example');
+      expect(loc.subtitle, 'VLESS · TCP · No TLS');
     });
 
     test('a server without one keeps the protocol', () {
       const link = 'vless://u@de.example:443?security=none#Germany';
-      expect(parseShareLink(link).location!.subtitle, 'vless · de.example');
+      expect(parseShareLink(link).location!.subtitle, 'VLESS · TCP · No TLS');
     });
 
     test('the JSON formats carry it as text, next to the name', () {
@@ -286,7 +286,7 @@ proxy-providers:
       "users": [{"id": "u"}]}]}}]}]''';
       final loc = parseSubscriptionBody(xray).locations.single;
       expect(loc.description, '10 Gbit/s');
-      expect(loc.subtitle, '10 Gbit/s · nl.example');
+      expect(loc.subtitle, '10 Gbit/s');
 
       const singbox = '''
 {"outbounds": [{"tag": "NL", "type": "vless", "server": "nl.example",
@@ -305,30 +305,48 @@ proxy-providers:
     Location loc(Map<String, dynamic> proxy, {String description = ''}) =>
         Location(id: 'x', label: 'X', proxy: proxy, description: description);
 
-    test('the transport is named next to the protocol', () {
-      // Within one subscription the protocol is the same on every row; the
-      // transport is what tells them apart — and what Clash Verge and Happ show.
+    test('protocol, transport and what protects it — in that order', () {
+      // The enumeration every other client shows. The address used to end this
+      // line; identical names are a mistake in someone else's list, and paying
+      // for it with an endpoint on every row costs the space these facts need.
       expect(
-        loc({'type': 'vless', 'server': 'de.example', 'network': 'xhttp'}).subtitle,
-        'vless · xhttp · de.example',
+        loc({
+          'type': 'vless',
+          'server': 'de.example',
+          'network': 'xhttp',
+          'reality-opts': {'public-key': 'k'}
+        }).subtitle,
+        'VLESS · XHTTP · Reality',
       );
       expect(
-        loc({'type': 'vmess', 'server': 'de.example', 'network': 'grpc'}).subtitle,
-        'vmess · grpc · de.example',
+        loc({'type': 'vmess', 'server': 'de.example', 'network': 'grpc', 'tls': true})
+            .subtitle,
+        'VMess · gRPC · TLS',
       );
     });
 
-    test('plain tcp is not worth a word', () {
-      // "tcp" tells the reader nothing and takes room from the address.
-      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'tcp'}).subtitle,
-          'vless · de.example');
-      expect(loc({'type': 'vless', 'server': 'de.example'}).subtitle, 'vless · de.example');
+    test('plain tcp is written, because a gap would read as "not checked"', () {
+      // It used to be dropped as a default worth no words. That was true while
+      // the address stood beside it and space was dear; in an enumeration of
+      // three, a missing element reads as unknown rather than as ordinary.
+      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'tcp', 'tls': true})
+          .subtitle, 'VLESS · TCP · TLS');
+      expect(loc({'type': 'vless', 'server': 'de.example', 'tls': true}).subtitle,
+          'VLESS · TCP · TLS');
     });
 
-    test('a protocol with no transport to choose gets none', () {
-      // hysteria2 is QUIC: there is nothing to select.
+    test('a protocol whose transport is not a choice still names it', () {
+      // hysteria2 carries no `network` because it has no alternative; leaving
+      // the slot empty would say we did not look.
       expect(loc({'type': 'hysteria2', 'server': 'de.example'}).subtitle,
-          'hysteria2 · de.example');
+          'Hysteria2 · QUIC · TLS');
+    });
+
+    test('nothing protecting the connection is said out loud', () {
+      // "Not stated" and "nothing there" are different facts, and for a VPN
+      // client the difference is the point of the line.
+      expect(loc({'type': 'vless', 'server': 'de.example'}).subtitle,
+          'VLESS · TCP · No TLS');
     });
 
     test('httpupgrade is named as itself, not as the websocket it is stored as', () {
@@ -338,17 +356,22 @@ proxy-providers:
         'network': 'ws',
         'ws-opts': {'path': '/', 'v2ray-http-upgrade': true},
       };
-      expect(loc(proxy).transport, 'httpupgrade',
-          reason: 'calling it ws would name a transport the server is not set up for');
-      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'ws'}).transport, 'ws');
+      expect(loc(proxy).transport, 'HTTPUpgrade',
+          reason: 'calling it WS would name a transport the server is not set up for');
+      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'ws'}).transport, 'WS');
     });
 
-    test('a provider description replaces the whole technical half', () {
+    test('a provider description replaces the line, all of it', () {
       expect(
         loc({'type': 'vless', 'server': 'de.example', 'network': 'xhttp'},
             description: 'до 10 Гбит/с').subtitle,
-        'до 10 Гбит/с · de.example',
+        'до 10 Гбит/с',
       );
+    });
+
+    test('the address is nowhere in it', () {
+      final row = loc({'type': 'vless', 'server': 'secret.example', 'network': 'ws'});
+      expect(row.subtitle, isNot(contains('secret.example')));
     });
   });
 }

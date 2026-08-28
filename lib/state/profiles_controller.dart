@@ -173,7 +173,13 @@ class ProfilesController extends Notifier<ProfilesState> {
       if (profileId == lastProfile && selectionId == lastSelection) return;
       lastProfile = profileId;
       lastSelection = selectionId;
-      unawaited(ProfileStore.saveSelection(profileId, selectionId));
+      // Nothing waits on this and nothing should: the selection is already in
+      // state, and the write only matters to the next launch. But a fire-and-
+      // forget future that throws is an uncaught async error, and a write can
+      // fail for reasons this app has no answer to — a full disk, a container
+      // that went away. Losing the memory of a choice is not worth that.
+      unawaited(ProfileStore.saveSelection(profileId, selectionId)
+          .catchError((Object e) => Log.e('selection not saved', '$e')));
     });
   }
 
@@ -620,9 +626,10 @@ class ProfilesController extends Notifier<ProfilesState> {
       await ref.read(onDemandProvider.notifier).onConnected();
     } catch (e) {
       Log.e('connect failed', '$e');
-      // The server/host is what the user can act on, so name it in the message.
-      final host = state.selectedLocation?.proxy['server'] as String?;
-      state = state.copyWith(error: describeError(e, subject: host));
+      // Named by its label, not its address: the message stays specific about
+      // which server failed, and the endpoint stays out of the interface.
+      state = state.copyWith(
+          error: describeError(e, subject: state.selectedLocation?.label));
     }
   }
 
