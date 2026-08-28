@@ -1,6 +1,7 @@
 
 
 import 'norm_config.dart';
+import 'dns_plan.dart';
 import 'json_file_store.dart';
 
 /// Hidden rules prepended (ahead of any policy, managed included) when
@@ -26,6 +27,7 @@ class RoutingPrefs {
     this.geositeUrl = defaultGeositeUrl,
     this.geoAutoUpdate = true,
     this.geoUpdatedAt,
+    this.defaultDns = kFallbackNameserver,
   });
 
   // mihomo's own default release artifacts (MetaCubeX/meta-rules-dat).
@@ -35,6 +37,13 @@ class RoutingPrefs {
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat';
 
   final bool lanDirect;
+
+  /// The resolver used by a configuration that names none of its own — a bare
+  /// link always, some subscriptions. Not a fourth source competing with the
+  /// three that own DNS (ADR-008): a default, in the one place nobody else made
+  /// a choice, and defaults are the user's to change.
+  final String defaultDns;
+
   final String geoipUrl;
   final String geositeUrl;
   final bool geoAutoUpdate;
@@ -42,6 +51,7 @@ class RoutingPrefs {
 
   RoutingPrefs copyWith({
     bool? lanDirect,
+    String? defaultDns,
     String? geoipUrl,
     String? geositeUrl,
     bool? geoAutoUpdate,
@@ -49,6 +59,7 @@ class RoutingPrefs {
   }) =>
       RoutingPrefs(
         lanDirect: lanDirect ?? this.lanDirect,
+        defaultDns: defaultDns ?? this.defaultDns,
         geoipUrl: geoipUrl ?? this.geoipUrl,
         geositeUrl: geositeUrl ?? this.geositeUrl,
         geoAutoUpdate: geoAutoUpdate ?? this.geoAutoUpdate,
@@ -57,6 +68,7 @@ class RoutingPrefs {
 
   factory RoutingPrefs.fromJson(Map<String, dynamic> j) => RoutingPrefs(
         lanDirect: j['lan_direct'] as bool? ?? true,
+        defaultDns: j['default_dns'] as String? ?? kFallbackNameserver,
         geoipUrl: j['geoip_url'] as String? ?? defaultGeoipUrl,
         geositeUrl: j['geosite_url'] as String? ?? defaultGeositeUrl,
         geoAutoUpdate: j['geo_auto_update'] as bool? ?? true,
@@ -67,6 +79,7 @@ class RoutingPrefs {
 
   Map<String, dynamic> toJson() => {
         'lan_direct': lanDirect,
+        'default_dns': defaultDns,
         'geoip_url': geoipUrl,
         'geosite_url': geositeUrl,
         'geo_auto_update': geoAutoUpdate,

@@ -7,6 +7,7 @@ import '../core/norm_config.dart';
 import '../core/profile.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
+import '../state/providers.dart';
 
 /// Who answers when an app asks for an address, and what we did not use.
 ///
@@ -61,8 +62,8 @@ class DnsScreen extends ConsumerWidget {
   String _origin(DnsPlan plan) => dnsOriginLabel(profile, plan);
 
   String _originNote(DnsPlan plan) => plan.usingFallback
-      ? 'This configuration names no resolver of its own, so the app uses one. '
-          'Encrypted, so the local network still learns nothing.'
+      ? 'This configuration names no resolver of its own, so the app uses its '
+          'default — change it in Settings › Default DNS.'
       : 'Chosen by whoever set up this configuration, and it changes with it.';
 }
 
@@ -142,6 +143,9 @@ class _Dropped extends StatelessWidget {
 /// under it.
 DnsPlan dnsPlanForProfile(WidgetRef ref, Profile profile) {
   final state = ref.watch(profilesControllerProvider);
+  // While the preference is still loading the built-in default stands in: the
+  // row would otherwise flash a resolver the user replaced.
+  final fallback = ref.watch(routingPrefsProvider).value?.defaultDns ?? kFallbackNameserver;
   final active = state.active?.id == profile.id;
   final group = active ? state.selectedGroup : null;
   final members = active ? state.selectedGroupMembers : const <Location>[];
@@ -150,13 +154,18 @@ DnsPlan dnsPlanForProfile(WidgetRef ref, Profile profile) {
   if (location == null) {
     // No server to render means no tunnel to reason about; the resolvers
     // themselves are still worth showing, and none of them can be pinned.
-    return dnsPlanFor(dns: profile.dns, outbounds: const {}, carriesUdp: false);
+    return dnsPlanFor(
+        dns: profile.dns,
+        outbounds: const {},
+        carriesUdp: false,
+        fallback: fallback);
   }
   final shape = engineShape(location, group: group, members: members);
   return dnsPlanFor(
     dns: profile.dns,
     outbounds: shape.outbounds,
     carriesUdp: shape.carriesUdp,
+    fallback: fallback,
   );
 }
 

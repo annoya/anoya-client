@@ -147,9 +147,11 @@ proxies:
       );
       final dns = (loadYaml(mihomoTunConfigYaml(noUdp,
           dns: ['1.1.1.1#PROXY'])) as YamlMap)['dns'] as YamlMap;
-      expect(dns['nameserver'], ['https://1.1.1.1/dns-query']);
-      // Reaching the proxy itself is a TCP dial, so the resolver is still fine
-      // for that job.
+      expect(dns['nameserver'], ['https://1.1.1.1/dns-query#PROXY']);
+      // Reaching the proxy itself is a TCP dial, so the resolver the
+      // configuration named is still fine for that job — and it is the only
+      // entry, because a configuration that chose its own resolver does not
+      // get ours added behind its back.
       expect(dns['proxy-server-nameserver'], ['1.1.1.1']);
     });
 

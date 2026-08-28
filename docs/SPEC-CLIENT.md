@@ -142,7 +142,10 @@ field, a Clash-YAML subscription's `dns.nameserver`, an Xray or sing-box
 body's `dns.servers` — and falls back to Cloudflare DoH
 (`https://1.1.1.1/dns-query`) when it names none; share links cannot carry
 DNS. Entries that could not be nameservers are dropped, never escaped into the
-YAML, and hostname-addressed resolvers get a plain-IP bootstrap. Fake-ip mode
+YAML, and hostname-addressed resolvers get a plain-IP bootstrap. When a
+configuration names none, the app's own default stands in — settable in
+Settings › Default DNS, pinned to the tunnel, and backed by a three-operator
+bootstrap for the one job that cannot ride it: resolving the proxy's address. Fake-ip mode
 and range are app constants across configurations.
 
 Each format also says whether a query is issued locally or sent out through

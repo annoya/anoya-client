@@ -16,6 +16,7 @@ import '../../core/rule_set.dart';
 import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../state/profiles_controller.dart';
+import '../../state/providers.dart';
 import '../../state/routing_status.dart';
 import '../dns_screen.dart';
 import 'routing_config_screen.dart';
@@ -856,6 +857,7 @@ class NamesSection extends ConsumerWidget {
       dns: profile.dns,
       outbounds: shape.outbounds,
       carriesUdp: shape.carriesUdp,
+      fallback: ref.watch(routingPrefsProvider).value?.defaultDns ?? kFallbackNameserver,
     );
     final first = plan.resolvers.first;
 

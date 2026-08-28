@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+import 'dns_plan.dart';
 import 'log.dart';
 import 'mihomo_tun_config.dart';
 import 'norm_config.dart';
@@ -201,6 +202,9 @@ class NetworkExtensionCore implements VpnCore {
             members: members,
             routing: config.routing,
             dns: config.dns,
+            defaultDns: config.defaultDns.isEmpty
+                ? kFallbackNameserver
+                : config.defaultDns,
             listPaths: listPaths,
             stack: 'gvisor',
             collectLogs: Log.enabled),
