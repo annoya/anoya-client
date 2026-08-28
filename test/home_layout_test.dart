@@ -173,7 +173,9 @@ void main() {
         ],
       ),
     ]);
-    expect(find.text('vless · xhttp · 1.2.3.4'), findsOneWidget);
+    expect(find.text('VLESS · XHTTP · No TLS'), findsOneWidget);
+    expect(find.textContaining('1.2.3.4'), findsNothing,
+        reason: 'the endpoint is not something the interface shows');
   });
 
 }

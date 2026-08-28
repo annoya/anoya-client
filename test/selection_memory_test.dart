@@ -50,7 +50,11 @@ void main() {
     File('${tmp.path}/profiles.json').writeAsStringSync(
         jsonEncode([profile('p1', 'nexus').toJson(), profile('p2', 'work').toJson()]));
   });
-  tearDown(() {
+  tearDown(() async {
+    // The containers are disposed by their own tearDowns first, but a write
+    // they set going is not awaited by anyone. Deleting the directory out from
+    // under it is a race this harness creates, not one the app has.
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     messenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'), null);
     messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), null);
@@ -66,16 +70,31 @@ void main() {
     addTearDown(container.dispose);
     final ctrl = container.read(profilesControllerProvider.notifier);
     // The load is scheduled from build(); the state says when it has landed.
-    for (var i = 0; i < 200 && container.read(profilesControllerProvider).loading; i++) {
+    for (var i = 0; i < 800 && container.read(profilesControllerProvider).loading; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
     return ctrl;
+  }
+
+  /// Waits for the selection to have reached disk. The write is fire-and-forget
+  /// — nothing in the app waits on it, and it must not — so a test that opens
+  /// the "next launch" immediately is racing the thing it is testing.
+  Future<void> written(String profileId, String selectionId) async {
+    // Generous on purpose: the budget only costs time when something is wrong,
+    // and a suite running everything at once is slower than this file alone.
+    for (var i = 0; i < 800; i++) {
+      final saved = await ProfileStore.loadSelection();
+      if (saved.profileId == profileId && saved.selectionId == selectionId) return;
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    fail('the selection never reached disk');
   }
 
   test('the configuration and the server come back', () async {
     final first = await launch();
     await first.setActive('p2');
     await first.selectLocation('p2-b');
+    await written('p2', 'p2-b');
 
     final next = await launch();
     expect(next.state.active?.id, 'p2');
@@ -89,7 +108,9 @@ void main() {
     // engine happened to be using.
     final first = await launch();
     await first.setActive('p2');
-    await first.selectLocation(const ProxyGroup(name: 'auto', type: 'url-test', members: []).id);
+    const group = ProxyGroup(name: 'auto', type: 'url-test', members: []);
+    await first.selectLocation(group.id);
+    await written('p2', group.id);
 
     final next = await launch();
     expect(next.state.selectedGroup?.name, 'auto');

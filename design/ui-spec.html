@@ -641,7 +641,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           </div></div>
         </div>
       </div>
@@ -669,7 +669,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -698,7 +698,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇵🇱</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · poland.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -718,23 +718,23 @@
         <div class="stitle">Server</div>
         <div class="sh">ALL · 5 SERVERS</div>
         <div class="row act-fill"><span class="flag">🇳🇱</span>
-          <div class="tx"><div class="t">Нидерланды</div><div class="s">vless · xhttp · 94.159.101.110</div></div>
+          <div class="tx"><div class="t">Нидерланды</div><div class="s">VLESS · XHTTP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇸🇪</span>
-          <div class="tx"><div class="t">Швеция</div><div class="s">vless · ws · 45.80.12.7</div></div>
+          <div class="tx"><div class="t">Швеция</div><div class="s">VLESS · WS · TLS</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇩🇪</span>
-          <div class="tx"><div class="t">Германия</div><div class="s">vless · 78.17.229.219</div></div>
+          <div class="tx"><div class="t">Германия</div><div class="s">VLESS · TCP · No TLS</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇯🇵</span>
-          <div class="tx"><div class="t">Токио</div><div class="s">hysteria2 · 45.32.11.8</div></div>
+          <div class="tx"><div class="t">Токио</div><div class="s">Hysteria2 · QUIC · TLS</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇺🇸</span>
-          <div class="tx"><div class="t">США</div><div class="s">до 10 Гбит/с · 45.130.41.9</div></div>
+          <div class="tx"><div class="t">США</div><div class="s">до 10 Гбит/с</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · _pickLocation · транспорт</span><b>Другая подписка — намеренно.</b> Все четырнадцать серверов «ТСПУ Дронов» ходят по голому tcp, так что на ней эта половина строки не появляется ни разу; показывать транспорт на ней было бы нечем. Здесь провайдер, у которого транспорты разные.<br><br><b>Транспорт рядом с протоколом — как в Clash Verge и Happ.</b> «vless» на всех строках подписки одинаков и почти ничего не сообщает; различает их именно транспорт, и когда провайдер держит один и тот же сервер на ws и на xhttp, без него две строки неразличимы.<br><br><b>Показываем только то, что не по умолчанию.</b> Третья строка — обычный tcp, и слова «tcp» там нет: оно не сообщает ничего, а место в строке отнимает у адреса. У hysteria2 транспорта нет вовсе — это QUIC, выбирать нечего, поэтому четвёртая строка тоже из двух частей.<br><br>Одно место, где мы не повторяем движок дословно: <code>httpupgrade</code> хранится как <code>ws</code> с флагом, и показать «ws» значило бы назвать не тот транспорт, который настроен на сервере — пишем «httpupgrade».<br><br>Последняя строка — сервер с описанием провайдера: описание занимает место <b>всей технической половины</b>, включая транспорт. Решение прежнее и по той же причине: провайдеру отдаём то, что ему есть чем заменить, а адрес остаётся, потому что это единственное, чем различаются одинаково названные записи.</p>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation · транспорт</span><b>Другая подписка — намеренно.</b> Все четырнадцать серверов «ТСПУ Дронов» ходят по голому tcp, так что на ней эта половина строки не появляется ни разу; показывать транспорт на ней было бы нечем. Здесь провайдер, у которого транспорты разные.<br><br><b>Протокол, транспорт и защита — перечислением, как в Happ.</b> Три факта через точку: <code>VLESS · TCP · Reality</code>. Разделитель наш, а не вертикальная черта: точка уже разделяет всё остальное в приложении, и вводить второй разделитель ради одной строки значит завести второй язык.<br><br><b>Адреса в строке больше нет.</b> Раньше он стоял последним и обосновывался тем, что различает одинаково названные записи. Но одинаковые имена — это оплошность провайдера, а не задача, которую интерфейс обязан решать за него; платить за неё эндпоинтом на каждой строке дорого. Место, которое он занимал, ушло на то, что действительно различает серверы у одного провайдера.<br><br><b>TCP теперь пишем.</b> Прежде его прятали как «умолчание, которое ничего не сообщает» — верно, пока рядом стоял адрес и место было в цене. В перечислении из трёх пропуск одного элемента читается не как «по умолчанию», а как «не выяснили».<br><br><b>Защита названа всегда, включая её отсутствие.</b> <code>Reality</code>, <code>TLS</code> — или <code>No TLS</code>, потому что «не сказано» и «нечем» для VPN-клиента не одно и то же, и молчание здесь читалось бы как первое.<br><br>Одно место, где мы не повторяем движок дословно: <code>httpupgrade</code> хранится как <code>ws</code> с флагом, и показать «WS» значило бы назвать не тот транспорт, который настроен на сервере.<br><br>Последняя строка — сервер с описанием провайдера: описание занимает место <b>всей</b> технической строки. Провайдеру отдаём то, что ему есть чем заменить.</p>
   </div>
 
   <div class="board">
@@ -757,7 +757,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇭🇰</span>
-            <div class="tx"><div class="t">HostVDS</div><div class="s">vless · hongkong.hostvds.13371488.xyz</div></div>
+            <div class="tx"><div class="t">HostVDS</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -787,7 +787,7 @@
           </div></div>
           <div class="card" style="opacity:.5"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon s muted"><use href="#i-lock"/></svg>
           </div></div>
         </div>
@@ -815,7 +815,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -864,7 +864,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -896,7 +896,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           </div></div>
         </div>
       </div>
@@ -933,7 +933,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -969,7 +969,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇳🇱</span>
-            <div class="tx"><div class="t">Amsterdam</div><div class="s">vless · nl1.acme.dev</div></div>
+            <div class="tx"><div class="t">Amsterdam</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -1031,17 +1031,17 @@
           <div class="tx"><div class="t">PROXY</div><div class="s">Lowest latency of 10 · rechecks every 5 min</div></div></div>
         <div class="sh">FAVORITES</div>
         <div class="row act-fill"><span class="flag">🇩🇪</span>
-          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇵🇱</span>
-          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · poland.nexus.13371488.xyz</div></div>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
         <div class="sh">ALL · 4 OF 14 MATCH</div>
         <div class="row"><span class="flag">🇩🇪</span>
-          <div class="tx"><div class="t">h2.nexus 2</div><div class="s">vless · germany2.nexus.13371488.xyz</div></div>
+          <div class="tx"><div class="t">h2.nexus 2</div><div class="s">VLESS · TCP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇫🇮</span>
-          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · finland.nexus.13371488.xyz</div></div>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
@@ -1084,14 +1084,14 @@
           <div class="tx"><div class="t">WHITE LISTS</div><div class="s">Lowest latency of 2 · rechecks every 5 min</div></div></div>
         <div class="sh">FAVORITES</div>
         <div class="row"><span class="flag">🇩🇪</span>
-          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
         <div class="sh">ALL · 14 SERVERS</div>
         <div class="row"><span class="flag">🇵🇱</span>
-          <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · poland.nexus.13371488.xyz</div></div>
+          <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🏳️</span>
-          <div class="tx"><div class="t">White lists Timeweb</div><div class="s">hysteria2 · wl-timeweb.13371488.xyz</div></div>
+          <div class="tx"><div class="t">White lists Timeweb</div><div class="s">Hysteria2 · QUIC · TLS</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
@@ -1109,20 +1109,20 @@
         <div class="stitle">Server</div>
         <div class="sh">ALL · 6 SERVERS</div>
         <div class="row act-fill"><span class="flag">🇳🇱</span>
-          <div class="tx"><div class="t">Нидерланды</div><div class="s">до 10 Гбит/с · 94.159.101.110</div></div>
+          <div class="tx"><div class="t">Нидерланды</div><div class="s">до 10 Гбит/с</div></div>
           <span class="iconbtn"><svg class="icon s" style="fill:currentColor;color:var(--m-pri)"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇸🇪</span>
-          <div class="tx"><div class="t">Швеция</div><div class="s">для игр, низкий пинг · 45.80.12.7</div></div>
+          <div class="tx"><div class="t">Швеция</div><div class="s">для игр, низкий пинг</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇩🇪</span>
-          <div class="tx"><div class="t">Германия</div><div class="s">если VLESS заблокирован, работае… · 78.17.229.219</div></div>
+          <div class="tx"><div class="t">Германия</div><div class="s">если VLESS заблокирован, работает через CDN</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
         <div class="row"><span class="flag">🇺🇸</span>
-          <div class="tx"><div class="t">США</div><div class="s">vless · 45.130.41.9</div></div>
+          <div class="tx"><div class="t">США</div><div class="s">VLESS · TCP · Reality</div></div>
           <span class="iconbtn"><svg class="icon s muted"><use href="#i-star"/></svg></span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">HomeScreen · _pickLocation · описания провайдера</span><b>И здесь другая подписка.</b> <code>serverDescription</code> «ТСПУ Дронов» не присылает — у неё имена серверов и есть всё описание. Поле встречается у других панелей, и вот как это выглядит.<br><br><b>Описание занимает место протокола, но не адреса.</b> <code>serverDescription</code> — текст провайдера под именем сервера; у Happ он заменяет собой всю техническую подпись («VMess»). Мы отдаём ему только её первую половину.<br><br>Почему не всю строку: <b>адрес — единственное, чем внешне различаются одинаковые записи.</b> На живой подписке мы это уже видели: семь записей с разными именами сидели на двух конфигурациях, и понять, что «Авто» и «Если другие не работают» — один и тот же сервер, можно было только по адресу. Отдать провайдеру всю подпись значит отнять у пользователя последний факт о том, куда он подключается. А протокол внутри одной подписки почти всегда одинаковый и сообщает мало — это и есть та половина, которой не жалко.<br><br>Последняя строка — сервер <b>без</b> описания: подпись остаётся прежней. Смешанный список — обычный случай, и он не должен выглядеть так, будто у части серверов что-то отвалилось. Длинное описание обрезается многоточием на своей половине строки, адрес не сдвигается: он всегда на своём месте, иначе взгляд не может его найти.</p>
+    <p class="cap"><span class="id">HomeScreen · _pickLocation · описания провайдера</span><b>И здесь другая подписка.</b> <code>serverDescription</code> «ТСПУ Дронов» не присылает — у неё имена серверов и есть всё описание. Поле встречается у других панелей, и вот как это выглядит.<br><br><b>Описание занимает место всей технической строки.</b> <code>serverDescription</code> — текст провайдера под именем сервера, и у Happ он ровно так и работает. Раньше мы отдавали ему только половину, оставляя адрес: он считался последним фактом о том, куда идёт подключение. Адреса в строке больше нет, и половинки не осталось — описание заменяет строку целиком.<br><br>Последняя строка — сервер <b>без</b> описания: там обычное перечисление. Смешанный список — рядовой случай, и он не должен выглядеть так, будто у части серверов что-то отвалилось. Длинное описание обрезается многоточием.</p>
   </div>
 
   <div class="board">
@@ -1144,7 +1144,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇳🇱</span>
-            <div class="tx"><div class="t">Нидерланды</div><div class="s">до 10 Гбит/с · 94.159.101.110</div></div>
+            <div class="tx"><div class="t">Нидерланды</div><div class="s">до 10 Гбит/с</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -1209,7 +1209,7 @@
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇳🇱</span>
-            <div class="tx"><div class="t">Amsterdam</div><div class="s">vless · nl1.acme.dev</div></div>
+            <div class="tx"><div class="t">Amsterdam</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -2467,7 +2467,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           </div></div>
         </div>
       </div>
@@ -2497,7 +2497,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
           </div></div>
         </div>
       </div>
@@ -2541,7 +2541,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -2571,7 +2571,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
           </div></div>
           <div class="card"><div class="row">
             <span class="flag">🇩🇪</span>
-            <div class="tx"><div class="t">h2.nexus</div><div class="s">vless · germany.nexus.13371488.xyz</div></div>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
             <svg class="icon muted"><use href="#i-chev"/></svg>
           </div></div>
         </div>
@@ -3111,7 +3111,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div></div>
       <div class="card"><div class="row">
         <span class="flag">🇩🇪</span>
-        <div class="tx"><div class="t">Frankfurt</div><div class="s">vless · 203.0.113.10</div></div>
+        <div class="tx"><div class="t">Frankfurt</div><div class="s">VLESS · TCP · Reality</div></div>
         <svg class="icon muted"><use href="#i-chev"/></svg>
       </div></div>
     </div></div>

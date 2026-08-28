@@ -129,6 +129,13 @@ restart. Both are validated on load — a configuration can be removed and a
 server can disappear from the next refresh of the list it came from — and the
 first-in-the-list default is what remains when either check fails.
 
+A server's row reads `VLESS · TCP · Reality` — protocol, transport, and what
+protects the connection, the enumeration other clients show. The security part
+is always present, including as `No TLS`: for a VPN client "not stated" and
+"nothing there" are different facts. The server's address appears nowhere in
+the interface, not even in a connect error, which names the server by its
+label. A provider's `serverDescription` replaces the whole line.
+
 A word about the copy: everything a subscription supplies is attributed to
 **the subscription**, never to "your provider". ADR-005 is why — a subscription
 is a feed of servers with no account behind it, so naming a company introduces a

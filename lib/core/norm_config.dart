@@ -392,41 +392,65 @@ class Location {
 
   String get proxyType => proxy['type'] as String? ?? '';
 
-  /// How the connection is carried, when that is worth saying: `xhttp`, `ws`,
-  /// `grpc`… Empty for plain TCP, whose name tells the reader nothing and only
-  /// takes room from the address, and for protocols that have no transport to
-  /// choose (hysteria2 is QUIC).
+  /// How the connection is carried, in the name the reader would look up.
   ///
   /// One value is not the engine's own: `httpupgrade` is stored as a websocket
-  /// with a flag, and calling it `ws` would name a transport the server is not
-  /// configured for.
+  /// with a flag, and calling it `WS` would name a transport the server is not
+  /// configured for. QUIC is not stored at all — hysteria2 has no `network`
+  /// because it has no choice — so it is supplied here rather than left blank.
   String get transport {
+    if (proxyType == 'hysteria2') return 'QUIC';
     final network = '${proxy['network'] ?? ''}'.toLowerCase();
-    if (network.isEmpty || network == 'tcp') return '';
     if (network == 'ws') {
       final ws = proxy['ws-opts'];
       final upgrade = ws is Map && ws['v2ray-http-upgrade'] == true;
-      return upgrade ? 'httpupgrade' : 'ws';
+      return upgrade ? 'HTTPUpgrade' : 'WS';
     }
-    return network;
+    return switch (network) {
+      '' || 'tcp' => 'TCP',
+      'grpc' => 'gRPC',
+      'h2' => 'HTTP/2',
+      'http' => 'HTTP',
+      'xhttp' => 'XHTTP',
+      _ => network.toUpperCase(),
+    };
   }
 
-  /// The line under the server's name: what it is, then where it is.
+  /// What protects the connection, always said — including when nothing does.
   ///
-  /// "What it is" is the protocol and the transport — the pair every other
-  /// client shows, because within one subscription the protocol alone is the
-  /// same on every row and the transport is what tells them apart. A provider's
-  /// description replaces that whole technical half; the address survives
-  /// either way, being the only thing that separates two identically named
-  /// entries.
-  String get subtitle {
-    final what = description.isNotEmpty
-        ? description
-        : [proxyType, transport].where((s) => s.isNotEmpty).join(' · ');
-    final server = proxy['server'];
-    if (server == null || '$server'.isEmpty) return what;
-    return what.isEmpty ? '$server' : '$what · $server';
+  /// "Not stated" and "nothing there" are different facts, and for a VPN client
+  /// the difference is the whole point of the line; silence would be read as
+  /// the first.
+  String get security {
+    if (proxy['reality-opts'] != null || proxy['reality'] != null) return 'Reality';
+    // Two protocols carry TLS by construction and do not carry the flag.
+    if (proxyType == 'trojan' || proxyType == 'hysteria2') return 'TLS';
+    return proxy['tls'] == true ? 'TLS' : 'No TLS';
   }
+
+  /// The protocol as it is written down everywhere else.
+  String get protocol => switch (proxyType) {
+        'vless' => 'VLESS',
+        'vmess' => 'VMess',
+        'trojan' => 'Trojan',
+        'ss' => 'Shadowsocks',
+        'hysteria2' => 'Hysteria2',
+        final other => other.toUpperCase(),
+      };
+
+  /// The line under the server's name: protocol, transport and what protects
+  /// it, the enumeration every other client shows.
+  ///
+  /// The address used to end this line, on the argument that it was the only
+  /// thing separating two identically named entries. It is not our argument to
+  /// make: identical names are a mistake in someone else's list, and paying for
+  /// it with an endpoint on every row costs the space the facts above need.
+  ///
+  /// A provider's description replaces the whole line. That is what it is for,
+  /// and with nothing else left on the line there is no half to keep.
+  String get subtitle => description.isNotEmpty
+      ? description
+      : [protocol, transport, security].join(' · ');
 
   factory Location.fromJson(Map<String, dynamic> json) => Location(
         id: json['id'] as String? ?? '',
