@@ -129,6 +129,13 @@ restart. Both are validated on load — a configuration can be removed and a
 server can disappear from the next refresh of the list it came from — and the
 first-in-the-list default is what remains when either check fails.
 
+The session clock counts from `NEVPNConnection.connectedDate` — when the system
+established the tunnel, whoever raised it. iOS starts tunnels from its own VPN
+switch and from on-demand rules, so a clock stamped when the app first looked
+counted from the wrong event: a session hours old read seconds. The app's own
+first sighting stands in while the platform is asked, and stays if it has no
+answer.
+
 A server's row reads `VLESS · TCP · Reality` — protocol, transport, and what
 protects the connection, the enumeration other clients show. The security part
 is always present, including as `No TLS`: for a VPN client "not stated" and

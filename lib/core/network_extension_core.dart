@@ -215,6 +215,27 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
+  /// When the system established the current session.
+  ///
+  /// `NEVPNConnection.connectedDate` — the moment the connection came up,
+  /// whoever brought it up. The app used to stamp its own time on first sight,
+  /// which is right only when the app was watching: a tunnel started from the
+  /// system's VPN switch, or by an on-demand rule, had been running for hours
+  /// and the clock read seconds.
+  @override
+  Future<DateTime?> connectedSince() async {
+    try {
+      final epoch = await _control.invokeMethod<double>('connected_since');
+      if (epoch == null || epoch <= 0) return null;
+      return DateTime.fromMillisecondsSinceEpoch((epoch * 1000).round());
+    } on PlatformException catch (e) {
+      Log.e('NE connected_since failed', e.message ?? e.code);
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
   /// Why the tunnel last stopped, as the system recorded it.
   ///
   /// Empty when there is nothing to tell. A failure inside the extension never
