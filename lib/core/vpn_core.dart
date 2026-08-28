@@ -24,6 +24,15 @@ abstract class VpnCore {
   /// Bring the tunnel up for the given location id.
   Future<void> connect(String locationId);
 
+  /// When the current session was established, as the system recorded it —
+  /// null when there is none, or when the platform cannot say.
+  ///
+  /// Asked rather than stamped locally because the tunnel can be up before the
+  /// app is: started from the system's own VPN switch, or by an on-demand rule.
+  /// A clock started when the app happened to look would count from the wrong
+  /// moment, and the system has the right one.
+  Future<DateTime?> connectedSince() async => null;
+
   /// Tear the tunnel down.
   Future<void> disconnect();
 

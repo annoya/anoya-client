@@ -434,6 +434,14 @@ final class VPNManager {
         statusString(manager?.connection.status ?? .invalid)
     }
 
+    /// When the system established the current session, in epoch seconds; 0
+    /// when there is none. The app cannot work this out for itself: the tunnel
+    /// may have been brought up from the system's VPN switch or by an on-demand
+    /// rule long before the app was launched.
+    func connectedSince() -> Double {
+        manager?.connection.connectedDate?.timeIntervalSince1970 ?? 0
+    }
+
     /// Block-based observers are identified by the token addObserver returns —
     /// removeObserver(self,…) does NOT remove them. Keeping the token is what
     /// stops every loadOrCreate() from stacking another observer (which is why

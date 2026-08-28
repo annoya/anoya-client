@@ -100,6 +100,8 @@ enum VpnChannel {
                 }
             case "status":
                 Task { @MainActor in result(await VPNManager.shared.refreshStatus()) }
+            case "connected_since":
+                Task { @MainActor in result(VPNManager.shared.connectedSince()) }
             case "disconnect_error":
                 Task { @MainActor in result(await VPNManager.shared.lastDisconnectError()) }
             case "group_member":
