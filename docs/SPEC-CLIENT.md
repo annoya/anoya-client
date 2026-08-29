@@ -129,6 +129,13 @@ restart. Both are validated on load — a configuration can be removed and a
 server can disappear from the next refresh of the list it came from — and the
 first-in-the-list default is what remains when either check fails.
 
+How often a configuration re-reads itself is settable per configuration: a gear
+beside the refresh button opens a field in hours — the unit the panel asks in
+(`profile-update-interval`) — with "As the subscription asks" as the way back
+to the source's own period. The app's five-minute floor applies to a user's
+number too; there it is a courtesy to someone else's server rather than a
+defence against a panel.
+
 The session clock counts from `NEVPNConnection.connectedDate` — when the system
 established the tunnel, whoever raised it. iOS starts tunnels from its own VPN
 switch and from on-demand rules, so a clock stamped when the app first looked

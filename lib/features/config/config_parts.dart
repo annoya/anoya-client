@@ -342,17 +342,72 @@ class RefreshCard extends StatelessWidget {
         child: ListTile(
           title: const Text('Last refreshed'),
           subtitle: Text(refreshedAtLabel(profile)),
-          trailing: refreshing
-              ? const SizedBox(
-                  height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh now',
-                  onPressed: onRefresh,
-                ),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            _RefreshEveryButton(profile: profile),
+            if (refreshing)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: SizedBox(
+                    height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh now',
+                onPressed: onRefresh,
+              ),
+          ]),
         ),
       );
 }
+
+/// Sets how often this configuration re-reads itself, in the same unit the
+/// panel asks in.
+///
+/// A period is a request from the source, and the app honours it by default —
+/// but it is spent out of the user's data and battery, so it has to be movable.
+/// The gear sits beside the refresh button because it is the setting for what
+/// that button does on its own.
+class _RefreshEveryButton extends ConsumerWidget {
+  const _RefreshEveryButton({required this.profile});
+
+  final Profile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => IconButton(
+        icon: const Icon(Icons.settings_outlined, size: 20),
+        tooltip: 'Refresh every',
+        onPressed: () => _edit(context, ref),
+      );
+
+  Future<void> _edit(BuildContext context, WidgetRef ref) async {
+    final asked = profile.providerInfo?.updateInterval;
+    final typed = await promptText(
+      context,
+      title: 'Refresh every',
+      label: 'Hours',
+      confirmLabel: 'Save',
+      initial: profile.refreshHours?.toString() ?? '',
+      hint: asked != null && asked > 0 ? '$asked' : '',
+      autocorrect: false,
+      // Getting back to the source's own period has to be an action, not an
+      // empty field: a cleared box reads as a mistake, not as a decision.
+      resetLabel: 'As the subscription asks',
+      resetValue: '',
+    );
+    if (typed == null) return;
+    final trimmed = typed.trim();
+    final hours = trimmed.isEmpty ? null : int.tryParse(trimmed);
+    if (trimmed.isNotEmpty && (hours == null || hours <= 0)) {
+      if (context.mounted) showToast(context, 'Enter a whole number of hours.');
+      return;
+    }
+    await ref
+        .read(profilesControllerProvider.notifier)
+        .setRefreshHours(profile.id, hours);
+  }
+}
+
 
 String refreshedAtLabel(Profile p) {
   final at = p.refreshedAt;
@@ -369,13 +424,9 @@ String refreshedAtLabel(Profile p) {
   return '$ago · $every';
 }
 
-/// How often this configuration re-pulls — what the app actually does, which
-/// is the panel's own cadence (`profile-update-interval`, in **hours**) where
-/// that is slower than our polling floor.
-///
-/// It used to say "every 5 min" always, and read the header as days: a panel
-/// asking for 12 hours was shown as "every 12 days" and polled 144 times inside
-/// each of those hours.
+/// How often this configuration re-pulls — what the app actually does, which is
+/// the user's period where they set one, the panel's `profile-update-interval`
+/// (in **hours**) otherwise, and our polling floor when neither says.
 String _cadence(Profile p) {
   final gap = refreshGapFor(p);
   if (gap.inMinutes < 60) return 'auto every ${gap.inMinutes} min';
@@ -383,6 +434,7 @@ String _cadence(Profile p) {
   final days = gap.inDays;
   return 'auto every ${days == 1 ? 'day' : '$days days'}';
 }
+
 
 /// The routing section for a subscription whose panel sent rules of its own.
 ///

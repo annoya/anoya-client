@@ -43,6 +43,7 @@ class Profile {
     this.providerRoutingProbed = false,
     this.providerInfo,
     this.refreshedAt,
+    this.refreshHours,
   });
 
   final String id;
@@ -145,6 +146,11 @@ class Profile {
 
   final DateTime? refreshedAt;
 
+  /// How often the user asked this configuration to re-read itself, in hours —
+  /// the same unit the panel's own request uses. Null means they did not ask,
+  /// and the source's cadence stands.
+  final int? refreshHours;
+
   /// A single-server source (link) shows no location picker.
   bool get isSingleServer => type == ProfileType.link || locations.length <= 1;
 
@@ -211,6 +217,7 @@ class Profile {
         rendering: rendering,
         renderingProbed: renderingProbed,
         refreshedAt: refreshedAt,
+        refreshHours: refreshHours,
       );
 
   Profile copyWith({
@@ -224,6 +231,10 @@ class Profile {
     bool? routingEnabled,
     List<String>? dns,
     DateTime? refreshedAt,
+    // Nullable on purpose and passed as a wrapper: `null` is a real value here
+    // — "no choice of mine, use the source's" — so `??` cannot tell it from
+    // "leave alone".
+    ({int? value})? refreshHours,
   }) =>
       Profile(
         id: id,
@@ -252,6 +263,7 @@ class Profile {
         rendering: rendering,
         renderingProbed: renderingProbed,
         refreshedAt: refreshedAt ?? this.refreshedAt,
+        refreshHours: refreshHours == null ? this.refreshHours : refreshHours.value,
       );
 
   factory Profile.fromJson(Map<String, dynamic> j) => Profile(
@@ -296,6 +308,7 @@ class Profile {
             : null,
         refreshedAt:
             j['refreshed_at'] != null ? DateTime.tryParse(j['refreshed_at'] as String) : null,
+        refreshHours: j['refresh_hours'] as int?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -324,18 +337,22 @@ class Profile {
         if (renderingProbed) 'rendering_probed': true,
         if (providerInfo != null) 'provider_info': providerInfo!.toJson(),
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
+        if (refreshHours != null) 'refresh_hours': refreshHours,
       };
 }
 
 /// How often the app re-reads a refreshable configuration.
 ///
-/// A subscription's panel may ask for its own cadence
-/// (`profile-update-interval`, in **hours** — the convention's unit). We honour
-/// it where it is slower than our own polling and floor it at [kMinRefreshGap]:
-/// a panel must not be able to make the app call it every minute, and a panel
-/// asking for twelve hours should not be called 144 times in between.
+/// Three answers, in order: the user's, when they set one; the panel's own
+/// request (`profile-update-interval`, in **hours** — the convention's unit);
+/// our polling floor. The user comes first because a panel asking for a cadence
+/// is asking to spend traffic and battery it does not own.
+///
+/// [kMinRefreshGap] survives all three. It used to be a defence against a panel
+/// asking to be called every minute; it is now also a courtesy to someone
+/// else's server.
 Duration refreshGapFor(Profile p) {
-  final hours = p.providerInfo?.updateInterval;
+  final hours = p.refreshHours ?? p.providerInfo?.updateInterval;
   if (hours == null || hours <= 0) return kMinRefreshGap;
   final asked = Duration(hours: hours);
   return asked < kMinRefreshGap ? kMinRefreshGap : asked;

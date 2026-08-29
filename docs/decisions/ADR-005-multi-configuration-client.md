@@ -201,6 +201,11 @@ no business seeing.
 
 ## Where It Lives
 
+- `refreshGapFor` in `client/lib/core/profile.dart` — three answers in order:
+  the user's period (`refreshHours`), the panel's `profile-update-interval`, the
+  app's floor. The user's comes first because a panel asking for a cadence is
+  asking to spend traffic and battery it does not own; the floor survives all
+  three, now also as a courtesy to someone else's server.
 - `client/lib/core/profile.dart`, `config_source.dart`, `profile_store.dart` —
   the last also remembers which configuration was active and what it connected
   through, in `selection.json` beside the list. Kept out of `profiles.json`
