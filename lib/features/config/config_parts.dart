@@ -802,6 +802,14 @@ class ConfigActions extends ConsumerWidget {
   }
 
   Future<void> _remove(BuildContext context, WidgetRef ref) async {
+    // Both captured before the removal, and used instead of `context`/`ref`
+    // after it: the moment the configuration is gone this widget is replaced by
+    // the screen's "nothing to show" placeholder, and asking a dead element to
+    // pop does nothing. That is how removing the *active* configuration left
+    // the user on a blank page — re-pointing the tunnel let a frame through
+    // first, so by the time the pop was reached there was nobody to ask.
+    final nav = Navigator.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -823,12 +831,13 @@ class ConfigActions extends ConsumerWidget {
       } catch (_) {/* ignore */}
     }
     await ctrl.removeProfile(profile.id);
-    if (!context.mounted) return;
     // Only close ourselves while other configurations remain. When that was the
     // last one, the app shell unwinds to the add screen on its own — popping
     // here as well would race it and take the root route down too (leaving an
     // empty navigator, i.e. a black screen).
-    if (ref.read(profilesControllerProvider).hasProfiles) Navigator.of(context).pop();
+    if (container.read(profilesControllerProvider).hasProfiles && nav.mounted) {
+      nav.pop();
+    }
   }
 }
 
