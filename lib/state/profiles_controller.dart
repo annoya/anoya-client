@@ -503,6 +503,16 @@ class ProfilesController extends Notifier<ProfilesState> {
     return merged;
   }
 
+  /// How often this configuration re-reads itself, in hours. Null hands the
+  /// choice back to the source.
+  Future<void> setRefreshHours(String profileId, int? hours) async {
+    await _ready;
+    final p = _byId(profileId);
+    if (p == null) return;
+    _replaceProfile(p.copyWith(refreshHours: (value: hours)));
+    await ProfileStore.save(state.profiles);
+  }
+
   /// Apply a global rule set to a profile. Picking a set also turns routing on:
   /// choosing one and seeing nothing happen would read as a bug.
   Future<void> setRuleSet(String profileId, String ruleSetId) =>

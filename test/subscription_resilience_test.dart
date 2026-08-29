@@ -145,7 +145,7 @@ void main() {
   });
 
   group('the update cadence', () {
-    Profile sub({int? hours, DateTime? refreshedAt}) => Profile(
+    Profile sub({int? hours, DateTime? refreshedAt, int? chosen}) => Profile(
           id: 'p1',
           type: ProfileType.subscription,
           name: 'S',
@@ -154,6 +154,7 @@ void main() {
           providerInfo: SubscriptionInfo.fromHeaders(
               hours == null ? {} : {'profile-update-interval': '$hours'}),
           refreshedAt: refreshedAt,
+          refreshHours: chosen,
         );
 
     test('the header is hours, which is the convention\'s unit', () {
@@ -182,6 +183,23 @@ void main() {
 
     test('one never refreshed is always due', () {
       expect(isDueForRefresh(sub(hours: 12)), isTrue);
+    });
+
+    group('when the user has set a period', () {
+      test('theirs wins over the panel’s request', () {
+        // The panel asks; the traffic and the battery are not its own to spend.
+        expect(refreshGapFor(sub(hours: 12, chosen: 1)), const Duration(hours: 1));
+      });
+
+      test('clearing it hands the choice back to the panel', () {
+        expect(refreshGapFor(sub(hours: 12)), const Duration(hours: 12));
+      });
+
+      test('it survives storage, and "unset" is not zero', () {
+        final restored = Profile.fromJson(sub(hours: 12, chosen: 6).toJson());
+        expect(restored.refreshHours, 6);
+        expect(Profile.fromJson(sub(hours: 12).toJson()).refreshHours, isNull);
+      });
     });
   });
 

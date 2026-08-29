@@ -8,6 +8,7 @@ import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/on_demand.dart';
 import 'package:vpn_client/core/profile.dart';
 import 'package:vpn_client/core/rule_list_store.dart';
+import 'package:vpn_client/core/subscription_info.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/ui.dart';
 import 'package:vpn_client/features/config/config_parts.dart';
@@ -151,6 +152,33 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('https://dns.quad9.net/dns-query'), findsOneWidget);
       expect(find.text('through the tunnel'), findsOneWidget);
+    });
+  });
+
+  group('the refresh period', () {
+    testWidgets('the cadence in force is on the row it belongs to', (tester) async {
+      await pump(tester, profile(ProfileType.subscription).copyWithInterval(12));
+      await tester.scrollUntilVisible(find.text('Last refreshed'), 200);
+      expect(find.textContaining('auto every 12 h'), findsOneWidget);
+    });
+
+    testWidgets('the user’s own period replaces what the panel asked for',
+        (tester) async {
+      await pump(
+          tester,
+          profile(ProfileType.subscription)
+              .copyWithInterval(12)
+              .copyWith(refreshHours: (value: 6)));
+      await tester.scrollUntilVisible(find.text('Last refreshed'), 200);
+      expect(find.textContaining('auto every 6 h'), findsOneWidget);
+    });
+
+    testWidgets('the gear sits beside the refresh button, not on its own row',
+        (tester) async {
+      await pump(tester, profile(ProfileType.subscription).copyWithInterval(12));
+      await tester.scrollUntilVisible(find.text('Last refreshed'), 200);
+      expect(find.byTooltip('Refresh every'), findsOneWidget);
+      expect(find.byTooltip('Refresh now'), findsOneWidget);
     });
   });
 
@@ -387,6 +415,18 @@ extension on Profile {
         ]),
         providerRoutingSkipped: 1,
         providerRoutingEnabled: enabled,
+        refreshedAt: refreshedAt,
+      );
+
+  /// A panel that asked for its own refresh cadence.
+  Profile copyWithInterval(int hours) => Profile(
+        id: id,
+        type: type,
+        name: name,
+        locations: locations,
+        subscriptionUrl: subscriptionUrl,
+        providerInfo:
+            SubscriptionInfo.fromHeaders({'profile-update-interval': '$hours'}),
         refreshedAt: refreshedAt,
       );
 
