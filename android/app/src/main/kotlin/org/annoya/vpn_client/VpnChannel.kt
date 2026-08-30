@@ -2,49 +2,88 @@ package org.annoya.vpn_client
 
 import android.Manifest
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
+import android.os.IBinder
 import android.provider.Settings
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
+import java.util.concurrent.Executors
 
-/// VpnChannel bridges Flutter <-> MihomoVpnService, speaking the same
+/// VpnChannel bridges Flutter <-> the tunnel process, speaking the same
 /// "vpn/control" / "vpn/status" contract as the Apple side, so the Dart core
 /// does not know which platform it is on.
 ///
-/// The one Android-only step is consent: the first start must go through
-/// VpnService.prepare()'s system dialog, which needs an Activity result — the
-/// pending start waits in [onVpnPermissionResult] until the user answers.
+/// The tunnel lives in `:tunnel`, so every question for it is a binder call.
+/// Two rules follow. Binder calls block, so they run on [calls] and never on
+/// the UI thread. And the tunnel process can die without taking the app with
+/// it — that is the point of the split — so a lost binding is a state the app
+/// reports rather than a state it crashes in.
+///
+/// Starting is not a binder call: the app sends the same Intent the system
+/// sends for always-on, and the service reads the config from disk either way.
 object VpnChannel {
 
     private var pendingStart: MethodChannel.Result? = null
     const val PREPARE_REQUEST = 24001
     const val NOTIFICATIONS_REQUEST = 24002
 
-    /// Kept so a re-register (Activity recreated) replaces the listener
-    /// instead of stacking a second one.
-    private var connectListener: ((String) -> Unit)? = null
+    /// Binder calls block for as long as the tunnel process takes to answer —
+    /// a config parse, in the worst case. Never the UI thread.
+    private val calls = Executors.newSingleThreadExecutor()
 
-    fun register(messenger: BinaryMessenger, activity: Activity) {
-        val context = activity.applicationContext
+    @Volatile private var tunnel: ITunnel? = null
+    @Volatile private var lastStatus: String = TunnelState.DISCONNECTED
+    private var events: EventChannel.EventSink? = null
+    private var host: Activity? = null
 
-        // Ask to show notifications on the first successful connect — the
-        // moment the foreground notification exists to be seen, and the ask
-        // explains itself. Without the permission (a runtime one since
-        // Android 13) the tunnel still runs; only the shade entry is silently
-        // dropped. Asked once: a refusal is an answer, not a retry schedule.
-        connectListener?.let { TunnelState.removeListener(it) }
-        val onConnected: (String) -> Unit = { s ->
-            if (s == TunnelState.CONNECTED) {
-                activity.runOnUiThread { maybeAskForNotifications(activity) }
+    private val callback = object : ITunnelCallback.Stub() {
+        override fun onStatus(status: String) {
+            lastStatus = status
+            host?.runOnUiThread {
+                events?.success(status)
+                if (status == TunnelState.CONNECTED) {
+                    host?.let { maybeAskForNotifications(it) }
+                }
             }
         }
-        connectListener = onConnected
-        TunnelState.addListener(onConnected)
+    }
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val t = ITunnel.Stub.asInterface(service)
+            tunnel = t
+            // Registering also delivers what is true right now: the app may
+            // have just been opened over a tunnel the system started hours ago.
+            calls.execute { runCatching { t.registerCallback(callback) } }
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            // The tunnel process died — crashed, or was killed after it
+            // stopped. Either way nothing is carrying traffic now, and saying
+            // so is the honest answer; `disconnect_error` explains why when
+            // there was a reason.
+            tunnel = null
+            lastStatus = TunnelState.DISCONNECTED
+            host?.runOnUiThread { events?.success(TunnelState.DISCONNECTED) }
+        }
+    }
+
+    fun register(messenger: BinaryMessenger, activity: Activity) {
+        host = activity
+        val context = activity.applicationContext
+        // Bound from the start, with AUTO_CREATE: binding creates the service
+        // but does not start a tunnel (onStartCommand is what does), so this
+        // costs an idle process and buys a live status the moment the app opens.
+        context.bindService(
+            Intent(context, MihomoVpnService::class.java), connection, Context.BIND_AUTO_CREATE)
+
         val control = MethodChannel(messenger, "vpn/control")
         control.setMethodCallHandler { call, result ->
             when (call.method) {
@@ -65,25 +104,21 @@ object VpnChannel {
                         activity.startActivityForResult(consent, PREPARE_REQUEST)
                     }
                 }
-                "stop" -> {
-                    MihomoVpnService.instance?.shutdown()
-                    result.success(null)
-                }
+                "stop" -> ask(result) { it.stop(); null }
                 "reload" -> {
                     val config = call.argument<String>("config")
                     if (config == null) {
                         result.error("bad_args", "config required", null); return@setMethodCallHandler
                     }
                     persist(context, config, call.argument<Boolean>("log_enabled") ?: true)
-                    val service = MihomoVpnService.instance
-                    if (service == null) {
-                        result.error("reload_failed", "tunnel is not running", null)
-                    } else {
-                        service.reload(config) { err ->
-                            activity.runOnUiThread {
-                                if (err == null) result.success(null)
-                                else result.error("reload_failed", err.message, null)
-                            }
+                    calls.execute {
+                        val t = tunnel
+                        val err = if (t == null) "tunnel is not running"
+                                  else runCatching { t.reload(config) }
+                                      .getOrElse { it.message ?: "reload failed" }
+                        activity.runOnUiThread {
+                            if (err.isEmpty()) result.success(null)
+                            else result.error("reload_failed", err, null)
                         }
                     }
                 }
@@ -102,60 +137,55 @@ object VpnChannel {
                     // No system profile to remove on Android; what must not
                     // outlive the last configuration is the saved config an
                     // always-on start would run.
-                    MihomoVpnService.instance?.shutdown()
-                    MihomoVpnService.configFile(context).delete()
-                    result.success(null)
+                    calls.execute {
+                        runCatching { tunnel?.stop() }
+                        TunnelFiles.config(context).delete()
+                        activity.runOnUiThread { result.success(null) }
+                    }
                 }
-                "set_on_demand" -> {
-                    // Android's counterpart is always-on, and it is the
-                    // system's own switch — an app can only point at it.
-                    // Never armed from here.
-                    result.success(false)
-                }
-                "is_always_on" -> {
-                    val service = MihomoVpnService.instance
-                    result.success(
-                        Build.VERSION.SDK_INT >= 29 && service != null && service.isAlwaysOn)
-                }
+                // Android's counterpart is always-on, and it is the system's
+                // own switch — an app can only point at it. Never armed here.
+                "set_on_demand" -> result.success(false)
+                "is_always_on" -> ask(result, orElse = false) { it.isAlwaysOn() }
                 "open_vpn_settings" -> {
                     activity.startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
                     result.success(null)
                 }
-                "status" -> result.success(TunnelState.status)
-                "connected_since" -> result.success(TunnelState.connectedSince)
-                "disconnect_error" -> result.success(TunnelState.lastError(context))
+                // Answered from the app's own copy: it is what the last
+                // callback said, and it is still right when the tunnel process
+                // is gone (there is nothing to ask, and nothing running).
+                "status" -> result.success(lastStatus)
+                "connected_since" -> ask(result, orElse = 0.0) { it.connectedSince() }
+                "disconnect_error" -> result.success(TunnelFiles.lastError(context))
                 "group_member" -> {
                     val name = call.argument<String>("group") ?: ""
-                    result.success(
-                        if (TunnelState.status == TunnelState.CONNECTED)
-                            mobile.Mobile.groupMember(name)
-                        else "")
+                    ask(result, orElse = "") { it.groupMember(name) }
                 }
                 "device_info" -> result.success(mapOf(
                     "os" to "Android",
                     "version" to Build.VERSION.RELEASE,
                     "model" to Build.MODEL,
                 ))
-                "shared_dir" -> result.success(MihomoVpnService.engineDir(context).absolutePath)
+                "shared_dir" -> result.success(TunnelFiles.engineDir(context).absolutePath)
                 "set_logging" -> {
                     val on = call.argument<Boolean>("enabled") ?: true
-                    context.getSharedPreferences("vpn_state", Context.MODE_PRIVATE)
-                        .edit().putBoolean("log_enabled", on).apply()
-                    mobile.Mobile.setLogLevel(if (on) "info" else "silent")
-                    result.success(null)
+                    // Written here as well as pushed: with no tunnel running
+                    // there is nobody to tell, and the next start must still
+                    // honour the switch.
+                    TunnelFiles.setLogsEnabled(context, on)
+                    ask(result) { it.setLogging(on); null }
                 }
                 "clear_logs" -> {
-                    // In-process, so unlike the Apple extension this works
-                    // whether or not the tunnel is up.
-                    MihomoVpnService.engineLogFile(context).writeText("")
-                    MihomoVpnService.serviceLogFile(context).writeText("")
+                    // The logs are files in the app's own sandbox, so unlike
+                    // the Apple extension this works with the tunnel down.
+                    TunnelFiles.engineLog(context).writeText("")
+                    TunnelFiles.serviceLog(context).writeText("")
                     result.success(null)
                 }
                 "fetch_log" -> {
-                    val name = call.argument<String>("name") ?: ""
-                    val file = when (name) {
-                        "mihomo" -> MihomoVpnService.engineLogFile(context)
-                        else -> MihomoVpnService.serviceLogFile(context)
+                    val file = when (call.argument<String>("name") ?: "") {
+                        "mihomo" -> TunnelFiles.engineLog(context)
+                        else -> TunnelFiles.serviceLog(context)
                     }
                     result.success(if (file.exists()) file.readText() else "")
                 }
@@ -164,28 +194,27 @@ object VpnChannel {
         }
 
         EventChannel(messenger, "vpn/status").setStreamHandler(object : EventChannel.StreamHandler {
-            private var listener: ((String) -> Unit)? = null
-            override fun onListen(args: Any?, events: EventChannel.EventSink) {
-                val l: (String) -> Unit = { s -> activity.runOnUiThread { events.success(s) } }
-                listener = l
-                TunnelState.addListener(l)
+            override fun onListen(args: Any?, sink: EventChannel.EventSink) {
+                events = sink
+                sink.success(lastStatus)
             }
             override fun onCancel(args: Any?) {
-                listener?.let { TunnelState.removeListener(it) }
-                listener = null
+                events = null
             }
         })
     }
 
-    private fun maybeAskForNotifications(activity: Activity) {
-        if (Build.VERSION.SDK_INT < 33) return
-        if (activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED) return
-        val prefs = activity.getSharedPreferences("vpn_state", Context.MODE_PRIVATE)
-        if (prefs.getBoolean("notifications_asked", false)) return
-        prefs.edit().putBoolean("notifications_asked", true).apply()
-        activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-            NOTIFICATIONS_REQUEST)
+    /// One binder question, off the UI thread, with an answer for the case
+    /// where there is no tunnel process to ask.
+    private fun ask(result: MethodChannel.Result, orElse: Any? = null,
+                    body: (ITunnel) -> Any?) {
+        val activity = host ?: return result.success(orElse)
+        calls.execute {
+            val t = tunnel
+            val value = if (t == null) orElse
+                        else runCatching { body(t) }.getOrDefault(orElse)
+            activity.runOnUiThread { result.success(value) }
+        }
     }
 
     fun onVpnPermissionResult(context: Context, resultCode: Int) {
@@ -195,9 +224,24 @@ object VpnChannel {
             startService(context)
             pending.success(null)
         } else {
-            TunnelState.set(TunnelState.DISCONNECTED)
             pending.error("start_failed", "VPN permission was declined", null)
         }
+    }
+
+    /// Asked on the first successful connect — the moment the foreground
+    /// notification exists to be seen, and the ask explains itself. Without
+    /// the permission (a runtime one since Android 13) the tunnel still runs;
+    /// only the shade entry is silently dropped. Asked once: a refusal is an
+    /// answer, not a retry schedule.
+    fun maybeAskForNotifications(activity: Activity) {
+        if (Build.VERSION.SDK_INT < 33) return
+        if (activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED) return
+        val prefs = activity.getSharedPreferences("vpn_state", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("notifications_asked", false)) return
+        prefs.edit().putBoolean("notifications_asked", true).apply()
+        activity.requestPermissions(
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATIONS_REQUEST)
     }
 
     private fun startService(context: Context) {
@@ -206,8 +250,7 @@ object VpnChannel {
     }
 
     private fun persist(context: Context, config: String, logEnabled: Boolean) {
-        MihomoVpnService.configFile(context).writeText(config)
-        context.getSharedPreferences("vpn_state", Context.MODE_PRIVATE)
-            .edit().putBoolean("log_enabled", logEnabled).apply()
+        TunnelFiles.config(context).writeText(config)
+        TunnelFiles.setLogsEnabled(context, logEnabled)
     }
 }

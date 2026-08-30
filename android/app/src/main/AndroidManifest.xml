@@ -29,14 +29,19 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- The tunnel. BIND_VPN_SERVICE gates it to the system;
-             systemExempted is the foreground type Android 14+ reserves for
-             exactly this. SUPPORTS_ALWAYS_ON opts the app into the system's
-             always-on switch — the Android counterpart of on-demand. -->
+        <!-- The tunnel, in its own process. BIND_VPN_SERVICE gates it to the
+             system; systemExempted is the foreground type Android 14+ reserves
+             for exactly this. SUPPORTS_ALWAYS_ON opts the app into the
+             system's always-on switch — the Android counterpart of on-demand.
+             The `:tunnel` process is what makes the engine's failures the
+             engine's own: a native fault there leaves the app alive to report
+             it, and the system can reclaim the UI without dropping a tunnel
+             the user asked to keep. -->
         <service
             android:name=".MihomoVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:exported="false"
+            android:process=":tunnel"
             android:foregroundServiceType="systemExempted">
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
