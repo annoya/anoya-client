@@ -8,9 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import android.os.Build
-import android.os.ParcelFileDescriptor
+import android.os.IBinder
 import android.system.Os
-import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -18,39 +17,32 @@ import mobile.Mobile
 import mobile.SocketProtector
 
 /// The Android tunnel: VpnService owns the tun fd and routing, the mihomo
-/// engine (gomobile AAR, in-process) reads the fd — the same split as the
-/// Apple Network Extension, minus the process boundary.
+/// engine (gomobile AAR) reads the fd — the same split as the Apple Network
+/// Extension, including the process boundary.
 ///
-/// Two ways in. The app starts it over the control channel with a config it
-/// just wrote to disk; the system starts it directly — always-on at boot, or a
-/// restart after a kill — with no Flutter engine anywhere in sight. Both paths
-/// read the same persisted config, which is why `start` takes no arguments:
-/// a start that needed the app to be alive would make always-on a lie.
+/// It runs in `:tunnel`, and that separation is load-bearing rather than
+/// tidiness. The engine is native code: a fault in it aborts its process. In
+/// one process that took the UI down with it, and the app that was supposed to
+/// report the failure was dead too — the app is built on the opposite
+/// assumption, that a tunnel can die on its own and be explained afterwards
+/// (ADR-004). It also means Android may reclaim the UI process without
+/// touching a tunnel the user asked to stay up.
+///
+/// Two ways in, and only one path: the app starts it over the control channel
+/// with a config it just wrote to disk; the system starts it directly —
+/// always-on at boot, or a restart after a kill — with no app anywhere in
+/// sight. Both read the same persisted config, which is why starting takes no
+/// arguments: a start that needed the app alive would make always-on a lie.
 class MihomoVpnService : VpnService() {
 
     companion object {
         const val ACTION_START = "org.annoya.vpn_client.START"
         const val ACTION_STOP = "org.annoya.vpn_client.STOP"
-
-        /// The running service, reachable because the service shares the app's
-        /// process. Null when the tunnel is down.
-        @Volatile var instance: MihomoVpnService? = null
-            private set
-
-        /// The engine's working directory: rendered config, geo databases,
-        /// logs. The Dart side gets this via `shared_dir` and downloads geo
-        /// data into it, exactly as it does with the App Group container.
-        fun engineDir(context: Context): File =
-            File(context.filesDir, "engine").apply { mkdirs() }
-
-        fun configFile(context: Context): File = File(engineDir(context), "last_config.yaml")
-        fun engineLogFile(context: Context): File = File(engineDir(context), "mihomo.log")
-        fun serviceLogFile(context: Context): File = File(engineDir(context), "tunnel.log")
     }
 
-    /// Engine calls run off the main thread, one at a time: Start/Reload/Stop
-    /// touch shared engine state, and the binder thread that delivers
-    /// onStartCommand must not block on a config parse.
+    /// Engine calls run off the caller's thread, one at a time: start, reload
+    /// and stop all touch shared engine state, and neither a binder thread nor
+    /// the one delivering onStartCommand may block on a config parse.
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
 
     /// The tun fd as a bare number, not a ParcelFileDescriptor: ownership is
@@ -58,10 +50,55 @@ class MihomoVpnService : VpnService() {
     /// directly (no dup) and closes it on Stop — keeping a PFD around meant a
     /// second close() on the same number, which Android's fdsan answers with
     /// SIGABRT, not a log line. detachFd() unregisters our claim; from then on
-    /// the engine is the one owner and this field is only a number to reload
-    /// with.
-    private var tunFd: Int? = null
+    /// the engine is the one owner and this is only a number to reload with.
+    @Volatile private var tunFd: Int? = null
     private var logStream: FileOutputStream? = null
+
+    private val binder = object : ITunnel.Stub() {
+        override fun stop() = shutdown()
+
+        override fun reload(config: String): String {
+            val fd = tunFd ?: return "tunnel is not running"
+            return try {
+                executor.submit<String> {
+                    try {
+                        Mobile.reload(fd.toLong(), config)
+                        log("hot reload applied")
+                        ""
+                    } catch (e: Exception) {
+                        log("hot reload failed: ${e.message}")
+                        e.message ?: "reload failed"
+                    }
+                }.get()
+            } catch (e: Exception) {
+                e.message ?: "reload failed"
+            }
+        }
+
+        override fun status(): String = TunnelState.status
+        override fun connectedSince(): Double = TunnelState.connectedSince
+
+        override fun groupMember(group: String): String =
+            if (TunnelState.status == TunnelState.CONNECTED) {
+                runCatching { Mobile.groupMember(group) }.getOrDefault("")
+            } else ""
+
+        override fun isAlwaysOn(): Boolean =
+            Build.VERSION.SDK_INT >= 29 && this@MihomoVpnService.isAlwaysOn
+
+        override fun setLogging(enabled: Boolean) {
+            TunnelFiles.setLogsEnabled(this@MihomoVpnService, enabled)
+            runCatching { Mobile.setLogLevel(if (enabled) "info" else "silent") }
+        }
+
+        override fun registerCallback(cb: ITunnelCallback) = TunnelState.register(cb)
+        override fun unregisterCallback(cb: ITunnelCallback) = TunnelState.unregister(cb)
+    }
+
+    /// The system's own bind (action `android.net.VpnService`) must get the
+    /// default VpnService binder, or always-on breaks; ours is for the app.
+    override fun onBind(intent: Intent?): IBinder? =
+        if (intent?.action == SERVICE_INTERFACE) super.onBind(intent) else binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // A null intent is the system restarting us after a kill; the
@@ -79,7 +116,7 @@ class MihomoVpnService : VpnService() {
 
     private fun bringUp() {
         try {
-            val config = configFile(this).takeIf { it.exists() }?.readText()
+            val config = TunnelFiles.config(this).takeIf { it.exists() }?.readText()
                 ?: throw IllegalStateException("no saved tunnel config to start from")
 
             // Mirrors the Apple extension's NEPacketTunnelNetworkSettings: the
@@ -102,50 +139,29 @@ class MihomoVpnService : VpnService() {
             tunFd = fd
 
             Mobile.setSocketProtector(object : SocketProtector {
-                override fun protect(sock: Long): Boolean = this@MihomoVpnService.protect(sock.toInt())
+                override fun protect(sock: Long): Boolean =
+                    this@MihomoVpnService.protect(sock.toInt())
             })
-            Mobile.setHomeDir(engineDir(this).absolutePath)
+            Mobile.setHomeDir(TunnelFiles.engineDir(this).absolutePath)
             redirectEngineOutput()
-            Mobile.setLogLevel(if (logsEnabled()) "info" else "silent")
+            Mobile.setLogLevel(if (TunnelFiles.logsEnabled(this)) "info" else "silent")
             log("starting engine on fd $fd")
             Mobile.start(fd.toLong(), config)
-            TunnelState.clearError(this)
+            TunnelFiles.clearError(this)
             TunnelState.set(TunnelState.CONNECTED)
             log("tunnel up")
         } catch (e: Exception) {
             log("start failed: ${e.message}")
-            TunnelState.recordError(this, e.message ?: "start failed")
+            TunnelFiles.recordError(this, e.message ?: "start failed")
             TunnelState.set(TunnelState.ERROR)
             shutdown()
-        }
-    }
-
-    /// Hot switch: new config, same fd, session survives — the engine keeps
-    /// the tun listener when the tun section is unchanged, which ours is by
-    /// design. Throws back to the channel on failure, with the engine still
-    /// running on the previous config.
-    fun reload(config: String, done: (Exception?) -> Unit) {
-        executor.execute {
-            val fd = tunFd
-            if (fd == null) {
-                done(IllegalStateException("tunnel is not running"))
-                return@execute
-            }
-            try {
-                Mobile.reload(fd.toLong(), config)
-                log("hot reload applied")
-                done(null)
-            } catch (e: Exception) {
-                log("hot reload failed: ${e.message}")
-                done(e)
-            }
         }
     }
 
     fun shutdown() {
         executor.execute {
             // Stop closes the fd too — the engine owns it (see tunFd).
-            try { Mobile.stop() } catch (_: Exception) {}
+            runCatching { Mobile.stop() }
             tunFd = null
             TunnelState.set(TunnelState.DISCONNECTED)
             log("tunnel down")
@@ -158,17 +174,12 @@ class MihomoVpnService : VpnService() {
     /// The system already unrouted us; all that is left is honesty.
     override fun onRevoke() {
         log("revoked by the system")
-        TunnelState.recordError(this, "the system revoked the VPN (another VPN app, or turned off in settings)")
+        TunnelFiles.recordError(this,
+            "the system revoked the VPN (another VPN app, or turned off in settings)")
         shutdown()
     }
 
-    override fun onCreate() {
-        super.onCreate()
-        instance = this
-    }
-
     override fun onDestroy() {
-        instance = null
         executor.shutdown()
         super.onDestroy()
     }
@@ -179,7 +190,7 @@ class MihomoVpnService : VpnService() {
     private fun redirectEngineOutput() {
         if (logStream != null) return
         try {
-            val out = FileOutputStream(engineLogFile(this), true)
+            val out = FileOutputStream(TunnelFiles.engineLog(this), true)
             Os.dup2(out.fd, 1)
             Os.dup2(out.fd, 2)
             logStream = out // held so the fd stays open
@@ -188,15 +199,11 @@ class MihomoVpnService : VpnService() {
         }
     }
 
-    private fun logsEnabled(): Boolean =
-        getSharedPreferences("vpn_state", Context.MODE_PRIVATE).getBoolean("log_enabled", true)
-
     private fun log(line: String) {
-        if (!logsEnabled()) return
-        try {
-            serviceLogFile(this).appendText(
-                "${java.time.LocalDateTime.now()} $line\n")
-        } catch (_: Exception) {}
+        if (!TunnelFiles.logsEnabled(this)) return
+        runCatching {
+            TunnelFiles.serviceLog(this).appendText("${java.time.LocalDateTime.now()} $line\n")
+        }
     }
 
     /// The persistent notification a foreground VpnService must carry. Silent
@@ -207,8 +214,7 @@ class MihomoVpnService : VpnService() {
         nm.createNotificationChannel(
             NotificationChannel(channelId, "VPN", NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE)
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return Notification.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_lock)
             .setContentTitle("VPN")

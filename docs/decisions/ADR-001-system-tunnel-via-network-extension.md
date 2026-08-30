@@ -44,10 +44,22 @@ shipped as a separate executable.
 
 ### The same decision on Android (2026-08-30)
 
-The tunnel is a `VpnService` in the app's own process, and the same engine
-package (`native/mihomocore/engine`) is bound by gomobile
-(`mihomocore.aar`, `-tags with_gvisor,cmfa`). The differences are Android's,
-not ours:
+The tunnel is a `VpnService` in its own process (`:tunnel`), and the same
+engine package (`native/mihomocore/engine`) is bound by gomobile
+(`mihomocore.aar`, `-tags with_gvisor,cmfa`).
+
+**The process boundary is load-bearing, not tidiness.** Android does not
+require it — a VpnService runs in the app's process by default, and it did at
+first. The engine is native code, so a fault in it aborts its process: in one
+process that took the UI down with it, observed as an fdsan abort that
+force-finished MainActivity. The app is built on the opposite assumption —
+that a tunnel can die on its own and be explained afterwards (ADR-004) — and
+that assumption is simply false when the reporter dies with the subject. The
+split also lets Android reclaim the UI process without dropping a tunnel the
+user asked to keep, which is what always-on promises. It costs an AIDL
+interface (`ITunnel`) whose surface is the one the method channel already had.
+
+The remaining differences are Android's, not ours:
 
 - **`cmfa` build tag.** Without it mihomo's TUN listener starts a package
   manager that reads `/data/system/packages.xml` — system-only — and the
@@ -66,7 +78,11 @@ not ours:
   close from our side is a process abort under fdsan, not a log line.
 - **One start path.** The service reads the persisted config from disk whether
   the app started it or the system did (always-on at boot, restart after a
-  kill). A start that needed the app alive would make always-on a lie.
+  kill). A start that needed the app alive would make always-on a lie — which
+  is also why starting is an Intent and not a binder call.
+- **Cross-process state is files, not preferences.** `MODE_MULTI_PROCESS` is
+  gone and was never reliable; the disconnect reason and the log switch live in
+  the engine directory, where they survive the process that wrote them.
 - The engine home is the app's files directory (`files/engine`); no App Group
   exists or is needed — service and app share the process.
 

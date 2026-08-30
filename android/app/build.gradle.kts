@@ -27,6 +27,9 @@ android {
         versionName = flutter.versionName
     }
 
+    // The app talks to its tunnel process over ITunnel (src/main/aidl).
+    buildFeatures { aidl = true }
+
     packaging {
         // The engine AAR carries arm64-v8a and x86_64 only, and the build
         // script pins Flutter to the same list — but a native-assets
