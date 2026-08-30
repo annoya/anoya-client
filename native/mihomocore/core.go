@@ -6,9 +6,9 @@
 //	MihomoStop()
 //
 // The extension passes the utun file descriptor (from NEPacketTunnelFlow) and a
-// mihomo config (with a TUN inbound bound to that fd). This file is the C
-// surface; the actual engine wiring lives in engine.go behind startEngine /
-// stopEngine so this surface stays stable while the engine is filled in.
+// mihomo config (with a TUN inbound bound to that fd). This file is only the C
+// surface; the engine wiring lives in the engine package, shared with the
+// Android bindings in ./mobile.
 package main
 
 /*
@@ -19,6 +19,8 @@ import "C"
 import (
 	"sync"
 	"unsafe"
+
+	"mihomocore/engine"
 )
 
 var mu sync.Mutex
@@ -27,7 +29,7 @@ func main() {} // required for c-archive
 
 //export MihomoVersion
 func MihomoVersion() *C.char {
-	return C.CString(engineVersion())
+	return C.CString(engine.Version())
 }
 
 // MihomoSetHomeDir points the engine at its working directory — where it looks
@@ -38,7 +40,7 @@ func MihomoVersion() *C.char {
 func MihomoSetHomeDir(path *C.char) {
 	mu.Lock()
 	defer mu.Unlock()
-	setEngineHomeDir(C.GoString(path))
+	engine.SetHomeDir(C.GoString(path))
 }
 
 // MihomoSetLogLevel applies a mihomo log level ("silent", "error", "warning",
@@ -49,14 +51,14 @@ func MihomoSetHomeDir(path *C.char) {
 func MihomoSetLogLevel(level *C.char) {
 	mu.Lock()
 	defer mu.Unlock()
-	setEngineLogLevel(C.GoString(level))
+	engine.SetLogLevel(C.GoString(level))
 }
 
 //export MihomoStart
 func MihomoStart(fd C.int, configJSON *C.char) *C.char {
 	mu.Lock()
 	defer mu.Unlock()
-	if err := startEngine(int(fd), C.GoString(configJSON)); err != nil {
+	if err := engine.Start(int(fd), C.GoString(configJSON)); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString("")
@@ -71,7 +73,7 @@ func MihomoStart(fd C.int, configJSON *C.char) *C.char {
 func MihomoReload(fd C.int, configJSON *C.char) *C.char {
 	mu.Lock()
 	defer mu.Unlock()
-	if err := reloadEngine(int(fd), C.GoString(configJSON)); err != nil {
+	if err := engine.Reload(int(fd), C.GoString(configJSON)); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString("")
@@ -81,7 +83,7 @@ func MihomoReload(fd C.int, configJSON *C.char) *C.char {
 func MihomoStop() {
 	mu.Lock()
 	defer mu.Unlock()
-	stopEngine()
+	engine.Stop()
 }
 
 // FreeCString lets the caller release strings returned by this library.
@@ -100,5 +102,5 @@ func FreeCString(s *C.char) {
 func MihomoGroupMember(group *C.char) *C.char {
 	mu.Lock()
 	defer mu.Unlock()
-	return C.CString(selectedGroupMember(C.GoString(group)))
+	return C.CString(engine.GroupMember(C.GoString(group)))
 }

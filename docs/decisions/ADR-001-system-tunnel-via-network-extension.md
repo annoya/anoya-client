@@ -42,6 +42,34 @@ shipped as a separate executable.
 - The Swift that is identical on both platforms lives once in
   `client/shared/apple/` and is symlinked into `macos/` and `ios/`.
 
+### The same decision on Android (2026-08-30)
+
+The tunnel is a `VpnService` in the app's own process, and the same engine
+package (`native/mihomocore/engine`) is bound by gomobile
+(`mihomocore.aar`, `-tags with_gvisor,cmfa`). The differences are Android's,
+not ours:
+
+- **`cmfa` build tag.** Without it mihomo's TUN listener starts a package
+  manager that reads `/data/system/packages.xml` — system-only — and the
+  listener dies on the first start. The tag is mihomo's own "running inside an
+  Android app" switch, maintained for ClashMetaForAndroid.
+- **`VpnService.protect()` instead of interface binding.** The engine's dials
+  must leave outside its own tunnel. On Apple that is
+  `auto-detect-interface` + per-dial binding; on Android the detector cannot
+  even start (its route monitor needs a netlink socket, banned for apps since
+  Android 11), and the sanctioned mechanism is `protect()`. It is installed as
+  mihomo's `dialer.DefaultSocketHook`; a dial whose protect failed is refused,
+  so a broken hook goes silent instead of looping. The renderer emits
+  `auto-detect-interface: false` for Android.
+- **The engine owns the tun fd.** `establish()` is followed by `detachFd()`:
+  sing-tun wraps the fd directly (no dup) and closes it on stop, and a second
+  close from our side is a process abort under fdsan, not a log line.
+- **One start path.** The service reads the persisted config from disk whether
+  the app started it or the system did (always-on at boot, restart after a
+  kill). A start that needed the app alive would make always-on a lie.
+- The engine home is the app's files directory (`files/engine`); no App Group
+  exists or is needed — service and app share the process.
+
 ## Invariants
 
 - The engine runs inside the extension process. Nothing downloads, extracts or

@@ -51,6 +51,19 @@ order to turn something off is nonsense.
 **There is no kill switch.** `includeAllNetworks` is not implemented and is not
 planned as a toggle.
 
+### Android (2026-08-30)
+
+Android has no on-demand rules to compile. Its counterpart is the system's
+**Always-on VPN** switch, which lives in system settings next to the system's
+own kill switch ("Block connections without VPN"), and neither can be armed or
+read by the app while the tunnel is down. So on Android the app ships no rule
+editor, no Auto chip, and no toggle: an explainer screen and a button into the
+system's VPN settings (`AlwaysOnScreen`). The saved config that a
+system-initiated start runs is kept current by the same `syncConfig` calls that
+maintain `providerConfiguration` on Apple. Verified end to end: always-on
+enabled in system settings brings the tunnel up at boot with the app never
+opened.
+
 ## Invariants
 
 - The three on-demand facts are never collapsed into one boolean. "Off",

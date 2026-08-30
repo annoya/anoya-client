@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/services.dart';
 
@@ -207,7 +208,8 @@ class NetworkExtensionCore implements VpnCore {
                 : config.defaultDns,
             listPaths: listPaths,
             stack: 'gvisor',
-            collectLogs: Log.enabled),
+            collectLogs: Log.enabled,
+            autoDetectInterface: !Platform.isAndroid),
       };
     } catch (e) {
       Log.e('config render failed', '$e');

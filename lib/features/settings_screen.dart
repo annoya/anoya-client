@@ -12,7 +12,9 @@ import '../state/favorites_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
+import '../core/platform_support.dart';
 import 'about_screen.dart';
+import 'always_on_screen.dart';
 import 'config/config_screen.dart';
 import 'geo_screen.dart';
 import 'logs_screen.dart';
@@ -206,27 +208,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Card(margin: kCardMargin, child: _configurationsRow(st)),
             ],
 
+            // Auto-connect differs by platform in kind, not in detail: Apple
+            // evaluates our on-demand rules, Android has the system's own
+            // Always-on switch we can only point at. Disconnect-on-sleep is a
+            // flag of Apple's VPN protocol and has no Android counterpart.
             const SectionHeader('CONNECTION'),
             Card(
               margin: kCardMargin,
-              child: Column(children: [
-                ListTile(
-                  leading: const Icon(Icons.bolt_outlined),
-                  title: const Text('On demand'),
-                  subtitle: Text(onDemand.statusLabel),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _push(const OnDemandScreen()),
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                SwitchListTile(
-                  secondary: const Icon(Icons.bedtime_outlined),
-                  title: const Text('Disconnect on sleep'),
-                  subtitle: const Text('Drop the tunnel when the device sleeps'),
-                  value: onDemand.disconnectOnSleep,
-                  onChanged: (v) =>
-                      ref.read(onDemandProvider.notifier).setDisconnectOnSleep(v),
-                ),
-              ]),
+              child: supportsOnDemand
+                  ? Column(children: [
+                      ListTile(
+                        leading: const Icon(Icons.bolt_outlined),
+                        title: const Text('On demand'),
+                        subtitle: Text(onDemand.statusLabel),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _push(const OnDemandScreen()),
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      SwitchListTile(
+                        secondary: const Icon(Icons.bedtime_outlined),
+                        title: const Text('Disconnect on sleep'),
+                        subtitle: const Text('Drop the tunnel when the device sleeps'),
+                        value: onDemand.disconnectOnSleep,
+                        onChanged: (v) =>
+                            ref.read(onDemandProvider.notifier).setDisconnectOnSleep(v),
+                      ),
+                    ])
+                  : ListTile(
+                      leading: const Icon(Icons.bolt_outlined),
+                      title: const Text('Always-on VPN'),
+                      subtitle: const Text('A system switch — set in Android settings'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _push(const AlwaysOnScreen()),
+                    ),
             ),
 
             const SectionHeader('ROUTING'),
