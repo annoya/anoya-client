@@ -88,9 +88,13 @@ extension, which doubles as the engine's home directory for geo databases.
 Swift shared by both platforms lives once in `client/shared/apple/` and is
 symlinked into the platform projects.
 
-On Android the tunnel is a `VpnService` in the app's own process; the same
-engine package is bound by gomobile (`mihomocore.aar`, `-tags
-with_gvisor,cmfa`). The service establishes the tun (same addresses, routes and
+On Android the tunnel is a `VpnService` in its own process (`:tunnel`), with
+the same engine package bound by gomobile (`mihomocore.aar`, `-tags
+with_gvisor,cmfa`). The app talks to it over AIDL (`ITunnel`,
+`android/app/src/main/aidl/`); binder calls block, so they never run on the UI
+thread, and facts that must outlive a dead tunnel process — the disconnect
+reason, the log switch — are files in the shared app sandbox rather than
+memory or SharedPreferences (which are not cross-process). The service establishes the tun (same addresses, routes and
 MTU as the Apple settings), hands the fd to the engine — and hands the fd's
 *ownership* with it: sing-tun closes it on stop, and a second close is a
 process abort under fdsan. The engine's own sockets bypass the VPN through
