@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"bytes"
@@ -17,20 +17,20 @@ import (
 // The engine logs while it *parses* a config (geo rule loading, "initial
 // configuration in progress") — before ApplyConfig gets to read log-level out of
 // the YAML. So the level has to be settable up front; this pins that
-// setEngineLogLevel does exactly that.
+// SetLogLevel does exactly that.
 func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 	var out bytes.Buffer
 	logrus.SetOutput(&out)
 	t.Cleanup(func() { logrus.SetOutput(os.Stderr) })
 
-	setEngineLogLevel("info")
+	SetLogLevel("info")
 	log.Infoln("while collecting")
 	if !bytes.Contains(out.Bytes(), []byte("while collecting")) {
 		t.Fatalf("expected the line to be written at info level, got %q", out.String())
 	}
 
 	out.Reset()
-	setEngineLogLevel("silent")
+	SetLogLevel("silent")
 	log.Infoln("after the switch")
 	log.Warnln("and a warning")
 	if out.Len() != 0 {
@@ -38,12 +38,12 @@ func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 	}
 
 	// An unknown level must not silently disable logging.
-	setEngineLogLevel("nonsense")
+	SetLogLevel("nonsense")
 	log.Infoln("still silent")
 	if out.Len() != 0 {
 		t.Fatalf("an unknown level must leave the current one alone, got %q", out.String())
 	}
-	setEngineLogLevel("info")
+	SetLogLevel("info")
 	log.Infoln("back on")
 	if !bytes.Contains(out.Bytes(), []byte("back on")) {
 		t.Fatalf("expected logging to resume, got %q", out.String())
@@ -53,18 +53,18 @@ func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 // A hot reload must never be able to take the running tunnel down: a config
 // that does not parse has to be rejected *before* anything is applied, leaving
 // the engine on the previous config. (Parse happens in full before ApplyConfig
-// in startEngine/reloadEngine, so a returned error means the engine was never
+// in Start/Reload, so a returned error means the engine was never
 // touched.)
 func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
 	// "{" is not parseable YAML; anything parseable would reach ApplyConfig,
 	// which starts real listeners — exactly what this test must not do.
-	if err := reloadEngine(5, "{"); err == nil {
+	if err := Reload(5, "{"); err == nil {
 		t.Fatal("a config that does not parse must be rejected")
 	}
-	if err := reloadEngine(5, ""); err == nil {
+	if err := Reload(5, ""); err == nil {
 		t.Fatal("an empty config must be rejected")
 	}
-	if err := reloadEngine(0, "log-level: info"); err == nil {
+	if err := Reload(0, "log-level: info"); err == nil {
 		t.Fatal("a missing fd must be rejected")
 	}
 }
@@ -85,7 +85,7 @@ func TestMissingGeoDatabaseFailsFastInsteadOfDownloading(t *testing.T) {
 		"rules:\n  - GEOSITE,youtube,DIRECT\n"
 
 	start := time.Now()
-	err := reloadEngine(5, cfg)
+	err := Reload(5, cfg)
 	elapsed := time.Since(start)
 
 	if err == nil {
@@ -105,7 +105,7 @@ func TestMissingGeoDatabaseFailsFastInsteadOfDownloading(t *testing.T) {
 // app. mihomo's decoder quotes the offending config value, and config bodies
 // carry uuids and passwords.
 func TestParseErrorsCarryNoConfigText(t *testing.T) {
-	err := reloadEngine(5, "log-level: info\nport: 'a-secret-looking-value'\n")
+	err := Reload(5, "log-level: info\nport: 'a-secret-looking-value'\n")
 	if err == nil {
 		t.Skip("engine accepted the config; nothing to sanitize")
 	}

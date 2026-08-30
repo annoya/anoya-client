@@ -8,8 +8,8 @@
 
 ## 1. What this is
 
-A Flutter VPN client for macOS and iOS that establishes a system-wide tunnel
-through a swappable engine.
+A Flutter VPN client for macOS, iOS and Android that establishes a system-wide
+tunnel through a swappable engine.
 
 It is a complete product on its own. Nothing in it requires the management
 service from this repository: a user who has only a subscription link or a
@@ -65,7 +65,10 @@ client/
   lib/features    screens
   lib/api         management API client (self-hosted domain only)
   shared/apple    Swift shared by macOS and iOS, symlinked into both projects
-  native/mihomocore   standalone Go module → MihomoCore.xcframework
+  android/app     Kotlin: VpnService, the control channel, the engine AAR
+  native/mihomocore   standalone Go module → MihomoCore.xcframework (Apple)
+                  and mihomocore.aar via gomobile (Android); one engine
+                  package under both surfaces
   design          ui-spec.html + check.js — the source of truth for UI geometry
   scripts         build.sh, leak-check.sh
   test            contract suites
@@ -78,11 +81,24 @@ builds with `GOWORK=off`.
 
 ## 3. Tunnel architecture
 
-The tunnel is an `NEPacketTunnelProvider` extension; mihomo is compiled into it
-as a Go c-archive (`MihomoCore.xcframework`, `-tags with_gvisor`). The host app
-stays sandboxed and shares an App Group with the extension, which doubles as the
-engine's home directory for geo databases. Swift shared by both platforms lives
-once in `client/shared/apple/` and is symlinked into the platform projects.
+On Apple the tunnel is an `NEPacketTunnelProvider` extension; mihomo is
+compiled into it as a Go c-archive (`MihomoCore.xcframework`, `-tags
+with_gvisor`). The host app stays sandboxed and shares an App Group with the
+extension, which doubles as the engine's home directory for geo databases.
+Swift shared by both platforms lives once in `client/shared/apple/` and is
+symlinked into the platform projects.
+
+On Android the tunnel is a `VpnService` in the app's own process; the same
+engine package is bound by gomobile (`mihomocore.aar`, `-tags
+with_gvisor,cmfa`). The service establishes the tun (same addresses, routes and
+MTU as the Apple settings), hands the fd to the engine — and hands the fd's
+*ownership* with it: sing-tun closes it on stop, and a second close is a
+process abort under fdsan. The engine's own sockets bypass the VPN through
+`VpnService.protect()` installed as mihomo's socket hook, not through interface
+binding (`auto-detect-interface: false` there — its route monitor needs a
+netlink socket Android denies to apps). The engine home is the app's files
+directory. Both natives speak one channel contract (`vpn/control`,
+`vpn/status`), so a single Dart core serves all three platforms.
 Rationale and constraints: ADR-001.
 
 ### 3.1 The `VpnCore` seam
@@ -101,9 +117,11 @@ The app never references the engine. `VpnCore`
 | `status`, `statusStream()`, `statsStream()` | state and telemetry |
 | `engineVersion()` | diagnostics |
 
-`NetworkExtensionCore` implements it for macOS and iOS. Config translation
-(bundle → mihomo YAML) lives entirely inside the core implementation and is
-unit-tested (`client/lib/core/mihomo_tun_config.dart`). Other platforms throw
+`NetworkExtensionCore` implements it for macOS, iOS and Android — the class
+only speaks the platform channel, and all three natives answer the same
+contract. Config translation (bundle → mihomo YAML) lives entirely inside the
+core implementation and is unit-tested
+(`client/lib/core/mihomo_tun_config.dart`). Other platforms throw
 `UnsupportedError` until their core is written.
 
 `statsStream()` currently yields nothing.
@@ -374,8 +392,9 @@ tunnel.
   the transport named only when there is one to choose (plain TCP and QUIC
   protocols say nothing) and a provider's `serverDescription` replacing that
   whole technical half.
-- **Settings** — configurations, connection (on-demand, disconnect on sleep),
-  routing (LAN direct, rule sets, geo databases), appearance and language, logs.
+- **Settings** — configurations, connection (on-demand and disconnect-on-sleep
+  on Apple; the Always-on VPN explainer on Android), routing (LAN direct, rule
+  sets, geo databases), appearance and language, logs.
 - **Configuration** — source, refresh, account and quota, routing switch and
   rule set, set active, remove.
 - **Rule sets** and **Routing editor** — simple (service catalog) and advanced
@@ -460,11 +479,23 @@ views converts nothing.
 
 ## 7. Auto-connect
 
-On-demand rules (interface, SSID, DNS domains and servers, probe URL) are
-compiled into `NEOnDemandRule`s and evaluated by the system. The rendered config
-is persisted into `providerConfiguration` so a system-initiated start has
-something to run. Intent, pause and what the OS actually armed are three
+Apple: on-demand rules (interface, SSID, DNS domains and servers, probe URL)
+are compiled into `NEOnDemandRule`s and evaluated by the system. The rendered
+config is persisted into `providerConfiguration` so a system-initiated start
+has something to run. Intent, pause and what the OS actually armed are three
 separate facts and all of them are shown. There is no kill switch. See ADR-004.
+
+Android: the counterpart is the system's **Always-on VPN** — a switch the OS
+owns, next to its own kill switch ("Block connections without VPN"). The app
+can neither arm it nor reliably read it while the tunnel is down, so it offers
+no toggle: a screen describes what the switch gives and one button opens the
+system's VPN settings. The rendered config is persisted into the app's files
+directory for the same reason as `providerConfiguration` on Apple — an
+always-on start happens with no Flutter engine running, and it runs whatever
+configuration was used last, which `syncConfig` keeps current. The on-demand
+rule editor and the home "Auto" chip do not exist on Android
+(`supportsOnDemand` / `supportsAlwaysOn` in
+`client/lib/core/platform_support.dart`).
 
 ---
 

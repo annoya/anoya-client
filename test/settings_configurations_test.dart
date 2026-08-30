@@ -85,7 +85,12 @@ void main() {
 
   testWidgets('the row opens the About screen', (tester) async {
     await pump(tester, [profile('a', 'Config')]);
+    // scrollUntilVisible stops when the row merely exists — a lazy list builds
+    // it in the cache extent while its centre is still past the edge, and a
+    // tap there hits nothing. ensureVisible finishes the job.
     await tester.scrollUntilVisible(find.text('About'), 200);
+    await tester.ensureVisible(find.text('About'));
+    await tester.pump();
     await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
 

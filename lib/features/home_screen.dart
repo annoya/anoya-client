@@ -22,6 +22,7 @@ import '../state/providers.dart';
 import '../state/routing_status.dart';
 import 'config/config_screen.dart';
 import 'logs_screen.dart';
+import '../core/platform_support.dart';
 import 'on_demand_screen.dart';
 import 'rule_sets_screen.dart';
 import 'settings_screen.dart';
@@ -214,12 +215,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         spacing: 8,
         runSpacing: 8,
         children: [
-          _StatusChip(
-            icon: Icons.bolt_outlined,
-            label: 'Auto · $autoLabel',
-            tone: autoTone,
-            onTap: () => _push(const OnDemandScreen()),
-          ),
+          // Only where the label can be true: on Android auto-connect is the
+          // system's Always-on switch, whose state the app cannot read while
+          // the tunnel is down — a chip would show a guess.
+          if (supportsOnDemand)
+            _StatusChip(
+              icon: Icons.bolt_outlined,
+              label: 'Auto · $autoLabel',
+              tone: autoTone,
+              onTap: () => _push(const OnDemandScreen()),
+            ),
           _StatusChip(
             icon: Icons.alt_route,
             // The value is unknown only until the rule set is read off disk, so

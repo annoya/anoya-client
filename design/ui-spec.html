@@ -2314,7 +2314,9 @@ sets): у каждого действие <code>Connect / Disconnect / Ignore</c
 SSID, поисковый DNS-домен, адрес DNS-сервера, URL-проба. Применяется первое совпавшее.
 Ручной «Disconnect» при включённом on-demand <b>ставит автоподключение на паузу</b>, следующий
 «Connect» снимает её. Только Apple-платформы (NEOnDemandRule); на будущих Windows/Linux —
-сторожевой сервис + kill switch.</p>
+сторожевой сервис + kill switch. На Android этой механики нет — там системный
+<b>Always-on VPN</b>: переключатель в настройках ОС, который сама система дергает при загрузке и
+обрыве; последние два борда — Android-вариант секции и экран-объяснение.</p>
 <div class="rail">
 
   <div class="board">
@@ -2466,6 +2468,45 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
     </div></div>
     <p class="cap"><span class="id">OnDemandValuesScreen · empty</span><b>Пусто.</b> Поиск скрыт, пока список короткий. Текст объясняет, что пустое условие не сужает правило, а не ломает его. Ниже — подсказка про формат конкретного условия.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">CONNECTION</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
+          <div class="tx"><div class="t">Always-on VPN</div><div class="s">A system switch — set in Android settings</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      </div>
+      <div class="sh">ROUTING</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-wifi"/></svg>
+          <div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div>
+          <span class="sw"><i></i></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · CONNECTION (Android)</span><b>Android.</b> Вместо «On demand» — одна строка «Always-on VPN», ведущая на экран-объяснение. «Disconnect on sleep» не показывается: это флаг протокола Apple, у Android его нет. Секции с правилами нет вовсе — у системного always-on правил не бывает.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Always-on VPN</span></div>
+      <div class="card" style="margin-top:8px">
+        <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
+          <div class="tx"><div class="t">Started by the system</div><div class="s">At boot, and again whenever the tunnel drops</div></div></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-lock"/></svg>
+          <div class="tx"><div class="t">Block connections without VPN</div><div class="s">The system’s kill switch, on the same screen</div></div></div>
+      </div>
+      <div class="empty">Android owns this switch, so it lives in system settings:
+        Network &amp; internet → VPN → the gear next to this app.
+        The system starts whatever configuration was used last.</div>
+      <div class="btn tonal" style="margin:16px 16px 0"><svg class="icon s"><use href="#i-gear"/></svg>Open system VPN settings</div>
+    </div></div>
+    <p class="cap"><span class="id">AlwaysOnScreen</span><b>Android-замена on demand.</b> Экран ничего не переключает — переключатель принадлежит системе, и приложение не может ни включить его, ни надёжно прочитать, пока туннель лежит. Поэтому карточка описывает, что даёт системный флаг (автозапуск и системный kill switch), а единственная кнопка ведёт в системные настройки VPN. Не обещаем состояние, которого не знаем.</p>
   </div>
 
   <div class="board">
