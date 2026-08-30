@@ -38,6 +38,9 @@ void main() {
         ],
       );
 
+  // Pinned to iOS: the Auto chip belongs to the Apple strip (Android's
+  // auto-connect is the system's Always-on switch, whose state the app cannot
+  // read), and widget tests default to android, where the chip is hidden.
   group('strip', () {
     Future<void> pump(
       WidgetTester tester, {
@@ -60,7 +63,8 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('every chip names its state, not just its subject', (tester) async {
+    testWidgets('every chip names its state, not just its subject', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+        (tester) async {
       await pump(
         tester,
         onDemand: const OnDemandPrefs(
@@ -74,7 +78,8 @@ void main() {
       expect(find.text('Logs · on'), findsOneWidget);
     });
 
-    testWidgets('nothing enabled still shows three chips', (tester) async {
+    testWidgets('nothing enabled still shows three chips', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+        (tester) async {
       await pump(
         tester,
         onDemand: const OnDemandPrefs(),
@@ -89,7 +94,8 @@ void main() {
       expect(find.text('Logs · off'), findsOneWidget);
     });
 
-    testWidgets('armed but not working is its own word', (tester) async {
+    testWidgets('armed but not working is its own word', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+        (tester) async {
       await pump(
         tester,
         onDemand: const OnDemandPrefs(
@@ -104,7 +110,8 @@ void main() {
       expect(find.text('Auto · off'), findsNothing);
     });
 
-    testWidgets('chips open the screen that owns the setting', (tester) async {
+    testWidgets('chips open the screen that owns the setting', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+        (tester) async {
       await pump(
         tester,
         onDemand: const OnDemandPrefs(),

@@ -9,11 +9,13 @@ import '../core/log.dart';
 import '../core/network_extension_core.dart';
 import '../core/vpn_core.dart';
 
-/// The active VPN core. macOS/iOS use the system Network Extension (full
-/// tunnel). Other platforms (Linux/Windows) are not supported yet — their
-/// core will be added behind this same [VpnCore] seam when built.
+/// The active VPN core. macOS/iOS drive the system Network Extension; Android
+/// drives a VpnService with the engine in-process. Both speak the same
+/// "vpn/control" channel contract, so one Dart core serves all three — the
+/// platform difference lives entirely on the native side. Linux/Windows are
+/// not supported yet; their core will be added behind this same [VpnCore] seam.
 final vpnCoreProvider = Provider<VpnCore>((_) {
-  if (Platform.isMacOS || Platform.isIOS) {
+  if (Platform.isMacOS || Platform.isIOS || Platform.isAndroid) {
     return NetworkExtensionCore();
   }
   throw UnsupportedError('No VPN core for this platform yet');

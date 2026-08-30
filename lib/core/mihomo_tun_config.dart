@@ -42,6 +42,7 @@ String mihomoTunConfigYaml(
   Map<String, String> listPaths = const {},
   String stack = 'gvisor',
   bool collectLogs = true,
+  bool autoDetectInterface = true,
 }) {
   final proxy = _mihomoProxy(location);
   // A single server, or a group whose member the engine picks. Either way the
@@ -156,10 +157,15 @@ String mihomoTunConfigYaml(
     // dropped session. The address is the engine's own documented default.
     '  inet6-address:',
     '    - $kTunInet6Address',
-    // NE owns OS routing; mihomo just reads the fd. Detect the physical
-    // interface so the proxy's own outbound does not loop back into the tun.
+    // The host OS owns routing; mihomo just reads the fd.
     '  auto-route: false',
-    '  auto-detect-interface: true',
+    // How the proxy's own outbound avoids looping back into the tun differs by
+    // platform. On Apple the engine detects the physical interface and binds
+    // its dials to it. On Android that detector cannot even start — its route
+    // monitor needs a netlink socket, banned for apps since Android 11 — and
+    // is not needed: VpnService.protect() marks each engine socket to bypass
+    // the VPN, installed as the engine's socket hook.
+    '  auto-detect-interface: $autoDetectInterface',
     '  mtu: 9000',
     'proxies:',
     ...proxyLines,

@@ -1,9 +1,10 @@
-package main
+package engine
 
-// Real mihomo engine wiring. The Network Extension passes the utun file
-// descriptor and a mihomo YAML config (with a TUN inbound). We parse the
-// config, bind the TUN to the provided fd, and apply it. The C surface in
-// core.go is unchanged.
+// Real mihomo engine wiring, shared by every platform shim: the host passes a
+// tun file descriptor and a mihomo YAML config (with a TUN inbound); we parse
+// the config, bind the TUN to the provided fd, and apply it. Apple reaches
+// this through the C surface in ../core.go, Android through the gomobile
+// bindings in ../mobile.
 
 import (
 	"context"
@@ -25,14 +26,14 @@ import (
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
-func engineVersion() string {
+func Version() string {
 	return "mihomo " + constant.Version
 }
 
-// setEngineHomeDir sets mihomo's working directory (GeoIP/GeoSite database
+// SetHomeDir sets mihomo's working directory (GeoIP/GeoSite database
 // location) and the process-wide policy the engine runs under. Must be called
-// before startEngine.
-func setEngineHomeDir(path string) {
+// before Start.
+func SetHomeDir(path string) {
 	if path != "" {
 		constant.SetHomeDir(path)
 	}
@@ -62,22 +63,22 @@ func configureEngineGlobals() {
 	})
 }
 
-// setEngineLogLevel changes the engine's log level on a running tunnel. The
+// SetLogLevel changes the engine's log level on a running tunnel. The
 // level in the config is only read when the config is applied, so without this
 // turning logging off would not take effect until the next connect — while the
 // engine kept writing to its log file the whole time.
-func setEngineLogLevel(level string) {
+func SetLogLevel(level string) {
 	if l, ok := log.LogLevelMapping[strings.ToLower(level)]; ok {
 		log.SetLevel(l)
 	}
 }
 
-func startEngine(fd int, configYAML string) error {
-	_, err := applyEngineConfig(fd, configYAML)
+func Start(fd int, configYAML string) error {
+	_, err := applyConfig(fd, configYAML)
 	return err
 }
 
-// reloadEngine applies a new config to the running engine, keeping the same
+// Reload applies a new config to the running engine, keeping the same
 // tunnel fd. The tun section of our rendered configs never changes between
 // locations/profiles, so mihomo skips re-creating the TUN listener and the fd
 // (and with it the NE session) stays untouched — that is what makes switching
@@ -90,8 +91,8 @@ func startEngine(fd int, configYAML string) error {
 // listener, it survives the swap. Deliberately NOT pinned as `interface-name`:
 // that would take priority over the detector and go stale the moment the machine
 // changes network.
-func reloadEngine(fd int, configYAML string) error {
-	cfg, err := applyEngineConfig(fd, configYAML)
+func Reload(fd int, configYAML string) error {
+	cfg, err := applyConfig(fd, configYAML)
 	if err != nil {
 		return err
 	}
@@ -120,7 +121,7 @@ func closeTrackedConnections() int {
 	return closed
 }
 
-func applyEngineConfig(fd int, configYAML string) (*config.Config, error) {
+func applyConfig(fd int, configYAML string) (*config.Config, error) {
 	if fd <= 0 {
 		return nil, fmt.Errorf("invalid tun fd %d", fd)
 	}
@@ -199,7 +200,7 @@ func logProxyEgress(cfg *config.Config) {
 	_ = conn.Close()
 }
 
-func stopEngine() {
+func Stop() {
 	executor.Shutdown()
 	// Shutdown closes the TUN listener but leaves LastTunConf populated, and
 	// re-creation is skipped whenever the new conf compares equal — our tun
@@ -211,7 +212,7 @@ func stopEngine() {
 	listener.ReCreateTun(LC.Tun{}, nil)
 }
 
-// selectedGroupMember returns the member a proxy group is currently sending
+// GroupMember returns the member a proxy group is currently sending
 // traffic through, or "" when there is no such group.
 //
 // Read in process, deliberately: mihomo also exposes this over its HTTP API,
@@ -222,7 +223,7 @@ func stopEngine() {
 // The name returned is the engine-side one (`p0`, `p1`, …) that the renderer
 // generated; the app maps it back to the label the provider gave. Provider text
 // never has to cross this boundary.
-func selectedGroupMember(group string) string {
+func GroupMember(group string) string {
 	proxies := tunnel.Proxies()
 	p, ok := proxies[group]
 	if !ok {
