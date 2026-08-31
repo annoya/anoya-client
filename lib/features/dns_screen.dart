@@ -154,6 +154,8 @@ DnsPlan dnsPlanForProfile(WidgetRef ref, Profile profile) {
   if (location == null) {
     // No server to render means no tunnel to reason about; the resolvers
     // themselves are still worth showing, and none of them can be pinned.
+    // (A server that exists but has not been issued yet gets the same answer,
+    // from [engineShape] itself.)
     return dnsPlanFor(
         dns: profile.dns,
         outbounds: const {},
@@ -176,6 +178,7 @@ String dnsOriginLabel(Profile profile, DnsPlan plan) {
   return switch (profile.type) {
     ProfileType.subscription => 'from your subscription',
     ProfileType.selfhosted => 'from your organisation',
+    ProfileType.amnezia => 'from your subscription',
     ProfileType.link => 'from this configuration',
   };
 }

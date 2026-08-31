@@ -329,7 +329,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// Push the log level into the running engine: "info" while collecting,
     /// "silent" when the user turned logging off.
     private func applyEngineLogLevel(_ enabled: Bool) {
-        let level = enabled ? "info" : "silent"
+        // Matches what the rendered config asks for: collecting logs means
+        // wanting the engine's verbose channel, where a WireGuard handshake
+        // that never completed is the only place the failure appears.
+        let level = enabled ? "debug" : "silent"
         level.withCString { MihomoSetLogLevel(UnsafeMutablePointer(mutating: $0)) }
     }
 

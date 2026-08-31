@@ -1,4 +1,5 @@
 import '../api/api_client.dart';
+import 'amnezia/amnezia_source.dart';
 import 'log.dart';
 import 'profile.dart';
 import 'profile_store.dart';
@@ -25,9 +26,44 @@ sealed class ConfigSource {
   /// (the controller treats an identical return as "no change").
   Future<Profile> refresh() async => profile;
 
+  /// Resolve whatever the selected server needs before it is handed to the
+  /// engine, returning an updated [Profile] (or the same one when nothing was
+  /// missing).
+  ///
+  /// Most sources publish their servers up front and have nothing to do here.
+  /// A gateway that issues a server on demand does: without this the app would
+  /// have to either fetch every location's settings at once — spending device
+  /// slots on places the user never picks — or discover at connect time that
+  /// it has a name and no server behind it.
+  ///
+  /// [force] means the user just changed what they are connecting through, so
+  /// the answer must come from the source rather than from anything held: what
+  /// a place *is* belongs to the gateway, and a server it issued earlier may
+  /// since have been rotated away from the account.
+  Future<Profile> resolveSelection(String selectionId, {bool force = false}) async =>
+      profile;
+
   /// Release any resources tied to this profile (e.g. a stored token) when it
   /// is removed. No-op unless overridden.
   Future<void> dispose() async {}
+}
+
+/// An Amnezia subscription. The work is [AmneziaSource]'s; this is the arm
+/// that lets the controller reach it without knowing what it is.
+final class AmneziaConfigSource extends ConfigSource {
+  const AmneziaConfigSource(super.profile);
+
+  AmneziaSource get _inner => AmneziaSource(profile);
+
+  @override
+  Future<Profile> refresh() => _inner.refresh();
+
+  @override
+  Future<Profile> resolveSelection(String selectionId, {bool force = false}) =>
+      _inner.resolveSelection(selectionId, force: force);
+
+  @override
+  Future<void> dispose() => _inner.dispose();
 }
 
 /// Self-hosted: an authenticated management server delivers the full bundle.
@@ -166,6 +202,7 @@ final class LinkSource extends ConfigSource {
 ConfigSource configSourceFor(Profile p) => switch (p.type) {
       ProfileType.selfhosted => SelfhostedSource(p),
       ProfileType.subscription => SubscriptionSource(p),
+      ProfileType.amnezia => AmneziaConfigSource(p),
       ProfileType.link => LinkSource(p),
     };
 

@@ -45,6 +45,8 @@ dependencies:
   share_plus: ^12.0.2
   flutter_svg: ^2.0.10    # brand glyphs in the routing service catalog
   url_launcher: ^6.3.2
+  ffi: ^2.2.0              # the Amnezia gateway SDK is a C ABI (native/libagw)
+  cryptography: ^2.9.0
 
 dev_dependencies:
   flutter_test:

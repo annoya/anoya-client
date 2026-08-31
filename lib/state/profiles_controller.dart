@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
+import '../core/amnezia/amnezia_source.dart';
+import '../core/amnezia/vpn_key.dart';
 import '../core/app_error.dart';
 import '../core/config_source.dart';
 import '../core/geo_store.dart';
@@ -43,6 +45,7 @@ class ProfilesState {
     this.loading = false,
     this.switching = false,
     this.error,
+    this.notice,
   });
 
   final List<Profile> profiles;
@@ -54,7 +57,15 @@ class ProfilesState {
   /// swapped onto another location/profile. Rows ignore taps meanwhile.
   final bool switching;
 
+  /// Blocks what the user asked for: shown as a dialog they have to dismiss.
   final AppError? error;
+
+  /// Happened, changed nothing, needs no decision — a toast (§9 of the spec).
+  /// Separate from [error] because the difference is what the user has to do
+  /// about it, not how bad it sounds: a refresh that failed and a server that
+  /// could not be issued both leave the previous one working, and both should
+  /// read the same wherever they surface.
+  final AppError? notice;
 
   bool get hasProfiles => profiles.isNotEmpty;
 
@@ -108,6 +119,7 @@ class ProfilesState {
     bool? loading,
     bool? switching,
     AppError? error,
+    AppError? notice,
   }) =>
       ProfilesState(
         profiles: profiles ?? this.profiles,
@@ -116,6 +128,7 @@ class ProfilesState {
         loading: loading ?? this.loading,
         switching: switching ?? this.switching,
         error: error, // reset each transition unless passed
+        notice: notice, // same: a message is for the transition that set it
       );
 }
 
@@ -354,6 +367,37 @@ class ProfilesController extends Notifier<ProfilesState> {
     ));
   }
 
+  /// Adds an Amnezia subscription from its `vpn://` key.
+  ///
+  /// The key alone is not a configuration: it names the subscription and
+  /// nothing else, so the gateway is asked what it may connect to before the
+  /// profile is kept. A key the gateway refuses is not added at all — a
+  /// configuration with no servers and an error where the locations should be
+  /// is worse than never having accepted it.
+  Future<void> addAmneziaKey(String text) async {
+    await _ready;
+    final key = parseAmneziaVpnKey(text);
+    if (key == null) {
+      throw const FormatException('This is not a subscription key.');
+    }
+    final refusal = amneziaKeyUnsupported(key);
+    if (refusal != null) {
+      throw AppErrorException(
+          AppError('${key.name} isn’t supported here', detail: refusal));
+    }
+    final id = _newId();
+    // The credential goes to the keychain first: if the gateway call fails,
+    // the orphaned entry is cleaned up below rather than left behind.
+    await ProfileStore.saveAmneziaKey(id, key.apiKey);
+    try {
+      final resolved = await AmneziaSource(amneziaProfileFor(key, id: id)).refresh();
+      await _append(resolved);
+    } catch (e) {
+      await ProfileStore.deleteAmneziaKey(id);
+      rethrow;
+    }
+  }
+
   Future<void> _append(Profile p) async {
     await _ready;
     final profiles = [...state.profiles, p];
@@ -366,6 +410,35 @@ class ProfilesController extends Notifier<ProfilesState> {
     // A new configuration becomes the active one, so it is what on-demand
     // should bring up from now on.
     await syncTunnelConfig();
+  }
+
+  /// Asks the source to fill in whatever the chosen server still needs, and
+  /// keeps the answer. Returns the profile unchanged when there was nothing to
+  /// do, which is every source but one.
+  Future<Profile> _resolveSelection(Profile p, String selectionId,
+      {bool force = false}) async {
+    final resolved =
+        await configSourceFor(p).resolveSelection(selectionId, force: force);
+    if (identical(resolved, p)) return p;
+    await _replace(resolved);
+    return resolved;
+  }
+
+  /// Stores an updated profile in place, leaving the rest of the state alone.
+  Future<void> _replace(Profile p) async {
+    final profiles = [
+      for (final existing in state.profiles) existing.id == p.id ? p : existing,
+    ];
+    await ProfileStore.save(profiles);
+    state = state.copyWith(profiles: profiles);
+  }
+
+  /// What to call the selection in a message to the user.
+  String _selectionLabel(String selectionId) {
+    for (final l in state.locations) {
+      if (l.id == selectionId) return l.label;
+    }
+    return state.active?.name ?? '';
   }
 
   Profile? _byId(String id) {
@@ -432,13 +505,45 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// only needs to reach the persisted config for the next start.
   Future<void> _applySelection() async {
     final core = ref.read(vpnCoreProvider);
+    var p = state.active;
+    final selection = state.selectionId;
+    if (p == null || selection == null) return;
+
+    // Ask the source for the server first, whether or not a tunnel is running.
+    // On a live tunnel this *is* the switch. With the tunnel down it is what
+    // makes the stored config runnable: the system can start it later with no
+    // app in memory — from the VPN switch in settings, or from always-on — and
+    // a place with no server behind it would fail there, where there is nobody
+    // to tell. It is also what keeps the configuration screen describing the
+    // server the user actually picked.
+    //
+    // Held under `switching` because it is not instant: a gateway round trip
+    // with no sign of it would leave Connect tappable before there is anything
+    // to connect with, and the user would meet a refusal whose only cause is
+    // that we had not asked yet.
+    // Forced: the user just chose this place, and what it is belongs to the
+    // source. Reusing a server it issued earlier would mean connecting through
+    // something the gateway may already have rotated off the account.
+    state = state.copyWith(switching: true);
+    try {
+      p = await _resolveSelection(p, selection, force: true);
+    } catch (e) {
+      Log.e('issuing the selected server failed', '$e');
+      // Nothing is blocked: the previous server still works and Connect still
+      // does something. That makes this a notice, not a dialog (spec §9).
+      state = state.copyWith(
+        switching: false,
+        notice: AppError('Couldn’t get the server for ${_selectionLabel(selection)}',
+            detail: describeError(e).detail ?? 'The previous one is still in use.'),
+      );
+      return;
+    }
+    state = state.copyWith(switching: false);
+
     if (core.status != VpnStatus.connected) {
       await syncTunnelConfig();
       return;
     }
-    final p = state.active;
-    final selection = state.selectionId;
-    if (p == null || selection == null) return;
     state = state.copyWith(switching: true);
     try {
       await core.reload(await _normConfig(p), selection);
@@ -475,7 +580,8 @@ class ProfilesController extends Notifier<ProfilesState> {
     // remote-owned fields onto the profile as it is NOW — the user may have
     // edited the local half (rule set, routing switch) while the request was
     // in flight, and persisting the snapshot would silently revert that.
-    final merged = (_byId(id) ?? p).withBundle(
+    final current = _byId(id) ?? p;
+    final merged = current.withBundle(
       locations: updated.locations,
       account: updated.account,
       routing: updated.routing,
@@ -492,6 +598,13 @@ class ProfilesController extends Notifier<ProfilesState> {
       rendering: updated.rendering,
       renderingProbed: updated.renderingProbed,
       refreshedAt: updated.refreshedAt ?? DateTime.now(),
+      // The gateway owns what the subscription *is*; which servers we have
+      // been issued and when they expire is ours, and a config resolved while
+      // this request was in flight must not be undone by an older snapshot.
+      amnezia: updated.amnezia == null
+          ? current.amnezia
+          : (current.amnezia ?? updated.amnezia!)
+              .copyWith(account: updated.amnezia!.account),
     );
     _replaceProfile(merged);
     await ProfileStore.save(state.profiles);
@@ -627,6 +740,11 @@ class ProfilesController extends Notifier<ProfilesState> {
                 detail: 'Refresh it, or add another configuration.'));
         return;
       }
+      // Some sources issue a server only when it is asked for, and one may
+      // have expired since it was last used. Done here rather than at
+      // selection time as well: the tunnel is about to carry traffic, and this
+      // is the last moment a stale config can still be replaced quietly.
+      p = await _resolveSelection(p, selection);
       await core.load(await _normConfig(p));
       await core.connect(selection);
       _lastReapply = DateTime.now();
@@ -645,6 +763,8 @@ class ProfilesController extends Notifier<ProfilesState> {
 
   /// Drops the banner the user just dismissed.
   void clearError() => state = state.copyWith(error: null);
+
+  void clearNotice() => state = state.copyWith(notice: null);
 
   Future<void> disconnect() async {
     _stopExpected = true;
@@ -688,12 +808,19 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// nothing until a VPN profile exists (creating one would pop the system
   /// approval dialog at a surprising moment).
   Future<void> syncTunnelConfig() async {
-    final p = state.active;
+    var p = state.active;
     final selection = state.selectionId;
     if (p == null || selection == null) return;
     try {
+      // Whatever is stored must be runnable on its own: a system-initiated
+      // start has no app to fetch anything for it. Costs nothing for a source
+      // that publishes its servers, and nothing again for one that issues them
+      // once the config in hand is still good.
+      p = await _resolveSelection(p, selection);
       await ref.read(vpnCoreProvider).syncConfig(await _normConfig(p), selection);
     } catch (e) {
+      // Best-effort by design: every caller here is a side effect of something
+      // else the user did, and the next connect writes the config anyway.
       Log.e('tunnel config sync failed', '$e');
     }
   }
@@ -701,7 +828,17 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// The config the core would run for [p] right now (routing resolved, LAN
   /// rules and geo availability applied). Exposed so on-demand can hand it to
   /// the system when arming.
-  Future<NormConfig> effectiveConfig(Profile p) => _normConfig(p);
+  ///
+  /// Arming is the one moment outside a connect that genuinely needs a server
+  /// in hand: the system will bring this up with no app running, so a source
+  /// that issues servers on demand has to be asked now. Without this, arming
+  /// an Amnezia subscription that had never connected reported "not armed"
+  /// and gave no reason — the system had refused a config we never sent.
+  Future<NormConfig> effectiveConfig(Profile p) async {
+    final selection = state.selectionId;
+    final resolved = selection == null ? p : await _resolveSelection(p, selection);
+    return _normConfig(resolved);
+  }
 
   /// Builds a NormConfig for the core from a profile: its locations + the
   /// effective routing. Precedence: server-managed policy (self-hosted), else

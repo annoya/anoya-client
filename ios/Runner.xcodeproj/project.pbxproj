@@ -21,6 +21,7 @@
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		C03E7F4E664138EA498A71C0 /* VPNManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B16396960913B0A37EF883E0 /* VPNManager.swift */; };
 		FCF4CAFD7143D1143147C66D /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B49AACD2FAA77C94ADA3519 /* Pods_Runner.framework */; };
+		A6A61AGW0000000000000002 /* Libagw.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A61AGW0000000000000001 /* Libagw.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,6 +96,7 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB693180F7D004BFA8C64114 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B16396960913B0A37EF883E0 /* VPNManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VPNManager.swift; sourceTree = "<group>"; };
+		A6A61AGW0000000000000001 /* Libagw.xcframework */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = wrapper.xcframework; name = Libagw.xcframework; path = ../native/libagw/Libagw.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -144,6 +146,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6A61AGW0000000000000002 /* Libagw.xcframework in Frameworks */,
 				FCF4CAFD7143D1143147C66D /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -188,6 +191,7 @@
 			children = (
 				6E1CF7BD30088D52009BE363 /* NetworkExtension.framework */,
 				27BAF2BCC69D45BB6020E901 /* MihomoCore.xcframework */,
+				A6A61AGW0000000000000001 /* Libagw.xcframework */,
 				5B49AACD2FAA77C94ADA3519 /* Pods_Runner.framework */,
 				AB693180F7D004BFA8C64114 /* Pods_RunnerTests.framework */,
 			);

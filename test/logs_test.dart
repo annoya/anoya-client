@@ -75,7 +75,10 @@ void main() {
         label: 'DE',
         proxy: {'type': 'vless', 'server': '1.2.3.4', 'port': 443, 'uuid': 'u'},
       );
-      expect(mihomoTunConfigYaml(location), contains('log-level: info'));
+      // debug, not info: collecting logs is for finding out why something
+      // failed, and the engine reports a handshake that never completed only
+      // on its verbose channel.
+      expect(mihomoTunConfigYaml(location), contains('log-level: debug'));
       expect(mihomoTunConfigYaml(location, collectLogs: false), contains('log-level: silent'));
     });
 

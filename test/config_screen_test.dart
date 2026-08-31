@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vpn_client/core/amnezia/amnezia_account.dart';
+import 'package:vpn_client/core/device_identity.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/on_demand.dart';
 import 'package:vpn_client/core/profile.dart';
@@ -111,6 +115,36 @@ void main() {
     await expectFullWidthButtons(tester);
   });
 
+  testWidgets('the id the subscription counts this device by can be copied',
+      (tester) async {
+    // The panel says a slot is taken, never which device holds it — so the one
+    // question support asks has to be answerable from this screen.
+    DeviceIdentityStore.debugCache(const DeviceIdentity(
+        hwid: '7f3a9c21e4b84a2c9d0f1b3e5a6c5d0146',
+        os: 'macos',
+        osVersion: '15.0',
+        model: 'MacBook Pro'));
+    addTearDown(() => DeviceIdentityStore.debugCache(null));
+    String? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') copied = call.arguments['text'] as String?;
+      return null;
+    });
+    addTearDown(() => tester.binding.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null));
+
+    await pump(tester, profile(ProfileType.subscription).copyWithDeviceLimit());
+    await tester.pump();
+    await tester.scrollUntilVisible(find.text('Device id'), 200);
+
+    // Short enough to read back over the phone, whole in the clipboard.
+    expect(find.text('7f3a9c21e4b8…6c5d0146'), findsOneWidget);
+    await tester.tap(find.byTooltip('Copy'));
+    await tester.pump();
+    expect(copied, '7f3a9c21e4b84a2c9d0f1b3e5a6c5d0146');
+  });
+
   group('the routing row', () {
     testWidgets('carries both facts the sections it replaced used to show',
         (tester) async {
@@ -180,6 +214,100 @@ void main() {
       expect(find.byTooltip('Refresh every'), findsOneWidget);
       expect(find.byTooltip('Refresh now'), findsOneWidget);
     });
+  });
+
+  testWidgets('an Amnezia subscription opens before any server is issued',
+      (tester) async {
+    // Its locations are real and pickable, but they carry no settings until
+    // the gateway is asked for one (ADR-009). Everything on this screen that
+    // asks "what would the engine get" meets them first, and the renderer
+    // refuses an empty proxy on purpose — so the screen threw on open.
+    await pump(
+      tester,
+      Profile(
+        id: 'p1',
+        type: ProfileType.amnezia,
+        name: 'Amnezia Premium',
+        locations: [
+          Location(
+              id: 'amnezia_de_awg',
+              label: 'Germany',
+              proxy: const {},
+              description: 'AmneziaWG'),
+        ],
+        amnezia: const AmneziaState(
+          serviceType: 'amnezia-premium',
+          serviceProtocol: 'awg',
+          userCountryCode: 'ru',
+          account: AmneziaAccount(activeDevices: 5, maxDevices: 7),
+        ),
+        refreshedAt: DateTime.now(),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    // And the screen behind the routing row, which asks the same question a
+    // second time and threw on its own after the first was fixed.
+    await openRouting(tester);
+    expect(tester.takeException(), isNull);
+    expect(find.text('DNS'), findsWidgets);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Amnezia Premium'), findsWidgets);
+    expect(find.text('Devices'), findsOneWidget);
+    expect(find.text('5 of 7 used'), findsOneWidget);
+    // Nothing was said about an end date, so nothing claims one.
+    expect(find.text('Runs until'), findsNothing);
+  });
+
+  testWidgets('a subscription shows no numbers it was never given',
+      (tester) async {
+    // The gateway answers about premium and free with different amounts, and
+    // it can answer about either with less than usual. A dash where a number
+    // would go, or "0 of 0" devices, asserts a value exists and is empty.
+    await pump(
+      tester,
+      Profile(
+        id: 'p1',
+        type: ProfileType.amnezia,
+        name: 'Amnezia Premium',
+        locations: [
+          Location(id: 'amnezia_de_awg', label: 'Germany', proxy: const {}),
+        ],
+        amnezia: const AmneziaState(
+          serviceType: 'amnezia-premium',
+          serviceProtocol: 'awg',
+          userCountryCode: 'ru',
+          account: AmneziaAccount(description: 'Premium, one year.'),
+        ),
+        refreshedAt: DateTime.now(),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Devices'), findsNothing);
+    expect(find.text('Runs until'), findsNothing);
+    // Not even the description fills the gap: what Amnezia sends there is the
+    // sales copy for a plan the user has already bought, and printing it where
+    // the dates and slots should be would read as an answer.
+    expect(find.textContaining('Premium, one year.'), findsNothing);
+  });
+
+  testWidgets('every refresh that fails says so the same way', (tester) async {
+    // One event, one wording, whichever domain the configuration belongs to:
+    // the user should not have to work out whether two screens are telling
+    // them about the same thing.
+    final wordings = <String>{};
+    for (final f in [
+      File('lib/features/config/amnezia_config_screen.dart'),
+      File('lib/features/config/subscription_config_screen.dart'),
+      File('lib/features/config/selfhosted_config_screen.dart'),
+    ]) {
+      final m = RegExp(r"'(Couldn’t refresh[^']*)").firstMatch(f.readAsStringSync());
+      expect(m, isNotNull, reason: '${f.path} reports a failed refresh');
+      wordings.add(m!.group(1)!.split('\${').first);
+    }
+    expect(wordings, hasLength(1), reason: 'they diverged: $wordings');
   });
 
   testWidgets('a self-hosted configuration is the only one with an account',
@@ -399,6 +527,17 @@ extension on Profile {
         locations: locations,
         subscriptionUrl: subscriptionUrl,
         unsupportedServers: kinds,
+        refreshedAt: refreshedAt,
+      );
+
+  /// A panel that says it counts devices, without saying it is full.
+  Profile copyWithDeviceLimit() => Profile(
+        id: id,
+        type: type,
+        name: name,
+        locations: locations,
+        subscriptionUrl: subscriptionUrl,
+        deviceLimitActive: true,
         refreshedAt: refreshedAt,
       );
 

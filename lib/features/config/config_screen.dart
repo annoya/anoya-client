@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/profile.dart';
 import '../../state/profiles_controller.dart';
+import 'amnezia_config_screen.dart';
 import 'link_config_screen.dart';
 import 'selfhosted_config_screen.dart';
 import 'subscription_config_screen.dart';
@@ -38,6 +39,8 @@ class ConfigScreen extends ConsumerWidget {
         SelfhostedConfigScreen(profile: profile, isActive: isActive),
       ProfileType.subscription =>
         SubscriptionConfigScreen(profile: profile, isActive: isActive),
+      ProfileType.amnezia =>
+        AmneziaConfigScreen(profile: profile, isActive: isActive),
       ProfileType.link => LinkConfigScreen(profile: profile, isActive: isActive),
     };
   }

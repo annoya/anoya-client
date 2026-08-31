@@ -194,6 +194,11 @@ class NetworkExtensionCore implements VpnCore {
       if (location == null) return null;
     }
 
+    // A place whose settings have not been issued yet (ADR-009). There is
+    // nothing to render and nothing has gone wrong: the config is fetched when
+    // the user connects, and syncing before that would spend a device slot on
+    // a server they may never pick.
+    if (location.isPlaceholder) return null;
     try {
       final listPaths =
           await RuleListStore.availablePaths(config.routing?.lists ?? const []);

@@ -1,3 +1,4 @@
+import '../amnezia/vpn_key.dart';
 import '../log.dart';
 import '../norm_config.dart';
 import 'base64_text.dart';
@@ -191,6 +192,11 @@ enum InputKind {
   /// A single share link (vless:// etc.) → a link profile.
   link,
 
+  /// An Amnezia `vpn://` subscription key. Its servers are not in the key —
+  /// the gateway issues them — so this is the one input whose Continue has to
+  /// reach the network before there is anything to show.
+  amneziaKey,
+
   /// An http(s) URL, fetched as a subscription on Continue.
   subscriptionUrl,
 
@@ -211,6 +217,15 @@ DetectedInput? detectInput(String raw) {
   final t = raw.trim();
   if (t.isEmpty) return null;
   final scheme = t.contains('://') ? t.split('://').first.toLowerCase() : '';
+  // Before the share-link check: `vpn://` is Amnezia's, and the formats this
+  // app does not serve (their self-hosted bundles, the retired v1) are refused
+  // here rather than misread as something else later.
+  if (scheme == 'vpn') {
+    final key = parseAmneziaVpnKey(t);
+    return key == null
+        ? null
+        : DetectedInput(InputKind.amneziaKey, '${key.name} · subscription key');
+  }
   // A share link is a single token; multi-line vless:// lists are a
   // subscription and fall through to the parser below.
   final singleToken = !t.contains(RegExp(r'\s'));

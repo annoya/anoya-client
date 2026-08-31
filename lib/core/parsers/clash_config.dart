@@ -31,7 +31,9 @@ ParsedSubscription? parseClashProxies(String body) {
       // Filtered here rather than left to the renderer: an entry we cannot
       // render would otherwise reach the server picker and fail only when the
       // user taps Connect, which is the worst possible moment to find out.
-      if (!kSupportedProxyTypes.contains(type)) {
+      // The subscription list is the narrower one — the renderer can also emit
+      // WireGuard, but only where the key material is issued with the config.
+      if (!kSubscriptionProxyTypes.contains(type)) {
         unsupported[type] = (unsupported[type] ?? 0) + 1;
         continue;
       }

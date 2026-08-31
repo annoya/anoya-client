@@ -118,8 +118,15 @@ class Option<T> {
 /// nothing to close by hand about a message that leaves on its own. Use it for
 /// what is already over (a refresh that failed, a copy that succeeded); if the
 /// user has to decide something, they need [showErrorDialog] instead.
-void showToast(BuildContext context, String message) {
-  final messenger = ScaffoldMessenger.of(context);
+void showToast(BuildContext context, String message) =>
+    showToastWith(ScaffoldMessenger.of(context), message);
+
+/// The same toast, for a caller whose widget may already be gone.
+///
+/// A messenger taken before an await outlives the screen that took it, which
+/// is the only way to report the outcome of something that replaced that
+/// screen — adding the first configuration, for one.
+void showToastWith(ScaffoldMessengerState messenger, String message) {
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(SnackBar(
     duration: const Duration(seconds: 3),

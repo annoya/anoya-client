@@ -95,6 +95,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     });
 
+    // What happened, changed nothing, and needs no decision — a toast, in the
+    // same form the configuration screens use for the same class of event
+    // (spec §9). The dialog above is for what blocks the user.
+    ref.listen(profilesControllerProvider.select((s) => s.notice), (_, notice) {
+      if (notice == null) return;
+      showToast(context, notice.line);
+      ref.read(profilesControllerProvider.notifier).clearNotice();
+    });
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -165,9 +174,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // "· auto" only when the OS confirmed it is auto-connecting.
     final auto = ref.watch(onDemandProvider).systemArmed ? ' · auto' : '';
     if (ref.watch(profilesControllerProvider.select((s) => s.switching))) {
+      // Two different waits wear different words. With a live session the
+      // server is being swapped under it; with the tunnel down there is no
+      // session to switch, only a server still being fetched, and promising a
+      // switch would describe something that is not happening.
+      final label = _status == VpnStatus.connected
+          ? 'Switching server…'
+          : 'Getting the server…';
       // The ring stays green (the session never dropped); the status line is
       // the only telltale of the in-flight switch.
-      return Text('Switching server…',
+      return Text(label,
           style: Theme.of(context)
               .textTheme
               .titleMedium
@@ -366,7 +382,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // rather than a server from a previous session.
         subtitle: group != null
             ? Text(picked == null || picked.isEmpty ? 'auto' : 'auto · $picked')
-            : loc != null
+            : loc != null && loc.subtitle.isNotEmpty
                 ? Text(loc.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis)
                 : null,
         trailing: !pickable

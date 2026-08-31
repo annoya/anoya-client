@@ -13,3 +13,4 @@ key.properties
 **/*.keystore
 **/*.jks
 /app/libs/
+/app/src/main/jniLibs/

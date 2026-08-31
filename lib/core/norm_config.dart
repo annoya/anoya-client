@@ -392,6 +392,15 @@ class Location {
 
   String get proxyType => proxy['type'] as String? ?? '';
 
+  /// A place to connect through whose settings have not been issued yet.
+  ///
+  /// Only a source that hands out servers on demand produces these (ADR-009):
+  /// the location is real and pickable, but there is no engine config behind
+  /// it until [ConfigSource.resolveSelection] asks for one. Anything that
+  /// renders or describes a config has to treat it as "nothing yet" rather
+  /// than as a broken server.
+  bool get isPlaceholder => proxy.isEmpty;
+
   /// How the connection is carried, in the name the reader would look up.
   ///
   /// One value is not the engine's own: `httpupgrade` is stored as a websocket
@@ -448,9 +457,14 @@ class Location {
   ///
   /// A provider's description replaces the whole line. That is what it is for,
   /// and with nothing else left on the line there is no half to keep.
-  String get subtitle => description.isNotEmpty
-      ? description
-      : [protocol, transport, security].join(' · ');
+  String get subtitle {
+    if (description.isNotEmpty) return description;
+    // Nothing is known about a server that has not been issued, and the
+    // enumeration below would answer anyway — "No TLS" about a config we have
+    // never seen is a claim, not a blank.
+    if (isPlaceholder) return '';
+    return [protocol, transport, security].join(' · ');
+  }
 
   factory Location.fromJson(Map<String, dynamic> json) => Location(
         id: json['id'] as String? ?? '',
