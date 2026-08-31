@@ -1,8 +1,8 @@
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'profile.dart';
+import 'amnezia/wg_keys.dart';
 import 'json_file_store.dart';
+import 'profile.dart';
 
 /// Persists the list of [Profile]s and their secrets.
 ///
@@ -29,6 +29,33 @@ class ProfileStore {
       _secure.write(key: 'token_$profileId', value: token);
 
   static Future<void> deleteToken(String profileId) => _secure.delete(key: 'token_$profileId');
+
+  // --- Amnezia subscription key + install identity (Keychain) ---
+
+  /// The subscription's bearer credential. In the keychain rather than in
+  /// `profiles.json` because that is what it is: anyone holding it can use the
+  /// subscription, and it is the one field of an Amnezia configuration that
+  /// must never be exported or logged.
+  static Future<String?> amneziaKey(String profileId) =>
+      _secure.read(key: 'amnezia_key_$profileId');
+
+  static Future<void> saveAmneziaKey(String profileId, String key) =>
+      _secure.write(key: 'amnezia_key_$profileId', value: key);
+
+  static Future<void> deleteAmneziaKey(String profileId) =>
+      _secure.delete(key: 'amnezia_key_$profileId');
+
+  /// Identifies this installation to the gateway, which counts devices by it.
+  /// Created once and kept: a new one on every launch would spend a device
+  /// slot each time the app started.
+  static Future<String> amneziaInstallId() async {
+    const key = 'amnezia_install_uuid';
+    final existing = await _secure.read(key: key);
+    if (existing != null && existing.length >= 32) return existing;
+    final fresh = generateVlessId();
+    await _secure.write(key: key, value: fresh);
+    return fresh;
+  }
 
   // --- which configuration and server were in use ---
 

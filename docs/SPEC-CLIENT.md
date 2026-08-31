@@ -16,22 +16,38 @@ service from this repository: a user who has only a subscription link or a
 share link installs the client and it works. The self-hosted account is one of
 three sources it serves, not its reason to exist.
 
-### 1.1 Three domains of authority
+### 1.1 Four domains of authority
 
-The client serves three ways of being given a VPN, and they differ in **who has
+The client serves four ways of being given a VPN, and they differ in **who has
 authority over the user's access** — not in file format.
 
 **1. Self-hosted.** The user signs in to a management service which owns
 identity, access and policy. Full capability: an account with status and quota,
 a centrally managed routing policy, revocation that takes effect immediately.
 
-**2. Existing panels, via subscription links.** Marzban, 3x-ui and the rest of
+**2. Key subscriptions (`vpn://`).** A subscription key and an encrypted
+gateway.
+Unlike a panel, it publishes only *places*, and issues a server — keys, routes,
+resolvers and an expiry — one at a time on request. The client shows only what
+the gateway answered with: locations, an end date and a device count when they
+are there, and nothing in their place when they are not. Protocols are
+AmneziaWG and VLESS; a location offering both appears as two entries, because a
+configuration is issued for the pairing. Free-tier keys are refused on import —
+the gateway asks for a CAPTCHA before issuing one and this app cannot show it.
+
+The gateway is Amnezia's and the domain is named after it in the code, but
+**no user-visible string says so**: other providers sell the same key format
+through the same gateway (`service_type: external-premium`), carrying their own
+name, which is what the client displays. Everything else is worded as it is for
+a panel subscription. See §9.
+
+**3. Existing panels, via subscription links.** Marzban, 3x-ui and the rest of
 that ecosystem already run people's servers, and they all speak the same one-way
 contract: a URL returns a list of servers. There is no account and no policy to
 receive — whoever runs that panel controls access by changing what the URL
 returns.
 
-**3. Bare configs, via share links.** A `vless://`-style link, or a file of
+**4. Bare configs, via share links.** A `vless://`-style link, or a file of
 them, describing one server and nothing else. No origin to ask, no account, no
 revocation — it carries exactly what is needed to bring up a tunnel.
 
@@ -361,6 +377,13 @@ subscription's panel may ask for its own cadence (`profile-update-interval`, in
 **hours**) and gets it where it is slower than that floor. A manual refresh
 never waits.
 
+A source that states no cadence does not fall to that floor: it is re-read
+**every hour**. That covers a panel that sends no header, one that sends a zero
+in it, and a `vpn://` gateway, which has no such field at all. The floor is what
+a source may ask its way down to, not what silence means — read as a schedule it
+fetched somebody else's whole list 288 times a day. The gear beside the refresh
+button overrides all of it, in the same unit.
+
 Two more of the panel's own statements are honoured, within bounds the app sets:
 `subscription-request-timeout` (clamped to 5–15 s) and `fallback-url` — an https
 address tried once when the main one does not answer at all. A refresh that came
@@ -513,7 +536,84 @@ the physical interface.
 
 ---
 
-## 9. What a self-hosted server must provide
+## 9. Key subscriptions (`vpn://`)
+
+The key is a Qt artefact and decodes like one: `vpn://` over URL-safe base64
+over a zlib stream behind a four-byte prefix whose value is not to be trusted
+(their premium encoder writes a constant there). The same codec unwraps the
+`config` field of a gateway answer, inside which the protocol settings are a
+JSON *string*. `client/lib/core/amnezia/vpn_key.dart`.
+
+Two endpoints are used and no more — a subscription this app imports was bought
+elsewhere, and an endpoint we never call is a behaviour we cannot get wrong:
+
+- `v1/account_info` on the refresh the user asks for and on the poll timer.
+- `v1/config` on every change of selection, unconditionally, and otherwise
+  when the config in hand is missing or near its stated expiry
+  (`ConfigSource.resolveSelection`). Eagerly, on selection rather than on
+  connect, because the stored config has to be runnable by the *system*: an
+  always-on start, or the VPN switch in the phone's own settings, brings the
+  tunnel up with no app in memory, and a place with no server behind it would
+  fail there with nobody to explain it.
+
+  Only the server in use is kept. A switch always re-asks and the previous
+  place goes back to being a name, because what a place *is* belongs to the
+  gateway: a config it issued earlier may since have been rotated off the
+  account, and a WireGuard peer the server has forgotten is not refused — it
+  is ignored, which reaches the user as a tunnel that connects and carries
+  nothing. AmneziaWG is issued against a keypair
+  generated on the device; the private half never leaves it and is substituted
+  into what comes back.
+
+The transport is the native `libagw` (`client/native/libagw`, a pinned
+submodule of Amnezia's own SDK): RSA+AES request envelopes, and — the reason it
+is a linked library rather than a page of Dart — the censorship bypass that
+resolves a pool of proxies from S3 and walks it when the gateway looks blocked.
+It runs in the app process on every platform, since the engine already holds a
+Go runtime in the tunnel process and two cannot share one. Calls block for the
+whole failover sweep, so they run in an isolate with a deadline enforced
+through the library's cancel handle.
+
+AmneziaWG renders as a mihomo `wireguard` outbound with `amnezia-wg-option`
+carrying the obfuscation as issued — H1–H4 arrive as ranges, and `version: 3`
+is set only when the server sent v3.1 parameters, because claiming it selects a
+different implementation than the server speaks. VLESS arrives as an ordinary
+Xray document and goes through the reader this app already has.
+
+The gateway counts devices by `installation_uuid`, not by requests: the id is
+minted once and kept in the keychain, so re-issuing a server costs nothing
+against the subscription's device limit. Losing it is what costs a slot, which
+is why it is created by the app and never derived from anything the gateway
+returns. A refusal still surfaces as an error where the user asked for
+something (a selection, a connect) and as a log line where they did not (a
+background sync). An import whose first issue fails still adds the
+subscription — the account is real and its locations are real, and refusing to
+add it would leave the user with nothing over a captcha.
+
+Issuing a server is held under the same "switching" state a hot switch uses,
+because it is a gateway round trip: without it Connect is tappable before there
+is anything to connect with. The wait says which wait it is — a live session is
+switching servers, a dead one is still getting its first.
+
+A failure that leaves the previous server working is a toast, not a dialog
+(§9): the same event should not read one way on the home screen and another in
+the configuration's own settings.
+
+The gateway's own account of each request — direct, through which bypass proxy,
+whether it fell back to storage — is logged through its callbacks. Without it,
+"the gateway did not answer" reads identically whether the network is dead or
+the bypass silently worked.
+
+Failures are reported with the gateway's own 1100-series codes and, where they
+have one, its own wording: the same problem should read the same in two
+clients. The captcha codes say plainly that this app cannot show one. The
+wording is provider-neutral throughout — the gateway serves resellers, and a
+sentence naming Amnezia would be a false statement about who took the money;
+`amnezia_config_test.dart` fails if one appears.
+
+---
+
+## 10. What a self-hosted server must provide
 
 The only contract between this client and a management service is one
 authenticated endpoint returning the normalized bundle (`normconfig.Bundle`,
@@ -530,7 +630,7 @@ understands, so a server adding a protocol does not require a client change.
 
 ---
 
-## 10. Security
+## 11. Security
 
 - Tokens are stored in the Keychain, one per self-hosted configuration, and
   removed with the configuration.

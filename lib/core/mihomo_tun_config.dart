@@ -82,7 +82,13 @@ String mihomoTunConfigYaml(
   final lines = <String>[
     // "silent" is how the engine stops writing at all: the log file is in the
     // extension's container, so there is no other way to keep it quiet.
-    collectLogs ? 'log-level: info' : 'log-level: silent',
+    //
+    // "debug" rather than "info" when collecting, because the switch exists to
+    // diagnose and info hides the layer that fails silently: a WireGuard peer
+    // that never answers reports nothing at info — the engine logs handshake
+    // attempts through its verbose channel — so a tunnel that carries no
+    // traffic looks identical to one that was never asked to.
+    collectLogs ? 'log-level: debug' : 'log-level: silent',
     'mode: rule',
     // Both families are handled, not just claimed. The tunnel owns the v6
     // default route (ADR-002), so v6 has to work end to end here — with the
@@ -194,6 +200,18 @@ String mihomoTunConfigYaml(
   ProxyGroup? group,
   List<Location> members = const [],
 }) {
+  // A server whose settings have not been issued yet (ADR-009). Its shape is
+  // genuinely empty — there is no outbound to pin a resolver to and no
+  // datagram it could carry — and answering that here rather than throwing is
+  // what keeps every screen that asks this question honest. The renderer never
+  // reaches this state: it refuses a placeholder outright, because rendering
+  // one would produce a config with nowhere to send traffic.
+  final shapeless = group == null
+      ? location.isPlaceholder
+      : members.isEmpty || members.any((m) => m.isPlaceholder);
+  if (shapeless) {
+    return (outbounds: <String>{'DIRECT', 'REJECT'}, carriesUdp: false);
+  }
   final rendered = group == null
       ? [_mihomoProxy(location)]
       : [for (final m in members) _mihomoProxy(m)];
@@ -287,13 +305,34 @@ const kTunInet6Address = 'fdfe:dcba:9876::1/126';
 /// Proxy types this renderer can turn into an engine config. Public because
 /// the subscription parsers consult it: keeping a proxy we cannot render would
 /// put a server in the picker that fails only when the user taps Connect.
-const kSupportedProxyTypes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2'};
+///
+/// `wireguard` covers AmneziaWG too — the obfuscation rides along in
+/// `amnezia-wg-option`, which the engine reads natively. It is deliberately
+/// absent from [kSubscriptionProxyTypes]: a panel that lists a WireGuard
+/// server is listing one we have no key material for, while an Amnezia
+/// gateway issues the key and the config together.
+const kSupportedProxyTypes = {
+  'vless',
+  'vmess',
+  'trojan',
+  'ss',
+  'hysteria2',
+  'wireguard',
+};
+
+/// What a subscription may put in the server picker. Narrower than what the
+/// renderer can emit, and for a reason: see above.
+const kSubscriptionProxyTypes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2'};
 
 /// Normalizes a Location's proxy into a single mihomo proxy map named "proxy".
 /// The self-hosted bundle uses a custom `reality` sub-map; share-link and
 /// subscription proxies are already mihomo-shaped (see proxy_uri.dart).
 Map<String, dynamic> _mihomoProxy(Location location) {
   final type = location.proxyType;
+  if (location.isPlaceholder) {
+    throw StateError('this server has no settings yet — it must be issued '
+        'before it can be rendered (ADR-009)');
+  }
   if (!kSupportedProxyTypes.contains(type)) {
     throw StateError('unsupported proxy type: $type');
   }

@@ -41,7 +41,10 @@ void main() {
   });
 
   test('mihomoTunConfigYaml rejects unknown proxy types', () {
-    final loc = Location.fromJson({'id': 'w', 'label': 'x', 'proxy': {'type': 'wireguard'}});
+    // Not wireguard, which the renderer emits now that Amnezia's AWG
+    // configurations arrive with their own key material — the same trap the
+    // hysteria2 note below records.
+    final loc = Location.fromJson({'id': 'w', 'label': 'x', 'proxy': {'type': 'ssh'}});
     expect(() => mihomoTunConfigYaml(loc), throwsStateError);
   });
 

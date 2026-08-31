@@ -67,3 +67,25 @@ The Xcode projects already contain the Tunnel extension targets, so day-to-day
 you only need `build.sh`. If you ever recreate a target from scratch, see
 `macos/Tunnel/SETUP.md` / `ios/Tunnel/SETUP-ios.md` and the helper scripts under
 `macos/scripts/` and `ios/scripts/`.
+
+## Amnezia Premium/Free builds
+
+Amnezia support needs credentials that are not in this repository: the
+gateway's RSA public key, its storage endpoints, and the client identity its
+gateway checks before answering. Copy `client-secrets.example.json` to
+`client-secrets.json` (gitignored) and build with:
+
+```
+flutter build apk --release --dart-define-from-file=client-secrets.json
+```
+
+A build without them still works — Amnezia keys are simply refused with a
+message saying so, rather than failing as if the network were down.
+
+The gateway library itself is a pinned submodule:
+
+```
+git submodule update --init --recursive
+client/native/libagw/build-xcframework.sh   # macOS + iOS
+client/native/libagw/build-so.sh            # Android
+```

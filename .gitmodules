@@ -1,0 +1,3 @@
+[submodule "client/native/libagw/upstream"]
+	path = client/native/libagw/upstream
+	url = https://github.com/amnezia-vpn/libagw.git

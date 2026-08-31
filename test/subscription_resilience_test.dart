@@ -164,9 +164,35 @@ void main() {
       expect(refreshGapFor(sub(hours: 1)), const Duration(hours: 1));
     });
 
-    test('a panel cannot ask to be called more often than our floor', () {
-      expect(refreshGapFor(sub(hours: 0)), kMinRefreshGap);
-      expect(refreshGapFor(sub()), kMinRefreshGap);
+    test('a source that asks for nothing is read hourly, not at the floor', () {
+      // The floor is what a source may ask *down to*, never what silence
+      // means. Read as a schedule it fetched the whole list every five
+      // minutes — 288 times a day, off someone else's server.
+      expect(refreshGapFor(sub()), const Duration(hours: 1));
+      // A zero in the header is that same silence, spelled out. It used to
+      // clamp to the floor, which made the least meaningful answer a panel can
+      // give the most expensive one to receive.
+      expect(refreshGapFor(sub(hours: 0)), const Duration(hours: 1));
+    });
+
+    test('a key subscription is polled in hours, and actually polled', () {
+      // Its gateway has no interval field to answer in, so it takes the
+      // default like any other silent source. The screen says "auto every
+      // 1 h"; both halves of that have to be true.
+      final key = Profile(
+        id: 'a1',
+        type: ProfileType.amnezia,
+        name: 'Subscription',
+        locations: const [],
+        refreshedAt: DateTime.now(),
+      );
+      expect(refreshGapFor(key), const Duration(hours: 1));
+      // The poll skipped this domain entirely, so the line above the gear was
+      // a promise nothing kept.
+      expect(key.isRefreshable, isTrue);
+      // The gear still wins: it is the user's battery.
+      expect(refreshGapFor(key.copyWith(refreshHours: (value: 3))),
+          const Duration(hours: 3));
     });
 
     test('a source is left alone until its own interval is up', () {

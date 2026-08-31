@@ -88,7 +88,7 @@ class MihomoVpnService : VpnService() {
 
         override fun setLogging(enabled: Boolean) {
             TunnelFiles.setLogsEnabled(this@MihomoVpnService, enabled)
-            runCatching { Mobile.setLogLevel(if (enabled) "info" else "silent") }
+            runCatching { Mobile.setLogLevel(if (enabled) "debug" else "silent") }
         }
 
         override fun registerCallback(cb: ITunnelCallback) = TunnelState.register(cb)
@@ -139,12 +139,18 @@ class MihomoVpnService : VpnService() {
             tunFd = fd
 
             Mobile.setSocketProtector(object : SocketProtector {
-                override fun protect(sock: Long): Boolean =
-                    this@MihomoVpnService.protect(sock.toInt())
+                override fun protect(sock: Long): Boolean {
+                    val ok = this@MihomoVpnService.protect(sock.toInt())
+                    // Only the failure is worth a line: a busy tunnel protects
+                    // a socket per dial, and a protect that did not take is
+                    // the difference between a working tunnel and a silent one.
+                    if (!ok) log("protect failed for fd $sock")
+                    return ok
+                }
             })
             Mobile.setHomeDir(TunnelFiles.engineDir(this).absolutePath)
             redirectEngineOutput()
-            Mobile.setLogLevel(if (TunnelFiles.logsEnabled(this)) "info" else "silent")
+            Mobile.setLogLevel(if (TunnelFiles.logsEnabled(this)) "debug" else "silent")
             log("starting engine on fd $fd")
             Mobile.start(fd.toLong(), config)
             TunnelFiles.clearError(this)

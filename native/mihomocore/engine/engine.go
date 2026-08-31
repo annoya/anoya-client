@@ -189,6 +189,13 @@ func logProxyEgress(cfg *config.Config) {
 	if !ok {
 		return
 	}
+	// Only meaningful for a proxy that speaks TCP. A WireGuard peer listens on
+	// UDP, so this dial is refused by design — and reporting that as
+	// "unreachable" sent a reader looking for a network fault that was not
+	// there, which is worse than saying nothing.
+	if !proxyDialsTCP(proxy) {
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	conn, err := dialer.DialContext(ctx, "tcp", proxy.Addr())
@@ -198,6 +205,16 @@ func logProxyEgress(cfg *config.Config) {
 	}
 	log.Infoln("[egress] %s reachable after reload, from %s", proxy.Addr(), conn.LocalAddr())
 	_ = conn.Close()
+}
+
+// proxyDialsTCP reports whether reaching this proxy means a TCP connection.
+func proxyDialsTCP(proxy constant.Proxy) bool {
+	switch proxy.Type() {
+	case constant.WireGuard, constant.Hysteria, constant.Hysteria2, constant.Tuic:
+		return false
+	default:
+		return true
+	}
 }
 
 func Stop() {
