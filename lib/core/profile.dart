@@ -1,3 +1,4 @@
+import 'amnezia/amnezia_account.dart';
 import 'norm_config.dart';
 import 'subscription_info.dart';
 
@@ -8,6 +9,12 @@ enum ProfileType {
   /// locations, an account (status/quota) and optional managed routing;
   /// refreshed from the server.
   selfhosted,
+
+  /// An Amnezia Premium/Free subscription: a `vpn://` key, an encrypted
+  /// gateway that lists locations, and a server config issued per location on
+  /// demand. Everything specific to it lives behind [Profile.amnezia] and
+  /// [AmneziaSource], so the rest of the app treats it like any other source.
+  amnezia,
 
   /// A subscription URL that returns a list of servers; periodically refreshed.
   subscription,
@@ -44,6 +51,7 @@ class Profile {
     this.providerInfo,
     this.refreshedAt,
     this.refreshHours,
+    this.amnezia,
   });
 
   final String id;
@@ -151,6 +159,12 @@ class Profile {
   /// and the source's cadence stands.
   final int? refreshHours;
 
+  /// Everything an Amnezia subscription needs and no other source has: which
+  /// service it is, what the gateway last said about it, and when each issued
+  /// config stops being accepted. One field rather than a dozen, so that
+  /// adding this domain did not add a branch anywhere else (ADR-005).
+  final AmneziaState? amnezia;
+
   /// A single-server source (link) shows no location picker.
   bool get isSingleServer => type == ProfileType.link || locations.length <= 1;
 
@@ -162,15 +176,26 @@ class Profile {
   int get offeredServers =>
       locations.length + unsupportedServers.values.fold(0, (a, b) => a + b);
 
-  /// Refreshable from a remote source (self-hosted API / subscription URL).
-  bool get isRefreshable =>
-      type == ProfileType.selfhosted || type == ProfileType.subscription;
+  /// Re-readable from wherever it came from: a management API, a subscription
+  /// URL, a gateway. Everything but a pasted single server, which has no
+  /// source to ask — and which is why this is a negative test: a domain added
+  /// later has a source by definition, and the poll skipping it silently
+  /// (until someone notices the "auto every 12 h" line was a lie) is the
+  /// failure this shape prevents.
+  bool get isRefreshable => type != ProfileType.link;
 
   /// The remote-owned half of a profile, replaced wholesale by a refresh:
   /// what the source says, goes — verbatim. In particular `routing: null`
   /// CLEARS a managed policy (the admin detached it) and an empty [dns] drops
   /// ours (ADR-008: a source that drops its DNS drops ours too). copyWith's
   /// null-keeps semantics cannot express either.
+  /// Replaces everything a source owns, keeping what the device owns.
+  ///
+  /// It enumerates fields rather than copying, which is the point — a field
+  /// the source does not own must not be silently overwritten by a stale
+  /// snapshot. The cost is that a new field has to be added here on purpose,
+  /// and one that was not defaulted to null on every refresh: that is how
+  /// Amnezia subscriptions lost the state that says which service they are.
   Profile withBundle({
     required List<Location> locations,
     required Account? account,
@@ -188,6 +213,7 @@ class Profile {
     String rendering = '',
     bool renderingProbed = false,
     SubscriptionInfo? providerInfo,
+    AmneziaState? amnezia,
   }) =>
       Profile(
         id: id,
@@ -218,6 +244,7 @@ class Profile {
         renderingProbed: renderingProbed,
         refreshedAt: refreshedAt,
         refreshHours: refreshHours,
+        amnezia: amnezia ?? this.amnezia,
       );
 
   Profile copyWith({
@@ -235,6 +262,7 @@ class Profile {
     // — "no choice of mine, use the source's" — so `??` cannot tell it from
     // "leave alone".
     ({int? value})? refreshHours,
+    AmneziaState? amnezia,
   }) =>
       Profile(
         id: id,
@@ -264,6 +292,7 @@ class Profile {
         renderingProbed: renderingProbed,
         refreshedAt: refreshedAt ?? this.refreshedAt,
         refreshHours: refreshHours == null ? this.refreshHours : refreshHours.value,
+        amnezia: amnezia ?? this.amnezia,
       );
 
   factory Profile.fromJson(Map<String, dynamic> j) => Profile(
@@ -309,6 +338,9 @@ class Profile {
         refreshedAt:
             j['refreshed_at'] != null ? DateTime.tryParse(j['refreshed_at'] as String) : null,
         refreshHours: j['refresh_hours'] as int?,
+        amnezia: j['amnezia'] is Map
+            ? AmneziaState.fromJson((j['amnezia'] as Map).cast<String, dynamic>())
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -338,6 +370,7 @@ class Profile {
         if (providerInfo != null) 'provider_info': providerInfo!.toJson(),
         if (refreshedAt != null) 'refreshed_at': refreshedAt!.toIso8601String(),
         if (refreshHours != null) 'refresh_hours': refreshHours,
+        if (amnezia != null) 'amnezia': amnezia!.toJson(),
       };
 }
 
@@ -345,18 +378,31 @@ class Profile {
 ///
 /// Three answers, in order: the user's, when they set one; the panel's own
 /// request (`profile-update-interval`, in **hours** — the convention's unit);
-/// our polling floor. The user comes first because a panel asking for a cadence
-/// is asking to spend traffic and battery it does not own.
+/// [kDefaultRefreshGap] when neither says. The user comes first because a panel
+/// asking for a cadence is asking to spend traffic and battery it does not own.
 ///
-/// [kMinRefreshGap] survives all three. It used to be a defence against a panel
-/// asking to be called every minute; it is now also a courtesy to someone
-/// else's server.
+/// [kMinRefreshGap] survives all three, as a defence against a source asking to
+/// be called faster than the app polls at all.
 Duration refreshGapFor(Profile p) {
   final hours = p.refreshHours ?? p.providerInfo?.updateInterval;
-  if (hours == null || hours <= 0) return kMinRefreshGap;
+  // Zero is a panel saying nothing in a header it had to fill in, not a panel
+  // asking to be read constantly — reading it as "every 0 hours" made the
+  // least meaningful answer the most expensive one.
+  if (hours == null || hours <= 0) return kDefaultRefreshGap;
   final asked = Duration(hours: hours);
   return asked < kMinRefreshGap ? kMinRefreshGap : asked;
 }
+
+/// What a source that named no cadence is re-read at.
+///
+/// The floor is not a schedule. Silence used to fall to it, so a panel that
+/// sent no header — and a gateway, which has no header to send — was re-read
+/// 288 times a day: a full fetch of somebody else's list every five minutes,
+/// out of the user's battery and the provider's rate limit, to be told the
+/// same thing. An hour is the cadence a source gets for saying nothing; one
+/// that wants to be read faster can still ask, down to the floor, and the gear
+/// beside the refresh button overrides both.
+const kDefaultRefreshGap = Duration(hours: 1);
 
 /// Whether the poll should re-read this configuration yet.
 bool isDueForRefresh(Profile p, {DateTime? now}) {

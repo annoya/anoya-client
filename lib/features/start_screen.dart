@@ -62,13 +62,15 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   /// means the user backed out (cancelled a picker) — the screen must stay,
   /// closing it would read as a phantom success.
   Future<void> _run(Future<bool> Function() action) async {
+    final container = ProviderScope.containerOf(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
       final added = await action();
       // Before the pop, and deliberately: the toast lives in the root
       // ScaffoldMessenger, so it survives the unwind and lands on the screen
       // the user ends up looking at.
-      if (added) _warnIfRefused();
+      if (added) _warnIfRefused(container, messenger);
       // First run: app.dart swaps to Home when a profile appears. Pushed from
       // home/settings: unwind whatever is above the root.
       if (added && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
@@ -87,11 +89,16 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   /// answers with placeholders instead of servers. The add succeeds (that is
   /// what the panel returned), and this is how the user learns why the list
   /// reads the way it does.
-  void _warnIfRefused() {
-    final p = ref.read(profilesControllerProvider).profiles.lastOrNull;
-    if (p != null && p.deviceLimitReached && mounted) {
-      showToast(context, kDeviceLimitReached.line);
-    }
+  ///
+  /// Both handles are taken before the add, because adding the *first*
+  /// configuration replaces this screen: the shell swaps in Home the moment a
+  /// profile exists, and by the time there is anything to warn about, `ref`
+  /// and `context` belong to a widget that is gone. The messenger is the root
+  /// one, so the toast still lands on whatever the user is looking at.
+  void _warnIfRefused(ProviderContainer container, ScaffoldMessengerState messenger) {
+    final p = container.read(profilesControllerProvider).profiles.lastOrNull;
+    if (p == null || !p.deviceLimitReached) return;
+    showToastWith(messenger, kDeviceLimitReached.line);
   }
 
   Future<void> _continue() async {
@@ -101,10 +108,12 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     if (d.kind == InputKind.subscriptionUrl) {
       // Fetch as a subscription; when it isn't one, probe whether it's a
       // management server and hand over to sign-in instead of failing.
+      final container = ProviderScope.containerOf(context, listen: false);
+      final messenger = ScaffoldMessenger.of(context);
       setState(() => _busy = true);
       try {
         await _ctrl.addSubscriptionUrl('', t);
-        _warnIfRefused();
+        _warnIfRefused(container, messenger);
         if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
       } on FormatException catch (fe) {
         try {
@@ -131,6 +140,16 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       } finally {
         if (mounted) setState(() => _busy = false);
       }
+      return;
+    }
+    if (d.kind == InputKind.amneziaKey) {
+      // The key names a subscription; the servers are the gateway's to hand
+      // out, so adding one is a network call and shows the same busy state a
+      // subscription URL does.
+      await _run(() async {
+        await _ctrl.addAmneziaKey(t);
+        return true;
+      });
       return;
     }
     await _run(() async {

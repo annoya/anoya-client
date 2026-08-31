@@ -4,6 +4,7 @@ import FlutterMacOS
 import Flutter
 #endif
 import Foundation
+import Libagw
 
 /// VpnChannel bridges Flutter <-> VPNManager.
 ///   MethodChannel "vpn/control":  start(config) / stop / status / prepare
@@ -109,6 +110,13 @@ enum VpnChannel {
                 Task { @MainActor in result(await VPNManager.shared.groupMember(name)) }
             case "device_info":
                 result(deviceInfo())
+            case "gateway_abi":
+                // Also the reason this file imports Libagw at all: the library
+                // is a static archive whose only caller is Dart over FFI, so
+                // without one reference from linked code the linker would drop
+                // it and every agw_* lookup would fail at runtime with nothing
+                // to explain why.
+                result(Int(agw_abi_version()))
             case "shared_dir":
                 // App Group container shared with the tunnel extension — the
                 // engine's home dir, where GeoIP/GeoSite databases live. Dart

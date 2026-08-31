@@ -161,6 +161,47 @@ void main() {
     });
   });
 
+  group('a server whose settings have not been issued yet', () {
+    // Amnezia hands out a server on request (ADR-009), so its locations are
+    // real and pickable while still carrying nothing. Every screen that asks
+    // what the engine would get meets them, and each one that asked directly
+    // used to throw — the configuration screen, then the routing screen. The
+    // answer belongs here, once, rather than in a guard per caller.
+    final placeholder = Location(id: 'amnezia_de_awg', label: 'Germany', proxy: const {});
+
+    test('has an empty shape rather than no answer', () {
+      final shape = engineShape(placeholder);
+      expect(shape.outbounds, {'DIRECT', 'REJECT'});
+      expect(shape.carriesUdp, isFalse,
+          reason: 'there is no outbound yet to carry anything');
+    });
+
+    test('so does a group any of whose members is one', () {
+      const group = ProxyGroup(name: 'auto', type: 'url-test', members: ['a', 'b']);
+      final shape = engineShape(placeholder,
+          group: group, members: [server(), placeholder]);
+      expect(shape.outbounds, {'DIRECT', 'REJECT'});
+    });
+
+    test('and the resolvers it would use are describable', () {
+      // What the DNS screen shows before anything is issued: the configuration
+      // still names resolvers, and none of them can be pinned to a tunnel that
+      // does not exist.
+      final plan = dnsPlanFor(
+        dns: const ['tls://dns.quad9.net#PROXY'],
+        outbounds: engineShape(placeholder).outbounds,
+        carriesUdp: false,
+      );
+      expect(plan.resolvers.single.address, 'tls://dns.quad9.net');
+      expect(plan.resolvers.single.viaTunnel, isFalse);
+    });
+
+    test('but the renderer still refuses to run one', () {
+      // Leniency here would produce a config with nowhere to send traffic.
+      expect(() => mihomoTunConfigYaml(placeholder), throwsStateError);
+    });
+  });
+
   test('the screen and the engine read the same decision', () {
     // The contract that makes the screen trustworthy. Both sides are asked for
     // the same configuration and must agree resolver for resolver — if the
