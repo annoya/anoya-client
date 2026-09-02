@@ -21,7 +21,7 @@ class MainFlutterWindow: NSWindow {
     VpnChannel.register(messenger: flutterViewController.engine.binaryMessenger)
 
     // SSO: system auth browser (ASWebAuthenticationSession) for the OIDC flow.
-    WebAuthChannel.register(messenger: flutterViewController.engine.binaryMessenger, window: self)
+    WebAuthChannel.register(messenger: flutterViewController.engine.binaryMessenger, anchor: self)
 
     // Menu bar item. Held by the window because it must outlive every menu it
     // shows: an NSStatusItem released early takes its slot out of the menu bar.

@@ -103,6 +103,10 @@ Future<String> _runWebAuth(String authUrl) async {
   } on PlatformException catch (e) {
     if (e.code == 'cancelled') throw OidcException('Sign-in was cancelled.');
     throw OidcException('Sign-in failed: ${e.message ?? e.code}');
+  } on MissingPluginException {
+    // Every shipped platform registers the channel; this is the message for a
+    // build that does not, so it never reads as a server-side failure.
+    throw OidcException('Sign in with SSO is not available in this build.');
   }
 }
 
