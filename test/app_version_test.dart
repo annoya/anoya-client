@@ -7,18 +7,30 @@ import 'package:vpn_client/core/device_identity.dart';
 
 /// The versions the app shows, against the files that actually decide them.
 ///
-/// The app cannot read `pubspec.yaml` or `go.mod` at runtime, so those numbers
-/// are duplicated in Dart. This is what keeps the duplicate honest: bumping a
-/// version without updating the constant fails here rather than shipping a
-/// build that misreports itself to support — and to a panel, since the
-/// User-Agent is built from the same strings.
+/// `pubspec.yaml` decides the app's version and is read at runtime, so there is
+/// no copy to drift — what these tests check is that the read works at all: an
+/// asset that stops being declared would leave every build calling itself
+/// "unknown", to the user and to a panel, since the User-Agent is built from
+/// the same string. The engine pin and the app name are still stated in Dart,
+/// and those two are guarded the old way.
 void main() {
-  test('the app version matches pubspec', () {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(loadAppVersion);
+
+  test('the version the app reports is the one pubspec carries', () async {
     final pubspec = File('pubspec.yaml').readAsStringSync();
-    final m = RegExp(r'^version:\s*(\S+)\+(\S+)\s*$', multiLine: true).firstMatch(pubspec);
+    final m = RegExp(r'^version:\s*(\S+?)\+(\S+)\s*$', multiLine: true).firstMatch(pubspec);
     expect(m, isNotNull, reason: 'pubspec must carry version: <name>+<build>');
-    expect(kAppVersion, m!.group(1));
-    expect(kAppBuild, m.group(2));
+    expect(appVersion, m!.group(1));
+    expect(appBuild, m.group(2));
+  });
+
+  test('the pubspec is shipped as an asset — without it there is no version', () async {
+    // The one way this arrangement can break: the asset entry goes away and
+    // every build starts reporting "unknown".
+    expect(appVersion, isNotEmpty);
+    expect(appVersionLabel, isNot('unknown'));
   });
 
   test('the engine pin matches go.mod', () {
@@ -38,8 +50,11 @@ void main() {
     expect(kAppName, m!.group(1));
   });
 
-  test('the User-Agent is built from those same strings', () {
-    expect(DeviceIdentity.kUserAgent, '$kAppName/$kAppVersion');
+  test('the User-Agent is the name and that version', () {
+    expect(DeviceIdentity.userAgent, '$kAppName/$appVersion');
+    // Headers are ASCII; whatever the version turns out to be, it cannot make
+    // this one unsendable.
+    expect(DeviceIdentity.userAgent, matches(RegExp(r'^[\x21-\x7E]+$')));
   });
 
   group('what the About section reads out', () {
@@ -48,7 +63,7 @@ void main() {
     });
 
     test('the app line pairs version and build, the way Apple shows it', () {
-      expect(appVersionLabel, '$kAppVersion ($kAppBuild)');
+      expect(appVersionLabel, '$appVersion ($appBuild)');
     });
   });
 }
