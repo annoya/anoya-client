@@ -421,6 +421,37 @@ final class VPNManager {
         return (try? await ask(session, "group:\(group)")) ?? ""
     }
 
+    /// One probe through the running tunnel: "ms:<delay>" or "err:<reason>".
+    ///
+    /// Throws when there is no session to ask — a probe with the tunnel down
+    /// has no meaning, and saying so is better than reporting a failure the
+    /// server never had. The wait is the probe's own timeout plus a margin,
+    /// not the standard one: a five-second probe answered at 4.9 s must not be
+    /// cut off by the transport carrying it.
+    func urlTest(_ url: String, timeoutMs: Int) async throws -> String {
+        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
+        guard let session = managers.first?.connection as? NETunnelProviderSession,
+              session.status == .connected else {
+            throw NSError(domain: "vpn", code: 5,
+                          userInfo: [NSLocalizedDescriptionKey: "the tunnel is not running"])
+        }
+        return try await ask(session, "urltest:\(timeoutMs):\(url)",
+                             timeout: TimeInterval(timeoutMs) / 1000 + 5)
+    }
+
+    /// Bytes carried through the tunnel's outbound so far, "<up>:<down>".
+    ///
+    /// "0:0" whenever there is nothing to ask — no session, or an extension
+    /// that did not answer. Never throws: the caller reads silence as "nothing
+    /// to look at yet" and asks the server itself instead, which is the right
+    /// behaviour for both cases.
+    func proxyBytes() async -> String {
+        let managers = try? await NETunnelProviderManager.loadAllFromPreferences()
+        guard let session = managers?.first?.connection as? NETunnelProviderSession,
+              session.status == .connected else { return "0:0" }
+        return (try? await ask(session, "proxybytes")) ?? "0:0"
+    }
+
     func fetchLog(_ name: String) async throws -> String {
         let managers = try await NETunnelProviderManager.loadAllFromPreferences()
         guard let session = managers.first?.connection as? NETunnelProviderSession else {

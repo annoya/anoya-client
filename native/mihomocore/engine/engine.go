@@ -240,6 +240,69 @@ func Stop() {
 // The name returned is the engine-side one (`p0`, `p1`, …) that the renderer
 // generated; the app maps it back to the label the provider gave. Provider text
 // never has to cross this boundary.
+// ProxyBytes reports how much has been carried through the named outbound in
+// this session, as the engine's own connection tracking sees it.
+//
+// The passive half of the connection check: bytes that came *back* through the
+// server are proof the tunnel works, paid for by traffic the user was making
+// anyway. No probe, nothing sent to a third party, no waiting.
+//
+// Counted per connection chain rather than from the tunnel's totals on
+// purpose. `statistic.Manager.Total()` includes everything the tunnel handled,
+// and in split mode much of that went out DIRECT — a number that grows while
+// the proxy is dead. Only live connections are visible here (a tracker leaves
+// the manager when its connection closes), so silence means "nothing to look
+// at yet", never "nothing works" — which is exactly when the caller falls back
+// to asking.
+func ProxyBytes(name string) (up, down int64) {
+	statistic.DefaultManager.Range(func(t statistic.Tracker) bool {
+		for _, hop := range t.Info().Chain {
+			if hop == name {
+				up += t.Info().UploadTotal.Load()
+				down += t.Info().DownloadTotal.Load()
+				break
+			}
+		}
+		return true
+	})
+	return up, down
+}
+
+// URLTest sends one HTTP HEAD through a running outbound and reports how long
+// the answer took, in milliseconds. The result reads "the tunnel carries
+// traffic"; anything else is an error naming why it does not.
+//
+// This is mihomo's own health check (the one url-test groups pick members
+// with), and it dials the outbound directly rather than through the rule
+// engine — so split tunnelling cannot route the probe away from the server
+// under test, and equally a pass says nothing about where the user's own
+// traffic goes.
+//
+// It exists because "connected" is a claim about an interface, not about a
+// path: an AmneziaWG peer whose handshake never completes and a VLESS server
+// that accepts TCP and says nothing both leave a tunnel that looks perfectly
+// up and carries nothing.
+func URLTest(name, url string, timeoutMs int) (int, error) {
+	proxies := tunnel.Proxies()
+	p, ok := proxies[name]
+	if !ok {
+		return 0, fmt.Errorf("no outbound named %s", name)
+	}
+	if timeoutMs <= 0 {
+		timeoutMs = 5000
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMs)*time.Millisecond)
+	defer cancel()
+	// No expected-status range: mihomo treats an empty one as "any 2xx/3xx the
+	// server sends", which is the only thing we can judge without asking the
+	// user to describe their captive portal.
+	delay, err := p.URLTest(ctx, url, nil)
+	if err != nil {
+		return 0, err
+	}
+	return int(delay), nil
+}
+
 func GroupMember(group string) string {
 	proxies := tunnel.Proxies()
 	p, ok := proxies[group]

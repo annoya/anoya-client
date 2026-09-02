@@ -108,6 +108,20 @@ enum VpnChannel {
             case "group_member":
                 let name = (call.arguments as? [String: Any])?["group"] as? String ?? ""
                 Task { @MainActor in result(await VPNManager.shared.groupMember(name)) }
+            case "proxy_bytes":
+                Task { @MainActor in result(await VPNManager.shared.proxyBytes()) }
+            case "url_test":
+                let args = call.arguments as? [String: Any]
+                let url = args?["url"] as? String ?? ""
+                let timeout = args?["timeout_ms"] as? Int ?? 5000
+                Task { @MainActor in
+                    do {
+                        result(try await VPNManager.shared.urlTest(url, timeoutMs: timeout))
+                    } catch {
+                        result(FlutterError(code: "url_test",
+                                            message: error.localizedDescription, details: nil))
+                    }
+                }
             case "device_info":
                 result(deviceInfo())
             case "gateway_abi":

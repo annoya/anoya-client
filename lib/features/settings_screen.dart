@@ -9,11 +9,13 @@ import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
 import '../state/favorites_controller.dart';
+import '../state/connection_check_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import '../core/platform_support.dart';
 import 'about_screen.dart';
+import 'advanced_connection_screen.dart';
 import 'always_on_screen.dart';
 import 'config/config_screen.dart';
 import 'geo_screen.dart';
@@ -197,6 +199,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final st = ref.watch(profilesControllerProvider);
     final appPrefs = ref.watch(appPrefsProvider);
     final onDemand = ref.watch(onDemandProvider);
+    final check = ref.watch(connectionCheckProvider).prefs;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -241,6 +244,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => _push(const AlwaysOnScreen()),
                     ),
+            ),
+            Card(
+              margin: kCardMargin,
+              child: ListTile(
+                leading: const Icon(Icons.tune),
+                title: const Text('Advanced'),
+                // The state of what is behind it, not a description of the
+                // screen: a row that says only "Advanced" has to be opened to
+                // learn whether the thing it holds is on.
+                subtitle: Text('Connection check · ${check.enabled ? 'on' : 'off'}'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _push(const AdvancedConnectionScreen()),
+              ),
             ),
 
             const SectionHeader('ROUTING'),

@@ -213,6 +213,10 @@ class ProfilesController extends Notifier<ProfilesState> {
     final restored = active?.id == saved.profileId
         ? _knownSelection(active, saved.selectionId)
         : null;
+    // The load is two file reads long, and the container can be gone by the
+    // time they finish — a screen torn down, a test ending. Assigning state
+    // then throws out of an unawaited future, where nothing catches it.
+    if (!ref.mounted) return;
     state = ProfilesState(
       profiles: profiles,
       activeId: active?.id,
