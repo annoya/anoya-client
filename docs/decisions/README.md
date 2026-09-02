@@ -28,6 +28,7 @@ test.
 | [008](ADR-008-dns-rides-the-config.md) | both | DNS resolvers ride the config; the OS-level DNS setting is a decoy | dns-hijack + fake-ip, per-source resolvers, Cloudflare DoH fallback, sanitation, bootstrap, `Bundle.DNS` |
 | [009](ADR-009-amnezia-subscriptions.md) | client | Key subscriptions as a fourth domain, with the gateway transport borrowed | `vpn://` codec, servers issued on demand, location × protocol, libagw, why no provider is named in the UI |
 | [010](ADR-010-connection-check.md) | client | The app verifies the tunnel carries traffic, and never drops it over the answer | passive byte counters first, mihomo `URLTest` second, handshake warm-up, why not `external-controller` |
+| [011](ADR-011-amneziawg-as-a-second-protocol.md) | service | AmneziaWG as a second protocol, userspace engine driven over UAPI | key pair per user via `NewCredentials`, id-derived tunnel addresses, peer diff not replace, why the `Backend` seam stays |
 
 ## Open Questions
 

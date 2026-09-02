@@ -9,6 +9,42 @@ import 'package:vpn_client/core/parsers/share_link.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';
 
 void main() {
+  test('a self-hosted AmneziaWG location renders as a wireguard outbound', () {
+    // The shape the amneziawg driver on the server emits: already mihomo's
+    // own keys, so it must pass through untouched — including the obfuscation
+    // set, without which the client would speak plain WireGuard.
+    final loc = Location.fromJson({
+      'id': 'worker_2',
+      'label': 'Berlin',
+      'proxy': {
+        'type': 'wireguard',
+        'server': '203.0.113.20',
+        'port': 51820,
+        'private-key': 'cGVlci1wcml2YXRlLWtleS0zMi1ieXRlcy1sb25nISE=',
+        'public-key': 'c2VydmVyLXB1YmxpYy1rZXktMzItYnl0ZXMtbG9uZyE=',
+        'ip': '10.8.0.4',
+        'mtu': 1420,
+        'persistent-keepalive': 25,
+        'udp': true,
+        'amnezia-wg-option': {
+          'jc': 4, 'jmin': 50, 'jmax': 1000, 's1': 20, 's2': 90,
+          'h1': '11111', 'h2': '22222', 'h3': '33333', 'h4': '44444',
+          'version': 3,
+        },
+      },
+    });
+
+    final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
+    final proxy = (doc['proxies'] as YamlList).first as YamlMap;
+    expect(proxy['type'], 'wireguard');
+    expect(proxy['ip'], '10.8.0.4');
+    expect(proxy['udp'], true);
+    final awg = proxy['amnezia-wg-option'] as YamlMap;
+    expect(awg['jc'], 4);
+    expect(awg['h1'], '11111', reason: 'header types stay text: the engine reads ranges there');
+    expect(awg['version'], 3);
+  });
+
   test('mihomoTunConfigYaml renders a tun inbound + vless proxy', () {
     final loc = Location.fromJson({
       'id': 'worker_1',

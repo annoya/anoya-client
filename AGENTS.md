@@ -18,7 +18,9 @@ Self-hosted VPN service, three components:
   protocol drivers).
 
 Two deliberate abstraction seams, and only two: `VpnCore` on the client and
-`protocol.Driver` on the server. Everything else stays boring and direct.
+`protocol.Driver` on the server (with `backend.Backend` as its worker-side
+half: the driver says what a server config is, the backend runs it — Xray or
+amneziawg-go, ADR-011). Everything else stays boring and direct.
 `VpnCore` is not there to swap the engine — mihomo is the engine, and nothing
 else is planned. It exists so the state layer can be tested against a fake
 tunnel, and so the platform side (Network Extension, VpnService) stays behind
