@@ -19,7 +19,6 @@ interface ITunnel {
     /** Swap the running config. Returns "" on success, else the failure. */
     String reload(String config);
 
-    String status();
     double connectedSince();
 
     /** Which member of a proxy group the engine currently uses, "" if none. */
@@ -37,9 +36,6 @@ interface ITunnel {
 
     /** Bytes carried through the outbound this session, "<up>:<down>". */
     String proxyBytes();
-
-    /** Whether the system started this as an always-on VPN. */
-    boolean isAlwaysOn();
 
     /** Apply the log level to the running engine. */
     void setLogging(boolean enabled);
