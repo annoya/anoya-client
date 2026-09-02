@@ -8,5 +8,39 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-flutter build apk --release --target-platform android-arm64,android-x64 "$@"
-echo "APK: build/app/outputs/flutter-apk/app-release.apk"
+OUT=build/app/outputs/flutter-apk
+marker="$(mktemp)"                       # anything older than this is a leftover
+
+# Narrowing it further is fine (one phone, one ABI); repeating the flag is not
+# — Flutter would pass the ABI twice and gradle dies packing a duplicate
+# libapp.so, ten megabytes of build later.
+targets=(--target-platform android-arm64,android-x64)
+for arg in "$@"; do
+  case "$arg" in --target-platform*) targets=() ;; esac
+done
+
+flutter build apk --release "${targets[@]+"${targets[@]}"}" "$@"
+
+# Name the file after the app and the version it carries. Flutter names every
+# build `app-release.apk`, so a folder of them is a folder of identical names
+# and the only way to tell which is which is the timestamp — which is exactly
+# what you have lost by the time someone asks "which build is on the phone?".
+# The label comes from the manifest and the version from pubspec, so the file
+# says what the launcher and the About screen will say.
+label="$(sed -n 's/.*android:label="\([^"]*\)".*/\1/p' android/app/src/main/AndroidManifest.xml | head -1)"
+version="$(awk '/^version:/ {print $2}' pubspec.yaml)"
+
+renamed=()
+for apk in "$OUT"/app*-release.apk; do
+  [ -f "$apk" ] || continue
+  [ "$apk" -nt "$marker" ] || continue   # from an earlier build, leave it alone
+  # app-release.apk -> "", app-arm64-v8a-release.apk -> "-arm64-v8a"
+  abi="$(basename "$apk" | sed -e 's/^app//' -e 's/-release\.apk$//')"
+  dest="$OUT/$label-$version$abi.apk"
+  mv "$apk" "$dest"
+  mv "$apk.sha1" "$dest.sha1" 2>/dev/null || true
+  renamed+=("$dest")
+done
+rm -f "$marker"
+
+for apk in "${renamed[@]}"; do echo "APK: $apk"; done

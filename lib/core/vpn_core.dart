@@ -87,4 +87,20 @@ abstract class VpnCore {
   /// the platform knows about is exactly what a fake core has to be able to
   /// stand in for.
   Future<String> lastDisconnectError() async => '';
+
+  /// One probe through the running tunnel: `ms:<delay>` or `err:<reason>`.
+  ///
+  /// Deliberately a string rather than a parsed value — the platforms carry it
+  /// as one, and [ConnectionCheck.parse] is the single place that reads it.
+  /// The default answer is a refusal, because a core that cannot probe must not
+  /// report a healthy tunnel it never tested.
+  Future<String> urlTest(String url, Duration timeout) async =>
+      'err:this build cannot test the connection';
+
+  /// Bytes carried through the tunnel's outbound this session, `<up>:<down>`.
+  ///
+  /// Zero when there is nothing to report — no session, no platform side, or
+  /// simply no traffic yet. The caller cannot tell those apart and does not
+  /// need to: all three mean "ask the server yourself".
+  Future<String> proxyBytes() async => '0:0';
 }

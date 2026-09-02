@@ -222,6 +222,44 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
+  /// Asks the engine — inside the extension, or in the tunnel process on
+  /// Android — to fetch one page through the outbound the tunnel routes to.
+  ///
+  /// A platform failure is returned as an answer, not thrown: "the tunnel is
+  /// not running" and "the server did not reply" are both results the user
+  /// needs to read, and only one of them is about the server.
+  @override
+  Future<String> urlTest(String url, Duration timeout) async {
+    try {
+      final res = await _control.invokeMethod<String>('url_test', {
+        'url': url,
+        'timeout_ms': timeout.inMilliseconds,
+      });
+      return res ?? 'err:the engine did not answer';
+    } on PlatformException catch (e) {
+      Log.e('NE url_test failed', e.message ?? e.code);
+      return 'err:${e.message ?? e.code}';
+    } on MissingPluginException {
+      return 'err:this build cannot test the connection';
+    }
+  }
+
+  /// What the engine has carried through the outbound so far.
+  ///
+  /// Best-effort by design — every failure answers "nothing", which sends the
+  /// caller to the active probe rather than to an error.
+  @override
+  Future<String> proxyBytes() async {
+    try {
+      return await _control.invokeMethod<String>('proxy_bytes') ?? '0:0';
+    } on PlatformException catch (e) {
+      Log.e('NE proxy_bytes failed', e.message ?? e.code);
+      return '0:0';
+    } on MissingPluginException {
+      return '0:0';
+    }
+  }
+
   /// When the system established the current session.
   ///
   /// `NEVPNConnection.connectedDate` — the moment the connection came up,

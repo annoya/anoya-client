@@ -161,6 +161,14 @@ object VpnChannel {
                     val name = call.argument<String>("group") ?: ""
                     ask(result, orElse = "") { it.groupMember(name) }
                 }
+                "proxy_bytes" -> ask(result, orElse = "0:0") { it.proxyBytes() }
+                "url_test" -> {
+                    val url = call.argument<String>("url") ?: ""
+                    val timeout = call.argument<Int>("timeout_ms") ?: 5000
+                    ask(result, orElse = "err:the tunnel is not running") {
+                        it.urlTest(url, timeout)
+                    }
+                }
                 "device_info" -> result.success(mapOf(
                     "os" to "Android",
                     "version" to Build.VERSION.RELEASE,

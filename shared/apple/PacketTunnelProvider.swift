@@ -149,6 +149,11 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// The host uses this to display tunnel/core logs without a shared
     /// container (which would be TCC-gated). Reading our OWN container is never
     /// TCC-gated. Only works while the tunnel is running (extension alive).
+    /// The group every rendered config routes through (`kTunnelOutbound` in
+    /// mihomo_tun_config.dart). Testing it rather than a member name means the
+    /// probe follows whatever the engine currently picked.
+    private static let tunnelOutbound = "PROXY"
+
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
         let request = String(data: messageData, encoding: .utf8) ?? ""
         if request.hasPrefix("reload:") {
@@ -190,6 +195,42 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 return String(cString: res)
             }
             completionHandler?(Data(member.utf8))
+            return
+        }
+        if request == "proxybytes" {
+            let answer = Self.tunnelOutbound.withCString { name -> String in
+                guard let res = MihomoProxyBytes(UnsafeMutablePointer(mutating: name)) else {
+                    return "0:0"
+                }
+                defer { FreeCString(res) }
+                return String(cString: res)
+            }
+            completionHandler?(Data(answer.utf8))
+            return
+        }
+        if request.hasPrefix("urltest:") {
+            // "urltest:<timeoutMs>:<url>" — the url last because it is the only
+            // part that can contain a colon.
+            let rest = String(request.dropFirst("urltest:".count))
+            let cut = rest.firstIndex(of: ":") ?? rest.startIndex
+            let timeout = Int32(rest[rest.startIndex..<cut]) ?? 5000
+            let url = String(rest[rest.index(after: cut)...])
+            // Off the main queue: the probe blocks for up to its timeout, and
+            // the extension still has a tunnel to run while it waits.
+            DispatchQueue.global(qos: .userInitiated).async {
+                let answer = url.withCString { u -> String in
+                    return Self.tunnelOutbound.withCString { name -> String in
+                        guard let res = MihomoURLTest(UnsafeMutablePointer(mutating: name),
+                                                      UnsafeMutablePointer(mutating: u),
+                                                      timeout) else {
+                            return "err:the engine did not answer"
+                        }
+                        defer { FreeCString(res) }
+                        return String(cString: res)
+                    }
+                }
+                completionHandler?(Data(answer.utf8))
+            }
             return
         }
         if request.hasPrefix("logging:") {
