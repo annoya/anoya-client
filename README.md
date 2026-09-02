@@ -4,8 +4,9 @@ Cross-platform VPN client. One Flutter/Dart UI drives both macOS and iOS.
 
 ## Architecture
 
-The app depends only on the **`VpnCore`** seam (`lib/core/vpn_core.dart`), never
-on a specific engine. On macOS/iOS the implementation is **`NetworkExtensionCore`**
+The engine is mihomo. Screens and state reach it through the **`VpnCore`**
+boundary (`lib/core/vpn_core.dart`), which tests replace with a fake tunnel.
+On macOS/iOS the implementation is **`NetworkExtensionCore`**
 (`lib/core/network_extension_core.dart`): a real system-wide VPN via a
 **`NEPacketTunnelProvider`** extension. The mihomo engine is compiled as a Go
 c-archive (`MihomoCore.xcframework`) and linked into the extension; Dart only
@@ -16,8 +17,8 @@ renders the mihomo TUN config and sends start/stop over a MethodChannel.
   platforms, split-tunneling rules rendered from the config bundle.
 - the app re-fetches its config from management before every connect.
 
-Swapping the engine or adding a platform means writing a new `VpnCore`; no
-screen or state code changes.
+Adding a platform means a new native side behind the same `vpn/control`
+channel; no screen or state code changes. Swapping the engine is not a goal.
 
 ## Native core (Go → xcframework)
 

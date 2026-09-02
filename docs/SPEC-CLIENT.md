@@ -9,7 +9,7 @@
 ## 1. What this is
 
 A Flutter VPN client for macOS, iOS and Android that establishes a system-wide
-tunnel through a swappable engine.
+tunnel through the mihomo engine.
 
 It is a complete product on its own. Nothing in it requires the management
 service from this repository: a user who has only a subscription link or a
@@ -57,8 +57,10 @@ user may do. See ADR-005.
 
 ### 1.2 Guiding principles
 
-- **One abstraction seam.** `VpnCore` isolates the engine so it can be replaced
-  or ported. Everything else is direct.
+- **One abstraction seam.** `VpnCore` keeps the platform side (Network
+  Extension, VpnService) behind one class and lets the state layer be tested
+  against a fake tunnel. It is not a plan to replace mihomo: the engine is
+  fixed. Everything else is direct.
 - **Simple, readable codebase.** Implement the requirement, not a platform.
 - **The app never claims authority it does not have.** A domain that cannot tell
   us the account is expired must not show an account.
@@ -123,8 +125,8 @@ Rationale and constraints: ADR-001.
 
 ### 3.1 The `VpnCore` seam
 
-The app never references the engine. `VpnCore`
-(`client/lib/core/vpn_core.dart`):
+Screens and state never talk to the platform directly; they go through
+`VpnCore` (`client/lib/core/vpn_core.dart`), which tests replace with a fake:
 
 | Member | Purpose |
 |---|---|

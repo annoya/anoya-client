@@ -11,12 +11,13 @@ class VpnStats {
   final int bytesDown;
 }
 
-/// VpnCore is the client's core-abstraction seam. The app depends only on this
-/// interface, never on a specific engine (mihomo). Swapping the core means
-/// writing a new implementation; no screen or state code changes.
+/// VpnCore is what screens and state talk to instead of the platform. The
+/// engine behind it is mihomo and nothing else is planned; the interface exists
+/// so the state layer can be tested against a fake tunnel, and so the platform
+/// side (Network Extension, VpnService) stays behind one class.
 ///
-/// The translation from the core-agnostic [NormConfig] into the engine's native
-/// config lives entirely inside the implementation.
+/// The translation from [NormConfig] into the engine's own config lives
+/// entirely inside the implementation.
 abstract class VpnCore {
   /// Load a freshly fetched config bundle into the core (does not connect).
   Future<void> load(NormConfig config);
@@ -39,8 +40,8 @@ abstract class VpnCore {
   /// Swap the running tunnel onto a new config (another location or profile)
   /// without dropping the session — the tunnel interface and OS routes stay
   /// up, so no traffic escapes during the switch. Only meaningful while
-  /// connected; cores that cannot do this throw and the caller falls back to
-  /// a plain sync (next connect picks the change up).
+  /// connected; a fake that does not model it throws and the caller falls back
+  /// to a plain sync (next connect picks the change up).
   Future<void> reload(NormConfig config, String locationId) async =>
       throw UnsupportedError('hot reload is not supported by this core');
 
@@ -60,8 +61,8 @@ abstract class VpnCore {
   /// Apply system auto-connect state and report whether it ended up armed.
   /// [config]/[locationId] describe what the system should bring up when a
   /// rule matches; without them arming is refused (the OS would retry a
-  /// config-less start in a loop). A core with no such facility keeps this a
-  /// no-op returning false.
+  /// config-less start in a loop). A platform with no such facility keeps this
+  /// a no-op returning false.
   Future<bool> applyOnDemand(
     OnDemandPrefs prefs, {
     NormConfig? config,
