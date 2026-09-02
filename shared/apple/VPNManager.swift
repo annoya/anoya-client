@@ -5,6 +5,16 @@ import NetworkExtension
 /// NETunnelProviderManager: it saves/approves the VPN profile, starts the
 /// tunnel (passing the mihomo config in the start options), stops it, and
 /// reports status changes.
+///
+/// Main-actor isolated, and that is load-bearing (AGENTS.md invariant 9): the
+/// status it publishes feeds a Flutter EventChannel, which only accepts
+/// messages on the platform thread, and its fields are read by the channel
+/// handlers on that same thread. Before the annotation the async methods ran
+/// on the cooperative pool and wrote `manager` from there; now every method,
+/// callback and field lives on main, and a call from anywhere else does not
+/// compile. Nothing here blocks — every wait is an `await` on a system API or
+/// a continuation — so pinning it to main costs no responsiveness.
+@MainActor
 final class VPNManager {
     static let shared = VPNManager()
 
@@ -479,43 +489,34 @@ final class VPNManager {
             NotificationCenter.default.removeObserver(statusObserver)
             self.statusObserver = nil
         }
+        // Delivered on the main queue by request, which is what lets the
+        // closure step back into the actor without a hop: assumeIsolated
+        // checks the thread and traps if the queue ever stopped being main.
         statusObserver = NotificationCenter.default.addObserver(
             forName: .NEVPNStatusDidChange, object: m.connection, queue: .main
         ) { [weak self] _ in
-            guard let self else { return }
-            self.publish(self.currentStatus())
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.publish(self.currentStatus())
+            }
         }
     }
 
-    /// Publishes a status change to the Flutter side, from the main thread and
-    /// nowhere else.
+    /// Publishes a status change to the Flutter side, once per change.
     ///
     /// [onStatus] feeds a Flutter EventChannel, and platform-channel messages
     /// must be sent on the platform thread — Flutter warns that a send from
-    /// anywhere else may lose the message or crash. Getting that wrong is easy
-    /// here: this class is not actor-isolated, so a `nonisolated async` method
-    /// like [adopt] runs on the cooperative pool even when its caller started
-    /// on `@MainActor`. Every publication goes through this one door instead of
-    /// each call site remembering to hop.
-    ///
-    /// The dedup lives on the far side of the hop so [lastStatus] is only ever
-    /// touched on the main thread.
+    /// anywhere else may lose the message or crash. The class is main-actor
+    /// isolated, so this runs on that thread by construction; the door is one
+    /// so the dedup happens in one place.
     private func publish(_ status: String, force: Bool = false) {
-        if Thread.isMainThread {
-            deliver(status, force: force)
-        } else {
-            DispatchQueue.main.async { [weak self] in self?.deliver(status, force: force) }
-        }
-    }
-
-    private func deliver(_ status: String, force: Bool) {
         guard force || status != lastStatus else { return }
         lastStatus = status
         NSLog("VPN-NATIVE: status changed -> \(status)")
         onStatus?(status)
     }
 
-    /// Last status handed to Dart. Main thread only — see [publish].
+    /// Last status handed to Dart.
     private var lastStatus: String?
 
     private func statusString(_ s: NEVPNStatus) -> String {
