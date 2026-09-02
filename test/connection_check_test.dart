@@ -9,10 +9,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/connection_check.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/on_demand.dart';
+import 'package:vpn_client/core/profile.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/vpn_core.dart';
 import 'package:vpn_client/features/advanced_connection_screen.dart';
 import 'package:vpn_client/state/connection_check_controller.dart';
+import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 
 /// What "connected" leaves out.
@@ -53,8 +55,11 @@ void main() {
     }
   }
 
-  ProviderContainer boot(_FakeCore core) {
-    final c = ProviderContainer(overrides: [vpnCoreProvider.overrideWithValue(core)]);
+  ProviderContainer boot(_FakeCore core, {_DrivenProfiles? profiles}) {
+    final c = ProviderContainer(overrides: [
+      vpnCoreProvider.overrideWithValue(core),
+      if (profiles != null) profilesControllerProvider.overrideWith(() => profiles),
+    ]);
     addTearDown(c.dispose);
     c.read(connectionCheckProvider);
     return c;
@@ -115,6 +120,31 @@ void main() {
           timeout: const Duration(seconds: 2));
       expect(c.read(connectionCheckProvider).last, isNull,
           reason: 'a green line under a dead tunnel is worse than no line');
+    });
+
+    test('a hot switch forgets the old verdict and asks about the new server', () async {
+      // The session stays up across a switch, so the status stream never
+      // moves — yet the server the verdict described is gone.
+      final core = _FakeCore(answers: ['ms:120', 'ms:300']);
+      final profiles = _DrivenProfiles();
+      final c = boot(core, profiles: profiles);
+      await Future<void>.delayed(Duration.zero);
+
+      core.emit(VpnStatus.connected);
+      await until(() => c.read(connectionCheckProvider).last != null,
+          timeout: const Duration(seconds: 12));
+      expect(core.probes, 1);
+
+      profiles.set(profiles.state.copyWith(selectedLocationId: 'b', switching: true));
+      await Future<void>.delayed(Duration.zero);
+      expect(c.read(connectionCheckProvider).last, isNull,
+          reason: 'a verdict about the previous server must not be shown under the new one');
+
+      profiles.set(profiles.state.copyWith(switching: false));
+      await until(() => c.read(connectionCheckProvider).last != null,
+          timeout: const Duration(seconds: 12));
+      expect(core.probes, 2, reason: 'the end of the switch is a connect for this purpose');
+      expect(c.read(connectionCheckProvider).last?.delayMs, 300);
     });
 
     test('switched off, nothing is sent to anybody', () async {
@@ -418,4 +448,24 @@ class _FakeCore extends VpnCore {
   Future<bool> applyOnDemand(OnDemandPrefs prefs,
           {NormConfig? config, String? locationId}) async =>
       false;
+}
+
+/// A profiles controller the test moves by hand: one profile with two servers,
+/// and a setter for the selection and the switching flag.
+class _DrivenProfiles extends ProfilesController {
+  @override
+  ProfilesState build() {
+    final p = Profile(
+      id: 'p',
+      type: ProfileType.subscription,
+      name: 'p',
+      locations: [
+        Location(id: 'a', label: 'A', proxy: {'type': 'vless', 'server': '1.1.1.1'}),
+        Location(id: 'b', label: 'B', proxy: {'type': 'vless', 'server': '2.2.2.2'}),
+      ],
+    );
+    return ProfilesState(profiles: [p], activeId: 'p', selectedLocationId: 'a');
+  }
+
+  void set(ProfilesState s) => state = s;
 }

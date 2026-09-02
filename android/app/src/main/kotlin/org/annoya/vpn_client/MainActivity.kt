@@ -13,6 +13,7 @@ class MainActivity : FlutterActivity() {
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         VpnChannel.unregister(this)
+        WebAuthChannel.unregister(this)
         super.cleanUpFlutterEngine(flutterEngine)
     }
 

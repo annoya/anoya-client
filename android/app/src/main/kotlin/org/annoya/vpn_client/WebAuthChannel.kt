@@ -43,6 +43,15 @@ object WebAuthChannel {
         }
     }
 
+    /// The Activity is going away with its engine: a result still owed to it
+    /// belongs to a Dart side that no longer exists, and answering it later
+    /// would land on a detached messenger.
+    fun unregister(activity: Activity) {
+        if (host.get() === activity) host = WeakReference(null)
+        pending?.error("cancelled", "screen closed", null)
+        pending = null
+    }
+
     /// The identity provider redirected to our scheme.
     fun onCallback(uri: Uri?) {
         val result = pending ?: return
