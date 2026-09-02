@@ -5,7 +5,7 @@ import '../core/rule_set.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
 import '../state/routing_status.dart';
-import 'routing_screen.dart';
+import 'rule_set_editor_screen.dart';
 
 /// Global rule sets: created here, applied per configuration (see the
 /// configuration screen). Each row shows mode, rule count and how many
@@ -52,7 +52,7 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
     revision.bump();
     if (!mounted) return;
     await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => RoutingScreen.editSet(set.id)));
+        .push(MaterialPageRoute(builder: (_) => RuleSetEditorScreen(set.id)));
     await _load();
   }
 
@@ -96,7 +96,7 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () async {
                               await Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (_) => RoutingScreen.editSet(s.id)));
+                                  builder: (_) => RuleSetEditorScreen(s.id)));
                               await _load();
                             },
                           ),

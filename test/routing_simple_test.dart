@@ -13,7 +13,7 @@ import 'package:vpn_client/core/rule_set.dart';
 import 'package:vpn_client/core/service_catalog.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/vpn_core.dart';
-import 'package:vpn_client/features/routing_screen.dart';
+import 'package:vpn_client/features/rule_set_editor_screen.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 
@@ -110,7 +110,7 @@ void main() {
         ],
         child: MaterialApp(
           theme: buildAppTheme(Brightness.light),
-          home: const RoutingScreen.editSet(RuleSet.defaultId),
+          home: const RuleSetEditorScreen(RuleSet.defaultId),
         ),
       ));
       // _load does real file I/O (rule sets, geo status, the index scan).
