@@ -4,20 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
 import '../../state/profiles_controller.dart';
+import '../refresh_button.dart';
 
 /// Age of the cached servers plus a manual re-pull. Only for configurations
 /// with an origin to ask — a link has none.
 class RefreshCard extends StatelessWidget {
-  const RefreshCard({
-    super.key,
-    required this.profile,
-    required this.refreshing,
-    required this.onRefresh,
-  });
+  const RefreshCard({super.key, required this.profile});
 
   final Profile profile;
-  final bool refreshing;
-  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -27,18 +21,7 @@ class RefreshCard extends StatelessWidget {
           subtitle: Text(refreshedAtLabel(profile)),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             _RefreshEveryButton(profile: profile),
-            if (refreshing)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: SizedBox(
-                    height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Refresh now',
-                onPressed: onRefresh,
-              ),
+            RefreshButton(profile: profile),
           ]),
         ),
       );

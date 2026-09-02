@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/app_error.dart';
-import '../../core/log.dart';
 import '../../core/norm_config.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
-import '../../state/profiles_controller.dart';
 import 'config_parts.dart';
 
 /// Settings of a self-hosted configuration.
@@ -25,23 +22,6 @@ class SelfhostedConfigScreen extends ConsumerStatefulWidget {
 }
 
 class _SelfhostedConfigScreenState extends ConsumerState<SelfhostedConfigScreen> {
-  bool _refreshing = false;
-
-  Future<void> _refresh() async {
-    setState(() => _refreshing = true);
-    try {
-      await ref.read(profilesControllerProvider.notifier).refreshProfile(widget.profile.id);
-    } catch (e) {
-      Log.e('manual refresh failed', '$e');
-      if (mounted) {
-        showToast(context,
-            'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}');
-      }
-    } finally {
-      if (mounted) setState(() => _refreshing = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final p = widget.profile;
@@ -53,7 +33,7 @@ class _SelfhostedConfigScreenState extends ConsumerState<SelfhostedConfigScreen>
           const SizedBox(height: 8),
           ProfileHeaderCard(profile: p, isActive: widget.isActive),
           if (p.serverUrl != null) SourceCard(value: p.serverUrl!),
-          RefreshCard(profile: p, refreshing: _refreshing, onRefresh: _refresh),
+          RefreshCard(profile: p),
           RoutingRow(profile: p),
           if (account != null) ...[
             Card(

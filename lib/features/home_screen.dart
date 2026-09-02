@@ -1,30 +1,27 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/app_error.dart';
 import '../core/country_flag.dart';
-import '../core/log.dart';
-import '../core/mihomo_tun_config.dart';
 import '../core/norm_config.dart';
 import '../core/on_demand.dart';
+import '../core/platform_support.dart';
 import '../core/profile.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
+import '../state/connection_check_controller.dart';
 import '../state/favorites_controller.dart';
 import '../state/group_member.dart';
-import '../state/connection_check_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
-import '../state/session.dart';
 import '../state/providers.dart';
 import '../state/routing_status.dart';
+import '../state/session.dart';
 import 'config/config_screen.dart';
+import 'home_widgets.dart';
 import 'logs_screen.dart';
-import '../core/platform_support.dart';
 import 'on_demand_screen.dart';
+import 'refresh_button.dart';
 import 'rule_sets_screen.dart';
 import 'settings_screen.dart';
 import 'start_screen.dart';
@@ -37,42 +34,21 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  Timer? _sessionTimer;
-
   /// Status and session start are owned by [sessionProvider] — the menu bar
   /// shows the same clock, and two owners print two durations for one tunnel.
-  /// What stays here is the once-a-second repaint, which is this screen's own
-  /// business: nothing else needs a frame per second.
-  VpnStatus get _status => ref.watch(sessionProvider).status;
-
-  void _tick(VpnStatus s) {
-    if (s == VpnStatus.connected) {
-      _sessionTimer ??= Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) setState(() {});
-      });
-    } else {
-      _sessionTimer?.cancel();
-      _sessionTimer = null;
-    }
-  }
-
-  @override
-  void dispose() {
-    _sessionTimer?.cancel();
-    super.dispose();
-  }
-
-  bool get _busy => _status == VpnStatus.connected || _status == VpnStatus.connecting;
+  /// The once-a-second repaint for the clock is [StatusLabel]'s own business.
+  VpnStatus get _status => ref.watch(sessionProvider.select((s) => s.status));
 
   /// When the pickers refuse taps. A connected tunnel is NOT locked: switching
   /// is a hot reload under the live session. Locked only while the initial
   /// connect is in flight, or during the (brief) hot switch itself.
   bool get _locked =>
-      _status == VpnStatus.connecting || ref.read(profilesControllerProvider).switching;
+      _status == VpnStatus.connecting ||
+      ref.watch(profilesControllerProvider.select((s) => s.switching));
 
   Future<void> _toggle() async {
     final ctrl = ref.read(profilesControllerProvider.notifier);
-    if (_busy) {
+    if (ref.read(sessionProvider).busy) {
       await ctrl.disconnect();
     } else {
       await ctrl.connect();
@@ -81,10 +57,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final st = ref.watch(profilesControllerProvider);
-    final active = st.active;
-    // The clock only ticks while there is a session to time.
-    _tick(ref.watch(sessionProvider).status);
+    // Watched by the piece that needs it, never the whole state: a notice or a
+    // flag flipping used to rebuild every card on this screen.
+    final active = ref.watch(profilesControllerProvider.select((s) => s.active));
 
     // A connect failure floats above the screen until dismissed: the layout
     // must not jump, and a cause that vanished on its own tells the user
@@ -110,9 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         leading: IconButton(
           icon: const Icon(Icons.add),
           tooltip: 'Add configuration',
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const StartScreen()),
-          ),
+          onPressed: () => _push(const StartScreen()),
         ),
         title: const Text('VPN'),
         centerTitle: true,
@@ -120,9 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
+            onPressed: () => _push(const SettingsScreen()),
           ),
         ],
       ),
@@ -137,23 +108,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: IntrinsicHeight(
                 child: Column(
                   children: [
-                    _statusStrip(),
+                    _statusStrip(active),
                     Expanded(
                       child: Center(
                         child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          _statusLabel(),
+                          const StatusLabel(),
                           const SizedBox(height: 28),
-                          _ConnectButton(status: _status, onTap: _toggle),
+                          ConnectButton(status: _status, onTap: _toggle),
                         ]),
                       ),
                     ),
                     ?_checkBanner(),
                     ?_onDemandBanner(),
-                    if (active != null) _profileRow(st, active),
-                    if (active != null) _locationRow(st, active),
-                    if (active != null && active.hasAccount && active.account != null) ...[
+                    if (active != null) _profileRow(active),
+                    if (active != null) _locationRow(active),
+                    if (active?.account != null) ...[
                       const SizedBox(height: 12),
-                      _accountRow(active.account!),
+                      _accountRow(active!.account!),
                     ],
                     const SizedBox(height: kGutter),
                   ],
@@ -166,41 +137,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _session() {
-    final clock = sessionClock(ref.read(sessionProvider).startedAt);
-    return clock.isEmpty ? '' : ' · $clock';
-  }
-
-  Widget _statusLabel() {
-    final vpn = context.vpnColors;
-    // "· auto" only when the OS confirmed it is auto-connecting.
-    final auto = ref.watch(onDemandProvider).systemArmed ? ' · auto' : '';
-    if (ref.watch(profilesControllerProvider.select((s) => s.switching))) {
-      // Two different waits wear different words. With a live session the
-      // server is being swapped under it; with the tunnel down there is no
-      // session to switch, only a server still being fetched, and promising a
-      // switch would describe something that is not happening.
-      final label = _status == VpnStatus.connected
-          ? 'Switching server…'
-          : 'Getting the server…';
-      // The ring stays green (the session never dropped); the status line is
-      // the only telltale of the in-flight switch.
-      return Text(label,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(color: vpn.connecting, fontWeight: FontWeight.w600));
-    }
-    final (text, color) = switch (_status) {
-      VpnStatus.connected => ('Connected${_session()}$auto', vpn.connected),
-      VpnStatus.connecting => ('Connecting…', vpn.connecting),
-      VpnStatus.error => ('Error', Theme.of(context).colorScheme.error),
-      VpnStatus.disconnected => ('Not connected', Theme.of(context).colorScheme.onSurfaceVariant),
-    };
-    return Text(text,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color, fontWeight: FontWeight.w600));
-  }
-
   void _push(Widget screen) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
@@ -209,21 +145,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// whether any traffic is routed around the tunnel, and whether anything is
   /// written to the log. Each chip opens the screen that owns it — the off ones
   /// too, since that is where they get turned on.
-  Widget _statusStrip() {
+  Widget _statusStrip(Profile? active) {
     final onDemand = ref.watch(onDemandProvider);
-    final collectLogs = ref.watch(appPrefsProvider).collectLogs;
+    final collectLogs = ref.watch(appPrefsProvider.select((p) => p.collectLogs));
     final routing = ref.watch(routingStatusProvider).value;
-    final active = ref.watch(profilesControllerProvider).active;
 
     // "Enabled but not currently working" is its own state: showing it as off
     // would send the user to a screen where the switch is already on. Only the
     // last case means the OS confirmed it is auto-connecting.
     final (autoLabel, autoTone) = switch (onDemand) {
-      OnDemandPrefs(enabled: false) => ('off', _ChipTone.off),
-      OnDemandPrefs(paused: true) => ('paused', _ChipTone.pending),
-      OnDemandPrefs(rules: []) => ('no rules', _ChipTone.pending),
-      OnDemandPrefs(systemArmed: false) => ('not armed', _ChipTone.pending),
-      _ => ('on', _ChipTone.on),
+      OnDemandPrefs(enabled: false) => ('off', ChipTone.off),
+      OnDemandPrefs(paused: true) => ('paused', ChipTone.pending),
+      OnDemandPrefs(rules: []) => ('no rules', ChipTone.pending),
+      OnDemandPrefs(systemArmed: false) => ('not armed', ChipTone.pending),
+      _ => ('on', ChipTone.on),
     };
 
     return Padding(
@@ -237,28 +172,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // system's Always-on switch, whose state the app cannot read while
           // the tunnel is down — a chip would show a guess.
           if (supportsOnDemand)
-            _StatusChip(
+            StatusChip(
               icon: Icons.bolt_outlined,
               label: 'Auto · $autoLabel',
               tone: autoTone,
               onTap: () => _push(const OnDemandScreen()),
             ),
-          _StatusChip(
+          StatusChip(
             icon: Icons.alt_route,
             // The value is unknown only until the rule set is read off disk, so
             // it holds its place with an ellipsis instead of the chip appearing
             // a frame late and shifting the row.
             label: 'Routing · ${routing?.label ?? '…'}',
-            tone: routing == null || routing == RoutingStatus.off ? _ChipTone.off : _ChipTone.on,
+            tone: routing == null || routing == RoutingStatus.off ? ChipTone.off : ChipTone.on,
             // Routing is a per-configuration setting, so the chip leads to the
             // active configuration; with none added yet, to the sets themselves.
             onTap: () => _push(
                 active == null ? const RuleSetsScreen() : ConfigScreen(profileId: active.id)),
           ),
-          _StatusChip(
+          StatusChip(
             icon: Icons.description_outlined,
             label: 'Logs · ${collectLogs ? 'on' : 'off'}',
-            tone: collectLogs ? _ChipTone.on : _ChipTone.off,
+            tone: collectLogs ? ChipTone.on : ChipTone.off,
             onTap: () => _push(const LogsScreen()),
           ),
         ],
@@ -275,7 +210,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// really is up, and recolouring it would misreport the system's state to
   /// deliver a warning about the server.
   Widget? _checkBanner() {
-    final check = ref.watch(connectionCheckProvider).last;
+    final check = ref.watch(connectionCheckProvider.select((s) => s.last));
     if (check == null || check.passed) return null;
     final warn = context.vpnColors.connecting;
     return Card(
@@ -296,7 +231,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// start from yet (the system only accepts on-demand after one connect).
   Widget? _onDemandBanner() {
     final onDemand = ref.watch(onDemandProvider);
-    if (!onDemand.enabled || _busy) return null;
+    final busy = ref.watch(sessionProvider.select((s) => s.busy));
+    if (!onDemand.enabled || busy) return null;
     final (title, subtitle) = switch (onDemand) {
       OnDemandPrefs(paused: true) => ('Auto-connect paused', 'Press Connect to arm it again'),
       OnDemandPrefs(awaitingFirstConnect: true) => (
@@ -320,35 +256,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// The active configuration is always on screen, even when it is the only
   /// one: the gear jumps straight into its settings, while the chevron (and the
   /// row tap) only offer a choice when there is something to choose between.
-  /// A refresh is in flight. Kept here rather than in the controller: it is
-  /// about this button's own appearance, and the poll timer refreshes without
-  /// anyone watching.
-  bool _refreshing = false;
-
-  /// The same call the configuration screen makes, reporting the same way: a
-  /// toast when the panel refused the device, a toast when it failed, and
-  /// silence when it worked — the new list of servers is the answer.
-  Future<void> _refresh(Profile active) async {
-    setState(() => _refreshing = true);
-    try {
-      final updated =
-          await ref.read(profilesControllerProvider.notifier).refreshProfile(active.id);
-      if (updated.deviceLimitReached && mounted) {
-        showToast(context, kDeviceLimitReached.line);
-      }
-    } catch (e) {
-      Log.e('manual refresh failed', '$e');
-      if (mounted) {
-        showToast(context,
-            'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}');
-      }
-    } finally {
-      if (mounted) setState(() => _refreshing = false);
-    }
-  }
-
-  Widget _profileRow(ProfilesState st, Profile active) {
-    final pickable = st.profiles.length > 1;
+  Widget _profileRow(Profile active) {
+    final pickable = ref.watch(profilesControllerProvider.select((s) => s.profiles.length > 1));
     return Card(
       margin: kCardMargin,
       child: ListTile(
@@ -361,46 +270,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // pressed from here — the servers ran out or the provider changed
           // something, and the user is already looking at this screen.
           if (active.isRefreshable)
-            _refreshing
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14),
-                    child: SizedBox(
-                        height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.refresh, size: 20),
-                    tooltip: 'Refresh now',
-                    onPressed: () => _refresh(active),
-                  ),
+            RefreshButton(profile: active, iconSize: 20, spinnerPadding: 14),
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 20),
             tooltip: 'Configuration settings',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => ConfigScreen(profileId: active.id)),
-            ),
+            onPressed: () => _push(ConfigScreen(profileId: active.id)),
           ),
           if (pickable)
             _status == VpnStatus.connecting
                 ? const Icon(Icons.lock_outline, size: 18)
                 : const Icon(Icons.expand_more),
         ]),
-        onTap: (!pickable || _locked) ? null : () => _pickProfile(st),
+        onTap: (!pickable || _locked) ? null : _pickProfile,
       ),
     );
   }
 
-  Widget _locationRow(ProfilesState st, Profile active) {
-    final group = st.selectedGroup;
-    final loc = st.selectedLocation;
+  Widget _locationRow(Profile active) {
+    final group = ref.watch(profilesControllerProvider.select((s) => s.selectedGroup));
+    final loc = ref.watch(profilesControllerProvider.select((s) => s.selectedLocation));
     // A single-server profile (a plain link) has nothing to pick between: show
     // the server but no dropdown affordance or picker.
     final pickable =
-        !active.isSingleServer && (st.locations.length > 1 || active.groups.isNotEmpty);
+        !active.isSingleServer && (active.locations.length > 1 || active.groups.isNotEmpty);
     final picked = group == null ? null : ref.watch(groupMemberProvider).value;
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: group != null ? Icon(groupIcon(group.type)) : _flagOrIcon(loc?.label),
+        leading: group != null ? Icon(groupIcon(group.type)) : flagOrIcon(loc?.label),
         title: Text(group?.name ??
             (loc != null ? stripLeadingFlag(loc.label) : 'No servers')),
         // With a group, the name alone is a claim the user cannot check — they
@@ -417,7 +314,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : _status == VpnStatus.connecting
                 ? const Icon(Icons.lock_outline, size: 18)
                 : const Icon(Icons.chevron_right),
-        onTap: (!pickable || _locked) ? null : () => _pickLocation(st, active),
+        onTap: (!pickable || _locked) ? null : () => _pickLocation(active),
       ),
     );
   }
@@ -436,7 +333,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Future<void> _pickProfile(ProfilesState st) async {
+  Future<void> _pickProfile() async {
+    final st = ref.read(profilesControllerProvider);
     final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
@@ -445,9 +343,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       itemNoun: 'configuration',
       favorites: favorites.profiles,
       onToggleFavorite: (id) => ref.read(favoritesProvider.notifier).toggleProfile(id),
-      onOpenSettings: (id) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => ConfigScreen(profileId: id)),
-      ),
+      onOpenSettings: (id) => _push(ConfigScreen(profileId: id)),
       options: st.profiles
           .map((p) => Option(
                 p.id,
@@ -460,7 +356,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (picked != null) ref.read(profilesControllerProvider.notifier).setActive(picked);
   }
 
-  Future<void> _pickLocation(ProfilesState st, Profile active) async {
+  Future<void> _pickLocation(Profile active) async {
+    final st = ref.read(profilesControllerProvider);
     final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
@@ -474,7 +371,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .map((g) => Option(
                 g.id,
                 g.name,
-                subtitle: _describeGroup(g, st),
+                subtitle: describeGroup(g, st.locations),
                 leading: Icon(groupIcon(g.type)),
               ))
           .toList(),
@@ -486,156 +383,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 l.id,
                 stripLeadingFlag(l.label),
                 subtitle: l.subtitle,
-                leading: _flagOrIcon(l.label),
+                leading: flagOrIcon(l.label),
               ))
           .toList(),
     );
     if (picked != null) ref.read(profilesControllerProvider.notifier).selectLocation(picked);
-  }
-}
-
-/// How many of a group's members this device can actually run, and what the
-/// group does with them. The count is the live one, not the provider's: a group
-/// naming twelve servers of which we can run nine is a group of nine.
-String _describeGroup(ProxyGroup g, ProfilesState st) {
-  final ids = {for (final l in st.locations) l.id};
-  final n = g.members.where(ids.contains).length;
-  final every = g.type == 'url-test' || g.type == 'fallback' || g.type == 'load-balance';
-  final interval = Duration(seconds: g.intervalSeconds) < kMinGroupInterval
-      ? kMinGroupInterval
-      : Duration(seconds: g.intervalSeconds);
-  return every
-      ? '${g.describe(n)} · rechecks every ${interval.inMinutes} min'
-      : g.describe(n);
-}
-
-/// The shape that says what a group does. Colour cannot: the row is a list
-/// item like any other.
-IconData groupIcon(String type) => switch (type) {
-      'url-test' => Icons.bolt,
-      'fallback' => Icons.shield_outlined,
-      'load-balance' => Icons.balance,
-      'relay' => Icons.alt_route,
-      _ => Icons.groups_outlined,
-    };
-
-/// A country flag emoji for the location (rendered natively on Apple
-/// platforms), falling back to a globe icon when no country is inferred.
-Widget _flagOrIcon(String? label) {
-  final flag = label == null ? null : flagEmoji(label);
-  if (flag == null) return const Icon(Icons.public);
-  return Text(flag, style: const TextStyle(fontSize: 26));
-}
-
-/// Big circular connect button whose color reflects status.
-class _ConnectButton extends StatelessWidget {
-  const _ConnectButton({required this.status, required this.onTap});
-  final VpnStatus status;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final connected = status == VpnStatus.connected;
-    final connecting = status == VpnStatus.connecting;
-    final vpn = context.vpnColors;
-    final color = connected
-        ? vpn.connected
-        : connecting
-            ? vpn.connecting
-            : Theme.of(context).colorScheme.primary;
-
-    return Semantics(
-      button: true,
-      enabled: !connecting,
-      label: connected ? 'Disconnect' : 'Connect',
-      child: GestureDetector(
-        onTap: connecting ? null : onTap,
-        child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-        width: 180,
-        height: 180,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: 0.12),
-          border: Border.all(color: color, width: 3),
-        ),
-        child: Center(
-          child: connecting
-              ? SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(strokeWidth: 3, color: color))
-              : Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.power_settings_new, size: 56, color: color),
-                  const SizedBox(height: 8),
-                  Text(connected ? 'Disconnect' : 'Connect',
-                      style: TextStyle(color: color, fontWeight: FontWeight.w600)),
-                ]),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Tone of a status chip: on = the feature is doing something, off = it is not,
-/// pending = it is switched on but not in effect right now.
-enum _ChipTone { on, off, pending }
-
-/// Reports one piece of tunnel state and opens the screen that owns it. Not a
-/// Material chip: those are sized for selection and filtering, and this one has
-/// to stay 30pt so three of them read as a status line rather than a toolbar.
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({
-    required this.icon,
-    required this.label,
-    required this.tone,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final _ChipTone tone;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final (fg, bg, border) = switch (tone) {
-      _ChipTone.on => (cs.onPrimaryContainer, cs.primaryContainer, null),
-      _ChipTone.off => (cs.onSurfaceVariant, null, cs.outlineVariant),
-      _ChipTone.pending => (
-          context.vpnColors.connecting,
-          null,
-          context.vpnColors.connecting.withValues(alpha: 0.45),
-        ),
-    };
-    return Material(
-      color: bg ?? Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: border == null ? BorderSide.none : BorderSide(color: border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: SizedBox(
-            height: kStatusChipHeight,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(width: 6),
-              Text(label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(color: fg, fontWeight: FontWeight.w500)),
-            ]),
-          ),
-        ),
-      ),
-    );
   }
 }
