@@ -62,9 +62,13 @@ class MihomoVpnService : VpnService() {
         override fun stop() = shutdown()
 
         override fun reload(config: String): String {
-            val fd = tunFd ?: return "tunnel is not running"
             return try {
                 executor.submit<String> {
+                    // Read on the executor, not on the binder thread: a stop
+                    // already queued ahead of this runs first and clears the fd,
+                    // and a reload that read it earlier would hand the engine a
+                    // closed descriptor.
+                    val fd = tunFd ?: return@submit "tunnel is not running"
                     try {
                         Mobile.reload(fd.toLong(), config)
                         log("hot reload applied")
@@ -121,7 +125,13 @@ class MihomoVpnService : VpnService() {
             shutdown()
             return START_NOT_STICKY
         }
-        if (tunFd != null) return START_STICKY // already up; nothing to do
+        // Up, or on its way up. The fd alone is not the test: it is set only
+        // after establish() inside bringUp, so a second start intent landing
+        // while the first was still connecting queued a second bringUp — a
+        // second tun and a second engine start on a different fd.
+        when (TunnelState.status) {
+            TunnelState.CONNECTING, TunnelState.CONNECTED -> return START_STICKY
+        }
         startForeground(1, buildNotification())
         TunnelState.set(TunnelState.CONNECTING)
         executor.execute { bringUp() }
