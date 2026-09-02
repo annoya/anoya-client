@@ -7,9 +7,9 @@ the relevant ADR in `docs/decisions/` before changing the subsystem it governs.
 
 Self-hosted VPN service, three components:
 
-- `client/` — Flutter app for macOS and iOS. Drives a system VPN through a
-  swappable core seam (`VpnCore`); the mihomo engine is compiled into a
-  Network Extension.
+- `client/` — Flutter app for macOS, iOS and Android. Drives a system VPN
+  through the `VpnCore` boundary; the engine is mihomo and only mihomo,
+  compiled into a Network Extension (Apple) or a VpnService (Android).
 - `management/` — Go service + embedded React admin panel. Source of truth for
   users, user lists, workers, routing profiles. Hands out client configs.
 - `worker/` — Go agent on each VPN server. Runs Xray (VLESS+Reality), pulls its
@@ -19,6 +19,10 @@ Self-hosted VPN service, three components:
 
 Two deliberate abstraction seams, and only two: `VpnCore` on the client and
 `protocol.Driver` on the server. Everything else stays boring and direct.
+`VpnCore` is not there to swap the engine — mihomo is the engine, and nothing
+else is planned. It exists so the state layer can be tested against a fake
+tunnel, and so the platform side (Network Extension, VpnService) stays behind
+one Dart class.
 
 ## Non-Negotiable Invariants
 
@@ -193,11 +197,13 @@ The rules below exist because each was learned the expensive way.
 
 ### Client
 
-The app depends on `VpnCore` (`client/lib/core/vpn_core.dart`) and never on a
-specific engine. `NetworkExtensionCore` implements it for macOS and iOS through
-a `NEPacketTunnelProvider`; the mihomo engine is a Go c-archive linked into the
-extension. Dart renders the engine config (`client/lib/core/mihomo_tun_config.dart`) and
-sends commands over a MethodChannel. Swift shared by both platforms lives once
+The engine is mihomo. The state layer reaches it through `VpnCore`
+(`client/lib/core/vpn_core.dart`), whose one real implementation is
+`NetworkExtensionCore`: on macOS and iOS a `NEPacketTunnelProvider` with the
+engine linked in as a Go c-archive, on Android a `VpnService` with the engine
+in-process. Dart renders the mihomo config
+(`client/lib/core/mihomo_tun_config.dart`) and sends commands over a
+MethodChannel; tests substitute a fake `VpnCore`. Swift shared by both platforms lives once
 in `client/shared/apple/` and is symlinked into `macos/` and `ios/`.
 
 State is Riverpod; `ProfilesController` owns the configuration list, the active
