@@ -294,20 +294,26 @@ void main() {
   });
 
   testWidgets('every refresh that fails says so the same way', (tester) async {
-    // One event, one wording, whichever domain the configuration belongs to:
-    // the user should not have to work out whether two screens are telling
-    // them about the same thing.
-    final wordings = <String>{};
+    // One event, one wording, whichever screen it was pressed from: the user
+    // should not have to work out whether two screens are telling them about
+    // the same thing. Four copies of the handler once diverged in wording, so
+    // the wording now lives in exactly one place and the screens embed it.
+    const shared = 'lib/features/refresh_button.dart';
+    final pattern = RegExp(r"Couldn’t refresh");
+    expect(pattern.allMatches(File(shared).readAsStringSync()), hasLength(1),
+        reason: '$shared is the one place that says it');
     for (final f in [
       File('lib/features/config/amnezia_config_screen.dart'),
       File('lib/features/config/subscription_config_screen.dart'),
       File('lib/features/config/selfhosted_config_screen.dart'),
+      File('lib/features/home_screen.dart'),
     ]) {
-      final m = RegExp(r"'(Couldn’t refresh[^']*)").firstMatch(f.readAsStringSync());
-      expect(m, isNotNull, reason: '${f.path} reports a failed refresh');
-      wordings.add(m!.group(1)!.split('\${').first);
+      final src = f.readAsStringSync();
+      expect(src, isNot(contains('Couldn’t refresh')),
+          reason: '${f.path} has grown its own copy of the message');
+      expect(src, anyOf(contains('RefreshCard('), contains('RefreshButton(')),
+          reason: '${f.path} offers a refresh, so it must use the shared one');
     }
-    expect(wordings, hasLength(1), reason: 'they diverged: $wordings');
   });
 
   testWidgets('a self-hosted configuration is the only one with an account',

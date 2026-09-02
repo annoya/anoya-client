@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/amnezia/amnezia_account.dart';
-import '../../core/app_error.dart';
-import '../../core/log.dart';
 import '../../core/device_identity.dart';
 import '../../core/profile.dart';
 import '../../core/profile_store.dart';
 import '../../core/ui.dart';
-import '../../state/profiles_controller.dart';
 import 'config_parts.dart';
 
 /// An Amnezia Premium/Free subscription.
@@ -33,27 +30,6 @@ class AmneziaConfigScreen extends ConsumerStatefulWidget {
 }
 
 class _AmneziaConfigScreenState extends ConsumerState<AmneziaConfigScreen> {
-  bool _refreshing = false;
-
-  Future<void> _refresh() async {
-    setState(() => _refreshing = true);
-    try {
-      await ref.read(profilesControllerProvider.notifier).refreshProfile(widget.profile.id);
-    } catch (e) {
-      Log.e('amnezia refresh failed', '$e');
-      // Same form as every other refresh that failed (spec §9): what we hold
-      // still works, so this is news rather than a verdict. Worded the same
-      // way too — one event should not read differently depending on which
-      // screen the user happened to be on.
-      if (mounted) {
-        showToast(context,
-            'Couldn’t refresh — ${describeError(e).detail ?? 'showing what we already have.'}');
-      }
-    } finally {
-      if (mounted) setState(() => _refreshing = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final p = widget.profile;
@@ -66,7 +42,7 @@ class _AmneziaConfigScreenState extends ConsumerState<AmneziaConfigScreen> {
           const SizedBox(height: 8),
           ProfileHeaderCard(profile: p, isActive: widget.isActive),
           if (account?.expired == true) const _ExpiredCard(),
-          RefreshCard(profile: p, refreshing: _refreshing, onRefresh: _refresh),
+          RefreshCard(profile: p),
           if (account != null) ..._subscription(account),
           RoutingRow(profile: p),
           const _ThisInstallation(),
