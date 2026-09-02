@@ -25,7 +25,7 @@ class MainFlutterWindow: NSWindow {
 
     // Menu bar item. Held by the window because it must outlive every menu it
     // shows: an NSStatusItem released early takes its slot out of the menu bar.
-    menuBar = MenuBarController.register(
+    menuBar = MenuBarController(
       messenger: flutterViewController.engine.binaryMessenger, window: self)
 
     super.awakeFromNib()

@@ -208,7 +208,9 @@ object VpnChannel {
                     // Written here as well as pushed: with no tunnel running
                     // there is nobody to tell, and the next start must still
                     // honour the switch.
-                    TunnelFiles.setLogsEnabled(context, on)
+                    // On the same executor as the binder call that follows, so
+                    // the flag is on disk before the engine is told.
+                    calls.execute { TunnelFiles.setLogsEnabled(context, on) }
                     ask(result) { it.setLogging(on); null }
                 }
                 "clear_logs" -> io(result) {

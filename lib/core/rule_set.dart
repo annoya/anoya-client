@@ -3,6 +3,37 @@
 import 'norm_config.dart';
 import 'json_file_store.dart';
 
+/// The direction of a rule set: what happens to traffic no rule names.
+///
+/// An enum here, a string on the wire: `Routing.mode` mirrors the server's
+/// normconfig and stays text, and [wire] is the one place the two meet.
+enum RoutingMode {
+  /// Everything via VPN; rules are the exceptions.
+  full,
+
+  /// Only matching traffic via VPN; the rest connects directly.
+  split;
+
+  String get wire => name;
+
+  /// As the summaries print it.
+  String get label => this == split ? 'Split' : 'Full tunnel';
+
+  static RoutingMode parse(String? wire) => wire == 'split' ? split : full;
+}
+
+/// Which view a rule set opens in. Views over the same rules, not formats —
+/// switching never converts or discards anything.
+enum RuleEditor {
+  /// The service catalog.
+  simple,
+
+  /// Raw ordered rules.
+  advanced;
+
+  static RuleEditor parse(String? wire) => wire == 'advanced' ? advanced : simple;
+}
+
 /// A named, reusable split-tunneling policy. Rule sets are global (device
 /// level) and are applied to configurations individually via
 /// Profile.ruleSetId; self-hosted profiles with a server-managed policy ignore
@@ -12,9 +43,9 @@ class RuleSet {
   const RuleSet({
     required this.id,
     required this.name,
-    this.mode = 'full',
+    this.mode = RoutingMode.full,
     this.rules = const [],
-    this.editor = 'simple',
+    this.editor = RuleEditor.simple,
   });
 
   static const defaultId = 'default';
@@ -22,21 +53,15 @@ class RuleSet {
   final String id;
   final String name;
 
-  /// "full": everything via VPN, rules are exceptions.
-  /// "split": only matching traffic via VPN, the rest is direct.
-  final String mode;
+  final RoutingMode mode;
   final List<RoutingRule> rules;
-
-  /// Which editor view the set opens in: 'simple' (service catalog) or
-  /// 'advanced' (raw ordered rules). Views over the same rules, not formats —
-  /// switching never converts or discards anything.
-  final String editor;
+  final RuleEditor editor;
 
   bool get isDefault => id == defaultId;
 
-  Routing toRouting() => Routing(mode: mode, rules: rules);
+  Routing toRouting() => Routing(mode: mode.wire, rules: rules);
 
-  RuleSet copyWith({String? name, String? mode, List<RoutingRule>? rules, String? editor}) =>
+  RuleSet copyWith({String? name, RoutingMode? mode, List<RoutingRule>? rules, RuleEditor? editor}) =>
       RuleSet(
           id: id,
           name: name ?? this.name,
@@ -47,20 +72,20 @@ class RuleSet {
   factory RuleSet.fromJson(Map<String, dynamic> j) => RuleSet(
         id: j['id'] as String,
         name: j['name'] as String? ?? 'Rule set',
-        mode: j['mode'] as String? ?? 'full',
+        mode: RoutingMode.parse(j['mode'] as String?),
         rules: (j['rules'] as List<dynamic>? ?? [])
             .whereType<Map>()
             .map((e) => RoutingRule.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
-        editor: j['editor'] as String? ?? 'simple',
+        editor: RuleEditor.parse(j['editor'] as String?),
       );
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'mode': mode,
+        'mode': mode.wire,
         'rules': rules.map((r) => r.toJson()).toList(),
-        'editor': editor,
+        'editor': editor.name,
       };
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/geo_store.dart';
 import '../core/norm_config.dart';
+import '../core/rule_set.dart';
 import '../core/ui.dart';
 import 'policy_origin.dart';
 import 'routing_widgets.dart';
@@ -75,10 +76,10 @@ class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
                       busy: _geoBusy,
                       onDownload: _downloadGeo,
                     ),
-                  RoutingModeCard(mode: policy.mode),
+                  RoutingModeCard(mode: RoutingMode.parse(policy.mode)),
                   const SectionHeader('RULES — FIRST MATCH WINS'),
                   if (policy.rules.isEmpty)
-                    emptyRulesNote(context, policy.mode)
+                    emptyRulesNote(context, RoutingMode.parse(policy.mode))
                   else
                     for (final rule in policy.rules)
                       RuleTile(

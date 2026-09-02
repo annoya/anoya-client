@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_error.dart';
 import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/routing_prefs.dart';
 import '../core/ui.dart';
+import '../state/providers.dart';
 
 /// GeoIP & GeoSite database management: source URLs (editable), current
 /// size/age, manual update and the weekly auto-update switch. geoip/geosite
 /// rules stay inactive until both files are downloaded.
-class GeoScreen extends StatefulWidget {
+class GeoScreen extends ConsumerStatefulWidget {
   const GeoScreen({super.key});
 
   @override
-  State<GeoScreen> createState() => _GeoScreenState();
+  ConsumerState<GeoScreen> createState() => _GeoScreenState();
 }
 
-class _GeoScreenState extends State<GeoScreen> {
-  RoutingPrefs _prefs = const RoutingPrefs();
+class _GeoScreenState extends ConsumerState<GeoScreen> {
   GeoStatus _status = const GeoStatus();
   bool _loading = true;
   bool _busy = false;
@@ -29,15 +30,18 @@ class _GeoScreenState extends State<GeoScreen> {
   }
 
   Future<void> _load() async {
-    final prefs = await RoutingPrefsStore.load();
+    // The download stamps geoUpdatedAt into the file behind the provider's
+    // back, so the copy the screen shows is refreshed alongside the sizes.
+    await ref.read(routingPrefsProvider.notifier).reload();
     final status = await GeoStore.status();
     if (!mounted) return;
     setState(() {
-      _prefs = prefs;
       _status = status;
       _loading = false;
     });
   }
+
+  RoutingPrefs get _prefs => ref.read(routingPrefsProvider);
 
   Future<void> _update() async {
     setState(() {
@@ -71,10 +75,8 @@ class _GeoScreenState extends State<GeoScreen> {
     );
     final trimmed = url?.trim() ?? '';
     if (trimmed.isEmpty) return;
-    final updated =
-        geoip ? _prefs.copyWith(geoipUrl: trimmed) : _prefs.copyWith(geositeUrl: trimmed);
-    await RoutingPrefsStore.save(updated);
-    if (mounted) setState(() => _prefs = updated);
+    await ref.read(routingPrefsProvider.notifier).update(
+        (p) => geoip ? p.copyWith(geoipUrl: trimmed) : p.copyWith(geositeUrl: trimmed));
   }
 
   /// One database row: name + size on the title line, the source URL on one
@@ -112,8 +114,8 @@ class _GeoScreenState extends State<GeoScreen> {
 
   String _bytes(int n) => n <= 0 ? 'not downloaded' : formatBytes(n);
 
-  String _updatedAt() {
-    final at = _prefs.geoUpdatedAt;
+  String _updatedAt(RoutingPrefs prefs) {
+    final at = prefs.geoUpdatedAt;
     if (at == null || !_status.downloaded) return 'never';
     final d = DateTime.now().difference(at);
     if (d.inDays > 0) return '${d.inDays} day${d.inDays > 1 ? 's' : ''} ago';
@@ -123,6 +125,7 @@ class _GeoScreenState extends State<GeoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final prefs = ref.watch(routingPrefsProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('GeoIP & GeoSite')),
       body: _loading
@@ -133,13 +136,13 @@ class _GeoScreenState extends State<GeoScreen> {
                   const SectionHeader('DATABASES'),
                   _dbCard(
                     name: 'GeoIP',
-                    url: _prefs.geoipUrl,
+                    url: prefs.geoipUrl,
                     bytes: _status.geoipBytes,
                     onEdit: () => _editUrl(geoip: true),
                   ),
                   _dbCard(
                     name: 'GeoSite',
-                    url: _prefs.geositeUrl,
+                    url: prefs.geositeUrl,
                     bytes: _status.geositeBytes,
                     onEdit: () => _editUrl(geoip: false),
                   ),
@@ -149,17 +152,15 @@ class _GeoScreenState extends State<GeoScreen> {
                     child: Column(children: [
                       ListTile(
                         title: const Text('Last updated'),
-                        subtitle: Text(_updatedAt()),
+                        subtitle: Text(_updatedAt(prefs)),
                       ),
                       SwitchListTile(
                         title: const Text('Auto-update'),
                         subtitle: const Text('Weekly, when already downloaded'),
-                        value: _prefs.geoAutoUpdate,
-                        onChanged: (v) async {
-                          final updated = _prefs.copyWith(geoAutoUpdate: v);
-                          await RoutingPrefsStore.save(updated);
-                          if (mounted) setState(() => _prefs = updated);
-                        },
+                        value: prefs.geoAutoUpdate,
+                        onChanged: (v) => ref
+                            .read(routingPrefsProvider.notifier)
+                            .update((p) => p.copyWith(geoAutoUpdate: v)),
                       ),
                     ]),
                   ),

@@ -77,7 +77,7 @@ class LocalRoutingCard extends ConsumerWidget {
                 s.id,
                 s.name,
                 subtitle:
-                    '${s.mode == 'split' ? 'Split' : 'Full tunnel'} · ${s.rules.isEmpty ? 'no rules' : '${s.rules.length} rules'}',
+                    '${s.mode.label} · ${s.rules.isEmpty ? 'no rules' : '${s.rules.length} rules'}',
                 leading: const Icon(Icons.layers_outlined),
               ))
           .toList(),
@@ -97,7 +97,7 @@ void openManagedRouting(BuildContext context, Routing routing) {
 /// The policy a device's own rule set puts in force, in one line.
 String localRoutingSummary(Profile p, RuleSet? set) {
   if (!p.routingEnabled) return 'Off · everything through the VPN';
-  final mode = (set?.mode ?? 'full') == 'split' ? 'Split' : 'Full tunnel';
+  final mode = (set?.mode ?? RoutingMode.full).label;
   final rules = set?.rules.length ?? 0;
   return '$mode · ${rules == 0 ? 'no rules' : '$rules rule${rules > 1 ? 's' : ''}'}';
 }

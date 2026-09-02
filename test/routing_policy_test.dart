@@ -15,7 +15,7 @@ void main() {
   const localSet = RuleSet(
     id: 'work',
     name: 'Work',
-    mode: 'split',
+    mode: RoutingMode.split,
     rules: [RoutingRule(type: 'domain-suffix', value: 'corp.example', action: 'proxy')],
   );
   Future<RuleSet> load(String? id) async => localSet;

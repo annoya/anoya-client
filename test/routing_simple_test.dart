@@ -170,7 +170,7 @@ void main() {
       await scrollBy(tester, -400);
 
       final set = await storedDefault(tester);
-      expect(set.mode, 'split');
+      expect(set.mode, RoutingMode.split);
       expect(set.rules.single.action, 'proxy',
           reason: 'the user changed what "selected" means, not what is selected — '
               'the toggle must stay on, so the rule follows the new direction');
@@ -259,7 +259,7 @@ void main() {
       await settle(tester);
       expect(find.text('RULES — FIRST MATCH WINS'), findsOneWidget);
 
-      expect((await storedDefault(tester)).editor, 'advanced');
+      expect((await storedDefault(tester)).editor, RuleEditor.advanced);
     });
   });
 

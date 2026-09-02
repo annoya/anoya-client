@@ -31,8 +31,8 @@ class RuleSetEditorScreen extends ConsumerStatefulWidget {
 
 class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   String _name = 'Split tunneling';
-  String _mode = 'full';
-  String _editor = 'simple';
+  RoutingMode _mode = RoutingMode.full;
+  RuleEditor _editor = RuleEditor.simple;
   List<RoutingRule> _rules = [];
   bool _loading = true;
   bool _isDefault = false;
@@ -102,7 +102,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   // and is surfaced as the "Advanced rules" row instead of being hidden or
   // dropped.
 
-  String get _expectedAction => _mode == 'split' ? 'proxy' : 'direct';
+  String get _expectedAction => _mode == RoutingMode.split ? 'proxy' : 'direct';
 
   bool _representable(RoutingRule r) =>
       (r.type == 'geosite' || r.type == 'geoip') && r.action == _expectedAction;
@@ -128,10 +128,10 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   /// Flipping the direction re-tags every catalog selection with the action
   /// the new direction implies — the user changed what "selected" means, not
   /// which things are selected.
-  Future<void> _setSimpleMode(String mode) async {
+  Future<void> _setSimpleMode(RoutingMode mode) async {
     if (mode == _mode) return;
     final old = _expectedAction;
-    final now = mode == 'split' ? 'proxy' : 'direct';
+    final now = mode == RoutingMode.split ? 'proxy' : 'direct';
     setState(() {
       _mode = mode;
       _rules = [
@@ -146,12 +146,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   /// Advanced mode changes the direction without touching the rules: there
   /// every rule carries its own action, and the user reads them as written.
-  Future<void> _setMode(String mode) async {
+  Future<void> _setMode(RoutingMode mode) async {
     setState(() => _mode = mode);
     await _persist();
   }
 
-  Future<void> _setEditor(String editor) async {
+  Future<void> _setEditor(RuleEditor editor) async {
     if (editor == _editor) return;
     setState(() => _editor = editor);
     // A view preference, not a traffic change: saved without touching the
@@ -257,7 +257,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             ),
         ],
       ),
-      floatingActionButton: _editor == 'simple'
+      floatingActionButton: _editor == RuleEditor.simple
           ? null
           : FloatingActionButton(
               tooltip: 'Add rule',
@@ -271,7 +271,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
                 padding: const EdgeInsets.only(bottom: 88),
                 children: [
                   _editorSegment(context),
-                  if (_editor == 'advanced')
+                  if (_editor == RuleEditor.advanced)
                     ..._advancedChildren(context)
                   else
                     ..._simpleChildren(context),
@@ -288,11 +288,11 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
       child: SizedBox(
         width: double.infinity,
-        child: SegmentedButton<String>(
+        child: SegmentedButton<RuleEditor>(
           showSelectedIcon: false,
           segments: const [
-            ButtonSegment(value: 'simple', label: Text('Simple')),
-            ButtonSegment(value: 'advanced', label: Text('Advanced')),
+            ButtonSegment(value: RuleEditor.simple, label: Text('Simple')),
+            ButtonSegment(value: RuleEditor.advanced, label: Text('Advanced')),
           ],
           selected: {_editor},
           onSelectionChanged: (v) => _setEditor(v.first),
@@ -374,7 +374,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             title: Text('Advanced rules · $_advancedCount'),
             subtitle: const Text('Apply before the list below · edit in Advanced'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _setEditor('advanced'),
+            onTap: () => _setEditor(RuleEditor.advanced),
           ),
         ),
       Padding(
@@ -418,10 +418,10 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         padding: const EdgeInsets.fromLTRB(kGutter, 10, kGutter, 0),
         child: Text(
           selected == 0
-              ? (_mode == 'split'
+              ? (_mode == RoutingMode.split
                   ? 'Nothing selected · no traffic goes through the VPN yet'
                   : 'Nothing selected · everything goes through the VPN')
-              : (_mode == 'split'
+              : (_mode == RoutingMode.split
                   ? '$selected selected · everything else connects directly'
                   : '$selected selected · they connect directly, the rest goes through the VPN'),
           style: Theme.of(context)
@@ -444,11 +444,11 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
           children: [
             SizedBox(
               width: double.infinity,
-              child: SegmentedButton<String>(
+              child: SegmentedButton<RoutingMode>(
                 showSelectedIcon: false,
                 segments: const [
-                  ButtonSegment(value: 'split', label: Text('Only selected')),
-                  ButtonSegment(value: 'full', label: Text('All except selected')),
+                  ButtonSegment(value: RoutingMode.split, label: Text('Only selected')),
+                  ButtonSegment(value: RoutingMode.full, label: Text('All except selected')),
                 ],
                 selected: {_mode},
                 onSelectionChanged: (v) => _setSimpleMode(v.first),
@@ -456,7 +456,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _mode == 'split'
+              _mode == RoutingMode.split
                   ? 'Only the services you pick go through the VPN. Everything else connects directly.'
                   : 'Everything goes through the VPN. The services you pick connect directly.',
               style: Theme.of(context)

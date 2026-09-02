@@ -11,27 +11,22 @@ import 'config_parts.dart';
 /// The only domain with an account behind it (ADR-005): a management service
 /// owns identity, access and policy, so this is the one screen that can show a
 /// status, a quota and a routing policy the device does not control.
-class SelfhostedConfigScreen extends ConsumerStatefulWidget {
+class SelfhostedConfigScreen extends ConsumerWidget {
   const SelfhostedConfigScreen({super.key, required this.profile, required this.isActive});
 
   final Profile profile;
   final bool isActive;
 
   @override
-  ConsumerState<SelfhostedConfigScreen> createState() => _SelfhostedConfigScreenState();
-}
-
-class _SelfhostedConfigScreenState extends ConsumerState<SelfhostedConfigScreen> {
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.profile;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = profile;
     final account = p.account;
     return Scaffold(
       appBar: AppBar(title: Text(p.name)),
       body: PageBody(
         child: ListView(children: [
           const SizedBox(height: 8),
-          ProfileHeaderCard(profile: p, isActive: widget.isActive),
+          ProfileHeaderCard(profile: p, isActive: isActive),
           if (p.serverUrl != null) SourceCard(value: p.serverUrl!),
           RefreshCard(profile: p),
           RoutingRow(profile: p),
@@ -45,7 +40,7 @@ class _SelfhostedConfigScreenState extends ConsumerState<SelfhostedConfigScreen>
             ),
             if (account.dataLimit > 0) _TrafficCard(account: account),
           ],
-          ConfigActions(profile: p, isActive: widget.isActive),
+          ConfigActions(profile: p, isActive: isActive),
         ]),
       ),
     );

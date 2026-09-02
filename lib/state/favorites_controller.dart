@@ -1,17 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/favorites.dart';
+import 'ready_gate.dart';
 
-class FavoritesController extends Notifier<Favorites> {
-  /// Completes when the persisted favourites are in [state]; mutations await
-  /// it, or a toggle landing first would be overwritten when the load finishes
-  /// a moment later. Already complete until [build] replaces it — a controller
-  /// that never scheduled a load has nothing to wait for.
-  Future<void> _ready = Future.value();
-
+class FavoritesController extends Notifier<Favorites> with ReadyGate {
   @override
   Favorites build() {
-    _ready = FavoritesStore.load().then((v) {
+    ready = FavoritesStore.load().then((v) {
       state = v;
     });
     return const Favorites();
@@ -25,7 +20,7 @@ class FavoritesController extends Notifier<Favorites> {
   Future<void> forgetProfile(String profileId) => _save((f) => f.forgetProfile(profileId));
 
   Future<void> _save(Favorites Function(Favorites) change) async {
-    await _ready;
+    await ready;
     final favorites = change(state);
     state = favorites;
     await FavoritesStore.save(favorites);

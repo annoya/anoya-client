@@ -5,7 +5,6 @@ import '../core/app_prefs.dart';
 import '../core/app_version.dart';
 import '../core/geo_store.dart';
 import '../core/dns_plan.dart';
-import '../core/routing_prefs.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
 import '../state/favorites_controller.dart';
@@ -34,7 +33,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  RoutingPrefs _prefs = const RoutingPrefs();
   int _setCount = 1;
   GeoStatus _geo = const GeoStatus();
 
@@ -45,12 +43,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _load() async {
-    final prefs = await RoutingPrefsStore.load();
     final sets = await RuleSetStore.load();
     final geo = await GeoStore.status();
     if (!mounted) return;
     setState(() {
-      _prefs = prefs;
       _setCount = sets.length;
       _geo = geo;
     });
@@ -73,12 +69,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// domain would need resolving before it could resolve.
   Future<void> _pickDefaultDns() async {
     const custom = '__custom__';
+    final current = ref.read(routingPrefsProvider).defaultDns;
     final picked = await pickOption<String>(
       context,
       title: 'Default DNS',
-      selected: kDnsPresets.any((p) => p.address == _prefs.defaultDns)
-          ? _prefs.defaultDns
-          : custom,
+      selected: kDnsPresets.any((p) => p.address == current) ? current : custom,
       options: [
         for (final p in kDnsPresets)
           Option(p.address, p.name,
@@ -95,7 +90,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: 'Default DNS',
         label: 'Resolver',
         confirmLabel: 'Save',
-        initial: _prefs.defaultDns,
+        initial: current,
         hint: 'https://1.1.1.1/dns-query',
         autocorrect: false,
         resetLabel: 'Use Cloudflare',
@@ -110,11 +105,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       value = typed.trim();
     }
 
-    final updated = _prefs.copyWith(defaultDns: value);
-    await RoutingPrefsStore.save(updated);
+    await ref.read(routingPrefsProvider.notifier).update((p) => p.copyWith(defaultDns: value));
     if (!mounted) return;
-    setState(() => _prefs = updated);
-    ref.invalidate(routingPrefsProvider);
     // Only some configurations are affected, but the engine holds one config at
     // a time and the cheapest correct thing is to re-render the live one.
     await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
@@ -198,6 +190,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final st = ref.watch(profilesControllerProvider);
     final appPrefs = ref.watch(appPrefsProvider);
+    final prefs = ref.watch(routingPrefsProvider);
     final onDemand = ref.watch(onDemandProvider);
     final check = ref.watch(connectionCheckProvider).prefs;
 
@@ -267,11 +260,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   secondary: const Icon(Icons.wifi),
                   title: const Text('Local network direct'),
                   subtitle: const Text('LAN traffic bypasses the VPN'),
-                  value: _prefs.lanDirect,
+                  value: prefs.lanDirect,
                   onChanged: (v) async {
-                    final updated = _prefs.copyWith(lanDirect: v);
-                    await RoutingPrefsStore.save(updated);
-                    setState(() => _prefs = updated);
+                    await ref
+                        .read(routingPrefsProvider.notifier)
+                        .update((p) => p.copyWith(lanDirect: v));
                     // Changes the rendered rules, so the system's saved config
                     // must follow.
                     await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
@@ -291,7 +284,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: const Text('Default DNS'),
                   // Says when it applies, because most configurations bring
                   // their own and this setting then does nothing at all.
-                  subtitle: Text('${dnsPresetName(_prefs.defaultDns)} · '
+                  subtitle: Text('${dnsPresetName(prefs.defaultDns)} · '
                       'used when a configuration brings none'),
                   trailing: const Icon(Icons.expand_more),
                   onTap: _pickDefaultDns,

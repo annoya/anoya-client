@@ -61,10 +61,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     }
   }
 
-  static func register(messenger: FlutterBinaryMessenger, window: NSWindow) -> MenuBarController {
-    MenuBarController(messenger: messenger, window: window)
-  }
-
   // MARK: - State from Dart
 
   private func apply(_ args: [String: Any]) {
@@ -75,9 +71,10 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     tunnelUp = args["tunnel_up"] as? Bool ?? false
     connecting = args["connecting"] as? Bool ?? false
     applyIcon()
-    // The menu is rebuilt when it opens; if it is already open, the user is
-    // looking at it right now and the new state has to land immediately.
-    if let menu = statusItem.menu, menu.highlightedItem != nil || menu.numberOfItems > 0 {
+    // Rebuilt on every update as well as on open: if the menu is showing, the
+    // user is looking at it and the new state has to land now; if not, the
+    // rebuild is a few items' worth of work nobody sees.
+    if let menu = statusItem.menu {
       rebuild(menu)
     }
   }
