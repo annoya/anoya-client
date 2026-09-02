@@ -15,7 +15,9 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
-	<!-- Shared container: logs + stats readable by the host app. -->
+	<!-- App Group container: the engine's home (geo databases, rule lists) that
+	     the host downloads into. Logs are NOT here — they live in the
+	     extension's own container and travel over provider IPC. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.org.annoya.test</string>

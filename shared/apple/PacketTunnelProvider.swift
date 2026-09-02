@@ -1,11 +1,9 @@
 import NetworkExtension
 import MihomoCore
 
-// MihomoCore.xcframework exposes the C API:
-//   char* MihomoStart(int fd, char* configJSON);  // "" on success, else error
-//   void  MihomoStop(void);
-//   char* MihomoVersion(void);
-//   void  FreeCString(char* s);
+// MihomoCore.xcframework is the engine as a C archive; the Mihomo* functions
+// used below are its whole surface (see native/mihomocore/core.go), and every
+// string it returns is released with FreeCString.
 
 /// PacketTunnelProvider runs the mihomo engine inside the Network Extension.
 /// Flow: receive the mihomo config in the start options, configure the system
@@ -28,15 +26,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
     }
 
-    /// Log to NSLog (visible via `log stream`) and to tunnel.log in the shared
-    /// container so the host app can read it directly.
-    ///
-    /// Uses raw POSIX open/write rather than NSFileHandle/NSURL: the high-level
-    /// Foundation file APIs perform a side TCC-gated probe (resource values /
-    /// xattrs) on the file that triggers the macOS "access data from other
-    /// apps" prompt on every connect, even though the App Group container is
-    /// already accessible via the sandbox entitlement. POSIX I/O (like the
-    /// freopen below) does not, so it stays silent.
     /// Mirrors the app's "Collect logs" switch, carried in the start options and
     /// in providerConfiguration (an on-demand start has no options). Off means
     /// the file stops growing; what is already in it stays.
@@ -52,6 +41,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// in-flight reload decides whether the engine gets restarted on a dead
     /// descriptor.
     private let stateLock = NSLock()
+
+    /// Log to NSLog (visible via `log stream`) and to tunnel.log in our own
+    /// container, which the host reads over provider IPC.
+    ///
+    /// Uses raw POSIX open/write rather than NSFileHandle/NSURL: the high-level
+    /// Foundation file APIs perform a side TCC-gated probe (resource values /
+    /// xattrs) on the file that triggers the macOS "access data from other
+    /// apps" prompt on every connect. POSIX I/O (like the freopen below) does
+    /// not, so it stays silent.
 
     private func log(_ message: String) {
         NSLog("TUNNEL: \(message)")
@@ -140,20 +138,23 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         completionHandler()
     }
 
+    /// The group every rendered config routes through (`kTunnelOutbound` in
+    /// mihomo_tun_config.dart). Testing it rather than a member name means the
+    /// probe follows whatever the engine currently picked.
+    private static let tunnelOutbound = "PROXY"
+
     /// IPC from the host app. Protocol: a UTF-8 request string.
     ///   "log:<name>"      -> returns the bytes of <name>.log from our container
     ///   "clear-logs"      -> empties our log files
     ///   "reload:<yaml>"   -> hot-swaps the engine onto a new config (same fd,
     ///                        same network settings, session stays up)
     ///   "logging:<0|1>"   -> turns log writing off/on without reconnecting
+    ///   "group:<name>"    -> which member a proxy group currently uses
+    ///   "urltest:<ms>:<url>" -> one probe through the tunnel: ms:<n> | err:<why>
+    ///   "proxybytes"      -> "<up>:<down>" carried through the outbound
     /// The host uses this to display tunnel/core logs without a shared
     /// container (which would be TCC-gated). Reading our OWN container is never
     /// TCC-gated. Only works while the tunnel is running (extension alive).
-    /// The group every rendered config routes through (`kTunnelOutbound` in
-    /// mihomo_tun_config.dart). Testing it rather than a member name means the
-    /// probe follows whatever the engine currently picked.
-    private static let tunnelOutbound = "PROXY"
-
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
         let request = String(data: messageData, encoding: .utf8) ?? ""
         if request.hasPrefix("reload:") {
