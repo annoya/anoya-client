@@ -109,7 +109,7 @@ worth doing when a customer asks, not before.
 ## Where It Lives
 
 - `management/internal/oidcauth/oidcauth.go` — discovery, JWKS, claim checks.
-- `management/internal/http/` — `GET /api/client/auth-config`,
+- `management/internal/httpapi/` — `GET /api/client/auth-config`,
   `POST /api/client/login/oidc`, admin CRUD for providers.
 - `management/webui/src/pages/SSO.tsx` — provider configuration.
 - `client/lib/core/oidc_login.dart` — PKCE over the `vpn/web_auth` channel.
