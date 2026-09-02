@@ -9,11 +9,14 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.Settings
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
+import java.lang.ref.WeakReference
 import java.util.concurrent.Executors
 
 /// VpnChannel bridges Flutter <-> the tunnel process, speaking the same
@@ -41,15 +44,29 @@ object VpnChannel {
     @Volatile private var tunnel: ITunnel? = null
     @Volatile private var lastStatus: String = TunnelState.DISCONNECTED
     private var events: EventChannel.EventSink? = null
-    private var host: Activity? = null
+
+    /// Channel answers must land on the platform thread; this is that thread,
+    /// and it does not need an Activity to reach.
+    private val main = Handler(Looper.getMainLooper())
+
+    /// The Activity is needed only to show system dialogs (VPN consent, the
+    /// notification permission, VPN settings). Held weakly: this object lives
+    /// as long as the process, the Activity does not, and a strong reference
+    /// here kept every destroyed one alive.
+    private var host = WeakReference<Activity>(null)
+
+    /// The service is bound once, on the application context, for the life of
+    /// the process. Binding per Activity stacked a new connection on every
+    /// recreation and never released one.
+    private var bound = false
 
     private val callback = object : ITunnelCallback.Stub() {
         override fun onStatus(status: String) {
             lastStatus = status
-            host?.runOnUiThread {
+            main.post {
                 events?.success(status)
                 if (status == TunnelState.CONNECTED) {
-                    host?.let { maybeAskForNotifications(it) }
+                    host.get()?.let { maybeAskForNotifications(it) }
                 }
             }
         }
@@ -71,18 +88,20 @@ object VpnChannel {
             // there was a reason.
             tunnel = null
             lastStatus = TunnelState.DISCONNECTED
-            host?.runOnUiThread { events?.success(TunnelState.DISCONNECTED) }
+            main.post { events?.success(TunnelState.DISCONNECTED) }
         }
     }
 
     fun register(messenger: BinaryMessenger, activity: Activity) {
-        host = activity
+        host = WeakReference(activity)
         val context = activity.applicationContext
         // Bound from the start, with AUTO_CREATE: binding creates the service
         // but does not start a tunnel (onStartCommand is what does), so this
         // costs an idle process and buys a live status the moment the app opens.
-        context.bindService(
-            Intent(context, MihomoVpnService::class.java), connection, Context.BIND_AUTO_CREATE)
+        if (!bound) {
+            bound = context.bindService(
+                Intent(context, MihomoVpnService::class.java), connection, Context.BIND_AUTO_CREATE)
+        }
 
         val control = MethodChannel(messenger, "vpn/control")
         control.setMethodCallHandler { call, result ->
@@ -94,13 +113,16 @@ object VpnChannel {
                     }
                     persist(context, config, call.argument<Boolean>("log_enabled") ?: true)
                     val consent = VpnService.prepare(context)
+                    val act = host.get()
                     if (consent == null) {
                         startService(context); result.success(null)
+                    } else if (act == null) {
+                        result.error("start_failed", "no screen to ask for VPN permission on", null)
                     } else {
                         // The dialog belongs to the system; the answer comes
                         // back through the Activity, which finishes this call.
                         pendingStart = result
-                        activity.startActivityForResult(consent, PREPARE_REQUEST)
+                        act.startActivityForResult(consent, PREPARE_REQUEST)
                     }
                 }
                 "stop" -> ask(result) { it.stop(); null }
@@ -115,7 +137,7 @@ object VpnChannel {
                         val err = if (t == null) "tunnel is not running"
                                   else runCatching { t.reload(config) }
                                       .getOrElse { it.message ?: "reload failed" }
-                        activity.runOnUiThread {
+                        main.post {
                             if (err.isEmpty()) result.success(null)
                             else result.error("reload_failed", err, null)
                         }
@@ -139,14 +161,15 @@ object VpnChannel {
                     calls.execute {
                         runCatching { tunnel?.stop() }
                         TunnelFiles.config(context).delete()
-                        activity.runOnUiThread { result.success(null) }
+                        main.post { result.success(null) }
                     }
                 }
                 // Android's counterpart is always-on, and it is the system's
                 // own switch — an app can only point at it. Never armed here.
                 "set_on_demand" -> result.success(false)
                 "open_vpn_settings" -> {
-                    activity.startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
+                    context.startActivity(
+                        Intent(Settings.ACTION_VPN_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     result.success(null)
                 }
                 "connected_since" -> ask(result, orElse = 0.0) { it.connectedSince() }
@@ -210,13 +233,20 @@ object VpnChannel {
     /// where there is no tunnel process to ask.
     private fun ask(result: MethodChannel.Result, orElse: Any? = null,
                     body: (ITunnel) -> Any?) {
-        val activity = host ?: return result.success(orElse)
         calls.execute {
             val t = tunnel
             val value = if (t == null) orElse
                         else runCatching { body(t) }.getOrDefault(orElse)
-            activity.runOnUiThread { result.success(value) }
+            main.post { result.success(value) }
         }
+    }
+
+    /// The Activity is going away with its engine. Its sink and any answer
+    /// still owed to it belong to a Dart side that no longer exists.
+    fun unregister(activity: Activity) {
+        if (host.get() === activity) host = WeakReference(null)
+        events = null
+        pendingStart = null
     }
 
     fun onVpnPermissionResult(context: Context, resultCode: Int) {
