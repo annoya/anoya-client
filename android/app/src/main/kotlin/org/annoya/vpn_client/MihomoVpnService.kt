@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.VpnService
-import android.os.Build
 import android.os.IBinder
 import android.system.Os
 import java.io.FileOutputStream
@@ -80,7 +79,6 @@ class MihomoVpnService : VpnService() {
             }
         }
 
-        override fun status(): String = TunnelState.status
         override fun connectedSince(): Double = TunnelState.connectedSince
 
         override fun groupMember(group: String): String =
@@ -101,9 +99,6 @@ class MihomoVpnService : VpnService() {
             if (TunnelState.status == TunnelState.CONNECTED) {
                 runCatching { Mobile.proxyBytes(kTunnelOutbound) }.getOrDefault("0:0")
             } else "0:0"
-
-        override fun isAlwaysOn(): Boolean =
-            Build.VERSION.SDK_INT >= 29 && this@MihomoVpnService.isAlwaysOn
 
         override fun setLogging(enabled: Boolean) {
             TunnelFiles.setLogsEnabled(this@MihomoVpnService, enabled)

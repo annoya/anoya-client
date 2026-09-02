@@ -87,7 +87,6 @@ object VpnChannel {
         val control = MethodChannel(messenger, "vpn/control")
         control.setMethodCallHandler { call, result ->
             when (call.method) {
-                "prepare" -> result.success(null) // consent is asked on start, where it is needed
                 "start" -> {
                     val config = call.argument<String>("config")
                     if (config == null) {
@@ -146,15 +145,10 @@ object VpnChannel {
                 // Android's counterpart is always-on, and it is the system's
                 // own switch — an app can only point at it. Never armed here.
                 "set_on_demand" -> result.success(false)
-                "is_always_on" -> ask(result, orElse = false) { it.isAlwaysOn() }
                 "open_vpn_settings" -> {
                     activity.startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
                     result.success(null)
                 }
-                // Answered from the app's own copy: it is what the last
-                // callback said, and it is still right when the tunnel process
-                // is gone (there is nothing to ask, and nothing running).
-                "status" -> result.success(lastStatus)
                 "connected_since" -> ask(result, orElse = 0.0) { it.connectedSince() }
                 "disconnect_error" -> result.success(TunnelFiles.lastError(context))
                 "group_member" -> {
