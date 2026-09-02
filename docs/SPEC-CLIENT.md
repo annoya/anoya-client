@@ -502,10 +502,13 @@ from the engine — mihomo carries `constant.Version = "1.10.0"` in its source a
 only substitutes the real one at release build time, so asking it would report a
 version we do not run. Terms of Service and Privacy Policy sit there in their own card,
 dimmed and inert while their addresses are empty, saying "Not published yet"
-rather than looking tappable or being hidden. The app's name, version and engine
-pin live in one file (`lib/core/app_version.dart`) with a test that checks them
-against `pubspec.yaml`, `go.mod` and the bundle's `PRODUCT_NAME`; the
-User-Agent is built from the same two strings.
+rather than looking tappable or being hidden. The version is written in
+`pubspec.yaml` and nowhere else: every platform already derives it from there,
+and the app reads that same file — shipped as an asset — at startup, so a bump
+is one line. The app's name and the engine pin belong to files no asset can
+carry (the Xcode config and `go.mod`) and are stated in
+`lib/core/app_version.dart` with a test that checks them against those two. The
+User-Agent is the name and the version that was read.
 
 On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
 the system): a status line, show/hide the app, connect, disconnect, quit. It is

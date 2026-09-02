@@ -62,7 +62,7 @@ void main() {
     expect(id.headers['x-hwid'], id.hwid);
     // Ours, not the Dart SDK's default: panels key their template rules on this
     // string, so it is part of the app's contract with them.
-    expect(id.headers['user-agent'], DeviceIdentity.kUserAgent);
+    expect(id.headers['user-agent'], DeviceIdentity.userAgent);
     expect(id.headers['x-device-os'], 'iOS');
     expect(id.headers['x-ver-os'], '18.0');
     expect(id.headers['x-device-model'], 'iPhone16,1');
