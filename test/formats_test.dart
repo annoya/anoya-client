@@ -236,8 +236,11 @@ void main() {
   group('what the log says about a body', () {
     test('malformed links are one line, counted, and say whose they were', () {
       Log.clear();
-      const body = 'vless://u@:0?security=none#a\n'
-          'vless://u@:0?security=none#b\n'
+      // The second link fails inside Uri.parse, whose FormatException prints
+      // the whole offending string — uuid included — under its message.
+      const uuid = 'd1f8b2c4-aaaa-bbbb-cccc-1234567890ab';
+      const body = 'vless://$uuid@:0?security=none#a\n'
+          'vless://$uuid@[::1?security=none#b\n'
           'vless://u@real.example:443?security=reality&pbk=PK#DE';
       final parsed = parseSubscriptionBody(body, source: 'sub.example');
       expect(parsed.locations.length, 1);
@@ -245,7 +248,8 @@ void main() {
       expect(lines, hasLength(1), reason: 'one line per body, not per link');
       expect(lines.single, contains('sub.example'));
       expect(lines.single, contains('2 malformed'));
-      expect(lines.single, isNot(contains('u@')), reason: 'the userinfo is the credential');
+      expect(lines.single, isNot(contains(uuid)),
+          reason: 'the userinfo is the credential; only the reason may be logged');
     });
   });
 

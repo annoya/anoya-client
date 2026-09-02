@@ -65,6 +65,18 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState> with Read
       }
     });
     ref.onDispose(() => _sub?.cancel());
+    // A hot switch keeps the session, so the status never moves — but the
+    // server did, and a verdict about the previous one is exactly the stale
+    // measurement this controller exists not to carry. The pick forgets;
+    // the end of the switch asks again, once the engine runs the new server.
+    ref.listen(profilesControllerProvider.select((s) => s.selectionId), (was, now) {
+      if (was != null && was != now) forget();
+    });
+    ref.listen(profilesControllerProvider.select((s) => s.switching), (was, now) {
+      if (was == true && now == false && core.status == VpnStatus.connected) {
+        unawaited(runAfterConnect());
+      }
+    });
     return const ConnectionCheckState();
   }
 
