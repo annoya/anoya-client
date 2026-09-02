@@ -162,7 +162,10 @@ class _StartScreenState extends ConsumerState<StartScreen> {
         final res = await FilePicker.platform.pickFiles(withData: true);
         if (res == null) return false; // cancelled — nothing added
         final bytes = res.files.single.bytes;
-        if (bytes == null) throw const FormatException('Could not read the file.');
+        if (bytes == null) {
+          throw const AppErrorException(AppError('Couldn’t read the file',
+              detail: 'Try opening it again, or paste its contents.'));
+        }
         await _ctrl.addFromText(utf8.decode(bytes), name: res.files.single.name);
         return true;
       });
