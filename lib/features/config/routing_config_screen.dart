@@ -5,6 +5,7 @@ import '../../core/profile.dart';
 import '../../core/rule_list_store.dart';
 import '../../core/ui.dart';
 import '../../state/profiles_controller.dart';
+import '../../state/provider_rule_lists.dart';
 import 'config_parts.dart';
 
 /// Where a configuration's traffic goes, and who names the addresses.

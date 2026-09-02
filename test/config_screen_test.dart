@@ -15,7 +15,7 @@ import 'package:vpn_client/core/rule_list_store.dart';
 import 'package:vpn_client/core/subscription_info.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/ui.dart';
-import 'package:vpn_client/features/config/config_parts.dart';
+import 'package:vpn_client/state/provider_rule_lists.dart';
 import 'package:vpn_client/features/config/config_screen.dart';
 import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
