@@ -5,27 +5,23 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
-import '../core/amnezia/amnezia_source.dart';
-import '../core/amnezia/vpn_key.dart';
 import '../core/app_error.dart';
 import '../core/config_source.dart';
+import '../core/effective_config.dart';
 import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/norm_config.dart';
-import '../core/oidc_login.dart';
 import '../core/profile.dart';
+import '../core/profile_import.dart';
 import '../core/profile_store.dart';
-import '../core/parsers/subscription.dart';
-import '../core/platform_support.dart';
-import '../core/subscription_fetch.dart';
-import '../core/routing_prefs.dart';
-import '../core/routing_policy.dart';
 import '../core/rule_list_store.dart';
-import '../core/rule_set.dart';
 import '../core/vpn_core.dart';
 import 'favorites_controller.dart';
 import 'on_demand_controller.dart';
+import 'profiles_state.dart';
 import 'providers.dart';
+
+export 'profiles_state.dart';
 
 /// How often a refreshable profile (self-hosted / subscription) is re-pulled.
 /// How often the poll timer fires. Not how often a source is re-read: that is
@@ -36,101 +32,6 @@ const kConfigPollInterval = kMinRefreshGap;
 /// Minimum gap between automatic reconnects when a refresh changes the active
 /// server/routing while connected (so a flapping source can't loop the tunnel).
 const kReapplyMinGap = Duration(minutes: 1);
-
-class ProfilesState {
-  const ProfilesState({
-    this.profiles = const [],
-    this.activeId,
-    this.selectedLocationId,
-    this.loading = false,
-    this.switching = false,
-    this.error,
-    this.notice,
-  });
-
-  final List<Profile> profiles;
-  final String? activeId;
-  final String? selectedLocationId;
-  final bool loading;
-
-  /// A hot switch is in flight: the tunnel is up and the engine is being
-  /// swapped onto another location/profile. Rows ignore taps meanwhile.
-  final bool switching;
-
-  /// Blocks what the user asked for: shown as a dialog they have to dismiss.
-  final AppError? error;
-
-  /// Happened, changed nothing, needs no decision — a toast (§9 of the spec).
-  /// Separate from [error] because the difference is what the user has to do
-  /// about it, not how bad it sounds: a refresh that failed and a server that
-  /// could not be issued both leave the previous one working, and both should
-  /// read the same wherever they surface.
-  final AppError? notice;
-
-  bool get hasProfiles => profiles.isNotEmpty;
-
-  Profile? get active {
-    for (final p in profiles) {
-      if (p.id == activeId) return p;
-    }
-    return profiles.isEmpty ? null : profiles.first;
-  }
-
-  List<Location> get locations => active?.locations ?? const [];
-
-  /// The group the selection names, when it names one. Groups and servers share
-  /// the one selection the app already has: the user answers a single question
-  /// — what carries my traffic — and a group is one of the answers.
-  ProxyGroup? get selectedGroup {
-    final id = selectedLocationId;
-    if (id == null || !ProxyGroup.isGroupId(id)) return null;
-    for (final g in active?.groups ?? const <ProxyGroup>[]) {
-      if (g.id == id) return g;
-    }
-    return null;
-  }
-
-  /// What the tunnel should carry traffic through: a group when one is chosen,
-  /// otherwise a server. Every path that hands an id to the core uses this —
-  /// [selectedLocation] falls back to the first server, which would silently
-  /// turn a chosen group into one of its members.
-  String? get selectionId => selectedGroup?.id ?? selectedLocation?.id;
-
-  /// The servers a selected group would pick from, in the provider's order.
-  List<Location> get selectedGroupMembers {
-    final g = selectedGroup;
-    if (g == null) return const [];
-    final byId = {for (final l in locations) l.id: l};
-    return [for (final id in g.members) if (byId[id] != null) byId[id]!];
-  }
-
-  Location? get selectedLocation {
-    final locs = locations;
-    for (final l in locs) {
-      if (l.id == selectedLocationId) return l;
-    }
-    return locs.isEmpty ? null : locs.first;
-  }
-
-  ProfilesState copyWith({
-    List<Profile>? profiles,
-    String? activeId,
-    String? selectedLocationId,
-    bool? loading,
-    bool? switching,
-    AppError? error,
-    AppError? notice,
-  }) =>
-      ProfilesState(
-        profiles: profiles ?? this.profiles,
-        activeId: activeId ?? this.activeId,
-        selectedLocationId: selectedLocationId ?? this.selectedLocationId,
-        loading: loading ?? this.loading,
-        switching: switching ?? this.switching,
-        error: error, // reset each transition unless passed
-        notice: notice, // same: a message is for the transition that set it
-      );
-}
 
 /// Owns the list of config sources (profiles), the active profile + selected
 /// location, and the connect lifecycle. Replaces the old single-config
@@ -143,7 +44,6 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// A poll found a change but the rate limit blocked the reapply; the next
   /// poll owes one even if it sees no new diff.
   bool _reapplyPending = false;
-  int _idSeq = 0;
 
   /// The user asked for this stop, so a status falling back to disconnected is
   /// the answer rather than a failure to explain.
@@ -234,176 +134,27 @@ class ProfilesController extends Notifier<ProfilesState> {
     return p.locations.any((l) => l.id == id) ? id : null;
   }
 
-  String _newId() => 'p${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}_${_idSeq++}';
-
   // --- adding profiles ---
+  //
+  // What a configuration is made of — the fetch, the parse, the diagnosis —
+  // lives in core/profile_import.dart. Here it only becomes the active one.
 
-  /// Self-hosted sign-in with username/password. Fetches the config bundle and
-  /// stores a profile + its session token (Keychain).
-  Future<void> addSelfhosted(String serverUrl, String username, String password) async {
-    final api = ApiClient(serverUrl);
-    final res = await api.login(username, password);
-    api.token = res.token;
-    await _addSelfhostedFromApi(api, res.token);
-  }
+  Future<void> addSelfhosted(String serverUrl, String username, String password) async =>
+      _append(await importSelfhosted(serverUrl, username, password));
 
-  /// Self-hosted sign-in via an OIDC provider (SSO).
-  Future<void> addSelfhostedOIDC(String serverUrl, AuthProvider provider) async {
-    final api = ApiClient(serverUrl);
-    final idToken = await obtainOidcIdToken(provider);
-    final res = await api.loginOIDC(provider.id, idToken);
-    api.token = res.token;
-    await _addSelfhostedFromApi(api, res.token);
-  }
+  Future<void> addSelfhostedOIDC(String serverUrl, AuthProvider provider) async =>
+      _append(await importSelfhostedOIDC(serverUrl, provider));
 
   /// Which auth methods a self-hosted server offers (password + SSO providers).
   Future<AuthConfig> authConfig(String serverUrl) => ApiClient(serverUrl).authConfig();
 
-  Future<void> _addSelfhostedFromApi(ApiClient api, String token) async {
-    final cfg = await api.fetchConfig();
-    final id = _newId();
-    await ProfileStore.saveToken(id, token);
-    final name = cfg.account.displayName.isNotEmpty
-        ? cfg.account.displayName
-        : Uri.parse(api.baseUrl).host;
-    final profile = Profile(
-      id: id,
-      type: ProfileType.selfhosted,
-      name: name,
-      locations: cfg.locations,
-      serverUrl: api.baseUrl,
-      account: cfg.account,
-      routing: cfg.routing,
-      dns: cfg.dns,
-      refreshedAt: DateTime.now(),
-    );
-    await _append(profile);
-  }
+  Future<void> addSubscriptionUrl(String name, String url) async =>
+      _append(await importSubscriptionUrl(name, url));
 
-  /// Add a subscription by URL (fetched now and on the poll timer).
-  Future<void> addSubscriptionUrl(String name, String url) async {
-    final res = await fetchSubscription(url);
-    var parsed = parseSubscriptionBody(res.body);
-    if (parsed.providers.isNotEmpty) parsed = await withProxyProviders(parsed);
-    final page = res.info.webPageUrl.isNotEmpty ? res.info.webPageUrl : url;
-    if (parsed.locations.isEmpty) {
-      throw SubscriptionFormatException(_whyNothingUsable(parsed), openUrl: page);
-    }
-    // Placeholders are servers only when the panel told us why it sent them: a
-    // full device limit is a state the app shows and keeps (the entries carry
-    // the panel's message). Without that signal they are just text, and adding
-    // locations that can never connect would be the app's own invention.
-    if (parsed.allPlaceholders && !res.deviceLimitReached) {
-      throw SubscriptionFormatException(
-        providerMessageInstead(parsed.placeholderLines),
-        openUrl: page,
-      );
-    }
-    // The panel's own name for the subscription beats a hostname, and the user's
-    // beats both — they typed it on purpose.
-    final title = res.info.title.trim();
-    await _append(Profile(
-      id: _newId(),
-      type: ProfileType.subscription,
-      name: name.trim().isNotEmpty
-          ? name.trim()
-          : (title.isNotEmpty ? title : Uri.parse(url).host),
-      locations: parsed.locations,
-      subscriptionUrl: url,
-      dns: parsed.dns,
-      deviceLimitActive: res.deviceLimitActive,
-      deviceLimitReached: res.deviceLimitReached,
-      unsupportedServers: parsed.unsupported,
-      groups: parsed.groups,
-      rendering: res.rendering,
-      renderingProbed: res.renderingProbed,
-      // The panel's routing was already fetched with the body; without this it
-      // would only appear after the first poll, which reads as the app losing it.
-      providerRouting: res.routing?.routing,
-      providerRoutingSkipped: res.routing?.skipped ?? 0,
-      providerRoutingProbed: res.routingProbed,
-      providerInfo: res.info.isEmpty ? null : res.info,
-      refreshedAt: DateTime.now(),
-    ));
-  }
+  Future<void> addFromText(String text, {String? name}) async =>
+      _append(await importText(text, name: name));
 
-  /// Which of the two "nothing usable" problems this was. They send the user to
-  /// different places — one to their provider for a different template, the
-  /// other to a client that speaks the protocols theirs uses.
-  AppError _whyNothingUsable(ParsedSubscription parsed) {
-    if (parsed.hasUnsupported) {
-      return noRunnableServers(parsed.total, parsed.unsupportedList);
-    }
-    // Read it and found nothing, versus could not read it at all: the first is
-    // the provider's answer, the second is the format.
-    return parsed.format == SubscriptionFormat.unknown
-        ? kUnreadableSubscription
-        : emptySubscription(parsed.format.label);
-  }
-
-  /// Add from pasted text or a file's contents: a single share link becomes a
-  /// `link` profile (no location picker); multiple servers become a static
-  /// `subscription` snapshot (no refresh URL).
-  Future<void> addFromText(String text, {String? name}) async {
-    final parsed = parseSubscriptionBody(text);
-    final locations = parsed.locations;
-    if (locations.isEmpty) {
-      // Pasted text that is not a link at all keeps the generic message: at
-      // that point "we could not read this format" would be pedantic about
-      // something the user can see is a typo.
-      if (parsed.format == SubscriptionFormat.unknown && !text.contains('://')) {
-        throw const FormatException(
-            'No valid vless://vmess://trojan://ss:// link or subscription found.');
-      }
-      throw SubscriptionFormatException(_whyNothingUsable(parsed));
-    }
-    final single = locations.length == 1;
-    await _append(Profile(
-      id: _newId(),
-      type: single ? ProfileType.link : ProfileType.subscription,
-      name: name?.trim().isNotEmpty == true
-          ? name!.trim()
-          : (single ? locations.first.label : 'Imported (${locations.length})'),
-      locations: locations,
-      dns: parsed.dns,
-      unsupportedServers: parsed.unsupported,
-      refreshedAt: DateTime.now(),
-    ));
-  }
-
-  /// Adds an Amnezia subscription from its `vpn://` key.
-  ///
-  /// The key alone is not a configuration: it names the subscription and
-  /// nothing else, so the gateway is asked what it may connect to before the
-  /// profile is kept. A key the gateway refuses is not added at all — a
-  /// configuration with no servers and an error where the locations should be
-  /// is worse than never having accepted it.
-  Future<void> addAmneziaKey(String text) async {
-    await _ready;
-    final key = parseAmneziaVpnKey(text);
-    if (key == null) {
-      // Not a FormatException: describeError would then talk about share
-      // links, and the user typed something that looked like a key.
-      throw const AppErrorException(AppError('This isn’t a subscription key',
-          detail: 'Expected a vpn:// key from your subscription.'));
-    }
-    final refusal = amneziaKeyUnsupported(key);
-    if (refusal != null) {
-      throw AppErrorException(
-          AppError('${key.name} isn’t supported here', detail: refusal));
-    }
-    final id = _newId();
-    // The credential goes to the keychain first: if the gateway call fails,
-    // the orphaned entry is cleaned up below rather than left behind.
-    await ProfileStore.saveAmneziaKey(id, key.apiKey);
-    try {
-      final resolved = await AmneziaSource(amneziaProfileFor(key, id: id)).refresh();
-      await _append(resolved);
-    } catch (e) {
-      await ProfileStore.deleteAmneziaKey(id);
-      rethrow;
-    }
-  }
+  Future<void> addAmneziaKey(String text) async => _append(await importAmneziaKey(text));
 
   Future<void> _append(Profile p) async {
     await _ready;
@@ -553,7 +304,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     }
     state = state.copyWith(switching: true);
     try {
-      await core.reload(await _normConfig(p), selection);
+      await core.reload(await buildNormConfig(p), selection);
       _reapplyPending = false; // the core just got the current config
       state = state.copyWith(switching: false);
     } catch (e) {
@@ -752,7 +503,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       // selection time as well: the tunnel is about to carry traffic, and this
       // is the last moment a stale config can still be replaced quietly.
       p = await _resolveSelection(p, selection);
-      await core.load(await _normConfig(p));
+      await core.load(await buildNormConfig(p));
       await core.connect(selection);
       _lastReapply = DateTime.now();
       _reapplyPending = false;
@@ -824,7 +575,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       // that publishes its servers, and nothing again for one that issues them
       // once the config in hand is still good.
       p = await _resolveSelection(p, selection);
-      await ref.read(vpnCoreProvider).syncConfig(await _normConfig(p), selection);
+      await ref.read(vpnCoreProvider).syncConfig(await buildNormConfig(p), selection);
     } catch (e) {
       // Best-effort by design: every caller here is a side effect of something
       // else the user did, and the next connect writes the config anyway.
@@ -844,65 +595,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<NormConfig> effectiveConfig(Profile p) async {
     final selection = state.selectionId;
     final resolved = selection == null ? p : await _resolveSelection(p, selection);
-    return _normConfig(resolved);
-  }
-
-  /// Builds a NormConfig for the core from a profile: its locations + the
-  /// effective routing. Precedence: server-managed policy (self-hosted), else
-  /// the profile's global rule set. Device-level extras are applied on top:
-  /// LAN-direct rules are prepended, and geo rules are dropped (with a log)
-  /// while the databases aren't downloaded — a rule that can't match must not
-  /// stall the engine into fetching 20+ MB mid-connect.
-  Future<NormConfig> _normConfig(Profile p) async {
-    // Whose rules apply is the policy's decision, not this method's: one of
-    // three classes answers it (ADR-005), and what is left here is the
-    // device-level trimming that applies to any of them.
-    final policy = routingPolicyFor(p, loadRuleSet: RuleSetStore.byId);
-    Routing routing = await policy.resolve();
-
-    if (routing.rules.any((r) => r.needsGeoData) &&
-        !(await GeoStore.status()).downloaded) {
-      Log.e('routing', 'geo rules skipped: databases not downloaded');
-      routing = Routing(
-        mode: routing.mode,
-        rules: routing.rules.where((r) => !r.needsGeoData).toList(),
-        lists: routing.lists,
-      );
-    }
-
-    // A set authored on a desktop can travel to a phone (same account, same
-    // sets). Its process rules cannot match there, and leaving them in would
-    // turn find-process-mode on for nothing.
-    if (!supportsProcessRules && routing.rules.any((r) => r.type == 'process-name')) {
-      Log.e('routing', 'process rules skipped: this platform cannot resolve processes');
-      routing = Routing(
-        mode: routing.mode,
-        rules: routing.rules.where((r) => r.type != 'process-name').toList(),
-        lists: routing.lists,
-      );
-    }
-
-    final prefs = await RoutingPrefsStore.load();
-    if (prefs.lanDirect) {
-      routing = Routing(
-          mode: routing.mode,
-          rules: [...kLanDirectRules, ...routing.rules],
-          lists: routing.lists);
-    }
-
-    return NormConfig(
-      version: 1,
-      account: p.account ?? Account(displayName: p.name, status: 'active'),
-      locations: p.locations,
-      groups: p.groups,
-      routing: routing,
-      dns: p.dns,
-      // Only reaches the engine when the configuration named nothing; the
-      // renderer decides that, so the value travels rather than being folded in
-      // here — folded in, the DNS screen would report the app's own resolver as
-      // the subscription's choice.
-      defaultDns: prefs.defaultDns,
-    );
+    return buildNormConfig(resolved);
   }
 
   Future<void> _poll() async {
@@ -964,7 +657,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     // the reconnect leak ADR-002 exists to avoid. Same path as a user switch.
     Log.i('poll: active config changed — hot-reloading to apply');
     _lastReapply = DateTime.now();
-    await core.reload(await _normConfig(after), locId);
+    await core.reload(await buildNormConfig(after), locId);
   }
 
   /// What the selection resolves to, for diffing one poll against the next.
