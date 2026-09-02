@@ -29,9 +29,10 @@ client and `protocol.Driver` on the server. Everything else is direct and
 boring. An interface with one implementation and no second one in sight is
 waste.
 
-**We do not let the engine define the app.** No mihomo type crosses the
-`VpnCore` boundary; config translation lives entirely inside the core
-implementation.
+**We do not swap the engine.** mihomo is the engine on every platform, and no
+second one is planned. `VpnCore` is the platform boundary and the test seam,
+not an engine-selection mechanism; config translation lives entirely inside the
+core implementation so the state layer never carries mihomo types.
 
 **We do not push from server to client.** The whole system is pull: workers
 heartbeat and fetch, clients poll and refetch. No SSE, no WebSocket, no

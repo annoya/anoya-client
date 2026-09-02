@@ -15,8 +15,8 @@ import 'vpn_core.dart';
 /// NEPacketTunnelProvider extension. The mihomo engine runs inside the
 /// extension (MihomoCore.xcframework); this class only sends the rendered
 /// config and start/stop commands over a MethodChannel, and reflects status
-/// from an EventChannel. The VpnCore seam is unchanged, so screens/state don't
-/// care which core is active.
+/// from an EventChannel. Screens and state see only [VpnCore], which is what
+/// the tests replace with a fake.
 ///
 /// Note: the connect/disconnect path deliberately does NOT read the shared log
 /// container — doing so from the host triggers a macOS "access data from other

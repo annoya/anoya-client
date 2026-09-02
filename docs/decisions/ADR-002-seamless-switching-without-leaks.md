@@ -186,9 +186,9 @@ never gave it to the tunnel" can be told apart from "it went out both ways".
   so the window this ADR closes for switching remains open for reconnects. It
   cannot be closed the same way; see ADR-004.
 - The mechanism is platform-neutral by construction — the leak source is the
-  death of the tunnel interface, which is universal. Android and desktop cores
-  implement `VpnCore.reload` and the UI does not change. Not yet verified on a
-  physical iOS device.
+  death of the tunnel interface, which is universal. Android reaches the same
+  engine reload through the same `vpn/control` channel and the UI does not
+  change. Not yet verified on a physical iOS device.
 
 ## Where It Lives
 
