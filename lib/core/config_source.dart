@@ -120,7 +120,8 @@ final class SubscriptionSource extends ConfigSource {
           ? null
           : Duration(seconds: info!.requestTimeout!),
     );
-    var parsed = parseSubscriptionBody(res.body);
+    var parsed = parseSubscriptionBody(res.body,
+        source: Uri.parse(profile.subscriptionUrl!).host);
     // A Clash document may name its servers elsewhere. Merged before anything
     // else looks at the result, so "how many servers does this subscription
     // have" has one answer.

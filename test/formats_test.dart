@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'package:vpn_client/core/config_source.dart';
+import 'package:vpn_client/core/log.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/parsers/share_link.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';
@@ -229,6 +230,22 @@ void main() {
       const body = 'vless://u@0.0.0.0:1?security=none#msg\n'
           'vless://u@real.example:443?security=reality&pbk=PK#DE';
       expect(parseSubscriptionBody(body).allPlaceholders, isFalse);
+    });
+  });
+
+  group('what the log says about a body', () {
+    test('malformed links are one line, counted, and say whose they were', () {
+      Log.clear();
+      const body = 'vless://u@:0?security=none#a\n'
+          'vless://u@:0?security=none#b\n'
+          'vless://u@real.example:443?security=reality&pbk=PK#DE';
+      final parsed = parseSubscriptionBody(body, source: 'sub.example');
+      expect(parsed.locations.length, 1);
+      final lines = Log.lines().where((l) => l.contains('malformed')).toList();
+      expect(lines, hasLength(1), reason: 'one line per body, not per link');
+      expect(lines.single, contains('sub.example'));
+      expect(lines.single, contains('2 malformed'));
+      expect(lines.single, isNot(contains('u@')), reason: 'the userinfo is the credential');
     });
   });
 

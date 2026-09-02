@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import '../log.dart';
 import '../norm_config.dart';
 import 'base64_text.dart';
 import 'mihomo_proxy.dart';
@@ -23,9 +22,19 @@ const kShareLinkSchemes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2', 'hy2'}
 /// `type=kcp` is not "an unsupported protocol" — vless is supported — so the
 /// reason has to be the transport, which is also the thing they can look up.
 class ShareLink {
-  const ShareLink.server(Location this.location) : unsupported = null;
-  const ShareLink.unsupported(String this.unsupported) : location = null;
-  const ShareLink.junk() : location = null, unsupported = null;
+  const ShareLink.server(Location this.location)
+      : unsupported = null,
+        malformed = null;
+  const ShareLink.unsupported(String this.unsupported)
+      : location = null,
+        malformed = null;
+  const ShareLink.malformed(String this.malformed)
+      : location = null,
+        unsupported = null;
+  const ShareLink.junk()
+      : location = null,
+        unsupported = null,
+        malformed = null;
 
   /// Null when this link is not something we can run.
   final Location? location;
@@ -33,6 +42,12 @@ class ShareLink {
   /// What we could not run — a scheme (`tuic`) or a transport (`kcp`). Null
   /// when the text was not a server at all.
   final String? unsupported;
+
+  /// A link of a scheme we know that would not parse, and why — scheme and
+  /// reason only, never the link itself, because the userinfo is the
+  /// credential. Reported by the caller, which knows how many there were and
+  /// where they came from; one line per link said neither.
+  final String? malformed;
 }
 
 /// Parse one share-link URI. Null when the scheme is unknown or malformed; use
@@ -54,12 +69,9 @@ ShareLink parseShareLink(String raw) {
       _ => ShareLink.unsupported(scheme),
     };
   } catch (e) {
-    // Scheme only: the link's userinfo IS the credential (uuid/password), and
-    // this log line ends up in the support archive.
-    Log.e('proxy uri parse failed', '$scheme:// -> $e');
     // A link of a scheme we know that will not parse is malformed, not
     // unsupported — saying "vless unsupported" would be a lie.
-    return const ShareLink.junk();
+    return ShareLink.malformed('$scheme:// $e');
   }
 }
 

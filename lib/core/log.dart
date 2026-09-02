@@ -33,8 +33,30 @@ class Log {
     developer.log(msg, name: 'vpn', level: 1000, error: error, stackTrace: st);
   }
 
+  /// What the lines logged right now are about — a subscription's host while
+  /// its body is being parsed. Set only through [within], for the duration of
+  /// one synchronous call, so it never outlives what it describes.
+  static String _context = '';
+
+  /// Runs [body] with every line it logs prefixed by [label].
+  ///
+  /// The parsers log what they skip and why, and they are called for several
+  /// subscriptions in a row on every poll; without the label sixteen identical
+  /// "port out of range" lines could belong to any of them. The label is set
+  /// around the call rather than threaded through every parser, because the
+  /// parsers are pure functions of a body and should stay that way.
+  static T within<T>(String label, T Function() body) {
+    final previous = _context;
+    _context = label.isEmpty ? previous : label;
+    try {
+      return body();
+    } finally {
+      _context = previous;
+    }
+  }
+
   static void _add(String level, String msg) {
-    final line = '[$level] $msg';
+    final line = _context.isEmpty ? '[$level] $msg' : '[$level] $_context: $msg';
     developer.log(msg, name: 'vpn');
     if (kDebugMode) debugPrint('vpn $line');
     if (!enabled) return;
