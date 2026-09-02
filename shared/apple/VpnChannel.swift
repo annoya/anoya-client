@@ -198,10 +198,15 @@ private func deviceInfo() -> [String: String] {
     ]
 }
 
+/// Flutter calls stream handlers on the platform thread, which is main; the
+/// protocol does not say so in its types, hence the assumeIsolated at each
+/// entry — it traps rather than races if that ever stops being true.
 private final class StatusStreamHandler: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-        VPNManager.shared.onStatus = { status in events(status) }
-        events(VPNManager.shared.currentStatus()) // what we know right now
+        MainActor.assumeIsolated {
+            VPNManager.shared.onStatus = { status in events(status) }
+            events(VPNManager.shared.currentStatus()) // what we know right now
+        }
         // …and what is actually true: on a fresh launch the app has not touched
         // the system profile yet, so the line above says "disconnected" even
         // over a live tunnel. Adopting the existing profile publishes the real
@@ -211,7 +216,7 @@ private final class StatusStreamHandler: NSObject, FlutterStreamHandler {
     }
 
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        VPNManager.shared.onStatus = nil
+        MainActor.assumeIsolated { VPNManager.shared.onStatus = nil }
         return nil
     }
 }
