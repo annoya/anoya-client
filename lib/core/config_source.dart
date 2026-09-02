@@ -1,3 +1,5 @@
+import 'package:http/http.dart' as http;
+
 import '../api/api_client.dart';
 import 'amnezia/amnezia_source.dart';
 import 'log.dart';
@@ -174,11 +176,20 @@ final class SubscriptionSource extends ConfigSource {
 /// A list that cannot be fetched is counted, not silently skipped: the user
 /// counted servers in their provider's panel, and a smaller number here with no
 /// reason reads as the app losing them.
-Future<ParsedSubscription> withProxyProviders(ParsedSubscription parsed) async {
+///
+/// Only the servers come from the lists. The document's own DNS and groups
+/// stay as they were parsed: a list is a pool of servers, and the panel's
+/// resolvers and its choice of how to pick among them belong to the document
+/// that pointed at it (ADR-008). Losing them here once made every subscription
+/// with `proxy-providers` silently fall back to the app's default resolver.
+Future<ParsedSubscription> withProxyProviders(
+  ParsedSubscription parsed, {
+  http.Client? client,
+}) async {
   final locations = [...parsed.locations];
   final unsupported = {...parsed.unsupported};
   for (final provider in parsed.providers) {
-    final fetched = await fetchProxyProvider(provider);
+    final fetched = await fetchProxyProvider(provider, client: client);
     if (fetched == null) {
       unsupported.update('unreachable list (${provider.name})', (n) => n + 1,
           ifAbsent: () => 1);
@@ -190,6 +201,8 @@ Future<ParsedSubscription> withProxyProviders(ParsedSubscription parsed) async {
   return ParsedSubscription(
     locations: locations,
     unsupported: unsupported,
+    groups: parsed.groups,
+    dns: parsed.dns,
     format: parsed.format,
   );
 }
