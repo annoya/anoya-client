@@ -12,6 +12,8 @@ import UIKit
     // VPN control/status bridge to the packet-tunnel extension.
     if let controller = window?.rootViewController as? FlutterViewController {
       VpnChannel.register(messenger: controller.binaryMessenger)
+      // SSO: system auth browser (ASWebAuthenticationSession) for the OIDC flow.
+      WebAuthChannel.register(messenger: controller.binaryMessenger, anchor: window)
     }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
