@@ -11,6 +11,11 @@ class MainActivity : FlutterActivity() {
         WebAuthChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
     }
 
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        VpnChannel.unregister(this)
+        super.cleanUpFlutterEngine(flutterEngine)
+    }
+
     override fun onResume() {
         super.onResume()
         // Back from the browser with no redirect delivered: the sign-in was
