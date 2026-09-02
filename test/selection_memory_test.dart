@@ -151,9 +151,6 @@ class _QuietCore extends VpnCore {
   Stream<VpnStatus> statusStream() => const Stream.empty();
 
   @override
-  Stream<VpnStats> statsStream() => const Stream.empty();
-
-  @override
   Future<void> load(NormConfig config) async {}
 
   @override
@@ -162,8 +159,6 @@ class _QuietCore extends VpnCore {
   @override
   Future<void> disconnect() async {}
 
-  @override
-  Future<String> engineVersion() async => '';
 }
 
 class _QuietOnDemand extends OnDemandController {

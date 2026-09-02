@@ -14,11 +14,6 @@ class Favorites {
   static String locationKey(String profileId, String locationId) =>
       '$profileId/$locationId';
 
-  bool hasProfile(String profileId) => profiles.contains(profileId);
-
-  bool hasLocation(String profileId, String locationId) =>
-      locations.contains(locationKey(profileId, locationId));
-
   /// The favourite location ids of one profile, as the pickers want them.
   Set<String> locationsOf(String profileId) {
     final prefix = '$profileId/';

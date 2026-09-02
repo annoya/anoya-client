@@ -52,7 +52,4 @@ class AmneziaEnv {
       String.fromEnvironment('AGW_CLIENT_VERSION', defaultValue: '5.0.1.5');
   static const distribution =
       String.fromEnvironment('AGW_DISTRIBUTION', defaultValue: 'github');
-
-  /// Whether this build can talk to the gateway at all.
-  static bool get configured => _publicKeyB64.isNotEmpty && endpoint.isNotEmpty;
 }

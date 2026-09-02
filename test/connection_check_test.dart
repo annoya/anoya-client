@@ -415,12 +415,6 @@ class _FakeCore extends VpnCore {
   Future<void> disconnect() async {}
 
   @override
-  Future<String?> engineVersion() async => 'fake';
-
-  @override
-  Stream<VpnStats> statsStream() => const Stream.empty();
-
-  @override
   Future<bool> applyOnDemand(OnDemandPrefs prefs,
           {NormConfig? config, String? locationId}) async =>
       false;

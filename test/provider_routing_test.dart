@@ -209,7 +209,6 @@ rules:
           ['rule-list reject', 'domain-suffix ip.me']);
       expect(r.routing.lists.single.name, 'reject');
       expect(r.routing.lists.single.behavior, 'domain');
-      expect(r.routing.lists.single.intervalSeconds, 86400);
     });
 
     test('lists we cannot fetch are dropped and counted', () {
@@ -240,14 +239,14 @@ rules:
         const MethodChannel('plugins.flutter.io/path_provider'),
         (call) async => tmp.path,
       );
-      debugSetDeviceIdentity(const DeviceIdentity(
+      DeviceIdentityStore.debugCache(const DeviceIdentity(
           hwid: 'aaaabbbbccccdddd', os: 'iOS', osVersion: '18.0', model: 'iPhone16,1'));
     });
     tearDown(() {
       messenger.setMockMethodCallHandler(
           const MethodChannel('plugins.flutter.io/path_provider'), null);
       tmp.deleteSync(recursive: true);
-      DeviceIdentityStore.forget();
+      DeviceIdentityStore.debugCache(null);
     });
 
     test('the panel is asked for its json rendering by name', () async {

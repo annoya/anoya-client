@@ -155,13 +155,11 @@ class AgwConfig {
     required this.endpoint,
     required this.publicKeyPem,
     this.s3Primary = const [],
-    this.s3Fallback = const [],
   });
 
   final String endpoint;
   final String publicKeyPem;
   final List<String> s3Primary;
-  final List<String> s3Fallback;
 
   Map<String, dynamic> toJson() => {
         'gateway_endpoint': endpoint,
@@ -170,7 +168,6 @@ class AgwConfig {
         // silently disables the bypass path.
         'public_key_pem': publicKeyPem,
         if (s3Primary.isNotEmpty) 's3_primary_endpoints': s3Primary,
-        if (s3Fallback.isNotEmpty) 's3_fallback_endpoints': s3Fallback,
       };
 }
 
@@ -192,10 +189,6 @@ class AgwClient {
   /// discovery sweep again; worth protecting, because it names the bypass
   /// endpoints.
   String state = '';
-
-  /// The library's ABI version — also the cheapest proof that the native side
-  /// is actually linked in.
-  static int get abiVersion => _Bindings.instance.abiVersion();
 
   Future<AgwResponse> post(
     String endpoint,

@@ -45,7 +45,7 @@ void main() {
     {"type": "direct", "tag": "direct-out"}
   ]
 }''';
-      expect(subscriptionDns(body), [
+      expect(parseSubscriptionBody(body).dns, [
         'tls://dns.quad9.net#PROXY',
         'udp://77.88.8.8',
         // No detour is sing-box's own default, and its default is direct.
@@ -68,7 +68,7 @@ void main() {
 }''';
       // The two mechanisms are dropped: inside the extension "local" is the
       // tunnel's own DNS setting, so asking it loops straight back to us.
-      expect(subscriptionDns(body), ['https://dns.quad9.net:443/dns-query#PROXY']);
+      expect(parseSubscriptionBody(body).dns, ['https://dns.quad9.net:443/dns-query#PROXY']);
     });
   });
 
@@ -84,7 +84,7 @@ void main() {
   ]},
   "outbounds": [{"protocol": "vless", "settings": {"vnext": [
     {"address": "h.example", "port": 443, "users": [{"id": "u"}]}]}}]}]''';
-      expect(subscriptionDns(body), [
+      expect(parseSubscriptionBody(body).dns, [
         'https://dns.quad9.net/dns-query#PROXY',
         'https://dns.google/dns-query',
         // The object form carries the same address plus filters we cannot
@@ -103,12 +103,12 @@ dns:
 proxies:
   - {name: a, type: vless, server: h.example, port: 443, uuid: u}
 ''';
-    expect(subscriptionDns(body),
+    expect(parseSubscriptionBody(body).dns,
         ['https://dns.quad9.net/dns-query#PROXY', 'tls://77.88.8.8']);
   });
 
   test('a link list has nowhere to put a resolver', () {
-    expect(subscriptionDns('vless://u@h.example:443?security=none#A'), isEmpty);
+    expect(parseSubscriptionBody('vless://u@h.example:443?security=none#A').dns, isEmpty);
   });
 
   test('HTTP/3 is a transport, not a protocol the engine has a scheme for', () {
@@ -117,7 +117,7 @@ proxies:
     const body = '''
 {"dns": {"servers": [{"tag": "r", "address": "h3://dns.google/dns-query"}]},
  "outbounds": [{"type": "vless", "tag": "v", "server": "h.example", "server_port": 443, "uuid": "u"}]}''';
-    expect(subscriptionDns(body), ['https://dns.google/dns-query']);
+    expect(parseSubscriptionBody(body).dns, ['https://dns.google/dns-query']);
   });
 
   group('what the renderer will still refuse', () {

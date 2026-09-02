@@ -25,6 +25,3 @@ bool get supportsOnDemand => switch (defaultTargetPlatform) {
       TargetPlatform.macOS || TargetPlatform.iOS => true,
       _ => false,
     };
-
-/// Whether this platform's auto-start is the system's Always-on VPN switch.
-bool get supportsAlwaysOn => defaultTargetPlatform == TargetPlatform.android;

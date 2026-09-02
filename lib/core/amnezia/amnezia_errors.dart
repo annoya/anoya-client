@@ -30,24 +30,6 @@ AppError describeAmneziaError(int code, {String? detail}) {
           : 'The gateway answered with code $code.');
 }
 
-/// Whether a failure is worth retrying on its own, or needs the user to do
-/// something first. Retrying a refusal only spends the user's battery and,
-/// where the gateway rate-limits, makes the next attempt worse.
-bool amneziaErrorIsTransient(int code) => const {
-      AgwStatus.downloadError,
-      AgwStatus.timeout,
-      AgwStatus.sslError,
-      AgwStatus.decryptionError,
-    }.contains(code);
-
-/// True when the subscription itself is the problem, so the app should stop
-/// presenting the configuration as usable rather than failing per connect.
-bool amneziaErrorIsFatalForSubscription(int code) => const {
-      AgwStatus.subscriptionExpired,
-      AgwStatus.subscriptionNotActive,
-      AgwStatus.notFound,
-    }.contains(code);
-
 const _messages = <int, (String, String)>{
   AgwStatus.cancelled: (
     'Took too long',

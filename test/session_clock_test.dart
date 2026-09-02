@@ -94,9 +94,6 @@ class _Core extends VpnCore {
   Stream<VpnStatus> statusStream() => _statuses.stream;
 
   @override
-  Stream<VpnStats> statsStream() => const Stream.empty();
-
-  @override
   Future<DateTime?> connectedSince() async {
     if (slow) await Future<void>.delayed(const Duration(milliseconds: 60));
     return _since;
@@ -111,6 +108,4 @@ class _Core extends VpnCore {
   @override
   Future<void> disconnect() async {}
 
-  @override
-  Future<String> engineVersion() async => '';
 }
