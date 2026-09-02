@@ -6,6 +6,7 @@ import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/norm_config.dart';
 import '../core/platform_support.dart';
+import '../core/rule_set.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 
@@ -19,8 +20,8 @@ import '../core/ui.dart';
 class RoutingModeCard extends StatelessWidget {
   const RoutingModeCard({super.key, required this.mode, this.onChanged});
 
-  final String mode;
-  final ValueChanged<String>? onChanged;
+  final RoutingMode mode;
+  final ValueChanged<RoutingMode>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +36,11 @@ class RoutingModeCard extends StatelessWidget {
             // shrink the labels and shift them off-centre.
             SizedBox(
               width: double.infinity,
-              child: SegmentedButton<String>(
+              child: SegmentedButton<RoutingMode>(
                 showSelectedIcon: false,
                 segments: const [
-                  ButtonSegment(value: 'full', label: Text('Full tunnel')),
-                  ButtonSegment(value: 'split', label: Text('Split')),
+                  ButtonSegment(value: RoutingMode.full, label: Text('Full tunnel')),
+                  ButtonSegment(value: RoutingMode.split, label: Text('Split')),
                 ],
                 selected: {mode},
                 onSelectionChanged:
@@ -48,7 +49,7 @@ class RoutingModeCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              mode == 'full'
+              mode == RoutingMode.full
                   ? 'All traffic goes through the VPN; rules define exceptions.'
                   : 'Only traffic matching the rules goes through the VPN; the rest connects directly.',
               style: Theme.of(context)
@@ -64,10 +65,10 @@ class RoutingModeCard extends StatelessWidget {
 }
 
 /// What an empty rule list means under each direction.
-Widget emptyRulesNote(BuildContext context, String mode) => Padding(
+Widget emptyRulesNote(BuildContext context, RoutingMode mode) => Padding(
       padding: const EdgeInsets.all(kGutter),
       child: Text(
-        mode == 'split'
+        mode == RoutingMode.split
             ? 'No rules: no traffic goes through the VPN. Add rules for what should be tunneled.'
             : 'No rules: all traffic goes through the VPN.',
         style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),

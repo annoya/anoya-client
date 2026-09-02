@@ -23,7 +23,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     /// prompt on every connect. The host reads these logs over the provider
     /// IPC channel (handleAppMessage) instead of from a shared container.
     private func sharedDir() -> URL {
-        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        // Caches always exists in a sandbox container; the fallback is for the
+        // one process whose crash is a VPN outage, not because it is expected.
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
     }
 
     /// Mirrors the app's "Collect logs" switch, carried in the start options and

@@ -20,6 +20,7 @@ import 'favorites_controller.dart';
 import 'on_demand_controller.dart';
 import 'profiles_state.dart';
 import 'providers.dart';
+import 'ready_gate.dart';
 
 export 'profiles_state.dart';
 
@@ -36,7 +37,7 @@ const kReapplyMinGap = Duration(minutes: 1);
 /// location, and the connect lifecycle. Replaces the old single-config
 /// controller; self-hosted login/SSO now create a profile rather than a global
 /// session.
-class ProfilesController extends Notifier<ProfilesState> {
+class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Timer? _timer;
   DateTime _lastReapply = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -49,23 +50,13 @@ class ProfilesController extends Notifier<ProfilesState> {
   bool _stopExpected = false;
   StreamSubscription<VpnStatus>? _statusSub;
 
-  /// Completes when the persisted state is in [state]. Mutations await it:
-  /// here the stakes are higher than a reverted field, because `_append` saves
-  /// `[...state.profiles, p]` — an add landing before the load would persist a
-  /// list missing every stored profile.
-  ///
-  /// Already complete until [build] replaces it, which is the truth for any
-  /// controller that never scheduled a load: its state is the default, and
-  /// there is nothing to wait for.
-  Future<void> _ready = Future.value();
-
   @override
   ProfilesState build() {
     _timer = Timer.periodic(kConfigPollInterval, (_) => _poll());
     ref.onDispose(() => _timer?.cancel());
     _watchForSilentFailures();
     _rememberSelection();
-    _ready = _init();
+    ready = _init();
     return const ProfilesState(loading: true);
   }
 
@@ -156,7 +147,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<void> addAmneziaKey(String text) async => _append(await importAmneziaKey(text));
 
   Future<void> _append(Profile p) async {
-    await _ready;
+    await ready;
     final profiles = [...state.profiles, p];
     await ProfileStore.save(profiles);
     state = ProfilesState(
@@ -210,7 +201,7 @@ class ProfilesController extends Notifier<ProfilesState> {
       p == null || p.locations.isEmpty ? null : p.locations.first.id;
 
   Future<void> removeProfile(String id) async {
-    await _ready;
+    await ready;
     final removed = _byId(id);
     if (removed != null) await configSourceFor(removed).dispose();
     final wasActive = id == state.activeId;
@@ -237,7 +228,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   }
 
   Future<void> setActive(String id) async {
-    await _ready;
+    await ready;
     final p = _byId(id);
     // Not copyWith: it cannot null the selection out, and a zero-location
     // profile must not inherit the previous profile's location id — ids are
@@ -328,7 +319,7 @@ class ProfilesController extends Notifier<ProfilesState> {
 
   /// Re-pull any profile by id (the per-configuration screen's manual refresh).
   Future<Profile> refreshProfile(String id) async {
-    await _ready;
+    await ready;
     final p = _byId(id);
     if (p == null) throw StateError('unknown profile $id');
     final updated = await configSourceFor(p).refresh();
@@ -375,7 +366,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// How often this configuration re-reads itself, in hours. Null hands the
   /// choice back to the source.
   Future<void> setRefreshHours(String profileId, int? hours) async {
-    await _ready;
+    await ready;
     final p = _byId(profileId);
     if (p == null) return;
     await _replace(p.copyWith(refreshHours: (value: hours)));
@@ -412,7 +403,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// points at any more belongs to a refresh, where a provider may genuinely
   /// have dropped a list.
   Future<void> setProviderRuleListsEnabled(String profileId, bool enabled) async {
-    await _ready;
+    await ready;
     final p = _byId(profileId);
     if (p == null) return;
     if (enabled) await syncRuleLists(profileId);
@@ -423,7 +414,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// Download whatever of a provider's lists we do not have. Also the retry
   /// path: a list that failed is worth one more attempt on demand.
   Future<List<RuleListStatus>> syncRuleLists(String profileId) async {
-    await _ready;
+    await ready;
     final lists = _byId(profileId)?.providerRouting?.lists ?? const <RuleList>[];
     if (lists.isEmpty) return const [];
     final status = await RuleListStore.sync(lists);
@@ -444,7 +435,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   /// Routing changes reach the tunnel the same way a server switch does: hot on
   /// a live session, persisted otherwise.
   Future<void> _updateRouting(String profileId, Profile Function(Profile) change) async {
-    await _ready;
+    await ready;
     final p = _byId(profileId);
     if (p == null) return;
     await _replace(change(p));
@@ -461,7 +452,7 @@ class ProfilesController extends Notifier<ProfilesState> {
   Future<void> connect() => _connecting ??= _connect().whenComplete(() => _connecting = null);
 
   Future<void> _connect() async {
-    await _ready;
+    await ready;
     final core = ref.read(vpnCoreProvider);
     state = state.copyWith(error: null);
     try {

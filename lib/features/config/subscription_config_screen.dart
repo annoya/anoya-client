@@ -13,26 +13,21 @@ import 'config_parts.dart';
 /// origin — hence the source and the refresh — and routing that is the device's
 /// own unless the panel sent rules, in which case both are offered and the user
 /// picks.
-class SubscriptionConfigScreen extends ConsumerStatefulWidget {
+class SubscriptionConfigScreen extends ConsumerWidget {
   const SubscriptionConfigScreen({super.key, required this.profile, required this.isActive});
 
   final Profile profile;
   final bool isActive;
 
   @override
-  ConsumerState<SubscriptionConfigScreen> createState() => _SubscriptionConfigScreenState();
-}
-
-class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScreen> {
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.profile;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = profile;
     return Scaffold(
       appBar: AppBar(title: Text(p.name)),
       body: PageBody(
         child: ListView(children: [
           const SizedBox(height: 8),
-          ProfileHeaderCard(profile: p, isActive: widget.isActive),
+          ProfileHeaderCard(profile: p, isActive: isActive),
           if (p.deviceLimitReached) const DeviceLimitCard(),
           if (p.unsupportedServers.isNotEmpty) UnsupportedServersCard(profile: p),
           if (p.subscriptionUrl != null)
@@ -52,7 +47,7 @@ class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScr
           RoutingRow(profile: p),
           if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),
           if (p.deviceLimitActive) const ThisDeviceSection(),
-          ConfigActions(profile: p, isActive: widget.isActive),
+          ConfigActions(profile: p, isActive: isActive),
         ]),
       ),
     );
