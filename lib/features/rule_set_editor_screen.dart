@@ -1,57 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/app_error.dart';
 import '../core/country_flag.dart';
 import '../core/geo_store.dart';
 import '../core/geosite_index.dart';
-import '../core/log.dart';
 import '../core/norm_config.dart';
-import '../core/platform_support.dart';
 import '../core/rule_set.dart';
 import '../core/service_avatar.dart';
 import '../core/service_catalog.dart';
-import '../core/theme.dart';
 import '../core/ui.dart';
 import '../state/profiles_controller.dart';
-import 'geosite_sheet.dart';
-import 'policy_origin.dart';
-import 'rule_dialog.dart';
 import '../state/routing_status.dart';
+import 'geosite_sheet.dart';
+import 'rule_dialog.dart';
+import 'routing_widgets.dart';
 
-/// Rule-set editor / managed-policy viewer.
-///
-/// [RoutingScreen.editSet] edits one global rule set (mode + ordered rules,
-/// geoip/geosite included). [RoutingScreen.managed] shows a server-delivered
-/// policy read-only.
-class RoutingScreen extends ConsumerStatefulWidget {
-  const RoutingScreen.managed(Routing this.managedPolicy,
-      {this.origin = PolicyOrigin.organization, this.listsAvailable, super.key})
-      : setId = null;
-  const RoutingScreen.editSet(String this.setId, {super.key})
-      : managedPolicy = null,
-        origin = PolicyOrigin.organization,
-        listsAvailable = null;
+/// Edits one global rule set: its direction and its ordered rules, geoip and
+/// geosite included. Two views over the same rules — Simple picks services
+/// from a catalog, Advanced lists every rule — so switching never converts
+/// anything. A policy someone else authored is shown by
+/// `ManagedPolicyScreen` instead.
+class RuleSetEditorScreen extends ConsumerStatefulWidget {
+  const RuleSetEditorScreen(this.setId, {super.key});
 
-  final Routing? managedPolicy;
-
-  /// Whose policy this is. A read-only screen has to answer that before
-  /// anything else: the rules are identical whoever sent them, and only the
-  /// author decides whether the user is looking at an obligation or an offer.
-  final PolicyOrigin origin;
-
-  /// Names of the policy's rule lists this device actually holds. Null means
-  /// the user has not accepted them at all — a different thing from a download
-  /// that failed, and the row says which.
-  final Set<String>? listsAvailable;
-
-  final String? setId;
+  final String setId;
 
   @override
-  ConsumerState<RoutingScreen> createState() => _RoutingScreenState();
+  ConsumerState<RuleSetEditorScreen> createState() => _RuleSetEditorScreenState();
 }
 
-class _RoutingScreenState extends ConsumerState<RoutingScreen> {
+class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   String _name = 'Split tunneling';
   String _mode = 'full';
   String _editor = 'simple';
@@ -63,13 +41,6 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
   List<GeositeCategory>? _index;
   String _query = '';
 
-  bool get _isManaged => widget.managedPolicy != null;
-
-  /// Lists we actually hold, and whether the user has refused them outright.
-  /// A read-only policy is the only kind that can name them.
-  Set<String> _listNames = const {};
-  bool _listsOff = false;
-
   @override
   void initState() {
     super.initState();
@@ -79,36 +50,21 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
   Future<void> _load() async {
     final geo = await GeoStore.status();
     if (!mounted) return;
-    if (_isManaged) {
-      final r = widget.managedPolicy!;
-      final held = widget.listsAvailable ?? const <String>{};
-      if (!mounted) return;
-      setState(() {
-        _mode = r.mode;
-        _rules = List.of(r.rules);
-        _geoReady = geo.downloaded;
-        _listNames = held;
-        _listsOff = widget.listsAvailable == null && r.lists.isNotEmpty;
-        _loading = false;
-      });
-      return;
-    }
     final set = await RuleSetStore.byId(widget.setId);
     if (!mounted) return;
     _editor = set.editor;
+    _geoReady = geo.downloaded;
     _loadIndex();
     setState(() {
       _name = set.name;
       _mode = set.mode;
       _rules = List.of(set.rules);
       _isDefault = set.isDefault;
-      _geoReady = geo.downloaded;
       _loading = false;
     });
   }
 
   Future<void> _persist() async {
-    if (_isManaged) return;
     // Grab the notifiers before any await: if the user leaves the screen while
     // the writes are in flight, ref is disposed — and the announce below must
     // still run, or the system's saved tunnel config keeps the old routing.
@@ -188,6 +144,13 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
     await _persist();
   }
 
+  /// Advanced mode changes the direction without touching the rules: there
+  /// every rule carries its own action, and the user reads them as written.
+  Future<void> _setMode(String mode) async {
+    setState(() => _mode = mode);
+    await _persist();
+  }
+
   Future<void> _setEditor(String editor) async {
     if (editor == _editor) return;
     setState(() => _editor = editor);
@@ -239,18 +202,12 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
 
   Future<void> _downloadGeo() async {
     setState(() => _geoBusy = true);
-    try {
-      await GeoStore.download();
-      final geo = await GeoStore.status();
-      if (mounted) setState(() => _geoReady = geo.downloaded);
-    } catch (e) {
-      Log.e('geo download failed', '$e');
-      if (mounted) {
-        showToast(context, describeError(e, subject: 'the database host').line);
-      }
-    } finally {
-      if (mounted) setState(() => _geoBusy = false);
-    }
+    final ready = await downloadGeoDatabases(context);
+    if (!mounted) return;
+    setState(() {
+      _geoBusy = false;
+      if (ready != null) _geoReady = ready;
+    });
   }
 
   Future<void> _editRule([int? index]) async {
@@ -290,9 +247,9 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isManaged ? 'Split tunneling' : _name),
+        title: Text(_name),
         actions: [
-          if (!_isManaged && !_isDefault && !_loading)
+          if (!_isDefault && !_loading)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               tooltip: 'Delete rule set',
@@ -300,7 +257,7 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
             ),
         ],
       ),
-      floatingActionButton: _isManaged || _editor == 'simple'
+      floatingActionButton: _editor == 'simple'
           ? null
           : FloatingActionButton(
               tooltip: 'Add rule',
@@ -313,9 +270,8 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 88),
                 children: [
-                  if (_isManaged) _managedBanner(context),
-                  if (!_isManaged) _editorSegment(context),
-                  if (_isManaged || _editor == 'advanced')
+                  _editorSegment(context),
+                  if (_editor == 'advanced')
                     ..._advancedChildren(context)
                   else
                     ..._simpleChildren(context),
@@ -347,21 +303,17 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
 
   List<Widget> _advancedChildren(BuildContext context) {
     return [
-      if (!_geoReady && _hasGeoRules) _geoBanner(context),
-      _modeCard(context),
+      if (!_geoReady && _rules.any((r) => r.needsGeoData))
+        GeoDownloadBanner(
+          title: 'Geo databases not downloaded',
+          subtitle: 'geoip / geosite rules are inactive until then (~25 MB)',
+          busy: _geoBusy,
+          onDownload: _downloadGeo,
+        ),
+      RoutingModeCard(mode: _mode, onChanged: _setMode),
       const SectionHeader('RULES — FIRST MATCH WINS'),
       if (_rules.isEmpty)
-        Padding(
-          padding: const EdgeInsets.all(kGutter),
-          child: Text(
-            _mode == 'split'
-                ? 'No rules: no traffic goes through the VPN. Add rules for what should be tunneled.'
-                : 'No rules: all traffic goes through the VPN.',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-        )
-      else if (_isManaged)
-        ..._rules.asMap().entries.map((e) => _ruleTile(e.key, e.value))
+        emptyRulesNote(context, _mode)
       else
         ReorderableListView(
           shrinkWrap: true,
@@ -376,7 +328,14 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
               // Keyed by item identity, not slot: a position key stays with
               // the index after a drop, so the settle animation targets the
               // wrong tile.
-              _ruleTile(i, _rules[i], key: ObjectKey(_rules[i])),
+              RuleTile(
+                key: ObjectKey(_rules[i]),
+                rule: _rules[i],
+                geoReady: _geoReady,
+                onTap: () => _editRule(i),
+                onRemove: () => _removeRule(i),
+                reorderIndex: i,
+              ),
           ],
         ),
     ];
@@ -387,7 +346,12 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
       // The whole catalog is geosite/geoip, so without the databases there is
       // nothing to offer — the download banner IS the screen.
       return [
-        _geoGateBanner(context),
+        GeoDownloadBanner(
+          title: 'Download the site lists first',
+          subtitle: 'Picking services needs the geo databases (~25 MB, one time)',
+          busy: _geoBusy,
+          onDownload: _downloadGeoThenIndex,
+        ),
         Opacity(opacity: 0.38, child: Column(children: _serviceGroups(interactive: false))),
       ];
     }
@@ -506,34 +470,6 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
     );
   }
 
-  Widget _geoGateBanner(BuildContext context) {
-    final warn = context.vpnColors.connecting;
-    return Card(
-      margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
-      color: warn.withValues(alpha: 0.12),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 0, 12, 10),
-        child: Column(children: [
-          ListTile(
-            leading: Icon(Icons.public_off, color: warn),
-            title: const Text('Download the site lists first'),
-            subtitle: const Text('Picking services needs the geo databases (~25 MB, one time)'),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.tonal(
-              onPressed: _geoBusy ? null : _downloadGeoThenIndex,
-              child: _geoBusy
-                  ? const SizedBox(
-                      height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Download'),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
   Future<void> _downloadGeoThenIndex() async {
     await _downloadGeo();
     await _loadIndex();
@@ -642,181 +578,5 @@ class _RoutingScreenState extends ConsumerState<RoutingScreen> {
       name,
       () => _setOn('geoip', code, false),
     );
-  }
-
-  bool get _hasGeoRules => _rules.any((r) => r.needsGeoData);
-
-  Widget _managedBanner(BuildContext context) {
-    final origin = widget.origin;
-    return Card(
-      margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
-      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
-      child: ListTile(
-        leading: Icon(origin.icon),
-        title: Text(origin.title),
-        subtitle: Text(origin.detail),
-        isThreeLine: origin.detail.length > 60,
-      ),
-    );
-  }
-
-  Widget _geoBanner(BuildContext context) {
-    final warn = context.vpnColors.connecting;
-    return Card(
-      margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
-      color: warn.withValues(alpha: 0.12),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 0, 12, 10),
-        child: Column(children: [
-          ListTile(
-            leading: Icon(Icons.public_off, color: warn),
-            title: const Text('Geo databases not downloaded'),
-            subtitle: const Text('geoip / geosite rules are inactive until then (~25 MB)'),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.tonal(
-              onPressed: _geoBusy ? null : _downloadGeo,
-              child: _geoBusy
-                  ? const SizedBox(
-                      height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Download'),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
-  Widget _modeCard(BuildContext context) {
-    return Card(
-      margin: kCardMargin,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Full width, half and half, no leading check — the check would
-            // shrink the labels and shift them off-centre.
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<String>(
-                showSelectedIcon: false,
-                segments: const [
-                  ButtonSegment(value: 'full', label: Text('Full tunnel')),
-                  ButtonSegment(value: 'split', label: Text('Split')),
-                ],
-                selected: {_mode},
-                onSelectionChanged: _isManaged
-                    ? null
-                    : (s) async {
-                        setState(() => _mode = s.first);
-                        await _persist();
-                      },
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _mode == 'full'
-                  ? 'All traffic goes through the VPN; rules define exceptions.'
-                  : 'Only traffic matching the rules goes through the VPN; the rest connects directly.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _ruleTile(int index, RoutingRule rule, {Key? key}) {
-    final actionColor = switch (rule.action) {
-      'proxy' => context.vpnColors.connected,
-      'direct' => context.vpnColors.direct,
-      _ => Theme.of(context).colorScheme.error,
-    };
-    final noDatabase = rule.needsGeoData && !_geoReady;
-    // Kept visible rather than hidden: the set may have been authored on a
-    // desktop, and silently dropping the row would look like data loss.
-    final unsupported = rule.type == 'process-name' && !supportsProcessRules;
-    // A list rule is only as good as the file behind it. Hiding it would claim
-    // a policy is smaller than it is; showing it as active would claim traffic
-    // is routed when nothing matches.
-    final noList = rule.needsRuleList && !_listNames.contains(rule.value);
-    final inactive = noDatabase || unsupported || noList;
-    final title = rule.type == 'geoip' ? _geoipTitle(rule.value) : rule.value;
-    final kind = rule.type == 'rule-list' ? 'rule list' : rule.type;
-    final subtitle = noDatabase
-        ? '$kind · inactive — no database'
-        : unsupported
-            ? '$kind · inactive — desktop only'
-            : noList
-                ? '$kind · inactive — ${_listsOff ? 'lists are off' : 'not downloaded'}'
-                : rule.noResolve
-                    ? '$kind · no-resolve'
-                    : kind;
-    final cs = Theme.of(context).colorScheme;
-    return Opacity(
-      key: key,
-      opacity: inactive ? 0.45 : 1,
-      child: Card(
-        margin: kCardMargin,
-        child: InkWell(
-          onTap: _isManaged ? null : () => _editRule(index),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-            child: Row(children: [
-              SizedBox(
-                width: 46,
-                child: Text(
-                  rule.action.toUpperCase(),
-                  style:
-                      TextStyle(color: actionColor, fontWeight: FontWeight.w700, fontSize: 11),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    Text(subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-                  ],
-                ),
-              ),
-              if (!_isManaged) ...[
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  tooltip: 'Remove',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => _removeRule(index),
-                ),
-                ReorderableDragStartListener(
-                  index: index,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                    child: Icon(Icons.drag_handle, size: 20, color: cs.onSurfaceVariant),
-                  ),
-                ),
-              ],
-            ]),
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _geoipTitle(String code) {
-    final up = code.toUpperCase();
-    final flag = flagEmoji(up) ?? '';
-    return flag.isEmpty ? up : '$flag  $up';
   }
 }

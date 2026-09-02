@@ -7,7 +7,7 @@ import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../state/profiles_controller.dart';
 import '../policy_origin.dart';
-import '../routing_screen.dart';
+import '../managed_policy_screen.dart';
 import '../../state/provider_rule_lists.dart';
 
 /// The routing section for a subscription whose panel sent rules of its own.
@@ -77,7 +77,7 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
           title: const Text('Rule set'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => RoutingScreen.managed(
+            builder: (_) => ManagedPolicyScreen(
               routing,
               origin: PolicyOrigin.provider(
                 profile.name,

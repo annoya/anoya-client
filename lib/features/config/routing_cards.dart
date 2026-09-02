@@ -9,7 +9,7 @@ import '../../state/profiles_controller.dart';
 import '../../state/routing_status.dart';
 import '../dns_screen.dart';
 import 'routing_config_screen.dart';
-import '../routing_screen.dart';
+import '../managed_policy_screen.dart';
 import '../../state/provider_rule_lists.dart';
 import 'provider_routing_card.dart';
 
@@ -91,7 +91,7 @@ class LocalRoutingCard extends ConsumerWidget {
 /// Opens the read-only view of a policy the configuration did not choose.
 void openManagedRouting(BuildContext context, Routing routing) {
   Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => RoutingScreen.managed(routing)));
+      MaterialPageRoute(builder: (_) => ManagedPolicyScreen(routing)));
 }
 
 /// The policy a device's own rule set puts in force, in one line.
