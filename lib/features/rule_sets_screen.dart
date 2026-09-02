@@ -57,7 +57,7 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
   }
 
   String _subtitle(RuleSet s, Map<String, int> usage) {
-    final mode = s.mode == 'split' ? 'Split' : 'Full tunnel';
+    final mode = s.mode.label;
     final rules = s.rules.isEmpty ? 'no rules' : '${s.rules.length} rules';
     final used = usage[s.id] ?? 0;
     return used > 0 ? '$mode · $rules · used by $used config${used > 1 ? 's' : ''}' : '$mode · $rules';

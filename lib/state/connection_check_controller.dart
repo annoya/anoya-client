@@ -10,6 +10,7 @@ import '../core/vpn_core.dart';
 import 'group_member.dart';
 import 'profiles_controller.dart';
 import 'providers.dart';
+import 'ready_gate.dart';
 
 class ConnectionCheckState {
   const ConnectionCheckState({
@@ -45,14 +46,12 @@ class ConnectionCheckState {
 /// Separate from the profiles controller on purpose: what it measures belongs
 /// to the *session*, not to a configuration, and a configuration switch must
 /// not carry an old measurement with it.
-class ConnectionCheckController extends Notifier<ConnectionCheckState> {
-  Future<void> _ready = Future.value();
-
+class ConnectionCheckController extends Notifier<ConnectionCheckState> with ReadyGate {
   StreamSubscription<VpnStatus>? _sub;
 
   @override
   ConnectionCheckState build() {
-    _ready = _load();
+    ready = _load();
     // The trigger is the session coming up, not the Connect button: a tunnel
     // raised by an on-demand rule or by Android's always-on switch is exactly
     // the one nobody is watching, and "up but carrying nothing" is worth
@@ -82,7 +81,7 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState> {
       _save(state.prefs.copyWith(timeoutSeconds: seconds));
 
   Future<void> _save(ConnectionCheckPrefs next) async {
-    await _ready;
+    await ready;
     state = state.copyWith(prefs: next);
     await ConnectionCheckStore.save(next);
   }
@@ -105,7 +104,7 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState> {
   /// was about to work; pressing Test now a moment later passed. A newly
   /// issued config (ADR-009) is the same story on the server's side.
   Future<void> runAfterConnect() async {
-    await _ready;
+    await ready;
     if (!state.prefs.enabled || state.running) return;
     state = state.copyWith(running: true);
     try {
@@ -144,7 +143,7 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState> {
   /// now and is owed the answer to *now*, not to a sequence that keeps trying
   /// while they watch a spinner.
   Future<ConnectionCheck> run() async {
-    await _ready;
+    await ready;
     if (state.running) return state.last ?? ConnectionCheck(at: DateTime.now());
     state = state.copyWith(running: true);
     try {

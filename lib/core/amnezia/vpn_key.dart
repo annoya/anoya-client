@@ -40,17 +40,6 @@ class AmneziaVpnKey {
   bool get isValid => apiKey.isNotEmpty && serviceType.isNotEmpty;
 }
 
-/// What a decoded Amnezia document turned out to be.
-enum AmneziaKeyKind {
-  /// A gateway subscription (`config_version: 2`): premium, free, external.
-  gateway,
-
-  /// A self-hosted Amnezia server config, or the v1 format their own client
-  /// no longer accepts. We do not serve these — the app has its own
-  /// self-hosted domain, and it is not this one.
-  unsupported,
-}
-
 /// Decodes a `vpn://` key, or any bare base64 body in that envelope.
 ///
 /// Returns null when the text is not an Amnezia key at all — which is a
@@ -81,7 +70,7 @@ Map<String, dynamic>? decodeAmneziaEnvelope(String text) {
 AmneziaVpnKey? parseAmneziaVpnKey(String text) {
   final doc = decodeAmneziaEnvelope(text);
   if (doc == null) return null;
-  if (amneziaKeyKind(doc) != AmneziaKeyKind.gateway) return null;
+  if (!_isGatewayKey(doc)) return null;
 
   final api = doc['api_config'];
   final auth = doc['auth_data'];
@@ -100,14 +89,11 @@ AmneziaVpnKey? parseAmneziaVpnKey(String text) {
 ///
 /// `config_version` is the discriminator their own client uses: 2 is the
 /// gateway subscription this app supports, 1 is the retired format that even
-/// Amnezia refuses now, and anything else is a self-hosted server bundle.
-AmneziaKeyKind amneziaKeyKind(Map<String, dynamic> doc) {
-  final version = doc['config_version'];
-  if (version != 2) return AmneziaKeyKind.unsupported;
-  final api = doc['api_config'];
-  if (api is! Map) return AmneziaKeyKind.unsupported;
-  return AmneziaKeyKind.gateway;
-}
+/// Amnezia refuses now, and anything else is a self-hosted server bundle. We
+/// serve only the first — the app has its own self-hosted domain, and it is
+/// not this one.
+bool _isGatewayKey(Map<String, dynamic> doc) =>
+    doc['config_version'] == 2 && doc['api_config'] is Map;
 
 Map<String, dynamic>? _asJsonObject(String text) {
   try {

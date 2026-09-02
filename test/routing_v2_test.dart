@@ -63,13 +63,13 @@ void main() {
   });
 
   test('RuleSet json round-trip and toRouting', () {
-    const set = RuleSet(id: 'work', name: 'Work', mode: 'split', rules: [
+    const set = RuleSet(id: 'work', name: 'Work', mode: RoutingMode.split, rules: [
       RoutingRule(type: 'geoip', value: 'ru', action: 'direct', noResolve: true),
       RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),
     ]);
     final restored = RuleSet.fromJson(set.toJson());
     expect(restored.name, 'Work');
-    expect(restored.mode, 'split');
+    expect(restored.mode, RoutingMode.split);
     expect(restored.rules.length, 2);
     expect(restored.rules.first.noResolve, true);
     expect(restored.toRouting().mode, 'split');

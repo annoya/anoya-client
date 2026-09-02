@@ -4,22 +4,17 @@ import '../core/log.dart';
 import '../core/on_demand.dart';
 import 'profiles_controller.dart';
 import 'providers.dart';
+import 'ready_gate.dart';
 
 /// Owns on-demand preferences and keeps the system side in sync: every state
 /// change is persisted and pushed to the core (which saves NEOnDemandRules
 /// into the system VPN preferences).
-class OnDemandController extends Notifier<OnDemandPrefs> {
+class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
   int _idSeq = 0;
-
-  /// Completes when the persisted prefs are in [state]; mutations await it, or
-  /// an edit landing first would be overwritten when the load finishes a moment
-  /// later. Already complete until [build] replaces it — a controller that
-  /// never scheduled a load has nothing to wait for.
-  Future<void> _ready = Future.value();
 
   @override
   OnDemandPrefs build() {
-    _ready = OnDemandStore.load().then((v) {
+    ready = OnDemandStore.load().then((v) {
       state = v;
     });
     return const OnDemandPrefs();
@@ -94,7 +89,7 @@ class OnDemandController extends Notifier<OnDemandPrefs> {
   /// state falls back to "not armed" so the UI never claims auto-connect that
   /// isn't running.
   Future<void> _apply(OnDemandPrefs prefs) async {
-    await _ready;
+    await ready;
     state = prefs;
     await OnDemandStore.save(prefs);
     bool armed = false;

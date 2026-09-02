@@ -145,7 +145,7 @@ DnsPlan dnsPlanForProfile(WidgetRef ref, Profile profile) {
   final state = ref.watch(profilesControllerProvider);
   // While the preference is still loading the built-in default stands in: the
   // row would otherwise flash a resolver the user replaced.
-  final fallback = ref.watch(routingPrefsProvider).value?.defaultDns ?? kFallbackNameserver;
+  final fallback = ref.watch(routingPrefsProvider.select((p) => p.defaultDns));
   final active = state.active?.id == profile.id;
   final group = active ? state.selectedGroup : null;
   final members = active ? state.selectedGroupMembers : const <Location>[];

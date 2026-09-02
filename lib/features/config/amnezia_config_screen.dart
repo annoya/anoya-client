@@ -19,20 +19,15 @@ import 'config_parts.dart';
 ///
 /// There is deliberately no Source row. The source is the subscription key,
 /// and the key is the credential: anyone who reads it holds the subscription.
-class AmneziaConfigScreen extends ConsumerStatefulWidget {
+class AmneziaConfigScreen extends ConsumerWidget {
   const AmneziaConfigScreen({super.key, required this.profile, required this.isActive});
 
   final Profile profile;
   final bool isActive;
 
   @override
-  ConsumerState<AmneziaConfigScreen> createState() => _AmneziaConfigScreenState();
-}
-
-class _AmneziaConfigScreenState extends ConsumerState<AmneziaConfigScreen> {
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.profile;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = profile;
     final state = p.amnezia;
     final account = state?.account;
     return Scaffold(
@@ -40,13 +35,13 @@ class _AmneziaConfigScreenState extends ConsumerState<AmneziaConfigScreen> {
       body: PageBody(
         child: ListView(children: [
           const SizedBox(height: 8),
-          ProfileHeaderCard(profile: p, isActive: widget.isActive),
+          ProfileHeaderCard(profile: p, isActive: isActive),
           if (account?.expired == true) const _ExpiredCard(),
           RefreshCard(profile: p),
           if (account != null) ..._subscription(account),
           RoutingRow(profile: p),
           const _ThisInstallation(),
-          ConfigActions(profile: p, isActive: widget.isActive),
+          ConfigActions(profile: p, isActive: isActive),
         ]),
       ),
     );

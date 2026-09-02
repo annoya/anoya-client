@@ -8,6 +8,7 @@ import '../core/routing_prefs.dart';
 import '../core/log.dart';
 import '../core/network_extension_core.dart';
 import '../core/vpn_core.dart';
+import 'ready_gate.dart';
 
 /// The VPN core. macOS/iOS drive the system Network Extension; Android drives
 /// a VpnService with the engine in-process. Both speak the same "vpn/control"
@@ -22,18 +23,12 @@ final vpnCoreProvider = Provider<VpnCore>((_) {
 
 /// Appearance + language, persisted. The app shell watches this so switching
 /// the theme repaints immediately.
-class AppPrefsController extends Notifier<AppPrefs> {
-  /// Completes when the persisted prefs are in [state]; setters await it, or
-  /// one landing first would be overwritten when the load finishes a moment
-  /// later. Already complete until [build] replaces it — a controller that
-  /// never scheduled a load has nothing to wait for.
-  Future<void> _ready = Future.value();
-
+class AppPrefsController extends Notifier<AppPrefs> with ReadyGate {
   @override
   AppPrefs build() {
     // Log.enabled is already set from the same file in main(), before anything
     // could log or connect; here we only need the rest of the prefs.
-    _ready = AppPrefsStore.load().then((v) {
+    ready = AppPrefsStore.load().then((v) {
       state = v;
     });
     return const AppPrefs();
@@ -51,7 +46,7 @@ class AppPrefsController extends Notifier<AppPrefs> {
   }
 
   Future<void> _save(AppPrefs Function(AppPrefs) change) async {
-    await _ready;
+    await ready;
     final prefs = change(state);
     state = prefs;
     await AppPrefsStore.save(prefs);
@@ -60,8 +55,31 @@ class AppPrefsController extends Notifier<AppPrefs> {
 
 final appPrefsProvider = NotifierProvider<AppPrefsController, AppPrefs>(AppPrefsController.new);
 
-/// The device's own routing preferences, for the screens that only need to read
-/// them. The settings screen still owns writing: it holds the whole object and
-/// saves it, and invalidating this after a save is what keeps the readers in
-/// step.
-final routingPrefsProvider = FutureProvider<RoutingPrefs>((_) => RoutingPrefsStore.load());
+/// The device's own routing preferences: one owner for the readers on the DNS
+/// screens and the writers on the settings and geo screens. Same shape as
+/// [AppPrefsController]; it used to be a FutureProvider that two screens
+/// bypassed with their own copy of the file, re-read after every pop.
+class RoutingPrefsController extends Notifier<RoutingPrefs> with ReadyGate {
+  @override
+  RoutingPrefs build() {
+    ready = reload();
+    return const RoutingPrefs();
+  }
+
+  /// Re-reads the file. [GeoStore] stamps `geoUpdatedAt` on its own after a
+  /// download, so the screen that shows it asks for a fresh copy.
+  Future<void> reload() async {
+    final prefs = await RoutingPrefsStore.load();
+    if (ref.mounted) state = prefs;
+  }
+
+  Future<void> update(RoutingPrefs Function(RoutingPrefs) change) async {
+    await ready;
+    final prefs = change(state);
+    state = prefs;
+    await RoutingPrefsStore.save(prefs);
+  }
+}
+
+final routingPrefsProvider =
+    NotifierProvider<RoutingPrefsController, RoutingPrefs>(RoutingPrefsController.new);

@@ -183,7 +183,7 @@ void main() {
 
     Future<void> writeWorkSet() => RuleSetStore.save([
           const RuleSet(id: RuleSet.defaultId, name: 'Default'),
-          const RuleSet(id: 'work', name: 'Work', mode: 'split', rules: workRules),
+          const RuleSet(id: 'work', name: 'Work', mode: RoutingMode.split, rules: workRules),
         ]);
 
     test('switched off, no rule set reaches the engine', () async {

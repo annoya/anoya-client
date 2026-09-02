@@ -38,7 +38,7 @@ class NamesSection extends ConsumerWidget {
       dns: profile.dns,
       outbounds: shape.outbounds,
       carriesUdp: shape.carriesUdp,
-      fallback: ref.watch(routingPrefsProvider).value?.defaultDns ?? kFallbackNameserver,
+      fallback: ref.watch(routingPrefsProvider.select((p) => p.defaultDns)),
     );
     final first = plan.resolvers.first;
 

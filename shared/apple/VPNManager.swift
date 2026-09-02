@@ -523,6 +523,9 @@ final class VPNManager {
         switch s {
         case .connected: return "connected"
         case .connecting, .reasserting: return "connecting"
+        // Deliberate: Dart has three states, and "disconnected" this early
+        // would make the silent-failure watcher ask the system for a reason it
+        // has not recorded yet. The spinner lasts the second the teardown does.
         case .disconnecting: return "connecting"
         case .disconnected, .invalid: return "disconnected"
         @unknown default: return "disconnected"
