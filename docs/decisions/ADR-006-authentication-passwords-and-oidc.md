@@ -29,8 +29,10 @@ This mirrors how NetBird does it, which was checked before committing.
 **The client talks to the IdP directly** — Authorization Code with PKCE, public
 client, no client secret. It returns the ID token to management, which validates
 it against JWKS: issuer, audience, nonce, `email_verified`, and the domain
-allowlist. On Apple platforms the browser leg is
-`ASWebAuthenticationSession` returning to the custom scheme `vpnclient://auth`.
+allowlist. The browser leg returns to the custom scheme `vpnclient://auth`: on
+macOS and iOS through `ASWebAuthenticationSession`, on Android through the
+user's browser and an activity registered for that scheme
+(`WebAuthCallbackActivity`). All three answer the same `vpn/web_auth` channel.
 
 **Users are provisioned just-in-time.** A verified identity from an allowed
 domain gets an account in the provider's default user list, recording
@@ -110,7 +112,9 @@ worth doing when a customer asks, not before.
 - `management/internal/http/` — `GET /api/client/auth-config`,
   `POST /api/client/login/oidc`, admin CRUD for providers.
 - `management/webui/src/pages/SSO.tsx` — provider configuration.
-- `client/lib/core/oidc_login.dart` — PKCE, `ASWebAuthenticationSession` over
-  the `vpn/web_auth` channel.
+- `client/lib/core/oidc_login.dart` — PKCE over the `vpn/web_auth` channel.
+- `client/shared/apple/WebAuthChannel.swift` (symlinked into both Runners) and
+  `client/android/.../WebAuthChannel.kt` + `WebAuthCallbackActivity.kt` — the
+  browser leg on each platform.
 - `client/lib/features/sign_in_screen.dart` — the SSO button, shown only when
   the server advertises a provider.

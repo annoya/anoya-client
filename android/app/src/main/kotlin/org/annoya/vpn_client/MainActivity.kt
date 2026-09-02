@@ -8,6 +8,14 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         VpnChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
+        WebAuthChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Back from the browser with no redirect delivered: the sign-in was
+        // abandoned. A delivered redirect has already cleared the wait.
+        WebAuthChannel.onHostResumed()
     }
 
     @Deprecated("Deprecated in Java")
