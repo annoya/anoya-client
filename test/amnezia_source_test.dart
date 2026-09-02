@@ -506,11 +506,6 @@ class _FakeGateway implements AmneziaGateway {
   String get installationUuid => 'test-install';
 
   @override
-  String get state => '';
-  @override
-  set state(String value) {}
-
-  @override
   Future<AgwResponse> accountInfo({
     required String apiKey,
     required String serviceType,

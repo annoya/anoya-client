@@ -11,12 +11,7 @@ import 'amnezia_env.dart';
 /// is a behaviour we cannot get wrong.
 class AmneziaGateway {
   AmneziaGateway({required this.installationUuid, AgwClient? client})
-      : _client = client ??
-            AgwClient(AgwConfig(
-              endpoint: AmneziaEnv.endpoint,
-              publicKeyPem: AmneziaEnv.publicKeyPem,
-              s3Primary: AmneziaEnv.s3Endpoints,
-            ));
+      : _client = client ?? _shared;
 
   /// Stable per installation, and sent on every request. The gateway counts
   /// devices by it, so it must survive app restarts and must not be shared.
@@ -24,9 +19,17 @@ class AmneziaGateway {
 
   final AgwClient _client;
 
-  /// Bypass state, worth persisting between launches — see [AgwClient.state].
-  String get state => _client.state;
-  set state(String value) => _client.state = value;
+  /// One client for the process. The client carries the bypass state — which
+  /// proxy reached the gateway last time — and a gateway object is built per
+  /// call (the source that owns it is itself built per call), so a client per
+  /// gateway meant a fresh discovery sweep for every request. The state now
+  /// lives as long as the app does; persisting it across launches is the next
+  /// step, not this one.
+  static final AgwClient _shared = AgwClient(AgwConfig(
+    endpoint: AmneziaEnv.endpoint,
+    publicKeyPem: AmneziaEnv.publicKeyPem,
+    s3Primary: AmneziaEnv.s3Endpoints,
+  ));
 
   /// What every request carries, whatever it asks for. Empty values are
   /// dropped rather than sent blank: absent and empty are different answers to

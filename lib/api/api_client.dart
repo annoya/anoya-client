@@ -142,8 +142,11 @@ class ApiClient {
       throw ApiException(0, 'tls',
           'TLS error talking to $baseUrl. If the server runs plain HTTP, enter the address with "http://".');
     } catch (e, st) {
+      // The exception's own words go to the log only: this message is what
+      // the dialog shows, and a stack of Dart type names is not an answer.
       Log.e('request to $uri failed', e, st);
-      throw ApiException(0, 'request', 'Request failed: $e');
+      throw ApiException(0, 'request',
+          'The request to $baseUrl could not be completed — check the address and try again.');
     }
 
     Log.i('$method $path -> ${res.statusCode} (${res.body.length} bytes)');
