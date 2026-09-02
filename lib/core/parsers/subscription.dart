@@ -264,6 +264,40 @@ DetectedInput? detectInput(String raw) {
       : DetectedInput(InputKind.subscriptionText, 'Subscription · ${locs.length} servers');
 }
 
+/// Why [detectInput] found nothing usable in [raw], in one short phrase for
+/// the chip under the field — or null when the text is empty.
+///
+/// The verdicts are deliberately few and name the thing the user can act on:
+/// a scheme we have no protocol for, a link of ours that will not parse, a
+/// transport the engine cannot run, a `vpn://` that is not a subscription key.
+/// The text itself is never repeated — it is right there in the field, and for
+/// a link it is the credential.
+String? whyUnusable(String raw) {
+  final t = raw.trim();
+  if (t.isEmpty) return null;
+  // The first token is the one that says what the user meant to paste; a
+  // trailing stray word does not turn a broken vless link into "not a link".
+  final first = t.split(RegExp(r'\s+')).first;
+  final scheme = first.contains('://') ? first.split('://').first.toLowerCase() : '';
+  if (scheme == 'vpn') return 'Not an Amnezia subscription key';
+  if (kShareLinkSchemes.contains(scheme)) {
+    final parsed = parseShareLink(first);
+    final why = parsed.unsupported;
+    if (why != null) {
+      // A transport name ("kcp") reads as "vless over kcp"; a plugin or
+      // anything already naming its protocol ("ss+kcptun") stands alone.
+      return why.contains('+') || why.startsWith(scheme)
+          ? '$why isn’t supported'
+          : '$scheme over $why isn’t supported';
+    }
+    return '$scheme:// link can’t be read';
+  }
+  if (scheme.isNotEmpty && scheme != 'http' && scheme != 'https') {
+    return '$scheme:// isn’t supported';
+  }
+  return 'Not a link or subscription';
+}
+
 /// Addresses that cannot be dialed anywhere. A server on one of these was
 /// never meant to be connected to.
 bool _isUnroutable(String host) {

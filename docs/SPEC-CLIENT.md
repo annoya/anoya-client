@@ -300,7 +300,10 @@ fetched keep working.
 
 - **Share links** — `vless://`, `vmess://`, `trojan://`, `ss://`,
   `hysteria2://` (and its `hy2://` alias), pasted or opened from a file
-  containing several. Transports: plain tcp, tcp with an HTTP header, ws,
+  containing several. A `vless://` or `trojan://` whose payload is base64 is
+  read too, in both forms panels emit: the URI body encoded (`uuid@host:port?…`,
+  the name inside or after the `#`) and, for vless, the vmess-style JSON
+  object. Transports: plain tcp, tcp with an HTTP header, ws,
   httpupgrade, grpc, h2 and xhttp — each mapped to how the engine expresses it,
   which for two of them differs from the URI (an HTTP header makes it the
   engine's `http` network; httpupgrade is a websocket with the handshake
@@ -463,7 +466,12 @@ screen says so in as many words.
 
 ## 5. Screens
 
-- **Start** — add a configuration: paste a link, open a file, or sign in.
+- **Start** — add a configuration: paste a link, open a file, or sign in. The
+  field answers as the user types: a recognised input gets a chip naming it at
+  once; text that is neither gets, 700 ms after the last change, a chip saying
+  why in one phrase (an unknown scheme, a link of ours that will not parse, a
+  transport the engine cannot run, a `vpn://` that is not a key) — never the
+  text itself, which is the credential.
 - **Sign in** — password and, when the server offers it, SSO.
 - **Home** — connect ring and status, a status strip (auto-connect, routing,
   logs), the configuration and server pickers, account line. The configuration
