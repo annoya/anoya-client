@@ -17,6 +17,7 @@ package main
 import "C"
 
 import (
+	"fmt"
 	"sync"
 	"unsafe"
 
@@ -91,6 +92,34 @@ func MihomoStop() {
 //export FreeCString
 func FreeCString(s *C.char) {
 	C.free(unsafe.Pointer(s))
+}
+
+// MihomoProxyBytes reports bytes carried through the named outbound in this
+// session as "<up>:<down>". The passive half of the connection check: traffic
+// that already crossed the tunnel makes a probe unnecessary.
+//
+//export MihomoProxyBytes
+func MihomoProxyBytes(name *C.char) *C.char {
+	up, down := engine.ProxyBytes(C.GoString(name))
+	return C.CString(fmt.Sprintf("%d:%d", up, down))
+}
+
+// MihomoURLTest sends one HTTP HEAD through the named outbound and returns
+// either "ms:<delay>" or "err:<reason>". One string rather than an out-param
+// pair because the extension speaks to the app in strings anyway, and a delay
+// of 0 is indistinguishable from a failure otherwise.
+//
+// Not holding `mu`: the call blocks for as long as the timeout allows, and the
+// mutex serialises start/stop — a probe that is waiting for a dead server must
+// not stop the user from disconnecting it.
+//
+//export MihomoURLTest
+func MihomoURLTest(name *C.char, url *C.char, timeoutMs C.int) *C.char {
+	delay, err := engine.URLTest(C.GoString(name), C.GoString(url), int(timeoutMs))
+	if err != nil {
+		return C.CString("err:" + err.Error())
+	}
+	return C.CString(fmt.Sprintf("ms:%d", delay))
 }
 
 // MihomoGroupMember returns which member of a proxy group the engine is

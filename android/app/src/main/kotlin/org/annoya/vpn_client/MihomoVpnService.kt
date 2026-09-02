@@ -38,6 +38,11 @@ class MihomoVpnService : VpnService() {
     companion object {
         const val ACTION_START = "org.annoya.vpn_client.START"
         const val ACTION_STOP = "org.annoya.vpn_client.STOP"
+
+        /// The group every rendered config routes through (kTunnelOutbound in
+        /// mihomo_tun_config.dart). Probing the group and not a member means
+        /// the probe follows whatever the engine picked.
+        const val kTunnelOutbound = "PROXY"
     }
 
     /// Engine calls run off the caller's thread, one at a time: start, reload
@@ -82,6 +87,20 @@ class MihomoVpnService : VpnService() {
             if (TunnelState.status == TunnelState.CONNECTED) {
                 runCatching { Mobile.groupMember(group) }.getOrDefault("")
             } else ""
+
+        // Refused rather than attempted when the tunnel is down: the engine
+        // would answer "no outbound named PROXY", which reads as a broken
+        // config instead of "there is nothing running to test".
+        override fun urlTest(url: String, timeoutMs: Int): String =
+            if (TunnelState.status == TunnelState.CONNECTED) {
+                runCatching { "ms:" + Mobile.urlTest(kTunnelOutbound, url, timeoutMs.toLong()) }
+                    .getOrElse { "err:" + (it.message ?: "the engine did not answer") }
+            } else "err:the tunnel is not running"
+
+        override fun proxyBytes(): String =
+            if (TunnelState.status == TunnelState.CONNECTED) {
+                runCatching { Mobile.proxyBytes(kTunnelOutbound) }.getOrDefault("0:0")
+            } else "0:0"
 
         override fun isAlwaysOn(): Boolean =
             Build.VERSION.SDK_INT >= 29 && this@MihomoVpnService.isAlwaysOn

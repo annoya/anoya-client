@@ -26,7 +26,8 @@ test.
 | [006](ADR-006-authentication-passwords-and-oidc.md) | both | Passwords plus generic OIDC, client-direct with PKCE | why not server-mediated, JIT provisioning, allowlists |
 | [007](ADR-007-worker-enrollment-and-self-recovery.md) | service | Reusable enrollment tokens so a worker recovers itself | why not single-use, rotation as revocation, what to revisit before production |
 | [008](ADR-008-dns-rides-the-config.md) | both | DNS resolvers ride the config; the OS-level DNS setting is a decoy | dns-hijack + fake-ip, per-source resolvers, Cloudflare DoH fallback, sanitation, bootstrap, `Bundle.DNS` |
-- [ADR-009: Amnezia Premium as a fourth domain, with its transport borrowed](ADR-009-amnezia-subscriptions.md)
+| [009](ADR-009-amnezia-subscriptions.md) | client | Key subscriptions as a fourth domain, with the gateway transport borrowed | `vpn://` codec, servers issued on demand, location × protocol, libagw, why no provider is named in the UI |
+| [010](ADR-010-connection-check.md) | client | The app verifies the tunnel carries traffic, and never drops it over the answer | passive byte counters first, mihomo `URLTest` second, handshake warm-up, why not `external-controller` |
 
 ## Open Questions
 

@@ -93,7 +93,12 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    `nonisolated async` method runs on the cooperative pool even when its caller
    started on `@MainActor` — every publication goes through `publish()`, which
    hops, and `lastStatus` is touched only on the far side of that hop.
-10. **Logs never contain secrets.** No tokens, passwords, private keys or full
+10. **A check never disconnects the tunnel.** The connection check measures and
+   reports; it has false negatives (a captive portal, a blocked test host, the
+   second after a switch), and acting on one would take a working VPN away
+   silently. Same rule as the failed switch above, for the same reason
+   (ADR-010).
+11. **Logs never contain secrets.** No tokens, passwords, private keys or full
    config bodies in app, tunnel or engine logs. This includes error text that
    quotes them: subscription URLs, share links and engine parse errors are
    reduced to a host, a scheme or a redacted message before they are logged.

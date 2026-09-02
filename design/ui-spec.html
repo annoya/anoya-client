@@ -2332,6 +2332,10 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
         <div class="row"><svg class="icon muted"><use href="#i-theme"/></svg>
           <div class="tx"><div class="t">Disconnect on sleep</div><div class="s">Drop the tunnel when the device sleeps</div></div>
           <span class="sw off"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-gear"/></svg>
+          <div class="tx"><div class="t">Advanced</div><div class="s">Connection check · on</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
       </div>
       <div class="sh">ROUTING</div>
       <div class="card">
@@ -2340,7 +2344,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
           <span class="sw"><i></i></span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">SettingsScreen · CONNECTION</span><b>Настройки.</b> «On demand» — строка с состоянием («Off» / «On · N rules» / «Paused»), ведёт на свой экран. Рядом «Disconnect on sleep» (флаг протокола). Секция видна только на iOS/macOS.</p>
+    <p class="cap"><span class="id">SettingsScreen · CONNECTION</span><b>Настройки.</b> «On demand» — строка с состоянием («Off» / «On · N rules» / «Paused»), ведёт на свой экран. Рядом «Disconnect on sleep» (флаг протокола). Секция видна только на iOS/macOS.<br><br>Третья строка — «Advanced», и она одинаковая на обеих платформах: за ней проверка соединения (§14). Подпись называет её состояние, а не содержимое экрана: строка, которая говорит «Advanced» и больше ничего, заставляет заходить, чтобы узнать, включено ли то, что за ней.</p>
   </div>
 
   <div class="board">
@@ -2478,6 +2482,10 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       <div class="card">
         <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
           <div class="tx"><div class="t">Always-on VPN</div><div class="s">A system switch — set in Android settings</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-gear"/></svg>
+          <div class="tx"><div class="t">Advanced</div><div class="s">Connection check · on</div></div>
           <svg class="icon muted"><use href="#i-chev"/></svg></div>
       </div>
       <div class="sh">ROUTING</div>
@@ -3279,6 +3287,127 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
 </div>
 
 <!-- ============ 13 ============ -->
+<h2>12 · DNS</h2>
+<p class="flowdesc">Резолверы едут вместе с конфигурацией, переопределения по доменам — вместе с набором правил. Экран показывает результат сложения и, что важнее, то, что мы <b>молча выбросили</b>.</p>
+<div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
+      <div class="sh">ROUTING</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-route"/></svg>
+        <div class="tx"><div class="t">Routing</div><div class="s">Split · 27 rules · <span style="color:var(--m-warn)">DNS: 1 refused</span></div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Where traffic goes, and who answers when an app asks for an address.</div>
+    </div></div>
+    <p class="cap"><span class="id">ConfigScreen · subscription · routing row</span><b>Одна строка вместо двух секций.</b> Маршруты и резолверы — самая объёмная часть экрана конфигурации и самая редко нужная: их открывают единицы, а места они занимали больше, чем имя, источник, план и обновление вместе. Строка уводит обе на свою страницу.<br><br><b>Вход остаётся в конфигурации, а не в общих настройках</b>, и это не изменилось. И маршруты, и резолверы едут вместе с конфигом (ADR-008, ADR-003) и переключаются тем же горячим релоадом: у рабочей подписки и у личной они разные, и общая настройка соврала бы про обе.<br><br><b>Подпись несёт оба факта, а не название функции.</b> «Split · 27 rules» — действующая политика; «DNS from your subscription» — чей резолвер. Ни одно из двух не выводится из слова «Routing», и человек, зашедший проверить, увидит ответ, не открывая страницу.<br><br><b>И вот ради чего вторая половина подписи меняется.</b> Когда мы отказались от чужого резолвера, вместо происхождения встаёт «DNS: 1 refused» — янтарным, но <b>словом</b>. Это то самое, что раньше было строчкой в логе: конфигурация теряла DNS провайдера и выглядела нетронутой. Спрятать это на страницу, до которой два тапа, значило бы вернуть ту же немоту, только на уровень глубже.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">DNS</span></div>
+      <div class="sh">IN EFFECT</div>
+      <div class="card">
+        <div class="row">
+          <div class="tx">
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <span class="t" style="flex:1">dns.quad9.net</span>
+              <span style="font-size:12.5px;color:var(--m-ok)">through the tunnel</span>
+            </div>
+            <div class="s">DNS over HTTPS · from your subscription</div>
+          </div>
+        </div>
+      </div>
+      <div class="hint" style="padding:10px 16px 0">Their <code>direct-nameserver</code> is not adopted: it applies to traffic we route ourselves.</div>
+      <div class="sh">DROPPED</div>
+      <div class="card warn"><div class="row">
+        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <div class="tx"><div class="t">h3://dns.google</div><div class="s multi">The engine has no scheme for HTTP/3. Keeping it would have failed the whole configuration.</div></div>
+      </div></div>
+      <div class="sh">PER-DOMAIN</div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">*.corp.local</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">direct</span>
+          </div>
+          <div class="s">10.0.0.53 · from “Work”</div>
+        </div>
+      </div></div>
+      <div class="hint" style="padding:10px 16px 0">The proxy’s own address is always resolved directly — it has to be, or nothing could reach the tunnel.</div>
+    </div></div>
+    <p class="cap wide"><span class="id">DnsScreen · from your subscription</span><b>Три секции — три разных вопроса, и средняя из них и есть причина существования экрана.</b><br><br><b>Реализовано пока без <code>PER-DOMAIN</code>.</b> Первые две секции работают: экран и движок читают один и тот же расчёт, так что показать резолвер, которого движок не получил, он не может. Третья появится вместе с самими переопределениями — рисовать пустую секцию с обещанием «сюда можно добавить» раньше, чем добавлять станет куда, значит соврать.<br><br><code>IN EFFECT</code>: что реально спрашивают. Справа на первой строке — <b>направление</b>, потому что это единственное свойство резолвера, которое меняет, кто видит запрос. Зелёное «through the tunnel» и приглушённое «direct» — цвет здесь второй сигнал, слово первый.<br><br><code>DROPPED</code> — то, ради чего всё затевалось. Мы отбрасываем чужие резолверы в трёх случаях: неизвестная движку схема (иначе <code>config.Parse</code> отклоняет <b>весь</b> документ, и туннель не поднимается вообще), plain-UDP резолвер, пришпиленный к аутбаунду без UDP (дозвон падает на каждой попытке — это «подключено, но ничего не резолвится»), и пин на группу, которой у нас нет. Сейчас всё это уходит строчкой в лог, которую никто не читает. Это ровно тот же класс дефекта, что и туннель, падавший молча: поведение верное, объяснения нет. Секции нет, когда выбрасывать было нечего — пустая рамка «всё хорошо» отучает на неё смотреть.<br><br><code>PER-DOMAIN</code> приходит из набора правил, и подпись называет набор. Здесь это только чтение: правка — там, где живёт вторая половина той же задачи (трафик в 10.0.0.0/8 мимо туннеля). Разнести редактирование по двум экранам значит гарантировать, что однажды настроят одну половину.<br><br>Подсказка внизу про адрес прокси стоит не для красоты: непинованный <code>proxy-server-nameserver</code> — то, чего у нас не было, и его отсутствие давало «подключается и не работает». Строка объясняет, почему один запрос всегда идёт наружу, — до того, как кто-нибудь сочтёт это утечкой и «починит».</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">DNS</span></div>
+      <div class="sh">IN EFFECT</div>
+      <div class="card"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">1.1.1.1</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">direct</span>
+          </div>
+          <div class="s">DNS over HTTPS · app default</div>
+        </div>
+      </div></div>
+      <div class="hint" style="padding:10px 16px 0">This configuration names no resolver of its own, so the app uses one. Encrypted, so the local network still learns nothing.</div>
+      <div class="sh">PER-DOMAIN</div>
+      <div class="empty">No rule set is attached, so no domain is resolved anywhere special.</div>
+    </div></div>
+    <p class="cap"><span class="id">DnsScreen · app default</span><b>Подстановка названа подстановкой.</b> Ссылки и часть подписок DNS не несут вовсе, и тогда мы молча ставим Cloudflare DoH. Молча — и есть дефект: пользователь уверен, что резолвер ему дал провайдер. Подпись «app default» и следом фраза о том, почему это не страшно (шифрованный канал), закрывают вопрос до того, как он возникнет.<br><br>Пустая <code>PER-DOMAIN</code> объясняет отсутствие через <b>причину</b> — набор не прикреплён, — а не через «пусто». Разница в том, что первое говорит, куда идти.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">10.0.0.0/8</div><div class="s">ip-cidr · no-resolve</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="sh">DNS — ORDER DOES NOT MATTER</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">*.corp.local</div><div class="s">10.0.0.53 · real IP, not fake</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+      </div></div>
+      <div class="hint" style="padding:12px 16px 0">Names only. Traffic still follows the rules above — the 10.0.0.0/8 rule is what keeps it off the VPN.</div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap wide"><span class="id">RoutingScreen · dns</span><b>Переопределения живут здесь, а не в конфигурации, и это не произвол.</b> <code>nameserver-policy</code> в движке <b>аддитивна</b>: она вырезает домены, не заменяя резолверы конфигурации, — поэтому один набор правил, применённый к двум подпискам, ни с одной из них не подерётся. Список резолверов, положенный в набор, подрался бы с обеими.<br><br>Настоящая причина соседства — <b>задача одна</b>. «Корпоративный DNS» — это два утверждения сразу: <code>*.corp.local</code> спрашивать у 10.0.0.53, и трафик в 10.0.0.0/8 вести мимо туннеля. Разнеси их по экранам — настроят первое, забудут второе, и симптом будет невнятный. Подсказка внизу прямо называет вторую половину и показывает пальцем на правило выше.<br><br><b>Заголовок секции спорит с соседним намеренно.</b> У правил «first match wins», у DNS порядка нет вовсе — движок держит домены в дереве и берёт самое частное совпадение. Поэтому здесь нет ручки перетаскивания, и её отсутствие — не упущение, а утверждение. Молчать об этом значило бы предложить пользователю ложную модель: он бы «поднял правило повыше» и не понял, почему ничего не изменилось.<br><br>Тег слева читается тем же словарём, что и в правилах: где отвечают на вопрос. <code>DIRECT</code> — резолвер в локальной сети, спрашиваем напрямую; корпоративный сервер иначе и недостижим.<br><br>«real IP, not fake» — про <code>fake-ip-filter</code>, который мы включаем для этих же доменов автоматически. Отдельного тумблера нет: SMB, Kerberos и половина корпоративного софта на подставном адресе ломаются, так что «резолвить у своего сервера» и «отдавать настоящий адрес» — одно намерение, а не два. Строка сообщает о последствии, не спрашивая.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>Resolve elsewhere</h4>
+        <div class="body">
+          <div class="inp focus"><div class="lb">Domains</div><div class="vl">*.corp.local</div></div>
+          <div class="inp" style="margin-top:8px"><div class="lb">Resolver</div><div class="vl">10.0.0.53</div></div>
+          <div class="hint">→ Names under corp.local are asked at 10.0.0.53, directly, and answered with their real addresses.</div>
+        </div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">_DnsRuleDialog</span><b>Два поля, потому что вопросов ровно два.</b> Схемы резолвера (<code>tls://</code>, <code>https://</code>) принимаются, но не требуются: голый адрес движок читает как обычный DNS, и для сервера в локальной сети это верный случай по умолчанию.<br><br>Резюме внизу — той же формы, что у диалога правила, и договаривает <b>третье</b>, о чём не спросили: «directly» и «real addresses». Оба следствия выведены, а не выбраны, поэтому им место в резюме, а не в отдельных полях.</p>
+  </div>
+
+</div>
 <h2>13 · Подписки по ключу vpn://</h2>
 <p class="flowdesc">Четвёртый домен (ADR-005) и единственный, где серверов нет в источнике. Ключ
 <code>vpn://</code> несёт только удостоверение подписки; список мест приезжает из шифрованного
@@ -3361,6 +3490,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div>
     </div></div>
     <p class="cap"><span class="id">StartScreen · amnezia-free refused</span><b>Free не поддерживаем — и говорим почему.</b> Шлюз выдаёт бесплатный конфиг только после капчи (код 1117), показать её нам нечем: наш экран не их вебвью, а решать капчу за пользователя нельзя. Тянуть ради этого целый механизм ради продукта, у которого и так есть родное приложение, — не стоит. Поэтому ключ <b>распознаётся</b> (чип называет подписку), а отказ приходит по Continue и объясняет причину и куда идти. Промолчать было бы хуже всего: пользователь решил бы, что ключ битый.</p>
+  </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
@@ -3492,127 +3622,156 @@ subscription», «Subscription · 44 servers». Имя продавца прил
 
 </div>
 
-<h2>12 · DNS</h2>
-<p class="flowdesc">Резолверы едут вместе с конфигурацией, переопределения по доменам — вместе с набором правил. Экран показывает результат сложения и, что важнее, то, что мы <b>молча выбросили</b>.</p>
+<h2>14 · Проверка соединения</h2>
+<p class="flowdesc">Системный статус «подключено» означает, что интерфейс поднят, — и ничего больше. Туннель
+может стоять с поднятым интерфейсом и не пропускать ни байта: у AmneziaWG не сошёлся хендшейк, у VLESS
+сервер принял TCP и молчит, у провайдера кончился срок. Снаружи это выглядит одинаково — зелёное кольцо и
+мёртвый интернет, и человек ищет причину в чём угодно, кроме VPN. Проверка — это HTTP-запрос
+<b>через выбранный сервер</b>: движок умеет её сам (<code>Proxy.URLTest</code>, тот же механизм, которым
+url-test-группы выбирают участника), и стоит она одного HEAD.</p>
 <div class="rail">
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">ТСПУ Дронов</span></div>
-      <div class="sh">ROUTING</div>
-      <div class="card"><div class="row">
-        <svg class="icon muted"><use href="#i-route"/></svg>
-        <div class="tx"><div class="t">Routing</div><div class="s">Split · 27 rules · <span style="color:var(--m-warn)">DNS: 1 refused</span></div></div>
-        <svg class="icon muted"><use href="#i-chev"/></svg>
-      </div></div>
-      <div class="hint" style="padding:12px 16px 0">Where traffic goes, and who answers when an app asks for an address.</div>
-    </div></div>
-    <p class="cap"><span class="id">ConfigScreen · subscription · routing row</span><b>Одна строка вместо двух секций.</b> Маршруты и резолверы — самая объёмная часть экрана конфигурации и самая редко нужная: их открывают единицы, а места они занимали больше, чем имя, источник, план и обновление вместе. Строка уводит обе на свою страницу.<br><br><b>Вход остаётся в конфигурации, а не в общих настройках</b>, и это не изменилось. И маршруты, и резолверы едут вместе с конфигом (ADR-008, ADR-003) и переключаются тем же горячим релоадом: у рабочей подписки и у личной они разные, и общая настройка соврала бы про обе.<br><br><b>Подпись несёт оба факта, а не название функции.</b> «Split · 27 rules» — действующая политика; «DNS from your subscription» — чей резолвер. Ни одно из двух не выводится из слова «Routing», и человек, зашедший проверить, увидит ответ, не открывая страницу.<br><br><b>И вот ради чего вторая половина подписи меняется.</b> Когда мы отказались от чужого резолвера, вместо происхождения встаёт «DNS: 1 refused» — янтарным, но <b>словом</b>. Это то самое, что раньше было строчкой в логе: конфигурация теряла DNS провайдера и выглядела нетронутой. Спрятать это на страницу, до которой два тапа, значило бы вернуть ту же немоту, только на уровень глубже.</p>
-  </div>
-
-  <div class="board">
-    <div class="scaler"><div class="ph">
-      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">DNS</span></div>
-      <div class="sh">IN EFFECT</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Advanced</span></div>
+      <div class="sh">CONNECTION CHECK</div>
       <div class="card">
-        <div class="row">
-          <div class="tx">
-            <div style="display:flex;align-items:baseline;gap:8px">
-              <span class="t" style="flex:1">dns.quad9.net</span>
-              <span style="font-size:12.5px;color:var(--m-ok)">through the tunnel</span>
-            </div>
-            <div class="s">DNS over HTTPS · from your subscription</div>
-          </div>
-        </div>
+        <div class="row"><svg class="icon muted"><use href="#i-check"/></svg>
+          <div class="tx"><div class="t">Check after connecting</div><div class="s">Fetch a page through the server and time the answer</div></div>
+          <span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-globe"/></svg>
+          <div class="tx"><div class="t">Test URL</div><div class="s">https://www.gstatic.com/generate_204</div></div>
+          <svg class="icon muted"><use href="#i-edit"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-refresh"/></svg>
+          <div class="tx"><div class="t">Give up after</div><div class="s">5 seconds</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
       </div>
-      <div class="hint" style="padding:10px 16px 0">Their <code>direct-nameserver</code> is not adopted: it applies to traffic we route ourselves.</div>
-      <div class="sh">DROPPED</div>
-      <div class="card warn"><div class="row">
-        <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
-        <div class="tx"><div class="t">h3://dns.google</div><div class="s multi">The engine has no scheme for HTTP/3. Keeping it would have failed the whole configuration.</div></div>
-      </div></div>
-      <div class="sh">PER-DOMAIN</div>
-      <div class="card"><div class="row">
-        <div class="tx">
-          <div style="display:flex;align-items:baseline;gap:8px">
-            <span class="t" style="flex:1">*.corp.local</span>
-            <span style="font-size:12.5px;color:var(--m-mut)">direct</span>
-          </div>
-          <div class="s">10.0.0.53 · from “Work”</div>
-        </div>
-      </div></div>
-      <div class="hint" style="padding:10px 16px 0">The proxy’s own address is always resolved directly — it has to be, or nothing could reach the tunnel.</div>
+      <div style="padding:14px 16px 0"><div class="btn fill">Test now</div></div>
+      <div class="hint" style="padding:12px 16px 0">The request goes through the server itself, so routing rules do not affect it. It proves the server passes traffic — not that your traffic goes through it.</div>
     </div></div>
-    <p class="cap wide"><span class="id">DnsScreen · from your subscription</span><b>Три секции — три разных вопроса, и средняя из них и есть причина существования экрана.</b><br><br><b>Реализовано пока без <code>PER-DOMAIN</code>.</b> Первые две секции работают: экран и движок читают один и тот же расчёт, так что показать резолвер, которого движок не получил, он не может. Третья появится вместе с самими переопределениями — рисовать пустую секцию с обещанием «сюда можно добавить» раньше, чем добавлять станет куда, значит соврать.<br><br><code>IN EFFECT</code>: что реально спрашивают. Справа на первой строке — <b>направление</b>, потому что это единственное свойство резолвера, которое меняет, кто видит запрос. Зелёное «through the tunnel» и приглушённое «direct» — цвет здесь второй сигнал, слово первый.<br><br><code>DROPPED</code> — то, ради чего всё затевалось. Мы отбрасываем чужие резолверы в трёх случаях: неизвестная движку схема (иначе <code>config.Parse</code> отклоняет <b>весь</b> документ, и туннель не поднимается вообще), plain-UDP резолвер, пришпиленный к аутбаунду без UDP (дозвон падает на каждой попытке — это «подключено, но ничего не резолвится»), и пин на группу, которой у нас нет. Сейчас всё это уходит строчкой в лог, которую никто не читает. Это ровно тот же класс дефекта, что и туннель, падавший молча: поведение верное, объяснения нет. Секции нет, когда выбрасывать было нечего — пустая рамка «всё хорошо» отучает на неё смотреть.<br><br><code>PER-DOMAIN</code> приходит из набора правил, и подпись называет набор. Здесь это только чтение: правка — там, где живёт вторая половина той же задачи (трафик в 10.0.0.0/8 мимо туннеля). Разнести редактирование по двум экранам значит гарантировать, что однажды настроят одну половину.<br><br>Подсказка внизу про адрес прокси стоит не для красоты: непинованный <code>proxy-server-nameserver</code> — то, чего у нас не было, и его отсутствие давало «подключается и не работает». Строка объясняет, почему один запрос всегда идёт наружу, — до того, как кто-нибудь сочтёт это утечкой и «починит».</p>
+    <p class="cap"><span class="id">AdvancedConnectionScreen</span><b>Три настройки и кнопка.</b> Экран за строкой «Advanced» в секции CONNECTION. Проверка включена по умолчанию: она стоит одного HEAD на подключение, а ловит состояние, которое иначе диагностируется вечером с логами. Выключить можно — запрос уходит на чужой хост, и это решение пользователя, а не наше.<br><br><b>URL редактируется, статус — нет.</b> У <code>expected-status</code> в mihomo есть свой синтаксис диапазонов, и поле для него дало бы пользователю способ сломать проверку так, что она молча перестанет что-либо значить. Значимых сценариев два: адрес по умолчанию и «мой сервер вместо гугловского», и первого хватает почти всем.<br><br><b>Кнопка неактивна, пока туннель не поднят</b>, и подпись под ней объясняет почему: проверка идёт <b>через движок</b>, а с остановленным движком проверять нечего. Это же причина, по которой мы не показываем её как «пинг сервера»: измеряется не доступность адреса, а способность соединения донести запрос и ответ.<br><br>Последняя строка подсказки — то, что легко принять за противоположное. Тест дозванивается через сам прокси (<code>Proxy.URLTest</code> вызывает <code>DialContext</code> адаптера, минуя движковые правила), поэтому раздельное туннелирование на него не влияет — но по той же причине зелёный результат ничего не говорит о том, что трафик приложений действительно уходит в VPN.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">DNS</span></div>
-      <div class="sh">IN EFFECT</div>
-      <div class="card"><div class="row">
-        <div class="tx">
-          <div style="display:flex;align-items:baseline;gap:8px">
-            <span class="t" style="flex:1">1.1.1.1</span>
-            <span style="font-size:12.5px;color:var(--m-mut)">direct</span>
-          </div>
-          <div class="s">DNS over HTTPS · app default</div>
-        </div>
-      </div></div>
-      <div class="hint" style="padding:10px 16px 0">This configuration names no resolver of its own, so the app uses one. Encrypted, so the local network still learns nothing.</div>
-      <div class="sh">PER-DOMAIN</div>
-      <div class="empty">No rule set is attached, so no domain is resolved anywhere special.</div>
-    </div></div>
-    <p class="cap"><span class="id">DnsScreen · app default</span><b>Подстановка названа подстановкой.</b> Ссылки и часть подписок DNS не несут вовсе, и тогда мы молча ставим Cloudflare DoH. Молча — и есть дефект: пользователь уверен, что резолвер ему дал провайдер. Подпись «app default» и следом фраза о том, почему это не страшно (шифрованный канал), закрывают вопрос до того, как он возникнет.<br><br>Пустая <code>PER-DOMAIN</code> объясняет отсутствие через <b>причину</b> — набор не прикреплён, — а не через «пусто». Разница в том, что первое говорит, куда идти.</p>
-  </div>
-
-  <div class="board">
-    <div class="scaler"><div class="ph">
-      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
-        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
-      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
-      <div class="sh">RULES — FIRST MATCH WINS</div>
-      <div class="card"><div class="rule">
-        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
-        <div class="tx"><div class="t">10.0.0.0/8</div><div class="s">ip-cidr · no-resolve</div></div>
-        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
-        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
-      </div></div>
-      <div class="sh">DNS — ORDER DOES NOT MATTER</div>
-      <div class="card"><div class="rule">
-        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
-        <div class="tx"><div class="t">*.corp.local</div><div class="s">10.0.0.53 · real IP, not fake</div></div>
-        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
-      </div></div>
-      <div class="hint" style="padding:12px 16px 0">Names only. Traffic still follows the rules above — the 10.0.0.0/8 rule is what keeps it off the VPN.</div>
-      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
-    </div></div>
-    <p class="cap wide"><span class="id">RoutingScreen · dns</span><b>Переопределения живут здесь, а не в конфигурации, и это не произвол.</b> <code>nameserver-policy</code> в движке <b>аддитивна</b>: она вырезает домены, не заменяя резолверы конфигурации, — поэтому один набор правил, применённый к двум подпискам, ни с одной из них не подерётся. Список резолверов, положенный в набор, подрался бы с обеими.<br><br>Настоящая причина соседства — <b>задача одна</b>. «Корпоративный DNS» — это два утверждения сразу: <code>*.corp.local</code> спрашивать у 10.0.0.53, и трафик в 10.0.0.0/8 вести мимо туннеля. Разнеси их по экранам — настроят первое, забудут второе, и симптом будет невнятный. Подсказка внизу прямо называет вторую половину и показывает пальцем на правило выше.<br><br><b>Заголовок секции спорит с соседним намеренно.</b> У правил «first match wins», у DNS порядка нет вовсе — движок держит домены в дереве и берёт самое частное совпадение. Поэтому здесь нет ручки перетаскивания, и её отсутствие — не упущение, а утверждение. Молчать об этом значило бы предложить пользователю ложную модель: он бы «поднял правило повыше» и не понял, почему ничего не изменилось.<br><br>Тег слева читается тем же словарём, что и в правилах: где отвечают на вопрос. <code>DIRECT</code> — резолвер в локальной сети, спрашиваем напрямую; корпоративный сервер иначе и недостижим.<br><br>«real IP, not fake» — про <code>fake-ip-filter</code>, который мы включаем для этих же доменов автоматически. Отдельного тумблера нет: SMB, Kerberos и половина корпоративного софта на подставном адресе ломаются, так что «резолвить у своего сервера» и «отдавать настоящий адрес» — одно намерение, а не два. Строка сообщает о последствии, не спрашивая.</p>
-  </div>
-
-  <div class="board">
-    <div class="scaler"><div class="ph">
-      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
-      <div class="dim"></div>
-      <div class="dlg">
-        <h4>Resolve elsewhere</h4>
-        <div class="body">
-          <div class="inp focus"><div class="lb">Domains</div><div class="vl">*.corp.local</div></div>
-          <div class="inp" style="margin-top:8px"><div class="lb">Resolver</div><div class="vl">10.0.0.53</div></div>
-          <div class="hint">→ Names under corp.local are asked at 10.0.0.53, directly, and answered with their real addresses.</div>
-        </div>
-        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Advanced</span></div>
+      <div class="sh">CONNECTION CHECK</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-check"/></svg>
+          <div class="tx"><div class="t">Check after connecting</div><div class="s">Fetch a page through the server and time the answer</div></div>
+          <span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-globe"/></svg>
+          <div class="tx"><div class="t">Test URL</div><div class="s">https://www.gstatic.com/generate_204</div></div>
+          <svg class="icon muted"><use href="#i-edit"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-refresh"/></svg>
+          <div class="tx"><div class="t">Give up after</div><div class="s">5 seconds</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
+      </div>
+      <div style="padding:14px 16px 0"><div class="btn fill">Test now</div></div>
+      <div class="sh">LAST CHECK</div>
+      <div class="card">
+        <div class="row"><svg class="icon" style="color:var(--m-ok)"><use href="#i-check"/></svg>
+          <div class="tx"><div class="t">Answered in 143 ms</div><div class="s">just now · through Netherlands #2</div></div></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">_DnsRuleDialog</span><b>Два поля, потому что вопросов ровно два.</b> Схемы резолвера (<code>tls://</code>, <code>https://</code>) принимаются, но не требуются: голый адрес движок читает как обычный DNS, и для сервера в локальной сети это верный случай по умолчанию.<br><br>Резюме внизу — той же формы, что у диалога правила, и договаривает <b>третье</b>, о чём не спросили: «directly» и «real addresses». Оба следствия выведены, а не выбраны, поэтому им место в резюме, а не в отдельных полях.</p>
+    <p class="cap"><span class="id">AdvancedConnectionScreen · прошла</span><b>Результат — строка, а не тост.</b> Тост исчезает, а этот факт хочется сравнить со следующим: «143 ms» и «1.9 s» отвечают на разные вопросы, и второй читается только рядом с первым. Секция появляется после первой проверки и переживает уход с экрана — состояние туннеля с ним не связано.<br><br>Подпись называет <b>через что</b> прошёл запрос, и это не украшение: у группы участник меняется сам, и «143 ms» без имени сервера — измерение неизвестно чего. Имя берём <b>своё</b>, а не движковое: внутри конфига одиночный сервер называется <code>proxy</code>, а участники группы — <code>p0</code>, <code>p1</code>, и показать это значило бы назвать сервер именем, которого пользователь нигде больше не видел.<br><br>Время рядом с именем тикает, пока экран открыт: «just now» через пять минут — это уже не округление, а неправда.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Advanced</span></div>
+      <div class="sh">CONNECTION CHECK</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-check"/></svg>
+          <div class="tx"><div class="t">Check after connecting</div><div class="s">Fetch a page through the server and time the answer</div></div>
+          <span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-globe"/></svg>
+          <div class="tx"><div class="t">Test URL</div><div class="s">https://www.gstatic.com/generate_204</div></div>
+          <svg class="icon muted"><use href="#i-edit"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-refresh"/></svg>
+          <div class="tx"><div class="t">Give up after</div><div class="s">5 seconds</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
+      </div>
+      <div style="padding:14px 16px 0"><div class="btn fill">Test now</div></div>
+      <div class="sh">LAST CHECK</div>
+      <div class="card">
+        <div class="row"><svg class="icon" style="color:var(--m-ok)"><use href="#i-check"/></svg>
+          <div class="tx"><div class="t">Traffic is getting through</div><div class="s">just now · through Netherlands #2</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">AdvancedConnectionScreen · без запроса</span><b>Лучшая проверка — та, которую не пришлось делать.</b> Прежде чем слать HEAD на чужой хост, смотрим на счётчики движка: если через выбранный сервер уже <b>пришли</b> байты, туннель доказанно работает — и доказан он настоящим трафиком пользователя, а не нашим. Тогда запрос не уходит вовсе, и у большинства людей он не уйдёт никогда.<br><br>Формулировка отличается намеренно: «Traffic is getting through» вместо «Answered in 143 ms». Числа здесь нет, потому что мы ничего не измеряли — приписать несуществующую задержку ради единообразия строки значило бы соврать.<br><br>Считаем <b>только то, что прошло через сам сервер</b> (цепочка соединения содержит наш аутбаунд), а не общий счётчик туннеля: в режиме split мимо VPN идёт свой трафик, и «туннель работает» из него не следует. Ложного «да» здесь быть не может — байты, пришедшие через прокси, это факт. А тишина не значит «не работает», значит «пока не на что смотреть», и тогда мы спрашиваем сами.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Advanced</span></div>
+      <div class="sh">CONNECTION CHECK</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-check"/></svg>
+          <div class="tx"><div class="t">Check after connecting</div><div class="s">Fetch a page through the server and time the answer</div></div>
+          <span class="sw"><i></i></span></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-globe"/></svg>
+          <div class="tx"><div class="t">Test URL</div><div class="s">https://www.gstatic.com/generate_204</div></div>
+          <svg class="icon muted"><use href="#i-edit"/></svg></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-refresh"/></svg>
+          <div class="tx"><div class="t">Give up after</div><div class="s">5 seconds</div></div>
+          <svg class="icon muted"><use href="#i-exp"/></svg></div>
+      </div>
+      <div style="padding:14px 16px 0"><div class="btn fill">Test now</div></div>
+      <div class="sh">LAST CHECK</div>
+      <div class="card warn">
+        <div class="row"><svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+          <div class="tx"><div class="t">No answer</div><div class="s multi">The server did not answer in time. The tunnel is up, so this is the server or the network beyond it.</div></div></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">AdvancedConnectionScreen · не прошла</span><b>Отказ — не ошибка приложения.</b> Warn, а не error: у нас ничего не сломалось, туннель работает, не отвечает та сторона. Формулировка называет и границу ответственности — «туннель поднят, дело в сервере или в сети за ним», — потому что без этой фразы человек начинает переустанавливать приложение.<br><br><b>Первая строка — наша, а не движковая.</b> Go отдаёт сюда <code>dial tcp 172.253.144.94:443: context deadline exceeded</code>, а следом вторую такую же про IPv6-адрес: две попытки одного запроса, адреса чужого CDN и слово «dial». Ни одно из этого не отвечает на вопрос «что мне делать»: пользователю нужно знать, что сервер <b>не ответил вовремя</b> — или что он <b>закрыл соединение</b>, если пришёл EOF. Полный текст движка уходит в лог, где ему и место.<br><br><b>Туннель мы не рвём.</b> Проверка — измерение, а не сторож: у неё есть свои ложные срабатывания, и молча уронить рабочее соединение из-за одного неотвеченного HEAD хуже, чем показать строку.<br><br><b>И не спрашиваем сразу.</b> Между «система сказала connected» и «через туннель ходит трафик» лежит рукопожатие: у AmneziaWG первый пакет только запускает handshake, а повтор в amneziawg-go стоит ровно <code>RekeyTimeout = 5 s</code> — столько же, сколько наш таймаут по умолчанию. Проба, отправленная в нулевую секунду, проигрывала эту гонку и показывала «No answer» на исправном сервере; нажатие «Test now» через пару секунд проходило. Поэтому автоматическая проверка ждёт две секунды и повторяет попытку, а показывает только последний ответ — промежуточный отказ не мигает баннером на главном.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:742px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:01:12</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card warn"><div class="row">
+            <svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+            <div class="tx"><div class="t">Connected, but nothing came back</div><div class="s multi">The check found no answer through this server. Try another one, or open Advanced.</div></div>
+          </div></div>
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers</div></div>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇳🇱</span>
+            <div class="tx"><div class="t">Netherlands #2</div><div class="s">VLESS · TCP · Reality</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · проверка не прошла</span><b>Там, где на это смотрят.</b> Единственное место, где состояние «зелёное кольцо и мёртвый интернет» имеет смысл показывать, — главный экран в момент, когда оно возникло. Баннер, а не тост: состояние не мгновенное, оно держится, пока человек что-то не поменяет, и исчезающая плашка тут — способ сообщить и не сообщить одновременно.<br><br>Кольцо остаётся <b>зелёным</b>, и это осознанно: туннель действительно поднят, и перекрасить его значило бы соврать про состояние системы ради предупреждения. Баннер говорит о другом факте и стоит отдельно от него — как «Paused» у on-demand.<br><br>Успех не показывается вовсе. Подключение и есть сообщение об успехе; вторая плашка «всё хорошо» после каждого коннекта — шум, который перестают читать ровно к тому моменту, когда в ней появляется что-то важное.</p>
   </div>
 
 </div>
+
 
 
 <footer>

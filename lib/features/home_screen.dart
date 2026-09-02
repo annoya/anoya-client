@@ -15,6 +15,7 @@ import '../core/ui.dart';
 import '../core/vpn_core.dart';
 import '../state/favorites_controller.dart';
 import '../state/group_member.dart';
+import '../state/connection_check_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/session.dart';
@@ -146,6 +147,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ]),
                       ),
                     ),
+                    ?_checkBanner(),
                     ?_onDemandBanner(),
                     if (active != null) _profileRow(st, active),
                     if (active != null) _locationRow(st, active),
@@ -260,6 +262,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onTap: () => _push(const LogsScreen()),
           ),
         ],
+      ),
+    );
+  }
+
+  /// The one thing a green ring cannot say: the tunnel is up and nothing is
+  /// getting through it.
+  ///
+  /// A banner rather than a toast — the state holds until the user changes
+  /// something, and a message that leaves on its own is a way of both telling
+  /// them and not telling them. The ring stays green on purpose: the tunnel
+  /// really is up, and recolouring it would misreport the system's state to
+  /// deliver a warning about the server.
+  Widget? _checkBanner() {
+    final check = ref.watch(connectionCheckProvider).last;
+    if (check == null || check.passed) return null;
+    final warn = context.vpnColors.connecting;
+    return Card(
+      margin: kCardMargin,
+      color: warn.withValues(alpha: 0.12),
+      child: ListTile(
+        leading: Icon(Icons.warning_amber_outlined, color: warn),
+        title: const Text('Connected, but nothing came back'),
+        subtitle: const Text('The check found no answer through this server. '
+            'Try another one, or open Advanced.'),
+        isThreeLine: true,
       ),
     );
   }

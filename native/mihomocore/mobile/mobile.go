@@ -74,6 +74,21 @@ func Reload(fd int, configYAML string) error { return engine.Reload(fd, configYA
 // Stop shuts the engine down.
 func Stop() { engine.Stop() }
 
+// ProxyBytes reports bytes carried through the named outbound in this session
+// as "<up>:<down>" — one string because gomobile cannot return two integers,
+// and the caller parses it anyway.
+func ProxyBytes(name string) string {
+	up, down := engine.ProxyBytes(name)
+	return fmt.Sprintf("%d:%d", up, down)
+}
+
+// URLTest sends one HTTP HEAD through the named outbound and returns the round
+// trip in milliseconds, or an error saying why nothing came back. Blocking:
+// the caller is the tunnel service, which answers the app over its binder.
+func URLTest(name, url string, timeoutMs int) (int, error) {
+	return engine.URLTest(name, url, timeoutMs)
+}
+
 // GroupMember returns which member of a proxy group the engine is currently
 // using ("" when the running config has no such group).
 func GroupMember(group string) string { return engine.GroupMember(group) }

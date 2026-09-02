@@ -405,6 +405,58 @@ account can no longer connect, or the connected server disappeared, the tunnel
 disconnects. Re-applies are rate-limited so a flapping source cannot loop the
 tunnel.
 
+### 4.4 The connection check
+
+"Connected" is a claim about an interface, not about a path. An AmneziaWG peer
+whose handshake never completes and a VLESS server that accepts TCP and then
+says nothing both leave a tunnel that looks up and carries nothing — the same
+green ring, a dead internet, and no reason to suspect the VPN.
+
+First it looks instead of asking. The engine tracks every connection it carries,
+so bytes that already came *back* through the selected outbound prove the tunnel
+works — proved by the user's own traffic, with nothing sent to a third party.
+Counted per connection chain, never from the tunnel's totals: in split mode
+those include traffic that went out DIRECT, which says nothing about the proxy.
+Silence there is not a failure, only "nothing to look at yet".
+
+When there is nothing to look at, the app asks the engine for one HTTP HEAD
+through the outbound the tunnel routes to (`PROXY`, the group every rendered
+config carries). This is mihomo's
+own `Proxy.URLTest`, the mechanism url-test groups pick members with, reached
+through the tunnel transport each platform already has — no `external-controller`
+(ADR-001 forbids it). Default target `https://www.gstatic.com/generate_204`,
+default wait 5 s, both editable; `expected-status` is not exposed, because its
+range syntax is a way to make the check silently meaningless.
+
+It runs when the session comes up — including a session the system raised by
+itself, which is the one nobody is watching — and on demand from the button.
+Not immediately, and not once: "connected" and "carrying traffic" are separated
+by a handshake, and an AmneziaWG peer only starts one when the first packet asks
+for it — with a retry at `RekeyTimeout`, five seconds, exactly the probe's own
+default. The automatic check therefore waits two seconds and makes up to three
+attempts, publishing only the last; the button makes one, because the user asked
+about now. A newly issued `vpn://` config (ADR-009) has the same warm-up on the
+server's side.
+
+The engine's failure is reported as a sentence — "The server did not answer in
+time", "The server closed the connection" — not as its dial chain: Go hands back
+`connect failed: dial tcp <cdn address>:443: context deadline exceeded` twice
+over, once per address family, and none of that is about the user's problem. The
+full text goes to the log. A
+pass is silent (the tunnel coming up is already the message) and recorded on the
+Advanced screen — as a delay when it was measured, as "Traffic is getting
+through" when it was only observed, because a number we did not measure would be
+an invention. The server is named there with the label the user's own screens
+use, never the renderer's internal `proxy` / `p0`. A failure raises a warning
+banner on Home. The tunnel is never dropped on a failed check: the probe
+has its own false negatives, and killing a working tunnel over one unanswered
+HEAD is worse than saying so.
+
+The probe dials the outbound directly rather than through the rule engine, so
+split tunnelling cannot route it away from the server under test — and, for the
+same reason, a pass says nothing about where the user's own traffic goes. The
+screen says so in as many words.
+
 ---
 
 ## 5. Screens
@@ -420,8 +472,12 @@ tunnel.
   protocols say nothing) and a provider's `serverDescription` replacing that
   whole technical half.
 - **Settings** — configurations, connection (on-demand and disconnect-on-sleep
-  on Apple; the Always-on VPN explainer on Android), routing (LAN direct, rule
-  sets, geo databases), appearance and language, logs.
+  on Apple; the Always-on VPN explainer on Android; **Advanced**, which holds
+  the connection check), routing (LAN direct, rule sets, geo databases),
+  appearance and language, logs.
+- **Advanced connection** — the connection check: whether to run it after
+  connecting, the URL it fetches, how long it waits, a "Test now" button and the
+  last answer.
 - **Configuration** — source, refresh, account and quota, routing switch and
   rule set, set active, remove.
 - **Rule sets** and **Routing editor** — simple (service catalog) and advanced

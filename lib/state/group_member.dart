@@ -28,7 +28,7 @@ final groupMemberProvider = StreamProvider<String>((ref) async* {
   final members = profiles.selectedGroupMembers;
   while (true) {
     final picked = await NetworkExtensionCore.groupMember(kGroupName);
-    yield _labelFor(picked, members);
+    yield labelForGroupMember(picked, members);
     await Future<void>.delayed(kGroupMemberPoll);
   }
 });
@@ -38,7 +38,10 @@ final groupMemberProvider = StreamProvider<String>((ref) async* {
 /// the extension.
 const kGroupMemberPoll = Duration(seconds: 10);
 
-String _labelFor(String engineName, List<dynamic> members) {
+/// Turns the engine's positional member name (`p0`, `p1`, …) back into the
+/// label the provider gave that server. Shared with the connection check,
+/// which has to name the same server the same way.
+String labelForGroupMember(String engineName, List<dynamic> members) {
   if (!engineName.startsWith('p')) return '';
   final index = int.tryParse(engineName.substring(1));
   if (index == null || index < 0 || index >= members.length) return '';

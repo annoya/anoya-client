@@ -25,6 +25,19 @@ interface ITunnel {
     /** Which member of a proxy group the engine currently uses, "" if none. */
     String groupMember(String group);
 
+    /**
+     * One HTTP probe through the running outbound: "ms:<delay>" or
+     * "err:<reason>".
+     *
+     * Blocks the binder thread for up to `timeoutMs` — the longest call on this
+     * interface by far, and the reason the app side hands it to its own
+     * executor rather than the UI thread.
+     */
+    String urlTest(String url, int timeoutMs);
+
+    /** Bytes carried through the outbound this session, "<up>:<down>". */
+    String proxyBytes();
+
     /** Whether the system started this as an always-on VPN. */
     boolean isAlwaysOn();
 
