@@ -380,7 +380,7 @@ Future<ParsedSubscription?> fetchProxyProvider(
     if (res.bodyBytes.length > kMaxProxyListBytes) {
       throw http.ClientException('proxy list exceeds ${kMaxProxyListBytes ~/ 1024} KB');
     }
-    return parseSubscriptionBody(res.body);
+    return parseSubscriptionBody(res.body, source: '${provider.name} @ ${uri.host}');
   } catch (e) {
     // Host only: a provider URL can carry a token of its own.
     Log.e('proxy list fetch failed', '${provider.name}: ${uri.host}: $e');

@@ -123,7 +123,15 @@ enum SubscriptionFormat {
 /// null rather than guessing: `proxies:` makes it Clash, `protocol` inside
 /// `outbounds` makes it Xray, `type` inside `outbounds` makes it sing-box, and
 /// a `://` anywhere makes it a link list.
-ParsedSubscription parseSubscriptionBody(String body) {
+///
+/// [source] names where the body came from — a host, "pasted text" — and
+/// prefixes every line the parsers log while reading it. Several
+/// subscriptions are parsed in a row on each poll, and a skipped link is only
+/// actionable when the log says whose it was.
+ParsedSubscription parseSubscriptionBody(String body, {String source = ''}) =>
+    Log.within(source, () => _parseBody(body));
+
+ParsedSubscription _parseBody(String body) {
   final trimmed = body.trim();
   if (trimmed.isEmpty) return const ParsedSubscription(locations: []);
   if (trimmed.length > _maxSubscriptionChars) {
@@ -150,12 +158,17 @@ ParsedSubscription parseSubscriptionBody(String body) {
   }
   final out = <Location>[];
   final unsupported = <String, int>{};
+  final malformed = <String, int>{};
   for (final line in text.split(RegExp(r'[\r\n\s]+'))) {
     if (line.isEmpty) continue;
     final parsed = parseShareLink(line);
     final loc = parsed.location;
     if (loc != null) {
       out.add(loc);
+      continue;
+    }
+    if (parsed.malformed != null) {
+      malformed.update(parsed.malformed!, (n) => n + 1, ifAbsent: () => 1);
       continue;
     }
     // The parser names what stopped it — a scheme we have no protocol for, or a
@@ -166,6 +179,14 @@ ParsedSubscription parseSubscriptionBody(String body) {
     if (why != null && why.length <= 24) {
       unsupported[why] = (unsupported[why] ?? 0) + 1;
     }
+  }
+  // One line per body, not per link: a panel that pads its list with sixteen
+  // placeholder links used to produce sixteen identical lines, and the count is
+  // what tells a broken template from a single odd entry.
+  if (malformed.isNotEmpty) {
+    final total = malformed.values.fold(0, (a, b) => a + b);
+    final reasons = [for (final e in malformed.entries) '${e.key} ×${e.value}'].join(', ');
+    Log.e('subscription: $total malformed link(s) skipped', reasons);
   }
   return ParsedSubscription(
     locations: out,

@@ -65,7 +65,7 @@ Future<Profile> _selfhostedFromApi(ApiClient api, String token) async {
 /// A subscription by URL (fetched now and on the poll timer).
 Future<Profile> importSubscriptionUrl(String name, String url) async {
   final res = await fetchSubscription(url);
-  var parsed = parseSubscriptionBody(res.body);
+  var parsed = parseSubscriptionBody(res.body, source: Uri.parse(url).host);
   if (parsed.providers.isNotEmpty) parsed = await withProxyProviders(parsed);
   final page = res.info.webPageUrl.isNotEmpty ? res.info.webPageUrl : url;
   if (parsed.locations.isEmpty) {
@@ -127,7 +127,7 @@ AppError _whyNothingUsable(ParsedSubscription parsed) {
 /// profile (no location picker); multiple servers become a static
 /// `subscription` snapshot (no refresh URL).
 Future<Profile> importText(String text, {String? name}) async {
-  final parsed = parseSubscriptionBody(text);
+  final parsed = parseSubscriptionBody(text, source: name ?? 'pasted text');
   final locations = parsed.locations;
   if (locations.isEmpty) {
     // Pasted text that is not a link at all keeps the generic message: at
