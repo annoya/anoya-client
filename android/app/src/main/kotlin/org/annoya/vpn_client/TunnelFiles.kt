@@ -2,6 +2,7 @@ package org.annoya.vpn_client
 
 import android.content.Context
 import java.io.File
+import java.io.RandomAccessFile
 
 /// The facts both processes need to read.
 ///
@@ -44,4 +45,53 @@ object TunnelFiles {
 
     fun logsEnabled(context: Context): Boolean =
         runCatching { logFlagFile(context).readText().trim() != "0" }.getOrDefault(true)
+
+    /// The most of a log the app reads into memory, and the size a log may
+    /// reach before it is halved. The same two numbers as the Apple extension:
+    /// the engine writes its log through a redirected stdout for as long as
+    /// the tunnel lives, and nothing else prunes it — a long session used to
+    /// grow it without bound, and `fetch_log` then read all of it at once.
+    private const val LOG_TAIL_BYTES = 512L * 1024
+    private const val LOG_MAX_BYTES = 4L * 1024 * 1024
+
+    /// The last [LOG_TAIL_BYTES] of a log, cut at a line boundary. Also where
+    /// the engine's log gets pruned: the tunnel process only appends to it.
+    fun tail(file: File): String {
+        if (!file.exists()) return ""
+        rotateIfNeeded(file)
+        return runCatching {
+            RandomAccessFile(file, "r").use { raf ->
+                val size = raf.length()
+                val take = minOf(size, LOG_TAIL_BYTES)
+                raf.seek(size - take)
+                val bytes = ByteArray(take.toInt())
+                raf.readFully(bytes)
+                var text = String(bytes, Charsets.UTF_8)
+                if (size > take) {
+                    val nl = text.indexOf('\n')
+                    if (nl >= 0) text = text.substring(nl + 1)
+                }
+                text
+            }
+        }.getOrDefault("")
+    }
+
+    /// Trim a log that has grown past the cap, keeping the newest half. Half
+    /// rather than "down to the cap", so a rotation happens once per half-cap
+    /// of writing instead of on every line once the cap is reached. Safe
+    /// against a writer in another process: both append, and an append lands
+    /// at whatever the end is after the truncation.
+    fun rotateIfNeeded(file: File) {
+        runCatching {
+            RandomAccessFile(file, "rw").use { raf ->
+                val size = raf.length()
+                if (size <= LOG_MAX_BYTES) return
+                raf.seek(size / 2)
+                val keep = ByteArray((size - size / 2).toInt())
+                raf.readFully(keep)
+                raf.setLength(0)
+                raf.write(keep)
+            }
+        }
+    }
 }

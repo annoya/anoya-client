@@ -111,18 +111,28 @@ object VpnChannel {
                     if (config == null) {
                         result.error("bad_args", "config required", null); return@setMethodCallHandler
                     }
-                    persist(context, config, call.argument<Boolean>("log_enabled") ?: true)
-                    val consent = VpnService.prepare(context)
-                    val act = host.get()
-                    if (consent == null) {
-                        startService(context); result.success(null)
-                    } else if (act == null) {
-                        result.error("start_failed", "no screen to ask for VPN permission on", null)
-                    } else {
-                        // The dialog belongs to the system; the answer comes
-                        // back through the Activity, which finishes this call.
-                        pendingStart = result
-                        act.startActivityForResult(consent, PREPARE_REQUEST)
+                    val logEnabled = call.argument<Boolean>("log_enabled") ?: true
+                    // The config is written before the service is told to
+                    // start, and off the UI thread like every other file here;
+                    // the consent dialog, if any, must be shown from the UI
+                    // thread, so that half comes back to it.
+                    calls.execute {
+                        persist(context, config, logEnabled)
+                        main.post {
+                            val consent = VpnService.prepare(context)
+                            val act = host.get()
+                            if (consent == null) {
+                                startService(context); result.success(null)
+                            } else if (act == null) {
+                                result.error("start_failed", "no screen to ask for VPN permission on", null)
+                            } else {
+                                // The dialog belongs to the system; the answer
+                                // comes back through the Activity, which
+                                // finishes this call.
+                                pendingStart = result
+                                act.startActivityForResult(consent, PREPARE_REQUEST)
+                            }
+                        }
                     }
                 }
                 "stop" -> ask(result) { it.stop(); null }
@@ -131,8 +141,9 @@ object VpnChannel {
                     if (config == null) {
                         result.error("bad_args", "config required", null); return@setMethodCallHandler
                     }
-                    persist(context, config, call.argument<Boolean>("log_enabled") ?: true)
+                    val logEnabled = call.argument<Boolean>("log_enabled") ?: true
                     calls.execute {
+                        persist(context, config, logEnabled)
                         val t = tunnel
                         val err = if (t == null) "tunnel is not running"
                                   else runCatching { t.reload(config) }
@@ -151,8 +162,8 @@ object VpnChannel {
                     if (config == null) {
                         result.error("bad_args", "config required", null); return@setMethodCallHandler
                     }
-                    persist(context, config, call.argument<Boolean>("log_enabled") ?: true)
-                    result.success(null)
+                    val logEnabled = call.argument<Boolean>("log_enabled") ?: true
+                    io(result) { persist(context, config, logEnabled); null }
                 }
                 "remove_profile" -> {
                     // No system profile to remove on Android; what must not
@@ -200,19 +211,22 @@ object VpnChannel {
                     TunnelFiles.setLogsEnabled(context, on)
                     ask(result) { it.setLogging(on); null }
                 }
-                "clear_logs" -> {
+                "clear_logs" -> io(result) {
                     // The logs are files in the app's own sandbox, so unlike
                     // the Apple extension this works with the tunnel down.
                     TunnelFiles.engineLog(context).writeText("")
                     TunnelFiles.serviceLog(context).writeText("")
-                    result.success(null)
+                    null
                 }
                 "fetch_log" -> {
                     val file = when (call.argument<String>("name") ?: "") {
                         "mihomo" -> TunnelFiles.engineLog(context)
                         else -> TunnelFiles.serviceLog(context)
                     }
-                    result.success(if (file.exists()) file.readText() else "")
+                    // The tail, not the file: a long session's engine log is
+                    // megabytes, and reading it whole on the UI thread froze
+                    // the Logs screen for as long as the read took.
+                    io(result) { TunnelFiles.tail(file) }
                 }
                 else -> result.notImplemented()
             }
@@ -237,6 +251,15 @@ object VpnChannel {
             val t = tunnel
             val value = if (t == null) orElse
                         else runCatching { body(t) }.getOrDefault(orElse)
+            main.post { result.success(value) }
+        }
+    }
+
+    /// File work off the UI thread, answered on it. Same executor as the binder
+    /// calls, so a config write and the reload that reads it stay ordered.
+    private fun io(result: MethodChannel.Result, body: () -> Any?) {
+        calls.execute {
+            val value = runCatching(body).getOrNull()
             main.post { result.success(value) }
         }
     }

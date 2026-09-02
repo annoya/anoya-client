@@ -222,7 +222,9 @@ class MihomoVpnService : VpnService() {
     private fun log(line: String) {
         if (!TunnelFiles.logsEnabled(this)) return
         runCatching {
-            TunnelFiles.serviceLog(this).appendText("${java.time.LocalDateTime.now()} $line\n")
+            val file = TunnelFiles.serviceLog(this)
+            TunnelFiles.rotateIfNeeded(file)
+            file.appendText("${java.time.LocalDateTime.now()} $line\n")
         }
     }
 
