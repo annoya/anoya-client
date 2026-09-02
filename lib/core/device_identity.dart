@@ -43,15 +43,18 @@ class DeviceIdentity {
   /// for a rendering by name where it can — a capability must not hinge on
   /// somebody else's rule matching our version string.
   ///
-  /// Built from the app's own name and version, so there is one place to
-  /// change and a test that keeps it in step with `pubspec.yaml`.
-  static const kUserAgent = '$kAppName/$kAppVersion';
+  /// Built from the app's own name and the version read out of `pubspec.yaml`
+  /// at startup, so there is exactly one place a bump happens. Before that read
+  /// (and if it ever fails) this is the bare name: a product token with no
+  /// version is a valid User-Agent, and `AnnoyaTest/` is not.
+  static String get userAgent =>
+      appVersion.isEmpty ? kAppName : '$kAppName/$appVersion';
 
   /// The headers a subscription request carries. Only `x-hwid` is required by
   /// the convention; the rest exist so the entry in the provider's panel is
   /// recognisable as *this* device instead of an opaque id.
   Map<String, String> get headers => {
-        'user-agent': kUserAgent,
+        'user-agent': userAgent,
         'x-hwid': hwid,
         if (os.isNotEmpty) 'x-device-os': os,
         if (osVersion.isNotEmpty) 'x-ver-os': osVersion,

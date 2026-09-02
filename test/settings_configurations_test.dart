@@ -15,6 +15,10 @@ import 'package:vpn_client/state/profiles_controller.dart';
 /// inline, several hide behind a sheet, and neither offers to switch the active
 /// one — that lives on the home screen.
 void main() {
+  // The version is read from the shipped pubspec at startup; without this the
+  // rows below would assert the "unknown" placeholder against itself.
+  setUpAll(loadAppVersion);
+
   Profile profile(String id, String name) => Profile(
         id: id,
         type: ProfileType.link,
