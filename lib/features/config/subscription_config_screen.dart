@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/app_error.dart';
-import '../../core/log.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
-import '../../state/profiles_controller.dart';
 import 'config_parts.dart';
 
 /// Settings of a subscription.
@@ -27,31 +24,6 @@ class SubscriptionConfigScreen extends ConsumerStatefulWidget {
 }
 
 class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScreen> {
-  bool _refreshing = false;
-
-  Future<void> _refresh() async {
-    setState(() => _refreshing = true);
-    try {
-      final updated =
-          await ref.read(profilesControllerProvider.notifier).refreshProfile(widget.profile.id);
-      // The fetch itself succeeded — the panel simply answered with a refusal
-      // and placeholders. Nothing threw, so without this the refresh would look
-      // like it worked while the server list quietly turned into a message.
-      if (updated.deviceLimitReached && mounted) {
-        showToast(context, kDeviceLimitReached.line);
-      }
-    } catch (e) {
-      Log.e('manual refresh failed', '$e');
-      // The cached servers still work, so this is news, not a decision.
-      if (mounted) {
-        showToast(context,
-            'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}');
-      }
-    } finally {
-      if (mounted) setState(() => _refreshing = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final p = widget.profile;
@@ -73,7 +45,7 @@ class _SubscriptionConfigScreenState extends ConsumerState<SubscriptionConfigScr
                   : p.subscriptionUrl,
               viaFallback: p.usedFallback,
             ),
-          RefreshCard(profile: p, refreshing: _refreshing, onRefresh: _refresh),
+          RefreshCard(profile: p),
           // Above the provider's own details: this is the configuration's
           // behaviour, and what the panel reports about the account is
           // background to it.
