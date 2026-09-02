@@ -100,4 +100,36 @@ void main() {
       expect(detectInput(''), isNull);
     });
   });
+
+  group('whyUnusable', () {
+    // The chip names the thing the user can act on, never the text itself.
+    test('a scheme we have no protocol for', () {
+      expect(whyUnusable('tuic://a:b@h.example:443'), 'tuic:// isn’t supported');
+    });
+
+    test('a link of ours that will not parse, even with a stray word after it', () {
+      expect(whyUnusable('vless://asdasd123 1212312'), 'vless:// link can’t be read');
+      expect(whyUnusable('vless://asdasd123 1212312'), isNot(contains('asdasd')));
+    });
+
+    test('a transport the engine cannot run is named as the transport', () {
+      expect(whyUnusable('vless://u@h.example:443?type=kcp'), 'vless over kcp isn’t supported');
+    });
+
+    test('a plugin already names its protocol', () {
+      expect(
+          whyUnusable('ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=kcptun'),
+          'ss+kcptun isn’t supported');
+    });
+
+    test('vpn:// that is not a subscription key', () {
+      expect(whyUnusable('vpn://nonsense'), 'Not an Amnezia subscription key');
+    });
+
+    test('everything else, and nothing for an empty field', () {
+      expect(whyUnusable('hello world'), 'Not a link or subscription');
+      expect(whyUnusable('https://'), 'Not a link or subscription');
+      expect(whyUnusable('   '), isNull);
+    });
+  });
 }

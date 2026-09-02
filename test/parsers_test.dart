@@ -311,5 +311,73 @@ rules:
     expect(parsed.total, 5);
   });
 
+
+  group('base64 payloads on vless:// and trojan://', () {
+    // Not a standard form for either protocol, but panels and older clients
+    // emit it — the whole URI body encoded, sometimes with the name outside.
+    String b64(String s) => base64Url.encode(utf8.encode(s)).replaceAll('=', '');
+    const uuid = 'd1f8b2c4-aaaa-bbbb-cccc-1234567890ab';
+
+    test('base64 of the URI body is read as the URI', () {
+      final loc = parseProxyUri(
+          'vless://${b64('$uuid@h.example:443?security=tls&type=ws&path=/x&sni=h.example#Tokyo')}')!;
+      expect(loc.proxy['server'], 'h.example');
+      expect(loc.proxy['uuid'], uuid);
+      expect(loc.proxy['network'], 'ws');
+      expect(loc.proxy['servername'], 'h.example');
+      expect(loc.label, 'Tokyo');
+    });
+
+    test('a name outside the base64 wins over one inside', () {
+      final loc = parseProxyUri('vless://${b64('$uuid@h.example:443?security=tls#inner')}#Outer')!;
+      expect(loc.label, 'Outer');
+    });
+
+    test('the vmess-style JSON form carries vless fields too', () {
+      final json = jsonEncode({
+        'add': 'r.example', 'port': 443, 'id': uuid, 'net': 'tcp', 'tls': 'reality',
+        'sni': 'www.example', 'fp': 'chrome', 'pbk': 'PK', 'sid': 's1',
+        'flow': 'xtls-rprx-vision', 'ps': 'Reality',
+      });
+      final loc = parseProxyUri('vless://${b64(json)}')!;
+      expect(loc.proxy['type'], 'vless');
+      expect(loc.proxy['uuid'], uuid);
+      expect(loc.proxy['tls'], isTrue);
+      expect(loc.proxy['servername'], 'www.example');
+      expect(loc.proxy['flow'], 'xtls-rprx-vision');
+      expect(loc.proxy['client-fingerprint'], 'chrome');
+      expect(loc.proxy['reality-opts'], {'public-key': 'PK', 'short-id': 's1'});
+      expect(loc.proxy, isNot(contains('alterId')), reason: 'a vmess field, not a vless one');
+      expect(loc.label, 'Reality');
+    });
+
+    test('trojan takes the same wrapping', () {
+      final loc = parseProxyUri('trojan://${b64('pw@t.example:443?sni=t.example#Tj')}')!;
+      expect(loc.proxy['password'], 'pw');
+      expect(loc.proxy['server'], 't.example');
+      expect(loc.proxy['sni'], 't.example');
+      expect(loc.label, 'Tj');
+    });
+
+    test('base64 that decodes to nothing link-like is malformed, and the reason names no payload', () {
+      final r = parseShareLink('vless://${b64('just some words')}');
+      expect(r.location, isNull);
+      expect(r.malformed, isNotNull);
+      expect(r.malformed, isNot(contains('just')));
+    });
+
+    test('the plain URI form is untouched by the unwrapping', () {
+      final loc = parseProxyUri('vless://$uuid@h.example:443?security=tls#Plain')!;
+      expect(loc.proxy['uuid'], uuid);
+      expect(loc.label, 'Plain');
+    });
+
+    test('the add screen recognises the wrapped link as a server', () {
+      final d = detectInput('vless://${b64('$uuid@h.example:443?security=tls#Tokyo')}');
+      expect(d!.kind, InputKind.link);
+      expect(d.label, contains('Tokyo'));
+    });
+  });
+
 }
 
