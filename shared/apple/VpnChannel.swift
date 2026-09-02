@@ -7,18 +7,14 @@ import Foundation
 import Libagw
 
 /// VpnChannel bridges Flutter <-> VPNManager.
-///   MethodChannel "vpn/control":  start(config) / stop / status / prepare
+///   MethodChannel "vpn/control":  start(config) / stop / reload / … — one case
+///                                 per request the Dart core makes
 ///   EventChannel  "vpn/status":   stream of "connected|connecting|disconnected"
 enum VpnChannel {
     static func register(messenger: FlutterBinaryMessenger) {
         let control = FlutterMethodChannel(name: "vpn/control", binaryMessenger: messenger)
         control.setMethodCallHandler { call, result in
             switch call.method {
-            case "prepare":
-                Task { @MainActor in
-                    do { try await VPNManager.shared.prepare(); result(nil) }
-                    catch { result(FlutterError(code: "prepare_failed", message: error.localizedDescription, details: nil)) }
-                }
             case "start":
                 let args = call.arguments as? [String: Any]
                 guard let config = args?["config"] as? String else {
@@ -99,8 +95,6 @@ enum VpnChannel {
                     catch { result(FlutterError(code: "remove_failed",
                                                 message: error.localizedDescription, details: nil)) }
                 }
-            case "status":
-                Task { @MainActor in result(await VPNManager.shared.refreshStatus()) }
             case "connected_since":
                 Task { @MainActor in result(VPNManager.shared.connectedSince()) }
             case "disconnect_error":

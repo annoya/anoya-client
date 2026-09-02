@@ -41,10 +41,6 @@ final class VPNManager {
         return m
     }
 
-    func prepare() async throws {
-        _ = try await loadOrCreate()
-    }
-
     /// Write the config into the protocol so an on-demand start (where the OS
     /// launches the extension with no options) has something to run. Only
     /// writes when it actually changed — saving preferences on a live session
