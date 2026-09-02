@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/log.dart';
 import 'core/theme.dart';
 import 'features/start_screen.dart';
 import 'features/home_screen.dart';
@@ -22,9 +21,6 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   @override
   void initState() {
     super.initState();
-    ref.read(vpnCoreProvider).engineVersion().then((v) {
-      Log.i('vpn engine: ${v ?? 'unavailable'}');
-    });
     // The menu bar item must answer while the window is closed, which is
     // exactly when no screen is watching anything — so the shell holds it.
     ref.read(menuBarProvider);

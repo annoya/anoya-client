@@ -128,11 +128,6 @@ class ConnectionCheck {
 
   bool get passed => delayMs != null || observed;
 
-  /// Parses the engine's answer: `ms:<delay>` or `err:<reason>`.
-  ///
-  /// One string in both directions because that is what the tunnel transports
-  /// speak on both platforms — and because a delay of 0 is otherwise
-  /// indistinguishable from a failure.
   /// Reads the `<up>:<down>` counters. Zero and unparseable are the same
   /// answer — nothing to look at.
   static int downloadedFrom(String counters) {
@@ -141,6 +136,11 @@ class ConnectionCheck {
     return int.tryParse(parts[1]) ?? 0;
   }
 
+  /// Parses the engine's answer: `ms:<delay>` or `err:<reason>`.
+  ///
+  /// One string in both directions because that is what the tunnel transports
+  /// speak on both platforms — and because a delay of 0 is otherwise
+  /// indistinguishable from a failure.
   factory ConnectionCheck.parse(String answer, {required DateTime at, String via = ''}) {
     if (answer.startsWith('ms:')) {
       final ms = int.tryParse(answer.substring(3));

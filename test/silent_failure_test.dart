@@ -119,11 +119,6 @@ class _FakeCore extends VpnCore {
           {NormConfig? config, String? locationId}) async =>
       false;
 
-  @override
-  Future<String?> engineVersion() async => 'fake';
-
-  @override
-  Stream<VpnStats> statsStream() => const Stream.empty();
 }
 
 class _QuietOnDemand extends OnDemandController {

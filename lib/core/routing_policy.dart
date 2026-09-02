@@ -29,10 +29,6 @@ sealed class RoutingPolicy {
   /// The rules this policy puts in force, with anything it cannot run already
   /// removed. Async because a local set lives on disk.
   Future<Routing> resolve();
-
-  /// Whether the user may switch this policy off. False only for a policy its
-  /// author both sets and enforces.
-  bool get switchable => true;
 }
 
 /// A self-hosted server's policy: applied as delivered, not negotiable here.
@@ -40,9 +36,6 @@ final class ManagedRoutingPolicy extends RoutingPolicy {
   const ManagedRoutingPolicy(super.profile);
 
   Routing get routing => profile.routing!;
-
-  @override
-  bool get switchable => false;
 
   @override
   Future<Routing> resolve() async => routing;
@@ -53,15 +46,6 @@ final class ProviderRoutingPolicy extends RoutingPolicy {
   const ProviderRoutingPolicy(super.profile);
 
   Routing get routing => profile.providerRouting!;
-
-  /// Rules the panel sent that could not be translated at all. Shown, never
-  /// swallowed: a partial policy presented as complete is the one way this
-  /// could mislead.
-  int get untranslated => profile.providerRoutingSkipped;
-
-  /// Lists the policy refers to. Empty unless the source was a Clash body with
-  /// `rule-providers` — an Xray `ext:` file has no address to fetch.
-  List<RuleList> get lists => routing.lists;
 
   /// Whether the user agreed to hold this provider's list files on the device.
   bool get listsEnabled => profile.providerRuleListsEnabled;
@@ -78,11 +62,6 @@ final class ProviderRoutingPolicy extends RoutingPolicy {
       lists: const [],
     );
   }
-
-  /// How many rules are waiting on the lists switch — the number that makes
-  /// the "not supported" count actionable instead of just discouraging.
-  int get rulesNeedingLists =>
-      routing.rules.where((r) => r.needsRuleList).length;
 }
 
 /// The device's own rule sets: opt-in per configuration, editable, global to

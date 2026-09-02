@@ -40,7 +40,6 @@ String mihomoTunConfigYaml(
   List<String> dns = const [],
   String defaultDns = kFallbackNameserver,
   Map<String, String> listPaths = const {},
-  String stack = 'gvisor',
   bool collectLogs = true,
   bool autoDetectInterface = true,
 }) {
@@ -148,7 +147,7 @@ String mihomoTunConfigYaml(
     for (final r in plan.resolvers) '    - ${yamlScalar(r.wire)}',
     'tun:',
     '  enable: true',
-    '  stack: $stack',
+    '  stack: gvisor',
     // Without this the engine forwards ICMP with a DIRECT outbound of its own
     // — it opens a socket on the physical interface, so `ping` while the VPN is
     // up leaks the real address (the request enters the tun and leaves again

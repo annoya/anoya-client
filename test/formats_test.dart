@@ -241,7 +241,7 @@ void main() {
           'vless://u@real.example:443?security=reality&pbk=PK#DE';
       final parsed = parseSubscriptionBody(body, source: 'sub.example');
       expect(parsed.locations.length, 1);
-      final lines = Log.lines().where((l) => l.contains('malformed')).toList();
+      final lines = Log.dump().split('\n').where((l) => l.contains('malformed')).toList();
       expect(lines, hasLength(1), reason: 'one line per body, not per link');
       expect(lines.single, contains('sub.example'));
       expect(lines.single, contains('2 malformed'));

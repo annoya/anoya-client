@@ -203,9 +203,6 @@ ParsedSubscription _parseBody(String body) {
 /// Just the servers, for the callers that only need those.
 List<Location> parseSubscription(String body) => parseSubscriptionBody(body).locations;
 
-/// Just the resolvers, for the callers that only need those.
-List<String> subscriptionDns(String body) => parseSubscriptionBody(body).dns;
-
 
 /// What a pasted string on the add screen turned out to be — drives the live
 /// detection chip and enables Continue.
@@ -226,11 +223,10 @@ enum InputKind {
 }
 
 class DetectedInput {
-  const DetectedInput(this.kind, this.label, {this.serverCount = 0});
+  const DetectedInput(this.kind, this.label);
 
   final InputKind kind;
   final String label; // what to show in the chip
-  final int serverCount; // known for local text, 0 for URLs (fetched later)
 }
 
 /// Classifies pasted text without any network I/O. Null → nothing usable yet.
@@ -254,8 +250,7 @@ DetectedInput? detectInput(String raw) {
     final loc = parseProxyUri(t);
     return loc == null
         ? null
-        : DetectedInput(InputKind.link, '${loc.proxyType.toUpperCase()} server · ${loc.label}',
-            serverCount: 1);
+        : DetectedInput(InputKind.link, '${loc.proxyType.toUpperCase()} server · ${loc.label}');
   }
   if (scheme == 'http' || scheme == 'https') {
     final u = Uri.tryParse(t);
@@ -265,9 +260,8 @@ DetectedInput? detectInput(String raw) {
   final locs = parseSubscription(t);
   if (locs.isEmpty) return null;
   return locs.length == 1
-      ? DetectedInput(InputKind.link, 'Server · ${locs.first.label}', serverCount: 1)
-      : DetectedInput(InputKind.subscriptionText, 'Subscription · ${locs.length} servers',
-          serverCount: locs.length);
+      ? DetectedInput(InputKind.link, 'Server · ${locs.first.label}')
+      : DetectedInput(InputKind.subscriptionText, 'Subscription · ${locs.length} servers');
 }
 
 /// Addresses that cannot be dialed anywhere. A server on one of these was

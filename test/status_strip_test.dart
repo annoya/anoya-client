@@ -288,9 +288,6 @@ class _FixedCore extends VpnCore {
   Stream<VpnStatus> statusStream() => const Stream.empty();
 
   @override
-  Stream<VpnStats> statsStream() => const Stream.empty();
-
-  @override
   Future<void> load(NormConfig config) async {}
 
   @override
@@ -299,8 +296,6 @@ class _FixedCore extends VpnCore {
   @override
   Future<void> disconnect() async {}
 
-  @override
-  Future<String?> engineVersion() async => null;
 }
 
 /// Records every call that could touch the tunnel session.

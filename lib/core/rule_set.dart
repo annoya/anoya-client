@@ -33,7 +33,6 @@ class RuleSet {
   final String editor;
 
   bool get isDefault => id == defaultId;
-  bool get hasGeoRules => rules.any((r) => r.needsGeoData);
 
   Routing toRouting() => Routing(mode: mode, rules: rules);
 

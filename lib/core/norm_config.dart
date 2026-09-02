@@ -193,7 +193,6 @@ class RuleList {
     required this.url,
     required this.behavior,
     this.format = 'yaml',
-    this.intervalSeconds = 0,
   });
 
   final String name;
@@ -205,10 +204,6 @@ class RuleList {
 
   /// `yaml`, `text` or `mrs` (mihomo's binary rule-set format).
   final String format;
-
-  /// How often the publisher wants it re-read. Advisory: the app refreshes on
-  /// its own schedule, and a source asking for every 60 s does not get it.
-  final int intervalSeconds;
 
   static const behaviors = ['domain', 'ipcidr', 'classical'];
   static const formats = ['yaml', 'text', 'mrs'];
@@ -229,7 +224,6 @@ class RuleList {
         url: json['url'] as String? ?? '',
         behavior: json['behavior'] as String? ?? '',
         format: json['format'] as String? ?? 'yaml',
-        intervalSeconds: (json['interval'] as num?)?.toInt() ?? 0,
       );
 
   Map<String, dynamic> toJson() => {
@@ -237,7 +231,6 @@ class RuleList {
         'url': url,
         'behavior': behavior,
         'format': format,
-        if (intervalSeconds > 0) 'interval': intervalSeconds,
       };
 }
 
@@ -348,7 +341,6 @@ class Account {
   final int usedBytes;
   final int dataLimit; // 0 = unlimited
 
-  bool get isActive => status == 'active';
 
   /// on_hold users may connect — their expiry starts on first use.
   bool get canConnect => status == 'active' || status == 'on_hold';

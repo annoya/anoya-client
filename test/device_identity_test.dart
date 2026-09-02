@@ -27,14 +27,14 @@ void main() {
           ? {'os': 'iOS', 'version': '18.0', 'model': 'iPhone16,1'}
           : throw PlatformException(code: 'no platform in tests'),
     );
-    DeviceIdentityStore.forget();
+    DeviceIdentityStore.debugCache(null);
   });
   tearDown(() {
     messenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'), null);
     messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), null);
     tmp.deleteSync(recursive: true);
-    DeviceIdentityStore.forget();
+    DeviceIdentityStore.debugCache(null);
   });
 
   test('the id satisfies what panels accept', () async {
@@ -46,7 +46,7 @@ void main() {
 
   test('the id survives a restart, so a launch does not cost a device slot', () async {
     final first = (await DeviceIdentityStore.load()).hwid;
-    DeviceIdentityStore.forget(); // as if the app restarted
+    DeviceIdentityStore.debugCache(null); // as if the app restarted
     expect((await DeviceIdentityStore.load()).hwid, first);
   });
 
@@ -72,7 +72,7 @@ void main() {
   test('an unknown device still yields a usable identity', () async {
     // The optional fields are absent rather than guessed: only x-hwid is
     // required, and inventing a model would misname the entry in the panel.
-    debugSetDeviceIdentity(
+    DeviceIdentityStore.debugCache(
         const DeviceIdentity(hwid: 'abcdef0123', os: '', osVersion: '', model: ''));
     final id = await DeviceIdentityStore.load();
     expect(id.headers.keys, ['user-agent', 'x-hwid'],

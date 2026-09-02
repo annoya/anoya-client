@@ -15,16 +15,13 @@ import 'dart:typed_data';
 class AmneziaVpnKey {
   const AmneziaVpnKey({
     required this.name,
-    required this.description,
     required this.serviceType,
     required this.serviceProtocol,
     required this.userCountryCode,
     required this.apiKey,
-    required this.raw,
   });
 
   final String name;
-  final String description;
 
   /// `amnezia-premium`, `amnezia-free`, or `external-premium`.
   final String serviceType;
@@ -39,10 +36,6 @@ class AmneziaVpnKey {
 
   /// The subscription's bearer credential. Never logged, never rendered.
   final String apiKey;
-
-  /// The key exactly as pasted, kept so it can be re-imported or re-read
-  /// without a lossy round trip through our own model.
-  final String raw;
 
   bool get isValid => apiKey.isNotEmpty && serviceType.isNotEmpty;
 }
@@ -95,12 +88,10 @@ AmneziaVpnKey? parseAmneziaVpnKey(String text) {
   if (api is! Map || auth is! Map) return null;
   final key = AmneziaVpnKey(
     name: '${doc['name'] ?? 'Subscription'}',
-    description: '${doc['description'] ?? ''}',
     serviceType: '${api['service_type'] ?? ''}',
     serviceProtocol: '${api['service_protocol'] ?? ''}',
     userCountryCode: '${api['user_country_code'] ?? ''}',
     apiKey: '${auth['api_key'] ?? ''}',
-    raw: text.trim(),
   );
   return key.isValid ? key : null;
 }

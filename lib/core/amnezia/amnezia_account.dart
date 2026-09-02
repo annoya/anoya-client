@@ -58,7 +58,6 @@ class AmneziaAccount {
     this.activeDevices = 0,
     this.maxDevices = 0,
     this.description = '',
-    this.renewalAvailable = false,
   });
 
   final List<AmneziaCountry> countries;
@@ -69,7 +68,6 @@ class AmneziaAccount {
   final int maxDevices;
 
   final String description;
-  final bool renewalAvailable;
 
   /// A subscription the gateway placed no end on is not expired; only one it
   /// dated and that date has passed.
@@ -86,7 +84,6 @@ class AmneziaAccount {
         activeDevices: (j['active_device_count'] as num?)?.toInt() ?? 0,
         maxDevices: (j['max_device_count'] as num?)?.toInt() ?? 0,
         description: '${j['subscription_description'] ?? ''}',
-        renewalAvailable: j['is_renewal_available'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -96,7 +93,6 @@ class AmneziaAccount {
         if (activeDevices > 0) 'active_device_count': activeDevices,
         if (maxDevices > 0) 'max_device_count': maxDevices,
         if (description.isNotEmpty) 'subscription_description': description,
-        if (renewalAvailable) 'is_renewal_available': true,
       };
 }
 

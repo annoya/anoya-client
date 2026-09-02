@@ -153,23 +153,19 @@ void main() {
     test('a free key is refused with a reason, not imported to fail later', () {
       final free = AmneziaVpnKey(
         name: 'Amnezia Free',
-        description: '',
         serviceType: 'amnezia-free',
         serviceProtocol: 'awg',
         userCountryCode: 'ru',
         apiKey: 'k',
-        raw: '',
       );
       expect(amneziaKeyUnsupported(free), contains('CAPTCHA'));
       expect(
           amneziaKeyUnsupported(AmneziaVpnKey(
             name: 'Amnezia Premium',
-            description: '',
             serviceType: 'amnezia-premium',
             serviceProtocol: 'awg',
             userCountryCode: 'ru',
             apiKey: 'k',
-            raw: '',
           )),
           isNull);
     });
@@ -470,15 +466,6 @@ void main() {
       // Their message is usually more specific than any table can be.
       final e = describeAmneziaError(AgwStatus.notFound, detail: 'Account not found.');
       expect(e.detail, 'Account not found.');
-    });
-
-    test('only the failures worth retrying are marked so', () {
-      expect(amneziaErrorIsTransient(AgwStatus.timeout), isTrue);
-      // Retrying a refusal spends the user's battery and, where the gateway
-      // rate-limits, makes the next attempt worse.
-      expect(amneziaErrorIsTransient(AgwStatus.subscriptionExpired), isFalse);
-      expect(amneziaErrorIsTransient(AgwStatus.rateLimit), isFalse);
-      expect(amneziaErrorIsFatalForSubscription(AgwStatus.subscriptionExpired), isTrue);
     });
   });
 }

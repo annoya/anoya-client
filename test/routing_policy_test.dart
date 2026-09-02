@@ -56,8 +56,7 @@ void main() {
     final policy = routingPolicyFor(
         profile(managed: managed, provider: providerRouting, localOn: true),
         loadRuleSet: load);
-    expect(policy, isA<ManagedRoutingPolicy>());
-    expect(policy.switchable, isFalse,
+    expect(policy, isA<ManagedRoutingPolicy>(),
         reason: 'the server would only re-apply it; a switch would be a lie');
     expect((await policy.resolve()).rules, isEmpty);
   });
@@ -65,7 +64,6 @@ void main() {
   test('a provider policy applies while the user leaves it on', () async {
     final policy = routingPolicyFor(profile(provider: providerRouting), loadRuleSet: load);
     expect(policy, isA<ProviderRoutingPolicy>());
-    expect(policy.switchable, isTrue);
   });
 
   test('refusing a provider policy hands the device its own set back', () async {
@@ -91,7 +89,7 @@ void main() {
       expect(routing.rules.map((r) => r.value), ['ip.me']);
       expect(routing.lists, isEmpty,
           reason: 'a definition with no rule using it would only invite a download');
-      expect(policy.rulesNeedingLists, 1,
+      expect(policy.routing.rules.where((r) => r.needsRuleList).length, 1,
           reason: 'the count is what makes the switch worth offering');
     });
 
@@ -102,19 +100,6 @@ void main() {
       expect(routing.rules.length, 2);
       expect(routing.lists.single.name, 'reject');
       expect(policy.listsEnabled, isTrue);
-    });
-
-    test('an untranslatable rule is remembered as a count, not lost', () {
-      final p = Profile(
-        id: 'p1',
-        type: ProfileType.subscription,
-        name: 'Config',
-        locations: const [],
-        providerRouting: providerRouting,
-        providerRoutingSkipped: 3,
-      );
-      final policy = routingPolicyFor(p, loadRuleSet: load) as ProviderRoutingPolicy;
-      expect(policy.untranslated, 3);
     });
   });
 }

@@ -9,17 +9,15 @@ void main() {
     test('locations are keyed per profile — two profiles may reuse an id', () {
       var f = const Favorites();
       f = f.toggleLocation('p1', 'de-1');
-      expect(f.hasLocation('p1', 'de-1'), true);
-      expect(f.hasLocation('p2', 'de-1'), false,
-          reason: 'a location id is only unique inside its profile');
       expect(f.locationsOf('p1'), {'de-1'});
-      expect(f.locationsOf('p2'), isEmpty);
+      expect(f.locationsOf('p2'), isEmpty,
+          reason: 'a location id is only unique inside its profile');
     });
 
     test('toggle adds then removes', () {
       final on = const Favorites().toggleProfile('p1');
-      expect(on.hasProfile('p1'), true);
-      expect(on.toggleProfile('p1').hasProfile('p1'), false);
+      expect(on.profiles, {'p1'});
+      expect(on.toggleProfile('p1').profiles, isEmpty);
     });
 
     test('removing a configuration takes its servers with it', () {
@@ -28,9 +26,9 @@ void main() {
           .toggleLocation('p1', 'de-1')
           .toggleLocation('p2', 'nl-1')
           .forgetProfile('p1');
-      expect(f.hasProfile('p1'), false);
+      expect(f.profiles, isEmpty);
       expect(f.locationsOf('p1'), isEmpty);
-      expect(f.hasLocation('p2', 'nl-1'), true, reason: 'other profiles untouched');
+      expect(f.locationsOf('p2'), {'nl-1'}, reason: 'other profiles untouched');
     });
 
     test('json round-trip', () {

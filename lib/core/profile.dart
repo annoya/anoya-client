@@ -184,12 +184,10 @@ class Profile {
   /// failure this shape prevents.
   bool get isRefreshable => type != ProfileType.link;
 
-  /// The remote-owned half of a profile, replaced wholesale by a refresh:
-  /// what the source says, goes — verbatim. In particular `routing: null`
-  /// CLEARS a managed policy (the admin detached it) and an empty [dns] drops
-  /// ours (ADR-008: a source that drops its DNS drops ours too). copyWith's
+  /// Replaces everything a source owns, keeping what the device owns. What the
+  /// source says, goes — verbatim: `routing: null` CLEARS a managed policy (the
+  /// admin detached it) and an empty [dns] drops ours (ADR-008). copyWith's
   /// null-keeps semantics cannot express either.
-  /// Replaces everything a source owns, keeping what the device owns.
   ///
   /// It enumerates fields rather than copying, which is the point — a field
   /// the source does not own must not be silently overwritten by a stale
@@ -248,12 +246,9 @@ class Profile {
       );
 
   Profile copyWith({
-    String? name,
     bool? providerRoutingEnabled,
     bool? providerRuleListsEnabled,
     List<Location>? locations,
-    Account? account,
-    Routing? routing,
     String? ruleSetId,
     bool? routingEnabled,
     List<String>? dns,
@@ -267,12 +262,12 @@ class Profile {
       Profile(
         id: id,
         type: type,
-        name: name ?? this.name,
+        name: name,
         locations: locations ?? this.locations,
         serverUrl: serverUrl,
         subscriptionUrl: subscriptionUrl,
-        account: account ?? this.account,
-        routing: routing ?? this.routing,
+        account: account,
+        routing: routing,
         ruleSetId: ruleSetId ?? this.ruleSetId,
         routingEnabled: routingEnabled ?? this.routingEnabled,
         dns: dns ?? this.dns,

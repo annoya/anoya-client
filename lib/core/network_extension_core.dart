@@ -31,14 +31,14 @@ class NetworkExtensionCore implements VpnCore {
         .map((e) => _mapStatus(e as String?))
         .distinct()
         .asBroadcastStream();
-    _sub = _statusStream.listen((s) => _status = s);
+    // Lives as long as the app: the core is a process-lifetime provider.
+    _statusStream.listen((s) => _status = s);
   }
 
   static const _control = MethodChannel('vpn/control');
   static const _statusEvents = EventChannel('vpn/status');
 
   late final Stream<VpnStatus> _statusStream;
-  StreamSubscription<VpnStatus>? _sub;
   NormConfig? _config;
   VpnStatus _status = VpnStatus.disconnected;
 
@@ -47,9 +47,6 @@ class NetworkExtensionCore implements VpnCore {
 
   @override
   Stream<VpnStatus> statusStream() => _statusStream;
-
-  @override
-  Stream<VpnStats> statsStream() => const Stream.empty();
 
   @override
   Future<void> load(NormConfig config) async {
@@ -99,9 +96,6 @@ class NetworkExtensionCore implements VpnCore {
       Log.e('NE stop failed', 'no platform side');
     }
   }
-
-  @override
-  Future<String?> engineVersion() async => 'mihomo (NetworkExtension)';
 
   @override
   Future<bool> applyOnDemand(
@@ -156,13 +150,13 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// Renders the YAML the extension will run. Null when there is nothing to
-  /// render. The proxy server is deliberately NOT singled out here: the engine
-  /// binds its own dials to the physical interface, so nothing has to be routed
+  /// Renders the config for one selection — a server, or a group whose member
+  /// the engine picks. Null when there is nothing to render.
+  ///
+  /// The proxy server is deliberately NOT singled out here: the engine binds
+  /// its own dials to the physical interface, so nothing has to be routed
   /// around the tunnel — which also means the server's hostname is never
   /// resolved outside it.
-  /// Renders the config for one selection — a server, or a group whose member
-  /// the engine picks.
   ///
   /// gvisor on both macOS and iOS: it is fully userspace (no socket binds), the
   /// only stack that works inside the iOS NE sandbox (the `system` stack fails
@@ -212,7 +206,6 @@ class NetworkExtensionCore implements VpnCore {
                 ? kFallbackNameserver
                 : config.defaultDns,
             listPaths: listPaths,
-            stack: 'gvisor',
             collectLogs: Log.enabled,
             autoDetectInterface: !Platform.isAndroid),
       };
@@ -317,8 +310,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// App Group container shared with the tunnel extension — the engine's home
-  /// dir. GeoIP/GeoSite databases are downloaded here so mihomo (whose home is
   /// What the platform says this device is: os, version, model. Null when
   /// there is no platform side (unsupported host, or tests).
   static Future<Map<String, String>?> deviceInfo() async {
@@ -334,6 +325,8 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
+  /// App Group container shared with the tunnel extension — the engine's home
+  /// dir. GeoIP/GeoSite databases are downloaded here so mihomo (whose home is
   /// set to the same path) can read them. Null when the platform side has no
   /// group container (then geo rules are unavailable).
   static Future<String?> sharedDir() async {
@@ -360,9 +353,5 @@ class NetworkExtensionCore implements VpnCore {
       default:
         return VpnStatus.disconnected;
     }
-  }
-
-  void dispose() {
-    _sub?.cancel();
   }
 }

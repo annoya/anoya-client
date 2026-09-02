@@ -23,7 +23,6 @@ import 'providers.dart';
 
 export 'profiles_state.dart';
 
-/// How often a refreshable profile (self-hosted / subscription) is re-pulled.
 /// How often the poll timer fires. Not how often a source is re-read: that is
 /// [refreshGapFor], which honours a panel's own cadence. The timer stays fast
 /// so a configuration whose provider asks for five minutes gets five minutes.
@@ -182,13 +181,13 @@ class ProfilesController extends Notifier<ProfilesState> {
     return resolved;
   }
 
-  /// Stores an updated profile in place, leaving the rest of the state alone.
+  /// Stores an updated profile in place — in state and on disk — leaving the
+  /// rest of the state alone.
   Future<void> _replace(Profile p) async {
-    final profiles = [
-      for (final existing in state.profiles) existing.id == p.id ? p : existing,
-    ];
-    await ProfileStore.save(profiles);
-    state = state.copyWith(profiles: profiles);
+    state = state.copyWith(
+      profiles: [for (final existing in state.profiles) existing.id == p.id ? p : existing],
+    );
+    await ProfileStore.save(state.profiles);
   }
 
   /// What to call the selection in a message to the user.
@@ -364,8 +363,7 @@ class ProfilesController extends Notifier<ProfilesState> {
           : (current.amnezia ?? updated.amnezia!)
               .copyWith(account: updated.amnezia!.account),
     );
-    _replaceProfile(merged);
-    await ProfileStore.save(state.profiles);
+    await _replace(merged);
     // Pruned against every profile, not just this one: the list files are one
     // shared directory, and pruning against a single policy would delete the
     // files another configuration is using.
@@ -380,8 +378,7 @@ class ProfilesController extends Notifier<ProfilesState> {
     await _ready;
     final p = _byId(profileId);
     if (p == null) return;
-    _replaceProfile(p.copyWith(refreshHours: (value: hours)));
-    await ProfileStore.save(state.profiles);
+    await _replace(p.copyWith(refreshHours: (value: hours)));
   }
 
   /// Apply a global rule set to a profile. Picking a set also turns routing on:
@@ -450,15 +447,8 @@ class ProfilesController extends Notifier<ProfilesState> {
     await _ready;
     final p = _byId(profileId);
     if (p == null) return;
-    _replaceProfile(change(p));
-    await ProfileStore.save(state.profiles);
+    await _replace(change(p));
     if (profileId == state.activeId) await _applySelection();
-  }
-
-  void _replaceProfile(Profile updated) {
-    state = state.copyWith(
-      profiles: [for (final p in state.profiles) p.id == updated.id ? updated : p],
-    );
   }
 
   // --- connect ---

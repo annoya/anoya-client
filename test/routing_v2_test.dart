@@ -73,7 +73,7 @@ void main() {
     expect(restored.rules.length, 2);
     expect(restored.rules.first.noResolve, true);
     expect(restored.toRouting().mode, 'split');
-    expect(set.hasGeoRules, true);
+    expect(set.rules.any((r) => r.needsGeoData), true);
   });
 
   group('detectInput', () {
@@ -93,7 +93,6 @@ void main() {
       const text = 'vless://u1@1.2.3.4:443?type=tcp#A\nvless://u2@5.6.7.8:443?type=tcp#B';
       final d = detectInput(text);
       expect(d!.kind, InputKind.subscriptionText);
-      expect(d.serverCount, 2);
     });
 
     test('garbage → null', () {

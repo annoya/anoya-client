@@ -68,7 +68,6 @@ class Log {
     revision.value++;
   }
 
-  static List<String> lines() => _buffer.toList();
   static String dump() => _buffer.join('\n');
 
   /// Size of what [dump] would produce, in bytes. Real bytes, not code units:
