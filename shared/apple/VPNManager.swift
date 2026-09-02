@@ -137,6 +137,26 @@ final class VPNManager {
         return existing
     }
 
+    /// The provider session of the system's profile, through [adopt]: one XPC
+    /// load the first time, the cached manager after that. Every method that
+    /// talks to the running extension goes through here — each used to load
+    /// all preferences again, a full round trip to nesessionmanager, and two
+    /// of them are polled.
+    ///
+    /// Nil when there is no profile, or when [connected] is required and the
+    /// tunnel is not up.
+    private func session(connected: Bool = true) async -> NETunnelProviderSession? {
+        guard let m = await adopt(),
+              let s = m.connection as? NETunnelProviderSession else { return nil }
+        if connected && s.status != .connected { return nil }
+        return s
+    }
+
+    private var tunnelNotRunning: NSError {
+        NSError(domain: "vpn", code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
+    }
+
     /// The tunnel's current state. Loads the system's profile when the app has
     /// not touched it yet, so a relaunch over a live tunnel does not report
     /// "disconnected".
@@ -337,20 +357,14 @@ final class VPNManager {
     /// the whole switch. Throws when the tunnel is not up or the engine
     /// rejected the config — in both cases the previous config keeps working.
     func reload(config: String, logEnabled: Bool) async throws {
-        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
-        guard let m = managers.first,
+        guard let m = await adopt(),
               let session = m.connection as? NETunnelProviderSession,
-              session.status == .connected else {
-            throw NSError(domain: "vpn", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
-        }
+              session.status == .connected else { throw tunnelNotRunning }
         let failure = try await ask(session, "reload:\(config)")
         guard failure.isEmpty else {
             throw NSError(domain: "vpn", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: failure])
         }
-        self.manager = m
-        observe(m)
         // The persisted copy is what an on-demand restart (or the next manual
         // start) runs — keep it in step with what the engine now runs.
         try await persist(config: config, logEnabled: logEnabled, into: m)
@@ -362,8 +376,7 @@ final class VPNManager {
     /// directly; with the tunnel down there is nothing to tell — the persisted
     /// config already carries the flag for the next start.
     func setLogging(_ enabled: Bool) async {
-        let managers = try? await NETunnelProviderManager.loadAllFromPreferences()
-        guard let session = managers?.first?.connection as? NETunnelProviderSession,
+        guard let session = await session(connected: false),
               session.status == .connected || session.status == .connecting else { return }
         try? session.sendProviderMessage(Data("logging:\(enabled ? 1 : 0)".utf8)) { _ in }
     }
@@ -372,18 +385,10 @@ final class VPNManager {
     /// only works while the tunnel is up: the extension is the only process
     /// that may touch its own container.
     func clearLogs() async throws {
-        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
-        guard let session = managers.first?.connection as? NETunnelProviderSession else {
-            throw NSError(domain: "vpn", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
-        }
+        guard let session = await session(connected: false) else { throw tunnelNotRunning }
         _ = try await ask(session, "clear-logs")
     }
 
-    /// Ask the running extension for one of its log files (e.g. "tunnel",
-    /// "mihomo") over the provider IPC channel. Only works while the tunnel is
-    /// up; throws otherwise (the extension process is the log's only reader,
-    /// since it lives in the extension's own sandbox container).
     /// Why the tunnel stopped, when the system knows.
     ///
     /// A packet-tunnel provider that fails inside `startTunnel` reports it to
@@ -411,9 +416,7 @@ final class VPNManager {
     /// Never throws: this feeds a subtitle, and a missing answer means "not
     /// known yet", which the app shows as plain "auto" rather than an error.
     func groupMember(_ group: String) async -> String {
-        let managers = try? await NETunnelProviderManager.loadAllFromPreferences()
-        guard let session = managers?.first?.connection as? NETunnelProviderSession,
-              session.status == .connected else { return "" }
+        guard let session = await session() else { return "" }
         return (try? await ask(session, "group:\(group)")) ?? ""
     }
 
@@ -425,9 +428,7 @@ final class VPNManager {
     /// not the standard one: a five-second probe answered at 4.9 s must not be
     /// cut off by the transport carrying it.
     func urlTest(_ url: String, timeoutMs: Int) async throws -> String {
-        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
-        guard let session = managers.first?.connection as? NETunnelProviderSession,
-              session.status == .connected else {
+        guard let session = await session() else {
             throw NSError(domain: "vpn", code: 5,
                           userInfo: [NSLocalizedDescriptionKey: "the tunnel is not running"])
         }
@@ -442,18 +443,16 @@ final class VPNManager {
     /// to look at yet" and asks the server itself instead, which is the right
     /// behaviour for both cases.
     func proxyBytes() async -> String {
-        let managers = try? await NETunnelProviderManager.loadAllFromPreferences()
-        guard let session = managers?.first?.connection as? NETunnelProviderSession,
-              session.status == .connected else { return "0:0" }
+        guard let session = await session() else { return "0:0" }
         return (try? await ask(session, "proxybytes")) ?? "0:0"
     }
 
+    /// Ask the running extension for one of its log files (e.g. "tunnel",
+    /// "mihomo") over the provider IPC channel. Only works while the tunnel is
+    /// up; throws otherwise (the extension process is the log's only reader,
+    /// since it lives in the extension's own sandbox container).
     func fetchLog(_ name: String) async throws -> String {
-        let managers = try await NETunnelProviderManager.loadAllFromPreferences()
-        guard let session = managers.first?.connection as? NETunnelProviderSession else {
-            throw NSError(domain: "vpn", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "tunnel not running"])
-        }
+        guard let session = await session(connected: false) else { throw tunnelNotRunning }
         return try await ask(session, "log:\(name)")
     }
 
