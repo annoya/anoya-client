@@ -41,6 +41,12 @@ object VpnChannel {
     /// a config parse, in the worst case. Never the UI thread.
     private val calls = Executors.newSingleThreadExecutor()
 
+    /// Probes block for as long as their timeout allows — up to fifteen
+    /// seconds each, three in a row after a connect. On [calls] they queued
+    /// stop, reload and log reads behind them; the Apple side keeps probes off
+    /// its serving queue for the same reason.
+    private val probes = Executors.newCachedThreadPool()
+
     @Volatile private var tunnel: ITunnel? = null
     @Volatile private var lastStatus: String = TunnelState.DISCONNECTED
     private var events: EventChannel.EventSink? = null
@@ -193,7 +199,7 @@ object VpnChannel {
                 "url_test" -> {
                     val url = call.argument<String>("url") ?: ""
                     val timeout = call.argument<Int>("timeout_ms") ?: 5000
-                    ask(result, orElse = "err:the tunnel is not running") {
+                    ask(result, orElse = "err:the tunnel is not running", on = probes) {
                         it.urlTest(url, timeout)
                     }
                 }
@@ -248,8 +254,8 @@ object VpnChannel {
     /// One binder question, off the UI thread, with an answer for the case
     /// where there is no tunnel process to ask.
     private fun ask(result: MethodChannel.Result, orElse: Any? = null,
-                    body: (ITunnel) -> Any?) {
-        calls.execute {
+                    on: java.util.concurrent.Executor = calls, body: (ITunnel) -> Any?) {
+        on.execute {
             val t = tunnel
             val value = if (t == null) orElse
                         else runCatching { body(t) }.getOrDefault(orElse)

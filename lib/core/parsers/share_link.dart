@@ -71,7 +71,12 @@ ShareLink parseShareLink(String raw) {
   } catch (e) {
     // A link of a scheme we know that will not parse is malformed, not
     // unsupported — saying "vless unsupported" would be a lie.
-    return ShareLink.malformed('$scheme:// $e');
+    //
+    // Only the reason travels, never the exception's own text: Uri.parse
+    // prints the offending string under its message, and the userinfo in it
+    // is the credential (AGENTS.md invariant 11).
+    final why = e is FormatException ? e.message : e.runtimeType.toString();
+    return ShareLink.malformed('$scheme:// $why');
   }
 }
 

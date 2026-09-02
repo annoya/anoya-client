@@ -73,9 +73,13 @@ class RoutingPrefsController extends Notifier<RoutingPrefs> with ReadyGate {
     if (ref.mounted) state = prefs;
   }
 
+  /// Read-modify-write against the file, not against [state]: GeoStore stamps
+  /// geoUpdatedAt into the same file on its own, and a change computed from
+  /// the snapshot taken at startup would save that stamp away — after which
+  /// the next launch downloads the databases again.
   Future<void> update(RoutingPrefs Function(RoutingPrefs) change) async {
     await ready;
-    final prefs = change(state);
+    final prefs = change(await RoutingPrefsStore.load());
     state = prefs;
     await RoutingPrefsStore.save(prefs);
   }
