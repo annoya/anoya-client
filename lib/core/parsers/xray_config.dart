@@ -188,7 +188,7 @@ String? _applyStream(Map<String, dynamic> proxy, String protocol, Object? stream
   if (proxy['type'] == 'trojan') {
     proxy['network'] = network;
   } else {
-    proxy['network'] = network == 'h2' ? 'h2' : network;
+    proxy['network'] = network;
     proxy['tls'] = tls;
   }
 

@@ -49,14 +49,13 @@ void main() {
   test('the platforms split auto-connect between them, with no overlap', () {
     // One kind each: rules Apple evaluates, a switch Android owns. A platform
     // claiming both would put two entry points on one screen.
-    for (final (platform, onDemand, alwaysOn) in [
-      (TargetPlatform.iOS, true, false),
-      (TargetPlatform.macOS, true, false),
-      (TargetPlatform.android, false, true),
+    for (final (platform, onDemand) in [
+      (TargetPlatform.iOS, true),
+      (TargetPlatform.macOS, true),
+      (TargetPlatform.android, false),
     ]) {
       debugDefaultTargetPlatformOverride = platform;
       expect(supportsOnDemand, onDemand, reason: '$platform');
-      expect(supportsAlwaysOn, alwaysOn, reason: '$platform');
     }
     debugDefaultTargetPlatformOverride = null;
   });

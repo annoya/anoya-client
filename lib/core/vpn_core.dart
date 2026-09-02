@@ -4,13 +4,6 @@ import 'on_demand.dart';
 /// VpnStatus is the connection lifecycle reported by a [VpnCore].
 enum VpnStatus { disconnected, connecting, connected, error }
 
-/// VpnStats are best-effort live tunnel metrics. Fields are 0 when unknown.
-class VpnStats {
-  const VpnStats({this.bytesUp = 0, this.bytesDown = 0});
-  final int bytesUp;
-  final int bytesDown;
-}
-
 /// VpnCore is what screens and state talk to instead of the platform. The
 /// engine behind it is mihomo and nothing else is planned; the interface exists
 /// so the state layer can be tested against a fake tunnel, and so the platform
@@ -48,15 +41,8 @@ abstract class VpnCore {
   /// Connection status updates.
   Stream<VpnStatus> statusStream();
 
-  /// Best-effort live stats (may never emit).
-  Stream<VpnStats> statsStream();
-
   /// Current status snapshot.
   VpnStatus get status;
-
-  /// Engine version string for diagnostics (e.g. mihomo build), or null if the
-  /// engine cannot be located/queried.
-  Future<String?> engineVersion();
 
   /// Apply system auto-connect state and report whether it ended up armed.
   /// [config]/[locationId] describe what the system should bring up when a

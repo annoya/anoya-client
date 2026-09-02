@@ -53,8 +53,6 @@ class OnDemandController extends Notifier<OnDemandPrefs> {
   /// disconnect-on-sleep flag reaches the system.
   Future<void> onConnected() => _apply(state.copyWith(paused: false));
 
-  /// The active configuration is gone — nothing to auto-connect to.
-
   /// Forget on-demand locally, without touching the system. Used when the VPN
   /// profile is being removed anyway: pushing a "disarm" first would recreate
   /// the profile (and pop the approval dialog) just to delete it a moment

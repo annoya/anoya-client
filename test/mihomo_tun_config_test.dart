@@ -96,11 +96,8 @@ void main() {
         },
       });
 
-  test('stack defaults to gvisor and is overridable (iOS uses system)', () {
+  test('the tun stack is gvisor, on every platform', () {
     expect(mihomoTunConfigYaml(vlessLoc()), contains('stack: gvisor'));
-    final ios = mihomoTunConfigYaml(vlessLoc(), stack: 'system');
-    expect(ios, contains('stack: system'));
-    expect(ios, isNot(contains('stack: gvisor')));
   });
 
   test('no routing → full tunnel, process matching off', () {
@@ -423,9 +420,9 @@ dns:
 proxies:
   - {name: a, type: vless, server: 1.2.3.4, port: 443, uuid: u}
 ''';
-    expect(subscriptionDns(clash),
+    expect(parseSubscriptionBody(clash).dns,
         ['https://doh.example.net/dns-query', '9.9.9.9']);
     // Link lists carry no DNS.
-    expect(subscriptionDns('vless://u@h:443?security=none#x'), isEmpty);
+    expect(parseSubscriptionBody('vless://u@h:443?security=none#x').dns, isEmpty);
   });
 }

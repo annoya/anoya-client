@@ -26,14 +26,14 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       (call) async => tmp.path,
     );
-    debugSetDeviceIdentity(const DeviceIdentity(
+    DeviceIdentityStore.debugCache(const DeviceIdentity(
         hwid: 'aaaabbbbccccdddd', os: 'iOS', osVersion: '18.0', model: 'iPhone16,1'));
   });
   tearDown(() {
     messenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'), null);
     tmp.deleteSync(recursive: true);
-    DeviceIdentityStore.forget();
+    DeviceIdentityStore.debugCache(null);
   });
 
   http.Client answering(String body, {int status = 200, Map<String, String> headers = const {}}) =>

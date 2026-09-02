@@ -95,9 +95,8 @@ class DeviceIdentityStore {
     return identity;
   }
 
-  /// Forgets the cached value (tests, and a future "reset identity" action).
-  static void forget() => _cached = null;
-
+  /// Pins (or, with null, forgets) the cached identity so a test does not
+  /// depend on the host it runs on.
   @visibleForTesting
   static void debugCache(DeviceIdentity? identity) => _cached = identity;
 
@@ -147,8 +146,3 @@ class DeviceIdentityStore {
     return m?.group(1) ?? '';
   }
 }
-
-/// Test seam: pins the identity so a test does not depend on the host.
-@visibleForTesting
-void debugSetDeviceIdentity(DeviceIdentity? identity) =>
-    DeviceIdentityStore.debugCache(identity);

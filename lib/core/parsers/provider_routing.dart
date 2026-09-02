@@ -195,7 +195,6 @@ List<RuleList> _clashRuleLists(Object? node) {
       url: '${spec['url'] ?? ''}',
       behavior: '${spec['behavior'] ?? ''}',
       format: spec['format'] == null ? 'yaml' : '${spec['format']}',
-      intervalSeconds: (spec['interval'] as num?)?.toInt() ?? 0,
     );
     if (list.isValid) out.add(list);
   });
