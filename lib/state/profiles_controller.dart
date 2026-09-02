@@ -551,7 +551,10 @@ class ProfilesController extends Notifier<ProfilesState> {
         return;
       }
       final reason = await core.lastDisconnectError();
-      if (reason.isEmpty) return;
+      // The platform can answer after the container is gone — a rebuild, a
+      // test tearing down — and assigning state then throws out of a stream
+      // callback, where nothing catches it.
+      if (!ref.mounted || reason.isEmpty) return;
       Log.e('tunnel stopped on its own', reason);
       state = state.copyWith(
         error: AppError('The tunnel stopped', detail: reason),
