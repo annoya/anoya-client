@@ -95,10 +95,12 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    `client/test/dns_sources_test.dart`.
 9. **Status reaches Dart from the platform thread only.** `onStatus` feeds the
    `vpn/status` EventChannel, and Flutter drops or crashes on a channel message
-   sent from anywhere else. `VPNManager` is not actor-isolated, so a
-   `nonisolated async` method runs on the cooperative pool even when its caller
-   started on `@MainActor` — every publication goes through `publish()`, which
-   hops, and `lastStatus` is touched only on the far side of that hop.
+   sent from anywhere else. `VPNManager` is `@MainActor`: every method, field
+   and callback of it runs on the platform thread because the compiler refuses
+   anything else, and the two places that enter it from a synchronous callback
+   (`NotificationCenter`, the stream handler) do so through
+   `MainActor.assumeIsolated`, which traps rather than races. Do not remove the
+   annotation to "fix" a build error — hop into the actor instead.
 10. **A check never disconnects the tunnel.** The connection check measures and
    reports; it has false negatives (a captive portal, a blocked test host, the
    second after a switch), and acting on one would take a working VPN away
