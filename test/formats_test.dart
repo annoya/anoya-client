@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
+import 'package:vpn_client/core/config_source.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/parsers/share_link.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';
@@ -249,6 +252,39 @@ proxy-providers:
       expect(p.providers.map((e) => e.name), ['main'],
           reason: 'a file lives on the author\'s disk and http can be rewritten');
       expect(p.locations, isEmpty, reason: 'the fetch belongs to the network layer');
+    });
+
+    test('the lists bring servers; the document keeps its DNS and groups', () async {
+      // Groups are resolved against the document's own proxies at parse time,
+      // so the one here spans NL; the list only adds DE.
+      const body = '''
+dns:
+  nameserver:
+    - tls://9.9.9.9
+proxies:
+  - {name: NL, type: vless, server: nl.example, port: 443, uuid: u, tls: true,
+     servername: nl.example, reality-opts: {public-key: PK}}
+proxy-providers:
+  main:
+    type: http
+    url: "https://lists.example/proxies.yaml"
+proxy-groups:
+  - name: Auto
+    type: url-test
+    proxies: [NL]
+    url: https://cp.cloudflare.com
+''';
+      const list = '''
+proxies:
+  - {name: DE, type: vless, server: de.example, port: 443, uuid: u, tls: true,
+     servername: de.example, reality-opts: {public-key: PK}}
+''';
+      final client = MockClient((req) async => http.Response(list, 200));
+      final merged = await withProxyProviders(parseSubscriptionBody(body), client: client);
+      expect(merged.locations.map((l) => l.label), ['NL', 'DE']);
+      expect(merged.dns, ['tls://9.9.9.9'],
+          reason: 'a document with proxy-providers used to lose its resolvers here');
+      expect(merged.groups.map((g) => g.name), ['Auto'], reason: 'and its groups');
     });
   });
 
