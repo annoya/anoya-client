@@ -83,7 +83,45 @@ ShareLink parseShareLink(String raw) {
 
 // --- per-protocol ---
 
-ShareLink _parseVless(String s) {
+/// A `vless://` or `trojan://` link whose payload is base64 rather than a URI.
+///
+/// Neither protocol has a standard base64 form, but panels and older clients
+/// emit two anyway: base64 of the URI body (`uuid@host:port?…#name`), and for
+/// vless the vmess-style base64 JSON. Both are recognised by what a URI body
+/// cannot lack — `@` — and what base64 cannot contain: `@`, `?` and `#`.
+///
+/// Returns the link in URI form (the JSON form is handed to [_parseJsonPayload]
+/// by the caller), or the link unchanged when it is already a URI.
+String _unwrapBase64Uri(String s, String scheme) {
+  final prefix = '$scheme://';
+  final hash = s.indexOf('#');
+  final body = s.substring(prefix.length, hash < 0 ? s.length : hash);
+  if (body.contains('@') || body.contains('?') || body.isEmpty) return s;
+  final decoded = tryDecodeLooseBase64(body);
+  if (decoded == null || !decoded.contains('@')) return s;
+  // The name may sit outside the base64 or inside it; outside wins when both.
+  final fragment = hash < 0 ? '' : s.substring(hash);
+  final inner = decoded.startsWith(prefix) ? decoded.substring(prefix.length) : decoded;
+  return fragment.isNotEmpty && inner.contains('#')
+      ? '$prefix${inner.substring(0, inner.indexOf('#'))}$fragment'
+      : '$prefix$inner$fragment';
+}
+
+/// The vmess-style JSON object behind a base64 payload, or null when the payload
+/// is not that.
+Map<String, dynamic>? _base64Json(String s, String scheme) {
+  final body = s.substring('$scheme://'.length).split('#').first;
+  if (body.contains('@') || body.contains('?') || body.isEmpty) return null;
+  final decoded = tryDecodeLooseBase64(body);
+  if (decoded == null || !decoded.trimLeft().startsWith('{')) return null;
+  final json = jsonDecode(decoded);
+  return json is Map<String, dynamic> ? json : null;
+}
+
+ShareLink _parseVless(String raw) {
+  final json = _base64Json(raw, 'vless');
+  if (json != null) return _parseJsonPayload(raw, json, 'vless');
+  final s = _unwrapBase64Uri(raw, 'vless');
   final u = Uri.parse(s);
   final q = u.queryParameters;
   final security = (q['security'] ?? 'none').toLowerCase();
@@ -124,30 +162,50 @@ ShareLink _parseVless(String s) {
 
 ShareLink _parseVmess(String s) {
   final json = jsonDecode(decodeLooseBase64(s.substring('vmess://'.length))) as Map<String, dynamic>;
+  return _parseJsonPayload(s, json, 'vmess');
+}
+
+/// The base64-JSON payload: vmess's native form, and the one some panels emit
+/// for vless under the same field names (`add`, `port`, `id`, `net`, `tls`,
+/// `sni`, `host`, `path`, `ps`), plus vless's own `flow`, `fp`, `pbk`, `sid`.
+ShareLink _parseJsonPayload(String s, Map<String, dynamic> json, String protocol) {
   String str(String k) => json[k]?.toString() ?? '';
   final net = (str('net').isEmpty ? 'tcp' : str('net')).toLowerCase();
-  final tls = str('tls') == 'tls';
+  // `tls` carries the security name in this form; vmess only ever says "tls",
+  // vless payloads also say "reality" (some under `security` instead).
+  final security = (str('tls').isEmpty ? str('security') : str('tls')).toLowerCase();
+  final tls = security == 'tls' || security == 'reality' || security == 'xtls';
   final proxy = <String, dynamic>{
-    'type': 'vmess',
+    'type': protocol,
     'server': str('add'),
     'port': _int(json['port']),
     'uuid': str('id'),
-    'alterId': _int(json['aid']),
-    'cipher': str('scy').isEmpty ? 'auto' : str('scy'),
+    if (protocol == 'vmess') 'alterId': _int(json['aid']),
+    if (protocol == 'vmess') 'cipher': str('scy').isEmpty ? 'auto' : str('scy'),
     'network': net,
     'udp': true,
     'tls': tls,
   };
+  if (protocol == 'vless') {
+    if (str('flow').isNotEmpty) proxy['flow'] = str('flow');
+    if (str('fp').isNotEmpty) proxy['client-fingerprint'] = str('fp');
+    if (security == 'reality') {
+      proxy['reality-opts'] = {
+        'public-key': str('pbk'),
+        if (str('sid').isNotEmpty) 'short-id': str('sid'),
+      };
+    }
+  }
   final sni = str('sni').isNotEmpty ? str('sni') : str('host');
   if (tls && sni.isNotEmpty) proxy['servername'] = sni;
   applyAlpn(proxy, str('alpn'));
-  // A vmess payload names the same things a URI query does, under its own keys.
+  // The payload names the same things a URI query does, under its own keys.
   final skip = applyTransport(proxy, net, {
     'path': str('path'),
     'host': str('host'),
     'serviceName': str('path'), // grpc service name lives in `path` here
     'headerType': str('type'),
-  }, protocol: 'vmess');
+  }, protocol: protocol);
   if (skip != null) return ShareLink.unsupported(skip);
   final meta = splitFragment(str('ps'));
   return ShareLink.server(locationFor(
@@ -155,7 +213,8 @@ ShareLink _parseVmess(String s) {
       description: meta.description));
 }
 
-ShareLink _parseTrojan(String s) {
+ShareLink _parseTrojan(String raw) {
+  final s = _unwrapBase64Uri(raw, 'trojan');
   final u = Uri.parse(s);
   final q = u.queryParameters;
   final network = (q['type'] ?? 'tcp').toLowerCase();

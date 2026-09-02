@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
@@ -30,8 +31,17 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   DetectedInput? _detected;
   bool _busy = false;
 
+  /// Why the text in the field is not something we can add — shown only after
+  /// the user stops changing it. Recognition is instant; a refusal waits,
+  /// because half a pasted link and a typo look the same to the parser, and a
+  /// chip that calls every unfinished address unusable is noise, not help.
+  String? _verdict;
+  Timer? _verdictTimer;
+  static const _verdictDelay = Duration(milliseconds: 700);
+
   @override
   void dispose() {
+    _verdictTimer?.cancel();
     _input.dispose();
     super.dispose();
   }
@@ -53,10 +63,20 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   /// would hide the one action that helps.
   SubscriptionFormatException? _rejected;
 
-  void _onChanged(String v) => setState(() {
-        _detected = detectInput(v);
-        _rejected = null;
+  void _onChanged(String v) {
+    _verdictTimer?.cancel();
+    setState(() {
+      _detected = detectInput(v);
+      _rejected = null;
+      _verdict = null;
+    });
+    if (_detected == null && v.trim().isNotEmpty) {
+      _verdictTimer = Timer(_verdictDelay, () {
+        if (!mounted || _input.text != v) return;
+        setState(() => _verdict = whyUnusable(v));
       });
+    }
+  }
 
   /// The action returns true when a configuration was actually added; false
   /// means the user backed out (cancelled a picker) — the screen must stay,
@@ -222,6 +242,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                   if (_detected != null) ...[
                     const SizedBox(height: 10),
                     _DetectChip(text: _detected!.label),
+                  ] else if (_verdict != null) ...[
+                    const SizedBox(height: 10),
+                    _DetectChip(text: 'Can’t use this · $_verdict', refused: true),
                   ],
                   const SizedBox(height: 14),
                   // All three buttons take their 48pt height from the theme.
@@ -320,28 +343,39 @@ class _RejectedCard extends StatelessWidget {
   }
 }
 
+/// What the field holds, in one line: a recognised server or subscription on
+/// the primary tint, or — [refused] — why it is neither, on the warning tint.
+/// Same shape either way, so the answer changes colour rather than place.
 class _DetectChip extends StatelessWidget {
-  const _DetectChip({required this.text});
+  const _DetectChip({required this.text, this.refused = false});
   final String text;
+  final bool refused;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final warn = context.vpnColors.connecting;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: cs.primaryContainer.withValues(alpha: 0.45),
+        color: refused
+            ? warn.withValues(alpha: 0.14)
+            : cs.primaryContainer.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.4)),
+        border: Border.all(
+            color: (refused ? warn : cs.primary).withValues(alpha: 0.4)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.check_circle_outline, size: 16, color: cs.primary),
+        Icon(refused ? Icons.error_outline : Icons.check_circle_outline,
+            size: 16, color: refused ? warn : cs.primary),
         const SizedBox(width: 8),
         Flexible(
           child: Text(text,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  fontSize: 12.5, fontWeight: FontWeight.w600, color: cs.onPrimaryContainer)),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: refused ? cs.onSurface : cs.onPrimaryContainer)),
         ),
       ]),
     );

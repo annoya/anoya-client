@@ -567,6 +567,30 @@
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
+      <div style="padding:0 24px">
+        <div class="inp focus"><div class="lb">Link or subscription</div><div class="vl">tuic://a1b2c3d4:pass@h.example:443?…</div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 12px;border-radius:12px;
+             background:color-mix(in srgb, var(--m-warn) 14%, transparent)">
+          <svg class="icon s" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+          <span style="font-size:12.5px;font-weight:600;color:var(--m-ink)">Can’t use this · tuic:// isn’t supported</span>
+        </div>
+        <div class="btn fill dis" style="margin:14px 0 8px">Continue</div>
+        <div class="btn out" style="margin:0 0 18px"><svg class="icon s"><use href="#i-file"/></svg>Open a config file…</div>
+        <div style="display:flex;align-items:center;gap:10px;color:var(--m-mut);font-size:12.5px">
+          <span style="flex:1;height:1px;background:var(--m-line)"></span>or<span style="flex:1;height:1px;background:var(--m-line)"></span>
+        </div>
+        <div class="btn tonal" style="margin:18px 0 0"><svg class="icon s"><use href="#i-org"/></svg>Sign in to your server</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen · detectInput · refused</span><b>Не распознано.</b> Тот же чип 40&nbsp;pt, r12, но на warn-тинте (14%) и со значком предупреждения; «Continue» остаётся задизейбленной. Текст — «Can’t use this · причина», причина одной короткой фразой: <code>tuic:// isn’t supported</code> (схема, которой у нас нет), <code>vless:// link can’t be read</code> (схема наша, ссылка битая), <code>vless over kcp isn’t supported</code> (транспорт), <code>Not an Amnezia subscription key</code> (vpn://, но не ключ подписки), <code>Not a link or subscription</code> (всё остальное). Сама ссылка в чипе не повторяется — она и так в поле. Чип появляется не на каждый символ: если распознать не удалось, вердикт показывается через 700&nbsp;мс после последнего изменения, чтобы не ругаться на недопечатанный адрес; успешное распознавание — сразу, как и раньше.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Sign in</span></div>
       <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri);width:48px;height:48px"><use href="#i-org"/></svg></div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:10px 24px 20px">Your organization’s or personal server</div>
