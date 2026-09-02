@@ -18,31 +18,35 @@ platform="${1:-macos}"; shift || true
 action="${1:-run}"; case "${1:-}" in run|build) shift || true;; *) action="run";; esac
 case "$platform" in macos|ios) ;; *) echo "usage: build.sh [macos|ios] [run|build]"; exit 2;; esac
 
-CORE_DIR="native/mihomocore"
-XCF="$CORE_DIR/MihomoCore.xcframework"
-
-# --- 1. xcframework: rebuild only if missing or older than any Go source ---
-needs_build=0
-if [ ! -d "$XCF" ]; then
-  needs_build=1
-elif [ -n "$(find "$CORE_DIR" -name '*.go' -newer "$XCF" -print -quit 2>/dev/null)" ] \
-  || [ "$CORE_DIR/go.mod" -nt "$XCF" ]; then
-  needs_build=1
-fi
-# macOS builds don't need the iOS slice and vice-versa, but the script builds
-# both slices; the iOS slice is skipped automatically off a Mac without the SDK.
-if [ "$needs_build" = 1 ]; then
-  echo ">> MihomoCore.xcframework is missing or stale — building the Go core"
-  ( cd "$CORE_DIR" && ./build-xcframework.sh )
-else
-  echo ">> MihomoCore.xcframework up to date (skipping Go build)"
-fi
+# --- 1. xcframeworks: rebuild only if missing or older than any Go source ---
+# Both are linked by the Xcode projects and neither is committed. A fresh clone
+# without MihomoCore fails to link, loudly; without Libagw it fails the same
+# way, so both are checked. macOS builds don't need the iOS slice and
+# vice-versa, but the scripts build every slice; iOS is skipped automatically
+# off a Mac without the SDK.
+ensure_xcframework() { # dir name
+  local dir="$1" xcf="$1/$2"
+  if [ ! -d "$xcf" ] \
+    || [ -n "$(find "$dir" -name '*.go' -not -path "$dir/upstream/*" -newer "$xcf" -print -quit 2>/dev/null)" ] \
+    || [ "$dir/go.mod" -nt "$xcf" ]; then
+    echo ">> $2 is missing or stale — building the Go core in $dir"
+    ( cd "$dir" && ./build-xcframework.sh )
+  else
+    echo ">> $2 up to date (skipping Go build)"
+  fi
+}
+ensure_xcframework native/mihomocore MihomoCore.xcframework
+ensure_xcframework native/libagw Libagw.xcframework
 
 # --- 2. iOS only: keep Flutter's "Thin Binary" phase last (breaks the cycle) ---
 if [ "$platform" = ios ]; then
   CP="$(ls -d /opt/homebrew/Cellar/cocoapods/*/libexec 2>/dev/null | head -1 || true)"
   if [ -n "$CP" ]; then
     env GEM_HOME="$CP" GEM_PATH="$CP" ruby ios/scripts/fix_build_phase_cycle.rb 2>/dev/null | grep -v Ignoring || true
+  else
+    # Said out loud: skipped silently, the "Cycle inside Runner" error comes
+    # back with nothing pointing at why.
+    echo ">> warning: CocoaPods not found under Homebrew; skipping the build-phase cycle fix" >&2
   fi
 fi
 

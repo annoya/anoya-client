@@ -2,8 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Sandboxed: host co-owns the App Group container with the extension
-	     (logs/stats) without TCC prompts. macOS tunnel uses the NE. -->
+	<!-- Sandboxed. The macOS tunnel is the Network Extension, so the host needs
+	     no process-spawning exceptions. -->
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
 	<key>com.apple.security.network.client</key>
@@ -16,7 +16,8 @@
 	<array>
 		<string>packet-tunnel-provider</string>
 	</array>
-	<!-- Shared container with the extension (logs + stats). -->
+	<!-- App Group container shared with the extension: the engine's home (geo
+	     databases, rule lists). Logs travel over provider IPC, not this. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.org.annoya.test</string>

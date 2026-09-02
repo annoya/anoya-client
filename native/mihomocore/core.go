@@ -1,14 +1,13 @@
-// Package main builds a C archive that wraps the mihomo engine for use inside
-// the macOS Network Extension. It exposes a tiny C API:
-//
-//	MihomoVersion() -> version string
-//	MihomoStart(fd, configJSON) -> "" on success or an error message
-//	MihomoStop()
+// Package main builds a C archive that wraps the mihomo engine for the macOS
+// and iOS Network Extension. The exported Mihomo* functions are the C surface,
+// one per request the Swift side makes; every returned string is freed by the
+// caller through FreeCString.
 //
 // The extension passes the utun file descriptor (from NEPacketTunnelFlow) and a
-// mihomo config (with a TUN inbound bound to that fd). This file is only the C
-// surface; the engine wiring lives in the engine package, shared with the
-// Android bindings in ./mobile.
+// mihomo YAML config (with a TUN inbound bound to that fd). This file is only
+// the C surface; the engine wiring, and the mutex that serialises state
+// changes, live in the engine package, shared with the Android bindings in
+// ./mobile.
 package main
 
 /*
@@ -18,13 +17,10 @@ import "C"
 
 import (
 	"fmt"
-	"sync"
 	"unsafe"
 
 	"mihomocore/engine"
 )
-
-var mu sync.Mutex
 
 func main() {} // required for c-archive
 
@@ -39,8 +35,6 @@ func MihomoVersion() *C.char {
 //
 //export MihomoSetHomeDir
 func MihomoSetHomeDir(path *C.char) {
-	mu.Lock()
-	defer mu.Unlock()
 	engine.SetHomeDir(C.GoString(path))
 }
 
@@ -50,15 +44,11 @@ func MihomoSetHomeDir(path *C.char) {
 //
 //export MihomoSetLogLevel
 func MihomoSetLogLevel(level *C.char) {
-	mu.Lock()
-	defer mu.Unlock()
 	engine.SetLogLevel(C.GoString(level))
 }
 
 //export MihomoStart
 func MihomoStart(fd C.int, configJSON *C.char) *C.char {
-	mu.Lock()
-	defer mu.Unlock()
 	if err := engine.Start(int(fd), C.GoString(configJSON)); err != nil {
 		return C.CString(err.Error())
 	}
@@ -72,8 +62,6 @@ func MihomoStart(fd C.int, configJSON *C.char) *C.char {
 //
 //export MihomoReload
 func MihomoReload(fd C.int, configJSON *C.char) *C.char {
-	mu.Lock()
-	defer mu.Unlock()
 	if err := engine.Reload(int(fd), C.GoString(configJSON)); err != nil {
 		return C.CString(err.Error())
 	}
@@ -82,8 +70,6 @@ func MihomoReload(fd C.int, configJSON *C.char) *C.char {
 
 //export MihomoStop
 func MihomoStop() {
-	mu.Lock()
-	defer mu.Unlock()
 	engine.Stop()
 }
 
@@ -109,10 +95,6 @@ func MihomoProxyBytes(name *C.char) *C.char {
 // pair because the extension speaks to the app in strings anyway, and a delay
 // of 0 is indistinguishable from a failure otherwise.
 //
-// Not holding `mu`: the call blocks for as long as the timeout allows, and the
-// mutex serialises start/stop — a probe that is waiting for a dead server must
-// not stop the user from disconnecting it.
-//
 //export MihomoURLTest
 func MihomoURLTest(name *C.char, url *C.char, timeoutMs C.int) *C.char {
 	delay, err := engine.URLTest(C.GoString(name), C.GoString(url), int(timeoutMs))
@@ -129,7 +111,5 @@ func MihomoURLTest(name *C.char, url *C.char, timeoutMs C.int) *C.char {
 //
 //export MihomoGroupMember
 func MihomoGroupMember(group *C.char) *C.char {
-	mu.Lock()
-	defer mu.Unlock()
 	return C.CString(engine.GroupMember(C.GoString(group)))
 }

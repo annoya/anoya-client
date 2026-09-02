@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Build the mihomo Go core as a macOS .xcframework (static c-archive) for the
-# Network Extension to link. Universal (arm64 + x86_64) by default; set
-# UNIVERSAL=0 for an arm64-only library.
+# Build the mihomo Go core as an .xcframework (static c-archive) with macOS,
+# iOS and iOS-simulator slices for the Network Extension to link. The macOS
+# slice is universal (arm64 + x86_64) by default; set UNIVERSAL=0 for arm64 only.
 #
 # The macOS slices pin -mmacosx-version-min explicitly, exactly as the iOS ones
 # do. Without it the c-archive inherits the host SDK's default (macOS 26 on this
@@ -27,18 +27,24 @@ mkdir -p "$OUT/arm64" "$OUT/headers"
 
 echo ">> building darwin/arm64 c-archive"
 # with_gvisor: include the gVisor TUN network stack (required for tun mode).
+# -trimpath and -s -w as libagw does: no DWARF and no absolute build paths in
+# the extension binary, which on iOS runs under the tightest memory cap.
 CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 \
   CC="clang -arch arm64 -mmacosx-version-min=$MACOS_MIN" \
-  go build -tags with_gvisor -buildmode=c-archive -o "$OUT/arm64/libmihomocore.a" .
+  go build -tags with_gvisor -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/arm64/libmihomocore.a" .
 cp "$OUT/arm64/libmihomocore.h" "$OUT/headers/mihomocore.h"
 
-# Clang module map so Swift can `import MihomoCore`.
-cat > "$OUT/headers/module.modulemap" <<'MAP'
+# Clang module map so Swift can `import MihomoCore`. One function, one text:
+# three slices used to carry three copies of it.
+modulemap() {
+  cat > "$1/module.modulemap" <<'MAP'
 module MihomoCore {
     header "mihomocore.h"
     export *
 }
 MAP
+}
+modulemap "$OUT/headers"
 
 LIB="$OUT/arm64/libmihomocore.a"
 if [ "${UNIVERSAL:-1}" = "1" ]; then
@@ -47,7 +53,7 @@ if [ "${UNIVERSAL:-1}" = "1" ]; then
   CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 \
     SDKROOT="$(xcrun --sdk macosx --show-sdk-path)" \
     CC="clang -arch x86_64 -mmacosx-version-min=$MACOS_MIN" \
-    go build -tags with_gvisor -buildmode=c-archive -o "$OUT/amd64/libmihomocore.a" .
+    go build -tags with_gvisor -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/amd64/libmihomocore.a" .
   lipo -create "$OUT/arm64/libmihomocore.a" "$OUT/amd64/libmihomocore.a" \
     -output "$OUT/universal/libmihomocore.a"
   LIB="$OUT/universal/libmihomocore.a"
@@ -67,14 +73,9 @@ if [ "${IOS:-1}" = "1" ] && xcrun --sdk iphoneos --show-sdk-path >/dev/null 2>&1
   CGO_ENABLED=1 GOOS=ios GOARCH=arm64 \
     SDKROOT="$IOS_SDK" \
     CC="$(xcrun --sdk iphoneos --find clang) -arch arm64 -isysroot $IOS_SDK -miphoneos-version-min=15.0" \
-    go build -tags with_gvisor -buildmode=c-archive -o "$OUT/ios-arm64/libmihomocore.a" .
+    go build -tags with_gvisor -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/ios-arm64/libmihomocore.a" .
   cp "$OUT/ios-arm64/libmihomocore.h" "$OUT/ios-headers/mihomocore.h"
-  cat > "$OUT/ios-headers/module.modulemap" <<'MAP'
-module MihomoCore {
-    header "mihomocore.h"
-    export *
-}
-MAP
+  modulemap "$OUT/ios-headers"
   XCARGS+=(-library "$OUT/ios-arm64/libmihomocore.a" -headers "$OUT/ios-headers")
 else
   echo ">> skipping iOS slice (no iOS SDK or IOS=0)"
@@ -89,14 +90,9 @@ if [ "${IOS:-1}" = "1" ] && xcrun --sdk iphonesimulator --show-sdk-path >/dev/nu
   CGO_ENABLED=1 GOOS=ios GOARCH=arm64 \
     SDKROOT="$SIM_SDK" \
     CC="$(xcrun --sdk iphonesimulator --find clang) -arch arm64 -isysroot $SIM_SDK -target arm64-apple-ios15.0-simulator" \
-    go build -tags with_gvisor -buildmode=c-archive -o "$OUT/ios-sim-arm64/libmihomocore.a" .
+    go build -tags with_gvisor -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/ios-sim-arm64/libmihomocore.a" .
   cp "$OUT/ios-sim-arm64/libmihomocore.h" "$OUT/ios-sim-headers/mihomocore.h"
-  cat > "$OUT/ios-sim-headers/module.modulemap" <<'MAP'
-module MihomoCore {
-    header "mihomocore.h"
-    export *
-}
-MAP
+  modulemap "$OUT/ios-sim-headers"
   XCARGS+=(-library "$OUT/ios-sim-arm64/libmihomocore.a" -headers "$OUT/ios-sim-headers")
 else
   echo ">> skipping iOS simulator slice (no simulator SDK or IOS=0)"

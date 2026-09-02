@@ -34,6 +34,8 @@ func Version() string {
 // location) and the process-wide policy the engine runs under. Must be called
 // before Start.
 func SetHomeDir(path string) {
+	mu.Lock()
+	defer mu.Unlock()
 	if path != "" {
 		constant.SetHomeDir(path)
 	}
@@ -68,12 +70,25 @@ func configureEngineGlobals() {
 // turning logging off would not take effect until the next connect — while the
 // engine kept writing to its log file the whole time.
 func SetLogLevel(level string) {
+	mu.Lock()
+	defer mu.Unlock()
 	if l, ok := log.LogLevelMapping[strings.ToLower(level)]; ok {
 		log.SetLevel(l)
 	}
 }
 
+// mu serialises the calls that change the engine's state — start, reload,
+// stop, home dir, log level — for every host: the C archive on Apple and the
+// gomobile binding on Android. It lives here rather than in either shim so the
+// two cannot drift; the Android side used to rely on its caller's executor
+// alone. Probes (URLTest, ProxyBytes, GroupMember) do not take it: they can
+// block for as long as a dead server keeps them waiting, and a probe must not
+// stop the user from disconnecting.
+var mu sync.Mutex
+
 func Start(fd int, configYAML string) error {
+	mu.Lock()
+	defer mu.Unlock()
 	_, err := applyConfig(fd, configYAML)
 	return err
 }
@@ -92,6 +107,8 @@ func Start(fd int, configYAML string) error {
 // that would take priority over the detector and go stale the moment the machine
 // changes network.
 func Reload(fd int, configYAML string) error {
+	mu.Lock()
+	defer mu.Unlock()
 	cfg, err := applyConfig(fd, configYAML)
 	if err != nil {
 		return err
@@ -122,6 +139,11 @@ func closeTrackedConnections() int {
 }
 
 func applyConfig(fd int, configYAML string) (*config.Config, error) {
+	// Idempotent, and here rather than only in SetHomeDir: invariant 3 (both
+	// address families carried) hangs on the IPv6 check being disabled, and a
+	// host that forgot to set the home dir first must not get a different
+	// engine.
+	configureEngineGlobals()
 	if fd <= 0 {
 		return nil, fmt.Errorf("invalid tun fd %d", fd)
 	}
@@ -173,8 +195,10 @@ func sanitizeConfigError(err error) string {
 		msg = msg[:i]
 	}
 	msg = quotedText.ReplaceAllString(msg, "'<redacted>'")
-	if len(msg) > maxErrorChars {
-		msg = msg[:maxErrorChars] + "…"
+	// Cut in runes: a yaml error quotes the document, and slicing bytes could
+	// split a multibyte character and hand the app an invalid string.
+	if r := []rune(msg); len(r) > maxErrorChars {
+		msg = string(r[:maxErrorChars]) + "…"
 	}
 	return msg
 }
@@ -218,6 +242,8 @@ func proxyDialsTCP(proxy constant.Proxy) bool {
 }
 
 func Stop() {
+	mu.Lock()
+	defer mu.Unlock()
 	executor.Shutdown()
 	// Shutdown closes the TUN listener but leaves LastTunConf populated, and
 	// re-creation is skipped whenever the new conf compares equal — our tun
