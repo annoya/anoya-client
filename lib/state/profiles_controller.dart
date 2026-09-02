@@ -382,7 +382,10 @@ class ProfilesController extends Notifier<ProfilesState> {
     await _ready;
     final key = parseAmneziaVpnKey(text);
     if (key == null) {
-      throw const FormatException('This is not a subscription key.');
+      // Not a FormatException: describeError would then talk about share
+      // links, and the user typed something that looked like a key.
+      throw const AppErrorException(AppError('This isn’t a subscription key',
+          detail: 'Expected a vpn:// key from your subscription.'));
     }
     final refusal = amneziaKeyUnsupported(key);
     if (refusal != null) {

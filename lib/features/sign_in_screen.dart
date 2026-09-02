@@ -62,12 +62,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       });
 
   Future<void> _ssoSignIn() => _run(() async {
+        // Already worded for the user: a FormatException here would be read by
+        // describeError as "this doesn't look like a link".
         if (_server.text.trim().isEmpty) {
-          throw const FormatException('Enter the server address first.');
+          throw const AppErrorException(AppError('Enter the server address first'));
         }
         final cfg = await _ctrl.authConfig(_server.text);
         if (cfg.providers.isEmpty) {
-          throw const FormatException('This server has no SSO providers.');
+          throw const AppErrorException(AppError('This server has no SSO providers',
+              detail: 'Sign in with a username and password instead.'));
         }
         final provider =
             cfg.providers.length == 1 ? cfg.providers.first : await _pickProvider(cfg.providers);

@@ -32,6 +32,16 @@ void main() {
       }
     });
 
+    test('a message already worded for the user arrives untouched', () {
+      // The sign-in and add screens throw these for their own guard
+      // conditions; a FormatException in their place used to come out as
+      // "this doesn't look like a link".
+      const worded = AppError('Enter the server address first', detail: 'Then try again.');
+      final described = describeError(const AppErrorException(worded));
+      expect(described.title, worded.title);
+      expect(described.detail, worded.detail);
+    });
+
     test('names the subject so the user knows what to fix', () {
       final e = describeError(const SocketException('nope'), subject: 'de1.example.com');
       expect(e.detail, contains('de1.example.com'));
