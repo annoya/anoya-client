@@ -139,6 +139,9 @@ AppError describeError(Object error, {String? subject}) {
     ApiException(status: >= 500) =>
       err('The server returned an error', 'Nothing to fix on this side — try again in a few minutes.'),
     ApiException(message: final m) => err('The server refused the request', m),
+    // A parse failure, and only that. Anything that already has words for the
+    // user throws [AppErrorException]; a FormatException carrying a sentence
+    // would land here and be replaced by this one.
     FormatException() => err(
         'This doesn’t look like a link we know',
         'Expected vless://, vmess://, trojan://, ss:// or a subscription URL.',
