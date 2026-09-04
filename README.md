@@ -54,6 +54,26 @@ Sign in with the **server address** (e.g. `https://…:8443`), **username**, and
 **password** of a user from the management panel — or **Sign in with SSO** if the
 server has an OIDC provider configured.
 
+### Windows
+
+The tunnel is a Windows service (`native/mihomocore/cmd/tunnel-service`)
+hosting the same engine; the app talks to it over a named pipe. Building the
+app needs Windows and Visual Studio's C++ workload; the service cross-compiles
+from anywhere:
+
+```sh
+./scripts/build-tunnel-service.sh        # build/windows/service/{tunnel-service.exe,wintun.dll}
+flutter build windows                    # on Windows
+ISCC.exe windows\installer\AnnoyaTest.iss /DAppVersion=1.1.0   # the setup .exe
+```
+
+The installer registers the service (`AnnoyaTunnel`, runs as SYSTEM, starts
+at boot) and grants Users write access to `%ProgramData%\AnnoyaTest\engine`,
+where the app downloads the geo databases and the service writes its logs.
+Without the service installed the app runs, shows the tunnel as disconnected and
+knocks on the pipe every few seconds; `tunnel-service.exe -console` in an
+elevated prompt is the same service in the foreground, for development.
+
 ## Requirements
 
 - Flutter 3.38+, Xcode.
