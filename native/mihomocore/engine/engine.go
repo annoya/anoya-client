@@ -86,10 +86,26 @@ func SetLogLevel(level string) {
 // stop the user from disconnecting.
 var mu sync.Mutex
 
+// Start brings the engine up on a tun the host created and handed over as
+// [fd] — the Network Extension's utun, the VpnService's descriptor.
 func Start(fd int, configYAML string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	_, err := applyConfig(fd, configYAML)
+	_, err := applyConfig(fd, false, configYAML)
+	return err
+}
+
+// StartOwnDevice brings the engine up on a tun it creates itself, from the
+// config's `tun` section: the Wintun adapter named in `device`, with the routes
+// `auto-route` asks for. The Windows service has no host-owned descriptor to
+// hand over — creating the adapter *is* the privileged act, and the service
+// exists to hold that privilege. The TUN listener check at the end applies the
+// same way: an adapter that failed to come up is a rejected config, not a
+// tunnel.
+func StartOwnDevice(configYAML string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	_, err := applyConfig(0, true, configYAML)
 	return err
 }
 
@@ -109,7 +125,21 @@ func Start(fd int, configYAML string) error {
 func Reload(fd int, configYAML string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	cfg, err := applyConfig(fd, configYAML)
+	return reload(fd, false, configYAML)
+}
+
+// ReloadOwnDevice is [Reload] for an engine started with [StartOwnDevice]. The
+// tun section is byte-identical between our rendered configs, so mihomo keeps
+// the adapter and its routes across the swap — the same property that makes a
+// hot switch leak-free on the platforms where the host owns the device.
+func ReloadOwnDevice(configYAML string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	return reload(0, true, configYAML)
+}
+
+func reload(fd int, ownDevice bool, configYAML string) error {
+	cfg, err := applyConfig(fd, ownDevice, configYAML)
 	if err != nil {
 		return err
 	}
@@ -138,13 +168,16 @@ func closeTrackedConnections() int {
 	return closed
 }
 
-func applyConfig(fd int, configYAML string) (*config.Config, error) {
+// applyConfig parses and applies one config. With [ownDevice] the engine
+// creates the tun from the config's own `tun` section; otherwise it is bound to
+// [fd], which the host opened and must be a real descriptor.
+func applyConfig(fd int, ownDevice bool, configYAML string) (*config.Config, error) {
 	// Idempotent, and here rather than only in SetHomeDir: invariant 3 (both
 	// address families carried) hangs on the IPv6 check being disabled, and a
 	// host that forgot to set the home dir first must not get a different
 	// engine.
 	configureEngineGlobals()
-	if fd <= 0 {
+	if !ownDevice && fd <= 0 {
 		return nil, fmt.Errorf("invalid tun fd %d", fd)
 	}
 	if configYAML == "" {
@@ -154,10 +187,12 @@ func applyConfig(fd int, configYAML string) (*config.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse config: %s", sanitizeConfigError(err))
 	}
-	// Bind the TUN inbound to the fd provided by the Network Extension instead
-	// of letting mihomo create its own interface.
+	// Bind the TUN inbound to the fd provided by the host instead of letting
+	// mihomo create its own interface — except where creating it is the point.
 	cfg.General.Tun.Enable = true
-	cfg.General.Tun.FileDescriptor = fd
+	if !ownDevice {
+		cfg.General.Tun.FileDescriptor = fd
+	}
 	executor.ApplyConfig(cfg, true)
 	// ApplyConfig returns nothing and logs every apply-stage failure instead of
 	// reporting it, so "the config was rejected" only ever meant "it did not
