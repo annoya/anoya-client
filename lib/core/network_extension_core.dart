@@ -3,6 +3,8 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/services.dart';
 
+import 'app_version.dart';
+import 'control_transport.dart';
 import 'dns_plan.dart';
 import 'log.dart';
 import 'mihomo_tun_config.dart';
@@ -11,32 +13,42 @@ import 'on_demand.dart';
 import 'rule_list_store.dart';
 import 'vpn_core.dart';
 
-/// NetworkExtensionCore drives a real system VPN via the macOS/iOS
-/// NEPacketTunnelProvider extension. The mihomo engine runs inside the
-/// extension (MihomoCore.xcframework); this class only sends the rendered
-/// config and start/stop commands over a MethodChannel, and reflects status
-/// from an EventChannel. Screens and state see only [VpnCore], which is what
-/// the tests replace with a fake.
+/// NetworkExtensionCore drives the real tunnel, which always runs in another
+/// process: the NEPacketTunnelProvider extension on macOS and iOS, the
+/// VpnService in `:tunnel` on Android, the `AnnoyaTunnel` service on Windows.
+/// The mihomo engine lives over there; this class only sends the rendered
+/// config and start/stop commands and reflects the status that comes back.
+/// Screens and state see only [VpnCore], which is what the tests replace with
+/// a fake.
+///
+/// The [ControlTransport] is the one platform difference: channels the runner
+/// registers, or the named pipe to the service. Everything said over it is the
+/// same on every platform.
 ///
 /// Note: the connect/disconnect path deliberately does NOT read the shared log
 /// container — doing so from the host triggers a macOS "access data from other
 /// apps" prompt. Logs are viewed on demand in the Logs screen instead.
 class NetworkExtensionCore implements VpnCore {
-  NetworkExtensionCore() {
+  NetworkExtensionCore({ControlTransport? transport}) {
+    if (transport != null) _transport = transport;
     // distinct(): NEVPNStatusDidChange can fire repeatedly for one transition
     // (and several NE statuses map to the same VpnStatus), which would churn
     // the UI on every flap.
-    _statusStream = _statusEvents
-        .receiveBroadcastStream()
-        .map((e) => _mapStatus(e as String?))
+    _statusStream = _transport.statusEvents
+        .map(_mapStatus)
         .distinct()
         .asBroadcastStream();
     // Lives as long as the app: the core is a process-lifetime provider.
     _statusStream.listen((s) => _status = s);
   }
 
-  static const _control = MethodChannel('vpn/control');
-  static const _statusEvents = EventChannel('vpn/status');
+  /// One transport per process, shared with the static lookups below (geo
+  /// directory, device info, group member) that run before or beside the
+  /// core. The core's constructor installs the platform's; until then, and in
+  /// tests, it is the channels — which throw MissingPluginException where there
+  /// is no platform side, and every caller already reads that as "unavailable".
+  static ControlTransport _transport = ChannelTransport();
+  static ControlTransport get _control => _transport;
 
   late final Stream<VpnStatus> _statusStream;
   NormConfig? _config;
@@ -65,7 +77,7 @@ class NetworkExtensionCore implements VpnCore {
         routing == null ? 'none (full tunnel)' : '${routing.mode}, ${routing.rules.length} rule(s)';
     Log.i('NE connect: selection=$locationId routing=$routingDesc');
     try {
-      await _control.invokeMethod<void>('start', {
+      await _control.invoke<void>('start', {
         'config': yaml,
         'log_enabled': Log.enabled,
       });
@@ -80,7 +92,7 @@ class NetworkExtensionCore implements VpnCore {
     final rendered = await _render(config, locationId);
     if (rendered == null) throw StateError('unknown location $locationId');
     Log.i('NE hot reload: location=$locationId');
-    await _control.invokeMethod<void>('reload', {
+    await _control.invoke<void>('reload', {
       ...rendered,
       'log_enabled': Log.enabled,
     });
@@ -89,7 +101,7 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<void> disconnect() async {
     try {
-      await _control.invokeMethod<void>('stop');
+      await _control.invoke<void>('stop');
     } on PlatformException catch (e) {
       Log.e('NE stop failed', e.message ?? e.code);
     } on MissingPluginException {
@@ -105,7 +117,7 @@ class NetworkExtensionCore implements VpnCore {
   }) async {
     final rendered = await _render(config, locationId);
     try {
-      final armed = await _control.invokeMethod<bool>('set_on_demand', {
+      final armed = await _control.invoke<bool>('set_on_demand', {
         'enabled': prefs.armed,
         'rules': prefs.rules.map((r) => r.toChannel()).toList(),
         'disconnect_on_sleep': prefs.disconnectOnSleep,
@@ -125,7 +137,7 @@ class NetworkExtensionCore implements VpnCore {
     final rendered = await _render(config, locationId);
     if (rendered == null) return;
     try {
-      await _control.invokeMethod<void>('sync_config', {
+      await _control.invoke<void>('sync_config', {
         ...rendered,
         'log_enabled': Log.enabled,
       });
@@ -141,7 +153,7 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<void> removeSystemProfile() async {
     try {
-      await _control.invokeMethod<void>('remove_profile');
+      await _control.invoke<void>('remove_profile');
       Log.i('system VPN profile removed');
     } on PlatformException catch (e) {
       Log.e('NE remove_profile failed', e.message ?? e.code);
@@ -207,7 +219,11 @@ class NetworkExtensionCore implements VpnCore {
                 : config.defaultDns,
             listPaths: listPaths,
             collectLogs: Log.enabled,
-            autoDetectInterface: !Platform.isAndroid),
+            autoDetectInterface: !Platform.isAndroid,
+            // The Windows service has no host-opened device to hand the engine;
+            // it creates the adapter itself, named after the app so the user
+            // recognises it in the network list.
+            device: Platform.isWindows ? kAppName : null),
       };
     } catch (e) {
       Log.e('config render failed', '$e');
@@ -224,7 +240,7 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<String> urlTest(String url, Duration timeout) async {
     try {
-      final res = await _control.invokeMethod<String>('url_test', {
+      final res = await _control.invoke<String>('url_test', {
         'url': url,
         'timeout_ms': timeout.inMilliseconds,
       });
@@ -244,7 +260,7 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<String> proxyBytes() async {
     try {
-      return await _control.invokeMethod<String>('proxy_bytes') ?? '0:0';
+      return await _control.invoke<String>('proxy_bytes') ?? '0:0';
     } on PlatformException catch (e) {
       Log.e('NE proxy_bytes failed', e.message ?? e.code);
       return '0:0';
@@ -263,7 +279,7 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<DateTime?> connectedSince() async {
     try {
-      final epoch = await _control.invokeMethod<double>('connected_since');
+      final epoch = await _control.invoke<double>('connected_since');
       if (epoch == null || epoch <= 0) return null;
       return DateTime.fromMillisecondsSinceEpoch((epoch * 1000).round());
     } on PlatformException catch (e) {
@@ -283,7 +299,7 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<String> lastDisconnectError() async {
     try {
-      return await _control.invokeMethod<String>('disconnect_error') ?? '';
+      return await _control.invoke<String>('disconnect_error') ?? '';
     } on PlatformException catch (e) {
       Log.e('NE disconnect_error failed', e.message ?? e.code);
       return '';
@@ -300,7 +316,7 @@ class NetworkExtensionCore implements VpnCore {
   static Future<String> groupMember(String group) async {
     try {
       final res = await _control
-          .invokeMethod<String>('group_member', {'group': group});
+          .invoke<String>('group_member', {'group': group});
       return res ?? '';
     } on PlatformException catch (e) {
       Log.e('NE group_member failed', e.message ?? e.code);
@@ -314,7 +330,12 @@ class NetworkExtensionCore implements VpnCore {
   /// there is no platform side (unsupported host, or tests).
   static Future<Map<String, String>?> deviceInfo() async {
     try {
-      final info = await _control.invokeMethod<Map<dynamic, dynamic>>('device_info');
+      // Windows has no runner of its own to ask; what the Dart runtime knows
+      // is what the panel gets.
+      if (Platform.isWindows) {
+        return {'os': 'Windows', 'version': Platform.operatingSystemVersion, 'model': ''};
+      }
+      final info = await _control.invoke<Map<dynamic, dynamic>>('device_info');
       if (info == null) return null;
       return info.map((k, v) => MapEntry('$k', '$v'));
     } on PlatformException catch (e) {
@@ -331,7 +352,7 @@ class NetworkExtensionCore implements VpnCore {
   /// group container (then geo rules are unavailable).
   static Future<String?> sharedDir() async {
     try {
-      return await _control.invokeMethod<String>('shared_dir');
+      return await _control.invoke<String>('shared_dir');
     } on PlatformException catch (e) {
       Log.e('NE shared_dir failed', e.message ?? e.code);
       return null;

@@ -40,6 +40,7 @@ dependencies:
   flutter_svg: ^2.0.10    # brand glyphs in the routing service catalog
   url_launcher: ^6.3.2
   ffi: ^2.2.0              # the Amnezia gateway SDK is a C ABI (native/libagw)
+  win32: ^5.15.0           # the named pipe to the Windows tunnel service
   cryptography: ^2.9.0
 
 dev_dependencies:

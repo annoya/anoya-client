@@ -425,4 +425,31 @@ proxies:
     // Link lists carry no DNS.
     expect(parseSubscriptionBody('vless://u@h:443?security=none#x').dns, isEmpty);
   });
+
+  group('an engine-owned device', () {
+    // The Windows service has no host to open the TUN: the engine creates the
+    // adapter and routes it. Everywhere else the host does both and the engine
+    // must touch neither.
+    Location loc() => parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
+
+    test('is named, addressed and routed by the engine', () {
+      final tun = (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest')) as YamlMap)['tun'] as YamlMap;
+      expect(tun['device'], 'AnnoyaTest');
+      expect(tun['auto-route'], isTrue);
+      expect(tun['auto-detect-interface'], isTrue);
+      expect(tun['inet4-address'], [kTunInet4Address]);
+      expect(tun['inet6-address'], [kTunInet6Address]);
+      expect(tun['stack'], 'mixed');
+      expect(tun['dns-hijack'], ['any:53']);
+    });
+
+    test('a host-owned device keeps the engine out of routing', () {
+      final tun = (loadYaml(mihomoTunConfigYaml(loc())) as YamlMap)['tun'] as YamlMap;
+      expect(tun['auto-route'], isFalse);
+      expect(tun.containsKey('device'), isFalse);
+      expect(tun.containsKey('inet4-address'), isFalse, reason: 'the host assigns it');
+      expect(tun['stack'], 'gvisor');
+    });
+  });
+
 }

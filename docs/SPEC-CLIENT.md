@@ -139,8 +139,10 @@ Screens and state never talk to the platform directly; they go through
 | `status`, `statusStream()`, `statsStream()` | state and telemetry |
 | `engineVersion()` | diagnostics |
 
-`NetworkExtensionCore` implements it for macOS, iOS and Android — the class
-only speaks the platform channel, and all three natives answer the same
+`NetworkExtensionCore` implements it for macOS, iOS, Android and Windows — the class
+only speaks one control vocabulary, over the platform channels the runners
+register or, on Windows, over a named pipe to the tunnel service
+(`client/native/mihomocore/service`), and all four natives answer the same
 contract. Config translation (bundle → mihomo YAML) lives entirely inside the
 core implementation and is unit-tested
 (`client/lib/core/mihomo_tun_config.dart`). Other platforms throw

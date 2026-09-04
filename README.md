@@ -6,9 +6,10 @@ Cross-platform VPN client. One Flutter/Dart UI drives both macOS and iOS.
 
 The engine is mihomo. Screens and state reach it through the **`VpnCore`**
 boundary (`lib/core/vpn_core.dart`), which tests replace with a fake tunnel.
-On macOS/iOS the implementation is **`NetworkExtensionCore`**
-(`lib/core/network_extension_core.dart`): a real system-wide VPN via a
-**`NEPacketTunnelProvider`** extension. The mihomo engine is compiled as a Go
+The implementation is **`NetworkExtensionCore`**
+(`lib/core/network_extension_core.dart`); on macOS/iOS it drives a real
+system-wide VPN via a **`NEPacketTunnelProvider`** extension, on Windows the
+`AnnoyaTunnel` service over a named pipe. The mihomo engine is compiled as a Go
 c-archive (`MihomoCore.xcframework`) and linked into the extension; Dart only
 renders the mihomo TUN config and sends start/stop over a MethodChannel.
 

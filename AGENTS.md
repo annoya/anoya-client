@@ -205,9 +205,11 @@ The engine is mihomo. The state layer reaches it through `VpnCore`
 (`client/lib/core/vpn_core.dart`), whose one real implementation is
 `NetworkExtensionCore`: on macOS and iOS a `NEPacketTunnelProvider` with the
 engine linked in as a Go c-archive, on Android a `VpnService` with the engine
-in-process. Dart renders the mihomo config
-(`client/lib/core/mihomo_tun_config.dart`) and sends commands over a
-MethodChannel; tests substitute a fake `VpnCore`. Swift shared by both platforms lives once
+in-process, on Windows a service (`client/native/mihomocore/cmd/tunnel-service`)
+hosting the engine behind a named pipe. Dart renders the mihomo config
+(`client/lib/core/mihomo_tun_config.dart`) and sends the same commands over a
+`ControlTransport` — platform channels, or the pipe; tests substitute a fake
+`VpnCore`. Swift shared by both platforms lives once
 in `client/shared/apple/` and is symlinked into `macos/` and `ios/`.
 
 State is Riverpod; `ProfilesController` owns the configuration list, the active
