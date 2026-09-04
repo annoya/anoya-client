@@ -7,16 +7,21 @@ import '../core/app_prefs.dart';
 import '../core/routing_prefs.dart';
 import '../core/log.dart';
 import '../core/network_extension_core.dart';
+import '../core/pipe_transport.dart';
 import '../core/vpn_core.dart';
+import '../core/win_pipe_link.dart';
 import 'ready_gate.dart';
 
-/// The VPN core. macOS/iOS drive the system Network Extension; Android drives
-/// a VpnService with the engine in-process. Both speak the same "vpn/control"
-/// channel contract, so one Dart class serves all three — the platform
-/// difference lives entirely on the native side.
+/// The VPN core. macOS/iOS drive the system Network Extension, Android a
+/// VpnService in its own process, Windows a service behind a named pipe. All
+/// speak the same control vocabulary, so one Dart class serves the four — the
+/// platform difference is the transport and what sits at the far end of it.
 final vpnCoreProvider = Provider<VpnCore>((_) {
   if (Platform.isMacOS || Platform.isIOS || Platform.isAndroid) {
     return NetworkExtensionCore();
+  }
+  if (Platform.isWindows) {
+    return NetworkExtensionCore(transport: PipeTransport(WinPipeLink.new));
   }
   throw UnsupportedError('No VPN core for this platform yet');
 });

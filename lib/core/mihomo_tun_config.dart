@@ -25,8 +25,13 @@ import 'norm_config.dart';
 /// config apply with a 20 s timeout per file, then fails by only logging —
 /// leaving a rule that matches nothing at all.
 ///
-/// [stack] is the mihomo TUN network stack — "gvisor" on both macOS and iOS
-/// (fully userspace; the only stack that works inside the NE sandbox).
+/// The TUN device is the host's unless [device] is given: on Apple and
+/// Android the extension or VpnService opens it and hands the engine a
+/// descriptor, so the engine must not route or address anything. On Windows the
+/// service has no such host — the engine creates the adapter named [device],
+/// gives it the tunnel's addresses and installs the default routes itself
+/// (`auto-route`); the `mixed` stack there is the system's TCP with gvisor for
+/// UDP, where gvisor alone is the only stack the NE sandbox permits.
 ///
 /// Supports vless / vmess / trojan / ss / hysteria2. The selected location's `proxy` is
 /// either the self-hosted vless+reality shape (custom `reality` key) or a
@@ -42,6 +47,7 @@ String mihomoTunConfigYaml(
   Map<String, String> listPaths = const {},
   bool collectLogs = true,
   bool autoDetectInterface = true,
+  String? device,
 }) {
   final proxy = _mihomoProxy(location);
   // A single server, or a group whose member the engine picks. Either way the
@@ -147,7 +153,8 @@ String mihomoTunConfigYaml(
     for (final r in plan.resolvers) '    - ${yamlScalar(r.wire)}',
     'tun:',
     '  enable: true',
-    '  stack: gvisor',
+    if (device != null) '  device: ${yamlScalar(device)}',
+    if (device != null) '  stack: mixed' else '  stack: gvisor',
     // Without this the engine forwards ICMP with a DIRECT outbound of its own
     // — it opens a socket on the physical interface, so `ping` while the VPN is
     // up leaks the real address (the request enters the tun and leaves again
@@ -160,10 +167,15 @@ String mihomoTunConfigYaml(
     // what Tun.Equal compares, so an upstream default that changed under us
     // would turn the next hot switch into a listener re-creation — i.e. a
     // dropped session. The address is the engine's own documented default.
+    // On the platforms where the host opens the device, it also assigns the
+    // v4 address; a device of the engine's own needs it here.
+    if (device != null) '  inet4-address:',
+    if (device != null) '    - $kTunInet4Address',
     '  inet6-address:',
     '    - $kTunInet6Address',
-    // The host OS owns routing; mihomo just reads the fd.
-    '  auto-route: false',
+    // The host OS owns routing where it owns the device; mihomo just reads
+    // the fd. An adapter of the engine's own has nobody else to route it.
+    '  auto-route: ${device != null}',
     // How the proxy's own outbound avoids looping back into the tun differs by
     // platform. On Apple the engine detects the physical interface and binds
     // its dials to it. On Android that detector cannot even start — its route
@@ -300,6 +312,10 @@ const kFakeIpRange6 = 'fc00::/18';
 /// the interface's addresses; this is what the userspace stack answers on, and
 /// it must exist for the stack to accept v6 packets at all.
 const kTunInet6Address = 'fdfe:dcba:9876::1/126';
+
+/// The v4 address of an engine-created TUN — the same one the Apple extension
+/// and the Android VpnService assign to theirs.
+const kTunInet4Address = '172.19.0.1/30';
 
 /// Proxy types this renderer can turn into an engine config. Public because
 /// the subscription parsers consult it: keeping a proxy we cannot render would
