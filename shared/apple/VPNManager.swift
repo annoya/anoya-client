@@ -271,7 +271,7 @@ final class VPNManager {
     /// config is the slow one (parsing plus a full engine reload) and is well
     /// under a second in practice; this is a deadline for a process that has
     /// stopped answering, not a performance budget.
-    private static let providerMessageTimeout: TimeInterval = 10
+    nonisolated private static let providerMessageTimeout: TimeInterval = 10
 
     /// One provider-IPC round trip, with a deadline.
     ///
