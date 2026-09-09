@@ -3,7 +3,6 @@ import '../log.dart';
 import '../norm_config.dart';
 import '../profile.dart';
 import '../profile_store.dart';
-import 'agw_ffi.dart';
 import 'amnezia_account.dart';
 import 'amnezia_errors.dart';
 import 'gateway.dart';
@@ -55,7 +54,7 @@ final class AmneziaSource {
       userCountryCode: _state.userCountryCode,
       subscriptionStatus: _state.account.expired ? 'expired' : 'active',
     );
-    if (!res.ok) throw AppErrorException(describeAmneziaError(res.code, detail: _hint(res)));
+    if (!res.ok) throw AppErrorException(describeAmneziaError(res));
 
     final account = AmneziaAccount.fromJson(res.json);
     final next = _state.copyWith(account: account);
@@ -108,13 +107,13 @@ final class AmneziaSource {
       serverCountryCode: parts.country,
       isConnectEvent: true,
     );
-    if (!res.ok) throw AppErrorException(describeAmneziaError(res.code, detail: _hint(res)));
+    if (!res.ok) throw AppErrorException(describeAmneziaError(res));
 
     final label = _labelFor(selectionId);
     final parsed = parseAmneziaSecondaryConfig(res.json,
         label: label, privateKey: wg?.privateKey ?? '');
     if (parsed == null) {
-      throw AppErrorException(describeAmneziaError(AgwStatus.emptyConfig));
+      throw const AppErrorException(kAmneziaEmptyAnswer);
     }
 
     Log.i('amnezia: issued ${amneziaProtocolLabel(protocol)} config for '
@@ -176,17 +175,6 @@ final class AmneziaSource {
       if (l.id == id) return l.label;
     }
     return profile.name;
-  }
-
-  /// The gateway's own sentence, when it sent one worth repeating. Their
-  /// wording is often more specific than any code-to-text table.
-  String _hint(AgwResponse res) {
-    try {
-      final message = res.json['message'];
-      return message is String ? message : '';
-    } catch (_) {
-      return '';
-    }
   }
 
   Future<void> dispose() => ProfileStore.deleteAmneziaKey(profile.id);

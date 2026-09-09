@@ -684,9 +684,14 @@ whether it fell back to storage — is logged through its callbacks. Without it,
 "the gateway did not answer" reads identically whether the network is dead or
 the bypass silently worked.
 
-Failures are reported with the gateway's own 1100-series codes and, where they
-have one, its own wording: the same problem should read the same in two
-clients. The captcha codes say plainly that this app cannot show one. The
+Failures come in two kinds, and the library tells them apart: a transport
+outcome (cancelled, timeout, TLS, unreachable, undecryptable, a build without
+the key) when the gateway never answered, and the gateway's own refusal — its
+`http_status` and `message` in the body — when it did. The refusal is read the
+way the reference client reads it (429 throttled, 409 device limit or trial
+used, 404 unknown key, 501 client too old, 422 with its sentence expired, 402
+the captcha family or not active), and where the gateway sent wording, that
+wording wins: the same problem should read the same in two clients. The captcha codes say plainly that this app cannot show one. The
 wording is provider-neutral throughout — the gateway serves resellers, and a
 sentence naming Amnezia would be a false statement about who took the money;
 `amnezia_config_test.dart` fails if one appears.

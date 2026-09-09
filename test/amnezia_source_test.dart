@@ -171,7 +171,7 @@ void main() {
     });
 
     test('a refusal is reported in words, not as an empty list', () async {
-      final gw = _FakeGateway(accountCode: AgwStatus.subscriptionExpired);
+      final gw = _FakeGateway(accountBody: _refusal(422, kSubscriptionInactive));
       await expectLater(
         AmneziaSource(profile(), gateway: gw).refresh(),
         throwsA(isA<Object>()),
@@ -440,16 +440,18 @@ void main() {
   });
 
   group('what a failure tells the user', () {
-    test('every code the gateway can answer with has words of its own', () {
+    test('every outcome the library reports has words of its own', () {
+      // The transport never got an answer: one code, no body.
       for (final code in [
-        AgwStatus.downloadError,
-        AgwStatus.configLimit,
-        AgwStatus.subscriptionExpired,
-        AgwStatus.captchaRequired,
-        AgwStatus.rateLimit,
-        AgwStatus.updateRequired,
+        AgwStatus.cancelled,
+        AgwStatus.network,
+        AgwStatus.timeout,
+        AgwStatus.ssl,
+        AgwStatus.config,
+        AgwStatus.decrypt,
+        AgwStatus.invalidArgument,
       ]) {
-        final e = describeAmneziaError(code);
+        final e = describeAmneziaError(AgwResponse(code, ''));
         expect(e.title, isNotEmpty);
         expect(e.detail, isNotNull, reason: 'code $code says what to do');
         expect(e.title, isNot(contains('$code')),
@@ -457,30 +459,70 @@ void main() {
       }
     });
 
-    test('a code we have never seen is quoted rather than guessed at', () {
-      final e = describeAmneziaError(9999);
-      expect(e.detail, contains('9999'));
+    test('every refusal the gateway can write into its answer is read as the reference client reads it', () {
+      final cases = <(int, String, Map<String, Object>, String)>[
+        (429, '', {}, 'Too many requests'),
+        (409, '', {}, 'Device limit reached'),
+        (409, 'Trial subscription already used', {}, 'Trial already used'),
+        (404, '', {}, 'Subscription not found'),
+        (408, '', {}, 'The gateway timed out'),
+        (501, '', {}, 'The gateway requires a newer client'),
+        (422, kSubscriptionInactive, {}, 'Subscription expired'),
+        (402, 'refresh_captcha', {}, 'The CAPTCHA expired'),
+        (402, 'invalid_captcha', {}, 'The CAPTCHA was rejected'),
+        (402, 'rate_limit_exceeded', {}, 'The gateway asked for a CAPTCHA'),
+        (402, '', {'captcha_id': 'abc'}, 'The gateway asked for a CAPTCHA'),
+        (402, '', {}, 'Subscription not active'),
+      ];
+      for (final (status, message, extra, title) in cases) {
+        final res = AgwResponse(AgwStatus.ok, jsonEncode({..._refusal(status, message), ...extra}));
+        expect(res.ok, isFalse, reason: 'HTTP $status is a refusal, not an answer');
+        expect(describeAmneziaError(res).title, title, reason: 'HTTP $status "$message"');
+      }
+    });
+
+    test('an answer is one the gateway did not refuse, with or without a status', () {
+      expect(AgwResponse(AgwStatus.ok, '{"http_status": 200, "config": {}}').ok, isTrue);
+      expect(AgwResponse(AgwStatus.ok, '{"config": {}}').ok, isTrue,
+          reason: 'a document without http_status is read as the reference client reads it');
+      expect(AgwResponse(AgwStatus.network, '').ok, isFalse);
+    });
+
+    test('a code or status we have never seen is quoted rather than guessed at', () {
+      expect(describeAmneziaError(AgwResponse(9999, '')).detail, contains('9999'));
+      expect(describeAmneziaError(AgwResponse(AgwStatus.ok, '{"http_status": 418}')).detail,
+          contains('418'));
     });
 
     test('the gateway’s own sentence wins over ours', () {
-      // Their message is usually more specific than any table can be.
-      final e = describeAmneziaError(AgwStatus.notFound, detail: 'Account not found.');
+      // Their message is usually more specific than any status-to-text table.
+      final e = describeAmneziaError(
+          AgwResponse(AgwStatus.ok, jsonEncode(_refusal(404, 'Account not found.'))));
+      expect(e.title, 'Subscription not found');
       expect(e.detail, 'Account not found.');
     });
   });
 }
 
+/// The sentence the gateway attaches to an inactive subscription, verbatim:
+/// the reference client matches it whole, and so does this one.
+const kSubscriptionInactive = 'Failed to retrieve subscription information. Is it activated?';
+
+/// A gateway document that refuses: the library hands these over as answers.
+Map<String, dynamic> _refusal(int status, String message) =>
+    {'http_status': status, if (message.isNotEmpty) 'message': message};
+
 /// Stands in for the gateway. Records what it was asked, because when a
-/// question is asked is the thing these tests are about.
+/// question is asked is the thing these tests are about. Every answer is a
+/// transport success, as with the real library; a refusal is a body that says
+/// so.
 class _FakeGateway implements AmneziaGateway {
   _FakeGateway({
     this.accountBody = const {},
-    this.accountCode = AgwStatus.ok,
     this.configBody = const {},
   });
 
   final Map<String, dynamic> accountBody;
-  final int accountCode;
   final Map<String, dynamic> configBody;
 
   int configCalls = 0;
@@ -499,7 +541,7 @@ class _FakeGateway implements AmneziaGateway {
     required String userCountryCode,
     String subscriptionStatus = 'active',
   }) async =>
-      AgwResponse(accountCode, jsonEncode(accountBody));
+      AgwResponse(AgwStatus.ok, jsonEncode(accountBody));
 
   @override
   Future<AgwResponse> config({
