@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/country_flag.dart';
 import '../core/norm_config.dart';
@@ -172,6 +173,13 @@ class _RuleDialogState extends State<RuleDialog> {
                 controller: _value,
                 autofocus: true,
                 autocorrect: false,
+                enableSuggestions: false,
+                // A URL keyboard: Android's text keyboard puts a space after
+                // every full stop it sees, and "vk. ru" is not a domain. The
+                // formatter is the second line of defence — a pasted value
+                // with a space in it never becomes one in the rule.
+                keyboardType: TextInputType.url,
+                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                 decoration: InputDecoration(labelText: 'Value', hintText: _hints[_type]),
                 onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _submit(),
