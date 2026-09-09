@@ -25,6 +25,25 @@ env:
   FLUTTER_VERSION: 3.38.9
 
 jobs:
+  # The Dart tests run on the host, not on a target, so they run once here
+  # rather than inside each build. In parallel with the builds on purpose: a
+  # red test is visible in the status, and the artifacts still get built.
+  test:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
   android:
     name: Android APK
     runs-on: ubuntu-latest
@@ -63,12 +82,6 @@ jobs:
           native/mihomocore/build-aar.sh
           native/libagw/build-so.sh
 
-      - name: Analyze and test
-        run: |
-          flutter pub get
-          flutter analyze
-          flutter test
-
       - name: Build APK
         env:
           CLIENT_SECRETS_JSON: ${{ secrets.CLIENT_SECRETS_JSON }}
@@ -78,6 +91,7 @@ jobs:
             printf '%s' "$CLIENT_SECRETS_JSON" > client-secrets.json
             args=(--dart-define-from-file=client-secrets.json)
           fi
+          flutter pub get
           scripts/build-android.sh "${args[@]+"${args[@]}"}"
 
       - uses: actions/upload-artifact@v4

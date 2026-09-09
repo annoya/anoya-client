@@ -56,9 +56,11 @@ server has an OIDC provider configured.
 
 ### CI
 
-`.github/workflows/build-client.yml` builds the Android APK and the Windows
-installer on every push to `main`, on tags and on pull requests that touch
-`client/`, and publishes them as workflow artifacts. Amnezia credentials come
+`.github/workflows/build-client.yml` runs the analyzer and the tests, and
+builds the Android APK and the Windows installer, on every push to `main`, on
+tags and on pull requests that touch `client/`; the builds are published as
+workflow artifacts. The three jobs are independent, so a red test does not
+withhold a build. Amnezia credentials come
 from the `CLIENT_SECRETS_JSON` repository secret (the contents of
 `client-secrets.json`); without it the builds still run.
 

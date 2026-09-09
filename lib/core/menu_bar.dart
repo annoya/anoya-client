@@ -75,7 +75,9 @@ class MenuBar {
   final MethodChannel _channel;
 
   /// True where a menu bar or a tray exists at all. iOS and Android have
-  /// neither, and the tests run on a host that pretends to be the former.
+  /// neither. Consulted by the provider that decides whether to wire one up;
+  /// an instance that was constructed works regardless, so the tests can
+  /// drive one on any host.
   static bool get supported => Platform.isMacOS || Platform.isWindows;
 
   MenuBarState? _last;
@@ -87,7 +89,6 @@ class MenuBar {
   Future<void> Function()? onDisconnect;
 
   void start() {
-    if (!supported) return;
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'sync':
@@ -104,14 +105,13 @@ class MenuBar {
   /// Stops answering the platform side. The status item itself belongs to the
   /// runner and outlives the isolate's providers.
   void dispose() {
-    if (!supported) return;
     _channel.setMethodCallHandler(null);
   }
 
   /// Pushes state, skipping a push that would change nothing. The menu asks on
   /// every open, so this runs often enough for the difference to matter.
   Future<void> update(MenuBarState state) async {
-    if (!supported || state == _last) return;
+    if (state == _last) return;
     _last = state;
     try {
       await _channel.invokeMethod<void>('update', state.toChannel());
