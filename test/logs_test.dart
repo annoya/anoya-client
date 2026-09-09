@@ -108,7 +108,7 @@ void main() {
       expect(read('app.log'), contains('hello from the app'));
       // No tunnel running in tests: the entry explains itself instead of being
       // an empty file the user would have to guess about.
-      expect(read('tunnel.log'), contains('only while the VPN is connected'));
+      expect(read('tunnel.log'), contains('only while the tunnel is running'));
     });
   });
 }

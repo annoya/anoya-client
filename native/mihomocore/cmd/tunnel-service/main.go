@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 
 	"mihomocore/service"
 )
@@ -43,6 +44,7 @@ func main() {
 	if err := files.Ensure(); err != nil {
 		log.Fatalf("engine dir: %v", err)
 	}
+	recordCrashes(files)
 
 	switch {
 	case *install:
@@ -70,4 +72,19 @@ func newService(files service.Files) *service.Service {
 		files.Append("engine log redirect failed: " + err.Error())
 	}
 	return service.New(service.RealEngine{}, files)
+}
+
+// recordCrashes points the runtime's fatal output at a file next to the logs.
+// As a service the process has no stderr, so a panic used to vanish: the SCM
+// noted "terminated unexpectedly" and the traceback went nowhere. Appended, so
+// repeated crashes accumulate; the file is small unless something is wrong.
+func recordCrashes(files service.Files) {
+	fh, err := os.OpenFile(files.CrashLog(), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		files.Append("crash log unavailable: " + err.Error())
+		return
+	}
+	if err := debug.SetCrashOutput(fh, debug.CrashOptions{}); err != nil {
+		files.Append("crash log unavailable: " + err.Error())
+	}
 }

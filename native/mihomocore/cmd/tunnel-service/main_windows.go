@@ -119,6 +119,15 @@ func installService() error {
 		return err
 	}
 	defer s.Close()
+	// A crashed service must come back on its own: the app only knocks on the
+	// pipe, it cannot start a service, and until someone reinstalled or
+	// rebooted the tunnel was simply gone. Three restarts a day, then give up
+	// — a crash loop would otherwise hide a broken build behind a flapping
+	// service.
+	restart := mgr.RecoveryAction{Type: mgr.ServiceRestart, Delay: 5 * time.Second}
+	if err := s.SetRecoveryActions([]mgr.RecoveryAction{restart, restart, restart}, 24*60*60); err != nil {
+		return fmt.Errorf("set recovery actions: %w", err)
+	}
 	return s.Start()
 }
 

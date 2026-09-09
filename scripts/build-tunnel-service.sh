@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Build the Windows tunnel service and fetch the Wintun driver next to it.
 #
-# Cross-compiles from any host: the service is pure Go (CGO_ENABLED=0), and
+# Cross-compiles from any host: the service is pure Go (CGO_ENABLED=0; gvisor,
+# which the TUN stack needs on every platform, is pure Go too), and
 # mihomo's Windows TUN is Wintun, which is not built here — it is a signed
 # driver WireGuard LLC ships as a DLL, and the engine loads it from the
 # directory of its own executable. The checksum pins the release; a different
@@ -21,7 +22,7 @@ mkdir -p "$OUT"
 
 echo ">> tunnel-service.exe ($ARCH)"
 ( cd native/mihomocore && GOWORK=off CGO_ENABLED=0 GOOS=windows GOARCH="$ARCH" \
-    go build -trimpath -ldflags "-s -w" -o "../../$OUT/tunnel-service.exe" ./cmd/tunnel-service )
+    go build -tags with_gvisor -trimpath -ldflags "-s -w" -o "../../$OUT/tunnel-service.exe" ./cmd/tunnel-service )
 
 echo ">> wintun.dll ($WINTUN_VERSION, $ARCH)"
 zip="build/windows/wintun-$WINTUN_VERSION.zip"
