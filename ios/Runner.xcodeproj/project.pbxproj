@@ -612,6 +612,21 @@
 				DEVELOPMENT_TEAM = 989ZJQVA79;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-Wl,-u,_agw_abi_version",
+					"-Wl,-u,_agw_cancel_cancel",
+					"-Wl,-u,_agw_cancel_create",
+					"-Wl,-u,_agw_cancel_destroy",
+					"-Wl,-u,_agw_client_create",
+					"-Wl,-u,_agw_client_destroy",
+					"-Wl,-u,_agw_error_string",
+					"-Wl,-u,_agw_export_state",
+					"-Wl,-u,_agw_import_state",
+					"-Wl,-u,_agw_post",
+					"-Wl,-u,_agw_result_free",
+					"-Wl,-u,_agw_string_free",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -958,6 +973,21 @@
 				DEVELOPMENT_TEAM = 989ZJQVA79;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-Wl,-u,_agw_abi_version",
+					"-Wl,-u,_agw_cancel_cancel",
+					"-Wl,-u,_agw_cancel_create",
+					"-Wl,-u,_agw_cancel_destroy",
+					"-Wl,-u,_agw_client_create",
+					"-Wl,-u,_agw_client_destroy",
+					"-Wl,-u,_agw_error_string",
+					"-Wl,-u,_agw_export_state",
+					"-Wl,-u,_agw_import_state",
+					"-Wl,-u,_agw_post",
+					"-Wl,-u,_agw_result_free",
+					"-Wl,-u,_agw_string_free",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -982,6 +1012,21 @@
 				DEVELOPMENT_TEAM = 989ZJQVA79;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-Wl,-u,_agw_abi_version",
+					"-Wl,-u,_agw_cancel_cancel",
+					"-Wl,-u,_agw_cancel_create",
+					"-Wl,-u,_agw_cancel_destroy",
+					"-Wl,-u,_agw_client_create",
+					"-Wl,-u,_agw_client_destroy",
+					"-Wl,-u,_agw_error_string",
+					"-Wl,-u,_agw_export_state",
+					"-Wl,-u,_agw_import_state",
+					"-Wl,-u,_agw_post",
+					"-Wl,-u,_agw_result_free",
+					"-Wl,-u,_agw_string_free",
+				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

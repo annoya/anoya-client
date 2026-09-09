@@ -123,7 +123,10 @@ enum VpnChannel {
                 // is a static archive whose only caller is Dart over FFI, so
                 // without one reference from linked code the linker would drop
                 // it and every agw_* lookup would fail at runtime with nothing
-                // to explain why.
+                // to explain why. This call pulls the archive in; the -u flags
+                // in the Runner's OTHER_LDFLAGS keep every other agw_* entry
+                // point alive through a release link's dead stripping, which
+                // used to remove all but this one.
                 result(Int(agw_abi_version()))
             case "shared_dir":
                 // App Group container shared with the tunnel extension — the
