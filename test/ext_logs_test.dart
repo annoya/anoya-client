@@ -11,7 +11,7 @@ void main() {
 
   test('a log fetch with no platform side explains itself instead of throwing', () async {
     final text = await fetchExtensionLog('tunnel');
-    expect(text, contains('only while the VPN is connected'));
+    expect(text, contains('only while the tunnel is running'));
   });
 
   test('clearing logs with no platform side reports failure, never throws', () async {
