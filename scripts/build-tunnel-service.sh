@@ -29,7 +29,12 @@ zip="build/windows/wintun-$WINTUN_VERSION.zip"
 if [ ! -f "$zip" ]; then
   curl -fsSL -o "$zip" "https://www.wintun.net/builds/wintun-$WINTUN_VERSION.zip"
 fi
-echo "$WINTUN_SHA256  $zip" | shasum -a 256 -c - >/dev/null
+# sha256sum on Linux and in Git Bash, shasum on macOS.
+if command -v sha256sum >/dev/null; then
+  echo "$WINTUN_SHA256  $zip" | sha256sum -c - >/dev/null
+else
+  echo "$WINTUN_SHA256  $zip" | shasum -a 256 -c - >/dev/null
+fi
 # Whatever unzipper the host has: unzip on macOS and Linux, 7z on a Windows
 # runner's Git Bash, python where neither is around.
 if command -v unzip >/dev/null; then
