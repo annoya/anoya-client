@@ -120,6 +120,22 @@ void main() {
     expect((sniffer['sniff'] as YamlMap).keys, containsAll(['HTTP', 'TLS', 'QUIC']));
   });
 
+  test('the Android decoy resolver is refused on 853 before any other rule', () {
+    // Private DNS probes the resolver it was given for DoT; a probe that is
+    // refused keeps Android on plain DNS, the only path the hijack sees.
+    final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
+    final routing = Routing(mode: 'split', rules: [
+      RoutingRule(type: 'domain-suffix', value: 'vk.ru', action: 'block'),
+    ]);
+    final rules = (loadYaml(mihomoTunConfigYaml(loc, routing: routing, dnsDecoy: kAndroidDnsDecoy))
+        as YamlMap)['rules'] as YamlList;
+    expect(rules.first, 'IP-CIDR,172.19.0.2/32,REJECT,no-resolve');
+    expect(rules[1], 'DOMAIN-SUFFIX,vk.ru,REJECT');
+    // Only where the decoy is ours: Apple's system resolver never upgrades.
+    final apple = (loadYaml(mihomoTunConfigYaml(loc, routing: routing)) as YamlMap)['rules'] as YamlList;
+    expect(apple.first, 'DOMAIN-SUFFIX,vk.ru,REJECT');
+  });
+
   test('split routing renders ordered rules and MATCH,DIRECT', () {
     const routing = Routing(mode: 'split', rules: [
       RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),

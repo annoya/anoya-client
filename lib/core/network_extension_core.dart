@@ -229,7 +229,10 @@ class NetworkExtensionCore implements VpnCore {
             // The Windows service has no host-opened device to hand the engine;
             // it creates the adapter itself, named after the app so the user
             // recognises it in the network list.
-            device: Platform.isWindows ? kAppName : null),
+            device: Platform.isWindows ? kAppName : null,
+            // Android's Private DNS would otherwise upgrade the decoy resolver
+            // to DNS-over-TLS and take every lookup past the hijack.
+            dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null),
       };
     } catch (e) {
       Log.e('config render failed', '$e');
