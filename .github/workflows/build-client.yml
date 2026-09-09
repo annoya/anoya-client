@@ -141,7 +141,9 @@ jobs:
           version="$(awk '/^version:/ {print $2}' pubspec.yaml | cut -d+ -f1)"
           iscc="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
           [ -x "$iscc" ] || choco install innosetup -y --no-progress
-          "$iscc" "windows\\installer\\AnnoyaTest.iss" "/DAppVersion=$version"
+          # Git Bash rewrites arguments that start with a slash into Windows
+          # paths, so "/DAppVersion=…" reached ISCC as a second script file.
+          MSYS_NO_PATHCONV=1 "$iscc" "windows\\installer\\AnnoyaTest.iss" "/DAppVersion=$version"
 
       - uses: actions/upload-artifact@v4
         with:
