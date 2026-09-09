@@ -107,6 +107,19 @@ void main() {
     expect(rules, ['MATCH,PROXY']);
   });
 
+  test('the sniffer recovers the domain of a connection whose DNS bypassed the tunnel', () {
+    // Android Private DNS (DoT on 853) and Chrome's DoH hand apps real
+    // addresses; without sniffing every domain rule matched nothing there.
+    final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
+    final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
+    final sniffer = doc['sniffer'] as YamlMap;
+    expect(sniffer['enable'], isTrue);
+    expect(sniffer['parse-pure-ip'], isTrue, reason: 'bare-IP connections are the whole point');
+    expect(sniffer['override-destination'], isFalse,
+        reason: 'match on the name, but dial where the app was going');
+    expect((sniffer['sniff'] as YamlMap).keys, containsAll(['HTTP', 'TLS', 'QUIC']));
+  });
+
   test('split routing renders ordered rules and MATCH,DIRECT', () {
     const routing = Routing(mode: 'split', rules: [
       RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),
