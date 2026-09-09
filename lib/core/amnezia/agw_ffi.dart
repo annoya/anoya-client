@@ -100,51 +100,70 @@ final class AgwResult extends Struct {
   external int bodyLen;
 }
 
-/// The codes the gateway answers with. Numbering is the Amnezia client's own
-/// 1100-series and must not be renumbered — it is the shared vocabulary
-/// between their gateway, their client and ours.
+/// What the library reports about one call: transport outcomes only
+/// (`cabi/agw_types.h` upstream). A non-zero code means the gateway never
+/// answered. Whenever it did — refusal included — the code is [ok] and the
+/// gateway's own `http_status` and `message` sit in the body, for the host to
+/// read. The library used to fold both into one code space (the Amnezia
+/// client's 1100-series); it no longer does, and the two other clients on
+/// this gateway read the body the same way this one does.
 class AgwStatus {
   static const ok = 0;
+
+  /// Cancelled through a cancel handle — here, by our own deadline.
   static const cancelled = 1;
-  static const downloadError = 1100;
-  static const alreadyAdded = 1101;
-  static const emptyConfig = 1102;
-  static const timeout = 1103;
-  static const sslError = 1104;
-  static const missingPublicKey = 1105;
-  static const decryptionError = 1106;
-  static const servicesMissing = 1107;
-  static const configLimit = 1108;
-  static const notFound = 1109;
-  static const migration = 1110;
-  static const updateRequired = 1111;
-  static const subscriptionExpired = 1112;
-  static const purchaseError = 1113;
-  static const subscriptionNotActive = 1114;
-  static const noPurchasedSubscriptions = 1115;
-  static const trialAlreadyUsed = 1116;
-  static const captchaRequired = 1117;
-  static const captchaInvalid = 1118;
-  static const captchaRefresh = 1119;
-  static const rateLimit = 1120;
+
+  /// A bad handle or malformed input: a defect on this side, not a network.
+  static const invalidArgument = 2;
+
+  /// The gateway public key is missing or invalid — a build problem.
+  static const config = 3;
+  static const timeout = 4;
+
+  /// A TLS failure on the direct path.
+  static const ssl = 5;
+
+  /// Unreachable, with the failover exhausted.
+  static const network = 6;
+
+  /// An answer that did not decrypt.
+  static const decrypt = 7;
 }
 
-/// What one gateway call produced: a code, and whatever body came with it.
-///
-/// The body is meaningful even when the code is not [AgwStatus.ok] — a refusal
-/// carries the reason, and a captcha challenge carries the image.
+/// What one gateway call produced: the transport's code, and the body when
+/// there was an answer.
 class AgwResponse {
   const AgwResponse(this.code, this.body);
 
   final int code;
   final String body;
 
-  bool get ok => code == AgwStatus.ok;
+  /// An answer we can use: the transport delivered one, and the gateway did
+  /// not refuse in it. A body without an `http_status` counts as an answer,
+  /// as the reference client reads it; what it then fails to parse is
+  /// reported as an empty answer, not a refusal.
+  bool get ok => code == AgwStatus.ok && httpStatus < 300;
+
+  /// The status the gateway wrote into its document, 0 when there is none.
+  int get httpStatus {
+    final v = json['http_status'];
+    return v is int ? v : 0;
+  }
+
+  /// The gateway's own sentence about a refusal, empty when it sent none.
+  String get message {
+    final v = json['message'];
+    return v is String ? v.trim() : '';
+  }
 
   Map<String, dynamic> get json {
     if (body.isEmpty) return const {};
-    final decoded = jsonDecode(body);
-    return decoded is Map<String, dynamic> ? decoded : const {};
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : const {};
+    } catch (_) {
+      return const {};
+    }
   }
 }
 
@@ -267,7 +286,7 @@ _AgwOutcome _postSync(_AgwCall call) {
     // Refused before any request: malformed config, or no endpoint/key. A
     // missing key is the one the user could plausibly hit (a build without
     // the gateway secrets), so it gets that code rather than a generic one.
-    return const _AgwOutcome(AgwStatus.missingPublicKey, '', '');
+    return const _AgwOutcome(AgwStatus.config, '', '');
   }
 
   final endpointPtr = call.endpoint.toNativeUtf8();

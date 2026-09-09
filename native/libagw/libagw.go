@@ -12,6 +12,6 @@
 // are what produce the agw_* symbols. See upstream/cabi/agw.h.
 package main
 
-import _ "github.com/amnezia-vpn/amnezia-gateway-sdk/cabi"
+import _ "github.com/amnezia-vpn/libagw/cabi"
 
 func main() {}
