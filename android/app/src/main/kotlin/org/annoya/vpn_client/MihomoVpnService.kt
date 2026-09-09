@@ -156,7 +156,15 @@ class MihomoVpnService : VpnService() {
                 .addRoute("::", 0)
                 // A decoy, like NEDNSSettings on Apple: the address only has
                 // to be routed into the tun, where dns-hijack any:53 answers.
-                .addDnsServer("1.1.1.1")
+                // The other host of our own /30, not a public resolver: with
+                // 1.1.1.1 here, Private DNS in its default "automatic" mode
+                // found that the address speaks DNS-over-TLS, moved every
+                // lookup to port 853 past the hijack, and the engine never saw
+                // a domain name again — in split mode not one domain rule
+                // matched. Nobody answers on 172.19.0.2, and the engine refuses
+                // its port 853 outright (kAndroidDnsDecoy in the renderer), so
+                // Android stays on plain DNS.
+                .addDnsServer("172.19.0.2")
             val pfd = builder.establish()
                 ?: throw IllegalStateException("the system refused to establish the tunnel")
             val fd = pfd.detachFd()

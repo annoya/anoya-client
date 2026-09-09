@@ -203,11 +203,16 @@ subscription's own answer. The one place "provider" survives is the SSO
 
 The DNS servers in the NE settings are a decoy: their only job is to steer the
 OS's queries into the tunnel, where the engine's `any:53` hijack answers them
-in fake-ip mode. Not every query takes that road: Android's Private DNS
-upgrades to DNS-over-TLS on port 853 in its default mode, and Chrome to DoH,
-so their connections arrive as bare addresses. The engine's sniffer reads the
-name back out of the TLS, HTTP or QUIC handshake and matches domain rules on
-it, leaving the destination as the app chose. The real resolvers live in the
+in fake-ip mode. On Android the decoy is `172.19.0.2`, the other host of the
+tunnel's own /30, and the engine refuses its port 853 ahead of every rule:
+Private DNS in its default "automatic" mode probes the resolver it is given
+for DNS-over-TLS, and a public decoy such as 1.1.1.1 passes that probe — after
+which every lookup travels on 853 past the hijack, connections arrive as bare
+addresses and no domain rule can match (observed on a device: full mode still
+worked because the probe failed through the proxy, split mode let it through
+directly). Chrome's own DoH still hands it real addresses, so the engine's
+sniffer reads the name back out of the TLS, HTTP or QUIC handshake and matches
+domain rules on it, leaving the destination as the app chose. The real resolvers live in the
 engine config's `dns:` block and therefore switch with the configuration,
 through the same hot reload. A
 configuration supplies them at its source — the self-hosted bundle's `dns`

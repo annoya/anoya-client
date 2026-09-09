@@ -48,6 +48,7 @@ String mihomoTunConfigYaml(
   bool collectLogs = true,
   bool autoDetectInterface = true,
   String? device,
+  String? dnsDecoy,
 }) {
   final proxy = _mihomoProxy(location);
   // A single server, or a group whose member the engine picks. Either way the
@@ -216,6 +217,16 @@ String mihomoTunConfigYaml(
     '    proxies: [$entry]',
     ...listLines,
     'rules:',
+    // Android hands the system a decoy resolver inside the tunnel's own
+    // subnet (MihomoVpnService.kt). Its plain queries are hijacked above; what
+    // this rule stops is Private DNS in its default "automatic" mode probing
+    // the same address for DNS-over-TLS. Left to the engine, that probe would
+    // be dialled on and time out; refused at once, Android concludes the
+    // resolver does not do DoT and stays on plain DNS — which is the only
+    // path on which the engine learns domain names. Measured on a device:
+    // with the public decoy 1.1.1.1 the probe succeeded, every lookup went
+    // over 853, and in split mode not one domain rule ever matched.
+    if (dnsDecoy != null) '  - IP-CIDR,$dnsDecoy/32,REJECT,no-resolve',
     ...ruleLines,
     // Unmatched traffic: full mode tunnels it, split mode sends it direct.
     if (routing?.mode == 'split') '  - MATCH,DIRECT' else '  - MATCH,PROXY',
@@ -339,6 +350,11 @@ const kTunInet6Address = 'fdfe:dcba:9876::1/126';
 /// The v4 address of an engine-created TUN — the same one the Apple extension
 /// and the Android VpnService assign to theirs.
 const kTunInet4Address = '172.19.0.1/30';
+
+/// The resolver address Android is given: the other host of the tunnel's /30,
+/// where nobody answers and everything is routed into the tun. Must agree with
+/// `addDnsServer` in MihomoVpnService.kt.
+const kAndroidDnsDecoy = '172.19.0.2';
 
 /// Proxy types this renderer can turn into an engine config. Public because
 /// the subscription parsers consult it: keeping a proxy we cannot render would
