@@ -30,6 +30,15 @@ if [ ! -f "$zip" ]; then
   curl -fsSL -o "$zip" "https://www.wintun.net/builds/wintun-$WINTUN_VERSION.zip"
 fi
 echo "$WINTUN_SHA256  $zip" | shasum -a 256 -c - >/dev/null
-unzip -p "$zip" "wintun/bin/$ARCH/wintun.dll" > "$OUT/wintun.dll"
+# Whatever unzipper the host has: unzip on macOS and Linux, 7z on a Windows
+# runner's Git Bash, python where neither is around.
+if command -v unzip >/dev/null; then
+  unzip -p "$zip" "wintun/bin/$ARCH/wintun.dll" > "$OUT/wintun.dll"
+elif command -v 7z >/dev/null; then
+  7z e -so "$zip" "wintun/bin/$ARCH/wintun.dll" > "$OUT/wintun.dll"
+else
+  python3 -c "import sys,zipfile; sys.stdout.buffer.write(zipfile.ZipFile(sys.argv[1]).read(sys.argv[2]))" \
+    "$zip" "wintun/bin/$ARCH/wintun.dll" > "$OUT/wintun.dll"
+fi
 
 ls -la "$OUT"

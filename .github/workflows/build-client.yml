@@ -1,0 +1,146 @@
+# Builds the client for the two platforms that can be built on hosted runners:
+# an Android APK and a Windows installer. Apple needs signing identities and a
+# paid team, so those builds stay on a Mac for now.
+#
+# Amnezia support needs credentials that are not in the repository. Put the
+# contents of client-secrets.json into the CLIENT_SECRETS_JSON repository
+# secret and both builds pick it up; without it they still build, and Amnezia
+# keys are refused with a message rather than failing (see client/README.md).
+name: build-client
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    paths: ['client/**', '.github/workflows/build-client.yml']
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: client
+    shell: bash
+
+env:
+  FLUTTER_VERSION: 3.38.9
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The Amnezia gateway SDK is a submodule; without it build-so.sh
+          # refuses to run.
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: client/native/mihomocore/go.mod
+          cache-dependency-path: |
+            client/native/mihomocore/go.sum
+            client/native/libagw/upstream/go.sum
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # gomobile finds the NDK through ANDROID_NDK_HOME; the runner exposes the
+      # one it ships as ANDROID_NDK_LATEST_HOME (a machine variable, so it is
+      # read in the shell, not through the env context). build-so.sh scans
+      # $ANDROID_HOME/ndk on its own.
+      - name: Engine AAR and gateway library
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          native/mihomocore/build-aar.sh
+          native/libagw/build-so.sh
+
+      - name: Analyze and test
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - name: Build APK
+        env:
+          CLIENT_SECRETS_JSON: ${{ secrets.CLIENT_SECRETS_JSON }}
+        run: |
+          args=()
+          if [ -n "$CLIENT_SECRETS_JSON" ]; then
+            printf '%s' "$CLIENT_SECRETS_JSON" > client-secrets.json
+            args=(--dart-define-from-file=client-secrets.json)
+          fi
+          scripts/build-android.sh "${args[@]+"${args[@]}"}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: client/build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: client/native/mihomocore/go.mod
+          cache-dependency-path: client/native/mihomocore/go.sum
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # The service is pure Go and the Wintun driver is a pinned download; the
+      # script does both and verifies the driver's checksum.
+      - name: Tunnel service and Wintun
+        run: scripts/build-tunnel-service.sh
+
+      - name: Build app
+        env:
+          CLIENT_SECRETS_JSON: ${{ secrets.CLIENT_SECRETS_JSON }}
+        run: |
+          args=()
+          if [ -n "$CLIENT_SECRETS_JSON" ]; then
+            printf '%s' "$CLIENT_SECRETS_JSON" > client-secrets.json
+            args=(--dart-define-from-file=client-secrets.json)
+          fi
+          flutter pub get
+          flutter build windows --release "${args[@]+"${args[@]}"}"
+
+      # Inno Setup is not on PATH even where the image ships it; the version
+      # comes from pubspec, the one place it is written.
+      - name: Installer
+        run: |
+          version="$(awk '/^version:/ {print $2}' pubspec.yaml | cut -d+ -f1)"
+          iscc="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          [ -x "$iscc" ] || choco install innosetup -y --no-progress
+          "$iscc" "windows\\installer\\AnnoyaTest.iss" "/DAppVersion=$version"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: client/build/windows/installer/*.exe
+          if-no-files-found: error
+
+      # The bare build too, for a machine where the installer cannot run: the
+      # app folder plus the service and driver it expects next to it.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable
+          path: |
+            client/build/windows/x64/runner/Release/
+            client/build/windows/service/
+          if-no-files-found: error

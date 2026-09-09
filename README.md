@@ -54,6 +54,14 @@ Sign in with the **server address** (e.g. `https://…:8443`), **username**, and
 **password** of a user from the management panel — or **Sign in with SSO** if the
 server has an OIDC provider configured.
 
+### CI
+
+`.github/workflows/build-client.yml` builds the Android APK and the Windows
+installer on every push to `main`, on tags and on pull requests that touch
+`client/`, and publishes them as workflow artifacts. Amnezia credentials come
+from the `CLIENT_SECRETS_JSON` repository secret (the contents of
+`client-secrets.json`); without it the builds still run.
+
 ### Windows
 
 The tunnel is a Windows service (`native/mihomocore/cmd/tunnel-service`)
