@@ -23,7 +23,12 @@ final vpnCoreProvider = Provider<VpnCore>((_) {
   if (Platform.isWindows) {
     return NetworkExtensionCore(transport: PipeTransport(WinPipeLink.new));
   }
-  throw UnsupportedError('No VPN core for this platform yet');
+  // Anywhere else — Linux, which is not a target but is where CI runs the
+  // tests — the channels have no platform side, every call answers
+  // MissingPluginException, and every caller already reads that as
+  // "unavailable". Throwing here instead took the whole state layer down
+  // with it, since the session and the controllers all reach the core.
+  return NetworkExtensionCore();
 });
 
 /// Appearance + language, persisted. The app shell watches this so switching
