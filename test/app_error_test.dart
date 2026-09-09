@@ -49,6 +49,19 @@ void main() {
       expect(describeError(const SocketException('nope')).detail, contains('the server'));
     });
 
+    test('a missing tunnel service is named, not blamed on a VPN profile', () {
+      // Windows: the tunnel is a service the app does not own. The generic
+      // channel-error text sends the user to "system settings" for a VPN
+      // profile that does not exist there.
+      final absent = describeError(PlatformException(code: 'service_unavailable'));
+      expect(absent.title, 'The tunnel service isn’t running');
+      expect(absent.detail, contains('AnnoyaTunnel'));
+      expect(absent.detail, isNot(contains('profile')));
+      final gone = describeError(PlatformException(code: 'service_disconnected'));
+      expect(gone.title, 'The tunnel service stopped');
+      expect(gone.detail, contains('connect again'));
+    });
+
     test('a bad password is not the same message as an expired session', () {
       final wrong = describeError(ApiException(401, 'invalid_credentials', 'unauthorized'));
       final expired = describeError(ApiException(401, 'token_expired', 'unauthorized'));
