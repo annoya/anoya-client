@@ -27,8 +27,13 @@ type Files struct {
 func (f Files) Config() string     { return filepath.Join(f.Dir, "last_config.yaml") }
 func (f Files) EngineLog() string  { return filepath.Join(f.Dir, "mihomo.log") }
 func (f Files) ServiceLog() string { return filepath.Join(f.Dir, "tunnel.log") }
-func (f Files) errorFile() string  { return filepath.Join(f.Dir, "disconnect_error") }
-func (f Files) logFlag() string    { return filepath.Join(f.Dir, "log_enabled") }
+
+// CrashLog is where the Go runtime writes the traceback of a panic or fatal
+// error. A service has no stderr, so without this a crash leaves nothing but
+// the SCM's "terminated unexpectedly".
+func (f Files) CrashLog() string  { return filepath.Join(f.Dir, "crash.log") }
+func (f Files) errorFile() string { return filepath.Join(f.Dir, "disconnect_error") }
+func (f Files) logFlag() string   { return filepath.Join(f.Dir, "log_enabled") }
 
 // Ensure creates the directory. Idempotent; the installer normally did it
 // already, with the permissions the app needs.

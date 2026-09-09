@@ -50,6 +50,12 @@ class NetworkExtensionCore implements VpnCore {
   static ControlTransport _transport = ChannelTransport();
   static ControlTransport get _control => _transport;
 
+  /// The same transport, for the few calls that live outside this class (the
+  /// log fetchers in ext_logs.dart). They used to open the MethodChannel
+  /// themselves, which on Windows has no handler: the service answers
+  /// `fetch_log` over the pipe, but the Logs screen never asked it.
+  static ControlTransport get control => _transport;
+
   late final Stream<VpnStatus> _statusStream;
   NormConfig? _config;
   VpnStatus _status = VpnStatus.disconnected;
