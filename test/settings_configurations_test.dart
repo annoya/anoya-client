@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -73,6 +74,22 @@ void main() {
           matching: find.byIcon(Icons.chevron_right),
         ),
         findsNWidgets(3));
+  });
+
+  testWidgets('Windows shows no auto-connect card, but keeps Advanced', (tester) async {
+    // No on-demand rules and no system switch to point at: the card would
+    // have nothing true to say. The connection check works there, so its row
+    // stays.
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    await pump(tester, [profile('a', 'Config')]);
+
+    expect(find.text('CONNECTION'), findsOneWidget);
+    expect(find.text('On demand'), findsNothing);
+    expect(find.text('Always-on VPN'), findsNothing);
+    expect(find.text('Advanced'), findsOneWidget);
+    // Before the body ends: the binding checks foundation overrides are back
+    // to normal on exit, a tearDown is too late for it.
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('About is one row that already names the build', (tester) async {

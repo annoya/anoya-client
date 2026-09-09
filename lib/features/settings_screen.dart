@@ -206,9 +206,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             // Auto-connect differs by platform in kind, not in detail: Apple
             // evaluates our on-demand rules, Android has the system's own
-            // Always-on switch we can only point at. Disconnect-on-sleep is a
-            // flag of Apple's VPN protocol and has no Android counterpart.
+            // Always-on switch we can only point at, Windows has nothing of
+            // the sort and shows no card. Disconnect-on-sleep is a flag of
+            // Apple's VPN protocol and has no counterpart elsewhere.
             const SectionHeader('CONNECTION'),
+            if (hasAutoConnect)
             Card(
               margin: kCardMargin,
               child: supportsOnDemand

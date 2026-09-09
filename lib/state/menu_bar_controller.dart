@@ -6,7 +6,8 @@ import '../core/vpn_core.dart';
 import 'profiles_controller.dart';
 import 'session.dart';
 
-/// Keeps the macOS menu bar item in step with the app, and runs what it asks.
+/// Keeps the macOS menu bar item and the Windows tray icon in step with the
+/// app, and runs what they ask.
 ///
 /// Watched by the app shell so it lives as long as the app does — the menu has
 /// to work while the window is closed, which is precisely when no screen is

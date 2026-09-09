@@ -4,11 +4,12 @@ import 'package:flutter/services.dart';
 
 import 'log.dart';
 
-/// What the menu bar item shows, in the words it shows them.
+/// What the menu bar item (macOS) or tray icon (Windows) shows, in the words it
+/// shows them.
 ///
-/// The text is composed here rather than in Swift so the menu says the same
-/// thing as the home screen — the platform side owns the surface, not the
-/// vocabulary.
+/// The text is composed here rather than in Swift or C++ so the menu says the
+/// same thing as the home screen on every platform — the platform side owns
+/// the surface, not the vocabulary.
 class MenuBarState {
   const MenuBarState({
     required this.status,
@@ -58,8 +59,9 @@ class MenuBarState {
       Object.hash(status, detail, canConnect, canDisconnect, tunnelUp, connecting);
 }
 
-/// The `NSStatusItem` bridge. macOS only; a no-op everywhere else, so callers
-/// need no platform checks of their own.
+/// The bridge to the `NSStatusItem` on macOS and the notification-area icon
+/// on Windows (`windows/runner/tray_icon.cpp`). A no-op everywhere else, so
+/// callers need no platform checks of their own.
 ///
 /// Show / hide / quit never reach this class: they are window-server actions
 /// and are handled natively, without waiting on the isolate. What crosses the
@@ -72,9 +74,9 @@ class MenuBar {
 
   final MethodChannel _channel;
 
-  /// True where a menu bar exists at all. iOS has none, and the tests run on
-  /// neither.
-  static bool get supported => Platform.isMacOS;
+  /// True where a menu bar or a tray exists at all. iOS and Android have
+  /// neither, and the tests run on a host that pretends to be the former.
+  static bool get supported => Platform.isMacOS || Platform.isWindows;
 
   MenuBarState? _last;
 

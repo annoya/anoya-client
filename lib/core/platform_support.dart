@@ -25,3 +25,15 @@ bool get supportsOnDemand => switch (defaultTargetPlatform) {
       TargetPlatform.macOS || TargetPlatform.iOS => true,
       _ => false,
     };
+
+/// Whether the platform has any auto-connect facility to speak of — ours
+/// (on-demand rules) or the system's (Android's Always-on switch).
+///
+/// Windows has neither: no rules the system would evaluate for us, and no
+/// switch to point the user at. The settings row that explains the facility is
+/// left out there rather than replaced with an explanation — there is nothing
+/// to explain.
+bool get hasAutoConnect => switch (defaultTargetPlatform) {
+      TargetPlatform.macOS || TargetPlatform.iOS || TargetPlatform.android => true,
+      _ => false,
+    };

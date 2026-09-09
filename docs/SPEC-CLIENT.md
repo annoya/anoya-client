@@ -512,6 +512,15 @@ carry (the Xcode config and `go.mod`) and are stated in
 `lib/core/app_version.dart` with a test that checks them against those two. The
 User-Agent is the name and the version that was read.
 
+On Windows the same menu lives behind a **tray icon** (`windows/runner/tray_icon.cpp`,
+`Shell_NotifyIcon` and a Win32 popup menu): the same two status lines, Show/Hide,
+Connect, Disconnect and Quit, composed by the same Dart code over the same
+`vpn/tray` channel. A left click toggles the window, the close button hides it
+into the tray, and the icon is drawn at runtime — white with a dark outline, so
+it reads on a dark and a light taskbar — with the shape carrying the state:
+filled for a tunnel that is up, outlined for down, outlined with a dot while
+connecting.
+
 On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
 the system): a status line, show/hide the app, connect, disconnect, quit. It is
 the only view of the tunnel while the window is closed, so closing the window no

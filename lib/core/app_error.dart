@@ -146,6 +146,19 @@ AppError describeError(Object error, {String? subject}) {
         'This doesn’t look like a link we know',
         'Expected vless://, vmess://, trojan://, ss:// or a subscription URL.',
       ),
+    // The Windows tunnel is a service the app does not own. Absent (not
+    // installed, stopped) and vanished mid-request are different situations
+    // with different fixes, and neither has anything to do with a VPN profile.
+    PlatformException(code: 'service_unavailable') => err(
+        'The tunnel service isn’t running',
+        'AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, '
+            'or start the service in Services, then connect again.',
+      ),
+    PlatformException(code: 'service_disconnected') => err(
+        'The tunnel service stopped',
+        'It restarts on its own within a few seconds — connect again. If this keeps '
+            'happening, the tunnel log in Settings → Logs says why.',
+      ),
     // NEVPNError / permission denial arrives as a channel error.
     PlatformException() => err(
         'The system refused to start the tunnel',
