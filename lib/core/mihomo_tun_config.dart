@@ -151,6 +151,29 @@ String mihomoTunConfigYaml(
     for (final ns in plan.bootstrap) '    - ${yamlScalar(ns)}',
     '  nameserver:',
     for (final r in plan.resolvers) '    - ${yamlScalar(r.wire)}',
+    // Domain rules match on the name a connection is for, and the engine only
+    // knows it when the app's DNS went through the hijack above. On Android it
+    // often does not: Private DNS in its default "automatic" mode upgrades to
+    // DNS-over-TLS on port 853 — the decoy resolver supports it — and Chrome
+    // upgrades to DoH on its own. Both hand the app a real address, the
+    // connection arrives as a bare IP, and every domain rule silently matches
+    // nothing: a block rule blocks nothing, a split allow-list tunnels nothing.
+    // The sniffer reads the name back out of the TLS ClientHello, the HTTP
+    // Host header or the QUIC handshake and matches rules on it. The
+    // destination is left as the app chose it: re-resolving the name would
+    // route a direct connection's lookup through the resolvers above.
+    'sniffer:',
+    '  enable: true',
+    '  force-dns-mapping: true',
+    '  parse-pure-ip: true',
+    '  override-destination: false',
+    '  sniff:',
+    '    HTTP:',
+    '      ports: [80, 8080-8880]',
+    '    TLS:',
+    '      ports: [443, 8443]',
+    '    QUIC:',
+    '      ports: [443, 8443]',
     'tun:',
     '  enable: true',
     if (device != null) '  device: ${yamlScalar(device)}',

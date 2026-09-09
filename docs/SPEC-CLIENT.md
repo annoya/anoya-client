@@ -203,8 +203,13 @@ subscription's own answer. The one place "provider" survives is the SSO
 
 The DNS servers in the NE settings are a decoy: their only job is to steer the
 OS's queries into the tunnel, where the engine's `any:53` hijack answers them
-in fake-ip mode. The real resolvers live in the engine config's `dns:` block
-and therefore switch with the configuration, through the same hot reload. A
+in fake-ip mode. Not every query takes that road: Android's Private DNS
+upgrades to DNS-over-TLS on port 853 in its default mode, and Chrome to DoH,
+so their connections arrive as bare addresses. The engine's sniffer reads the
+name back out of the TLS, HTTP or QUIC handshake and matches domain rules on
+it, leaving the destination as the app chose. The real resolvers live in the
+engine config's `dns:` block and therefore switch with the configuration,
+through the same hot reload. A
 configuration supplies them at its source — the self-hosted bundle's `dns`
 field, a Clash-YAML subscription's `dns.nameserver`, an Xray or sing-box
 body's `dns.servers` — and falls back to Cloudflare DoH
