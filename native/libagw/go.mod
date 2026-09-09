@@ -2,11 +2,11 @@ module libagw
 
 go 1.24
 
-// The upstream repository is github.com/amnezia-vpn/libagw, but its go.mod
-// declares the module as amnezia-gateway-sdk — the two disagree, so `go get`
-// by the repository path is refused. The submodule in ./upstream pins the
-// v1.0.0 tag and this replace points the declared path at it: their code
+// The upstream repository is github.com/amnezia-vpn/libagw, and since v1.0.1 its
+// go.mod says so too. The submodule in ./upstream pins the commit we build —
+// 2f0215b, the C ABI that reports transport outcomes only and survives a
+// misused handle — and this replace points the module path at it: their code
 // stays theirs, at a commit we can name.
-require github.com/amnezia-vpn/amnezia-gateway-sdk v0.0.0
+require github.com/amnezia-vpn/libagw v0.0.0
 
-replace github.com/amnezia-vpn/amnezia-gateway-sdk => ./upstream
+replace github.com/amnezia-vpn/libagw => ./upstream
