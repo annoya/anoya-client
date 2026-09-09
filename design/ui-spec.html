@@ -111,6 +111,21 @@
   .mitem .key{margin-left:auto;font-size:12px;opacity:.7}
   .msep{height:1px;background:var(--m-line);margin:5px 0}
   .mnote{padding:2px 14px 2px;font-size:11px;color:var(--m-mut)}
+  /* Windows taskbar + Win32 popup menu. System-drawn as well: the menu is a
+     classic popup (26px items, 12px Segoe UI), the tray icon 16px. */
+  .mac.win{display:flex;flex-direction:column;justify-content:flex-end}
+  .wtask{height:48px;display:flex;align-items:center;justify-content:flex-end;gap:14px;
+    padding:0 12px;background:var(--m-card);border-top:1px solid var(--m-line)}
+  .wtask .wtray{display:flex;align-items:center;color:var(--m-ink)}
+  .wtask .wtray.on svg{fill:currentColor}
+  .wtask .wclock{font-size:11px;color:var(--m-mut);text-align:right;line-height:1.2}
+  .wmenu{position:absolute;right:12px;bottom:56px;width:236px;padding:4px 0;border-radius:8px;
+    background:var(--m-card);border:1px solid var(--m-line);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .witem{height:26px;display:flex;align-items:center;padding:0 12px;font-size:12px}
+  .witem.hi{background:var(--m-pric);color:var(--m-onpric)}
+  .witem.off{color:var(--m-mut)}
+  .wsep{height:1px;background:var(--m-line);margin:4px 0}
+  .wnote{padding:2px 12px 4px;font-size:11px;color:var(--m-mut)}
   .iconrow{display:flex;align-items:center;gap:14px;padding:10px 16px}
   .iconrow .what{font-size:12px;color:var(--m-mut)}
 
@@ -2525,6 +2540,26 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Settings</span></div>
+      <div class="sh">CONNECTION</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-gear"/></svg>
+          <div class="tx"><div class="t">Advanced</div><div class="s">Connection check · on</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      </div>
+      <div class="sh">ROUTING</div>
+      <div class="card">
+        <div class="row"><svg class="icon muted"><use href="#i-wifi"/></svg>
+          <div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div>
+          <span class="sw"><i></i></span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · CONNECTION (Windows)</span><b>Windows.</b> Ни «On demand», ни «Always-on»: у Windows нет ни правил, которые система оценивала бы сама, ни системного переключателя, на который можно указать. Карточка автоподключения не показывается вовсе, а не заменяется объяснением — объяснять нечего. Секция остаётся ради «Advanced»: проверка соединения работает через службу так же, как через расширение, и терять её настройку только потому, что соседняя карточка пуста, незачем.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Always-on VPN</span></div>
       <div class="card" style="margin-top:8px">
         <div class="row"><svg class="icon muted"><use href="#i-bolt"/></svg>
@@ -2679,6 +2714,37 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div>
     </div></div>
     <p class="cap"><span class="id">Error dialog</span><b>Диалог ошибки.</b> Обычная поверхность диалогов, без красного: ошибку отличают заголовок и модальность, а кричащий цвет на весь попап только выбивается из палитры. Красным остаётся лишь обводка поля с неверным вводом — там он показывает конкретное место. Геометрия диалогов: вставка 40&nbsp;pt, r20, иконка 24&nbsp;pt и заголовок 20/w500 в шапке, текст 14&nbsp;pt под ним, крестик 40&nbsp;pt справа сверху. Затемнение перехватывает нажатия, поэтому кнопка Connect и пикеры недоступны, пока ошибку не прочитали. Тап по затемнению не закрывает — только крестик, иначе сообщение снесут случайным касанием. Текст называет конкретный сервер или адрес: по «Ошибка подключения» пользователь не поймёт, что чинить.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:742px">
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-mut)">Not connected</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">ТСПУ Дронов</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+        </div>
+      </div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <div class="head">
+          <svg class="icon muted"><use href="#i-alert"/></svg>
+          <h4>The tunnel service isn’t running</h4>
+          <span class="iconbtn"><svg class="icon s"><use href="#i-close"/></svg></span>
+        </div>
+        <div class="body msg">AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">Error dialog · Windows service</span><b>Службы нет.</b> На Windows туннель держит служба, и подключение без неё падает кодом <code>service_unavailable</code>. Общая формулировка «the system refused to start the tunnel, allow the VPN profile in system settings» здесь ложь: никакого профиля нет, а разрешать нечего. Диалог называет службу по имени, под которым она видна в «Службах», и предлагает два реальных выхода — переустановить или запустить руками.<br><br>Второй код, <code>service_disconnected</code> — служба пропала посреди запроса (упала или обновляется): «The tunnel service stopped. It restarts on its own within a few seconds — connect again. If this keeps happening, the tunnel log in Settings → Logs says why.» Тот же диалог, другой текст: тут чинить нечего, надо подождать и повторить.</p>
   </div>
 
   <div class="board">
@@ -2986,7 +3052,7 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
       </div></div>
       <div class="hint" style="padding:12px 16px 0">Turn the switch off to use your own rule set instead. Your subscription cannot enforce this either way.</div>
     </div></div>
-    <p class="cap"><span class="id">RoutingConfigScreen · from your subscription</span><b>Во всех текстах — «subscription», а не «provider».</b> У приложения нет отношений с компанией: по ADR-005 подписка — это лента серверов, аккаунта за ней нет, и всё, что мы про неё знаем, приехало в её же ответе. «Your subscription sent a message» звучит метонимией ровно один раз; «your provider» вводило второе действующее лицо, которого в модели нет, и рядом с заголовком <code>SUBSCRIPTION ROUTING</code> читалось как что-то ещё. Исключение одно и оно не про подписку: identity provider в SSO — другая сущность, там слово остаётся.<br><br><b>Строки называются так же, как у устройства, — и это не косметика.</b> Было «Routes from your provider», «See what they route», «Their rule lists»: три формулировки, повторяющие «чьё» в каждой, при том что заголовок секции уже это сказал. Стало <code>Routing</code>, <code>Rule set</code>, <code>Rule lists</code> — те же слова, что в <code>DEVICE ROUTING</code> ниже. Две секции на одном экране отвечают на один вопрос из разных источников, и когда строки в них названы по-разному, сравнить источники глазами нельзя: приходится сначала переводить.<br><br>Владелец остаётся в заголовке секции, где он сказан один раз и относится ко всему, что под ним. Повторять его в каждой строке значило бы тратить ширину на то, что и так известно, — а ширина здесь уходит у подписи, которая несёт факты.<br><br><b>Два владельца — два заголовка, и нижний по-настоящему заперт.</b> «SUBSCRIPTION ROUTING» и «DEVICE ROUTING» отвечают на один вопрос из двух источников, и пока верхний включён, нижний не просто погашен: он <b>не принимает нажатий</b>. Раньше он их принимал — тумблер щёлкал, набор открывался, а на маршруты это не влияло никак. Управляющий элемент, который переключается и ничего не делает, хуже отсутствующего: он учит не доверять интерфейсу. Настоящий переключатель здесь один — верхний, и подпись под карточками говорит именно это.<br><br><b>Маршруты пришли вместе с подпиской.</b> Приходят они из трёх мест, и заголовок <code>routing</code> (направление <code>GlobalProxy</code> плюс шесть списков — сайты и IP на proxy, direct и block) — только одно из них. Живая проверка показала, что чаще правил там нет вовсе: панель кладёт их в <b>Xray-рендер той же подписки</b>, который клиент запрашивает по имени формата (<code>&lt;url&gt;/json</code>) — честно, а не подделывая юзер-агент. Третий случай — тело в формате Clash, где <code>rules:</code> уже на языке нашего ядра.<br><br>Переводим, а не перенимаем: в чужих наборах есть понятия, которых у нас нет — inbound-теги, порты, регулярки. Правило, которое мы не умеем выразить, <b>отбрасывается, а не приближается</b> (маршрут «почти туда» уводит трафик туда, куда пользователь не соглашался), и число отброшенных подписано в строке — иначе частичная политика выглядела бы полной. Направление берём из catch-all: «остальное direct» — это split, иначе full.<br><br>Применяем их, но говорим, чьи они: карточка на primary-container, как у managed-политики, и в заголовке прямо «from your subscription».<br><br>И одно отличие от self-hosted, которое здесь принципиально: <b>тумблер есть</b>. У организации политика неотключаема — сервер её задал и сам обеспечит. У подписки такой власти нет (ADR-005): она может не отдать сервер, но не может заставить нас гнать трафик по её правилам. Поэтому маршруты по умолчанию включены (иначе зачем провайдер их прислал), а решение остаётся за пользователем — и строка про это написана словами, а не подразумевается.<br><br><b>Третья строка — про чужие файлы, и она выключена по умолчанию.</b> Часть правил (<code>RULE-SET</code> у Clash) ссылается не на домен, а на <b>список, который хостит провайдер</b>. Пока строка выключена, такие правила попадают в счётчик «not supported» — и счётчик называет причину своими словами — «2 need their lists», а не безличное «not supported», потому что первое лечится одним тумблером, а второе не лечится вообще. Включение означает: скачать чужие файлы на устройство и обновлять их раз в неделю. Это другое по сути решение, чем «применить их правила», поэтому и тумблер отдельный.<br><br><b>Выключение файлы не стирает.</b> Сначала стирало — и это выглядело последовательным («отказался держать чужое — не держим»), пока не выяснилась цена: у живой подписки тринадцать списков, и передумать стоило полной перекачки. Тумблер называется «применять их правила», а не «удалить их файлы»; обещания про диск он не даёт, а сами файлы протухают через неделю и уберутся сами. Уборка осталась там, где она про мусор: после обновления подписки, где провайдер мог убрать список из политики и файл остался бы ничей.<br><br>Тумблер живёт <b>в конфигурации, а не в общих настройках</b>: доверие к спискам — это доверие к конкретному провайдеру, и одному можно доверять, а другому нет. Обещать он должен ровно то, что делает: Xray-шные <code>ext:</code> он не включает никогда — это файл на диске сервера панели, у него нет адреса, скачивать нечего.</p>
+    <p class="cap"><span class="id">RoutingConfigScreen · from your subscription</span><b>Во всех текстах — «subscription», а не «provider».</b> У приложения нет отношений с компанией: по ADR-005 подписка — это лента серверов, аккаунта за ней нет, и всё, что мы про неё знаем, приехало в её же ответе. «Your subscription sent a message» звучит метонимией ровно один раз; «your provider» вводило второе действующее лицо, которого в модели нет, и рядом с заголовком <code>SUBSCRIPTION ROUTING</code> читалось как что-то ещё. Исключение одно и оно не про подписку: identity provider в SSO — другая сущность, там слово остаётся. <i>Продолжение — под рельсом.</i></p>
   </div>
 
   <div class="board">
@@ -3222,7 +3288,18 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   </div>
 </div>
 
-<h2>11 · Меню в строке состояния (macOS)</h2>
+<p class="flowdesc"><b>RoutingConfigScreen · from your subscription, продолжение.</b> <b>Строки называются так же, как у устройства, — и это не косметика.</b> Было «Routes from your provider», «See what they route», «Their rule lists»: три формулировки, повторяющие «чьё» в каждой, при том что заголовок секции уже это сказал. Стало <code>Routing</code>, <code>Rule set</code>, <code>Rule lists</code> — те же слова, что в <code>DEVICE ROUTING</code> ниже. Две секции на одном экране отвечают на один вопрос из разных источников, и когда строки в них названы по-разному, сравнить источники глазами нельзя: приходится сначала переводить.</p>
+<p class="flowdesc">Владелец остаётся в заголовке секции, где он сказан один раз и относится ко всему, что под ним. Повторять его в каждой строке значило бы тратить ширину на то, что и так известно, — а ширина здесь уходит у подписи, которая несёт факты.</p>
+<p class="flowdesc"><b>Два владельца — два заголовка, и нижний по-настоящему заперт.</b> «SUBSCRIPTION ROUTING» и «DEVICE ROUTING» отвечают на один вопрос из двух источников, и пока верхний включён, нижний не просто погашен: он <b>не принимает нажатий</b>. Раньше он их принимал — тумблер щёлкал, набор открывался, а на маршруты это не влияло никак. Управляющий элемент, который переключается и ничего не делает, хуже отсутствующего: он учит не доверять интерфейсу. Настоящий переключатель здесь один — верхний, и подпись под карточками говорит именно это.</p>
+<p class="flowdesc"><b>Маршруты пришли вместе с подпиской.</b> Приходят они из трёх мест, и заголовок <code>routing</code> (направление <code>GlobalProxy</code> плюс шесть списков — сайты и IP на proxy, direct и block) — только одно из них. Живая проверка показала, что чаще правил там нет вовсе: панель кладёт их в <b>Xray-рендер той же подписки</b>, который клиент запрашивает по имени формата (<code>&lt;url&gt;/json</code>) — честно, а не подделывая юзер-агент. Третий случай — тело в формате Clash, где <code>rules:</code> уже на языке нашего ядра.</p>
+<p class="flowdesc">Переводим, а не перенимаем: в чужих наборах есть понятия, которых у нас нет — inbound-теги, порты, регулярки. Правило, которое мы не умеем выразить, <b>отбрасывается, а не приближается</b> (маршрут «почти туда» уводит трафик туда, куда пользователь не соглашался), и число отброшенных подписано в строке — иначе частичная политика выглядела бы полной. Направление берём из catch-all: «остальное direct» — это split, иначе full.</p>
+<p class="flowdesc">Применяем их, но говорим, чьи они: карточка на primary-container, как у managed-политики, и в заголовке прямо «from your subscription».</p>
+<p class="flowdesc">И одно отличие от self-hosted, которое здесь принципиально: <b>тумблер есть</b>. У организации политика неотключаема — сервер её задал и сам обеспечит. У подписки такой власти нет (ADR-005): она может не отдать сервер, но не может заставить нас гнать трафик по её правилам. Поэтому маршруты по умолчанию включены (иначе зачем провайдер их прислал), а решение остаётся за пользователем — и строка про это написана словами, а не подразумевается.</p>
+<p class="flowdesc"><b>Третья строка — про чужие файлы, и она выключена по умолчанию.</b> Часть правил (<code>RULE-SET</code> у Clash) ссылается не на домен, а на <b>список, который хостит провайдер</b>. Пока строка выключена, такие правила попадают в счётчик «not supported» — и счётчик называет причину своими словами — «2 need their lists», а не безличное «not supported», потому что первое лечится одним тумблером, а второе не лечится вообще. Включение означает: скачать чужие файлы на устройство и обновлять их раз в неделю. Это другое по сути решение, чем «применить их правила», поэтому и тумблер отдельный.</p>
+<p class="flowdesc"><b>Выключение файлы не стирает.</b> Сначала стирало — и это выглядело последовательным («отказался держать чужое — не держим»), пока не выяснилась цена: у живой подписки тринадцать списков, и передумать стоило полной перекачки. Тумблер называется «применять их правила», а не «удалить их файлы»; обещания про диск он не даёт, а сами файлы протухают через неделю и уберутся сами. Уборка осталась там, где она про мусор: после обновления подписки, где провайдер мог убрать список из политики и файл остался бы ничей.</p>
+<p class="flowdesc">Тумблер живёт <b>в конфигурации, а не в общих настройках</b>: доверие к спискам — это доверие к конкретному провайдеру, и одному можно доверять, а другому нет. Обещать он должен ровно то, что делает: Xray-шные <code>ext:</code> он не включает никогда — это файл на диске сервера панели, у него нет адреса, скачивать нечего.</p>
+
+<h2>11 · Меню в строке состояния (macOS) и трей (Windows)</h2>
 <p class="flowdesc">Иконка в menu bar и её меню — единственный способ управлять туннелем, не разворачивая окно. Четыре действия: показать/спрятать окно, подключиться к активной конфигурации, отключиться, выйти. Поверхность системная: <code>NSStatusItem</code> плюс <code>NSMenu</code>, метрики AppKit (полоса 24&nbsp;pt, пункт 22&nbsp;pt, текст 13&nbsp;pt), и стилизовать их мы не можем и не пытаемся — это не наш экран, а системный.</p>
 <p class="flowdesc">Отсюда следует ограничение, которое определило дизайн иконки: template-изображение в menu bar <b>перекрашивается системой</b> в чёрный или белый, и цветом состояние передать нельзя вообще. Не «нежелательно», как в наших экранах, а невозможно. Поэтому состояние несёт <b>форма</b>: залитый щит — туннель поднят, контурный — опущен, контурный со точкой — идёт подключение. Слова про состояние живут в первой строке меню, где место для них есть.</p>
 <div class="rail">
@@ -3308,6 +3385,29 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
     <p class="cap wide"><span class="id">MenuBar · состояния</span><b>Крайние случаи.</b> Без конфигураций «Connect» и «Disconnect» погашены, а первая строка говорит почему — так «Show vpn2» становится единственным осмысленным действием, и оно же ведёт туда, где конфигурацию добавляют. Во время подключения «Disconnect» уже активен (отменить попытку — законное желание), а «Connect» нет: повторное нажатие во время подключения не ускоряет его, а перезапускает.<br><br>Три формы иконки, а не три цвета: система перекрашивает template-изображение сама, и жёлтого «подключаюсь» в menu bar не бывает. Стрелки обновления для промежуточного состояния взяты из того же набора, что и в приложении, — «Switching…» при горячем переключении сервера выглядит так же, потому что это то же состояние.</p>
   </div>
 
+
+  <div class="board">
+    <div class="scaler mac"><div class="mac win">
+      <div class="wmenu">
+        <div class="witem off">Connected · Germany</div>
+        <div class="witem off">00:04:11 · ТСПУ Дронов</div>
+        <div class="wsep"></div>
+        <div class="witem">Show AnnoyaTest</div>
+        <div class="wsep"></div>
+        <div class="witem off">Connect</div>
+        <div class="witem hi">Disconnect</div>
+        <div class="wsep"></div>
+        <div class="witem">Quit AnnoyaTest</div>
+        <div class="wnote">Quitting leaves the tunnel connected</div>
+      </div>
+      <div class="wtask">
+        <svg class="icon xs muted"><use href="#i-wifi"/></svg>
+        <span class="wtray on"><svg class="icon xs"><use href="#i-shield"/></svg></span>
+        <span class="wclock">9:41<br>04.09.2026</span>
+      </div>
+    </div></div>
+    <p class="cap wide"><span class="id">Tray · connected · окно спрятано</span><b>Windows: тот же контракт, другая поверхность.</b> Меню строка в строку повторяет macOS: две строки состояния, Show/Hide, Connect и Disconnect (неприменимый погашен, но виден), Quit, и строка под Quit только при поднятом туннеле — на Windows она так же верна: туннель живёт в службе, выход из приложения его не роняет. Текст меню приходит из того же Dart-кода <code>menuBarStateFor</code>, что и на macOS; нативная сторона (C++ в раннере, <code>Shell_NotifyIcon</code> плюс <code>TrackPopupMenu</code>) владеет поверхностью, а не словами. Хоткея у Quit нет: у Win32-меню в трее нет клавиатурных эквивалентов.<br><br><b>Жесты трея.</b> Правый клик — меню. Левый клик — показать или спрятать окно, то же, что первый пункт меню: на Windows так ведёт себя большинство фоновых приложений, и человек ждёт этого раньше, чем откроет меню. <b>Крестик окна больше не закрывает приложение</b>, а прячет его в трей — иначе иконка исчезала бы вместе с окном, и «Show» из меню было бы нечего показывать. Выход — только через Quit в меню.<br><br><b>Иконка.</b> Windows не перекрашивает иконки трея, но панель задач бывает и тёмной, и светлой, поэтому иконка рисуется в рантайме белой с однопиксельной тёмной обводкой — читается на обеих. Состояние несёт форма, как на macOS: залитый щит — туннель поднят, контурный — опущен, контурный с точкой — подключение или переключение.</p>
+  </div>
 </div>
 
 <!-- ============ 13 ============ -->
@@ -3452,11 +3552,17 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
-      <div class="h1">Add a connection</div>
-      <div class="sub">Link, subscription or config file</div>
-      <div class="field" style="margin:0 24px"><span class="lab">Link or subscription</span><span class="val">vpn://AAAA_3icdY3BC4IwFIf_Fdm5Igw…</span></div>
-      <div class="chip ok" style="margin:12px 24px 0"><svg class="icon s"><use href="#i-check"/></svg>Amnezia Premium · subscription key</div>
-      <div class="btn fill" style="margin:14px 24px 8px">Continue</div>
+      <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
+      <div style="padding:0 24px">
+        <div class="inp focus"><div class="lb">Link or subscription</div><div class="vl">vpn://AAAA_3icdY3BC4IwFIf_Fdm5Igw…</div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 12px;border-radius:12px;
+             background:color-mix(in srgb, var(--m-pric) 45%, transparent)">
+          <svg class="icon s" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+          <span style="font-size:12.5px;font-weight:600;color:var(--m-onpric)">Amnezia Premium · subscription key</span>
+        </div>
+        <div class="btn fill" style="margin:14px 0 8px">Continue</div>
+      </div>
     </div></div>
     <p class="cap"><span class="id">StartScreen · detectInput · vpn://</span><b>Импорт ключа.</b> Чип называет подписку так, как её назвал сам ключ («Amnezia Premium»), и не обещает числа: сколько там локаций, из ключа неизвестно — это выяснится первым же запросом к шлюзу. Форматы, которые мы не обслуживаем (их self-hosted-бандлы и снятая с поддержки версия 1), не распознаются вовсе — лучше «не понял», чем принять и упасть на подключении.</p>
   </div>
@@ -3498,11 +3604,17 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
-      <div class="h1">Add a connection</div>
-      <div class="sub">Link, subscription or config file</div>
-      <div class="field" style="margin:0 24px"><span class="lab">Link or subscription</span><span class="val">vpn://AAAA_3icXY3LDoIwEEV_hXStJj4S…</span></div>
-      <div class="chip ok" style="margin:12px 24px 0"><svg class="icon s"><use href="#i-check"/></svg>Amnezia Free · subscription key</div>
-      <div class="btn fill" style="margin:14px 24px 8px">Continue</div>
+      <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
+      <div style="padding:0 24px">
+        <div class="inp focus"><div class="lb">Link or subscription</div><div class="vl">vpn://AAAA_3icXY3LDoIwEEV_hXStJj4S…</div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 12px;border-radius:12px;
+             background:color-mix(in srgb, var(--m-pric) 45%, transparent)">
+          <svg class="icon s" style="color:var(--m-pri)"><use href="#i-check"/></svg>
+          <span style="font-size:12.5px;font-weight:600;color:var(--m-onpric)">Amnezia Free · subscription key</span>
+        </div>
+        <div class="btn fill" style="margin:14px 0 8px">Continue</div>
+      </div>
       <div class="dim"></div>
       <div class="dlg">
         <div class="head">
@@ -3520,20 +3632,27 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-plus"/></svg></span><span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="chips"><span class="chip"><svg class="icon s"><use href="#i-route"/></svg>Routing · off</span><span class="chip on"><svg class="icon s"><use href="#i-doc"/></svg>Logs · on</span></div>
-      <div class="center">
-        <div class="stat">Getting the server…</div>
-        <div class="ring" style="--rc:var(--m-out)"><div class="ring-in"><svg class="icon big muted"><use href="#i-power"/></svg><div class="ring-t muted">Connect</div></div></div>
-      </div>
-      <div class="card dis"><div class="row">
-        <svg class="icon muted"><use href="#i-shield"/></svg>
-        <div class="tx"><div class="t">Amnezia Premium</div><div class="s">Subscription · 44 servers</div></div>
-        <svg class="icon muted"><use href="#i-gear"/></svg></div>
-      </div>
-      <div class="card dis"><div class="row">
-        <span class="flag">🇩🇪</span>
-        <div class="tx"><div class="t">Germany</div><div class="s">AmneziaWG</div></div>
-        <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      <div class="hbody" style="height:742px">
+        <div class="strip">
+          <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Routing · off</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-doc"/></svg>Logs · on</span>
+        </div>
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-mut)">Getting the server…</span>
+          <div class="ring" style="--rc:var(--m-line);color:var(--m-mut)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card" style="opacity:.38"><div class="row">
+            <svg class="icon muted"><use href="#i-shield"/></svg>
+            <div class="tx"><div class="t">Amnezia Premium</div><div class="s">Subscription · 44 servers</div></div>
+            <svg class="icon muted"><use href="#i-gear"/></svg>
+          </div></div>
+          <div class="card" style="opacity:.38"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">Germany</div><div class="s">AmneziaWG</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
       </div>
     </div></div>
     <p class="cap"><span class="id">HomeScreen · Amnezia · issuing</span><b>Локацию выбрали — сервер ещё едет.</b> У Amnezia выбор места это запрос к шлюзу, и он не мгновенный. Без этого состояния кнопка Connect доступна раньше, чем появился конфиг: пользователь жмёт и получает отказ, причина которого — «мы ещё не спросили». Поэтому пикеры и кольцо гаснут ровно так же, как при горячем переключении, а строка статуса говорит, чего мы ждём. Слово другое, чем «Switching server…»: там сессия жива и меняется сервер под ней, здесь туннеля нет вовсе, и обещать переключение было бы неправдой.</p>
@@ -3543,15 +3662,22 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-plus"/></svg></span><span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
-      <div class="chips"><span class="chip"><svg class="icon s"><use href="#i-route"/></svg>Routing · off</span><span class="chip on"><svg class="icon s"><use href="#i-doc"/></svg>Logs · on</span></div>
-      <div class="center">
-        <div class="stat">Not connected</div>
-        <div class="ring" style="--rc:var(--m-pri)"><div class="ring-in"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-power"/></svg><div class="ring-t">Connect</div></div></div>
-      </div>
-      <div class="card"><div class="row">
-        <span class="flag">🇩🇪</span>
-        <div class="tx"><div class="t">Germany</div><div class="s">AmneziaWG</div></div>
-        <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      <div class="hbody" style="height:742px">
+        <div class="strip">
+          <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Routing · off</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-doc"/></svg>Logs · on</span>
+        </div>
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-mut)">Not connected</span>
+          <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">Germany</div><div class="s">AmneziaWG</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
       </div>
       <div class="toast"><div class="tt">Couldn’t get the server for Germany — the previous one is still in use.</div></div>
     </div></div>
