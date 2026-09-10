@@ -12,7 +12,7 @@ Same Apple team as macOS. Bundle ids: app `org.annoya.test`, extension
 ## Gate 1 — does mihomo even compile for iOS?
 
 ```sh
-cd client/native/mihomocore
+cd native/mihomocore
 ./build-xcframework.sh          # now also builds the ios-arm64 slice
 ```
 This must produce `MihomoCore.xcframework` with **both** `macos-arm64_x86_64`
@@ -20,7 +20,7 @@ and `ios-arm64` slices (`ls MihomoCore.xcframework`). If the iOS `go build` fail
 a dependency, stop here and report the error — that's the real risk, and it
 decides whether mihomo-in-NE is viable on iOS at all.
 
-## Xcode wiring (open `client/ios/Runner.xcworkspace`)
+## Xcode wiring (open `ios/Runner.xcworkspace`)
 
 1. **Runner target → Signing & Capabilities**: team = your Apple dev team,
    bundle id `org.annoya.test`; add capabilities **Network Extensions**

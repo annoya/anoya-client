@@ -133,7 +133,7 @@ func TestSanitizeConfigErrorRedactsQuotedValues(t *testing.T) {
 func TestEgressProbeLooksUpTheAgreedOutboundName(t *testing.T) {
 	if !strings.Contains(engineSource(t), `cfg.Proxies["proxy"]`) {
 		t.Fatal("the probe no longer looks up the outbound named \"proxy\"; " +
-			"if that is intended, update client/lib/core/mihomo_tun_config.dart too")
+			"if that is intended, update lib/core/mihomo_tun_config.dart too")
 	}
 }
 

@@ -201,22 +201,22 @@ no business seeing.
 
 ## Where It Lives
 
-- `refreshGapFor` in `client/lib/core/profile.dart` — three answers in order:
+- `refreshGapFor` in `lib/core/profile.dart` — three answers in order:
   the user's period (`refreshHours`), the panel's `profile-update-interval`, the
   app's floor. The user's comes first because a panel asking for a cadence is
   asking to spend traffic and battery it does not own; the floor survives all
   three, now also as a courtesy to someone else's server.
-- `client/lib/core/profile.dart`, `config_source.dart`, `profile_store.dart` —
+- `lib/core/profile.dart`, `config_source.dart`, `profile_store.dart` —
   the last also remembers which configuration was active and what it connected
   through, in `selection.json` beside the list. Kept out of `profiles.json`
   because that file is a bare JSON array: turning it into an object to hold two
   more fields would make every existing file unreadable, costing the profiles
   and not just the selection. Restored only when the ids still name something,
   and only onto the configuration they were saved for.
-- `client/lib/core/routing_policy.dart` — the three policy classes.
-- `client/lib/state/group_member.dart` — what a selected group resolved to.
-- `client/lib/core/rule_list_store.dart` — the provider's list files.
-- `client/lib/core/parsers/` — `share_link.dart` (single links),
+- `lib/core/routing_policy.dart` — the three policy classes.
+- `lib/state/group_member.dart` — what a selected group resolved to.
+- `lib/core/rule_list_store.dart` — the provider's list files.
+- `lib/core/parsers/` — `share_link.dart` (single links),
   `clash_config.dart`, `xray_config.dart`, `singbox_config.dart`,
   `mihomo_proxy.dart` (the transport/TLS mapping all three share),
   `subscription.dart` (format dispatch + the verdict), `provider_routing.dart`
@@ -225,14 +225,14 @@ no business seeing.
   will not compile drops the group instead of widening it: `exclude-filter`
   is how a provider says "not through this exit", and a membership assembled
   without it sends the user exactly where they were being steered away from.
-- `client/lib/core/subscription_fetch.dart` — the fetch, the device headers and
+- `lib/core/subscription_fetch.dart` — the fetch, the device headers and
   the routing lookup.
-- `client/lib/state/profiles_controller.dart` — the list, the active profile,
+- `lib/state/profiles_controller.dart` — the list, the active profile,
   the connect path, polling.
-- `client/lib/features/start_screen.dart` — the two ways in.
-- Tests: `client/test/parsers_test.dart`,
-  `client/test/provider_routing_test.dart`, `client/test/routing_policy_test.dart`,
-  `client/test/rule_list_store_test.dart`, `client/test/formats_test.dart`,
-  `client/test/proxy_groups_test.dart`,
-  `client/test/config_screen_test.dart`,
-  `client/test/settings_configurations_test.dart`, `client/test/home_layout_test.dart`.
+- `lib/features/start_screen.dart` — the two ways in.
+- Tests: `test/parsers_test.dart`,
+  `test/provider_routing_test.dart`, `test/routing_policy_test.dart`,
+  `test/rule_list_store_test.dart`, `test/formats_test.dart`,
+  `test/proxy_groups_test.dart`,
+  `test/config_screen_test.dart`,
+  `test/settings_configurations_test.dart`, `test/home_layout_test.dart`.

@@ -11,7 +11,7 @@
 #      Flutter can undo whenever it migrates the Xcode project.
 # Then runs flutter for the chosen platform. Defaults: platform=macos, action=run.
 set -euo pipefail
-cd "$(dirname "$0")/.."                 # -> client/
+cd "$(dirname "$0")/.."                 # -> repository root
 FLUTTER="${FLUTTER:-flutter}"
 
 platform="${1:-macos}"; shift || true
