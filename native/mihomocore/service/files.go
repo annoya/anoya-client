@@ -31,9 +31,10 @@ func (f Files) ServiceLog() string { return filepath.Join(f.Dir, "tunnel.log") }
 // CrashLog is where the Go runtime writes the traceback of a panic or fatal
 // error. A service has no stderr, so without this a crash leaves nothing but
 // the SCM's "terminated unexpectedly".
-func (f Files) CrashLog() string  { return filepath.Join(f.Dir, "crash.log") }
-func (f Files) errorFile() string { return filepath.Join(f.Dir, "disconnect_error") }
-func (f Files) logFlag() string   { return filepath.Join(f.Dir, "log_enabled") }
+func (f Files) CrashLog() string        { return filepath.Join(f.Dir, "crash.log") }
+func (f Files) errorFile() string       { return filepath.Join(f.Dir, "disconnect_error") }
+func (f Files) logFlag() string         { return filepath.Join(f.Dir, "log_enabled") }
+func (f Files) autoConnectFlag() string { return filepath.Join(f.Dir, "auto_connect") }
 
 // Ensure creates the directory. Idempotent; the installer normally did it
 // already, with the permissions the app needs.
@@ -51,6 +52,26 @@ func (f Files) LoadConfig() (string, error) {
 }
 
 func (f Files) RemoveConfig() { _ = os.Remove(f.Config()) }
+
+// SetAutoConnect records the user's answer to "connect when Windows starts".
+//
+// It is a setting, not a memory of the last session: the saved config cannot
+// stand in for it, because the app writes that whenever it mirrors the current
+// selection — tunnel up or down — so its presence says "there is something to
+// run", never "run it". Written by the app when the switch moves, read by the
+// service at boot when there is nobody to ask.
+func (f Files) SetAutoConnect(on bool) {
+	if !on {
+		_ = os.Remove(f.autoConnectFlag())
+		return
+	}
+	_ = os.WriteFile(f.autoConnectFlag(), []byte("1"), 0o644)
+}
+
+func (f Files) AutoConnect() bool {
+	_, err := os.Stat(f.autoConnectFlag())
+	return err == nil
+}
 
 func (f Files) RecordError(msg string) { _ = os.WriteFile(f.errorFile(), []byte(msg), 0o644) }
 func (f Files) ClearError()            { _ = os.Remove(f.errorFile()) }

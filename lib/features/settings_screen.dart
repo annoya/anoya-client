@@ -8,6 +8,7 @@ import '../core/dns_plan.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
 import '../state/favorites_controller.dart';
+import '../state/auto_connect_controller.dart';
 import '../state/connection_check_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
@@ -193,6 +194,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final prefs = ref.watch(routingPrefsProvider);
     final onDemand = ref.watch(onDemandProvider);
     final check = ref.watch(connectionCheckProvider).prefs;
+    final autoConnect = ref.watch(autoConnectProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -213,7 +215,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             if (hasAutoConnect)
             Card(
               margin: kCardMargin,
-              child: supportsOnDemand
+              child: supportsBootAutoConnect
+                  // Windows: our own service starts with the machine, so the
+                  // facility is ours to offer — and one condition ("when
+                  // Windows starts") is a switch, not a screen.
+                  ? SwitchListTile(
+                      secondary: const Icon(Icons.bolt_outlined),
+                      title: const Text('Auto-connect'),
+                      subtitle: const Text('Connect when Windows starts'),
+                      value: autoConnect,
+                      onChanged: (v) => ref.read(autoConnectProvider.notifier).set(v),
+                    )
+                  : supportsOnDemand
                   ? Column(children: [
                       ListTile(
                         leading: const Icon(Icons.bolt_outlined),

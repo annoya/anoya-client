@@ -134,6 +134,14 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		s.stop()
 		return nil, nil
 
+	case "set_auto_connect":
+		// The one thing that may raise a tunnel with no app running. Kept
+		// apart from connect and disconnect on purpose: those say what the
+		// user wants now, this says what they want every time the machine
+		// comes back, and the two are not the same question.
+		s.files.SetAutoConnect(boolOr("enabled", false))
+		return nil, nil
+
 	case "reload":
 		config := str("config")
 		if config == "" {
@@ -154,7 +162,9 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 
 	case "remove_profile":
 		// No system profile to remove; what must not outlive the last
-		// configuration is the saved config a boot-time start would run.
+		// configuration is the saved config a boot-time start would run. The
+		// auto-connect switch is left alone: it is the user's answer, not a
+		// property of the configuration they just removed.
 		s.stop()
 		s.files.RemoveConfig()
 		return nil, nil
@@ -271,9 +281,17 @@ func (s *Service) start(config string) error {
 }
 
 // StartSaved brings the tunnel up from the persisted config with no app
-// involved — the service starting at boot with a tunnel the user left on. An
-// absent config is not an error: nothing was left on.
+// involved — the service starting with the machine.
+//
+// It runs only when auto-connect is on. The config is saved on every sync of
+// the selection, so it exists after any run of the app at all; starting from
+// its mere presence turned a reboot into a VPN nobody had asked for. An absent
+// flag is not an error: it is the ordinary answer for anyone who never turned
+// the switch on.
 func (s *Service) StartSaved() error {
+	if !s.files.AutoConnect() {
+		return nil
+	}
 	config, err := s.files.LoadConfig()
 	if err != nil {
 		return nil

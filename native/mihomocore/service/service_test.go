@@ -175,6 +175,104 @@ func TestReloadKeepsTheSessionAndReportsARejectedConfig(t *testing.T) {
 	}
 }
 
+// A machine that reboots must not come back with a VPN nobody asked for.
+//
+// The saved config is written on every sync of the selection, so it exists
+// after any run of the app; what decides whether the tunnel comes up with the
+// machine is the auto-connect switch, and nothing else.
+func TestBootConnectsOnlyWhenAutoConnectIsOn(t *testing.T) {
+	s, eng, files := harness(t)
+
+	// The app mirrors the selection with the tunnel down — the ordinary case
+	// after an install, a server switch or a settings change.
+	if _, err := s.Handle("sync_config", map[string]any{"config": "tun: {}"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.StartSaved(); err != nil {
+		t.Fatal(err)
+	}
+	if eng.sequence() != "" {
+		t.Fatalf("a synced config started the tunnel at boot: %q", eng.sequence())
+	}
+	if s.Status() != StatusDisconnected {
+		t.Fatalf("status after a boot with auto-connect off: %v", s.Status())
+	}
+
+	// Connecting by hand is not the same answer: it says what the user wants
+	// now, not what they want every time the machine comes back.
+	if _, err := s.Handle("start", map[string]any{"config": "tun: {}"}); err != nil {
+		t.Fatal(err)
+	}
+	if files.AutoConnect() {
+		t.Fatal("connecting turned auto-connect on behind the user")
+	}
+
+	if _, err := s.Handle("set_auto_connect", map[string]any{"enabled": true}); err != nil {
+		t.Fatal(err)
+	}
+	next, nextEng, _ := harness(t)
+	next.files = files
+	if err := next.StartSaved(); err != nil {
+		t.Fatal(err)
+	}
+	if nextEng.sequence() != "start" {
+		t.Fatalf("auto-connect did not bring the tunnel up: %q", nextEng.sequence())
+	}
+}
+
+func TestTurningAutoConnectOffOutlivesAReboot(t *testing.T) {
+	s, _, files := harness(t)
+	if _, err := s.Handle("sync_config", map[string]any{"config": "tun: {}"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Handle("set_auto_connect", map[string]any{"enabled": true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Handle("set_auto_connect", map[string]any{"enabled": false}); err != nil {
+		t.Fatal(err)
+	}
+
+	next, nextEng, _ := harness(t)
+	next.files = files
+	if err := next.StartSaved(); err != nil {
+		t.Fatal(err)
+	}
+	if nextEng.sequence() != "" {
+		t.Fatalf("the tunnel came up with auto-connect off: %q", nextEng.sequence())
+	}
+}
+
+func TestDisconnectingDoesNotAnswerTheAutoConnectQuestion(t *testing.T) {
+	// Two different questions: "not now" and "not ever again on its own".
+	s, _, files := harness(t)
+	if _, err := s.Handle("set_auto_connect", map[string]any{"enabled": true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Handle("start", map[string]any{"config": "tun: {}"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Handle("stop", nil); err != nil {
+		t.Fatal(err)
+	}
+	if !files.AutoConnect() {
+		t.Fatal("a manual disconnect switched auto-connect off")
+	}
+	// Removing the last configuration is not that answer either: what goes is
+	// the config a boot-time start would have run.
+	if _, err := s.Handle("remove_profile", nil); err != nil {
+		t.Fatal(err)
+	}
+	if !files.AutoConnect() {
+		t.Fatal("removing a configuration switched auto-connect off")
+	}
+	if err := s.StartSaved(); err != nil {
+		t.Fatal(err)
+	}
+	if s.Status() != StatusDisconnected {
+		t.Fatal("a boot with no saved config still started something")
+	}
+}
+
 func TestStopAndRemoveProfile(t *testing.T) {
 	s, eng, files := harness(t)
 	_, _ = s.Handle("start", map[string]any{"config": "c"})
