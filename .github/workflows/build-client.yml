@@ -2,9 +2,11 @@
 # an Android APK and a Windows installer. Apple needs signing identities and a
 # paid team, so those builds stay on a Mac for now.
 #
-# Amnezia support needs credentials that are not in the repository. Put the
-# contents of client-secrets.json into the CLIENT_SECRETS_JSON repository
-# secret and both builds pick it up; without it they still build, and Amnezia
+# Amnezia support needs credentials that are not in the repository. Set them as
+# three repository secrets — AGW_ENDPOINT, AGW_PUBLIC_KEY_B64 and
+# AGW_S3_ENDPOINTS — and every build passes each one it finds as its own
+# --dart-define. A secret left unset is simply not passed, so the code's own
+# default stands; without the key material the builds still run, and Amnezia
 # keys are refused with a message rather than failing (see README.md).
 name: build-client
 
@@ -82,20 +84,24 @@ jobs:
 
       - name: Build APK
         env:
-          CLIENT_SECRETS_JSON: ${{ secrets.CLIENT_SECRETS_JSON }}
+          AGW_ENDPOINT: ${{ secrets.AGW_ENDPOINT }}
+          AGW_PUBLIC_KEY_B64: ${{ secrets.AGW_PUBLIC_KEY_B64 }}
+          AGW_S3_ENDPOINTS: ${{ secrets.AGW_S3_ENDPOINTS }}
         run: |
+          # One --dart-define per secret that is set. Passing an empty one
+          # would override the code's default with nothing.
           args=()
-          if [ -n "$CLIENT_SECRETS_JSON" ]; then
-            printf '%s' "$CLIENT_SECRETS_JSON" > client-secrets.json
-            args=(--dart-define-from-file=client-secrets.json)
-          fi
+          for name in AGW_ENDPOINT AGW_PUBLIC_KEY_B64 AGW_S3_ENDPOINTS; do
+            value="${!name}"
+            if [ -n "$value" ]; then args+=(--dart-define="$name=$value"); fi
+          done
           flutter pub get
           scripts/build-android.sh "${args[@]+"${args[@]}"}"
 
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: client/build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
 
   windows:
@@ -122,13 +128,17 @@ jobs:
 
       - name: Build app
         env:
-          CLIENT_SECRETS_JSON: ${{ secrets.CLIENT_SECRETS_JSON }}
+          AGW_ENDPOINT: ${{ secrets.AGW_ENDPOINT }}
+          AGW_PUBLIC_KEY_B64: ${{ secrets.AGW_PUBLIC_KEY_B64 }}
+          AGW_S3_ENDPOINTS: ${{ secrets.AGW_S3_ENDPOINTS }}
         run: |
+          # One --dart-define per secret that is set. Passing an empty one
+          # would override the code's default with nothing.
           args=()
-          if [ -n "$CLIENT_SECRETS_JSON" ]; then
-            printf '%s' "$CLIENT_SECRETS_JSON" > client-secrets.json
-            args=(--dart-define-from-file=client-secrets.json)
-          fi
+          for name in AGW_ENDPOINT AGW_PUBLIC_KEY_B64 AGW_S3_ENDPOINTS; do
+            value="${!name}"
+            if [ -n "$value" ]; then args+=(--dart-define="$name=$value"); fi
+          done
           flutter pub get
           flutter build windows --release "${args[@]+"${args[@]}"}"
 
@@ -146,7 +156,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: client/build/windows/installer/*.exe
+          path: build/windows/installer/*.exe
           if-no-files-found: error
 
       # The bare build too, for a machine where the installer cannot run: the
@@ -155,6 +165,6 @@ jobs:
         with:
           name: windows-portable
           path: |
-            client/build/windows/x64/runner/Release/
-            client/build/windows/service/
+            build/windows/x64/runner/Release/
+            build/windows/service/
           if-no-files-found: error
