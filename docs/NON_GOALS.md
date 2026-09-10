@@ -4,6 +4,11 @@ What this project deliberately does not do. Written down because delivery
 pressure re-proposes all of it, and because "we already considered that" is
 worthless if nobody can find where.
 
+This is the client's list. The server side's non-goals — what management and
+the workers deliberately do not do — live in the
+[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository's
+`docs/NON_GOALS.md`.
+
 ## Product
 
 **We are not building a consumer VPN service.** No sign-up funnel, no billing,
@@ -14,7 +19,7 @@ themselves.
 access and captive portals; the honest version is a firewall, which is separate
 work. See ADR-004.
 
-**We do not proxy third-party subscriptions through our server.** The client
+**We do not proxy third-party subscriptions through a server.** The client
 fetches them directly. Routing someone's subscription traffic through
 management would make it a middleman for data it has no business seeing.
 
@@ -24,10 +29,10 @@ route.
 
 ## Architecture
 
-**We do not add abstraction seams beyond the two that exist** — `VpnCore` on the
-client and `protocol.Driver` on the server. Everything else is direct and
-boring. An interface with one implementation and no second one in sight is
-waste.
+**We do not add abstraction seams beyond the two that exist** — here it is
+`VpnCore`; the other one is the server's `protocol.Driver`, in the web-panel
+repository. Everything else is direct and boring. An interface with one
+implementation and no second one in sight is waste.
 
 **We do not swap the engine.** mihomo is the engine on every platform, and no
 second one is planned. `VpnCore` is the platform boundary and the test seam,
@@ -67,9 +72,6 @@ non-goals:
 
 - pf-based kill switch (closes the reconnect leak window — ADR-004).
 - Traffic statistics in the client (`statsStream` is currently empty).
-- IdP group synchronisation into user lists (ADR-006).
-- Incremental user provisioning on the worker; today adding a user rewrites the
-  config and restarts Xray, dropping everyone's sessions.
 - Live Activity / Dynamic Island on iOS. It was designed and never built; the
   design was removed from the mockup rather than left as a promise.
 - Android, Windows, Linux clients.
