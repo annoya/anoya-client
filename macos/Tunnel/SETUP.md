@@ -95,7 +95,7 @@ Copy Files Phase, Destination = Plug-ins/Extensions) and add `Tunnel.appex`.
 ## 9. Build to validate Phase B
 - In Xcode select the **Runner** scheme → Product → Build (⌘B), or:
 ```sh
-cd client && flutter build macos --debug
+flutter build macos --debug
 ```
 Success means: the extension compiles, `import MihomoCore` resolves, the static
 lib links, and `Tunnel.appex` is embedded. (No tunnel runs yet — that's Phase C.)

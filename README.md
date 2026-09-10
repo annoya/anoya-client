@@ -44,7 +44,6 @@ One command handles the Go core (rebuilt only when it changed) and the
 Flutter+extension build-phase quirk, then runs Flutter:
 
 ```sh
-cd client
 ./scripts/build.sh macos          # build core if stale → flutter run -d macos
 ./scripts/build.sh ios            # + fixes the Flutter/extension build cycle
 ./scripts/build.sh macos build    # flutter build instead of run
@@ -60,9 +59,9 @@ server has an OIDC provider configured.
 builds the Android APK and the Windows installer, on every push to `main`, on
 tags and on every pull request; the builds are published as
 workflow artifacts. The three jobs are independent, so a red test does not
-withhold a build. Amnezia credentials come
-from the `CLIENT_SECRETS_JSON` repository secret (the contents of
-`client-secrets.json`); without it the builds still run.
+withhold a build. Amnezia credentials come from three repository secrets —
+`AGW_ENDPOINT`, `AGW_PUBLIC_KEY_B64` and `AGW_S3_ENDPOINTS` — each passed to
+the build as its own `--dart-define`; without them the builds still run.
 
 ### Windows
 
@@ -103,12 +102,21 @@ you only need `build.sh`. If you ever recreate a target from scratch, see
 ## Amnezia Premium/Free builds
 
 Amnezia support needs credentials that are not in this repository: the
-gateway's RSA public key, its storage endpoints, and the client identity its
-gateway checks before answering. Copy `client-secrets.example.json` to
-`client-secrets.json` (gitignored) and build with:
+gateway's endpoint, its RSA public key and its storage endpoints. The client
+identity the gateway is told about is no longer configuration — the app sends
+its own name and version, and claims no distribution channel. Copy
+`client-secrets.example.json` to `client-secrets.json` (gitignored) and build
+with:
 
 ```
 flutter build apk --release --dart-define-from-file=client-secrets.json
+```
+
+The same three values can be passed one by one instead, which is what CI does:
+
+```
+flutter build apk --release --dart-define=AGW_ENDPOINT=… \
+  --dart-define=AGW_PUBLIC_KEY_B64=… --dart-define=AGW_S3_ENDPOINTS=…
 ```
 
 A build without them still works — Amnezia keys are simply refused with a

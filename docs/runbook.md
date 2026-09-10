@@ -43,7 +43,7 @@ are identical.
 ## Build
 
 ```bash
-cd client && ./scripts/build.sh          # engine when stale, app, run
+./scripts/build.sh                      # engine when stale, app, run
 ```
 
 The Go engine is a standalone module and is **not** part of the Go workspace:
@@ -65,7 +65,7 @@ Dart runs under JIT there, and iOS forbids JIT without an attached debugger.
 That is not a bug in the app.
 
 ```bash
-cd client && flutter run --release -d <device-id>   # flutter devices for ids
+flutter run --release -d <device-id>    # flutter devices for ids
 ```
 
 Or in Xcode: Product → Scheme → Edit Scheme → Run → Build Configuration →
