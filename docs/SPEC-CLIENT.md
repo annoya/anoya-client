@@ -126,7 +126,12 @@ Rationale and constraints: ADR-001.
 On Windows the tunnel is a Windows service (`AnnoyaTunnel`,
 `client/native/mihomocore/cmd/tunnel-service`), started by the Service Control
 Manager and spoken to over a named pipe; the adapter is Wintun and the engine's
-home is under `ProgramData`. The service starts with the machine, and brings a
+home is under `ProgramData`. The tun runs with `strict-route`: Windows resolves
+names on every adapter in parallel, so without it the copy of each DNS query
+sent to the ISP's resolver leaves over the physical link and never meets the
+tunnel's rules — sing-tun's WFP filters block port 53 everywhere but the tun and
+the engine itself. Software on the host that talks to an off-tunnel DNS server
+directly is blocked while the tunnel is up, by design. The service starts with the machine, and brings a
 tunnel up on its own **only when auto-connect is on** — a switch in Settings →
 Connection, off by default, which the app writes into the service's own
 directory because at boot there is no app to ask. The saved config cannot stand
