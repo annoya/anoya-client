@@ -4,7 +4,7 @@
 >
 > This document says what the client *is*. Why it is that way lives in
 > [`docs/decisions/`](decisions/README.md); the server product it can optionally
-> talk to is specified in [`SPEC-SERVICE.md`](SPEC-SERVICE.md).
+> talk to is specified in [`SPEC-SERVICE.md`](https://github.com/annoya/annoya-web-panel/blob/main/docs/SPEC-SERVICE.md).
 
 ## 1. What this is
 
@@ -736,7 +736,7 @@ sentence naming Amnezia would be a false statement about who took the money;
 
 The only contract between this client and a management service is one
 authenticated endpoint returning the normalized bundle (`normconfig.Bundle`,
-specified in [`SPEC-SERVICE.md`](SPEC-SERVICE.md) §4):
+specified in [`SPEC-SERVICE.md`](https://github.com/annoya/annoya-web-panel/blob/main/docs/SPEC-SERVICE.md) §4):
 
 ```
 GET /api/client/config → { version, account, locations[], routing? }

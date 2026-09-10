@@ -85,19 +85,11 @@ is entirely unusable without them.
 
 ## Server side
 
-```bash
-cd management && go test ./...
-cd worker && go test ./...
-scripts/push-images.sh                   # multi-arch to Docker Hub
-```
-
-Deploy is pull plus recreate on the VPS. During MVP an upgrade may simply wipe
-the `vpn-data` volume and redeploy — there is no data to preserve and no
-migration path is maintained. The worker is then re-added from the panel with a
-fresh install command.
-
-Note: pressing "Install cmd" in the panel rotates the enrollment token, which
-invalidates any install command copied earlier.
+Server tests, image pushes and deploy live in the
+[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository's
+runbook. What matters from this side: during MVP an upgrade may wipe the
+server's data volume and redeploy, so nothing the client stored about a server
+survives it by contract.
 
 ## UI changes
 
