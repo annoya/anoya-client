@@ -1,6 +1,6 @@
 ---
 name: ui-change
-description: The mockup-first workflow for any visible change to the vpn2 Flutter client — update client/design/ui-spec.html, run its geometry validator, show the user, and only then write code. Use this whenever work touches a screen, a control, a layout, an empty state, an error message or user-facing copy in client/, even when the user just says "add a button", "fix this screen" or "поменяй экран" without mentioning the mockup. Also use it when reviewing whether an existing screen matches the spec.
+description: The mockup-first workflow for any visible change to the vpn2 Flutter client — update design/ui-spec.html, run its geometry validator, show the user, and only then write code. Use this whenever work touches a screen, a control, a layout, an empty state, an error message or user-facing copy in the app, even when the user just says "add a button", "fix this screen" or "поменяй экран" without mentioning the mockup. Also use it when reviewing whether an existing screen matches the spec.
 ---
 
 # Changing the client UI
@@ -13,14 +13,14 @@ to code reliably produces work that gets thrown away.
 
 ## The loop
 
-1. **Edit `client/design/ui-spec.html`.** Find the section for the screen you
+1. **Edit `design/ui-spec.html`.** Find the section for the screen you
    are changing and add or modify a canvas there.
 2. **Run the validator — it must report zero violations.** See below.
 3. **Show the user.** Take a screenshot of the affected canvases and describe
    the decisions you made, especially the ones they might disagree with. Wait
    for an explicit go-ahead. "делай" is the go-ahead; silence is not.
-4. **Write the code**, taking every number from `client/lib/core/theme.dart` and
-   `client/lib/core/ui.dart` — the same numbers the mockup uses.
+4. **Write the code**, taking every number from `lib/core/theme.dart` and
+   `lib/core/ui.dart` — the same numbers the mockup uses.
 5. **Verify**: `flutter analyze` (must be clean) and `flutter test`. Add or
    update the test that pins the behaviour you just introduced.
 
@@ -32,7 +32,7 @@ none of this applies. This is about what people see.
 Open the spec in the browser pane and evaluate `check.js` against it:
 
 ```
-mcp__Claude_Browser__preview_start   { url: "file:///<abs path>/client/design/ui-spec.html" }
+mcp__Claude_Browser__preview_start   { url: "file:///<abs path>/design/ui-spec.html" }
 mcp__Claude_Browser__javascript_tool { action: "javascript_exec",
   text: "(async () => { const src = await (await fetch('check.js')).text(); return eval(src); })()" }
 ```
@@ -72,7 +72,7 @@ Two traps worth knowing before they cost you a debugging round:
   appears in a list from six items (`kSearchThreshold`).
 - New component with its own geometry → add a row to the metrics table in the
   spec, and the constant to `theme.dart` or `ui.dart`. The README in
-  `client/design/` states the rule: those numbers and these numbers are the
+  `design/` states the rule: those numbers and these numbers are the
   same numbers.
 - State that the user can act on is written in words, not carried by colour
   alone. Colour is the second signal, never the only one.
@@ -88,5 +88,5 @@ Two traps worth knowing before they cost you a debugging round:
   subject"). If you find yourself weakening a test to make a change pass, the
   change is probably wrong.
 - Widget tests that touch real file I/O need `tester.runAsync` rather than
-  `pumpAndSettle` — see `client/test/routing_simple_test.dart` for the pattern
+  `pumpAndSettle` — see `test/routing_simple_test.dart` for the pattern
   that works.

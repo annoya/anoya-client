@@ -5,11 +5,12 @@ the relevant ADR in `docs/decisions/` before changing the subsystem it governs.
 
 ## Project Overview
 
-This repository is the client half of a self-hosted VPN service:
-
-- `client/` — Flutter app for macOS, iOS and Android. Drives a system VPN
-  through the `VpnCore` boundary; the engine is mihomo and only mihomo,
-  compiled into a Network Extension (Apple) or a VpnService (Android).
+This repository is the client half of a self-hosted VPN service, and the app
+is the repository root: a Flutter app for macOS, iOS and Android that drives a
+system VPN through the `VpnCore` boundary. The engine is mihomo and only
+mihomo, compiled into a Network Extension (Apple) or a VpnService (Android).
+Dart lives in `lib/` and `test/`, the platform projects in `macos/`, `ios/`,
+`android/` and `windows/`, the Go engine wrapper in `native/`.
 
 The server side lives in its own repository,
 [annoya-web-panel](https://github.com/annoya/annoya-web-panel): `management`
@@ -51,15 +52,15 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    per-location option sneaking in there silently turns switching into a
    session drop. In the `dns` section the resolvers ride the config (ADR-008),
    but the fake-ip mode and range are app constants — the OS caches the fake
-   addresses the engine handed out. Pinned by `client/test/hot_switch_test.dart`
-   and `client/test/mihomo_tun_config_test.dart`.
+   addresses the engine handed out. Pinned by `test/hot_switch_test.dart`
+   and `test/mihomo_tun_config_test.dart`.
 4. **A tunnel that stops on its own says why.** A packet-tunnel provider that
    refuses a config reports it to the *system*, never to the call that started
    it: the app sees the status fall back to disconnected and nothing else,
    which reads as a connect that hung. `VpnCore.lastDisconnectError` (the
    platform's `fetchLastDisconnectError`) is how that reason reaches the user,
    and every stop the app did not ask for goes through it. Pinned by
-   `client/test/silent_failure_test.dart`.
+   `test/silent_failure_test.dart`.
 5. **A failed switch never disconnects.** The tunnel keeps running on the
    previous config and the user is told. Dropping the session as error handling
    is the one thing that actually leaks.
@@ -70,7 +71,7 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    parser's key charset: keys are
    structural, so one carrying a newline adds a top-level config key
    (`external-controller` opens an unauthenticated control API). Drop, never
-   escape. Pinned by `client/test/mihomo_tun_config_test.dart`.
+   escape. Pinned by `test/mihomo_tun_config_test.dart`.
 7. **The engine never fetches anything while applying a config.** Geo
    databases and a provider's rule lists are downloaded by the app, into the
    App Group container, and referenced as local files. mihomo will happily do
@@ -79,8 +80,8 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    connect, and then reports failure by only logging, leaving a rule that
    silently matches nothing. If it is not on disk, the rule that needs it is
    dropped and the user is told. Pinned by
-   `client/test/mihomo_tun_config_test.dart` and
-   `client/test/rule_list_store_test.dart`.
+   `test/mihomo_tun_config_test.dart` and
+   `test/rule_list_store_test.dart`.
 8. **Resolving the proxy's own address never goes through the proxy.** Panels
    pin their resolver to the tunnel (`...#PROXY`) so DNS does not leak to the
    local network, and mihomo resolves proxy hostnames with the main resolver
@@ -93,8 +94,8 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    substitute: the engine uses it only to resolve a *nameserver's* own
    hostname. A scheme `config.Parse` does not know is dropped for the same
    family of reasons: the engine rejects the *whole* document over it. Pinned
-   by `client/test/mihomo_tun_config_test.dart` and
-   `client/test/dns_sources_test.dart`.
+   by `test/mihomo_tun_config_test.dart` and
+   `test/dns_sources_test.dart`.
 9. **Status reaches Dart from the platform thread only.** `onStatus` feeds the
    `vpn/status` EventChannel, and Flutter drops or crashes on a channel message
    sent from anywhere else. `VPNManager` is `@MainActor`: every method, field
@@ -115,7 +116,7 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
 
 ## Essential Commands
 
-Run from `client/` unless noted.
+Run from the repository root unless noted.
 
 ```bash
 flutter test                      # 100+ tests; the contract suites live here
@@ -133,17 +134,17 @@ sudo scripts/leak-check.sh        # leak check against a live tunnel (root)
 ## Which Check When
 
 - **Touched Dart or Swift** — `flutter analyze` and `flutter test`.
-- **Touched the engine wrapper (`client/native/mihomocore/`)** — Go tests, then
+- **Touched the engine wrapper (`native/mihomocore/`)** — Go tests, then
   `build-xcframework.sh`, then a macOS build. The xcframework is not committed;
   a stale one silently keeps the old behavior.
 - **Touched the tunnel, routing, or anything that decides where a packet goes**
   — run `leak-check.sh` against a live tunnel and switch locations while it
   watches. A green test suite does not prove the absence of a leak.
-- **Touched the UI** — update `client/design/ui-spec.html` *first*, run its
-  validator (`client/design/check.js` in the browser console, 0 violations
+- **Touched the UI** — update `design/ui-spec.html` *first*, run its
+  validator (`design/check.js` in the browser console, 0 violations
   required), then write the code to match. Numbers in the mockup and in
-  `client/lib/core/theme.dart` /
-  `client/lib/core/ui.dart` are the same numbers.
+  `lib/core/theme.dart` /
+  `lib/core/ui.dart` are the same numbers.
 - **Touched anything a decision governs** — update the ADR, or write a new one
   that supersedes it.
 
@@ -196,15 +197,15 @@ The rules below exist because each was learned the expensive way.
 ### Client
 
 The engine is mihomo. The state layer reaches it through `VpnCore`
-(`client/lib/core/vpn_core.dart`), whose one real implementation is
+(`lib/core/vpn_core.dart`), whose one real implementation is
 `NetworkExtensionCore`: on macOS and iOS a `NEPacketTunnelProvider` with the
 engine linked in as a Go c-archive, on Android a `VpnService` with the engine
-in-process, on Windows a service (`client/native/mihomocore/cmd/tunnel-service`)
+in-process, on Windows a service (`native/mihomocore/cmd/tunnel-service`)
 hosting the engine behind a named pipe. Dart renders the mihomo config
-(`client/lib/core/mihomo_tun_config.dart`) and sends the same commands over a
+(`lib/core/mihomo_tun_config.dart`) and sends the same commands over a
 `ControlTransport` — platform channels, or the pipe; tests substitute a fake
 `VpnCore`. Swift shared by both platforms lives once
-in `client/shared/apple/` and is symlinked into `macos/` and `ios/`.
+in `shared/apple/` and is symlinked into `macos/` and `ios/`.
 
 State is Riverpod; `ProfilesController` owns the configuration list, the active
 profile, the selected location and the connect path.
@@ -227,7 +228,7 @@ set, management never pushes — and protocol specifics live behind
   tunnel, routing, screens, and the contract it expects from a server. The
   other side of that contract is `docs/SPEC-SERVICE.md` in the
   [annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository.
-- `client/design/ui-spec.html` — every screen drawn 1:1 in Flutter logical
+- `design/ui-spec.html` — every screen drawn 1:1 in Flutter logical
   points, with `check.js` as its validator. The source of truth for UI geometry.
-- `client/README.md`, `client/macos/Tunnel/SETUP.md`,
-  `client/ios/Tunnel/SETUP-ios.md` — build and platform setup.
+- `README.md`, `macos/Tunnel/SETUP.md`,
+  `ios/Tunnel/SETUP-ios.md` — build and platform setup.

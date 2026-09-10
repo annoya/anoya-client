@@ -5,7 +5,7 @@
 # Amnezia support needs credentials that are not in the repository. Put the
 # contents of client-secrets.json into the CLIENT_SECRETS_JSON repository
 # secret and both builds pick it up; without it they still build, and Amnezia
-# keys are refused with a message rather than failing (see client/README.md).
+# keys are refused with a message rather than failing (see README.md).
 name: build-client
 
 on:
@@ -13,12 +13,10 @@ on:
     branches: [main]
     tags: ['v*']
   pull_request:
-    paths: ['client/**', '.github/workflows/build-client.yml']
   workflow_dispatch:
 
 defaults:
   run:
-    working-directory: client
     shell: bash
 
 env:
@@ -61,10 +59,10 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: client/native/mihomocore/go.mod
+          go-version-file: native/mihomocore/go.mod
           cache-dependency-path: |
-            client/native/mihomocore/go.sum
-            client/native/libagw/upstream/go.sum
+            native/mihomocore/go.sum
+            native/libagw/upstream/go.sum
 
       - uses: subosito/flutter-action@v2
         with:
@@ -108,8 +106,8 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: client/native/mihomocore/go.mod
-          cache-dependency-path: client/native/mihomocore/go.sum
+          go-version-file: native/mihomocore/go.mod
+          cache-dependency-path: native/mihomocore/go.sum
 
       - uses: subosito/flutter-action@v2
         with:

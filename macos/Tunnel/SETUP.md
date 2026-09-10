@@ -12,13 +12,13 @@ Identifiers used throughout:
 
 ## 1. Build the Go core xcframework
 ```sh
-cd client/native/mihomocore
+cd native/mihomocore
 ./build-xcframework.sh        # produces ./MihomoCore.xcframework (macos-arm64_x86_64)
 ```
 
 ## 2. Open the macOS project in Xcode
 ```sh
-open client/macos/Runner.xcworkspace
+open macos/Runner.xcworkspace
 ```
 Use the **.xcworkspace** (not .xcodeproj) — it includes the Flutter pods.
 
@@ -42,7 +42,7 @@ Xcode creates a `Tunnel/` group with generated `PacketTunnelProvider.swift`,
 `Info.plist`, and an entitlements file. We replace these in step 4.
 
 ## 4. Use our source files instead of the generated ones
-We already have the real files in `client/macos/Tunnel/`:
+We already have the real files in `macos/Tunnel/`:
 `PacketTunnelProvider.swift`, `Info.plist`, `Tunnel.entitlements`.
 - Delete the generated `PacketTunnelProvider.swift` (Move to Trash), then drag
   our `PacketTunnelProvider.swift` into the Tunnel group (Target = Tunnel).
@@ -52,7 +52,7 @@ We already have the real files in `client/macos/Tunnel/`:
 - Confirm the Tunnel target **Bundle Identifier** = `org.annoya.test.tunnel`.
 
 ## 5. Link MihomoCore.xcframework
-- Drag `client/native/mihomocore/MihomoCore.xcframework` into the project
+- Drag `native/mihomocore/MihomoCore.xcframework` into the project
   (don't copy; reference in place, or copy into `macos/`). Add to target: **Tunnel**.
 - Select the **Tunnel** target → **General** tab → the section for linked
   binaries (named **"Frameworks and Libraries"**, in some versions

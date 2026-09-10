@@ -10,8 +10,8 @@ physical interface. Run this while the tunnel is up, then switch locations and
 configurations in the app while it watches.
 
 ```bash
-sudo client/scripts/leak-check.sh        # until Ctrl-C
-sudo client/scripts/leak-check.sh 120    # or for N seconds
+sudo scripts/leak-check.sh        # until Ctrl-C
+sudo scripts/leak-check.sh 120    # or for N seconds
 ```
 
 It generates ICMP, TCP and DNS toward fixed public resolvers, captures both the
@@ -49,14 +49,14 @@ cd client && ./scripts/build.sh          # engine when stale, app, run
 The Go engine is a standalone module and is **not** part of the Go workspace:
 
 ```bash
-cd client/native/mihomocore
+cd native/mihomocore
 GOWORK=off go test .
 ./build-xcframework.sh                   # macos-arm64 + ios-arm64 + simulator
 ```
 
 `MihomoCore.xcframework` is 129 MB and not committed. A stale one silently keeps
 the previous engine behaviour — rebuild it after any change under
-`client/native/mihomocore/`, then rebuild the app.
+`native/mihomocore/`, then rebuild the app.
 
 ## Run on an iOS device
 
@@ -95,11 +95,11 @@ survives it by contract.
 
 The mockup comes first and is validated before any code:
 
-1. Edit `client/design/ui-spec.html`.
-2. Open it in a browser, run `client/design/check.js` in the console — it must
+1. Edit `design/ui-spec.html`.
+2. Open it in a browser, run `design/check.js` in the console — it must
    report `{"violations":0}`.
 3. Then write the code, taking the numbers from the same place
-   (`client/lib/core/theme.dart`, `client/lib/core/ui.dart`).
+   (`lib/core/theme.dart`, `lib/core/ui.dart`).
 
 ## Reading tunnel logs
 

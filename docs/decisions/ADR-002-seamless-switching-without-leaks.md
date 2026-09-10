@@ -154,7 +154,7 @@ answer; see ADR-004.
 ## Evidence
 
 Every claim above was settled by running the tunnel, not by reading code.
-`client/scripts/leak-check.sh` generates ICMP/TCP/DNS toward fixed public
+`scripts/leak-check.sh` generates ICMP/TCP/DNS toward fixed public
 addresses and captures both the physical interface and the utun, so "the OS
 never gave it to the tunnel" can be told apart from "it went out both ways".
 
@@ -192,14 +192,14 @@ never gave it to the tunnel" can be told apart from "it went out both ways".
 
 ## Where It Lives
 
-- `client/native/mihomocore/engine.go` — `reloadEngine`, connection closing, the
+- `native/mihomocore/engine.go` — `reloadEngine`, connection closing, the
   `[egress]` probe.
-- `client/shared/apple/PacketTunnelProvider.swift` — `applyNetworkSettings`
+- `shared/apple/PacketTunnelProvider.swift` — `applyNetworkSettings`
   (start only) and the `reload:` handler.
-- `client/lib/state/profiles_controller.dart` — `_applySelection`, and
+- `lib/state/profiles_controller.dart` — `_applySelection`, and
   `maybeReapply` (the background poll takes the same reload-only path).
-- `client/lib/core/mihomo_tun_config.dart` — identical `tun`/`dns` sections,
+- `lib/core/mihomo_tun_config.dart` — identical `tun`/`dns` sections,
   `disable-icmp-forwarding`.
-- Tests: `client/test/hot_switch_test.dart` (group `leak invariants`),
-  `client/native/mihomocore/engine_test.go`.
-- `client/scripts/leak-check.sh` — the verification tool.
+- Tests: `test/hot_switch_test.dart` (group `leak invariants`),
+  `native/mihomocore/engine_test.go`.
+- `scripts/leak-check.sh` — the verification tool.
