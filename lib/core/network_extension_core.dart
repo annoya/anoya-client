@@ -10,6 +10,7 @@ import 'log.dart';
 import 'mihomo_tun_config.dart';
 import 'norm_config.dart';
 import 'on_demand.dart';
+import 'platform_support.dart';
 import 'rule_list_store.dart';
 import 'vpn_core.dart';
 
@@ -259,6 +260,24 @@ class NetworkExtensionCore implements VpnCore {
       return 'err:${e.message ?? e.code}';
     } on MissingPluginException {
       return 'err:this build cannot test the connection';
+    }
+  }
+
+  /// Hands the auto-connect answer to the tunnel service, which is the only
+  /// thing still running when the machine next starts.
+  ///
+  /// Best-effort like every other push to the native side: a service that is
+  /// down keeps the answer it already has, and the next toggle (or the next
+  /// app start) says it again.
+  @override
+  Future<void> setAutoConnect(bool enabled) async {
+    if (!supportsBootAutoConnect) return;
+    try {
+      await _control.invoke<void>('set_auto_connect', {'enabled': enabled});
+    } on PlatformException catch (e) {
+      Log.e('NE set_auto_connect failed', e.message ?? e.code);
+    } on MissingPluginException {
+      Log.e('NE set_auto_connect failed', 'no platform side');
     }
   }
 
