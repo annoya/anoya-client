@@ -40,7 +40,7 @@ shipped as a separate executable.
 - Bundle identifier and App Group are read from `Bundle.main`; the provider is
   derived as `<bundle>.tunnel` rather than hardcoded.
 - The Swift that is identical on both platforms lives once in
-  `client/shared/apple/` and is symlinked into `macos/` and `ios/`.
+  `shared/apple/` and is symlinked into `macos/` and `ios/`.
 
 ### The same decision on Android (2026-08-30)
 
@@ -135,10 +135,10 @@ gVisor costs some throughput in theory and is the only stack that works here.
 
 ## Where It Lives
 
-- `client/shared/apple/PacketTunnelProvider.swift` — the provider: settings, fd,
+- `shared/apple/PacketTunnelProvider.swift` — the provider: settings, fd,
   engine start/stop, IPC.
-- `client/shared/apple/VPNManager.swift`, `VpnChannel.swift` — the host side.
-- `client/native/mihomocore/` — the Go module, its C surface and the
+- `shared/apple/VPNManager.swift`, `VpnChannel.swift` — the host side.
+- `native/mihomocore/` — the Go module, its C surface and the
   xcframework build script.
-- `client/lib/core/network_extension_core.dart` — the `VpnCore` implementation.
-- `client/lib/core/mihomo_tun_config.dart` — config rendering, unit-tested.
+- `lib/core/network_extension_core.dart` — the `VpnCore` implementation.
+- `lib/core/mihomo_tun_config.dart` — config rendering, unit-tested.

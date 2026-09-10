@@ -112,9 +112,9 @@ worth doing when a customer asks, not before.
 - `management/internal/httpapi/` — `GET /api/client/auth-config`,
   `POST /api/client/login/oidc`, admin CRUD for providers.
 - `management/webui/src/pages/SSO.tsx` — provider configuration.
-- `client/lib/core/oidc_login.dart` — PKCE over the `vpn/web_auth` channel.
-- `client/shared/apple/WebAuthChannel.swift` (symlinked into both Runners) and
-  `client/android/.../WebAuthChannel.kt` + `WebAuthCallbackActivity.kt` — the
+- `lib/core/oidc_login.dart` — PKCE over the `vpn/web_auth` channel.
+- `shared/apple/WebAuthChannel.swift` (symlinked into both Runners) and
+  `android/.../WebAuthChannel.kt` + `WebAuthCallbackActivity.kt` — the
   browser leg on each platform.
-- `client/lib/features/sign_in_screen.dart` — the SSO button, shown only when
+- `lib/features/sign_in_screen.dart` — the SSO button, shown only when
   the server advertises a provider.

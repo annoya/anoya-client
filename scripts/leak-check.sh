@@ -2,8 +2,8 @@
 # Live leak check for the macOS tunnel. Run it with the VPN CONNECTED, then
 # switch locations/configurations in the app while it watches.
 #
-#   sudo client/scripts/leak-check.sh            # runs until Ctrl-C
-#   sudo client/scripts/leak-check.sh 120        # or for N seconds
+#   sudo scripts/leak-check.sh            # runs until Ctrl-C
+#   sudo scripts/leak-check.sh 120        # or for N seconds
 #
 # How it works: the script keeps generating traffic to a fixed set of public
 # test IPs (TCP SYNs + system DNS lookups + ICMP) and captures BOTH the physical

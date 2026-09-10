@@ -58,7 +58,7 @@ server has an OIDC provider configured.
 
 `.github/workflows/build-client.yml` runs the analyzer and the tests, and
 builds the Android APK and the Windows installer, on every push to `main`, on
-tags and on pull requests that touch `client/`; the builds are published as
+tags and on every pull request; the builds are published as
 workflow artifacts. The three jobs are independent, so a red test does not
 withhold a build. Amnezia credentials come
 from the `CLIENT_SECRETS_JSON` repository secret (the contents of
@@ -118,6 +118,6 @@ The gateway library itself is a pinned submodule:
 
 ```
 git submodule update --init --recursive
-client/native/libagw/build-xcframework.sh   # macOS + iOS
-client/native/libagw/build-so.sh            # Android
+native/libagw/build-xcframework.sh   # macOS + iOS
+native/libagw/build-so.sh            # Android
 ```

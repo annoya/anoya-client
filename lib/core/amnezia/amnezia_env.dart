@@ -5,7 +5,7 @@ import 'dart:convert';
 /// None of this is derivable at runtime and none of it belongs in the
 /// repository: the RSA key and the storage endpoints are Amnezia's, and the
 /// identity fields are what their gateway checks before it answers at all.
-/// Supply them with `--dart-define-from-file` (see `client/README.md`); a
+/// Supply them with `--dart-define-from-file` (see `README.md`); a
 /// build without them simply has no Amnezia support, which the UI reports
 /// rather than pretending the network failed.
 class AmneziaEnv {

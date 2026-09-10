@@ -137,18 +137,18 @@ affects it, and a second write path is one more thing to keep in step.
 
 ## Where It Lives
 
-- `client/lib/core/on_demand.dart` — the model, `statusLabel`, `armed`,
+- `lib/core/on_demand.dart` — the model, `statusLabel`, `armed`,
   `awaitingFirstConnect`.
-- `client/lib/state/on_demand_controller.dart` — intent and platform sync.
-- `client/lib/features/on_demand_screen.dart` and the rule/value screens.
-- `client/shared/apple/VPNManager.swift` — `setOnDemand`, rule compilation,
+- `lib/state/on_demand_controller.dart` — intent and platform sync.
+- `lib/features/on_demand_screen.dart` and the rule/value screens.
+- `shared/apple/VPNManager.swift` — `setOnDemand`, rule compilation,
   `persist` into `providerConfiguration`.
-- `client/lib/features/home_screen.dart` — the `Auto` chip and the explanatory
+- `lib/features/home_screen.dart` — the `Auto` chip and the explanatory
   banner.
-- `client/lib/state/auto_connect_controller.dart` and the switch in
-  `client/lib/features/settings_screen.dart` — Windows.
-- `client/native/mihomocore/service/service.go` — `set_auto_connect` and
+- `lib/state/auto_connect_controller.dart` and the switch in
+  `lib/features/settings_screen.dart` — Windows.
+- `native/mihomocore/service/service.go` — `set_auto_connect` and
   `StartSaved`, the only path that raises a tunnel with no app running.
-- Tests: `client/test/on_demand_test.dart`, `client/test/status_strip_test.dart`,
-  `client/test/auto_connect_test.dart`,
-  `client/native/mihomocore/service/service_test.go`.
+- Tests: `test/on_demand_test.dart`, `test/status_strip_test.dart`,
+  `test/auto_connect_test.dart`,
+  `native/mihomocore/service/service_test.go`.

@@ -138,25 +138,25 @@ so length is cost, not redundancy.
   locations, protocols, routing policies **and DNS lists** — that section is
   the engine's condition for keeping the TUN fd (and the NE session) alive
   across a reload. The `dns` section is not part of that condition.
-  Pinned by `client/test/hot_switch_test.dart`.
+  Pinned by `test/hot_switch_test.dart`.
 - `enhanced-mode` and `fake-ip-range` are byte-identical whatever DNS a config
-  brings. Pinned by `client/test/mihomo_tun_config_test.dart`
+  brings. Pinned by `test/mihomo_tun_config_test.dart`
   ("fake-ip settings are app constants…").
 - A nameserver entry that fails sanitation never appears in the rendered YAML
-  in any form. Pinned by `client/test/mihomo_tun_config_test.dart`
+  in any form. Pinned by `test/mihomo_tun_config_test.dart`
   ("unusable dns entries are dropped, never interpolated").
 - An empty or fully-rejected DNS list falls back to `https://1.1.1.1/dns-query`.
-  Pinned by `client/test/mihomo_tun_config_test.dart`.
+  Pinned by `test/mihomo_tun_config_test.dart`.
 - `proxy-server-nameserver` is always present and never carries a pin, and no
   pin survives that names an outbound the config does not define. Pinned by
-  `client/test/mihomo_tun_config_test.dart` ("resolving the proxy never needs
+  `test/mihomo_tun_config_test.dart` ("resolving the proxy never needs
   the proxy", "a pin we cannot honour is dropped, its resolver kept").
 - No nameserver reaches the rendered config with a scheme `config.Parse`
   rejects, whatever format it came from. Pinned by
-  `client/test/dns_sources_test.dart`.
+  `test/dns_sources_test.dart`.
 - A source that says "through the proxy" comes out pinned, and one that says
   "issued here" comes out unpinned — in every format that can say either.
-  Pinned by `client/test/dns_sources_test.dart`.
+  Pinned by `test/dns_sources_test.dart`.
 
 ## Alternatives Considered
 
@@ -230,27 +230,27 @@ A user-facing override on top remains open — it would slot into the same
 
 - The decision itself — sanitation, scheme check, pins, the UDP test, the
   bootstrap list, the fallback, and the record of what was refused:
-  `client/lib/core/dns_plan.dart`. The renderer emits this plan rather than
+  `lib/core/dns_plan.dart`. The renderer emits this plan rather than
   deciding again, and the DNS screen reads the same object; that is what keeps
   the screen from describing a configuration the engine never got.
 - Renderer (`dns` parameter, `engineShape`):
-  `client/lib/core/mihomo_tun_config.dart`
+  `lib/core/mihomo_tun_config.dart`
 - Screen and the two rows that lead to it:
-  `client/lib/features/dns_screen.dart`, `NamesSection` on the routing page
-  (`client/lib/features/config/routing_config_screen.dart`), and `RoutingRow`
+  `lib/features/dns_screen.dart`, `NamesSection` on the routing page
+  (`lib/features/config/routing_config_screen.dart`), and `RoutingRow`
   on the configuration screen — which carries the refusal count itself, so
   moving DNS a level deeper did not put it back out of sight
 - Shared translation into mihomo's spelling:
-  `client/lib/core/parsers/dns_servers.dart`
+  `lib/core/parsers/dns_servers.dart`
 - Per-format mining: `_dnsServers` in `clash_config.dart`, `xray_config.dart`
   and `singbox_config.dart`; carried on `ParsedSubscription.dns`
-- Persistence and plumbing: `client/lib/core/profile.dart`,
-  `client/lib/core/norm_config.dart`, `client/lib/core/config_source.dart`,
-  `client/lib/state/profiles_controller.dart`,
-  `client/lib/core/network_extension_core.dart`
+- Persistence and plumbing: `lib/core/profile.dart`,
+  `lib/core/norm_config.dart`, `lib/core/config_source.dart`,
+  `lib/state/profiles_controller.dart`,
+  `lib/core/network_extension_core.dart`
 - Bundle schema: `shared/normconfig/normconfig.go` (`Bundle.DNS`)
 - OS-level decoy: `applyNetworkSettings` in
-  `client/shared/apple/PacketTunnelProvider.swift`
-- Tests: `client/test/dns_screen_test.dart`,
-  `client/test/dns_sources_test.dart`,
-  `client/test/mihomo_tun_config_test.dart`, `client/test/hot_switch_test.dart`
+  `shared/apple/PacketTunnelProvider.swift`
+- Tests: `test/dns_screen_test.dart`,
+  `test/dns_sources_test.dart`,
+  `test/mihomo_tun_config_test.dart`, `test/hot_switch_test.dart`

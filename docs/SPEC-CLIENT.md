@@ -76,20 +76,19 @@ tokens, `path_provider`, `crypto`, `yaml` (subscription parsing), `file_picker`,
 `archive` + `share_plus` (log export), `flutter_svg` (brand glyphs).
 
 ```
-client/
-  lib/core        models, stores, VpnCore + NetworkExtensionCore, config
-                  rendering, rule sets, geo databases, logging
-  lib/state       Riverpod controllers
-  lib/features    screens
-  lib/api         management API client (self-hosted domain only)
-  shared/apple    Swift shared by macOS and iOS, symlinked into both projects
-  android/app     Kotlin: VpnService, the control channel, the engine AAR
-  native/mihomocore   standalone Go module → MihomoCore.xcframework (Apple)
-                  and mihomocore.aar via gomobile (Android); one engine
-                  package under both surfaces
-  design          ui-spec.html + check.js — the source of truth for UI geometry
-  scripts         build.sh, leak-check.sh
-  test            contract suites
+lib/core        models, stores, VpnCore + NetworkExtensionCore, config
+                rendering, rule sets, geo databases, logging
+lib/state       Riverpod controllers
+lib/features    screens
+lib/api         management API client (self-hosted domain only)
+shared/apple    Swift shared by macOS and iOS, symlinked into both projects
+android/app     Kotlin: VpnService, the control channel, the engine AAR
+native/mihomocore   standalone Go module → MihomoCore.xcframework (Apple)
+                and mihomocore.aar via gomobile (Android); one engine
+                package under both surfaces
+design          ui-spec.html + check.js — the source of truth for UI geometry
+scripts         build.sh, leak-check.sh
+test            contract suites
 ```
 
 The native module is deliberately outside the repository's Go workspace and
@@ -103,7 +102,7 @@ On Apple the tunnel is an `NEPacketTunnelProvider` extension; mihomo is
 compiled into it as a Go c-archive (`MihomoCore.xcframework`, `-tags
 with_gvisor`). The host app stays sandboxed and shares an App Group with the
 extension, which doubles as the engine's home directory for geo databases.
-Swift shared by both platforms lives once in `client/shared/apple/` and is
+Swift shared by both platforms lives once in `shared/apple/` and is
 symlinked into the platform projects.
 
 On Android the tunnel is a `VpnService` in its own process (`:tunnel`), with
@@ -124,7 +123,7 @@ directory. Both natives speak one channel contract (`vpn/control`,
 Rationale and constraints: ADR-001.
 
 On Windows the tunnel is a Windows service (`AnnoyaTunnel`,
-`client/native/mihomocore/cmd/tunnel-service`), started by the Service Control
+`native/mihomocore/cmd/tunnel-service`), started by the Service Control
 Manager and spoken to over a named pipe; the adapter is Wintun and the engine's
 home is under `ProgramData`. The tun runs with `strict-route`: Windows resolves
 names on every adapter in parallel, so without it the copy of each DNS query
@@ -144,7 +143,7 @@ changes the other.
 ### 3.1 The `VpnCore` seam
 
 Screens and state never talk to the platform directly; they go through
-`VpnCore` (`client/lib/core/vpn_core.dart`), which tests replace with a fake:
+`VpnCore` (`lib/core/vpn_core.dart`), which tests replace with a fake:
 
 | Member | Purpose |
 |---|---|
@@ -160,10 +159,10 @@ Screens and state never talk to the platform directly; they go through
 `NetworkExtensionCore` implements it for macOS, iOS, Android and Windows — the class
 only speaks one control vocabulary, over the platform channels the runners
 register or, on Windows, over a named pipe to the tunnel service
-(`client/native/mihomocore/service`), and all four natives answer the same
+(`native/mihomocore/service`), and all four natives answer the same
 contract. Config translation (bundle → mihomo YAML) lives entirely inside the
 core implementation and is unit-tested
-(`client/lib/core/mihomo_tun_config.dart`). Other platforms throw
+(`lib/core/mihomo_tun_config.dart`). Other platforms throw
 `UnsupportedError` until their core is written.
 
 `statsStream()` currently yields nothing.
@@ -307,7 +306,7 @@ subscription shows a server picker but no account; only a self-hosted one can be
 told by its server that it may no longer connect.
 
 The differences live in a sealed `ConfigSource` hierarchy
-(`client/lib/core/config_source.dart`), so the controller orchestrates
+(`lib/core/config_source.dart`), so the controller orchestrates
 generically and adding a fourth domain is a subclass plus one `switch` arm.
 Favourites are stored per profile, keyed `profileId/locationId`.
 
@@ -565,9 +564,9 @@ State (including the item's icon, which carries status by shape because the
 system tints template images itself) is composed in Dart so the menu says what
 the home screen says.
 
-`client/design/ui-spec.html` draws every screen 1:1 in Flutter logical points
-and is validated by `client/design/check.js`; the numbers there and in
-`client/lib/core/theme.dart` are the same numbers. A visible change starts with
+`design/ui-spec.html` draws every screen 1:1 in Flutter logical points
+and is validated by `design/check.js`; the numbers there and in
+`lib/core/theme.dart` are the same numbers. A visible change starts with
 the mockup, not with the code.
 
 ---
@@ -581,7 +580,7 @@ under any policy.
 
 Whose rules apply is decided by one of three policy classes, not by branching:
 a self-hosted server's (unswitchable), a subscription panel's (switchable), or
-the device's own rule sets. See `client/lib/core/routing_policy.dart`.
+the device's own rule sets. See `lib/core/routing_policy.dart`.
 
 A subscription's panel may send routing of its own — as a `routing:` response
 header, as the `rules:` of a Clash body, or in the Xray rendering of the same
@@ -636,7 +635,7 @@ always-on start happens with no Flutter engine running, and it runs whatever
 configuration was used last, which `syncConfig` keeps current. The on-demand
 rule editor and the home "Auto" chip do not exist on Android
 (`supportsOnDemand` / `supportsAlwaysOn` in
-`client/lib/core/platform_support.dart`).
+`lib/core/platform_support.dart`).
 
 ---
 
@@ -645,7 +644,7 @@ rule editor and the home "Auto" chip do not exist on Android
 One switch controls collection for the app, tunnel and engine journals; console
 output continues regardless. Extension logs travel over IPC rather than through
 the shared container, and all three can be exported as a zip.
-`client/scripts/leak-check.sh` verifies on a live tunnel that nothing escapes
+`scripts/leak-check.sh` verifies on a live tunnel that nothing escapes
 the physical interface.
 
 ---
@@ -656,7 +655,7 @@ The key is a Qt artefact and decodes like one: `vpn://` over URL-safe base64
 over a zlib stream behind a four-byte prefix whose value is not to be trusted
 (their premium encoder writes a constant there). The same codec unwraps the
 `config` field of a gateway answer, inside which the protocol settings are a
-JSON *string*. `client/lib/core/amnezia/vpn_key.dart`.
+JSON *string*. `lib/core/amnezia/vpn_key.dart`.
 
 Two endpoints are used and no more — a subscription this app imports was bought
 elsewhere, and an endpoint we never call is a behaviour we cannot get wrong:
@@ -679,7 +678,7 @@ elsewhere, and an endpoint we never call is a behaviour we cannot get wrong:
   generated on the device; the private half never leaves it and is substituted
   into what comes back.
 
-The transport is the native `libagw` (`client/native/libagw`, a pinned
+The transport is the native `libagw` (`native/libagw`, a pinned
 submodule of Amnezia's own SDK): RSA+AES request envelopes, and — the reason it
 is a linked library rather than a page of Dart — the censorship bypass that
 resolves a pool of proxies from S3 and walks it when the gateway looks blocked.

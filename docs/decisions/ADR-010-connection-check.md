@@ -186,15 +186,15 @@ issued seconds earlier.
 
 ## Where It Lives
 
-- Engine: `client/native/mihomocore/engine/engine.go` (`URLTest`, `ProxyBytes`),
+- Engine: `native/mihomocore/engine/engine.go` (`URLTest`, `ProxyBytes`),
   exported in `core.go` (Apple) and `mobile/mobile.go` (Android).
-- Transports: `client/shared/apple/PacketTunnelProvider.swift` (`urltest:`,
+- Transports: `shared/apple/PacketTunnelProvider.swift` (`urltest:`,
   `proxybytes`), `VPNManager.swift`, `VpnChannel.swift`;
-  `client/android/app/src/main/aidl/org/annoya/vpn_client/ITunnel.aidl`,
+  `android/app/src/main/aidl/org/annoya/vpn_client/ITunnel.aidl`,
   `MihomoVpnService.kt`, `VpnChannel.kt`.
-- App: `client/lib/core/connection_check.dart`,
-  `client/lib/state/connection_check_controller.dart`,
-  `client/lib/features/advanced_connection_screen.dart`, the banner in
-  `client/lib/features/home_screen.dart`.
-- Tests: `client/test/connection_check_test.dart`.
-- Mockup: `client/design/ui-spec.html` §14.
+- App: `lib/core/connection_check.dart`,
+  `lib/state/connection_check_controller.dart`,
+  `lib/features/advanced_connection_screen.dart`, the banner in
+  `lib/features/home_screen.dart`.
+- Tests: `test/connection_check_test.dart`.
+- Mockup: `design/ui-spec.html` §14.
