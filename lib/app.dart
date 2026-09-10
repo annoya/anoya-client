@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme.dart';
+import 'core/ui.dart';
 import 'features/start_screen.dart';
 import 'features/home_screen.dart';
 import 'state/menu_bar_controller.dart';
@@ -48,6 +49,10 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       title: 'VPN',
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigator,
+      // Above the navigator, so it covers dialogs and sheets too — every text
+      // field in the app is inside one route or another, and the rule should
+      // not depend on which.
+      builder: (context, child) => DismissKeyboardOnTapOutside(child: child!),
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
       themeMode: prefs.themeMode,
