@@ -198,6 +198,39 @@ Future<void> showErrorDialog(BuildContext context, AppError error,
   onDismiss?.call();
 }
 
+/// Closes the keyboard when a tap lands outside the field that owns it.
+///
+/// Flutter's own rule is desktop-only. `EditableTextTapOutsideIntent` is
+/// answered by dropping focus on macOS, Windows and Linux, and on Android and
+/// iOS only for a mouse or a stylus — a *touch* outside deliberately keeps the
+/// field focused (`editable_text.dart`). On a phone that leaves the keyboard
+/// standing over the half of the screen the user tapped away to look at, and
+/// the only way back is a return key the field may not have.
+///
+/// Written as an action override rather than a `GestureDetector` around the
+/// app for two reasons: the intent fires on the pointer-down that lands outside
+/// the field, so the keyboard also closes when that tap belongs to a button —
+/// and nothing new competes for gestures on the screens that have no text
+/// input at all.
+class DismissKeyboardOnTapOutside extends StatelessWidget {
+  const DismissKeyboardOnTapOutside({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Actions(
+        actions: <Type, Action<Intent>>{
+          EditableTextTapOutsideIntent: CallbackAction<EditableTextTapOutsideIntent>(
+            onInvoke: (intent) {
+              intent.focusNode.unfocus();
+              return null;
+            },
+          ),
+        },
+        child: child,
+      );
+}
+
 /// The app's single text-input dialog. Owns its TextEditingController: at the
 /// call sites that used to build one inline, `controller.dispose()` on the
 /// line after `await showDialog` raced the dialog's fade-out, whose TextField

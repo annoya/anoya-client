@@ -192,6 +192,12 @@ is always present, including as `No TLS`: for a VPN client "not stated" and
 the interface, not even in a connect error, which names the server by its
 label. A provider's `serverDescription` replaces the whole line.
 
+A tap outside a text field closes the keyboard, on every platform. Flutter drops
+focus for a mouse or a stylus and keeps it for a touch, which on a phone leaves
+the keyboard standing over the content the user tapped away to read; the app
+overrides that once, above the navigator, so dialogs and sheets follow the same
+rule as screens.
+
 A word about the copy: everything a subscription supplies is attributed to
 **the subscription**, never to "your provider". ADR-005 is why — a subscription
 is a feed of servers with no account behind it, so naming a company introduces a
