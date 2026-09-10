@@ -117,9 +117,12 @@ work.
   comes from the key. Pinned by a test that reads the source files, because the
   wording is easy to reintroduce and impossible to notice while testing against
   an Amnezia key.
-- Gateway credentials and the client identity the gateway checks are build-time
-  configuration, never committed. A build without them refuses Amnezia keys
-  with a message that says so.
+- Gateway credentials — endpoint, RSA public key, storage endpoints — are
+  build-time configuration, never committed. A build without them refuses
+  Amnezia keys with a message that says so. The client identity the gateway is
+  told about is *not* configuration: the app sends its own bundle name and its
+  own version and claims no distribution channel, so no build can present
+  itself as somebody else's client.
 
 ## Alternatives Considered
 

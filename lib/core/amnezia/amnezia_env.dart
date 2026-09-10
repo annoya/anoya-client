@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../app_version.dart';
+
 /// Build-time configuration for the Amnezia gateway.
 ///
 /// None of this is derivable at runtime and none of it belongs in the
@@ -43,13 +45,7 @@ class AmneziaEnv {
       .where((e) => e.isNotEmpty)
       .toList(growable: false);
 
-  /// What the gateway is told this client is. It refuses anything it does not
-  /// recognise, so these are Amnezia's own values, not ours — kept in build
-  /// configuration precisely because they are someone else's and will have to
-  /// move when their release does.
-  static const clientName = String.fromEnvironment('AGW_CLIENT_NAME', defaultValue: 'AmneziaVPN');
-  static const clientVersion =
-      String.fromEnvironment('AGW_CLIENT_VERSION', defaultValue: '5.0.1.5');
-  static const distribution =
-      String.fromEnvironment('AGW_DISTRIBUTION', defaultValue: 'github');
+  static String get clientName => kAppName;
+  static String get clientVersion => appVersion;
+  static const distribution = '';
 }
