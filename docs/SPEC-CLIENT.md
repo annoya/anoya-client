@@ -123,6 +123,19 @@ directory. Both natives speak one channel contract (`vpn/control`,
 `vpn/status`), so a single Dart core serves all three platforms.
 Rationale and constraints: ADR-001.
 
+On Windows the tunnel is a Windows service (`AnnoyaTunnel`,
+`client/native/mihomocore/cmd/tunnel-service`), started by the Service Control
+Manager and spoken to over a named pipe; the adapter is Wintun and the engine's
+home is under `ProgramData`. The service starts with the machine, and brings a
+tunnel up on its own **only when auto-connect is on** — a switch in Settings →
+Connection, off by default, which the app writes into the service's own
+directory because at boot there is no app to ask. The saved config cannot stand
+in for that answer: it is rewritten whenever the app mirrors the current
+selection, connected or not, so its presence means "there is something to run",
+never "run it". Connecting and disconnecting say what the user wants now; the
+switch says what they want every time the machine comes back, and neither
+changes the other.
+
 ### 3.1 The `VpnCore` seam
 
 Screens and state never talk to the platform directly; they go through
@@ -500,9 +513,9 @@ screen says so in as many words.
   protocols say nothing) and a provider's `serverDescription` replacing that
   whole technical half.
 - **Settings** — configurations, connection (on-demand and disconnect-on-sleep
-  on Apple; the Always-on VPN explainer on Android; **Advanced**, which holds
-  the connection check), routing (LAN direct, rule sets, geo databases),
-  appearance and language, logs.
+  on Apple; the Always-on VPN explainer on Android; the **Auto-connect** switch
+  on Windows; **Advanced**, which holds the connection check), routing (LAN
+  direct, rule sets, geo databases), appearance and language, logs.
 - **Advanced connection** — the connection check: whether to run it after
   connecting, the URL it fetches, how long it waits, a "Test now" button and the
   last answer.

@@ -64,8 +64,27 @@ maintain `providerConfiguration` on Apple. Verified end to end: always-on
 enabled in system settings brings the tunnel up at boot with the app never
 opened.
 
+**Windows gets one switch, because the facility is one condition.** The tunnel
+there is our own service, started by the Service Control Manager with the
+machine — so unlike Android there *is* something we can arm, and unlike Apple
+there are no rules to arm it with. Settings → Connection carries an
+`Auto-connect` switch, off by default; the app writes the answer into the
+service's directory, and the service consults it at boot, when there is no app
+to ask. It is not a memory of the last session: connecting and disconnecting
+answer "now", the switch answers "every time this machine starts", and neither
+touches the other.
+
+The first implementation had no switch and started the tunnel whenever a saved
+config existed. That config is written on every sync of the selection, so a
+person who had never pressed Connect got a VPN after rebooting — authority the
+app does not have (ADR-005), with nowhere to decline it.
+
 ## Invariants
 
+- Nothing brings a tunnel up on its own unless the user armed it: on-demand
+  rules on Apple, the system's switch on Android, the `Auto-connect` switch on
+  Windows. The presence of a saved config is never the arming
+  (`TestBootConnectsOnlyWhenAutoConnectIsOn`).
 - The three on-demand facts are never collapsed into one boolean. "Off",
   "paused", "armed but not accepted by the system" and "working" are four
   different states and the UI names all four.
@@ -126,4 +145,10 @@ affects it, and a second write path is one more thing to keep in step.
   `persist` into `providerConfiguration`.
 - `client/lib/features/home_screen.dart` — the `Auto` chip and the explanatory
   banner.
-- Tests: `client/test/on_demand_test.dart`, `client/test/status_strip_test.dart`.
+- `client/lib/state/auto_connect_controller.dart` and the switch in
+  `client/lib/features/settings_screen.dart` — Windows.
+- `client/native/mihomocore/service/service.go` — `set_auto_connect` and
+  `StartSaved`, the only path that raises a tunnel with no app running.
+- Tests: `client/test/on_demand_test.dart`, `client/test/status_strip_test.dart`,
+  `client/test/auto_connect_test.dart`,
+  `client/native/mihomocore/service/service_test.go`.

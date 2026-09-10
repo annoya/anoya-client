@@ -84,6 +84,14 @@ abstract class VpnCore {
   Future<String> urlTest(String url, Duration timeout) async =>
       'err:this build cannot test the connection';
 
+  /// Tells the platform whether it may bring the tunnel up on its own when the
+  /// machine starts.
+  ///
+  /// Only Windows can: its tunnel is our service, started by the system with
+  /// nobody logged in yet. Apple has on-demand rules for this and Android the
+  /// system's own switch, so both ignore it.
+  Future<void> setAutoConnect(bool enabled) async {}
+
   /// Bytes carried through the tunnel's outbound this session, `<up>:<down>`.
   ///
   /// Zero when there is nothing to report — no session, no platform side, or
