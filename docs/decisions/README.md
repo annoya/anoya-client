@@ -4,9 +4,13 @@ One record per feature, not per micro-decision: everything decided while
 building a thing belongs in that thing's ADR, including the options that were
 tried and dropped.
 
-Records are numbered in one sequence and kept in one folder, including the two
-that span both products — a decision about the boundary between them belongs to
-neither side alone. The **Product** column is how you filter.
+Records are numbered in one sequence shared with the server side. The
+service-only records (007, 011) live in the
+[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository; the
+ones marked `both` are decisions about the boundary between the two products,
+so they are
+kept in both repositories and must be edited in both. The **Product** column is
+how you filter.
 
 Read the ADR for a subsystem before changing it. The **Alternatives Considered**
 section is the point of the document — it is what keeps a settled question from
@@ -24,11 +28,9 @@ test.
 | [004](ADR-004-on-demand-and-the-kill-switch.md) | client | On-demand auto-connect; no kill switch | intent/paused/systemArmed, persisted config, why `includeAllNetworks` was rejected |
 | [005](ADR-005-multi-configuration-client.md) | client | Three domains of authority: self-hosted, subscription, link | why not one backend, capability degradation, `ConfigSource`, refetch policy |
 | [006](ADR-006-authentication-passwords-and-oidc.md) | both | Passwords plus generic OIDC, client-direct with PKCE | why not server-mediated, JIT provisioning, allowlists |
-| [007](ADR-007-worker-enrollment-and-self-recovery.md) | service | Reusable enrollment tokens so a worker recovers itself | why not single-use, rotation as revocation, what to revisit before production |
 | [008](ADR-008-dns-rides-the-config.md) | both | DNS resolvers ride the config; the OS-level DNS setting is a decoy | dns-hijack + fake-ip, per-source resolvers, Cloudflare DoH fallback, sanitation, bootstrap, `Bundle.DNS` |
 | [009](ADR-009-amnezia-subscriptions.md) | client | Key subscriptions as a fourth domain, with the gateway transport borrowed | `vpn://` codec, servers issued on demand, location × protocol, libagw, why no provider is named in the UI |
 | [010](ADR-010-connection-check.md) | client | The app verifies the tunnel carries traffic, and never drops it over the answer | passive byte counters first, mihomo `URLTest` second, handshake warm-up, why not `external-controller` |
-| [011](ADR-011-amneziawg-as-a-second-protocol.md) | service | AmneziaWG as a second protocol, userspace engine driven over UAPI | key pair per user via `NewCredentials`, id-derived tunnel addresses, peer diff not replace, why the `Backend` seam stays |
 
 ## Open Questions
 

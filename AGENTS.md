@@ -5,22 +5,23 @@ the relevant ADR in `docs/decisions/` before changing the subsystem it governs.
 
 ## Project Overview
 
-Self-hosted VPN service, three components:
+This repository is the client half of a self-hosted VPN service:
 
 - `client/` — Flutter app for macOS, iOS and Android. Drives a system VPN
   through the `VpnCore` boundary; the engine is mihomo and only mihomo,
   compiled into a Network Extension (Apple) or a VpnService (Android).
-- `management/` — Go service + embedded React admin panel. Source of truth for
-  users, user lists, workers, routing profiles. Hands out client configs.
-- `worker/` — Go agent on each VPN server. Runs Xray (VLESS+Reality), pulls its
-  user set from management, reports liveness and traffic.
-- `shared/` — Go types shared by management and worker (wire contracts,
-  protocol drivers).
 
-Two deliberate abstraction seams, and only two: `VpnCore` on the client and
-`protocol.Driver` on the server (with `backend.Backend` as its worker-side
-half: the driver says what a server config is, the backend runs it — Xray or
-amneziawg-go, ADR-011). Everything else stays boring and direct.
+The server side lives in its own repository,
+[annoya-web-panel](https://github.com/annoya/annoya-web-panel): `management`
+(Go service + embedded React admin panel — source of truth for users, user
+lists, workers and routing profiles, and what hands out client configs),
+`worker` (Go agent on each VPN server, running Xray or amneziawg-go) and
+`shared` (the wire contracts between them). Management's client API is the only
+server surface this app talks to.
+
+One deliberate abstraction seam on this side, and only one: `VpnCore`.
+Everything else stays boring and direct. The server has its own seam,
+`protocol.Driver`, in the other repository.
 `VpnCore` is not there to swap the engine — mihomo is the engine, and nothing
 else is planned. It exists so the state layer can be tested against a fake
 tunnel, and so the platform side (Network Extension, VpnService) stays behind
@@ -64,8 +65,9 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    is the one thing that actually leaks.
 6. **Everything interpolated into the engine config is validated first —
    values and keys alike.** Rule values go through `RoutingRule.isValid`, which
-   mirrors the server-side validation (both sides must stay in step). Map keys
-   from a Clash subscription go through the parser's key charset: keys are
+   mirrors the server-side validation in the web-panel repository (both sides
+   must stay in step). Map keys from a Clash subscription go through the
+   parser's key charset: keys are
    structural, so one carrying a newline adds a top-level config key
    (`external-controller` opens an unauthenticated control API). Drop, never
    escape. Pinned by `client/test/mihomo_tun_config_test.dart`.
@@ -128,14 +130,6 @@ cd native/mihomocore && ./build-xcframework.sh # rebuild MihomoCore.xcframework
 sudo scripts/leak-check.sh        # leak check against a live tunnel (root)
 ```
 
-Server side, from the repo root:
-
-```bash
-cd management && go test ./...
-cd worker && go test ./...
-scripts/push-images.sh            # multi-arch images to Docker Hub
-```
-
 ## Which Check When
 
 - **Touched Dart or Swift** — `flutter analyze` and `flutter test`.
@@ -170,8 +164,8 @@ scripts/push-images.sh            # multi-arch images to Docker Hub
 - **Committing is the user's call.** Prepare the change, propose the split, do
   not commit unless asked.
 - **MVP policy: no migrations, no backwards compatibility.** There is no
-  production data; the VPS is wiped and redeployed, and the schema is one
-  consolidated migration.
+  production data and no install base to keep working; stored state may be
+  dropped rather than migrated, and the VPS is wiped and redeployed.
 - **Reference projects (Happ, Marzban, 3x-ui, NetBird, Mullvad) are sources of
   facts, not philosophies to copy.** Take the mechanism, judge it on our terms.
 
@@ -215,10 +209,13 @@ in `client/shared/apple/` and is symlinked into `macos/` and `ios/`.
 State is Riverpod; `ProfilesController` owns the configuration list, the active
 profile, the selected location and the connect path.
 
-### Management and worker
+### Server side
 
-Pull only: the worker heartbeats and fetches its user set; management never
-pushes. Protocol specifics live behind `protocol.Driver` in `shared/protocol/`.
+Documented in the
+[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository. The
+two facts that matter from here: it is pull only — the worker fetches its user
+set, management never pushes — and protocol specifics live behind
+`protocol.Driver` there, not in this app.
 
 ## Documentation Map
 
@@ -227,9 +224,9 @@ pushes. Protocol specifics live behind `protocol.Driver` in `shared/protocol/`.
 - `docs/NON_GOALS.md` — what this project deliberately does not do.
 - `docs/runbook.md` — operational procedures: leak checking, builds, releases.
 - `docs/SPEC-CLIENT.md` — what the client is: the three domains it serves, the
-  tunnel, routing, screens, and the contract it expects from a server.
-- `docs/SPEC-SERVICE.md` — what the server side is: domain model, protocol seam,
-  API surface, install, worker loop.
+  tunnel, routing, screens, and the contract it expects from a server. The
+  other side of that contract is `docs/SPEC-SERVICE.md` in the
+  [annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository.
 - `client/design/ui-spec.html` — every screen drawn 1:1 in Flutter logical
   points, with `check.js` as its validator. The source of truth for UI geometry.
 - `client/README.md`, `client/macos/Tunnel/SETUP.md`,
