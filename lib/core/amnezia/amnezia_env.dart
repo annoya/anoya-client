@@ -39,7 +39,14 @@ class AmneziaEnv {
   /// Comma-separated bucket URLs holding the bypass proxy lists.
   static const _s3 = String.fromEnvironment('AGW_S3_ENDPOINTS');
 
-  static List<String> get s3Endpoints => _s3
+  static const _s3Fallback =
+      String.fromEnvironment('AGW_S3_FALLBACK_ENDPOINTS');
+
+  static List<String> get s3Endpoints => _urls(_s3);
+
+  static List<String> get s3FallbackEndpoints => _urls(_s3Fallback);
+
+  static List<String> _urls(String csv) => csv
       .split(',')
       .map((e) => e.trim())
       .where((e) => e.isNotEmpty)

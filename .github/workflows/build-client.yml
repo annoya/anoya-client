@@ -3,9 +3,9 @@
 # paid team, so those builds stay on a Mac for now.
 #
 # Amnezia support needs credentials that are not in the repository. Set them as
-# three repository secrets — AGW_ENDPOINT, AGW_PUBLIC_KEY_B64 and
-# AGW_S3_ENDPOINTS — and every build passes each one it finds as its own
-# --dart-define. A secret left unset is simply not passed, so the code's own
+# four repository secrets — AGW_ENDPOINT, AGW_PUBLIC_KEY_B64, AGW_S3_ENDPOINTS
+# and AGW_S3_FALLBACK_ENDPOINTS — and every build passes each one it finds as
+# its own --dart-define. A secret left unset is simply not passed, so the code's own
 # default stands; without the key material the builds still run, and Amnezia
 # keys are refused with a message rather than failing (see README.md).
 name: build-client
@@ -87,11 +87,13 @@ jobs:
           AGW_ENDPOINT: ${{ secrets.AGW_ENDPOINT }}
           AGW_PUBLIC_KEY_B64: ${{ secrets.AGW_PUBLIC_KEY_B64 }}
           AGW_S3_ENDPOINTS: ${{ secrets.AGW_S3_ENDPOINTS }}
+          AGW_S3_FALLBACK_ENDPOINTS: ${{ secrets.AGW_S3_FALLBACK_ENDPOINTS }}
         run: |
           # One --dart-define per secret that is set. Passing an empty one
           # would override the code's default with nothing.
           args=()
-          for name in AGW_ENDPOINT AGW_PUBLIC_KEY_B64 AGW_S3_ENDPOINTS; do
+          for name in AGW_ENDPOINT AGW_PUBLIC_KEY_B64 \
+                      AGW_S3_ENDPOINTS AGW_S3_FALLBACK_ENDPOINTS; do
             value="${!name}"
             if [ -n "$value" ]; then args+=(--dart-define="$name=$value"); fi
           done
@@ -131,11 +133,13 @@ jobs:
           AGW_ENDPOINT: ${{ secrets.AGW_ENDPOINT }}
           AGW_PUBLIC_KEY_B64: ${{ secrets.AGW_PUBLIC_KEY_B64 }}
           AGW_S3_ENDPOINTS: ${{ secrets.AGW_S3_ENDPOINTS }}
+          AGW_S3_FALLBACK_ENDPOINTS: ${{ secrets.AGW_S3_FALLBACK_ENDPOINTS }}
         run: |
           # One --dart-define per secret that is set. Passing an empty one
           # would override the code's default with nothing.
           args=()
-          for name in AGW_ENDPOINT AGW_PUBLIC_KEY_B64 AGW_S3_ENDPOINTS; do
+          for name in AGW_ENDPOINT AGW_PUBLIC_KEY_B64 \
+                      AGW_S3_ENDPOINTS AGW_S3_FALLBACK_ENDPOINTS; do
             value="${!name}"
             if [ -n "$value" ]; then args+=(--dart-define="$name=$value"); fi
           done
