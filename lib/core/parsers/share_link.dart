@@ -86,25 +86,47 @@ ShareLink parseShareLink(String raw) {
 /// A `vless://` or `trojan://` link whose payload is base64 rather than a URI.
 ///
 /// Neither protocol has a standard base64 form, but panels and older clients
-/// emit two anyway: base64 of the URI body (`uuid@host:port?…#name`), and for
-/// vless the vmess-style base64 JSON. Both are recognised by what a URI body
-/// cannot lack — `@` — and what base64 cannot contain: `@`, `?` and `#`.
+/// emit several anyway: base64 of the whole URI body
+/// (`uuid@host:port?…#name`), base64 of only the `userinfo@host:port` half
+/// with the query and the name left in the clear beside it, and for vless the
+/// vmess-style base64 JSON.
+///
+/// What tells a wrapped payload from a plain URI is the `@`: every URI body
+/// here has one before its query, and base64 has none at all. Anything after
+/// the first `?` or `#` is not part of the payload either way — reading it as
+/// one is what used to make these links unreadable.
 ///
 /// Returns the link in URI form (the JSON form is handed to [_parseJsonPayload]
 /// by the caller), or the link unchanged when it is already a URI.
 String _unwrapBase64Uri(String s, String scheme) {
   final prefix = '$scheme://';
-  final hash = s.indexOf('#');
-  final body = s.substring(prefix.length, hash < 0 ? s.length : hash);
-  if (body.contains('@') || body.contains('?') || body.isEmpty) return s;
+  final (body, query, fragment) = _splitUriTail(s.substring(prefix.length));
+  if (body.isEmpty || body.contains('@')) return s;
   final decoded = tryDecodeLooseBase64(body);
   if (decoded == null || !decoded.contains('@')) return s;
-  // The name may sit outside the base64 or inside it; outside wins when both.
-  final fragment = hash < 0 ? '' : s.substring(hash);
-  final inner = decoded.startsWith(prefix) ? decoded.substring(prefix.length) : decoded;
-  return fragment.isNotEmpty && inner.contains('#')
-      ? '$prefix${inner.substring(0, inner.indexOf('#'))}$fragment'
-      : '$prefix$inner$fragment';
+  final unwrapped = decoded.startsWith(prefix) ? decoded.substring(prefix.length) : decoded;
+  final (inner, innerQuery, innerFragment) = _splitUriTail(unwrapped);
+  // Both halves may carry a query — the panel's own parameters inside, the
+  // ones it appended outside. Keeping both, outside last, means a repeated
+  // key resolves to the outer value, which is the one the panel wrote knowing
+  // what it had already encoded.
+  final q = [innerQuery, query].where((p) => p.isNotEmpty).join('&');
+  // The name is a label, not a setting: one of them wins, and it is the one
+  // the user can see in the link they pasted.
+  final f = fragment.isNotEmpty ? fragment : innerFragment;
+  return '$prefix$inner${q.isEmpty ? '' : '?$q'}${f.isEmpty ? '' : '#$f'}';
+}
+
+/// Splits a URI body into what precedes the query, the query and the fragment
+/// — each without its punctuation, empty when absent.
+(String, String, String) _splitUriTail(String s) {
+  final hash = s.indexOf('#');
+  final head = hash < 0 ? s : s.substring(0, hash);
+  final fragment = hash < 0 ? '' : s.substring(hash + 1);
+  final mark = head.indexOf('?');
+  return mark < 0
+      ? (head, '', fragment)
+      : (head.substring(0, mark), head.substring(mark + 1), fragment);
 }
 
 /// The vmess-style JSON object behind a base64 payload, or null when the payload
@@ -131,7 +153,7 @@ ShareLink _parseVless(String raw) {
     'type': 'vless',
     'server': u.host,
     'port': u.port,
-    'uuid': Uri.decodeComponent(u.userInfo),
+    'uuid': _vlessUuid(u.userInfo),
     'network': network,
     'udp': true,
     'tls': tls,
@@ -158,6 +180,19 @@ ShareLink _parseVless(String raw) {
   return ShareLink.server(locationFor(
       s, labelOr(meta.name, u.host, u.port), proxy,
       description: meta.description));
+}
+
+/// The uuid out of a vless userinfo.
+///
+/// Normally the userinfo *is* the uuid. The base64 form some panels emit
+/// borrows Shadowsocks' shape and puts the encryption in front of it —
+/// `none:<uuid>` — and VLESS has no encryption to negotiate, so that half is
+/// dropped rather than carried into the config as part of the credential. A
+/// uuid never contains a colon, which is what makes the split safe.
+String _vlessUuid(String userInfo) {
+  final decoded = Uri.decodeComponent(userInfo);
+  final colon = decoded.lastIndexOf(':');
+  return colon < 0 ? decoded : decoded.substring(colon + 1);
 }
 
 ShareLink _parseVmess(String s) {
