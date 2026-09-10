@@ -328,6 +328,34 @@ rules:
       expect(loc.label, 'Tokyo');
     });
 
+    test('the query may sit outside the base64, not only inside it', () {
+      // A live panel's shape: base64 over `encryption:uuid@host:port` only,
+      // with the parameters and the name appended in the clear. Reading that
+      // base64 as a hostname is what made every such link "can't be read".
+      final loc = parseProxyUri('vless://${b64('none:$uuid@h.example:443')}'
+          '?security=reality&pbk=KEY&sni=h.example&fp=chrome#Server 1')!;
+      expect(loc.proxy['server'], 'h.example');
+      expect(loc.proxy['port'], 443);
+      expect(loc.proxy['tls'], isTrue);
+      expect((loc.proxy['reality-opts'] as Map)['public-key'], 'KEY');
+      expect(loc.label, 'Server 1');
+    });
+
+    test('the encryption in front of the uuid is not part of the uuid', () {
+      // VLESS negotiates no encryption; the `none:` is Shadowsocks' shape
+      // borrowed by the panel. Carried into the config it would be a
+      // credential the server has never heard of.
+      final loc = parseProxyUri('vless://${b64('none:$uuid@h.example:443')}?security=tls')!;
+      expect(loc.proxy['uuid'], uuid);
+    });
+
+    test('parameters on both sides are kept, and the outer one wins a repeat', () {
+      final loc = parseProxyUri('vless://${b64('none:$uuid@h.example:443?sni=inner.example')}'
+          '?security=tls&sni=outer.example')!;
+      expect(loc.proxy['servername'], 'outer.example');
+      expect(loc.proxy['tls'], isTrue);
+    });
+
     test('a name outside the base64 wins over one inside', () {
       final loc = parseProxyUri('vless://${b64('$uuid@h.example:443?security=tls#inner')}#Outer')!;
       expect(loc.label, 'Outer');
