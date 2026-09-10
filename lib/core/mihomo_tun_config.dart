@@ -96,10 +96,25 @@ String mihomoTunConfigYaml(
     // traffic looks identical to one that was never asked to.
     collectLogs ? 'log-level: debug' : 'log-level: silent',
     'mode: rule',
-    // Both families are handled, not just claimed. The tunnel owns the v6
-    // default route (ADR-002), so v6 has to work end to end here — with the
-    // engine's v6 off, the fake-ip pool would refuse AAAA and every v6
-    // destination would fail instead of being carried.
+    // The fake-IP pool is rebuilt on every config apply, and without this it
+    // is rebuilt *empty*: the mapping from each 198.18.x.y back to its domain
+    // lives only in that pool. A hot switch (server, routing, anything) then
+    // strands every address the OS and the browsers have cached — they keep
+    // connecting to fake IPs the engine no longer recognises, and "some sites
+    // stop opening for a minute after switching" is what that looks like. The
+    // stable range below keeps the *addresses* valid across a switch; this
+    // keeps their meaning. Persisted to cache.db in the engine home, which
+    // every platform's tunnel process already writes to.
+    'profile:',
+    '  store-fake-ip: true',
+    // v6 is carried, not resolved. The tunnel owns the v6 default route
+    // (ADR-002), so a v6 packet an app sends — a literal address, or one it
+    // resolved past our hijack — must be accepted and routed, not dropped:
+    // that is what this flag and the tun's v6 address do. Names stay
+    // v4-only: `dns.ipv6` is left at mihomo's default (off), so AAAA answers
+    // are empty and apps connect through v4 fake-IPs. Deliberate — a fake v6
+    // answer would make dual-stack clients prefer v6, and on a server without
+    // v6 egress every such connection hangs instead of falling back.
     'ipv6: true',
     // Resolving a connection's owning process is only needed for PROCESS-NAME
     // rules; otherwise keep it off (it reads other processes' info).
@@ -200,6 +215,15 @@ String mihomoTunConfigYaml(
     // The host OS owns routing where it owns the device; mihomo just reads
     // the fd. An adapter of the engine's own has nobody else to route it.
     '  auto-route: ${device != null}',
+    // Windows resolves names on every adapter at once (Smart Multi-Homed Name
+    // Resolution): the query to the tun's resolver is hijacked below, and the
+    // same query to the ISP's resolver leaves over Wi-Fi in parallel — a DNS
+    // leak the routing rules never see, because that packet never enters the
+    // tun. strict-route makes sing-tun install WFP filters that block port 53
+    // everywhere except the tun and the engine's own process. Only where the
+    // engine owns the adapter: the flag is meaningless without auto-route, and
+    // on Apple and Android the system already routes DNS into the tunnel.
+    if (device != null) '  strict-route: true',
     // How the proxy's own outbound avoids looping back into the tun differs by
     // platform. On Apple the engine detects the physical interface and binds
     // its dials to it. On Android that detector cannot even start — its route

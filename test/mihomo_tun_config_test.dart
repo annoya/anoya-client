@@ -221,14 +221,30 @@ void main() {
     expect(yaml, isNot(contains('evil')));
   });
 
-  test('IPv6 is carried end to end, not just claimed', () {
-    // The tunnel owns the v6 default route (ADR-002), so the engine has to
-    // handle v6: with it off, the fake-IP pool refuses AAAA and every v6
-    // destination fails instead of being proxied.
+  test('fake-IP meanings survive a hot switch', () {
+    // Every config apply rebuilds the fake-IP pool, and without persistence
+    // it comes back empty: the OS and the browsers keep the 198.18.x.y they
+    // were handed, the engine no longer knows which domain each one meant, and
+    // sites stop opening for as long as those caches live. The stable range
+    // keeps the addresses valid; this keeps what they stand for.
+    final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
+    expect((doc['profile'] as YamlMap)['store-fake-ip'], true);
+  });
+
+  test('IPv6 is carried, not resolved', () {
+    // The tunnel owns the v6 default route (ADR-002), so a v6 packet that an
+    // app sends — a literal address, or one it resolved past our hijack — has
+    // to be accepted and routed rather than dropped: that is the general
+    // `ipv6: true` and the tun's v6 address. Names, though, are answered v4
+    // only: `dns.ipv6` is left at mihomo's default (off), so AAAA comes back
+    // empty and apps connect through v4 fake-IPs. Deliberate — a fake-v6
+    // answer would make dual-stack clients prefer v6, and every destination
+    // would then hang on a server without v6 egress instead of falling back.
     final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     expect(doc['ipv6'], true);
     final dns = doc['dns'] as YamlMap;
-    expect(dns['fake-ip-range6'], kFakeIpRange6);
+    expect(dns.containsKey('ipv6'), isFalse,
+        reason: 'names stay v4-only unless this becomes a decision');
     expect((doc['tun'] as YamlMap)['inet6-address'], [kTunInet6Address]);
   });
 
@@ -472,8 +488,18 @@ proxies:
       expect(tun['dns-hijack'], ['any:53']);
     });
 
+    test('closes the DNS side door Windows opens on every other adapter', () {
+      // The system resolver asks all adapters at once; the copy that goes to
+      // the ISP never enters the tun, so no rule can catch it. Only WFP can,
+      // and strict-route is how sing-tun installs those filters.
+      final tun = (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest')) as YamlMap)['tun'] as YamlMap;
+      expect(tun['strict-route'], isTrue);
+    });
+
     test('a host-owned device keeps the engine out of routing', () {
       final tun = (loadYaml(mihomoTunConfigYaml(loc())) as YamlMap)['tun'] as YamlMap;
+      expect(tun.containsKey('strict-route'), isFalse,
+          reason: 'firewall rules for an adapter the engine does not own');
       expect(tun['auto-route'], isFalse);
       expect(tun.containsKey('device'), isFalse);
       expect(tun.containsKey('inet4-address'), isFalse, reason: 'the host assigns it');
