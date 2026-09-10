@@ -59,9 +59,10 @@ server has an OIDC provider configured.
 builds the Android APK and the Windows installer, on every push to `main`, on
 tags and on every pull request; the builds are published as
 workflow artifacts. The three jobs are independent, so a red test does not
-withhold a build. Amnezia credentials come from three repository secrets —
-`AGW_ENDPOINT`, `AGW_PUBLIC_KEY_B64` and `AGW_S3_ENDPOINTS` — each passed to
-the build as its own `--dart-define`; without them the builds still run.
+withhold a build. Amnezia credentials come from four repository secrets —
+`AGW_ENDPOINT`, `AGW_PUBLIC_KEY_B64`, `AGW_S3_ENDPOINTS` and
+`AGW_S3_FALLBACK_ENDPOINTS` — each passed to the build as its own
+`--dart-define`; without them the builds still run.
 
 ### Windows
 
@@ -102,7 +103,8 @@ you only need `build.sh`. If you ever recreate a target from scratch, see
 ## Amnezia Premium/Free builds
 
 Amnezia support needs credentials that are not in this repository: the
-gateway's endpoint, its RSA public key and its storage endpoints. The client
+gateway's endpoint, its RSA public key, its storage endpoints and their
+fallbacks. The client
 identity the gateway is told about is no longer configuration — the app sends
 its own name and version, and claims no distribution channel. Copy
 `client-secrets.example.json` to `client-secrets.json` (gitignored) and build
@@ -112,11 +114,12 @@ with:
 flutter build apk --release --dart-define-from-file=client-secrets.json
 ```
 
-The same three values can be passed one by one instead, which is what CI does:
+The same values can be passed one by one instead, which is what CI does:
 
 ```
 flutter build apk --release --dart-define=AGW_ENDPOINT=… \
-  --dart-define=AGW_PUBLIC_KEY_B64=… --dart-define=AGW_S3_ENDPOINTS=…
+  --dart-define=AGW_PUBLIC_KEY_B64=… --dart-define=AGW_S3_ENDPOINTS=… \
+  --dart-define=AGW_S3_FALLBACK_ENDPOINTS=…
 ```
 
 A build without them still works — Amnezia keys are simply refused with a

@@ -174,11 +174,15 @@ class AgwConfig {
     required this.endpoint,
     required this.publicKeyPem,
     this.s3Primary = const [],
+    this.s3Fallback = const [],
   });
 
   final String endpoint;
   final String publicKeyPem;
   final List<String> s3Primary;
+
+  /// Tried only after every primary storage has failed.
+  final List<String> s3Fallback;
 
   Map<String, dynamic> toJson() => {
         'gateway_endpoint': endpoint,
@@ -187,6 +191,7 @@ class AgwConfig {
         // silently disables the bypass path.
         'public_key_pem': publicKeyPem,
         if (s3Primary.isNotEmpty) 's3_primary_endpoints': s3Primary,
+        if (s3Fallback.isNotEmpty) 's3_fallback_endpoints': s3Fallback,
       };
 }
 

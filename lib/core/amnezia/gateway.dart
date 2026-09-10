@@ -29,6 +29,7 @@ class AmneziaGateway {
     endpoint: AmneziaEnv.endpoint,
     publicKeyPem: AmneziaEnv.publicKeyPem,
     s3Primary: AmneziaEnv.s3Endpoints,
+    s3Fallback: AmneziaEnv.s3FallbackEndpoints,
   ));
 
   /// What every request carries, whatever it asks for. Empty values are
