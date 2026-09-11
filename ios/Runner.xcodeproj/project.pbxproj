@@ -614,6 +614,7 @@
 				INFOPLIST_FILE = Runner/Info.plist;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
+					"-Wl,-export_dynamic",
 					"-Wl,-u,_agw_abi_version",
 					"-Wl,-u,_agw_cancel_cancel",
 					"-Wl,-u,_agw_cancel_create",
@@ -633,6 +634,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_STYLE = "non-global";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -975,6 +977,7 @@
 				INFOPLIST_FILE = Runner/Info.plist;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
+					"-Wl,-export_dynamic",
 					"-Wl,-u,_agw_abi_version",
 					"-Wl,-u,_agw_cancel_cancel",
 					"-Wl,-u,_agw_cancel_create",
@@ -994,6 +997,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_STYLE = "non-global";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1014,6 +1018,7 @@
 				INFOPLIST_FILE = Runner/Info.plist;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
+					"-Wl,-export_dynamic",
 					"-Wl,-u,_agw_abi_version",
 					"-Wl,-u,_agw_cancel_cancel",
 					"-Wl,-u,_agw_cancel_create",
@@ -1033,6 +1038,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_STYLE = "non-global";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";

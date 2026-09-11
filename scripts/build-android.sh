@@ -52,4 +52,4 @@ for apk in "$OUT"/app*-release.apk; do
 done
 rm -f "$marker"
 
-for apk in "${renamed[@]}"; do echo "APK: $apk"; done
+for apk in "${renamed[@]}"; do echo "APK: $apk ($(du -h "$apk" | cut -f1))"; done
