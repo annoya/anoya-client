@@ -100,10 +100,24 @@ jobs:
           flutter pub get
           scripts/build-android.sh "${args[@]+"${args[@]}"}"
 
+      - name: Artifact names
+        id: meta
+        run: |
+          label="$(sed -n 's/.*android:label="\([^"]*\)".*/\1/p' \
+                   android/app/src/main/AndroidManifest.xml | head -1)"
+          version="$(awk '/^version:/ {print $2}' pubspec.yaml)"
+          echo "prefix=$label-$version" >> "$GITHUB_OUTPUT"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          name: ${{ steps.meta.outputs.prefix }}-android-arm64-v8a
+          path: build/app/outputs/flutter-apk/*-arm64-v8a.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.prefix }}-android-x86_64
+          path: build/app/outputs/flutter-apk/*-x86_64.apk
           if-no-files-found: error
 
   windows:
@@ -157,9 +171,17 @@ jobs:
           # paths, so "/DAppVersion=…" reached ISCC as a second script file.
           MSYS_NO_PATHCONV=1 "$iscc" "windows\\installer\\AnnoyaTest.iss" "/DAppVersion=$version"
 
+      - name: Artifact names
+        id: meta
+        run: |
+          name="$(sed -n 's/^set(BINARY_NAME "\([^"]*\)").*/\1/p' \
+                  windows/CMakeLists.txt | head -1)"
+          version="$(awk '/^version:/ {print $2}' pubspec.yaml)"
+          echo "prefix=$name-$version" >> "$GITHUB_OUTPUT"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: ${{ steps.meta.outputs.prefix }}-windows-x64-installer
           path: build/windows/installer/*.exe
           if-no-files-found: error
 
@@ -167,7 +189,7 @@ jobs:
       # app folder plus the service and driver it expects next to it.
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-portable
+          name: ${{ steps.meta.outputs.prefix }}-windows-x64-portable
           path: |
             build/windows/x64/runner/Release/
             build/windows/service/

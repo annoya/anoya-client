@@ -145,6 +145,20 @@ sudo scripts/leak-check.sh        # leak check against a live tunnel (root)
   required), then write the code to match. Numbers in the mockup and in
   `lib/core/theme.dart` /
   `lib/core/ui.dart` are the same numbers.
+- **Touched the Xcode projects, the linker flags, or anything the app reaches
+  through `DynamicLibrary.process()`** — check an *archive*, not a local
+  release build. `xcodebuild … archive` strips the binary and `flutter build`
+  does not, so a symbol that only an archive loses looks fine right up to
+  TestFlight:
+
+  ```bash
+  xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner \
+    -configuration Release -archivePath /tmp/Check.xcarchive archive \
+    CODE_SIGNING_ALLOWED=NO
+  xcrun dyld_info -exports /tmp/Check.xcarchive/Products/Applications/*.app/Contents/MacOS/* \
+    | grep -c agw_          # must not be 0
+  ```
+
 - **Touched anything a decision governs** — update the ADR, or write a new one
   that supersedes it.
 

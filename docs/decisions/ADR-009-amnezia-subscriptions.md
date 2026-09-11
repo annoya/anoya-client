@@ -117,6 +117,15 @@ work.
   comes from the key. Pinned by a test that reads the source files, because the
   wording is easy to reintroduce and impossible to notice while testing against
   an Amnezia key.
+- The gateway's C symbols survive the archive. The app reaches libagw through
+  `DynamicLibrary.process()`, so the names have to still be in the binary at
+  runtime. An archive strips it — `STRIP_INSTALLED_PRODUCT` is on for the
+  install action — and Xcode's default `STRIP_STYLE` of `all` empties both the
+  symbol table and the dyld export trie, which turns every gateway call into a
+  lookup failure. A local release build is never stripped, so the break shows
+  up only in TestFlight. Both Apple projects therefore set
+  `STRIP_STYLE = non-global` and pass `-Wl,-export_dynamic` next to the
+  `-Wl,-u,_agw_*` list that pulls the archive members in.
 - Gateway credentials — endpoint, RSA public key, storage endpoints and their
   fallbacks — are build-time configuration, never committed. A build without them refuses
   Amnezia keys with a message that says so. The client identity the gateway is
