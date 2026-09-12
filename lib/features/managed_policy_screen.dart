@@ -14,8 +14,12 @@ import 'routing_widgets.dart';
 /// geo databases, because a geo rule without them is inactive and the screen
 /// should say why rather than dim a row and leave it at that.
 class ManagedPolicyScreen extends StatefulWidget {
-  const ManagedPolicyScreen(this.policy,
-      {this.origin = PolicyOrigin.organization, this.listsAvailable, super.key});
+  const ManagedPolicyScreen(
+    this.policy, {
+    this.origin = PolicyOrigin.organization,
+    this.listsAvailable,
+    super.key,
+  });
 
   final Routing policy;
 
@@ -72,7 +76,8 @@ class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
                   if (!geoReady && policy.rules.any((r) => r.needsGeoData))
                     GeoDownloadBanner(
                       title: 'Geo databases not downloaded',
-                      subtitle: 'geoip / geosite rules are inactive until then (~25 MB)',
+                      subtitle:
+                          'geoip / geosite rules are inactive until then (~25 MB)',
                       busy: _geoBusy,
                       onDownload: _downloadGeo,
                     ),
@@ -86,7 +91,9 @@ class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
                         rule: rule,
                         geoReady: geoReady,
                         listNames: widget.listsAvailable ?? const {},
-                        listsOff: widget.listsAvailable == null && policy.lists.isNotEmpty,
+                        listsOff:
+                            widget.listsAvailable == null &&
+                            policy.lists.isNotEmpty,
                       ),
                 ],
               ),
@@ -98,7 +105,9 @@ class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
     final origin = widget.origin;
     return Card(
       margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
-      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
+      color: Theme.of(
+        context,
+      ).colorScheme.primaryContainer.withValues(alpha: 0.35),
       child: ListTile(
         leading: Icon(origin.icon),
         title: Text(origin.title),

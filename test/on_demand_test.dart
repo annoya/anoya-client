@@ -43,12 +43,18 @@ void main() {
 
     test('kept for Wi-Fi and Any, dropped for cellular/ethernet', () {
       expect(withSsid.effectiveSsids, ['corp-net']); // any
-      expect(withSsid.copyWith(interface: OnDemandInterface.wifi).effectiveSsids,
-          ['corp-net']);
-      expect(withSsid.copyWith(interface: OnDemandInterface.cellular).effectiveSsids,
-          isEmpty);
-      expect(withSsid.copyWith(interface: OnDemandInterface.ethernet).effectiveSsids,
-          isEmpty);
+      expect(
+        withSsid.copyWith(interface: OnDemandInterface.wifi).effectiveSsids,
+        ['corp-net'],
+      );
+      expect(
+        withSsid.copyWith(interface: OnDemandInterface.cellular).effectiveSsids,
+        isEmpty,
+      );
+      expect(
+        withSsid.copyWith(interface: OnDemandInterface.ethernet).effectiveSsids,
+        isEmpty,
+      );
     });
 
     test('never compiled into a rule the system could not satisfy', () {
@@ -61,8 +67,9 @@ void main() {
       final back = withSsid
           .copyWith(interface: OnDemandInterface.cellular)
           .copyWith(interface: OnDemandInterface.wifi);
-      expect(back.effectiveSsids, ['corp-net'],
-          reason: 'switching modes must not throw the list away');
+      expect(back.effectiveSsids, [
+        'corp-net',
+      ], reason: 'switching modes must not throw the list away');
     });
   });
 
@@ -81,7 +88,10 @@ void main() {
     test('armed requires enabled, not paused and at least one rule', () {
       const rule = OnDemandRule(id: 'r');
       expect(const OnDemandPrefs(enabled: true, rules: [rule]).armed, true);
-      expect(const OnDemandPrefs(enabled: true, paused: true, rules: [rule]).armed, false);
+      expect(
+        const OnDemandPrefs(enabled: true, paused: true, rules: [rule]).armed,
+        false,
+      );
       expect(const OnDemandPrefs(enabled: true).armed, false);
       expect(const OnDemandPrefs(rules: [rule]).armed, false);
     });
@@ -89,31 +99,60 @@ void main() {
     test('status label reflects off / paused / awaiting / rule count', () {
       const rule = OnDemandRule(id: 'r');
       expect(const OnDemandPrefs().statusLabel, 'Off');
-      expect(const OnDemandPrefs(enabled: true, paused: true, rules: [rule]).statusLabel,
-          'Paused');
-      // Enabled but the system hasn't taken it (no persisted tunnel config yet).
-      expect(const OnDemandPrefs(enabled: true, rules: [rule]).statusLabel,
-          'On · after first connect');
       expect(
-          const OnDemandPrefs(enabled: true, rules: [rule, rule], systemArmed: true).statusLabel,
-          'On · 2 rules');
+        const OnDemandPrefs(
+          enabled: true,
+          paused: true,
+          rules: [rule],
+        ).statusLabel,
+        'Paused',
+      );
+      // Enabled but the system hasn't taken it (no persisted tunnel config yet).
+      expect(
+        const OnDemandPrefs(enabled: true, rules: [rule]).statusLabel,
+        'On · after first connect',
+      );
+      expect(
+        const OnDemandPrefs(
+          enabled: true,
+          rules: [rule, rule],
+          systemArmed: true,
+        ).statusLabel,
+        'On · 2 rules',
+      );
     });
 
     test('awaitingFirstConnect only while asked-for but not system-armed', () {
       const rule = OnDemandRule(id: 'r');
-      expect(const OnDemandPrefs(enabled: true, rules: [rule]).awaitingFirstConnect, true);
       expect(
-          const OnDemandPrefs(enabled: true, rules: [rule], systemArmed: true)
-              .awaitingFirstConnect,
-          false);
+        const OnDemandPrefs(enabled: true, rules: [rule]).awaitingFirstConnect,
+        true,
+      );
+      expect(
+        const OnDemandPrefs(
+          enabled: true,
+          rules: [rule],
+          systemArmed: true,
+        ).awaitingFirstConnect,
+        false,
+      );
       // Paused isn't "awaiting" — it's a deliberate stop.
       expect(
-          const OnDemandPrefs(enabled: true, paused: true, rules: [rule]).awaitingFirstConnect,
-          false);
+        const OnDemandPrefs(
+          enabled: true,
+          paused: true,
+          rules: [rule],
+        ).awaitingFirstConnect,
+        false,
+      );
     });
 
     test('systemArmed is runtime state, never persisted', () {
-      const prefs = OnDemandPrefs(enabled: true, rules: [OnDemandRule(id: 'r')], systemArmed: true);
+      const prefs = OnDemandPrefs(
+        enabled: true,
+        rules: [OnDemandRule(id: 'r')],
+        systemArmed: true,
+      );
       expect(prefs.toJson().containsKey('system_armed'), false);
       // A reload starts from "not armed" until the platform confirms.
       expect(OnDemandPrefs.fromJson(prefs.toJson()).systemArmed, false);

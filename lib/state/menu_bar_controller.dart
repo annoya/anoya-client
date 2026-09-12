@@ -24,15 +24,22 @@ final menuBarProvider = Provider<MenuBar>((ref) {
   menu.onSync = () => _push(ref, menu);
   menu.start();
 
-  ref.listen(sessionProvider, (_, _) => _push(ref, menu), fireImmediately: true);
+  ref.listen(
+    sessionProvider,
+    (_, _) => _push(ref, menu),
+    fireImmediately: true,
+  );
   ref.listen(profilesControllerProvider, (_, _) => _push(ref, menu));
   ref.onDispose(menu.dispose);
   return menu;
 });
 
 void _push(Ref ref, MenuBar menu) => menu.update(
-      menuBarStateFor(ref.read(sessionProvider), ref.read(profilesControllerProvider)),
-    );
+  menuBarStateFor(
+    ref.read(sessionProvider),
+    ref.read(profilesControllerProvider),
+  ),
+);
 
 /// What the menu should say, given what the app knows.
 ///

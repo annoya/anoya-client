@@ -13,7 +13,11 @@ import 'config_parts.dart';
 /// is one server. What remains is routing — which is the device's own — and
 /// the two actions every configuration has.
 class LinkConfigScreen extends ConsumerWidget {
-  const LinkConfigScreen({super.key, required this.profile, required this.isActive});
+  const LinkConfigScreen({
+    super.key,
+    required this.profile,
+    required this.isActive,
+  });
 
   final Profile profile;
   final bool isActive;
@@ -23,12 +27,14 @@ class LinkConfigScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(profile.name)),
       body: PageBody(
-        child: ListView(children: [
-          const SizedBox(height: 8),
-          ProfileHeaderCard(profile: profile, isActive: isActive),
-          RoutingRow(profile: profile),
-          ConfigActions(profile: profile, isActive: isActive),
-        ]),
+        child: ListView(
+          children: [
+            const SizedBox(height: 8),
+            ProfileHeaderCard(profile: profile, isActive: isActive),
+            RoutingRow(profile: profile),
+            ConfigActions(profile: profile, isActive: isActive),
+          ],
+        ),
       ),
     );
   }

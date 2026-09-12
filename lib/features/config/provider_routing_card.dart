@@ -23,7 +23,8 @@ class ProviderRoutingCard extends ConsumerStatefulWidget {
   final Profile profile;
 
   @override
-  ConsumerState<ProviderRoutingCard> createState() => _ProviderRoutingCardState();
+  ConsumerState<ProviderRoutingCard> createState() =>
+      _ProviderRoutingCardState();
 }
 
 class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
@@ -57,69 +58,76 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
     return Card(
       margin: kCardMargin,
       color: cs.primaryContainer.withValues(alpha: 0.35),
-      child: Column(children: [
-        SwitchListTile(
-          secondary: const Icon(Icons.alt_route),
-          // Named like the device's own controls below it. Whose policy this
-          // is comes from the section header, once, instead of from every row —
-          // the width a repeated "from your provider" costs is width the
-          // subtitle needs for facts.
-          title: const Text('Routing'),
-          subtitle: Text(providerRoutingSummary(profile, lists)),
-          value: on,
-          onChanged: (v) => ctrl.setProviderRoutingEnabled(profile.id, v),
-        ),
-        const Divider(height: 1, indent: 16, endIndent: 16),
-        // Readable with the switch off: deciding whether to accept someone
-        // else's rules requires seeing them first.
-        ListTile(
-          leading: const Icon(Icons.layers_outlined),
-          title: const Text('Rule set'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => ManagedPolicyScreen(
-              routing,
-              origin: PolicyOrigin.provider(
-                profile.name,
-                skipped: profile.providerRoutingSkipped,
-              ),
-              // Null while the lists are refused, so the rules that need them
-              // can say "off" rather than "not downloaded" — the user's own
-              // decision reads differently from a failure.
-              listsAvailable: profile.providerRuleListsEnabled
-                  ? (lists ?? const [])
-                      .where((s) => s.available)
-                      .map((s) => s.list.name)
-                      .toSet()
-                  : null,
-            ),
-          )),
-        ),
-        // Only when there is something to decide: a policy with no external
-        // lists would get a switch that governs nothing.
-        if (needLists > 0) ...[
-          const Divider(height: 1, indent: 16, endIndent: 16),
+      child: Column(
+        children: [
           SwitchListTile(
-            // The spinner takes the icon's place rather than the switch's, so
-            // the row does not change width and it stays clear which operation
-            // is running — the same shape as the refresh card.
-            secondary: _downloading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2.5))
-                : const Icon(Icons.description_outlined),
-            title: const Text('Rule lists'),
-            subtitle: Text(_downloading
-                ? 'Downloading ${needLists == 1 ? 'one list' : '$needLists lists'}…'
-                : _listSummary(profile, needLists, lists)),
-            value: profile.providerRuleListsEnabled,
-            // A second tap would not hurry the first, and two writers on the
-            // same files is how half a list ends up on disk.
-            onChanged: _downloading ? null : _setLists,
+            secondary: const Icon(Icons.alt_route),
+            // Named like the device's own controls below it. Whose policy this
+            // is comes from the section header, once, instead of from every row —
+            // the width a repeated "from your provider" costs is width the
+            // subtitle needs for facts.
+            title: const Text('Routing'),
+            subtitle: Text(providerRoutingSummary(profile, lists)),
+            value: on,
+            onChanged: (v) => ctrl.setProviderRoutingEnabled(profile.id, v),
           ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          // Readable with the switch off: deciding whether to accept someone
+          // else's rules requires seeing them first.
+          ListTile(
+            leading: const Icon(Icons.layers_outlined),
+            title: const Text('Rule set'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ManagedPolicyScreen(
+                  routing,
+                  origin: PolicyOrigin.provider(
+                    profile.name,
+                    skipped: profile.providerRoutingSkipped,
+                  ),
+                  // Null while the lists are refused, so the rules that need them
+                  // can say "off" rather than "not downloaded" — the user's own
+                  // decision reads differently from a failure.
+                  listsAvailable: profile.providerRuleListsEnabled
+                      ? (lists ?? const [])
+                            .where((s) => s.available)
+                            .map((s) => s.list.name)
+                            .toSet()
+                      : null,
+                ),
+              ),
+            ),
+          ),
+          // Only when there is something to decide: a policy with no external
+          // lists would get a switch that governs nothing.
+          if (needLists > 0) ...[
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            SwitchListTile(
+              // The spinner takes the icon's place rather than the switch's, so
+              // the row does not change width and it stays clear which operation
+              // is running — the same shape as the refresh card.
+              secondary: _downloading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : const Icon(Icons.description_outlined),
+              title: const Text('Rule lists'),
+              subtitle: Text(
+                _downloading
+                    ? 'Downloading ${needLists == 1 ? 'one list' : '$needLists lists'}…'
+                    : _listSummary(profile, needLists, lists),
+              ),
+              value: profile.providerRuleListsEnabled,
+              // A second tap would not hurry the first, and two writers on the
+              // same files is how half a list ends up on disk.
+              onChanged: _downloading ? null : _setLists,
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -133,15 +141,19 @@ String providerRoutingSummary(Profile profile, List<RuleListStatus>? lists) {
   final applied = routing.rules
       .where((r) => !r.needsRuleList || _isAvailable(profile, r.value, lists))
       .length;
-  final rules = applied == 0 ? 'no exceptions' : '$applied rule${applied > 1 ? 's' : ''}';
+  final rules = applied == 0
+      ? 'no exceptions'
+      : '$applied rule${applied > 1 ? 's' : ''}';
   final parts = ['$mode · $rules'];
   final skipped = profile.providerRoutingSkipped;
   if (skipped > 0) parts.add('$skipped not supported');
   final missing = routing.rules.length - applied;
   if (missing > 0) {
-    parts.add(profile.providerRuleListsEnabled
-        ? '$missing list${missing > 1 ? 's' : ''} unavailable'
-        : '$missing need${missing > 1 ? '' : 's'} their lists');
+    parts.add(
+      profile.providerRuleListsEnabled
+          ? '$missing list${missing > 1 ? 's' : ''} unavailable'
+          : '$missing need${missing > 1 ? '' : 's'} their lists',
+    );
   }
   return parts.join(' · ');
 }
@@ -176,13 +188,18 @@ String _listSummary(Profile p, int needed, List<RuleListStatus>? lists) {
 /// applied and the fact is stated, with the one action that can fix it.
 
 class RuleListFailureCard extends ConsumerStatefulWidget {
-  const RuleListFailureCard({super.key, required this.profile, required this.failed});
+  const RuleListFailureCard({
+    super.key,
+    required this.profile,
+    required this.failed,
+  });
 
   final Profile profile;
   final List<RuleListStatus> failed;
 
   @override
-  ConsumerState<RuleListFailureCard> createState() => _RuleListFailureCardState();
+  ConsumerState<RuleListFailureCard> createState() =>
+      _RuleListFailureCardState();
 }
 
 class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
@@ -212,31 +229,40 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
     return Card(
       margin: kCardMargin,
       color: warn.withValues(alpha: 0.12),
-      child: Column(children: [
-        ListTile(
-          leading: Icon(Icons.warning_amber_outlined, color: warn),
-          title: Text(n == 1
-              ? 'One list could not be downloaded'
-              : '$n lists could not be downloaded'),
-          subtitle: Text('$names from $hosts — '
+      child: Column(
+        children: [
+          ListTile(
+            leading: Icon(Icons.warning_amber_outlined, color: warn),
+            title: Text(
+              n == 1
+                  ? 'One list could not be downloaded'
+                  : '$n lists could not be downloaded',
+            ),
+            subtitle: Text(
+              '$names from $hosts — '
               'the rule${n > 1 ? 's' : ''} using ${n > 1 ? 'them' : 'it'} '
-              '${n > 1 ? 'are' : 'is'} not applied.'),
-          isThreeLine: true,
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
-            child: FilledButton.tonal(
-              onPressed: _busy ? null : _retry,
-              child: _busy
-                  ? const SizedBox(
-                      width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Try again'),
+              '${n > 1 ? 'are' : 'is'} not applied.',
+            ),
+            isThreeLine: true,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
+              child: FilledButton.tonal(
+                onPressed: _busy ? null : _retry,
+                child: _busy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Try again'),
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }

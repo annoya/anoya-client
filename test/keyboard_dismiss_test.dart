@@ -15,14 +15,16 @@ void main() {
 
   Widget harness({required bool wrapped}) {
     final body = Scaffold(
-      body: Column(children: [
-        TextField(focusNode: field),
-        const SizedBox(
-          height: 300,
-          width: 300,
-          child: ColoredBox(key: outside, color: Color(0xFFEEEEEE)),
-        ),
-      ]),
+      body: Column(
+        children: [
+          TextField(focusNode: field),
+          const SizedBox(
+            height: 300,
+            width: 300,
+            child: ColoredBox(key: outside, color: Color(0xFFEEEEEE)),
+          ),
+        ],
+      ),
     );
     return MaterialApp(
       theme: buildAppTheme(Brightness.light),
@@ -36,7 +38,11 @@ void main() {
     await tester.pumpWidget(harness(wrapped: true));
     await tester.tap(find.byType(TextField));
     await tester.pump();
-    expect(field.hasFocus, isTrue, reason: 'the field is where the keyboard came from');
+    expect(
+      field.hasFocus,
+      isTrue,
+      reason: 'the field is where the keyboard came from',
+    );
 
     await tester.tap(find.byKey(outside));
     await tester.pump();
@@ -44,8 +50,9 @@ void main() {
     expect(field.hasFocus, isFalse);
   });
 
-  testWidgets('without it the framework keeps the keyboard up on a touch',
-      (tester) async {
+  testWidgets('without it the framework keeps the keyboard up on a touch', (
+    tester,
+  ) async {
     // Not a test of Flutter for its own sake: it is the reason
     // [DismissKeyboardOnTapOutside] exists, and the day this starts failing is
     // the day the wrapper can be deleted.

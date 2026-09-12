@@ -16,20 +16,21 @@ import 'package:vpn_client/core/parsers/subscription.dart';
 /// reads.
 void main() {
   Location loc() => Location(
-        id: 'a',
-        label: 'A',
-        proxy: const {
-          'type': 'vless',
-          'server': 'h.example',
-          'port': 443,
-          'uuid': 'u',
-          'network': 'tcp',
-          'tls': true,
-        },
-      );
+    id: 'a',
+    label: 'A',
+    proxy: const {
+      'type': 'vless',
+      'server': 'h.example',
+      'port': 443,
+      'uuid': 'u',
+      'network': 'tcp',
+      'tls': true,
+    },
+  );
 
   YamlMap dnsBlock(List<String> dns) =>
-      (loadYaml(mihomoTunConfigYaml(loc(), dns: dns)) as YamlMap)['dns'] as YamlMap;
+      (loadYaml(mihomoTunConfigYaml(loc(), dns: dns)) as YamlMap)['dns']
+          as YamlMap;
 
   group('sing-box', () {
     test('a detour to a server means the query rides the tunnel', () {
@@ -68,13 +69,17 @@ void main() {
 }''';
       // The two mechanisms are dropped: inside the extension "local" is the
       // tunnel's own DNS setting, so asking it loops straight back to us.
-      expect(parseSubscriptionBody(body).dns, ['https://dns.quad9.net:443/dns-query#PROXY']);
+      expect(parseSubscriptionBody(body).dns, [
+        'https://dns.quad9.net:443/dns-query#PROXY',
+      ]);
     });
   });
 
   group('xray', () {
-    test('+local is issued here, anything else goes out through the tunnel', () {
-      const body = '''
+    test(
+      '+local is issued here, anything else goes out through the tunnel',
+      () {
+        const body = '''
 [{"remarks": "A",
   "dns": {"servers": [
     "https://dns.quad9.net/dns-query",
@@ -84,14 +89,15 @@ void main() {
   ]},
   "outbounds": [{"protocol": "vless", "settings": {"vnext": [
     {"address": "h.example", "port": 443, "users": [{"id": "u"}]}]}}]}]''';
-      expect(parseSubscriptionBody(body).dns, [
-        'https://dns.quad9.net/dns-query#PROXY',
-        'https://dns.google/dns-query',
-        // The object form carries the same address plus filters we cannot
-        // express; the address is the part that survives.
-        '8.8.8.8#PROXY',
-      ]);
-    });
+        expect(parseSubscriptionBody(body).dns, [
+          'https://dns.quad9.net/dns-query#PROXY',
+          'https://dns.google/dns-query',
+          // The object form carries the same address plus filters we cannot
+          // express; the address is the part that survives.
+          '8.8.8.8#PROXY',
+        ]);
+      },
+    );
   });
 
   test('clash entries already speak the target syntax', () {
@@ -103,12 +109,17 @@ dns:
 proxies:
   - {name: a, type: vless, server: h.example, port: 443, uuid: u}
 ''';
-    expect(parseSubscriptionBody(body).dns,
-        ['https://dns.quad9.net/dns-query#PROXY', 'tls://77.88.8.8']);
+    expect(parseSubscriptionBody(body).dns, [
+      'https://dns.quad9.net/dns-query#PROXY',
+      'tls://77.88.8.8',
+    ]);
   });
 
   test('a link list has nowhere to put a resolver', () {
-    expect(parseSubscriptionBody('vless://u@h.example:443?security=none#A').dns, isEmpty);
+    expect(
+      parseSubscriptionBody('vless://u@h.example:443?security=none#A').dns,
+      isEmpty,
+    );
   });
 
   test('HTTP/3 is a transport, not a protocol the engine has a scheme for', () {
@@ -129,31 +140,36 @@ proxies:
       expect(dns['nameserver'], ['tls://9.9.9.9']);
     });
 
-    test('a resolver the tunnel cannot carry is replaced, not left to fail', () {
-      // mihomo answers a datagram dial through a UDP-less outbound with an
-      // error on every attempt, so keeping the pin would mean no DNS at all.
-      // Unpinning it instead would put every domain on the local network in
-      // clear text — so the entry goes and the encrypted fallback stands in.
-      final noUdp = Location(
-        id: 'b',
-        label: 'B',
-        proxy: const {
-          'type': 'ss',
-          'server': 'h.example',
-          'port': 443,
-          'password': 'p',
-          'cipher': 'aes-128-gcm',
-        },
-      );
-      final dns = (loadYaml(mihomoTunConfigYaml(noUdp,
-          dns: ['1.1.1.1#PROXY'])) as YamlMap)['dns'] as YamlMap;
-      expect(dns['nameserver'], ['https://1.1.1.1/dns-query#PROXY']);
-      // Reaching the proxy itself is a TCP dial, so the resolver the
-      // configuration named is still fine for that job — and it is the only
-      // entry, because a configuration that chose its own resolver does not
-      // get ours added behind its back.
-      expect(dns['proxy-server-nameserver'], ['1.1.1.1']);
-    });
+    test(
+      'a resolver the tunnel cannot carry is replaced, not left to fail',
+      () {
+        // mihomo answers a datagram dial through a UDP-less outbound with an
+        // error on every attempt, so keeping the pin would mean no DNS at all.
+        // Unpinning it instead would put every domain on the local network in
+        // clear text — so the entry goes and the encrypted fallback stands in.
+        final noUdp = Location(
+          id: 'b',
+          label: 'B',
+          proxy: const {
+            'type': 'ss',
+            'server': 'h.example',
+            'port': 443,
+            'password': 'p',
+            'cipher': 'aes-128-gcm',
+          },
+        );
+        final dns =
+            (loadYaml(mihomoTunConfigYaml(noUdp, dns: ['1.1.1.1#PROXY']))
+                    as YamlMap)['dns']
+                as YamlMap;
+        expect(dns['nameserver'], ['https://1.1.1.1/dns-query#PROXY']);
+        // Reaching the proxy itself is a TCP dial, so the resolver the
+        // configuration named is still fine for that job — and it is the only
+        // entry, because a configuration that chose its own resolver does not
+        // get ours added behind its back.
+        expect(dns['proxy-server-nameserver'], ['1.1.1.1']);
+      },
+    );
 
     test('an encrypted resolver is pinned even when the tunnel has no UDP', () {
       final noUdp = Location(
@@ -167,17 +183,27 @@ proxies:
           'cipher': 'aes-128-gcm',
         },
       );
-      final dns = (loadYaml(mihomoTunConfigYaml(noUdp,
-          dns: ['tls://dns.quad9.net#PROXY'])) as YamlMap)['dns'] as YamlMap;
+      final dns =
+          (loadYaml(
+                    mihomoTunConfigYaml(
+                      noUdp,
+                      dns: ['tls://dns.quad9.net#PROXY'],
+                    ),
+                  )
+                  as YamlMap)['dns']
+              as YamlMap;
       expect(dns['nameserver'], ['tls://dns.quad9.net#PROXY']);
     });
 
     test('resolvers are deduplicated and bounded', () {
       final many = [for (var i = 0; i < 40; i++) 'udp://10.0.0.$i'];
-      expect((dnsBlock([...many, ...many])['nameserver'] as YamlList),
-          hasLength(kMaxNameservers),
-          reason: 'the engine queries them all at once; a long list is cost, '
-              'not redundancy');
+      expect(
+        (dnsBlock([...many, ...many])['nameserver'] as YamlList),
+        hasLength(kMaxNameservers),
+        reason:
+            'the engine queries them all at once; a long list is cost, '
+            'not redundancy',
+      );
     });
   });
 }

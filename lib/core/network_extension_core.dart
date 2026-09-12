@@ -80,8 +80,9 @@ class NetworkExtensionCore implements VpnCore {
     if (rendered == null) throw StateError('unknown location $locationId');
     final yaml = rendered['config']!;
     final routing = config.routing;
-    final routingDesc =
-        routing == null ? 'none (full tunnel)' : '${routing.mode}, ${routing.rules.length} rule(s)';
+    final routingDesc = routing == null
+        ? 'none (full tunnel)'
+        : '${routing.mode}, ${routing.rules.length} rule(s)';
     Log.i('NE connect: selection=$locationId routing=$routingDesc');
     try {
       await _control.invoke<void>('start', {
@@ -131,7 +132,9 @@ class NetworkExtensionCore implements VpnCore {
         'log_enabled': Log.enabled,
         ...?rendered,
       });
-      Log.i('on-demand ${armed == true ? 'armed' : 'not armed'} (${prefs.rules.length} rule(s))');
+      Log.i(
+        'on-demand ${armed == true ? 'armed' : 'not armed'} (${prefs.rules.length} rule(s))',
+      );
       return armed ?? false;
     } on PlatformException catch (e) {
       Log.e('NE set_on_demand failed', e.message ?? e.code);
@@ -182,7 +185,10 @@ class NetworkExtensionCore implements VpnCore {
   /// there trying to bind the fake-ip gateway). Log.enabled is the "collect
   /// logs" switch; the level rendered here is what an on-demand start (no app
   /// involved) will use.
-  Future<Map<String, String>?> _render(NormConfig? config, String? locationId) async {
+  Future<Map<String, String>?> _render(
+    NormConfig? config,
+    String? locationId,
+  ) async {
     if (config == null || locationId == null) return null;
 
     ProxyGroup? group;
@@ -194,7 +200,10 @@ class NetworkExtensionCore implements VpnCore {
       }
       if (group == null) return null;
       final byId = {for (final l in config.locations) l.id: l};
-      members = [for (final id in group.members) if (byId[id] != null) byId[id]!];
+      members = [
+        for (final id in group.members)
+          if (byId[id] != null) byId[id]!,
+      ];
       // A group whose members all disappeared from the subscription would
       // render an empty `proxies:` list, which the engine rejects — and it
       // would reject it while applying, i.e. with the tunnel already down.
@@ -213,27 +222,30 @@ class NetworkExtensionCore implements VpnCore {
     // a server they may never pick.
     if (location.isPlaceholder) return null;
     try {
-      final listPaths =
-          await RuleListStore.availablePaths(config.routing?.lists ?? const []);
+      final listPaths = await RuleListStore.availablePaths(
+        config.routing?.lists ?? const [],
+      );
       return {
-        'config': mihomoTunConfigYaml(location,
-            group: group,
-            members: members,
-            routing: config.routing,
-            dns: config.dns,
-            defaultDns: config.defaultDns.isEmpty
-                ? kFallbackNameserver
-                : config.defaultDns,
-            listPaths: listPaths,
-            collectLogs: Log.enabled,
-            autoDetectInterface: !Platform.isAndroid,
-            // The Windows service has no host-opened device to hand the engine;
-            // it creates the adapter itself, named after the app so the user
-            // recognises it in the network list.
-            device: Platform.isWindows ? kAppName : null,
-            // Android's Private DNS would otherwise upgrade the decoy resolver
-            // to DNS-over-TLS and take every lookup past the hijack.
-            dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null),
+        'config': mihomoTunConfigYaml(
+          location,
+          group: group,
+          members: members,
+          routing: config.routing,
+          dns: config.dns,
+          defaultDns: config.defaultDns.isEmpty
+              ? kFallbackNameserver
+              : config.defaultDns,
+          listPaths: listPaths,
+          collectLogs: Log.enabled,
+          autoDetectInterface: !Platform.isAndroid,
+          // The Windows service has no host-opened device to hand the engine;
+          // it creates the adapter itself, named after the app so the user
+          // recognises it in the network list.
+          device: Platform.isWindows ? kAppName : null,
+          // Android's Private DNS would otherwise upgrade the decoy resolver
+          // to DNS-over-TLS and take every lookup past the hijack.
+          dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null,
+        ),
       };
     } catch (e) {
       Log.e('config render failed', '$e');
@@ -343,8 +355,9 @@ class NetworkExtensionCore implements VpnCore {
   /// caller: not known yet, so say "auto" and nothing more.
   static Future<String> groupMember(String group) async {
     try {
-      final res = await _control
-          .invoke<String>('group_member', {'group': group});
+      final res = await _control.invoke<String>('group_member', {
+        'group': group,
+      });
       return res ?? '';
     } on PlatformException catch (e) {
       Log.e('NE group_member failed', e.message ?? e.code);
@@ -361,7 +374,11 @@ class NetworkExtensionCore implements VpnCore {
       // Windows has no runner of its own to ask; what the Dart runtime knows
       // is what the panel gets.
       if (Platform.isWindows) {
-        return {'os': 'Windows', 'version': Platform.operatingSystemVersion, 'model': ''};
+        return {
+          'os': 'Windows',
+          'version': Platform.operatingSystemVersion,
+          'model': '',
+        };
       }
       final info = await _control.invoke<Map<dynamic, dynamic>>('device_info');
       if (info == null) return null;

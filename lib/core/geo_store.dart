@@ -75,7 +75,10 @@ class GeoStore {
           .send(http.Request('GET', Uri.parse(url)))
           .timeout(kHttpTimeout);
       if (res.statusCode ~/ 100 != 2) {
-        throw http.ClientException('geo download failed (${res.statusCode})', Uri.parse(url));
+        throw http.ClientException(
+          'geo download failed (${res.statusCode})',
+          Uri.parse(url),
+        );
       }
       // Write to a temp name then rename: keep the old database usable if we
       // die mid-write.

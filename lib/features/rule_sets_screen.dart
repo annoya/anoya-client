@@ -37,8 +37,13 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
   }
 
   Future<void> _create() async {
-    final name = await promptText(context,
-        title: 'New rule set', label: 'Name', hint: 'Work', confirmLabel: 'Create');
+    final name = await promptText(
+      context,
+      title: 'New rule set',
+      label: 'Name',
+      hint: 'Work',
+      confirmLabel: 'Create',
+    );
     final trimmed = name?.trim() ?? '';
     if (trimmed.isEmpty) return;
     final set = RuleSet(
@@ -51,8 +56,9 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
     await RuleSetStore.save([..._sets, set]);
     revision.bump();
     if (!mounted) return;
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => RuleSetEditorScreen(set.id)));
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => RuleSetEditorScreen(set.id)));
     await _load();
   }
 
@@ -60,7 +66,9 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
     final mode = s.mode.label;
     final rules = s.rules.isEmpty ? 'no rules' : '${s.rules.length} rules';
     final used = usage[s.id] ?? 0;
-    return used > 0 ? '$mode · $rules · used by $used config${used > 1 ? 's' : ''}' : '$mode · $rules';
+    return used > 0
+        ? '$mode · $rules · used by $used config${used > 1 ? 's' : ''}'
+        : '$mode · $rules';
   }
 
   @override
@@ -87,20 +95,25 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
               child: ListView(
                 padding: const EdgeInsets.only(top: 8, bottom: 88),
                 children: _sets
-                    .map((s) => Card(
-                          margin: kCardMargin,
-                          child: ListTile(
-                            leading: const Icon(Icons.layers_outlined),
-                            title: Text(s.name),
-                            subtitle: Text(_subtitle(s, usage)),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () async {
-                              await Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (_) => RuleSetEditorScreen(s.id)));
-                              await _load();
-                            },
-                          ),
-                        ))
+                    .map(
+                      (s) => Card(
+                        margin: kCardMargin,
+                        child: ListTile(
+                          leading: const Icon(Icons.layers_outlined),
+                          title: Text(s.name),
+                          subtitle: Text(_subtitle(s, usage)),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => RuleSetEditorScreen(s.id),
+                              ),
+                            );
+                            await _load();
+                          },
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),

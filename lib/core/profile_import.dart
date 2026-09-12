@@ -26,7 +26,11 @@ String newProfileId() =>
 
 /// Self-hosted sign-in with username/password. Fetches the config bundle and
 /// stores the session token (Keychain) under the new profile's id.
-Future<Profile> importSelfhosted(String serverUrl, String username, String password) async {
+Future<Profile> importSelfhosted(
+  String serverUrl,
+  String username,
+  String password,
+) async {
   final api = ApiClient(serverUrl);
   final res = await api.login(username, password);
   api.token = res.token;
@@ -34,7 +38,10 @@ Future<Profile> importSelfhosted(String serverUrl, String username, String passw
 }
 
 /// Self-hosted sign-in via an OIDC provider (SSO).
-Future<Profile> importSelfhostedOIDC(String serverUrl, AuthProvider provider) async {
+Future<Profile> importSelfhostedOIDC(
+  String serverUrl,
+  AuthProvider provider,
+) async {
   final api = ApiClient(serverUrl);
   final idToken = await obtainOidcIdToken(provider);
   final res = await api.loginOIDC(provider.id, idToken);
@@ -135,7 +142,8 @@ Future<Profile> importText(String text, {String? name}) async {
     // something the user can see is a typo.
     if (parsed.format == SubscriptionFormat.unknown && !text.contains('://')) {
       throw const FormatException(
-          'No valid vless://vmess://trojan://ss:// link or subscription found.');
+        'No valid vless://vmess://trojan://ss:// link or subscription found.',
+      );
     }
     throw SubscriptionFormatException(_whyNothingUsable(parsed));
   }
@@ -165,13 +173,18 @@ Future<Profile> importAmneziaKey(String text) async {
   if (key == null) {
     // Not a FormatException: describeError would then talk about share
     // links, and the user typed something that looked like a key.
-    throw const AppErrorException(AppError('This isn’t a subscription key',
-        detail: 'Expected a vpn:// key from your subscription.'));
+    throw const AppErrorException(
+      AppError(
+        'This isn’t a subscription key',
+        detail: 'Expected a vpn:// key from your subscription.',
+      ),
+    );
   }
   final refusal = amneziaKeyUnsupported(key);
   if (refusal != null) {
     throw AppErrorException(
-        AppError('${key.name} isn’t supported here', detail: refusal));
+      AppError('${key.name} isn’t supported here', detail: refusal),
+    );
   }
   final id = newProfileId();
   // The credential goes to the keychain first: if the gateway call fails,

@@ -46,7 +46,11 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
       context,
       title: 'Save all logs',
       options: const [
-        Option(_SaveTo.file, 'Save to file…', subtitle: 'Pick a folder on this device'),
+        Option(
+          _SaveTo.file,
+          'Save to file…',
+          subtitle: 'Pick a folder on this device',
+        ),
         Option(_SaveTo.share, 'Share…', subtitle: 'Send the archive somewhere'),
       ],
     );
@@ -59,7 +63,9 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
       if (!mounted) return;
       switch (where) {
         case _SaveTo.share:
-          await SharePlus.instance.share(ShareParams(files: [XFile(archive.path)]));
+          await SharePlus.instance.share(
+            ShareParams(files: [XFile(archive.path)]),
+          );
         case _SaveTo.file:
           // The mobile plugin writes the file itself and demands the bytes; the
           // desktop one refuses them ("Bytes are not supported on macOS") and
@@ -88,11 +94,18 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Clear all logs?'),
         content: const Text(
-            'The app, tunnel and core logs will be deleted from this device. '
-            'The tunnel and core logs can only be cleared while the VPN is connected.'),
+          'The app, tunnel and core logs will be deleted from this device. '
+          'The tunnel and core logs can only be cleared while the VPN is connected.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Clear')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear'),
+          ),
         ],
       ),
     );
@@ -102,10 +115,11 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
     if (!mounted) return;
     setState(() {});
     showToast(
-        context,
-        wiped
-            ? 'Logs cleared.'
-            : 'App log cleared. The tunnel and core logs need the VPN connected.');
+      context,
+      wiped
+          ? 'Logs cleared.'
+          : 'App log cleared. The tunnel and core logs need the VPN connected.',
+    );
   }
 
   @override
@@ -123,8 +137,10 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
               child: SwitchListTile(
                 secondary: const Icon(Icons.article_outlined),
                 title: const Text('Collect logs'),
-                subtitle: const Text('Off: the app, the tunnel and the core stop writing. '
-                    'Existing files stay readable.'),
+                subtitle: const Text(
+                  'Off: the app, the tunnel and the core stop writing. '
+                  'Existing files stay readable.',
+                ),
                 value: collecting,
                 onChanged: _busy ? null : _setCollecting,
               ),
@@ -145,9 +161,12 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
               title: 'Application',
               subtitle: 'Client-side events',
               size: formatBytes(Log.sizeBytes),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const LogViewerScreen(title: 'Application', appLog: true),
-              )),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const LogViewerScreen(title: 'Application', appLog: true),
+                ),
+              ),
             ),
             const SizedBox(height: 20),
             Padding(
@@ -155,7 +174,10 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
               child: OutlinedButton.icon(
                 icon: _busy
                     ? const SizedBox(
-                        height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.archive_outlined, size: 18),
                 label: const Text('Save all logs (.zip)'),
                 onPressed: _busy ? null : _save,
@@ -167,8 +189,9 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.delete_outline, size: 18),
                 label: const Text('Clear all logs'),
-                style:
-                    OutlinedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
                 onPressed: _busy ? null : _clear,
               ),
             ),
@@ -180,15 +203,21 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
   }
 
   void _open(BuildContext context, String title, {String? logKey}) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => LogViewerScreen(title: title, logKey: logKey),
-    ));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LogViewerScreen(title: title, logKey: logKey),
+      ),
+    );
   }
-
 }
 
 class _LogTile extends StatelessWidget {
-  const _LogTile({required this.title, required this.subtitle, this.size, required this.onTap});
+  const _LogTile({
+    required this.title,
+    required this.subtitle,
+    this.size,
+    required this.onTap,
+  });
   final String title;
   final String subtitle;
   final String? size;
@@ -205,8 +234,12 @@ class _LogTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (size != null)
-              Text(size!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              Text(
+                size!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
             const SizedBox(width: 6),
             const Icon(Icons.chevron_right),
           ],

@@ -38,7 +38,10 @@ bool _isRegional(int r) => r >= 0x1F1E6 && r <= 0x1F1FF;
 String _flagFromCode(String cc) {
   const base = 0x1F1E6; // regional indicator symbol letter A
   final up = cc.toUpperCase();
-  return String.fromCharCodes([base + (up.codeUnitAt(0) - 65), base + (up.codeUnitAt(1) - 65)]);
+  return String.fromCharCodes([
+    base + (up.codeUnitAt(0) - 65),
+    base + (up.codeUnitAt(1) - 65),
+  ]);
 }
 
 String? _countryCode(String label) {
@@ -49,64 +52,101 @@ String? _countryCode(String label) {
   }
   // Fall back to a standalone 2-letter ISO code token (e.g. "NL-1", "us02").
   for (final tok in label.split(RegExp(r'[^A-Za-z]+'))) {
-    if (tok.length == 2 && _codes.contains(tok.toUpperCase())) return tok.toUpperCase();
+    if (tok.length == 2 && _codes.contains(tok.toUpperCase())) {
+      return tok.toUpperCase();
+    }
   }
   return null;
 }
 
-bool _containsWord(String haystackLower, String needleLower) =>
-    RegExp('(^|[^a-z])${RegExp.escape(needleLower)}([^a-z]|\$)').hasMatch(haystackLower);
+bool _containsWord(String haystackLower, String needleLower) => RegExp(
+  '(^|[^a-z])${RegExp.escape(needleLower)}([^a-z]|\$)',
+).hasMatch(haystackLower);
 
 /// Country names + common aliases → ISO 3166-1 alpha-2. Lowercased keys.
 const Map<String, String> _names = {
-  'united states': 'US', 'usa': 'US', 'america': 'US',
-  'united kingdom': 'GB', 'britain': 'GB', 'england': 'GB', 'uk': 'GB',
-  'united arab emirates': 'AE', 'emirates': 'AE', 'dubai': 'AE',
-  'south korea': 'KR', 'korea': 'KR',
+  'united states': 'US',
+  'usa': 'US',
+  'america': 'US',
+  'united kingdom': 'GB',
+  'britain': 'GB',
+  'england': 'GB',
+  'uk': 'GB',
+  'united arab emirates': 'AE',
+  'emirates': 'AE',
+  'dubai': 'AE',
+  'south korea': 'KR',
+  'korea': 'KR',
   'hong kong': 'HK',
-  'netherlands': 'NL', 'holland': 'NL', 'amsterdam': 'NL',
-  'germany': 'DE', 'deutschland': 'DE', 'frankfurt': 'DE',
-  'france': 'FR', 'paris': 'FR',
-  'japan': 'JP', 'tokyo': 'JP',
+  'netherlands': 'NL',
+  'holland': 'NL',
+  'amsterdam': 'NL',
+  'germany': 'DE',
+  'deutschland': 'DE',
+  'frankfurt': 'DE',
+  'france': 'FR',
+  'paris': 'FR',
+  'japan': 'JP',
+  'tokyo': 'JP',
   'singapore': 'SG',
   'taiwan': 'TW',
   'canada': 'CA',
-  'australia': 'AU', 'sydney': 'AU',
-  'russia': 'RU', 'moscow': 'RU',
+  'australia': 'AU',
+  'sydney': 'AU',
+  'russia': 'RU',
+  'moscow': 'RU',
   'ukraine': 'UA',
-  'sweden': 'SE', 'stockholm': 'SE',
-  'finland': 'FI', 'helsinki': 'FI',
+  'sweden': 'SE',
+  'stockholm': 'SE',
+  'finland': 'FI',
+  'helsinki': 'FI',
   'norway': 'NO',
   'denmark': 'DK',
-  'switzerland': 'CH', 'zurich': 'CH',
-  'italy': 'IT', 'milan': 'IT',
-  'spain': 'ES', 'madrid': 'ES',
+  'switzerland': 'CH',
+  'zurich': 'CH',
+  'italy': 'IT',
+  'milan': 'IT',
+  'spain': 'ES',
+  'madrid': 'ES',
   'portugal': 'PT',
-  'poland': 'PL', 'warsaw': 'PL',
-  'turkey': 'TR', 'istanbul': 'TR', 'turkiye': 'TR',
-  'india': 'IN', 'mumbai': 'IN',
+  'poland': 'PL',
+  'warsaw': 'PL',
+  'turkey': 'TR',
+  'istanbul': 'TR',
+  'turkiye': 'TR',
+  'india': 'IN',
+  'mumbai': 'IN',
   'brazil': 'BR',
   'argentina': 'AR',
   'mexico': 'MX',
-  'iran': 'IR', 'tehran': 'IR',
+  'iran': 'IR',
+  'tehran': 'IR',
   'kazakhstan': 'KZ',
   'armenia': 'AM',
   'georgia': 'GE',
   'israel': 'IL',
   'ireland': 'IE',
-  'austria': 'AT', 'vienna': 'AT',
+  'austria': 'AT',
+  'vienna': 'AT',
   'belgium': 'BE',
   'romania': 'RO',
   'bulgaria': 'BG',
-  'czech': 'CZ', 'czechia': 'CZ', 'prague': 'CZ',
-  'hungary': 'HU', 'budapest': 'HU',
-  'greece': 'GR', 'athens': 'GR',
-  'indonesia': 'ID', 'jakarta': 'ID',
+  'czech': 'CZ',
+  'czechia': 'CZ',
+  'prague': 'CZ',
+  'hungary': 'HU',
+  'budapest': 'HU',
+  'greece': 'GR',
+  'athens': 'GR',
+  'indonesia': 'ID',
+  'jakarta': 'ID',
   'vietnam': 'VN',
-  'thailand': 'TH', 'bangkok': 'TH',
+  'thailand': 'TH',
+  'bangkok': 'TH',
   'malaysia': 'MY',
   'philippines': 'PH',
-  'china': 'CN', 'shanghai': 'CN',
+  'china': 'CN',
+  'shanghai': 'CN',
   'south africa': 'ZA',
   'estonia': 'EE',
   'latvia': 'LV',
@@ -136,5 +176,7 @@ List<(String, String)> geoCountries() {
   return list;
 }
 
-String _title(String s) =>
-    s.split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
+String _title(String s) => s
+    .split(' ')
+    .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+    .join(' ');

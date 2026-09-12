@@ -29,7 +29,8 @@ class NamesSection extends ConsumerWidget {
     final active = state.active?.id == profile.id;
     final group = active ? state.selectedGroup : null;
     final members = active ? state.selectedGroupMembers : const <Location>[];
-    final location = (active ? state.selectedLocation : null) ??
+    final location =
+        (active ? state.selectedLocation : null) ??
         (profile.locations.isEmpty ? null : profile.locations.first);
     final shape = location == null
         ? (outbounds: const <String>{}, carriesUdp: false)
@@ -48,31 +49,41 @@ class NamesSection extends ConsumerWidget {
       // every other one on the page stayed flush left.
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-      const SectionHeader('DNS'),
-      Card(
-        margin: kCardMargin,
-        child: ListTile(
-          leading: const Icon(Icons.language_outlined),
-          title: const Text('DNS'),
-          // Host and routing, not a count: the first is what the user came to
-          // check, the second is the one that decides who else sees the query.
-          subtitle: Text('${_host(first.address)} · ${first.routing}'
-              '${plan.resolvers.length > 1 ? ' · +${plan.resolvers.length - 1} more' : ''}'),
-          // Refusals are the reason this row leads anywhere at all, so they are
-          // announced before the screen is opened.
-          trailing: plan.dropped.isEmpty
-              ? const Icon(Icons.chevron_right)
-              : Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text('${plan.dropped.length} dropped',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.error)),
-                  const Icon(Icons.chevron_right),
-                ]),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => DnsScreen(profile: profile))),
+        const SectionHeader('DNS'),
+        Card(
+          margin: kCardMargin,
+          child: ListTile(
+            leading: const Icon(Icons.language_outlined),
+            title: const Text('DNS'),
+            // Host and routing, not a count: the first is what the user came to
+            // check, the second is the one that decides who else sees the query.
+            subtitle: Text(
+              '${_host(first.address)} · ${first.routing}'
+              '${plan.resolvers.length > 1 ? ' · +${plan.resolvers.length - 1} more' : ''}',
+            ),
+            // Refusals are the reason this row leads anywhere at all, so they are
+            // announced before the screen is opened.
+            trailing: plan.dropped.isEmpty
+                ? const Icon(Icons.chevron_right)
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${plan.dropped.length} dropped',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => DnsScreen(profile: profile)),
+            ),
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   /// The host alone. A DoH resolver's path (`/dns-query`) is the same on every

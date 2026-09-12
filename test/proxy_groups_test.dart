@@ -53,9 +53,12 @@ rules:
   group('reading them', () {
     test('only the types where the engine chooses are carried', () {
       final p = parseSubscriptionBody(body);
-      expect(p.groups.map((g) => g.name),
-          ['⚡️ Fastest', '🛟 Failover', '⚖️ Balance', '🎲 Odd'],
-          reason: 'select is a human choosing, which the server picker already is');
+      expect(
+        p.groups.map((g) => g.name),
+        ['⚡️ Fastest', '🛟 Failover', '⚖️ Balance', '🎲 Odd'],
+        reason:
+            'select is a human choosing, which the server picker already is',
+      );
     });
 
     test('include-all means every server we can actually run', () {
@@ -97,7 +100,8 @@ proxy-groups:
         final p = parseSubscriptionBody(filtered);
         final g = p.groups.firstWhere((g) => g.name == name);
         return [
-          for (final id in g.members) p.locations.firstWhere((l) => l.id == id).label
+          for (final id in g.members)
+            p.locations.firstWhere((l) => l.id == id).label,
         ];
       }
 
@@ -145,22 +149,36 @@ proxy-groups:
     });
 
     test('a group left with nothing runnable is not offered at all', () {
-      expect(parseSubscriptionBody(body).groups.map((g) => g.name),
-          isNot(contains('💀 Dead')));
+      expect(
+        parseSubscriptionBody(body).groups.map((g) => g.name),
+        isNot(contains('💀 Dead')),
+      );
     });
 
-    test('members keep the provider\'s order, because fallback is that order', () {
-      final failover = parseSubscriptionBody(body).groups[1];
-      final byId = {for (final l in parseSubscriptionBody(body).locations) l.id: l.label};
-      expect(failover.members.map((m) => byId[m]), ['🇩🇪 Germany', '🇳🇱 Netherlands']);
-    });
+    test(
+      'members keep the provider\'s order, because fallback is that order',
+      () {
+        final failover = parseSubscriptionBody(body).groups[1];
+        final byId = {
+          for (final l in parseSubscriptionBody(body).locations) l.id: l.label,
+        };
+        expect(failover.members.map((m) => byId[m]), [
+          '🇩🇪 Germany',
+          '🇳🇱 Netherlands',
+        ]);
+      },
+    );
 
     test('a load-balance strategy is carried, and an unknown one is not', () {
       // mihomo rejects an unknown strategy while *applying* the config, which
       // would take the running tunnel down over one mistyped field.
       final groups = parseSubscriptionBody(body).groups;
       expect(groups[2].strategy, 'consistent-hashing');
-      expect(groups[3].strategy, isEmpty, reason: 'the engine default beats a config it refuses');
+      expect(
+        groups[3].strategy,
+        isEmpty,
+        reason: 'the engine default beats a config it refuses',
+      );
     });
 
     test('a group survives a round trip through storage', () {
@@ -175,12 +193,26 @@ proxy-groups:
 
   group('rendering them', () {
     final members = [
-      Location(id: 'a', label: '🇩🇪 Germany', proxy: {
-        'type': 'vless', 'server': 'de.example', 'port': 443, 'uuid': 'u1',
-      }),
-      Location(id: 'b', label: '🇳🇱 Netherlands', proxy: {
-        'type': 'vless', 'server': 'nl.example', 'port': 443, 'uuid': 'u2',
-      }),
+      Location(
+        id: 'a',
+        label: '🇩🇪 Germany',
+        proxy: {
+          'type': 'vless',
+          'server': 'de.example',
+          'port': 443,
+          'uuid': 'u1',
+        },
+      ),
+      Location(
+        id: 'b',
+        label: '🇳🇱 Netherlands',
+        proxy: {
+          'type': 'vless',
+          'server': 'nl.example',
+          'port': 443,
+          'uuid': 'u2',
+        },
+      ),
     ];
     const group = ProxyGroup(
       name: '⚡️ Fastest',
@@ -191,9 +223,9 @@ proxy-groups:
       tolerance: 150,
     );
 
-    YamlMap render(ProxyGroup g) => loadYaml(
-          mihomoTunConfigYaml(members.first, group: g, members: members),
-        ) as YamlMap;
+    YamlMap render(ProxyGroup g) =>
+        loadYaml(mihomoTunConfigYaml(members.first, group: g, members: members))
+            as YamlMap;
 
     test('every member is a proxy and the group decides between them', () {
       final doc = render(group);
@@ -219,20 +251,31 @@ proxy-groups:
       // A label can hold anything — emoji, colons, newlines — and these are
       // YAML keys and rule targets.
       final doc = render(group);
-      expect(mihomoTunConfigYaml(members.first, group: group, members: members),
-          isNot(contains('Fastest')));
-      expect((doc['proxies'] as YamlList).map((p) => p['server']),
-          ['de.example', 'nl.example'], reason: 'position is the only mapping');
+      expect(
+        mihomoTunConfigYaml(members.first, group: group, members: members),
+        isNot(contains('Fastest')),
+      );
+      expect((doc['proxies'] as YamlList).map((p) => p['server']), [
+        'de.example',
+        'nl.example',
+      ], reason: 'position is the only mapping');
     });
 
     test('an interval below the floor is raised to it', () {
       // The check runs from the user's device, through the tunnel, once per
       // member per round. A provider asking for ten seconds does not get it.
-      final doc = render(const ProxyGroup(
-        name: 'g', type: 'url-test', members: ['a', 'b'], intervalSeconds: 10,
-      ));
-      expect((doc['proxy-groups'] as YamlList).first['interval'],
-          kMinGroupInterval.inSeconds);
+      final doc = render(
+        const ProxyGroup(
+          name: 'g',
+          type: 'url-test',
+          members: ['a', 'b'],
+          intervalSeconds: 10,
+        ),
+      );
+      expect(
+        (doc['proxy-groups'] as YamlList).first['interval'],
+        kMinGroupInterval.inSeconds,
+      );
     });
 
     test('a longer interval than ours is the provider\'s to choose', () {
@@ -240,28 +283,52 @@ proxy-groups:
     });
 
     test('a test URL that is not https is replaced, not trusted', () {
-      final doc = render(const ProxyGroup(
-        name: 'g', type: 'url-test', members: ['a', 'b'],
-        testUrl: 'http://tracker.example/probe',
-      ));
-      expect((doc['proxy-groups'] as YamlList).first['url'], kDefaultGroupTestUrl);
+      final doc = render(
+        const ProxyGroup(
+          name: 'g',
+          type: 'url-test',
+          members: ['a', 'b'],
+          testUrl: 'http://tracker.example/probe',
+        ),
+      );
+      expect(
+        (doc['proxy-groups'] as YamlList).first['url'],
+        kDefaultGroupTestUrl,
+      );
     });
 
     test('the strategy reaches the engine only for the group that has one', () {
-      final balanced = render(const ProxyGroup(
-        name: 'g', type: 'load-balance', members: ['a', 'b'],
-        strategy: 'round-robin', intervalSeconds: 300,
-      ));
-      expect((balanced['proxy-groups'] as YamlList).first['strategy'], 'round-robin');
-      expect((render(group)['proxy-groups'] as YamlList).first['strategy'], isNull,
-          reason: 'url-test has no strategy, and mihomo refuses fields it does not expect');
+      final balanced = render(
+        const ProxyGroup(
+          name: 'g',
+          type: 'load-balance',
+          members: ['a', 'b'],
+          strategy: 'round-robin',
+          intervalSeconds: 300,
+        ),
+      );
+      expect(
+        (balanced['proxy-groups'] as YamlList).first['strategy'],
+        'round-robin',
+      );
+      expect(
+        (render(group)['proxy-groups'] as YamlList).first['strategy'],
+        isNull,
+        reason:
+            'url-test has no strategy, and mihomo refuses fields it does not expect',
+      );
     });
 
     test('a chain has nothing to measure, so it gets no probe', () {
-      final doc = render(const ProxyGroup(
-        name: 'g', type: 'relay', members: ['a', 'b'],
-        testUrl: 'https://cp.cloudflare.com/generate_204', intervalSeconds: 300,
-      ));
+      final doc = render(
+        const ProxyGroup(
+          name: 'g',
+          type: 'relay',
+          members: ['a', 'b'],
+          testUrl: 'https://cp.cloudflare.com/generate_204',
+          intervalSeconds: 300,
+        ),
+      );
       final g = (doc['proxy-groups'] as YamlList).first;
       expect(g['type'], 'relay');
       expect(g['url'], isNull);
@@ -273,7 +340,11 @@ proxy-groups:
     test('a group id is distinguishable from a server id', () {
       // They share one selection — the user answers a single question — so the
       // id has to say which kind of answer it is.
-      const g = ProxyGroup(name: '⚡️ Fastest', type: 'url-test', members: ['a']);
+      const g = ProxyGroup(
+        name: '⚡️ Fastest',
+        type: 'url-test',
+        members: ['a'],
+      );
       expect(ProxyGroup.isGroupId(g.id), isTrue);
       expect(ProxyGroup.isGroupId('link_abc123'), isFalse);
       expect(ProxyGroup.isGroupId('sub_0_abcdef'), isFalse);
@@ -292,23 +363,34 @@ proxy-groups:
       // Remnawave calls it mihomo, Marzban clash-meta — Marzban has no
       // "mihomo" at all.
       final base = Uri.parse('https://sub.example/tok3n');
-      expect(renderingUrl(base, 'mihomo').toString(), 'https://sub.example/tok3n/mihomo');
-      expect(renderingUrl(base, 'clash-meta').toString(),
-          'https://sub.example/tok3n/clash-meta');
+      expect(
+        renderingUrl(base, 'mihomo').toString(),
+        'https://sub.example/tok3n/mihomo',
+      );
+      expect(
+        renderingUrl(base, 'clash-meta').toString(),
+        'https://sub.example/tok3n/clash-meta',
+      );
     });
 
     test('3x-ui serves it from another path, not a suffix', () {
       // /sub/<id> next to /clash/<id> and /json/<id>: appending would ask the
       // subscription endpoint for a server named "clash".
       final u = Uri.parse('https://panel.example/sub/abc123');
-      expect(renderingUrl(u, 'clash').toString(), 'https://panel.example/clash/abc123');
+      expect(
+        renderingUrl(u, 'clash').toString(),
+        'https://panel.example/clash/abc123',
+      );
       expect(renderingUrl(u, 'mihomo'), isNull);
     });
 
     test('a URL that already names a rendering is left alone', () {
       final u = Uri.parse('https://sub.example/tok3n/mihomo');
       expect(renderingUrl(u, 'mihomo'), isNull);
-      expect(renderingUrl(Uri.parse('https://sub.example/t/clash-meta'), 'mihomo'), isNull);
+      expect(
+        renderingUrl(Uri.parse('https://sub.example/t/clash-meta'), 'mihomo'),
+        isNull,
+      );
     });
   });
 }

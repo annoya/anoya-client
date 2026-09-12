@@ -59,20 +59,26 @@ ParsedSubscription? parseSingboxServers(String body) {
     }
     try {
       final proxy = _proxyFor(type, ob);
-      final skip = _applyTls(proxy, ob['tls']) ?? _applyTransport(proxy, type, ob);
+      final skip =
+          _applyTls(proxy, ob['tls']) ?? _applyTransport(proxy, type, ob);
       if (skip != null) {
         unsupported.update(skip, (n) => n + 1, ifAbsent: () => 1);
         continue;
       }
-      out.add(locationFor(
-        'singbox:$index:${proxy['server']}:${proxy['port']}',
-        labelOr('${ob['tag'] ?? ''}'.trim(), '${proxy['server']}',
-            proxy['port'] as int? ?? 0),
-        proxy,
-        description: ob['meta'] is Map
-            ? '${(ob['meta'] as Map)['serverDescription'] ?? ''}'.trim()
-            : '',
-      ));
+      out.add(
+        locationFor(
+          'singbox:$index:${proxy['server']}:${proxy['port']}',
+          labelOr(
+            '${ob['tag'] ?? ''}'.trim(),
+            '${proxy['server']}',
+            proxy['port'] as int? ?? 0,
+          ),
+          proxy,
+          description: ob['meta'] is Map
+              ? '${(ob['meta'] as Map)['serverDescription'] ?? ''}'.trim()
+              : '',
+        ),
+      );
     } catch (e) {
       Log.e('sing-box: unusable outbound', '$kind -> $e');
     }
@@ -182,8 +188,9 @@ String? _applyTls(Map<String, dynamic> proxy, Object? node) {
   final sni = '${tls['server_name'] ?? ''}';
   if (sni.isNotEmpty) {
     proxy[proxy['type'] == 'trojan' || proxy['type'] == 'hysteria2'
-        ? 'sni'
-        : 'servername'] = sni;
+            ? 'sni'
+            : 'servername'] =
+        sni;
   }
   final alpn = (tls['alpn'] as List? ?? const []).map((e) => '$e').toList();
   if (alpn.isNotEmpty) proxy['alpn'] = alpn;
@@ -225,16 +232,11 @@ String? _applyTransport(Map<String, dynamic> proxy, String type, Map ob) {
   // (httpupgrade is a websocket, tcp with an HTTP header is `http`).
   proxy['network'] = network;
 
-  return applyTransport(
-    proxy,
-    network,
-    {
-      'path': '${t['path'] ?? ''}',
-      'host': host,
-      'serviceName': '${t['service_name'] ?? ''}',
-    },
-    protocol: type,
-  );
+  return applyTransport(proxy, network, {
+    'path': '${t['path'] ?? ''}',
+    'host': host,
+    'serviceName': '${t['service_name'] ?? ''}',
+  }, protocol: type);
 }
 
 int _int(Object? v) => v is int ? v : int.tryParse('$v') ?? 0;

@@ -17,7 +17,11 @@ import 'base64_text.dart';
 /// not harmless: a server that expects h3 or h2 refuses the handshake outright
 /// when the client offers something else.
 void applyAlpn(Map<String, dynamic> proxy, String? raw) {
-  final alpn = (raw ?? '').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  final alpn = (raw ?? '')
+      .split(',')
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList();
   if (alpn.isNotEmpty) proxy['alpn'] = alpn;
 }
 
@@ -51,7 +55,9 @@ String? applyTransport(
   required String protocol,
 }) {
   final allowed = kTransportsByProtocol[protocol];
-  if (allowed != null && !allowed.contains(net)) return net.isEmpty ? 'tcp' : net;
+  if (allowed != null && !allowed.contains(net)) {
+    return net.isEmpty ? 'tcp' : net;
+  }
 
   final path = q['path'] ?? '';
   final host = q['host'] ?? '';
@@ -65,7 +71,11 @@ String? applyTransport(
         proxy['network'] = 'http';
         final opts = <String, dynamic>{};
         if (path.isNotEmpty) opts['path'] = [path]; // a list in the engine
-        if (host.isNotEmpty) opts['headers'] = {'Host': [host]};
+        if (host.isNotEmpty) {
+          opts['headers'] = {
+            'Host': [host],
+          };
+        }
         proxy['http-opts'] = opts;
       }
       return null;
@@ -103,7 +113,9 @@ String? applyTransport(
       // channel for downloads. Tuning we can leave at the engine's defaults;
       // a split download channel changes the topology, and dialing one channel
       // when the server expects two fails in a way no message would explain.
-      if (_xhttpHasDownloadSettings(q['extra'])) return 'xhttp (split download)';
+      if (_xhttpHasDownloadSettings(q['extra'])) {
+        return 'xhttp (split download)';
+      }
       final opts = <String, dynamic>{};
       if (path.isNotEmpty) opts['path'] = path;
       if (host.isNotEmpty) opts['host'] = host;
@@ -136,12 +148,18 @@ bool _xhttpHasDownloadSettings(String? extra) {
 /// anything that reaches the renderer — a port of 0 (what a malformed vmess
 /// `port` decodes to) would otherwise ship as a config the engine accepts and
 /// silently cannot use.
-Location locationFor(String uri, String label, Map<String, dynamic> proxy,
-    {String description = ''}) {
+Location locationFor(
+  String uri,
+  String label,
+  Map<String, dynamic> proxy, {
+  String description = '',
+}) {
   final server = (proxy['server'] as String?)?.trim() ?? '';
   final port = proxy['port'] as int? ?? 0;
   if (server.isEmpty) throw const FormatException('no server');
-  if (port < 1 || port > 65535) throw FormatException('port out of range: $port');
+  if (port < 1 || port > 65535) {
+    throw FormatException('port out of range: $port');
+  }
   proxy['server'] = bareHost(server);
   return Location(
     id: 'link_${shortDigest(uri)}',
@@ -162,7 +180,6 @@ String labelOr(String frag, String host, int port) {
   final f = frag.trim();
   return f.isNotEmpty ? f : '$host:$port';
 }
-
 
 /// URI fragments are percent-encoded UTF-8 (remarks often carry a flag emoji +
 /// spaces). `Uri.fragment` returns the raw encoded form, so decode it here;

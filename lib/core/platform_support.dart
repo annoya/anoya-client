@@ -11,9 +11,11 @@ import 'package:flutter/foundation.dart';
 /// Reads [defaultTargetPlatform] rather than dart:io Platform so tests can
 /// exercise both sides through `debugDefaultTargetPlatformOverride`.
 bool get supportsProcessRules => switch (defaultTargetPlatform) {
-      TargetPlatform.macOS || TargetPlatform.windows || TargetPlatform.linux => true,
-      _ => false,
-    };
+  TargetPlatform.macOS ||
+  TargetPlatform.windows ||
+  TargetPlatform.linux => true,
+  _ => false,
+};
 
 /// Whether this platform has system on-demand rules (NEOnDemandRule).
 ///
@@ -22,9 +24,9 @@ bool get supportsProcessRules => switch (defaultTargetPlatform) {
 /// offering our on-demand editor there would promise rules nobody will ever
 /// evaluate.
 bool get supportsOnDemand => switch (defaultTargetPlatform) {
-      TargetPlatform.macOS || TargetPlatform.iOS => true,
-      _ => false,
-    };
+  TargetPlatform.macOS || TargetPlatform.iOS => true,
+  _ => false,
+};
 
 /// Whether the tunnel comes up with the machine because *we* bring it up.
 ///
@@ -33,16 +35,16 @@ bool get supportsOnDemand => switch (defaultTargetPlatform) {
 /// facility exists and the decision is the user's to make. One switch, not a
 /// screen: the condition is "when Windows starts" and there is nothing else to
 /// edit about it.
-bool get supportsBootAutoConnect => defaultTargetPlatform == TargetPlatform.windows;
+bool get supportsBootAutoConnect =>
+    defaultTargetPlatform == TargetPlatform.windows;
 
 /// Whether the platform has any auto-connect facility to speak of — ours
 /// (on-demand rules, or the service that starts with Windows) or the system's
 /// (Android's Always-on switch).
 bool get hasAutoConnect => switch (defaultTargetPlatform) {
-      TargetPlatform.macOS ||
-      TargetPlatform.iOS ||
-      TargetPlatform.android ||
-      TargetPlatform.windows =>
-        true,
-      _ => false,
-    };
+  TargetPlatform.macOS ||
+  TargetPlatform.iOS ||
+  TargetPlatform.android ||
+  TargetPlatform.windows => true,
+  _ => false,
+};

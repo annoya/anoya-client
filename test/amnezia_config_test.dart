@@ -35,18 +35,17 @@ void main() {
     String serviceType = 'amnezia-premium',
     String protocol = 'awg',
     int version = 2,
-  }) =>
-      {
-        'name': 'Amnezia Premium',
-        'description': 'Amnezia Premium',
-        'config_version': version,
-        'api_config': {
-          'service_type': serviceType,
-          'service_protocol': protocol,
-          'user_country_code': 'ru',
-        },
-        'auth_data': {'api_key': 'a-subscription-key'},
-      };
+  }) => {
+    'name': 'Amnezia Premium',
+    'description': 'Amnezia Premium',
+    'config_version': version,
+    'api_config': {
+      'service_type': serviceType,
+      'service_protocol': protocol,
+      'user_country_code': 'ru',
+    },
+    'auth_data': {'api_key': 'a-subscription-key'},
+  };
 
   group('the vpn:// key', () {
     test('carries the service, the protocol and the credential', () {
@@ -63,15 +62,23 @@ void main() {
       final full = vpnKey(primary());
       final naked = full.substring(6).replaceAll('=', '');
       final wrapped = '${naked.substring(0, 20)}\n${naked.substring(20)}';
-      expect(parseAmneziaVpnKey('vpn://$wrapped')?.apiKey, 'a-subscription-key');
+      expect(
+        parseAmneziaVpnKey('vpn://$wrapped')?.apiKey,
+        'a-subscription-key',
+      );
     });
 
     test('a length prefix that lies is still readable', () {
       // The premium encoder's constant prefix is the common case, so a reader
       // that trusted the number would fail on every premium key there is.
-      expect(parseAmneziaVpnKey(vpnKey(primary(), premiumSignature: false))?.apiKey,
-          'a-subscription-key');
-      expect(parseAmneziaVpnKey(vpnKey(primary()))?.apiKey, 'a-subscription-key');
+      expect(
+        parseAmneziaVpnKey(vpnKey(primary(), premiumSignature: false))?.apiKey,
+        'a-subscription-key',
+      );
+      expect(
+        parseAmneziaVpnKey(vpnKey(primary()))?.apiKey,
+        'a-subscription-key',
+      );
     });
 
     test('the formats this app does not serve are refused, not half-read', () {
@@ -79,7 +86,10 @@ void main() {
       // document with no api_config is a self-hosted server bundle, which is
       // a different domain of this app (ADR-005) and not this one.
       expect(parseAmneziaVpnKey(vpnKey(primary(version: 1))), isNull);
-      expect(parseAmneziaVpnKey(vpnKey({'name': 'x', 'containers': []})), isNull);
+      expect(
+        parseAmneziaVpnKey(vpnKey({'name': 'x', 'containers': []})),
+        isNull,
+      );
       expect(parseAmneziaVpnKey('vless://u@h.example:443#A'), isNull);
       expect(parseAmneziaVpnKey('not a key'), isNull);
     });
@@ -87,7 +97,9 @@ void main() {
 
   /// The shape a live `/v1/config` answered with for an AWG location, with
   /// the key material replaced. H1–H4 really do arrive as ranges.
-  Map<String, dynamic> awgAnswer({String privateKey = r'$WIREGUARD_CLIENT_PRIVATE_KEY'}) {
+  Map<String, dynamic> awgAnswer({
+    String privateKey = r'$WIREGUARD_CLIENT_PRIVATE_KEY',
+  }) {
     final lastConfig = {
       'H1': '758037244-1346176164',
       'H2': '1833967475-4294967295',
@@ -105,7 +117,8 @@ void main() {
       'client_ip': '100.98.117.86/32',
       'client_priv_key': privateKey,
       'client_pub_key': 'Y2xpZW50cHVibGljMDAwMDAwMDAwMDAwMDAwMDAwMDA=',
-      'config': '[Interface]\nAddress = 100.98.117.86/32\nPrivateKey = $privateKey\n',
+      'config':
+          '[Interface]\nAddress = 100.98.117.86/32\nPrivateKey = $privateKey\n',
       'hostName': '135.136.45.186',
       'port': 7328,
       'psk_key': 'cHNrMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=',
@@ -140,26 +153,43 @@ void main() {
 
   group('an AWG location', () {
     test('becomes a wireguard outbound the engine can run', () {
-      final parsed = parseAmneziaSecondaryConfig(awgAnswer(),
-          label: 'Germany', privateKey: 'bXlwcml2YXRla2V5MDAwMDAwMDAwMDAwMDAwMDAwMA=');
+      final parsed = parseAmneziaSecondaryConfig(
+        awgAnswer(),
+        label: 'Germany',
+        privateKey: 'bXlwcml2YXRla2V5MDAwMDAwMDAwMDAwMDAwMDAwMA=',
+      );
       expect(parsed, isNotNull);
       final proxy = parsed!.location.proxy;
       expect(proxy['type'], 'wireguard');
       expect(proxy['server'], '135.136.45.186');
       expect(proxy['port'], 7328);
-      expect(proxy['private-key'], 'bXlwcml2YXRla2V5MDAwMDAwMDAwMDAwMDAwMDAwMA=');
-      expect(proxy['public-key'], 'c2VydmVycHVibGljMDAwMDAwMDAwMDAwMDAwMDAwMDA=');
+      expect(
+        proxy['private-key'],
+        'bXlwcml2YXRla2V5MDAwMDAwMDAwMDAwMDAwMDAwMA=',
+      );
+      expect(
+        proxy['public-key'],
+        'c2VydmVycHVibGljMDAwMDAwMDAwMDAwMDAwMDAwMDA=',
+      );
       // The mask belongs to the .conf, not to the engine's address field.
       expect(proxy['ip'], '100.98.117.86');
-      expect(proxy['udp'], isTrue,
-          reason: 'WireGuard carries datagrams, and a resolver may be pinned '
-              'through it only if we say so');
+      expect(
+        proxy['udp'],
+        isTrue,
+        reason:
+            'WireGuard carries datagrams, and a resolver may be pinned '
+            'through it only if we say so',
+      );
     });
 
     test('keeps the obfuscation exactly as issued', () {
-      final parsed = parseAmneziaSecondaryConfig(awgAnswer(),
-          label: 'Germany', privateKey: 'k');
-      final awg = parsed!.location.proxy['amnezia-wg-option'] as Map<String, dynamic>;
+      final parsed = parseAmneziaSecondaryConfig(
+        awgAnswer(),
+        label: 'Germany',
+        privateKey: 'k',
+      );
+      final awg =
+          parsed!.location.proxy['amnezia-wg-option'] as Map<String, dynamic>;
       expect(awg['jc'], 4);
       expect(awg['jmin'], 10);
       expect(awg['jmax'], 80);
@@ -174,8 +204,11 @@ void main() {
       // it on the wire differently, so the choice cannot be left to whichever
       // one happens to be the default: the current protocol is named outright.
       expect(awg['version'], 3);
-      expect(awg.containsKey('itime'), isFalse,
-          reason: 'deprecated, and forwarding it would pin the legacy port');
+      expect(
+        awg.containsKey('itime'),
+        isFalse,
+        reason: 'deprecated, and forwarding it would pin the legacy port',
+      );
     });
 
     test('a v3.1 server is marked as one', () {
@@ -184,15 +217,20 @@ void main() {
       final decoded = decodeAmneziaEnvelope(answer['config'] as String)!;
       final container = (decoded['containers'] as List).first as Map;
       final awg = (container['awg'] as Map).cast<String, dynamic>();
-      final lc = jsonDecode(awg['last_config'] as String) as Map<String, dynamic>;
+      final lc =
+          jsonDecode(awg['last_config'] as String) as Map<String, dynamic>;
       lc['HeaderProtectionKey'] = 'aGVhZGVyLXByb3RlY3Rpb24ta2V5';
       lc['DisableCookies'] = 'true';
       awg['last_config'] = jsonEncode(lc);
       container['awg'] = awg;
 
-      final parsed = parseAmneziaSecondaryConfig({'config': vpnKey(decoded)},
-          label: 'Germany', privateKey: 'k');
-      final opts = parsed!.location.proxy['amnezia-wg-option'] as Map<String, dynamic>;
+      final parsed = parseAmneziaSecondaryConfig(
+        {'config': vpnKey(decoded)},
+        label: 'Germany',
+        privateKey: 'k',
+      );
+      final opts =
+          parsed!.location.proxy['amnezia-wg-option'] as Map<String, dynamic>;
       expect(opts['version'], 3);
       expect(opts['header-protection-key'], 'aGVhZGVyLXByb3RlY3Rpb24ta2V5');
       expect(opts['disable-cookies'], 'true');
@@ -202,91 +240,111 @@ void main() {
       // The placeholder surviving means the substitution never happened. Run
       // as-is it would fail a handshake with nothing to explain why.
       expect(
-          parseAmneziaSecondaryConfig(awgAnswer(), label: 'Germany', privateKey: ''),
-          isNull);
+        parseAmneziaSecondaryConfig(
+          awgAnswer(),
+          label: 'Germany',
+          privateKey: '',
+        ),
+        isNull,
+      );
     });
 
     test('the resolvers it came with are carried, not invented', () {
-      final parsed = parseAmneziaSecondaryConfig(awgAnswer(),
-          label: 'Germany', privateKey: 'k');
+      final parsed = parseAmneziaSecondaryConfig(
+        awgAnswer(),
+        label: 'Germany',
+        privateKey: 'k',
+      );
       expect(parsed!.dns, ['100.64.0.1', '8.8.4.4']);
       expect(parsed.expiresAt, DateTime.utc(2026, 9, 30, 12));
     });
 
     test('reaches the engine as YAML mihomo accepts', () {
-      final parsed = parseAmneziaSecondaryConfig(awgAnswer(),
-          label: 'Germany', privateKey: 'bXlwcml2YXRla2V5MDAwMDAwMDAwMDAwMDAwMDAwMA=');
-      final doc = loadYaml(mihomoTunConfigYaml(parsed!.location, dns: parsed.dns))
-          as YamlMap;
+      final parsed = parseAmneziaSecondaryConfig(
+        awgAnswer(),
+        label: 'Germany',
+        privateKey: 'bXlwcml2YXRla2V5MDAwMDAwMDAwMDAwMDAwMDAwMA=',
+      );
+      final doc =
+          loadYaml(mihomoTunConfigYaml(parsed!.location, dns: parsed.dns))
+              as YamlMap;
       final proxy = (doc['proxies'] as YamlList).first as YamlMap;
       expect(proxy['type'], 'wireguard');
       expect((proxy['amnezia-wg-option'] as YamlMap)['jc'], 4);
-      expect((proxy['amnezia-wg-option'] as YamlMap)['h1'], '758037244-1346176164');
+      expect(
+        (proxy['amnezia-wg-option'] as YamlMap)['h1'],
+        '758037244-1346176164',
+      );
     });
   });
 
-  test('a VLESS location goes through the Xray reader this app already has',
-      () {
-    // Amnezia ships an ordinary Xray document; an Amnezia VLESS server and a
-    // panel's VLESS server differ in provenance, not in what they are.
-    final xrayConfig = {
-      'log': {'loglevel': 'error'},
-      'inbounds': [
-        {'listen': '127.0.0.1', 'port': 10808, 'protocol': 'socks'}
-      ],
-      'outbounds': [
-        {
-          'protocol': 'vless',
-          'tag': 'proxy',
-          'settings': {
-            'vnext': [
-              {
-                'address': '135.136.45.186',
-                'port': 443,
-                'users': [
-                  {
-                    'id': '0304f78c-2c15-4441-9bac-3897297dddcf',
-                    'encryption': 'none',
-                    'flow': 'xtls-rprx-vision',
-                  }
-                ],
-              }
-            ],
-          },
-          'streamSettings': {
-            'network': 'tcp',
-            'security': 'reality',
-            'realitySettings': {
-              'fingerprint': 'firefox',
-              'publicKey': 'U6-myBaEyMsYQ2pBu-VoJiX1AcS2v7VmdEdhqo-KtG4',
-              'shortId': '',
-              'serverName': '',
+  test(
+    'a VLESS location goes through the Xray reader this app already has',
+    () {
+      // Amnezia ships an ordinary Xray document; an Amnezia VLESS server and a
+      // panel's VLESS server differ in provenance, not in what they are.
+      final xrayConfig = {
+        'log': {'loglevel': 'error'},
+        'inbounds': [
+          {'listen': '127.0.0.1', 'port': 10808, 'protocol': 'socks'},
+        ],
+        'outbounds': [
+          {
+            'protocol': 'vless',
+            'tag': 'proxy',
+            'settings': {
+              'vnext': [
+                {
+                  'address': '135.136.45.186',
+                  'port': 443,
+                  'users': [
+                    {
+                      'id': '0304f78c-2c15-4441-9bac-3897297dddcf',
+                      'encryption': 'none',
+                      'flow': 'xtls-rprx-vision',
+                    },
+                  ],
+                },
+              ],
+            },
+            'streamSettings': {
+              'network': 'tcp',
+              'security': 'reality',
+              'realitySettings': {
+                'fingerprint': 'firefox',
+                'publicKey': 'U6-myBaEyMsYQ2pBu-VoJiX1AcS2v7VmdEdhqo-KtG4',
+                'shortId': '',
+                'serverName': '',
+              },
             },
           },
-        },
-        {'tag': 'dns-out', 'protocol': 'dns'},
-      ],
-    };
-    final doc = {
-      'name': 'Amnezia Premium',
-      'config_version': 2,
-      'hostName': '135.136.45.186',
-      'defaultContainer': 'amnezia-xray',
-      'dns1': '100.64.0.1',
-      'containers': [
-        {
-          'container': 'amnezia-xray',
-          'xray': {'port': '443', 'last_config': jsonEncode(xrayConfig)},
-        },
-      ],
-    };
-    final parsed = parseAmneziaSecondaryConfig({'config': vpnKey(doc)},
-        label: 'Germany', privateKey: '');
-    expect(parsed, isNotNull);
-    expect(parsed!.location.proxy['type'], 'vless');
-    expect(parsed.location.proxy['server'], '135.136.45.186');
-    expect(parsed.dns, ['100.64.0.1']);
-  });
+          {'tag': 'dns-out', 'protocol': 'dns'},
+        ],
+      };
+      final doc = {
+        'name': 'Amnezia Premium',
+        'config_version': 2,
+        'hostName': '135.136.45.186',
+        'defaultContainer': 'amnezia-xray',
+        'dns1': '100.64.0.1',
+        'containers': [
+          {
+            'container': 'amnezia-xray',
+            'xray': {'port': '443', 'last_config': jsonEncode(xrayConfig)},
+          },
+        ],
+      };
+      final parsed = parseAmneziaSecondaryConfig(
+        {'config': vpnKey(doc)},
+        label: 'Germany',
+        privateKey: '',
+      );
+      expect(parsed, isNotNull);
+      expect(parsed!.location.proxy['type'], 'vless');
+      expect(parsed.location.proxy['server'], '135.136.45.186');
+      expect(parsed.dns, ['100.64.0.1']);
+    },
+  );
 
   test('nothing the user reads names a company behind the subscription', () {
     // The key format and the gateway are not Amnezia's alone: other providers
@@ -308,7 +366,9 @@ void main() {
         // …and neither does it invent one. SPEC-CLIENT §5: everything a
         // subscription supplies is attributed to the subscription, because
         // there is no account behind it to attribute it to.
-        final quoted = RegExp(r"'[^']*(Amnezia|provider)[^']*'").allMatches(line);
+        final quoted = RegExp(
+          r"'[^']*(Amnezia|provider)[^']*'",
+        ).allMatches(line);
         for (final m in quoted) {
           final text = m.group(0)!;
           if (text.contains('AmneziaWG')) continue;

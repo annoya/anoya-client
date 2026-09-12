@@ -63,28 +63,37 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
   Widget build(BuildContext context) {
     final vpn = context.vpnColors;
     final session = ref.watch(sessionProvider);
-    final style = Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
+    final style = Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
     if (ref.watch(profilesControllerProvider.select((s) => s.switching))) {
       // Two different waits wear different words. With a live session the
       // server is being swapped under it; with the tunnel down there is no
       // session to switch, only a server still being fetched, and promising a
       // switch would describe something that is not happening.
-      final label = session.connected ? 'Switching server…' : 'Getting the server…';
+      final label = session.connected
+          ? 'Switching server…'
+          : 'Getting the server…';
       // The ring stays green (the session never dropped); the status line is
       // the only telltale of the in-flight switch.
       return Text(label, style: style?.copyWith(color: vpn.connecting));
     }
     // "· auto" only when the OS confirmed it is auto-connecting.
-    final auto = ref.watch(onDemandProvider.select((p) => p.systemArmed)) ? ' · auto' : '';
+    final auto = ref.watch(onDemandProvider.select((p) => p.systemArmed))
+        ? ' · auto'
+        : '';
     final clock = sessionClock(session.startedAt);
     final (text, color) = switch (session.status) {
       VpnStatus.connected => (
-          'Connected${clock.isEmpty ? '' : ' · $clock'}$auto',
-          vpn.connected,
-        ),
+        'Connected${clock.isEmpty ? '' : ' · $clock'}$auto',
+        vpn.connected,
+      ),
       VpnStatus.connecting => ('Connecting…', vpn.connecting),
       VpnStatus.error => ('Error', Theme.of(context).colorScheme.error),
-      VpnStatus.disconnected => ('Not connected', Theme.of(context).colorScheme.onSurfaceVariant),
+      VpnStatus.disconnected => (
+        'Not connected',
+        Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     };
     return Text(text, style: style?.copyWith(color: color));
   }
@@ -105,8 +114,8 @@ class ConnectButton extends StatelessWidget {
     final color = connected
         ? vpn.connected
         : connecting
-            ? vpn.connecting
-            : Theme.of(context).colorScheme.primary;
+        ? vpn.connecting
+        : Theme.of(context).colorScheme.primary;
 
     return Semantics(
       button: true,
@@ -129,13 +138,25 @@ class ConnectButton extends StatelessWidget {
                 ? SizedBox(
                     width: 40,
                     height: 40,
-                    child: CircularProgressIndicator(strokeWidth: 3, color: color))
-                : Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.power_settings_new, size: 56, color: color),
-                    const SizedBox(height: 8),
-                    Text(connected ? 'Disconnect' : 'Connect',
-                        style: TextStyle(color: color, fontWeight: FontWeight.w600)),
-                  ]),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: color,
+                    ),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.power_settings_new, size: 56, color: color),
+                      const SizedBox(height: 8),
+                      Text(
+                        connected ? 'Disconnect' : 'Connect',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),
@@ -171,10 +192,10 @@ class StatusChip extends StatelessWidget {
       ChipTone.on => (cs.onPrimaryContainer, cs.primaryContainer, null),
       ChipTone.off => (cs.onSurfaceVariant, null, cs.outlineVariant),
       ChipTone.pending => (
-          context.vpnColors.connecting,
-          null,
-          context.vpnColors.connecting.withValues(alpha: 0.45),
-        ),
+        context.vpnColors.connecting,
+        null,
+        context.vpnColors.connecting.withValues(alpha: 0.45),
+      ),
     };
     return Material(
       color: bg ?? Colors.transparent,
@@ -189,15 +210,20 @@ class StatusChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: SizedBox(
             height: kStatusChipHeight,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(width: 6),
-              Text(label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(color: fg, fontWeight: FontWeight.w500)),
-            ]),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: fg),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: fg,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -211,7 +237,8 @@ class StatusChip extends StatelessWidget {
 String describeGroup(ProxyGroup g, List<Location> locations) {
   final ids = {for (final l in locations) l.id};
   final n = g.members.where(ids.contains).length;
-  final every = g.type == 'url-test' || g.type == 'fallback' || g.type == 'load-balance';
+  final every =
+      g.type == 'url-test' || g.type == 'fallback' || g.type == 'load-balance';
   final interval = Duration(seconds: g.intervalSeconds) < kMinGroupInterval
       ? kMinGroupInterval
       : Duration(seconds: g.intervalSeconds);
@@ -223,12 +250,12 @@ String describeGroup(ProxyGroup g, List<Location> locations) {
 /// The shape that says what a group does. Colour cannot: the row is a list
 /// item like any other.
 IconData groupIcon(String type) => switch (type) {
-      'url-test' => Icons.bolt,
-      'fallback' => Icons.shield_outlined,
-      'load-balance' => Icons.balance,
-      'relay' => Icons.alt_route,
-      _ => Icons.groups_outlined,
-    };
+  'url-test' => Icons.bolt,
+  'fallback' => Icons.shield_outlined,
+  'load-balance' => Icons.balance,
+  'relay' => Icons.alt_route,
+  _ => Icons.groups_outlined,
+};
 
 /// A country flag emoji for the location (rendered natively on Apple
 /// platforms), falling back to a globe icon when no country is inferred.

@@ -24,8 +24,9 @@ class _RuleDialogState extends State<RuleDialog> {
   late String _type = widget.initial?.type ?? 'domain-suffix';
   late String _action = widget.initial?.action ?? 'proxy';
   late bool _noResolve = widget.initial?.noResolve ?? false;
-  late final TextEditingController _value =
-      TextEditingController(text: widget.initial?.value ?? '');
+  late final TextEditingController _value = TextEditingController(
+    text: widget.initial?.value ?? '',
+  );
   String? _error;
 
   static const _hints = {
@@ -58,14 +59,18 @@ class _RuleDialogState extends State<RuleDialog> {
   void _submit() {
     final rule = RoutingRule(
       type: _type,
-      value: _type == 'geoip' ? _value.text.trim().toLowerCase() : _value.text.trim(),
+      value: _type == 'geoip'
+          ? _value.text.trim().toLowerCase()
+          : _value.text.trim(),
       action: _action,
       noResolve: _type == 'geoip' && _noResolve,
     );
     if (!rule.isValid) {
-      setState(() => _error = _type == 'geoip'
-          ? 'Pick a country.'
-          : 'Invalid value for ${rule.type}.');
+      setState(
+        () => _error = _type == 'geoip'
+            ? 'Pick a country.'
+            : 'Invalid value for ${rule.type}.',
+      );
       return;
     }
     Navigator.of(context).pop(rule);
@@ -104,8 +109,8 @@ class _RuleDialogState extends State<RuleDialog> {
           subtitle: unsupported
               ? 'not available on this platform'
               : geoLocked
-                  ? 'needs geo databases'
-                  : _typeDescriptions[t],
+              ? 'needs geo databases'
+              : _typeDescriptions[t],
           enabled: !geoLocked && !unsupported,
         );
       }).toList(),
@@ -147,14 +152,18 @@ class _RuleDialogState extends State<RuleDialog> {
             if (_type == 'geoip') ...[
               SelectField(
                 label: 'Country',
-                value: _value.text.isEmpty ? 'Choose…' : _countryLabel(_value.text),
+                value: _value.text.isEmpty
+                    ? 'Choose…'
+                    : _countryLabel(_value.text),
                 trailingIcon: Icons.chevron_right,
                 onTap: _pickCountry,
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('no-resolve'),
-                subtitle: const Text('Match only plain-IP connections, don’t resolve domains'),
+                subtitle: const Text(
+                  'Match only plain-IP connections, don’t resolve domains',
+                ),
                 value: _noResolve,
                 onChanged: (v) => setState(() => _noResolve = v),
               ),
@@ -179,8 +188,13 @@ class _RuleDialogState extends State<RuleDialog> {
                 // formatter is the second line of defence — a pasted value
                 // with a space in it never becomes one in the rule.
                 keyboardType: TextInputType.url,
-                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
-                decoration: InputDecoration(labelText: 'Value', hintText: _hints[_type]),
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                ],
+                decoration: InputDecoration(
+                  labelText: 'Value',
+                  hintText: _hints[_type],
+                ),
                 onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _submit(),
               ),
@@ -190,22 +204,29 @@ class _RuleDialogState extends State<RuleDialog> {
             if (_summary() != null)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: Text(_summary()!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant)),
+                child: Text(
+                  _summary()!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                ),
               ),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Text(_error!, style: TextStyle(color: cs.error, fontSize: 13)),
+                child: Text(
+                  _error!,
+                  style: TextStyle(color: cs.error, fontSize: 13),
+                ),
               ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton(onPressed: _submit, child: const Text('Save')),
       ],
     );
@@ -241,13 +262,19 @@ class _RuleDialogState extends State<RuleDialog> {
 /// country/alias table the flags use (ISO code in the subtitle so it is
 /// searchable by either).
 Future<String?> pickCountry(BuildContext context) => pickOption<String>(
-      context,
-      title: 'Country',
-      itemNoun: 'country',
-      options: [
-        for (final c in geoCountries())
-          Option(c.$1, c.$2,
-              subtitle: c.$1,
-              leading: Text(flagEmoji(c.$1) ?? '', style: const TextStyle(fontSize: 22))),
-      ],
-    );
+  context,
+  title: 'Country',
+  itemNoun: 'country',
+  options: [
+    for (final c in geoCountries())
+      Option(
+        c.$1,
+        c.$2,
+        subtitle: c.$1,
+        leading: Text(
+          flagEmoji(c.$1) ?? '',
+          style: const TextStyle(fontSize: 22),
+        ),
+      ),
+  ],
+);

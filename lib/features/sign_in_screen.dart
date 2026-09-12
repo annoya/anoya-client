@@ -57,29 +57,35 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
   Future<void> _signIn() => _run(() async {
-        await _ctrl.addSelfhosted(_server.text, _username.text, _password.text);
-        return true;
-      });
+    await _ctrl.addSelfhosted(_server.text, _username.text, _password.text);
+    return true;
+  });
 
   Future<void> _ssoSignIn() => _run(() async {
-        // Already worded for the user: a FormatException here would be read by
-        // describeError as "this doesn't look like a link".
-        if (_server.text.trim().isEmpty) {
-          throw const AppErrorException(AppError('Enter the server address first'));
-        }
-        final cfg = await _ctrl.authConfig(_server.text);
-        if (cfg.providers.isEmpty) {
-          throw const AppErrorException(AppError('This server has no SSO providers',
-              detail: 'Sign in with a username and password instead.'));
-        }
-        final provider =
-            cfg.providers.length == 1 ? cfg.providers.first : await _pickProvider(cfg.providers);
-        if (provider == null) return false; // sheet dismissed — user backed out
-        await _ctrl.addSelfhostedOIDC(_server.text, provider);
-        return true;
-      });
+    // Already worded for the user: a FormatException here would be read by
+    // describeError as "this doesn't look like a link".
+    if (_server.text.trim().isEmpty) {
+      throw const AppErrorException(AppError('Enter the server address first'));
+    }
+    final cfg = await _ctrl.authConfig(_server.text);
+    if (cfg.providers.isEmpty) {
+      throw const AppErrorException(
+        AppError(
+          'This server has no SSO providers',
+          detail: 'Sign in with a username and password instead.',
+        ),
+      );
+    }
+    final provider = cfg.providers.length == 1
+        ? cfg.providers.first
+        : await _pickProvider(cfg.providers);
+    if (provider == null) return false; // sheet dismissed — user backed out
+    await _ctrl.addSelfhostedOIDC(_server.text, provider);
+    return true;
+  });
 
-  Future<AuthProvider?> _pickProvider(List<AuthProvider> providers) => pickOption(
+  Future<AuthProvider?> _pickProvider(List<AuthProvider> providers) =>
+      pickOption(
         context,
         title: 'Sign in with',
         options: [
@@ -104,12 +110,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 children: [
                   Icon(Icons.business_outlined, size: 48, color: cs.primary),
                   const SizedBox(height: 10),
-                  Text('Your organization’s or personal server',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: cs.onSurfaceVariant)),
+                  Text(
+                    'Your organization’s or personal server',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _server,
@@ -117,7 +124,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     autocorrect: false,
                     enabled: !_busy,
                     decoration: const InputDecoration(
-                        labelText: 'Server address', hintText: 'https://your-server'),
+                      labelText: 'Server address',
+                      hintText: 'https://your-server',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -143,7 +152,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Sign in'),
                   ),
                   const SizedBox(height: 8),

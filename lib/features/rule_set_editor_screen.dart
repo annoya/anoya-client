@@ -26,7 +26,8 @@ class RuleSetEditorScreen extends ConsumerStatefulWidget {
   final String setId;
 
   @override
-  ConsumerState<RuleSetEditorScreen> createState() => _RuleSetEditorScreenState();
+  ConsumerState<RuleSetEditorScreen> createState() =>
+      _RuleSetEditorScreenState();
 }
 
 class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
@@ -109,17 +110,21 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   int get _advancedCount => _rules.where((r) => !_representable(r)).length;
 
-  bool _isOn(String type, String value) =>
-      _rules.any((r) => _representable(r) && r.type == type && r.value == value);
+  bool _isOn(String type, String value) => _rules.any(
+    (r) => _representable(r) && r.type == type && r.value == value,
+  );
 
   Future<void> _setOn(String type, String value, bool on) async {
     setState(() {
       _rules.removeWhere(
-          (r) => _representable(r) && r.type == type && r.value == value);
+        (r) => _representable(r) && r.type == type && r.value == value,
+      );
       if (on) {
         // Appended: whatever the advanced rules say comes first, as the
         // "Advanced rules" row promises.
-        _rules.add(RoutingRule(type: type, value: value, action: _expectedAction));
+        _rules.add(
+          RoutingRule(type: type, value: value, action: _expectedAction),
+        );
       }
     });
     await _persist();
@@ -137,7 +142,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       _rules = [
         for (final r in _rules)
           (r.type == 'geosite' || r.type == 'geoip') && r.action == old
-              ? RoutingRule(type: r.type, value: r.value, action: now, noResolve: r.noResolve)
+              ? RoutingRule(
+                  type: r.type,
+                  value: r.value,
+                  action: now,
+                  noResolve: r.noResolve,
+                )
               : r,
       ];
     });
@@ -158,7 +168,8 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     // tunnel config.
     final sets = await RuleSetStore.load();
     await RuleSetStore.save([
-      for (final s in sets) s.id == widget.setId ? s.copyWith(editor: editor) : s,
+      for (final s in sets)
+        s.id == widget.setId ? s.copyWith(editor: editor) : s,
     ]);
   }
 
@@ -182,10 +193,18 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('Delete "$_name"?'),
-        content: const Text('Configurations using this set fall back to Default.'),
+        content: const Text(
+          'Configurations using this set fall back to Default.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -347,11 +366,15 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       return [
         GeoDownloadBanner(
           title: 'Download the site lists first',
-          subtitle: 'Picking services needs the geo databases (~25 MB, one time)',
+          subtitle:
+              'Picking services needs the geo databases (~25 MB, one time)',
           busy: _geoBusy,
           onDownload: _downloadGeoThenIndex,
         ),
-        Opacity(opacity: 0.38, child: Column(children: _serviceGroups(interactive: false))),
+        Opacity(
+          opacity: 0.38,
+          child: Column(children: _serviceGroups(interactive: false)),
+        ),
       ];
     }
 
@@ -367,11 +390,15 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       if (_advancedCount > 0)
         Card(
           margin: kCardMargin,
-          color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
+          color: Theme.of(
+            context,
+          ).colorScheme.primaryContainer.withValues(alpha: 0.35),
           child: ListTile(
             leading: const Icon(Icons.layers_outlined),
             title: Text('Advanced rules · $_advancedCount'),
-            subtitle: const Text('Apply before the list below · edit in Advanced'),
+            subtitle: const Text(
+              'Apply before the list below · edit in Advanced',
+            ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _setEditor(RuleEditor.advanced),
           ),
@@ -381,7 +408,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         child: TextField(
           autocorrect: false,
           decoration: const InputDecoration(
-              labelText: 'Search services', prefixIcon: Icon(Icons.search)),
+            labelText: 'Search services',
+            prefixIcon: Icon(Icons.search),
+          ),
           onChanged: (v) => setState(() => _query = v),
         ),
       ),
@@ -392,24 +421,32 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         // where the user just looked.
         Card(
           margin: kCardMargin,
-          child: Column(children: [
-            _addRow('Add country', _addCountry),
-            for (final code in countries) ...[
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              _countryRow(code),
+          child: Column(
+            children: [
+              _addRow('Add country', _addCountry),
+              for (final code in countries) ...[
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                _countryRow(code),
+              ],
             ],
-          ]),
+          ),
         ),
         const SectionHeader('SERVICES'),
         Card(
           margin: kCardMargin,
-          child: Column(children: [
-            _addRow('Add category', _addCategory),
-            for (final cat in _extraCategories('')) ...[
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              _removableRow(ServiceAvatar(cat), cat, () => _setOn('geosite', cat, false)),
+          child: Column(
+            children: [
+              _addRow('Add category', _addCategory),
+              for (final cat in _extraCategories('')) ...[
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                _removableRow(
+                  ServiceAvatar(cat),
+                  cat,
+                  () => _setOn('geosite', cat, false),
+                ),
+              ],
             ],
-          ]),
+          ),
         ),
       ],
       ..._serviceGroups(interactive: true, query: q),
@@ -418,15 +455,14 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         child: Text(
           selected == 0
               ? (_mode == RoutingMode.split
-                  ? 'Nothing selected · no traffic goes through the VPN yet'
-                  : 'Nothing selected · everything goes through the VPN')
+                    ? 'Nothing selected · no traffic goes through the VPN yet'
+                    : 'Nothing selected · everything goes through the VPN')
               : (_mode == RoutingMode.split
-                  ? '$selected selected · everything else connects directly'
-                  : '$selected selected · they connect directly, the rest goes through the VPN'),
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ? '$selected selected · everything else connects directly'
+                    : '$selected selected · they connect directly, the rest goes through the VPN'),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     ];
@@ -446,8 +482,14 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
               child: SegmentedButton<RoutingMode>(
                 showSelectedIcon: false,
                 segments: const [
-                  ButtonSegment(value: RoutingMode.split, label: Text('Only selected')),
-                  ButtonSegment(value: RoutingMode.full, label: Text('All except selected')),
+                  ButtonSegment(
+                    value: RoutingMode.split,
+                    label: Text('Only selected'),
+                  ),
+                  ButtonSegment(
+                    value: RoutingMode.full,
+                    label: Text('All except selected'),
+                  ),
                 ],
                 selected: {_mode},
                 onSelectionChanged: (v) => _setSimpleMode(v.first),
@@ -458,10 +500,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
               _mode == RoutingMode.split
                   ? 'Only the services you pick go through the VPN. Everything else connects directly.'
                   : 'Everything goes through the VPN. The services you pick connect directly.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -495,21 +536,26 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       ];
       if (services.isEmpty) continue;
       out.add(SectionHeader(group.header));
-      out.add(Card(
-        margin: kCardMargin,
-        child: Column(children: [
-          for (final (i, s) in services.indexed) ...[
-            if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-            SwitchListTile(
-              secondary: ServiceAvatar(s.name, category: s.category),
-              title: Text(s.name),
-              value: _isOn('geosite', s.category),
-              onChanged:
-                  interactive ? (v) => _setOn('geosite', s.category, v) : null,
-            ),
-          ],
-        ]),
-      ));
+      out.add(
+        Card(
+          margin: kCardMargin,
+          child: Column(
+            children: [
+              for (final (i, s) in services.indexed) ...[
+                if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+                SwitchListTile(
+                  secondary: ServiceAvatar(s.name, category: s.category),
+                  title: Text(s.name),
+                  value: _isOn('geosite', s.category),
+                  onChanged: interactive
+                      ? (v) => _setOn('geosite', s.category, v)
+                      : null,
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
     }
 
     // Ad-hoc categories matching the search: with no query they live under the
@@ -517,16 +563,23 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     final extras = _extraCategories(query);
     if (query.isNotEmpty && extras.isNotEmpty) {
       out.add(const SectionHeader('OTHER CATEGORIES'));
-      out.add(Card(
-        margin: kCardMargin,
-        child: Column(children: [
-          for (final (i, cat) in extras.indexed) ...[
-            if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-            _removableRow(ServiceAvatar(cat), cat,
-                interactive ? () => _setOn('geosite', cat, false) : null),
-          ],
-        ]),
-      ));
+      out.add(
+        Card(
+          margin: kCardMargin,
+          child: Column(
+            children: [
+              for (final (i, cat) in extras.indexed) ...[
+                if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+                _removableRow(
+                  ServiceAvatar(cat),
+                  cat,
+                  interactive ? () => _setOn('geosite', cat, false) : null,
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
     }
     return out;
   }
@@ -546,17 +599,20 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   Widget _addRow(String label, VoidCallback onTap) => ListTile(
-        leading: const Icon(Icons.add),
-        title: Text(label,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-        onTap: onTap,
-      );
+    leading: const Icon(Icons.add),
+    title: Text(
+      label,
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+    ),
+    onTap: onTap,
+  );
 
   /// A row the user added (country or ad-hoc category): plain entry, delete
   /// button. Not a switch — there is no "off but keep it" state for something
   /// that only exists because it was added, and the old switch's off position
   /// deleted the row anyway, which is exactly what a switch should not do.
-  Widget _removableRow(Widget leading, String title, VoidCallback? onRemove) => ListTile(
+  Widget _removableRow(Widget leading, String title, VoidCallback? onRemove) =>
+      ListTile(
         leading: leading,
         title: Text(title),
         trailing: IconButton(

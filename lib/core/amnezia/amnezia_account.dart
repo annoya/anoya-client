@@ -31,18 +31,19 @@ class AmneziaCountry {
       // The routing code may be `nl-ams-1`; a flag needs the country half.
       flagCode: (l10n.isNotEmpty ? l10n : code.split('-').first).toUpperCase(),
       protocols: [
-        for (final p in (j['available_protocols'] as List<dynamic>? ?? const []))
+        for (final p
+            in (j['available_protocols'] as List<dynamic>? ?? const []))
           if (p is String && p.isNotEmpty) p,
       ],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'server_country_code': code,
-        'server_country_name': name,
-        'server_country_code_l10n': flagCode,
-        'available_protocols': protocols,
-      };
+    'server_country_code': code,
+    'server_country_name': name,
+    'server_country_code_l10n': flagCode,
+    'available_protocols': protocols,
+  };
 }
 
 /// What the gateway says about a subscription as a whole.
@@ -71,29 +72,30 @@ class AmneziaAccount {
 
   /// A subscription the gateway placed no end on is not expired; only one it
   /// dated and that date has passed.
-  bool get expired => endsAt != null && endsAt!.isBefore(DateTime.now().toUtc());
+  bool get expired =>
+      endsAt != null && endsAt!.isBefore(DateTime.now().toUtc());
 
   bool get hasDeviceCount => maxDevices > 0;
 
   factory AmneziaAccount.fromJson(Map<String, dynamic> j) => AmneziaAccount(
-        countries: [
-          for (final c in (j['available_countries'] as List<dynamic>? ?? const []))
-            if (c is Map) AmneziaCountry.fromJson(c.cast<String, dynamic>()),
-        ],
-        endsAt: DateTime.tryParse('${j['subscription_end_date'] ?? ''}')?.toUtc(),
-        activeDevices: (j['active_device_count'] as num?)?.toInt() ?? 0,
-        maxDevices: (j['max_device_count'] as num?)?.toInt() ?? 0,
-        description: '${j['subscription_description'] ?? ''}',
-      );
+    countries: [
+      for (final c in (j['available_countries'] as List<dynamic>? ?? const []))
+        if (c is Map) AmneziaCountry.fromJson(c.cast<String, dynamic>()),
+    ],
+    endsAt: DateTime.tryParse('${j['subscription_end_date'] ?? ''}')?.toUtc(),
+    activeDevices: (j['active_device_count'] as num?)?.toInt() ?? 0,
+    maxDevices: (j['max_device_count'] as num?)?.toInt() ?? 0,
+    description: '${j['subscription_description'] ?? ''}',
+  );
 
   Map<String, dynamic> toJson() => {
-        if (countries.isNotEmpty)
-          'available_countries': [for (final c in countries) c.toJson()],
-        if (endsAt != null) 'subscription_end_date': endsAt!.toIso8601String(),
-        if (activeDevices > 0) 'active_device_count': activeDevices,
-        if (maxDevices > 0) 'max_device_count': maxDevices,
-        if (description.isNotEmpty) 'subscription_description': description,
-      };
+    if (countries.isNotEmpty)
+      'available_countries': [for (final c in countries) c.toJson()],
+    if (endsAt != null) 'subscription_end_date': endsAt!.toIso8601String(),
+    if (activeDevices > 0) 'active_device_count': activeDevices,
+    if (maxDevices > 0) 'max_device_count': maxDevices,
+    if (description.isNotEmpty) 'subscription_description': description,
+  };
 }
 
 /// Everything Amnezia-specific about a configuration, in one field so that
@@ -131,34 +133,34 @@ class AmneziaState {
     String? serviceProtocol,
     AmneziaAccount? account,
     Map<String, DateTime>? expiries,
-  }) =>
-      AmneziaState(
-        serviceType: serviceType,
-        serviceProtocol: serviceProtocol ?? this.serviceProtocol,
-        userCountryCode: userCountryCode,
-        account: account ?? this.account,
-        expiries: expiries ?? this.expiries,
-      );
+  }) => AmneziaState(
+    serviceType: serviceType,
+    serviceProtocol: serviceProtocol ?? this.serviceProtocol,
+    userCountryCode: userCountryCode,
+    account: account ?? this.account,
+    expiries: expiries ?? this.expiries,
+  );
 
   factory AmneziaState.fromJson(Map<String, dynamic> j) => AmneziaState(
-        serviceType: '${j['service_type'] ?? ''}',
-        serviceProtocol: '${j['service_protocol'] ?? ''}',
-        userCountryCode: '${j['user_country_code'] ?? ''}',
-        account: AmneziaAccount.fromJson(
-            (j['account'] as Map?)?.cast<String, dynamic>() ?? const {}),
-        expiries: _dates(j['expiries']),
-      );
+    serviceType: '${j['service_type'] ?? ''}',
+    serviceProtocol: '${j['service_protocol'] ?? ''}',
+    userCountryCode: '${j['user_country_code'] ?? ''}',
+    account: AmneziaAccount.fromJson(
+      (j['account'] as Map?)?.cast<String, dynamic>() ?? const {},
+    ),
+    expiries: _dates(j['expiries']),
+  );
 
   Map<String, dynamic> toJson() => {
-        'service_type': serviceType,
-        'service_protocol': serviceProtocol,
-        'user_country_code': userCountryCode,
-        'account': account.toJson(),
-        if (expiries.isNotEmpty)
-          'expiries': {
-            for (final e in expiries.entries) e.key: e.value.toIso8601String()
-          },
-      };
+    'service_type': serviceType,
+    'service_protocol': serviceProtocol,
+    'user_country_code': userCountryCode,
+    'account': account.toJson(),
+    if (expiries.isNotEmpty)
+      'expiries': {
+        for (final e in expiries.entries) e.key: e.value.toIso8601String(),
+      },
+  };
 
   static Map<String, DateTime> _dates(Object? raw) {
     if (raw is! Map) return const {};
@@ -182,10 +184,10 @@ String amneziaLocationId(String countryCode, String protocol) =>
 
 /// How a protocol is written where the user reads it.
 String amneziaProtocolLabel(String protocol) => switch (protocol) {
-      'awg' => 'AmneziaWG',
-      'vless' => 'VLESS',
-      final other => other.toUpperCase(),
-    };
+  'awg' => 'AmneziaWG',
+  'vless' => 'VLESS',
+  final other => other.toUpperCase(),
+};
 
 /// The locations a subscription offers, as the picker will show them.
 ///

@@ -31,22 +31,32 @@ void main() {
 
   test('a tunnel already up is timed from when the system raised it', () async {
     final since = DateTime.now().subtract(const Duration(hours: 3));
-    final c = ProviderContainer(overrides: [
-      vpnCoreProvider.overrideWithValue(_Core(VpnStatus.connected, since)),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        vpnCoreProvider.overrideWithValue(_Core(VpnStatus.connected, since)),
+      ],
+    );
     addTearDown(c.dispose);
 
     final s = await settle(c);
-    expect(s.startedAt!.difference(since).abs(), lessThan(const Duration(seconds: 1)));
-    expect(sessionClock(s.startedAt), startsWith('03:'),
-        reason: 'opening the app is not when the tunnel came up');
+    expect(
+      s.startedAt!.difference(since).abs(),
+      lessThan(const Duration(seconds: 1)),
+    );
+    expect(
+      sessionClock(s.startedAt),
+      startsWith('03:'),
+      reason: 'opening the app is not when the tunnel came up',
+    );
   });
 
   test('a platform with no answer keeps the app’s own sighting', () async {
     // Better a clock that is honestly short than no clock at all.
-    final c = ProviderContainer(overrides: [
-      vpnCoreProvider.overrideWithValue(_Core(VpnStatus.connected, null)),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        vpnCoreProvider.overrideWithValue(_Core(VpnStatus.connected, null)),
+      ],
+    );
     addTearDown(c.dispose);
 
     final s = await settle(c);
@@ -58,24 +68,28 @@ void main() {
     // The ring turns green on the status, not on a round trip to the platform.
     final core = _Core(VpnStatus.connected, DateTime.now(), slow: true);
     final c = ProviderContainer(
-        overrides: [vpnCoreProvider.overrideWithValue(core)]);
+      overrides: [vpnCoreProvider.overrideWithValue(core)],
+    );
     addTearDown(c.dispose);
     expect(c.read(sessionProvider).status, VpnStatus.connected);
   });
 
-  test('a session that ended before the answer arrived does not get a clock',
-      () async {
-    // The reply can land after the tunnel is down; a start time on a dead
-    // session would carry into the next one.
-    final core = _Core(VpnStatus.connected, DateTime.now(), slow: true);
-    final c = ProviderContainer(
-        overrides: [vpnCoreProvider.overrideWithValue(core)]);
-    addTearDown(c.dispose);
-    c.read(sessionProvider); // build, which asks
-    core.emit(VpnStatus.disconnected);
-    await Future<void>.delayed(const Duration(milliseconds: 120));
-    expect(c.read(sessionProvider).startedAt, isNull);
-  });
+  test(
+    'a session that ended before the answer arrived does not get a clock',
+    () async {
+      // The reply can land after the tunnel is down; a start time on a dead
+      // session would carry into the next one.
+      final core = _Core(VpnStatus.connected, DateTime.now(), slow: true);
+      final c = ProviderContainer(
+        overrides: [vpnCoreProvider.overrideWithValue(core)],
+      );
+      addTearDown(c.dispose);
+      c.read(sessionProvider); // build, which asks
+      core.emit(VpnStatus.disconnected);
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(c.read(sessionProvider).startedAt, isNull);
+    },
+  );
 }
 
 class _Core extends VpnCore {
@@ -107,5 +121,4 @@ class _Core extends VpnCore {
 
   @override
   Future<void> disconnect() async {}
-
 }

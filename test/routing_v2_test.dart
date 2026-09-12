@@ -5,68 +5,124 @@ import 'package:vpn_client/core/parsers/subscription.dart';
 import 'package:vpn_client/core/routing_prefs.dart';
 import 'package:vpn_client/core/rule_set.dart';
 
-Location _loc() => Location(id: 'l1', label: 'Test', proxy: {
-      'type': 'vless',
-      'server': '1.2.3.4',
-      'port': 443,
-      'uuid': 'u',
-      'network': 'tcp',
-      'udp': true,
-      'tls': true,
-      'servername': 's.example.com',
-      'client-fingerprint': 'chrome',
-      'reality-opts': {'public-key': 'PK', 'short-id': 'sid'},
-    });
+Location _loc() => Location(
+  id: 'l1',
+  label: 'Test',
+  proxy: {
+    'type': 'vless',
+    'server': '1.2.3.4',
+    'port': 443,
+    'uuid': 'u',
+    'network': 'tcp',
+    'udp': true,
+    'tls': true,
+    'servername': 's.example.com',
+    'client-fingerprint': 'chrome',
+    'reality-opts': {'public-key': 'PK', 'short-id': 'sid'},
+  },
+);
 
 void main() {
   test('geoip rule renders GEOIP with country upcased and no-resolve', () {
-    final yaml = mihomoTunConfigYaml(_loc(),
-        routing: const Routing(mode: 'full', rules: [
-          RoutingRule(type: 'geoip', value: 'ru', action: 'direct', noResolve: true),
-        ]));
+    final yaml = mihomoTunConfigYaml(
+      _loc(),
+      routing: const Routing(
+        mode: 'full',
+        rules: [
+          RoutingRule(
+            type: 'geoip',
+            value: 'ru',
+            action: 'direct',
+            noResolve: true,
+          ),
+        ],
+      ),
+    );
     expect(yaml, contains('  - GEOIP,RU,DIRECT,no-resolve'));
     expect(yaml, contains('geodata-mode: false'));
     expect(yaml, contains('geo-auto-update: false'));
   });
 
   test('geosite rule renders GEOSITE; no geodata keys without geo rules', () {
-    final withGeo = mihomoTunConfigYaml(_loc(),
-        routing: const Routing(mode: 'full', rules: [
+    final withGeo = mihomoTunConfigYaml(
+      _loc(),
+      routing: const Routing(
+        mode: 'full',
+        rules: [
           RoutingRule(type: 'geosite', value: 'netflix', action: 'direct'),
-        ]));
+        ],
+      ),
+    );
     expect(withGeo, contains('  - GEOSITE,netflix,DIRECT'));
 
-    final without = mihomoTunConfigYaml(_loc(),
-        routing: const Routing(mode: 'full', rules: [
+    final without = mihomoTunConfigYaml(
+      _loc(),
+      routing: const Routing(
+        mode: 'full',
+        rules: [
           RoutingRule(type: 'domain-suffix', value: 'a.com', action: 'proxy'),
-        ]));
+        ],
+      ),
+    );
     expect(without, isNot(contains('geodata-mode')));
   });
 
   test('invalid geo values are skipped, never interpolated', () {
-    final yaml = mihomoTunConfigYaml(_loc(),
-        routing: const Routing(mode: 'full', rules: [
-          RoutingRule(type: 'geoip', value: 'rus', action: 'direct'), // 3 letters
-          RoutingRule(type: 'geosite', value: 'Net flix', action: 'direct'), // space/case
-        ]));
+    final yaml = mihomoTunConfigYaml(
+      _loc(),
+      routing: const Routing(
+        mode: 'full',
+        rules: [
+          RoutingRule(
+            type: 'geoip',
+            value: 'rus',
+            action: 'direct',
+          ), // 3 letters
+          RoutingRule(
+            type: 'geosite',
+            value: 'Net flix',
+            action: 'direct',
+          ), // space/case
+        ],
+      ),
+    );
     expect(yaml, isNot(contains('GEOIP')));
     expect(yaml, isNot(contains('GEOSITE')));
   });
 
   test('LAN direct rules render as IP-CIDR direct with no-resolve', () {
-    final yaml = mihomoTunConfigYaml(_loc(),
-        routing: Routing(mode: 'full', rules: kLanDirectRules));
+    final yaml = mihomoTunConfigYaml(
+      _loc(),
+      routing: Routing(mode: 'full', rules: kLanDirectRules),
+    );
     expect(yaml, contains('  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve'));
     expect(yaml, contains('  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve'));
     // LAN exceptions must come before the final MATCH.
-    expect(yaml.indexOf('IP-CIDR,10.0.0.0/8'), lessThan(yaml.indexOf('MATCH,PROXY')));
+    expect(
+      yaml.indexOf('IP-CIDR,10.0.0.0/8'),
+      lessThan(yaml.indexOf('MATCH,PROXY')),
+    );
   });
 
   test('RuleSet json round-trip and toRouting', () {
-    const set = RuleSet(id: 'work', name: 'Work', mode: RoutingMode.split, rules: [
-      RoutingRule(type: 'geoip', value: 'ru', action: 'direct', noResolve: true),
-      RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),
-    ]);
+    const set = RuleSet(
+      id: 'work',
+      name: 'Work',
+      mode: RoutingMode.split,
+      rules: [
+        RoutingRule(
+          type: 'geoip',
+          value: 'ru',
+          action: 'direct',
+          noResolve: true,
+        ),
+        RoutingRule(
+          type: 'domain-suffix',
+          value: 'corp.example.com',
+          action: 'proxy',
+        ),
+      ],
+    );
     final restored = RuleSet.fromJson(set.toJson());
     expect(restored.name, 'Work');
     expect(restored.mode, RoutingMode.split);
@@ -90,7 +146,8 @@ void main() {
     });
 
     test('raw multi-server text → subscriptionText with count', () {
-      const text = 'vless://u1@1.2.3.4:443?type=tcp#A\nvless://u2@5.6.7.8:443?type=tcp#B';
+      const text =
+          'vless://u1@1.2.3.4:443?type=tcp#A\nvless://u2@5.6.7.8:443?type=tcp#B';
       final d = detectInput(text);
       expect(d!.kind, InputKind.subscriptionText);
     });
@@ -104,22 +161,38 @@ void main() {
   group('whyUnusable', () {
     // The chip names the thing the user can act on, never the text itself.
     test('a scheme we have no protocol for', () {
-      expect(whyUnusable('tuic://a:b@h.example:443'), 'tuic:// isn’t supported');
+      expect(
+        whyUnusable('tuic://a:b@h.example:443'),
+        'tuic:// isn’t supported',
+      );
     });
 
-    test('a link of ours that will not parse, even with a stray word after it', () {
-      expect(whyUnusable('vless://asdasd123 1212312'), 'vless:// link can’t be read');
-      expect(whyUnusable('vless://asdasd123 1212312'), isNot(contains('asdasd')));
-    });
+    test(
+      'a link of ours that will not parse, even with a stray word after it',
+      () {
+        expect(
+          whyUnusable('vless://asdasd123 1212312'),
+          'vless:// link can’t be read',
+        );
+        expect(
+          whyUnusable('vless://asdasd123 1212312'),
+          isNot(contains('asdasd')),
+        );
+      },
+    );
 
     test('a transport the engine cannot run is named as the transport', () {
-      expect(whyUnusable('vless://u@h.example:443?type=kcp'), 'vless over kcp isn’t supported');
+      expect(
+        whyUnusable('vless://u@h.example:443?type=kcp'),
+        'vless over kcp isn’t supported',
+      );
     });
 
     test('a plugin already names its protocol', () {
       expect(
-          whyUnusable('ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=kcptun'),
-          'ss+kcptun isn’t supported');
+        whyUnusable('ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=kcptun'),
+        'ss+kcptun isn’t supported',
+      );
     });
 
     test('vpn:// that is not a subscription key', () {

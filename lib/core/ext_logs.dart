@@ -33,7 +33,8 @@ Future<String> fetchExtensionLog(String name) async {
   }
 }
 
-const _unavailable = 'Logs are available only while the tunnel is running.\n'
+const _unavailable =
+    'Logs are available only while the tunnel is running.\n'
     '(The tunnel process keeps its logs on its own side and '
     'streams them to the app over IPC.)';
 
