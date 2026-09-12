@@ -117,6 +117,12 @@ work.
   comes from the key. Pinned by a test that reads the source files, because the
   wording is easy to reintroduce and impossible to notice while testing against
   an Amnezia key.
+- How the library reaches the app is per platform, and so is the way it can go
+  missing: Apple links the c-archive into the app binary (a *symbol* problem),
+  Android ships `libagw.so` inside the APK, Windows ships `libagw.dll` beside
+  the executable and opens it by name (a *file* problem). Windows was the last
+  of the three to be wired, and until it was, an Amnezia key on Windows failed
+  with a library that could not be opened.
 - The gateway's C symbols survive the archive. The app reaches libagw through
   `DynamicLibrary.process()`, so the names have to still be in the binary at
   runtime. An archive strips it — `STRIP_INSTALLED_PRODUCT` is on for the

@@ -90,6 +90,26 @@ if(PLUGIN_BUNDLED_LIBRARIES)
     COMPONENT Runtime)
 endif()
 
+# The Amnezia gateway library. Apple links its archive into the app binary and
+# Android ships a .so inside the APK; on Windows a Go c-archive cannot be linked
+# into the MSVC-built runner, so it ships as a DLL beside the executable and
+# Dart opens it by name (lib/core/amnezia/agw_ffi.dart). Built by
+# native/libagw/build-dll.sh.
+#
+# The check runs at install time rather than configure time on purpose: the DLL
+# is usually built in the same command as the app, and a configure-time
+# if(EXISTS) would decide before it exists. A bundle without it runs — Amnezia
+# keys are refused with a message, exactly as in a build without gateway
+# credentials.
+set(AGW_DLL "${PROJECT_SOURCE_DIR}/../native/libagw/build/windows/libagw.dll")
+install(CODE "
+  if(EXISTS \"${AGW_DLL}\")
+    file(INSTALL \"${AGW_DLL}\" DESTINATION \"${INSTALL_BUNDLE_LIB_DIR}\")
+  else()
+    message(STATUS \"libagw.dll was not built - this bundle has no Amnezia support\")
+  endif()
+" COMPONENT Runtime)
+
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/windows/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"
