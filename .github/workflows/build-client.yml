@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: subosito/flutter-action@v2
         with:
@@ -125,11 +127,15 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-go@v5
         with:
           go-version-file: native/mihomocore/go.mod
-          cache-dependency-path: native/mihomocore/go.sum
+          cache-dependency-path: |
+            native/mihomocore/go.sum
+            native/libagw/upstream/go.sum
 
       - uses: subosito/flutter-action@v2
         with:
