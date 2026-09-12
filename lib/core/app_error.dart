@@ -40,7 +40,8 @@ class AppErrorException implements Exception {
 /// says the one thing those entries cannot: what to do about it.
 const kDeviceLimitReached = AppError(
   'Device limit reached',
-  detail: 'Your subscription’s device limit is full, so it sent a placeholder '
+  detail:
+      'Your subscription’s device limit is full, so it sent a placeholder '
       'instead of your servers. Free a slot in your subscription, then refresh.',
 );
 
@@ -67,7 +68,8 @@ class SubscriptionFormatException extends FormatException {
 /// who is the only party who can change the template.
 const kUnreadableSubscription = AppError(
   'Couldn’t read this subscription',
-  detail: 'Your subscription sent a format this app does not recognise. It reads '
+  detail:
+      'Your subscription sent a format this app does not recognise. It reads '
       'base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.',
 );
 
@@ -78,21 +80,22 @@ const kUnreadableSubscription = AppError(
 /// fix is with the provider, so the message says so instead of blaming the
 /// format.
 AppError emptySubscription(String what) => AppError(
-      'This subscription has no servers',
-      detail: 'Your subscription answered with $what that lists none. That usually '
-          'means the account is out of days or its device limit is full — ask them.',
-    );
+  'This subscription has no servers',
+  detail:
+      'Your subscription answered with $what that lists none. That usually '
+      'means the account is out of days or its device limit is full — ask them.',
+);
 
 /// The body was read and every server in it uses something we cannot run.
 ///
 /// Distinct from [kUnreadableSubscription] on purpose: here we can count them
 /// and name what they use, which is a different problem with a different fix.
 AppError noRunnableServers(int total, String kinds) => AppError(
-      total == 1
-          ? 'The only server here cannot run'
-          : 'None of the $total servers can run here',
-      detail: 'They use $kinds, which this app cannot run yet. Nothing was added.',
-    );
+  total == 1
+      ? 'The only server here cannot run'
+      : 'None of the $total servers can run here',
+  detail: 'They use $kinds, which this app cannot run yet. Nothing was added.',
+);
 
 /// The panel sent entries that are not servers at all — every address is
 /// unroutable — and put its message in their names.
@@ -101,10 +104,11 @@ AppError noRunnableServers(int total, String kinds) => AppError(
 /// the user locations that can never connect; the honest reading is that this
 /// is text, so it is shown as text.
 AppError providerMessageInstead(Iterable<String> lines) => AppError(
-      'Your subscription sent a message',
-      detail: '${lines.where((l) => l.trim().isNotEmpty).join('\n')}'
-          '\n\nNot servers: every entry points nowhere, so nothing was added.',
-    );
+  'Your subscription sent a message',
+  detail:
+      '${lines.where((l) => l.trim().isNotEmpty).join('\n')}'
+      '\n\nNot servers: every entry points nowhere, so nothing was added.',
+);
 
 /// Translates whatever the layers below threw into something a person can act
 /// on. [subject] names what failed — a host, a subscription URL — so the second
@@ -120,51 +124,67 @@ AppError describeError(Object error, {String? subject}) {
     SubscriptionFormatException(:final error) => error,
     AppErrorException(:final error) => error,
     SocketException() || TimeoutException() => err(
-        'Server didn’t answer',
-        'Couldn’t reach $what. Check your network, or pick another server.',
-      ),
+      'Server didn’t answer',
+      'Couldn’t reach $what. Check your network, or pick another server.',
+    ),
     HandshakeException() || TlsException() => err(
-        'Couldn’t set up a secure connection',
-        'The certificate of $what was rejected. If the address is right, the server may be misconfigured.',
-      ),
-    HttpException() => err('Server didn’t answer', 'The connection to $what was closed.'),
-    ApiException(status: 401, code: 'invalid_credentials') =>
-      err('Wrong username or password', 'Check both and try again.'),
-    ApiException(status: 401) => err('Session expired', 'Sign in to $what again.'),
-    ApiException(status: 403) => err('Access is blocked', 'The server refused this account.'),
+      'Couldn’t set up a secure connection',
+      'The certificate of $what was rejected. If the address is right, the server may be misconfigured.',
+    ),
+    HttpException() => err(
+      'Server didn’t answer',
+      'The connection to $what was closed.',
+    ),
+    ApiException(status: 401, code: 'invalid_credentials') => err(
+      'Wrong username or password',
+      'Check both and try again.',
+    ),
+    ApiException(status: 401) => err(
+      'Session expired',
+      'Sign in to $what again.',
+    ),
+    ApiException(status: 403) => err(
+      'Access is blocked',
+      'The server refused this account.',
+    ),
     ApiException(status: 404) => err(
-        'Nothing at this address',
-        'Check the link — $what has no configuration for this account.',
-      ),
-    ApiException(status: >= 500) =>
-      err('The server returned an error', 'Nothing to fix on this side — try again in a few minutes.'),
+      'Nothing at this address',
+      'Check the link — $what has no configuration for this account.',
+    ),
+    ApiException(status: >= 500) => err(
+      'The server returned an error',
+      'Nothing to fix on this side — try again in a few minutes.',
+    ),
     ApiException(message: final m) => err('The server refused the request', m),
     // A parse failure, and only that. Anything that already has words for the
     // user throws [AppErrorException]; a FormatException carrying a sentence
     // would land here and be replaced by this one.
     FormatException() => err(
-        'This doesn’t look like a link we know',
-        'Expected vless://, vmess://, trojan://, ss:// or a subscription URL.',
-      ),
+      'This doesn’t look like a link we know',
+      'Expected vless://, vmess://, trojan://, ss:// or a subscription URL.',
+    ),
     // The Windows tunnel is a service the app does not own. Absent (not
     // installed, stopped) and vanished mid-request are different situations
     // with different fixes, and neither has anything to do with a VPN profile.
     PlatformException(code: 'service_unavailable') => err(
-        'The tunnel service isn’t running',
-        'AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, '
-            'or start the service in Services, then connect again.',
-      ),
+      'The tunnel service isn’t running',
+      'AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, '
+          'or start the service in Services, then connect again.',
+    ),
     PlatformException(code: 'service_disconnected') => err(
-        'The tunnel service stopped',
-        'It restarts on its own within a few seconds — connect again. If this keeps '
-            'happening, the tunnel log in Settings → Logs says why.',
-      ),
+      'The tunnel service stopped',
+      'It restarts on its own within a few seconds — connect again. If this keeps '
+          'happening, the tunnel log in Settings → Logs says why.',
+    ),
     // NEVPNError / permission denial arrives as a channel error.
     PlatformException() => err(
-        'The system refused to start the tunnel',
-        'Allow the VPN profile in system settings, then connect again.',
-      ),
-    OidcException() => err('Sign-in didn’t finish', 'The browser window was closed or the provider refused.'),
+      'The system refused to start the tunnel',
+      'Allow the VPN profile in system settings, then connect again.',
+    ),
+    OidcException() => err(
+      'Sign-in didn’t finish',
+      'The browser window was closed or the provider refused.',
+    ),
     _ => err('Something went wrong', 'The details are in Settings → Logs.'),
   };
 }
@@ -172,15 +192,25 @@ AppError describeError(Object error, {String? subject}) {
 /// Why an account cannot connect, in the user's terms rather than the server's
 /// status enum.
 AppError describeAccountStatus(String status) => switch (status) {
-      'expired' => const AppError('Subscription expired',
-          detail: 'Renew it in your account, then connect again.'),
-      'limited' => const AppError('Traffic limit reached',
-          detail: 'The plan is used up until it renews.'),
-      // The server's stored status is "deactivated" (shared/normconfig).
-      'deactivated' => const AppError('Access disabled',
-          detail: 'The administrator turned this account off.'),
-      'on_hold' => const AppError('Subscription not started',
-          detail: 'It begins on the first connection — try again in a moment.'),
-      _ => AppError('Account is ${status.replaceAll('_', ' ')}',
-          detail: 'Connecting is not allowed in this state.'),
-    };
+  'expired' => const AppError(
+    'Subscription expired',
+    detail: 'Renew it in your account, then connect again.',
+  ),
+  'limited' => const AppError(
+    'Traffic limit reached',
+    detail: 'The plan is used up until it renews.',
+  ),
+  // The server's stored status is "deactivated" (shared/normconfig).
+  'deactivated' => const AppError(
+    'Access disabled',
+    detail: 'The administrator turned this account off.',
+  ),
+  'on_hold' => const AppError(
+    'Subscription not started',
+    detail: 'It begins on the first connection — try again in a moment.',
+  ),
+  _ => AppError(
+    'Account is ${status.replaceAll('_', ' ')}',
+    detail: 'Connecting is not allowed in this state.',
+  ),
+};

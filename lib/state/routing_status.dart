@@ -18,10 +18,10 @@ enum RoutingStatus {
   split;
 
   String get label => switch (this) {
-        RoutingStatus.off => 'off',
-        RoutingStatus.full => 'full',
-        RoutingStatus.split => 'split',
-      };
+    RoutingStatus.off => 'off',
+    RoutingStatus.full => 'full',
+    RoutingStatus.split => 'split',
+  };
 
   static RoutingStatus ofMode(String mode) =>
       mode == 'split' ? RoutingStatus.split : RoutingStatus.full;
@@ -38,8 +38,9 @@ class RuleSetRevision extends Notifier<int> {
   void bump() => state = state + 1;
 }
 
-final ruleSetRevisionProvider =
-    NotifierProvider<RuleSetRevision, int>(RuleSetRevision.new);
+final ruleSetRevisionProvider = NotifierProvider<RuleSetRevision, int>(
+  RuleSetRevision.new,
+);
 
 /// Every rule set on the device, re-read after each edit.
 final ruleSetsProvider = FutureProvider<List<RuleSet>>((ref) async {

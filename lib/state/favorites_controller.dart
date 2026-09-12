@@ -12,12 +12,14 @@ class FavoritesController extends Notifier<Favorites> with ReadyGate {
     return const Favorites();
   }
 
-  Future<void> toggleProfile(String profileId) => _save((f) => f.toggleProfile(profileId));
+  Future<void> toggleProfile(String profileId) =>
+      _save((f) => f.toggleProfile(profileId));
 
   Future<void> toggleLocation(String profileId, String locationId) =>
       _save((f) => f.toggleLocation(profileId, locationId));
 
-  Future<void> forgetProfile(String profileId) => _save((f) => f.forgetProfile(profileId));
+  Future<void> forgetProfile(String profileId) =>
+      _save((f) => f.forgetProfile(profileId));
 
   Future<void> _save(Favorites Function(Favorites) change) async {
     await ready;
@@ -27,5 +29,6 @@ class FavoritesController extends Notifier<Favorites> with ReadyGate {
   }
 }
 
-final favoritesProvider =
-    NotifierProvider<FavoritesController, Favorites>(FavoritesController.new);
+final favoritesProvider = NotifierProvider<FavoritesController, Favorites>(
+  FavoritesController.new,
+);

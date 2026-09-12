@@ -48,15 +48,18 @@ AmneziaSecondaryConfig? parseAmneziaSecondaryConfig(
   if (doc == null) return null;
   final patched = privateKey.isEmpty
       ? doc
-      : jsonDecode(jsonEncode(doc)
-          .replaceAll(_privateKeyPlaceholder, privateKey)) as Map<String, dynamic>;
+      : jsonDecode(
+              jsonEncode(doc).replaceAll(_privateKeyPlaceholder, privateKey),
+            )
+            as Map<String, dynamic>;
 
   final containers = patched['containers'];
   if (containers is! List) return null;
 
   final dns = <String>[
     for (final k in const ['dns1', 'dns2'])
-      if (patched[k] is String && (patched[k] as String).isNotEmpty) patched[k] as String,
+      if (patched[k] is String && (patched[k] as String).isNotEmpty)
+        patched[k] as String,
   ];
 
   for (final container in containers) {
@@ -103,7 +106,10 @@ DateTime? _expiry(Map<String, dynamic> doc) {
 /// supports natively — H1–H4 arrive as ranges ("a-b") rather than numbers,
 /// which is the v2+ form and is why those four are strings on both sides.
 Location? _awgLocation(
-    Map<String, dynamic> doc, Map<String, dynamic> awg, String label) {
+  Map<String, dynamic> doc,
+  Map<String, dynamic> awg,
+  String label,
+) {
   final raw = awg['last_config'];
   if (raw is! String) return null;
   final Map<String, dynamic> cfg;
@@ -136,7 +142,8 @@ Location? _awgLocation(
     // The tunnel address, without the mask the .conf writes it with.
     if ('${cfg['client_ip'] ?? ''}'.isNotEmpty)
       'ip': '${cfg['client_ip']}'.split('/').first,
-    if (int.tryParse('${cfg['mtu'] ?? ''}') != null) 'mtu': int.parse('${cfg['mtu']}'),
+    if (int.tryParse('${cfg['mtu'] ?? ''}') != null)
+      'mtu': int.parse('${cfg['mtu']}'),
     if (int.tryParse('${cfg['persistent_keep_alive'] ?? ''}') != null)
       'persistent-keepalive': int.parse('${cfg['persistent_keep_alive']}'),
     // WireGuard carries datagrams by nature, and saying so is what lets a

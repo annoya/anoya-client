@@ -54,12 +54,12 @@ class DeviceIdentity {
   /// the convention; the rest exist so the entry in the provider's panel is
   /// recognisable as *this* device instead of an opaque id.
   Map<String, String> get headers => {
-        'user-agent': userAgent,
-        'x-hwid': hwid,
-        if (os.isNotEmpty) 'x-device-os': os,
-        if (osVersion.isNotEmpty) 'x-ver-os': osVersion,
-        if (model.isNotEmpty) 'x-device-model': model,
-      };
+    'user-agent': userAgent,
+    'x-hwid': hwid,
+    if (os.isNotEmpty) 'x-device-os': os,
+    if (osVersion.isNotEmpty) 'x-ver-os': osVersion,
+    if (model.isNotEmpty) 'x-device-model': model,
+  };
 
   /// How this device reads in the app, e.g. "iPhone16,1 · iOS 18.0".
   String get label {
@@ -82,7 +82,10 @@ class DeviceIdentityStore {
     final cached = _cached;
     if (cached != null) return cached;
 
-    var hwid = await _store.load<String>((j) => (j as Map)['hwid'] as String? ?? '', '');
+    var hwid = await _store.load<String>(
+      (j) => (j as Map)['hwid'] as String? ?? '',
+      '',
+    );
     if (!_isValidHwid(hwid)) {
       hwid = _newHwid();
       await _store.save({'hwid': hwid});
@@ -120,7 +123,9 @@ class DeviceIdentityStore {
   }
 
   static bool _isValidHwid(String s) =>
-      s.length >= 10 && s.length <= 64 && RegExp(r'^[A-Za-z0-9=-]+$').hasMatch(s);
+      s.length >= 10 &&
+      s.length <= 64 &&
+      RegExp(r'^[A-Za-z0-9=-]+$').hasMatch(s);
 
   /// (os, version, model). Falls back to what dart:io knows when the platform
   /// side is unavailable — the model is optional, so a missing one costs
@@ -129,8 +134,8 @@ class DeviceIdentityStore {
     final os = Platform.isIOS
         ? 'iOS'
         : Platform.isMacOS
-            ? 'macOS'
-            : Platform.operatingSystem;
+        ? 'macOS'
+        : Platform.operatingSystem;
     final native = await NetworkExtensionCore.deviceInfo();
     if (native != null) {
       return (

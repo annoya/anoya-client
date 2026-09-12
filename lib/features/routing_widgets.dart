@@ -39,12 +39,16 @@ class RoutingModeCard extends StatelessWidget {
               child: SegmentedButton<RoutingMode>(
                 showSelectedIcon: false,
                 segments: const [
-                  ButtonSegment(value: RoutingMode.full, label: Text('Full tunnel')),
+                  ButtonSegment(
+                    value: RoutingMode.full,
+                    label: Text('Full tunnel'),
+                  ),
                   ButtonSegment(value: RoutingMode.split, label: Text('Split')),
                 ],
                 selected: {mode},
-                onSelectionChanged:
-                    onChanged == null ? null : (s) => onChanged!(s.first),
+                onSelectionChanged: onChanged == null
+                    ? null
+                    : (s) => onChanged!(s.first),
               ),
             ),
             const SizedBox(height: 8),
@@ -52,10 +56,9 @@ class RoutingModeCard extends StatelessWidget {
               mode == RoutingMode.full
                   ? 'All traffic goes through the VPN; rules define exceptions.'
                   : 'Only traffic matching the rules goes through the VPN; the rest connects directly.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -66,14 +69,14 @@ class RoutingModeCard extends StatelessWidget {
 
 /// What an empty rule list means under each direction.
 Widget emptyRulesNote(BuildContext context, RoutingMode mode) => Padding(
-      padding: const EdgeInsets.all(kGutter),
-      child: Text(
-        mode == RoutingMode.split
-            ? 'No rules: no traffic goes through the VPN. Add rules for what should be tunneled.'
-            : 'No rules: all traffic goes through the VPN.',
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-      ),
-    );
+  padding: const EdgeInsets.all(kGutter),
+  child: Text(
+    mode == RoutingMode.split
+        ? 'No rules: no traffic goes through the VPN. Add rules for what should be tunneled.'
+        : 'No rules: all traffic goes through the VPN.',
+    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+  ),
+);
 
 /// Offers the geo databases where rules need them. The wording is the
 /// caller's: on the simple editor the download *is* the screen, in a rule list
@@ -100,23 +103,28 @@ class GeoDownloadBanner extends StatelessWidget {
       color: warn.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(4, 0, 12, 10),
-        child: Column(children: [
-          ListTile(
-            leading: Icon(Icons.public_off, color: warn),
-            title: Text(title),
-            subtitle: Text(subtitle),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.tonal(
-              onPressed: busy ? null : onDownload,
-              child: busy
-                  ? const SizedBox(
-                      height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Download'),
+        child: Column(
+          children: [
+            ListTile(
+              leading: Icon(Icons.public_off, color: warn),
+              title: Text(title),
+              subtitle: Text(subtitle),
             ),
-          ),
-        ]),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.tonal(
+                onPressed: busy ? null : onDownload,
+                child: busy
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Download'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -191,12 +199,12 @@ class RuleTile extends StatelessWidget {
     final subtitle = noDatabase
         ? '$kind · inactive — no database'
         : unsupported
-            ? '$kind · inactive — desktop only'
-            : noList
-                ? '$kind · inactive — ${listsOff ? 'lists are off' : 'not downloaded'}'
-                : rule.noResolve
-                    ? '$kind · no-resolve'
-                    : kind;
+        ? '$kind · inactive — desktop only'
+        : noList
+        ? '$kind · inactive — ${listsOff ? 'lists are off' : 'not downloaded'}'
+        : rule.noResolve
+        ? '$kind · no-resolve'
+        : kind;
     final cs = Theme.of(context).colorScheme;
     return Opacity(
       opacity: inactive ? 0.45 : 1,
@@ -206,47 +214,69 @@ class RuleTile extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-            child: Row(children: [
-              SizedBox(
-                width: 46,
-                child: Text(
-                  rule.action.toUpperCase(),
-                  style:
-                      TextStyle(color: actionColor, fontWeight: FontWeight.w700, fontSize: 11),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    Text(subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-                  ],
-                ),
-              ),
-              if (onRemove != null)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  tooltip: 'Remove',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: onRemove,
-                ),
-              if (reorderIndex != null)
-                ReorderableDragStartListener(
-                  index: reorderIndex!,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                    child: Icon(Icons.drag_handle, size: 20, color: cs.onSurfaceVariant),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 46,
+                  child: Text(
+                    rule.action.toUpperCase(),
+                    style: TextStyle(
+                      color: actionColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
-            ]),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (onRemove != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    tooltip: 'Remove',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onRemove,
+                  ),
+                if (reorderIndex != null)
+                  ReorderableDragStartListener(
+                    index: reorderIndex!,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 6,
+                      ),
+                      child: Icon(
+                        Icons.drag_handle,
+                        size: 20,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

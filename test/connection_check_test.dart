@@ -34,21 +34,26 @@ void main() {
     tmp = Directory.systemTemp.createTempSync('vpn-connection-check');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-            const MethodChannel('plugins.flutter.io/path_provider'),
-            (call) async => tmp.path);
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (call) async => tmp.path,
+        );
   });
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-            const MethodChannel('plugins.flutter.io/path_provider'), null);
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          null,
+        );
     tmp.deleteSync(recursive: true);
   });
 
   /// The controller reads its prefs from a file before it will probe, so the
   /// trigger tests have to wait for real async work rather than a microtask.
-  Future<void> until(bool Function() done,
-      {Duration timeout = const Duration(milliseconds: 500)}) async {
+  Future<void> until(
+    bool Function() done, {
+    Duration timeout = const Duration(milliseconds: 500),
+  }) async {
     final deadline = DateTime.now().add(timeout);
     while (!done() && DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
@@ -56,10 +61,13 @@ void main() {
   }
 
   ProviderContainer boot(_FakeCore core, {_DrivenProfiles? profiles}) {
-    final c = ProviderContainer(overrides: [
-      vpnCoreProvider.overrideWithValue(core),
-      if (profiles != null) profilesControllerProvider.overrideWith(() => profiles),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        vpnCoreProvider.overrideWithValue(core),
+        if (profiles != null)
+          profilesControllerProvider.overrideWith(() => profiles),
+      ],
+    );
     addTearDown(c.dispose);
     c.read(connectionCheckProvider);
     return c;
@@ -67,43 +75,64 @@ void main() {
 
   group('what the engine answers', () {
     test('a delay is a pass, and it is kept', () {
-      final r = ConnectionCheck.parse('ms:143', at: DateTime.now(), via: 'Netherlands #2');
+      final r = ConnectionCheck.parse(
+        'ms:143',
+        at: DateTime.now(),
+        via: 'Netherlands #2',
+      );
       expect(r.passed, isTrue);
       expect(r.delayMs, 143);
       expect(r.via, 'Netherlands #2');
     });
 
     test('a refusal is turned into a sentence, not left as a code', () {
-      final r = ConnectionCheck.parse('err:the tunnel is not running', at: DateTime.now());
+      final r = ConnectionCheck.parse(
+        'err:the tunnel is not running',
+        at: DateTime.now(),
+      );
       expect(r.passed, isFalse);
       expect(r.failure, 'The tunnel is not running.');
     });
 
-    test('an answer we cannot read is a failure, never a zero-millisecond pass', () {
-      // 0 ms and "no answer" are indistinguishable once a number is all the
-      // caller gets, which is why the engine answers in prefixed strings.
-      expect(ConnectionCheck.parse('', at: DateTime.now()).passed, isFalse);
-      expect(ConnectionCheck.parse('ms:', at: DateTime.now()).passed, isFalse);
-      expect(ConnectionCheck.parse('nonsense', at: DateTime.now()).failure, 'nonsense.');
-    });
+    test(
+      'an answer we cannot read is a failure, never a zero-millisecond pass',
+      () {
+        // 0 ms and "no answer" are indistinguishable once a number is all the
+        // caller gets, which is why the engine answers in prefixed strings.
+        expect(ConnectionCheck.parse('', at: DateTime.now()).passed, isFalse);
+        expect(
+          ConnectionCheck.parse('ms:', at: DateTime.now()).passed,
+          isFalse,
+        );
+        expect(
+          ConnectionCheck.parse('nonsense', at: DateTime.now()).failure,
+          'nonsense.',
+        );
+      },
+    );
   });
 
   group('when it runs', () {
-    test('a session coming up is the trigger, not the Connect button', () async {
-      // A tunnel raised by an on-demand rule or Android's always-on switch is
-      // the one nobody is watching, and "up but carrying nothing" matters
-      // there most.
-      final core = _FakeCore(answer: 'ms:120');
-      final c = boot(core);
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'a session coming up is the trigger, not the Connect button',
+      () async {
+        // A tunnel raised by an on-demand rule or Android's always-on switch is
+        // the one nobody is watching, and "up but carrying nothing" matters
+        // there most.
+        final core = _FakeCore(answer: 'ms:120');
+        final c = boot(core);
+        await Future<void>.delayed(Duration.zero);
 
-      core.emit(VpnStatus.connected);
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
+        core.emit(VpnStatus.connected);
+        await until(
+          () => c.read(connectionCheckProvider).last != null,
+          timeout: const Duration(seconds: 12),
+        );
 
-      expect(core.probes, 1);
-      expect(c.read(connectionCheckProvider).last?.delayMs, 120);
-    });
+        expect(core.probes, 1);
+        expect(c.read(connectionCheckProvider).last?.delayMs, 120);
+      },
+    );
 
     test('a measurement does not outlive the session it describes', () async {
       final core = _FakeCore(answer: 'ms:120');
@@ -111,41 +140,65 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       core.emit(VpnStatus.connected);
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
+      await until(
+        () => c.read(connectionCheckProvider).last != null,
+        timeout: const Duration(seconds: 12),
+      );
       expect(c.read(connectionCheckProvider).last, isNotNull);
 
       core.emit(VpnStatus.disconnected);
-      await until(() => c.read(connectionCheckProvider).last == null,
-          timeout: const Duration(seconds: 2));
-      expect(c.read(connectionCheckProvider).last, isNull,
-          reason: 'a green line under a dead tunnel is worse than no line');
+      await until(
+        () => c.read(connectionCheckProvider).last == null,
+        timeout: const Duration(seconds: 2),
+      );
+      expect(
+        c.read(connectionCheckProvider).last,
+        isNull,
+        reason: 'a green line under a dead tunnel is worse than no line',
+      );
     });
 
-    test('a hot switch forgets the old verdict and asks about the new server', () async {
-      // The session stays up across a switch, so the status stream never
-      // moves — yet the server the verdict described is gone.
-      final core = _FakeCore(answers: ['ms:120', 'ms:300']);
-      final profiles = _DrivenProfiles();
-      final c = boot(core, profiles: profiles);
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'a hot switch forgets the old verdict and asks about the new server',
+      () async {
+        // The session stays up across a switch, so the status stream never
+        // moves — yet the server the verdict described is gone.
+        final core = _FakeCore(answers: ['ms:120', 'ms:300']);
+        final profiles = _DrivenProfiles();
+        final c = boot(core, profiles: profiles);
+        await Future<void>.delayed(Duration.zero);
 
-      core.emit(VpnStatus.connected);
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
-      expect(core.probes, 1);
+        core.emit(VpnStatus.connected);
+        await until(
+          () => c.read(connectionCheckProvider).last != null,
+          timeout: const Duration(seconds: 12),
+        );
+        expect(core.probes, 1);
 
-      profiles.set(profiles.state.copyWith(selectedLocationId: 'b', switching: true));
-      await Future<void>.delayed(Duration.zero);
-      expect(c.read(connectionCheckProvider).last, isNull,
-          reason: 'a verdict about the previous server must not be shown under the new one');
+        profiles.set(
+          profiles.state.copyWith(selectedLocationId: 'b', switching: true),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(
+          c.read(connectionCheckProvider).last,
+          isNull,
+          reason:
+              'a verdict about the previous server must not be shown under the new one',
+        );
 
-      profiles.set(profiles.state.copyWith(switching: false));
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
-      expect(core.probes, 2, reason: 'the end of the switch is a connect for this purpose');
-      expect(c.read(connectionCheckProvider).last?.delayMs, 300);
-    });
+        profiles.set(profiles.state.copyWith(switching: false));
+        await until(
+          () => c.read(connectionCheckProvider).last != null,
+          timeout: const Duration(seconds: 12),
+        );
+        expect(
+          core.probes,
+          2,
+          reason: 'the end of the switch is a connect for this purpose',
+        );
+        expect(c.read(connectionCheckProvider).last?.delayMs, 300);
+      },
+    );
 
     test('switched off, nothing is sent to anybody', () async {
       // The probe leaves the device for somebody else's host on every connect;
@@ -181,8 +234,10 @@ void main() {
       final result = await c.read(connectionCheckProvider.notifier).run();
 
       expect(result.passed, isFalse);
-      expect(c.read(connectionCheckProvider).last?.failure,
-          'The server did not answer in time.');
+      expect(
+        c.read(connectionCheckProvider).last?.failure,
+        'The server did not answer in time.',
+      );
     });
 
     test('the settings the user chose are the ones sent', () async {
@@ -208,14 +263,20 @@ void main() {
       final c = boot(core);
 
       core.emit(VpnStatus.connected);
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
+      await until(
+        () => c.read(connectionCheckProvider).last != null,
+        timeout: const Duration(seconds: 12),
+      );
 
       expect(core.probes, 0, reason: 'nothing needed asking');
       final last = c.read(connectionCheckProvider).last!;
       expect(last.passed, isTrue);
       expect(last.observed, isTrue);
-      expect(last.delayMs, isNull, reason: 'we measured nothing, so we claim nothing');
+      expect(
+        last.delayMs,
+        isNull,
+        reason: 'we measured nothing, so we claim nothing',
+      );
     });
 
     test('bytes only counted when something came back', () async {
@@ -225,8 +286,10 @@ void main() {
       final c = boot(core);
 
       core.emit(VpnStatus.connected);
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
+      await until(
+        () => c.read(connectionCheckProvider).last != null,
+        timeout: const Duration(seconds: 12),
+      );
 
       expect(core.probes, 1);
       expect(c.read(connectionCheckProvider).last!.observed, isFalse);
@@ -253,16 +316,23 @@ void main() {
     // initiation after RekeyTimeout — five seconds, exactly the probe's own
     // default timeout. The probe was losing a race, not finding a dead server.
     test('the first no is not the answer', () async {
-      final core = _FakeCore(answers: ['err:context deadline exceeded', 'ms:180']);
+      final core = _FakeCore(
+        answers: ['err:context deadline exceeded', 'ms:180'],
+      );
       final c = boot(core);
 
       core.emit(VpnStatus.connected);
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
+      await until(
+        () => c.read(connectionCheckProvider).last != null,
+        timeout: const Duration(seconds: 12),
+      );
 
       expect(core.probes, 2);
-      expect(c.read(connectionCheckProvider).last!.passed, isTrue,
-          reason: 'the server was working; only the handshake was not ready');
+      expect(
+        c.read(connectionCheckProvider).last!.passed,
+        isTrue,
+        reason: 'the server was working; only the handshake was not ready',
+      );
     });
 
     test('a failure that never recovers is still reported', () async {
@@ -270,8 +340,10 @@ void main() {
       final c = boot(core);
 
       core.emit(VpnStatus.connected);
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 20));
+      await until(
+        () => c.read(connectionCheckProvider).last != null,
+        timeout: const Duration(seconds: 20),
+      );
 
       expect(core.probes, kCheckAttempts);
       expect(c.read(connectionCheckProvider).last!.passed, isFalse);
@@ -280,15 +352,19 @@ void main() {
     test('nothing is published until the sequence has a verdict', () async {
       // An intermediate failure would raise the banner on the home screen and
       // then take it back — a warning that flashes teaches people to ignore it.
-      final core = _FakeCore(answers: ['err:context deadline exceeded', 'ms:180']);
+      final core = _FakeCore(
+        answers: ['err:context deadline exceeded', 'ms:180'],
+      );
       final c = boot(core);
 
       core.emit(VpnStatus.connected);
       await until(() => core.probes == 1, timeout: const Duration(seconds: 12));
       expect(c.read(connectionCheckProvider).last, isNull);
 
-      await until(() => c.read(connectionCheckProvider).last != null,
-          timeout: const Duration(seconds: 12));
+      await until(
+        () => c.read(connectionCheckProvider).last != null,
+        timeout: const Duration(seconds: 12),
+      );
       expect(c.read(connectionCheckProvider).last!.passed, isTrue);
     });
 
@@ -301,8 +377,11 @@ void main() {
       core.emit(VpnStatus.disconnected);
       await Future<void>.delayed(const Duration(seconds: 5));
 
-      expect(c.read(connectionCheckProvider).last, isNull,
-          reason: 'a verdict about a tunnel that no longer exists is noise');
+      expect(
+        c.read(connectionCheckProvider).last,
+        isNull,
+        reason: 'a verdict about a tunnel that no longer exists is noise',
+      );
     });
   });
 
@@ -311,16 +390,24 @@ void main() {
       // What the engine actually handed us on AWG, both attempts of one
       // request: the addresses are somebody else's CDN and "dial" is a word
       // from the dialer.
-      const awg = 'connect failed: dial tcp 172.253.144.94:443: context deadline exceeded\n'
+      const awg =
+          'connect failed: dial tcp 172.253.144.94:443: context deadline exceeded\n'
           'connect failed: dial tcp [2404:6800:4003:c02::5e]:443: network is unreachable';
       expect(describeProbeFailure(awg), 'The server did not answer in time.');
       // And on VLESS, where the server accepted the connection and dropped it.
-      expect(describeProbeFailure('Head "https://www.gstatic.com/generate_204": EOF'),
-          'The server closed the connection.');
+      expect(
+        describeProbeFailure(
+          'Head "https://www.gstatic.com/generate_204": EOF',
+        ),
+        'The server closed the connection.',
+      );
     });
 
     test('a failure we have never seen is quoted, not guessed at', () {
-      expect(describeProbeFailure('connect failed: something new'), 'something new.');
+      expect(
+        describeProbeFailure('connect failed: something new'),
+        'something new.',
+      );
     });
   });
 
@@ -329,38 +416,46 @@ void main() {
     /// zone a widget test runs in, that read never completes — so the provider
     /// is built (and its file work finished) in the real zone first.
     Future<ProviderContainer> pump(WidgetTester tester, _FakeCore core) async {
-      final container =
-          ProviderContainer(overrides: [vpnCoreProvider.overrideWithValue(core)]);
+      final container = ProviderContainer(
+        overrides: [vpnCoreProvider.overrideWithValue(core)],
+      );
       addTearDown(container.dispose);
       await tester.runAsync(() async {
         container.read(connectionCheckProvider);
         await Future<void>.delayed(const Duration(milliseconds: 50));
       });
-      await tester.pumpWidget(UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          theme: buildAppTheme(Brightness.light),
-          home: const AdvancedConnectionScreen(),
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: buildAppTheme(Brightness.light),
+            home: const AdvancedConnectionScreen(),
+          ),
         ),
-      ));
+      );
       await tester.pump();
       return container;
     }
 
-    testWidgets('a probe cannot be asked for with nothing running', (tester) async {
+    testWidgets('a probe cannot be asked for with nothing running', (
+      tester,
+    ) async {
       // The probe goes through the engine, and a button that answers "the
       // tunnel is not running" reads as a fault rather than as the obvious.
       final core = _FakeCore(answer: 'ms:120');
       await pump(tester, core);
       await tester.pump();
 
-      final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Test now'));
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Test now'),
+      );
       expect(button.onPressed, isNull);
       expect(find.textContaining('the tunnel has to be up'), findsOneWidget);
     });
 
-    testWidgets('the answer stays on the screen as a line to compare with',
-        (tester) async {
+    testWidgets('the answer stays on the screen as a line to compare with', (
+      tester,
+    ) async {
       final core = _FakeCore(answer: 'ms:143');
       core.emit(VpnStatus.connected);
       await pump(tester, core);
@@ -390,14 +485,17 @@ void main() {
       await tester.pump();
 
       expect(find.text('No answer'), findsOneWidget);
-      expect(find.textContaining('the server or the network beyond it'), findsOneWidget);
+      expect(
+        find.textContaining('the server or the network beyond it'),
+        findsOneWidget,
+      );
     });
   });
 }
 
 class _FakeCore extends VpnCore {
   _FakeCore({String? answer, List<String>? answers, this.bytes = '0:0'})
-      : answers = answers ?? [answer ?? 'ms:1'];
+    : answers = answers ?? [answer ?? 'ms:1'];
 
   /// What the engine's connection tracking reports, as `up:down`.
   final String bytes;
@@ -421,7 +519,8 @@ class _FakeCore extends VpnCore {
   Future<String> urlTest(String url, Duration timeout) async {
     lastUrl = url;
     lastTimeout = timeout;
-    final answer = answers[probes < answers.length ? probes : answers.length - 1];
+    final answer =
+        answers[probes < answers.length ? probes : answers.length - 1];
     probes++;
     return answer;
   }
@@ -445,9 +544,11 @@ class _FakeCore extends VpnCore {
   Future<void> disconnect() async {}
 
   @override
-  Future<bool> applyOnDemand(OnDemandPrefs prefs,
-          {NormConfig? config, String? locationId}) async =>
-      false;
+  Future<bool> applyOnDemand(
+    OnDemandPrefs prefs, {
+    NormConfig? config,
+    String? locationId,
+  }) async => false;
 }
 
 /// A profiles controller the test moves by hand: one profile with two servers,
@@ -460,8 +561,16 @@ class _DrivenProfiles extends ProfilesController {
       type: ProfileType.subscription,
       name: 'p',
       locations: [
-        Location(id: 'a', label: 'A', proxy: {'type': 'vless', 'server': '1.1.1.1'}),
-        Location(id: 'b', label: 'B', proxy: {'type': 'vless', 'server': '2.2.2.2'}),
+        Location(
+          id: 'a',
+          label: 'A',
+          proxy: {'type': 'vless', 'server': '1.1.1.1'},
+        ),
+        Location(
+          id: 'b',
+          label: 'B',
+          proxy: {'type': 'vless', 'server': '2.2.2.2'},
+        ),
       ],
     );
     return ProfilesState(profiles: [p], activeId: 'p', selectedLocationId: 'a');

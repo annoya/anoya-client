@@ -27,8 +27,15 @@ void main() {
         'persistent-keepalive': 25,
         'udp': true,
         'amnezia-wg-option': {
-          'jc': 4, 'jmin': 50, 'jmax': 1000, 's1': 20, 's2': 90,
-          'h1': '11111', 'h2': '22222', 'h3': '33333', 'h4': '44444',
+          'jc': 4,
+          'jmin': 50,
+          'jmax': 1000,
+          's1': 20,
+          's2': 90,
+          'h1': '11111',
+          'h2': '22222',
+          'h3': '33333',
+          'h4': '44444',
           'version': 3,
         },
       },
@@ -41,7 +48,11 @@ void main() {
     expect(proxy['udp'], true);
     final awg = proxy['amnezia-wg-option'] as YamlMap;
     expect(awg['jc'], 4);
-    expect(awg['h1'], '11111', reason: 'header types stay text: the engine reads ranges there');
+    expect(
+      awg['h1'],
+      '11111',
+      reason: 'header types stay text: the engine reads ranges there',
+    );
     expect(awg['version'], 3);
   });
 
@@ -80,21 +91,29 @@ void main() {
     // Not wireguard, which the renderer emits now that Amnezia's AWG
     // configurations arrive with their own key material — the same trap the
     // hysteria2 note below records.
-    final loc = Location.fromJson({'id': 'w', 'label': 'x', 'proxy': {'type': 'ssh'}});
+    final loc = Location.fromJson({
+      'id': 'w',
+      'label': 'x',
+      'proxy': {'type': 'ssh'},
+    });
     expect(() => mihomoTunConfigYaml(loc), throwsStateError);
   });
 
   Location vlessLoc() => Location.fromJson({
-        'id': 'worker_1',
-        'label': 'L1',
-        'proxy': {
-          'type': 'vless',
-          'server': '203.0.113.10',
-          'port': 443,
-          'uuid': 'u',
-          'reality': {'public_key': 'PK', 'short_id': 's', 'server_name': 'www.apple.com'},
-        },
-      });
+    'id': 'worker_1',
+    'label': 'L1',
+    'proxy': {
+      'type': 'vless',
+      'server': '203.0.113.10',
+      'port': 443,
+      'uuid': 'u',
+      'reality': {
+        'public_key': 'PK',
+        'short_id': 's',
+        'server_name': 'www.apple.com',
+      },
+    },
+  });
 
   test('the tun stack is gvisor, on every platform', () {
     expect(mihomoTunConfigYaml(vlessLoc()), contains('stack: gvisor'));
@@ -107,43 +126,82 @@ void main() {
     expect(rules, ['MATCH,PROXY']);
   });
 
-  test('the sniffer recovers the domain of a connection whose DNS bypassed the tunnel', () {
-    // Android Private DNS (DoT on 853) and Chrome's DoH hand apps real
-    // addresses; without sniffing every domain rule matched nothing there.
-    final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
-    final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
-    final sniffer = doc['sniffer'] as YamlMap;
-    expect(sniffer['enable'], isTrue);
-    expect(sniffer['parse-pure-ip'], isTrue, reason: 'bare-IP connections are the whole point');
-    expect(sniffer['override-destination'], isFalse,
-        reason: 'match on the name, but dial where the app was going');
-    expect((sniffer['sniff'] as YamlMap).keys, containsAll(['HTTP', 'TLS', 'QUIC']));
-  });
+  test(
+    'the sniffer recovers the domain of a connection whose DNS bypassed the tunnel',
+    () {
+      // Android Private DNS (DoT on 853) and Chrome's DoH hand apps real
+      // addresses; without sniffing every domain rule matched nothing there.
+      final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
+      final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
+      final sniffer = doc['sniffer'] as YamlMap;
+      expect(sniffer['enable'], isTrue);
+      expect(
+        sniffer['parse-pure-ip'],
+        isTrue,
+        reason: 'bare-IP connections are the whole point',
+      );
+      expect(
+        sniffer['override-destination'],
+        isFalse,
+        reason: 'match on the name, but dial where the app was going',
+      );
+      expect(
+        (sniffer['sniff'] as YamlMap).keys,
+        containsAll(['HTTP', 'TLS', 'QUIC']),
+      );
+    },
+  );
 
-  test('the Android decoy resolver is refused on 853 before any other rule', () {
-    // Private DNS probes the resolver it was given for DoT; a probe that is
-    // refused keeps Android on plain DNS, the only path the hijack sees.
-    final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
-    final routing = Routing(mode: 'split', rules: [
-      RoutingRule(type: 'domain-suffix', value: 'vk.ru', action: 'block'),
-    ]);
-    final rules = (loadYaml(mihomoTunConfigYaml(loc, routing: routing, dnsDecoy: kAndroidDnsDecoy))
-        as YamlMap)['rules'] as YamlList;
-    expect(rules.first, 'IP-CIDR,172.19.0.2/32,REJECT,no-resolve');
-    expect(rules[1], 'DOMAIN-SUFFIX,vk.ru,REJECT');
-    // Only where the decoy is ours: Apple's system resolver never upgrades.
-    final apple = (loadYaml(mihomoTunConfigYaml(loc, routing: routing)) as YamlMap)['rules'] as YamlList;
-    expect(apple.first, 'DOMAIN-SUFFIX,vk.ru,REJECT');
-  });
+  test(
+    'the Android decoy resolver is refused on 853 before any other rule',
+    () {
+      // Private DNS probes the resolver it was given for DoT; a probe that is
+      // refused keeps Android on plain DNS, the only path the hijack sees.
+      final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
+      final routing = Routing(
+        mode: 'split',
+        rules: [
+          RoutingRule(type: 'domain-suffix', value: 'vk.ru', action: 'block'),
+        ],
+      );
+      final rules =
+          (loadYaml(
+                    mihomoTunConfigYaml(
+                      loc,
+                      routing: routing,
+                      dnsDecoy: kAndroidDnsDecoy,
+                    ),
+                  )
+                  as YamlMap)['rules']
+              as YamlList;
+      expect(rules.first, 'IP-CIDR,172.19.0.2/32,REJECT,no-resolve');
+      expect(rules[1], 'DOMAIN-SUFFIX,vk.ru,REJECT');
+      // Only where the decoy is ours: Apple's system resolver never upgrades.
+      final apple =
+          (loadYaml(mihomoTunConfigYaml(loc, routing: routing))
+                  as YamlMap)['rules']
+              as YamlList;
+      expect(apple.first, 'DOMAIN-SUFFIX,vk.ru,REJECT');
+    },
+  );
 
   test('split routing renders ordered rules and MATCH,DIRECT', () {
-    const routing = Routing(mode: 'split', rules: [
-      RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),
-      RoutingRule(type: 'ip-cidr', value: '10.0.0.0/8', action: 'proxy'),
-      RoutingRule(type: 'domain-keyword', value: 'tracker', action: 'block'),
-    ]);
+    const routing = Routing(
+      mode: 'split',
+      rules: [
+        RoutingRule(
+          type: 'domain-suffix',
+          value: 'corp.example.com',
+          action: 'proxy',
+        ),
+        RoutingRule(type: 'ip-cidr', value: '10.0.0.0/8', action: 'proxy'),
+        RoutingRule(type: 'domain-keyword', value: 'tracker', action: 'block'),
+      ],
+    );
     final rules =
-        (loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing)) as YamlMap)['rules'] as YamlList;
+        (loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing))
+                as YamlMap)['rules']
+            as YamlList;
     expect(rules, [
       'DOMAIN-SUFFIX,corp.example.com,PROXY',
       'IP-CIDR,10.0.0.0/8,PROXY,no-resolve',
@@ -153,21 +211,27 @@ void main() {
   });
 
   test('full routing keeps MATCH,PROXY and renders direct exceptions', () {
-    const routing = Routing(mode: 'full', rules: [
-      RoutingRule(type: 'domain-suffix', value: 'bank.local', action: 'direct'),
-    ]);
+    const routing = Routing(
+      mode: 'full',
+      rules: [
+        RoutingRule(
+          type: 'domain-suffix',
+          value: 'bank.local',
+          action: 'direct',
+        ),
+      ],
+    );
     final rules =
-        (loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing)) as YamlMap)['rules'] as YamlList;
+        (loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing))
+                as YamlMap)['rules']
+            as YamlList;
     expect(rules, ['DOMAIN-SUFFIX,bank.local,DIRECT', 'MATCH,PROXY']);
   });
 
   test('renders a parsed vmess (ws+tls) proxy', () {
     final loc = parseProxyUri(
-      'vmess://${base64.encode(utf8.encode(jsonEncode({
-            'ps': 'VM', 'add': '9.9.9.9', 'port': '8443', 'id': 'vmess-uuid',
-            'aid': '0', 'scy': 'auto', 'net': 'ws', 'host': 'h.example.com',
-            'path': '/p', 'tls': 'tls', 'sni': 's.example.com',
-          }))).replaceAll('\n', '')}')!;
+      'vmess://${base64.encode(utf8.encode(jsonEncode({'ps': 'VM', 'add': '9.9.9.9', 'port': '8443', 'id': 'vmess-uuid', 'aid': '0', 'scy': 'auto', 'net': 'ws', 'host': 'h.example.com', 'path': '/p', 'tls': 'tls', 'sni': 's.example.com'}))).replaceAll('\n', '')}',
+    )!;
     final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
     final proxy = (doc['proxies'] as YamlList).first as YamlMap;
     expect(proxy['name'], 'proxy');
@@ -177,11 +241,16 @@ void main() {
     expect(proxy['uuid'], 'vmess-uuid');
     expect(proxy['tls'], true);
     expect((proxy['ws-opts'] as YamlMap)['path'], '/p');
-    expect(((proxy['ws-opts'] as YamlMap)['headers'] as YamlMap)['Host'], 'h.example.com');
+    expect(
+      ((proxy['ws-opts'] as YamlMap)['headers'] as YamlMap)['Host'],
+      'h.example.com',
+    );
   });
 
   test('renders a parsed trojan proxy + group references it', () {
-    final loc = parseProxyUri('trojan://p@t.example.com:443?sni=t.example.com#T')!;
+    final loc = parseProxyUri(
+      'trojan://p@t.example.com:443?sni=t.example.com#T',
+    )!;
     final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
     final proxy = (doc['proxies'] as YamlList).first as YamlMap;
     expect(proxy['type'], 'trojan');
@@ -193,28 +262,58 @@ void main() {
   test('rejects unknown proxy types (renderer)', () {
     // tuic, not hysteria2: hysteria2 is supported now, and a test whose
     // "unsupported" example quietly became supported stops testing anything.
-    final loc = Location.fromJson({'id': 'x', 'label': 'y', 'proxy': {'type': 'tuic'}});
+    final loc = Location.fromJson({
+      'id': 'x',
+      'label': 'y',
+      'proxy': {'type': 'tuic'},
+    });
     expect(() => mihomoTunConfigYaml(loc), throwsStateError);
   });
 
   test('process rules enable strict process matching', () {
-    const routing = Routing(mode: 'full', rules: [
-      RoutingRule(type: 'process-name', value: 'Slack', action: 'direct'),
-    ]);
+    const routing = Routing(
+      mode: 'full',
+      rules: [
+        RoutingRule(type: 'process-name', value: 'Slack', action: 'direct'),
+      ],
+    );
     final yaml = mihomoTunConfigYaml(vlessLoc(), routing: routing);
     expect(yaml, contains('find-process-mode: strict'));
     expect(yaml, contains('PROCESS-NAME,Slack,DIRECT'));
   });
 
   test('invalid or malicious rules are skipped, never interpolated', () {
-    const routing = Routing(mode: 'split', rules: [
-      RoutingRule(type: 'domain-suffix', value: 'ok.example.com', action: 'proxy'),
-      RoutingRule(type: 'domain-suffix', value: 'evil,MATCH', action: 'proxy'),
-      RoutingRule(type: 'domain-suffix', value: 'x\nrules:', action: 'proxy'),
-      RoutingRule(type: 'ip-cidr', value: '10.0.0.1', action: 'proxy'), // bare IP
-      RoutingRule(type: 'geo-ip', value: 'ru', action: 'proxy'), // unknown type
-      RoutingRule(type: 'domain-suffix', value: 'y.com', action: 'allow'), // unknown action
-    ]);
+    const routing = Routing(
+      mode: 'split',
+      rules: [
+        RoutingRule(
+          type: 'domain-suffix',
+          value: 'ok.example.com',
+          action: 'proxy',
+        ),
+        RoutingRule(
+          type: 'domain-suffix',
+          value: 'evil,MATCH',
+          action: 'proxy',
+        ),
+        RoutingRule(type: 'domain-suffix', value: 'x\nrules:', action: 'proxy'),
+        RoutingRule(
+          type: 'ip-cidr',
+          value: '10.0.0.1',
+          action: 'proxy',
+        ), // bare IP
+        RoutingRule(
+          type: 'geo-ip',
+          value: 'ru',
+          action: 'proxy',
+        ), // unknown type
+        RoutingRule(
+          type: 'domain-suffix',
+          value: 'y.com',
+          action: 'allow',
+        ), // unknown action
+      ],
+    );
     final yaml = mihomoTunConfigYaml(vlessLoc(), routing: routing);
     final rules = (loadYaml(yaml) as YamlMap)['rules'] as YamlList;
     expect(rules, ['DOMAIN-SUFFIX,ok.example.com,PROXY', 'MATCH,DIRECT']);
@@ -243,8 +342,11 @@ void main() {
     final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     expect(doc['ipv6'], true);
     final dns = doc['dns'] as YamlMap;
-    expect(dns.containsKey('ipv6'), isFalse,
-        reason: 'names stay v4-only unless this becomes a decision');
+    expect(
+      dns.containsKey('ipv6'),
+      isFalse,
+      reason: 'names stay v4-only unless this becomes a decision',
+    );
     expect((doc['tun'] as YamlMap)['inet6-address'], [kTunInet6Address]);
   });
 
@@ -254,14 +356,18 @@ void main() {
     // overruns the system's deadline. Empty URLs make it fail immediately.
     final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     final urls = doc['geox-url'] as YamlMap;
-    expect(urls.values, everyElement(''),
-        reason: 'every geo source must be empty, whatever rules the config has');
+    expect(
+      urls.values,
+      everyElement(''),
+      reason: 'every geo source must be empty, whatever rules the config has',
+    );
   });
 
   test('renders a parsed hysteria2 proxy', () {
     // QUIC-based: no transport section, and alpn is a list rather than a string.
     final loc = parseProxyUri(
-        'hysteria2://pw@h.example:30443/?sni=h.example&alpn=h3&insecure=1#HY')!;
+      'hysteria2://pw@h.example:30443/?sni=h.example&alpn=h3&insecure=1#HY',
+    )!;
     final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
     final proxy = (doc['proxies'] as YamlList).single as YamlMap;
     expect(proxy['type'], 'hysteria2');
@@ -270,8 +376,11 @@ void main() {
     expect(proxy['sni'], 'h.example');
     expect(proxy['alpn'], ['h3']);
     expect(proxy['skip-cert-verify'], true);
-    expect(proxy.containsKey('network'), isFalse,
-        reason: 'a transport would be meaningless for QUIC');
+    expect(
+      proxy.containsKey('network'),
+      isFalse,
+      reason: 'a transport would be meaningless for QUIC',
+    );
   });
 
   test('the single outbound is always named "proxy"', () {
@@ -314,25 +423,48 @@ proxies:
     // out on the physical interface, telling the local network which resolver
     // this device uses and the resolver which addresses are asking. Through the
     // tunnel it says neither, and a network blocking it stops mattering.
-    expect((fallback['dns'] as YamlMap)['nameserver'],
-        ['https://1.1.1.1/dns-query#PROXY']);
+    expect((fallback['dns'] as YamlMap)['nameserver'], [
+      'https://1.1.1.1/dns-query#PROXY',
+    ]);
     // Reaching the proxy is the one job that cannot ride the tunnel, so it gets
     // its own unpinned list — and three operators rather than one, because it
     // resolves a single hostname the local network already watched us dial.
-    expect((fallback['dns'] as YamlMap)['proxy-server-nameserver'], hasLength(3));
-    expect((fallback['dns'] as YamlMap)['default-nameserver'], isNull,
-        reason: 'every default is addressed by IP, so nothing needs bootstrapping');
+    expect(
+      (fallback['dns'] as YamlMap)['proxy-server-nameserver'],
+      hasLength(3),
+    );
+    expect(
+      (fallback['dns'] as YamlMap)['default-nameserver'],
+      isNull,
+      reason:
+          'every default is addressed by IP, so nothing needs bootstrapping',
+    );
 
-    final own = loadYaml(mihomoTunConfigYaml(vlessLoc(),
-        dns: ['10.0.0.53', 'tls://1.1.1.1:853'])) as YamlMap;
-    expect((own['dns'] as YamlMap)['nameserver'], ['10.0.0.53', 'tls://1.1.1.1:853']);
+    final own =
+        loadYaml(
+              mihomoTunConfigYaml(
+                vlessLoc(),
+                dns: ['10.0.0.53', 'tls://1.1.1.1:853'],
+              ),
+            )
+            as YamlMap;
+    expect((own['dns'] as YamlMap)['nameserver'], [
+      '10.0.0.53',
+      'tls://1.1.1.1:853',
+    ]);
     // Every resolver is IP-addressed: no bootstrap needed.
     expect((own['dns'] as YamlMap)['default-nameserver'], isNull);
   });
 
   test('hostname resolvers get a plain-IP bootstrap', () {
-    final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(),
-        dns: ['https://dns.google/dns-query', '1.1.1.1'])) as YamlMap;
+    final doc =
+        loadYaml(
+              mihomoTunConfigYaml(
+                vlessLoc(),
+                dns: ['https://dns.google/dns-query', '1.1.1.1'],
+              ),
+            )
+            as YamlMap;
     expect((doc['dns'] as YamlMap)['default-nameserver'], ['1.1.1.1']);
   });
 
@@ -342,24 +474,45 @@ proxies:
     // deadlocks the engine: the query waits on the tunnel, the tunnel waits on
     // the query, and every dial dies with "couldn't find ip" — a VPN that
     // connects and carries nothing.
-    final dns = (loadYaml(mihomoTunConfigYaml(vlessLoc(),
-        dns: ['https://dns.quad9.net/dns-query#PROXY'])) as YamlMap)['dns'] as YamlMap;
-    expect(dns['nameserver'], ['https://dns.quad9.net/dns-query#PROXY'],
-        reason: "the provider's pin is kept: DNS still rides the tunnel");
-    final bootstrap = (dns['proxy-server-nameserver'] as YamlList).map((e) => '$e');
+    final dns =
+        (loadYaml(
+                  mihomoTunConfigYaml(
+                    vlessLoc(),
+                    dns: ['https://dns.quad9.net/dns-query#PROXY'],
+                  ),
+                )
+                as YamlMap)['dns']
+            as YamlMap;
+    expect(dns['nameserver'], [
+      'https://dns.quad9.net/dns-query#PROXY',
+    ], reason: "the provider's pin is kept: DNS still rides the tunnel");
+    final bootstrap = (dns['proxy-server-nameserver'] as YamlList).map(
+      (e) => '$e',
+    );
     expect(bootstrap, isNotEmpty);
-    expect(bootstrap.every((ns) => !ns.contains('#')), isTrue,
-        reason: 'a pinned resolver here would rebuild the same loop');
+    expect(
+      bootstrap.every((ns) => !ns.contains('#')),
+      isTrue,
+      reason: 'a pinned resolver here would rebuild the same loop',
+    );
   });
 
   test('a pin we cannot honour is dropped, its resolver kept', () {
     // mihomo reads an unknown pin as an interface name and binds the socket to
     // it, so a provider group name we replaced with ours would send every query
     // out of a device that does not exist.
-    final dns = (loadYaml(mihomoTunConfigYaml(vlessLoc(), dns: [
-      'https://dns.quad9.net/dns-query#\u{1F680} Auto',
-      'tls://dns.google#RULES',
-    ])) as YamlMap)['dns'] as YamlMap;
+    final dns =
+        (loadYaml(
+                  mihomoTunConfigYaml(
+                    vlessLoc(),
+                    dns: [
+                      'https://dns.quad9.net/dns-query#\u{1F680} Auto',
+                      'tls://dns.google#RULES',
+                    ],
+                  ),
+                )
+                as YamlMap)['dns']
+            as YamlMap;
     expect(dns['nameserver'], [
       'https://dns.quad9.net/dns-query',
       'tls://dns.google#RULES',
@@ -368,35 +521,55 @@ proxies:
 
   test('a group member can be pinned to, because we render it', () {
     const g = ProxyGroup(name: 'auto', type: 'url-test', members: ['a']);
-    final dns = (loadYaml(mihomoTunConfigYaml(vlessLoc(),
-        group: g,
-        members: [vlessLoc()],
-        dns: ['tls://dns.google#p0'])) as YamlMap)['dns'] as YamlMap;
+    final dns =
+        (loadYaml(
+                  mihomoTunConfigYaml(
+                    vlessLoc(),
+                    group: g,
+                    members: [vlessLoc()],
+                    dns: ['tls://dns.google#p0'],
+                  ),
+                )
+                as YamlMap)['dns']
+            as YamlMap;
     expect(dns['nameserver'], ['tls://dns.google#p0']);
   });
 
   test('unusable dns entries are dropped, never interpolated', () {
-    final yaml = mihomoTunConfigYaml(vlessLoc(), dns: [
-      'evil"\n  - injected', // quote + escape
-      'bad entry with spaces',
-      'x\nrules: []', // newline
-      '', // empty
-    ]);
+    final yaml = mihomoTunConfigYaml(
+      vlessLoc(),
+      dns: [
+        'evil"\n  - injected', // quote + escape
+        'bad entry with spaces',
+        'x\nrules: []', // newline
+        '', // empty
+      ],
+    );
     final doc = loadYaml(yaml) as YamlMap;
     // Everything was dropped, so the fallback applies and nothing leaked in.
-    expect((doc['dns'] as YamlMap)['nameserver'], ['https://1.1.1.1/dns-query#PROXY']);
+    expect((doc['dns'] as YamlMap)['nameserver'], [
+      'https://1.1.1.1/dns-query#PROXY',
+    ]);
     expect(yaml, isNot(contains('injected')));
   });
 
-  test('fake-ip settings are app constants, whatever dns the config brings', () {
-    // The OS caches the fake addresses the engine handed out; a range that
-    // moved with the config would strand every cached answer on a hot switch.
-    for (final dns in [<String>[], ['10.0.0.53'], ['https://dns.google/dns-query']]) {
-      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(), dns: dns)) as YamlMap;
-      expect((doc['dns'] as YamlMap)['fake-ip-range'], '198.18.0.1/16');
-      expect((doc['dns'] as YamlMap)['enhanced-mode'], 'fake-ip');
-    }
-  });
+  test(
+    'fake-ip settings are app constants, whatever dns the config brings',
+    () {
+      // The OS caches the fake addresses the engine handed out; a range that
+      // moved with the config would strand every cached answer on a hot switch.
+      for (final dns in [
+        <String>[],
+        ['10.0.0.53'],
+        ['https://dns.google/dns-query'],
+      ]) {
+        final doc =
+            loadYaml(mihomoTunConfigYaml(vlessLoc(), dns: dns)) as YamlMap;
+        expect((doc['dns'] as YamlMap)['fake-ip-range'], '198.18.0.1/16');
+        expect((doc['dns'] as YamlMap)['enhanced-mode'], 'fake-ip');
+      }
+    },
+  );
 
   group('rule lists', () {
     const list = RuleList(
@@ -404,52 +577,93 @@ proxies:
       url: 'https://lists.example/reject.yaml',
       behavior: 'domain',
     );
-    const routing = Routing(mode: 'split', rules: [
-      RoutingRule(type: 'rule-list', value: 'reject', action: 'block'),
-      RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
-    ], lists: [list]);
+    const routing = Routing(
+      mode: 'split',
+      rules: [
+        RoutingRule(type: 'rule-list', value: 'reject', action: 'block'),
+        RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
+      ],
+      lists: [list],
+    );
 
     test('a downloaded list is handed over as a local file', () {
       // Never `type: http`: mihomo fetches providers inside config apply, 20 s
       // per file under a wait group, which is a stalled connect — and a failure
       // there is only logged, leaving a rule that matches nothing.
-      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(),
-          routing: routing,
-          listPaths: {'reject': '/tmp/group/rulelists/abc.yaml'})) as YamlMap;
+      final doc =
+          loadYaml(
+                mihomoTunConfigYaml(
+                  vlessLoc(),
+                  routing: routing,
+                  listPaths: {'reject': '/tmp/group/rulelists/abc.yaml'},
+                ),
+              )
+              as YamlMap;
       final provider = (doc['rule-providers'] as YamlMap)['reject'] as YamlMap;
       expect(provider['type'], 'file');
       expect(provider['path'], '/tmp/group/rulelists/abc.yaml');
       expect(provider['behavior'], 'domain');
       expect(provider['format'], 'yaml');
-      expect((doc['rules'] as YamlList).map((e) => '$e'),
-          contains('RULE-SET,reject,REJECT'));
+      expect(
+        (doc['rules'] as YamlList).map((e) => '$e'),
+        contains('RULE-SET,reject,REJECT'),
+      );
     });
 
     test('without the file the rule is left out, not left dangling', () {
-      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing)) as YamlMap;
+      final doc =
+          loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing))
+              as YamlMap;
       expect(doc['rule-providers'], isNull);
       final rules = (doc['rules'] as YamlList).map((e) => '$e').toList();
-      expect(rules.any((r) => r.startsWith('RULE-SET')), isFalse,
-          reason: 'a rule pointing at nothing silently matches nothing');
-      expect(rules, contains('DOMAIN-SUFFIX,ip.me,PROXY'),
-          reason: 'one missing list must not cost the other rules');
+      expect(
+        rules.any((r) => r.startsWith('RULE-SET')),
+        isFalse,
+        reason: 'a rule pointing at nothing silently matches nothing',
+      );
+      expect(
+        rules,
+        contains('DOMAIN-SUFFIX,ip.me,PROXY'),
+        reason: 'one missing list must not cost the other rules',
+      );
     });
 
     test('a regex rule reaches the engine as DOMAIN-REGEX', () {
-      const r = Routing(mode: 'full', rules: [
-        RoutingRule(type: 'domain-regex', value: r'^.*[.]ads[.]example$', action: 'block'),
-      ]);
-      final doc = loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: r)) as YamlMap;
-      expect((doc['rules'] as YamlList).map((e) => '$e'),
-          contains(r'DOMAIN-REGEX,^.*[.]ads[.]example$,REJECT'));
+      const r = Routing(
+        mode: 'full',
+        rules: [
+          RoutingRule(
+            type: 'domain-regex',
+            value: r'^.*[.]ads[.]example$',
+            action: 'block',
+          ),
+        ],
+      );
+      final doc =
+          loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: r)) as YamlMap;
+      expect(
+        (doc['rules'] as YamlList).map((e) => '$e'),
+        contains(r'DOMAIN-REGEX,^.*[.]ads[.]example$,REJECT'),
+      );
     });
 
     test('a list name that is not YAML-safe never reaches the config', () {
-      const bad = Routing(mode: 'full', rules: [
-        RoutingRule(type: 'rule-list', value: 'a: b', action: 'block'),
-      ], lists: [RuleList(name: 'a: b', url: 'https://x.example/l', behavior: 'domain')]);
-      final yaml = mihomoTunConfigYaml(vlessLoc(),
-          routing: bad, listPaths: {'a: b': '/tmp/x.yaml'});
+      const bad = Routing(
+        mode: 'full',
+        rules: [RoutingRule(type: 'rule-list', value: 'a: b', action: 'block')],
+        lists: [
+          RuleList(
+            name: 'a: b',
+            url: 'https://x.example/l',
+            behavior: 'domain',
+          ),
+        ],
+      );
+      final yaml = mihomoTunConfigYaml(
+        vlessLoc(),
+        routing: bad,
+        listPaths: {'a: b': '/tmp/x.yaml'},
+      );
       expect(yaml, isNot(contains('a: b')));
       loadYaml(yaml); // must still parse
     });
@@ -465,10 +679,15 @@ dns:
 proxies:
   - {name: a, type: vless, server: 1.2.3.4, port: 443, uuid: u}
 ''';
-    expect(parseSubscriptionBody(clash).dns,
-        ['https://doh.example.net/dns-query', '9.9.9.9']);
+    expect(parseSubscriptionBody(clash).dns, [
+      'https://doh.example.net/dns-query',
+      '9.9.9.9',
+    ]);
     // Link lists carry no DNS.
-    expect(parseSubscriptionBody('vless://u@h:443?security=none#x').dns, isEmpty);
+    expect(
+      parseSubscriptionBody('vless://u@h:443?security=none#x').dns,
+      isEmpty,
+    );
   });
 
   group('an engine-owned device', () {
@@ -478,7 +697,10 @@ proxies:
     Location loc() => parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
 
     test('is named, addressed and routed by the engine', () {
-      final tun = (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest')) as YamlMap)['tun'] as YamlMap;
+      final tun =
+          (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest'))
+                  as YamlMap)['tun']
+              as YamlMap;
       expect(tun['device'], 'AnnoyaTest');
       expect(tun['auto-route'], isTrue);
       expect(tun['auto-detect-interface'], isTrue);
@@ -492,19 +714,29 @@ proxies:
       // The system resolver asks all adapters at once; the copy that goes to
       // the ISP never enters the tun, so no rule can catch it. Only WFP can,
       // and strict-route is how sing-tun installs those filters.
-      final tun = (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest')) as YamlMap)['tun'] as YamlMap;
+      final tun =
+          (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest'))
+                  as YamlMap)['tun']
+              as YamlMap;
       expect(tun['strict-route'], isTrue);
     });
 
     test('a host-owned device keeps the engine out of routing', () {
-      final tun = (loadYaml(mihomoTunConfigYaml(loc())) as YamlMap)['tun'] as YamlMap;
-      expect(tun.containsKey('strict-route'), isFalse,
-          reason: 'firewall rules for an adapter the engine does not own');
+      final tun =
+          (loadYaml(mihomoTunConfigYaml(loc())) as YamlMap)['tun'] as YamlMap;
+      expect(
+        tun.containsKey('strict-route'),
+        isFalse,
+        reason: 'firewall rules for an adapter the engine does not own',
+      );
       expect(tun['auto-route'], isFalse);
       expect(tun.containsKey('device'), isFalse);
-      expect(tun.containsKey('inet4-address'), isFalse, reason: 'the host assigns it');
+      expect(
+        tun.containsKey('inet4-address'),
+        isFalse,
+        reason: 'the host assigns it',
+      );
       expect(tun['stack'], 'gvisor');
     });
   });
-
 }

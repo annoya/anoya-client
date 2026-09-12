@@ -20,7 +20,8 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
     return const OnDemandPrefs();
   }
 
-  String _newId() => 'od${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}_${_idSeq++}';
+  String _newId() =>
+      'od${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}_${_idSeq++}';
 
   /// Toggle the feature. Enabling clears a pause and seeds the default
   /// "Connect · Any network" rule when the list is empty.
@@ -73,7 +74,9 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
   Future<void> removeRule(String id) async {
     final rules = state.rules.where((r) => r.id != id).toList();
     // The last rule going away disables the feature (armed requires rules).
-    await _apply(state.copyWith(rules: rules, enabled: state.enabled && rules.isNotEmpty));
+    await _apply(
+      state.copyWith(rules: rules, enabled: state.enabled && rules.isNotEmpty),
+    );
   }
 
   Future<void> reorderRules(int oldIndex, int newIndex) async {
@@ -100,11 +103,15 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
       final profiles = ref.read(profilesControllerProvider);
       final active = profiles.active;
       final loc = profiles.selectedLocation;
-      armed = await ref.read(vpnCoreProvider).applyOnDemand(
+      armed = await ref
+          .read(vpnCoreProvider)
+          .applyOnDemand(
             prefs,
             config: active == null
                 ? null
-                : await ref.read(profilesControllerProvider.notifier).effectiveConfig(active),
+                : await ref
+                      .read(profilesControllerProvider.notifier)
+                      .effectiveConfig(active),
             locationId: loc?.id,
           );
     } catch (e) {
@@ -114,5 +121,6 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
   }
 }
 
-final onDemandProvider =
-    NotifierProvider<OnDemandController, OnDemandPrefs>(OnDemandController.new);
+final onDemandProvider = NotifierProvider<OnDemandController, OnDemandPrefs>(
+  OnDemandController.new,
+);

@@ -35,13 +35,22 @@ class ConfigScreen extends ConsumerWidget {
     }
     final isActive = st.activeId == profile.id;
     return switch (profile.type) {
-      ProfileType.selfhosted =>
-        SelfhostedConfigScreen(profile: profile, isActive: isActive),
-      ProfileType.subscription =>
-        SubscriptionConfigScreen(profile: profile, isActive: isActive),
-      ProfileType.amnezia =>
-        AmneziaConfigScreen(profile: profile, isActive: isActive),
-      ProfileType.link => LinkConfigScreen(profile: profile, isActive: isActive),
+      ProfileType.selfhosted => SelfhostedConfigScreen(
+        profile: profile,
+        isActive: isActive,
+      ),
+      ProfileType.subscription => SubscriptionConfigScreen(
+        profile: profile,
+        isActive: isActive,
+      ),
+      ProfileType.amnezia => AmneziaConfigScreen(
+        profile: profile,
+        isActive: isActive,
+      ),
+      ProfileType.link => LinkConfigScreen(
+        profile: profile,
+        isActive: isActive,
+      ),
     };
   }
 }

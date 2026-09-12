@@ -49,7 +49,9 @@ class GeositeIndex {
     // as the scan it was meant to move off the UI thread.
     final path = dat.path;
     final list = await Isolate.run(() => scan(File(path).readAsBytesSync()));
-    Log.i('geosite index: ${list.length} categories in ${sw.elapsedMilliseconds} ms');
+    Log.i(
+      'geosite index: ${list.length} categories in ${sw.elapsedMilliseconds} ms',
+    );
     await _writeCache(cache, key, list);
     return list;
   }
@@ -83,7 +85,9 @@ class GeositeIndex {
       final tag = r.varint();
       switch (tag >> 3) {
         case 1 when tag & 7 == 2:
-          name = utf8.decode(r.bytes(r.varint()), allowMalformed: true).toLowerCase();
+          name = utf8
+              .decode(r.bytes(r.varint()), allowMalformed: true)
+              .toLowerCase();
         case 2 when tag & 7 == 2:
           domains++;
           r.bytes(r.varint());
@@ -94,7 +98,10 @@ class GeositeIndex {
     return GeositeCategory(name, domains);
   }
 
-  static Future<List<GeositeCategory>?> _readCache(File cache, String datKey) async {
+  static Future<List<GeositeCategory>?> _readCache(
+    File cache,
+    String datKey,
+  ) async {
     try {
       if (!await cache.exists()) return null;
       final j = jsonDecode(await cache.readAsString()) as Map<String, dynamic>;
@@ -109,14 +116,19 @@ class GeositeIndex {
   }
 
   static Future<void> _writeCache(
-      File cache, String datKey, List<GeositeCategory> list) async {
+    File cache,
+    String datKey,
+    List<GeositeCategory> list,
+  ) async {
     try {
-      await cache.writeAsString(jsonEncode({
-        'dat_key': datKey,
-        'categories': [
-          for (final c in list) {'n': c.name, 'd': c.domainCount},
-        ],
-      }));
+      await cache.writeAsString(
+        jsonEncode({
+          'dat_key': datKey,
+          'categories': [
+            for (final c in list) {'n': c.name, 'd': c.domainCount},
+          ],
+        }),
+      );
     } catch (e) {
       Log.e('geosite index: cache write failed', '$e');
     }
@@ -147,7 +159,9 @@ class _Reader {
   }
 
   Uint8List bytes(int n) {
-    if (n < 0 || _pos + n > _b.length) throw const FormatException('slice past end');
+    if (n < 0 || _pos + n > _b.length) {
+      throw const FormatException('slice past end');
+    }
     final v = Uint8List.sublistView(_b, _pos, _pos + n);
     _pos += n;
     return v;

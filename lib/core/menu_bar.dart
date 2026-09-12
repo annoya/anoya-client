@@ -36,13 +36,13 @@ class MenuBarState {
   final bool connecting;
 
   Map<String, Object?> toChannel() => {
-        'status': status,
-        'detail': detail,
-        'can_connect': canConnect,
-        'can_disconnect': canDisconnect,
-        'tunnel_up': tunnelUp,
-        'connecting': connecting,
-      };
+    'status': status,
+    'detail': detail,
+    'can_connect': canConnect,
+    'can_disconnect': canDisconnect,
+    'tunnel_up': tunnelUp,
+    'connecting': connecting,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -55,8 +55,14 @@ class MenuBarState {
       other.connecting == connecting;
 
   @override
-  int get hashCode =>
-      Object.hash(status, detail, canConnect, canDisconnect, tunnelUp, connecting);
+  int get hashCode => Object.hash(
+    status,
+    detail,
+    canConnect,
+    canDisconnect,
+    tunnelUp,
+    connecting,
+  );
 }
 
 /// The bridge to the `NSStatusItem` on macOS and the notification-area icon
@@ -70,7 +76,7 @@ class MenuBarState {
 /// failure has to be reported), so the platform only asks.
 class MenuBar {
   MenuBar({MethodChannel? channel})
-      : _channel = channel ?? const MethodChannel('vpn/tray');
+    : _channel = channel ?? const MethodChannel('vpn/tray');
 
   final MethodChannel _channel;
 

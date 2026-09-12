@@ -53,7 +53,9 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
     } catch (e) {
       Log.e('geo update failed', '$e');
       // Nothing is broken without fresh databases — the old ones keep working.
-      if (mounted) showToast(context, describeError(e, subject: 'the database host').line);
+      if (mounted) {
+        showToast(context, describeError(e, subject: 'the database host').line);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -71,12 +73,19 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
       longValue: true, // a 90-character download URL
       autocorrect: false,
       resetLabel: 'Reset to default',
-      resetValue: geoip ? RoutingPrefs.defaultGeoipUrl : RoutingPrefs.defaultGeositeUrl,
+      resetValue: geoip
+          ? RoutingPrefs.defaultGeoipUrl
+          : RoutingPrefs.defaultGeositeUrl,
     );
     final trimmed = url?.trim() ?? '';
     if (trimmed.isEmpty) return;
-    await ref.read(routingPrefsProvider.notifier).update(
-        (p) => geoip ? p.copyWith(geoipUrl: trimmed) : p.copyWith(geositeUrl: trimmed));
+    await ref
+        .read(routingPrefsProvider.notifier)
+        .update(
+          (p) => geoip
+              ? p.copyWith(geoipUrl: trimmed)
+              : p.copyWith(geositeUrl: trimmed),
+        );
   }
 
   /// One database row: name + size on the title line, the source URL on one
@@ -93,11 +102,20 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        title: Row(children: [
-          Expanded(child: Text(name)),
-          Text(_bytes(bytes), style: TextStyle(fontSize: 12.5, color: cs.onSurfaceVariant)),
-        ]),
-        subtitle: Text(_shortUrl(url), maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Row(
+          children: [
+            Expanded(child: Text(name)),
+            Text(
+              _bytes(bytes),
+              style: TextStyle(fontSize: 12.5, color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
+        subtitle: Text(
+          _shortUrl(url),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         trailing: const Icon(Icons.edit_outlined, size: 18),
         onTap: _busy ? null : onEdit,
       ),
@@ -119,7 +137,9 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
     if (at == null || !_status.downloaded) return 'never';
     final d = DateTime.now().difference(at);
     if (d.inDays > 0) return '${d.inDays} day${d.inDays > 1 ? 's' : ''} ago';
-    if (d.inHours > 0) return '${d.inHours} hour${d.inHours > 1 ? 's' : ''} ago';
+    if (d.inHours > 0) {
+      return '${d.inHours} hour${d.inHours > 1 ? 's' : ''} ago';
+    }
     return 'just now';
   }
 
@@ -149,20 +169,24 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
                   const SectionHeader('UPDATES'),
                   Card(
                     margin: kCardMargin,
-                    child: Column(children: [
-                      ListTile(
-                        title: const Text('Last updated'),
-                        subtitle: Text(_updatedAt(prefs)),
-                      ),
-                      SwitchListTile(
-                        title: const Text('Auto-update'),
-                        subtitle: const Text('Weekly, when already downloaded'),
-                        value: prefs.geoAutoUpdate,
-                        onChanged: (v) => ref
-                            .read(routingPrefsProvider.notifier)
-                            .update((p) => p.copyWith(geoAutoUpdate: v)),
-                      ),
-                    ]),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          title: const Text('Last updated'),
+                          subtitle: Text(_updatedAt(prefs)),
+                        ),
+                        SwitchListTile(
+                          title: const Text('Auto-update'),
+                          subtitle: const Text(
+                            'Weekly, when already downloaded',
+                          ),
+                          value: prefs.geoAutoUpdate,
+                          onChanged: (v) => ref
+                              .read(routingPrefsProvider.notifier)
+                              .update((p) => p.copyWith(geoAutoUpdate: v)),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Padding(
@@ -173,9 +197,12 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
                           ? const SizedBox(
                               height: 16,
                               width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : const Icon(Icons.refresh, size: 18),
-                      label: Text(_status.downloaded ? 'Update now' : 'Download (~25 MB)'),
+                      label: Text(
+                        _status.downloaded ? 'Update now' : 'Download (~25 MB)',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),

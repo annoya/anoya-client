@@ -45,8 +45,9 @@ class _RefreshButtonState extends ConsumerState<RefreshButton> {
   Future<void> _refresh() async {
     setState(() => _busy = true);
     try {
-      final updated =
-          await ref.read(profilesControllerProvider.notifier).refreshProfile(widget.profile.id);
+      final updated = await ref
+          .read(profilesControllerProvider.notifier)
+          .refreshProfile(widget.profile.id);
       // The fetch itself succeeded — the panel simply answered with a refusal
       // and placeholders. Nothing threw, so without this the refresh would look
       // like it worked while the server list quietly turned into a message.
@@ -56,8 +57,10 @@ class _RefreshButtonState extends ConsumerState<RefreshButton> {
     } catch (e) {
       Log.e('manual refresh failed', '$e');
       if (mounted) {
-        showToast(context,
-            'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}');
+        showToast(
+          context,
+          'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -70,7 +73,10 @@ class _RefreshButtonState extends ConsumerState<RefreshButton> {
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: widget.spinnerPadding),
         child: const SizedBox(
-            height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+          height: 18,
+          width: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
       );
     }
     return IconButton(

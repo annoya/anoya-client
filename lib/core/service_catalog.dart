@@ -21,7 +21,12 @@ enum ServiceGroup {
 }
 
 class CatalogService {
-  const CatalogService(this.name, this.category, this.group, {this.glyph = true});
+  const CatalogService(
+    this.name,
+    this.category,
+    this.group, {
+    this.glyph = true,
+  });
 
   final String name;
 
@@ -36,7 +41,8 @@ class CatalogService {
 
   /// Asset slug: the category name except where the icon set names it
   /// differently.
-  String get glyphAsset => 'assets/brands/${_slugOverrides[category] ?? category}.svg';
+  String get glyphAsset =>
+      'assets/brands/${_slugOverrides[category] ?? category}.svg';
 
   static const _slugOverrides = {'twitter': 'x'};
 }

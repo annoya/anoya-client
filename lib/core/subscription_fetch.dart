@@ -57,18 +57,17 @@ class SubscriptionResponse {
     bool? usedFallback,
     String? rendering,
     bool? renderingProbed,
-  }) =>
-      SubscriptionResponse(
-        body: body ?? this.body,
-        info: info,
-        deviceLimitActive: deviceLimitActive,
-        deviceLimitReached: deviceLimitReached,
-        routing: routing,
-        routingProbed: routingProbed,
-        usedFallback: usedFallback ?? this.usedFallback,
-        rendering: rendering ?? this.rendering,
-        renderingProbed: renderingProbed ?? this.renderingProbed,
-      );
+  }) => SubscriptionResponse(
+    body: body ?? this.body,
+    info: info,
+    deviceLimitActive: deviceLimitActive,
+    deviceLimitReached: deviceLimitReached,
+    routing: routing,
+    routingProbed: routingProbed,
+    usedFallback: usedFallback ?? this.usedFallback,
+    rendering: rendering ?? this.rendering,
+    renderingProbed: renderingProbed ?? this.renderingProbed,
+  );
 
   /// Which named rendering answered, if the plain URL was not the one used
   /// ('mihomo', 'clash-meta', …). Empty when the panel's own choice was taken.
@@ -123,8 +122,10 @@ Future<SubscriptionResponse> fetchSubscription(
           } catch (e) {
             // The panel dropped the template, or the path stopped working. The
             // plain URL is what the user added, so it is the answer of record.
-            Log.e('named rendering failed, falling back to the plain address',
-                '${uri.host}/$rendering: $e');
+            Log.e(
+              'named rendering failed, falling back to the plain address',
+              '${uri.host}/$rendering: $e',
+            );
           }
         }
       }
@@ -135,9 +136,13 @@ Future<SubscriptionResponse> fetchSubscription(
       // down. Tried once, and only when the provider named one — a retry loop
       // against a dead host is not resilience, it is a slower failure.
       final backup = Uri.tryParse(fallbackUrl);
-      if (backup == null || backup.scheme != 'https' || backup.host.isEmpty) rethrow;
-      Log.e('subscription fetch failed, trying the backup address',
-          '${uri.host} -> ${backup.host}');
+      if (backup == null || backup.scheme != 'https' || backup.host.isEmpty) {
+        rethrow;
+      }
+      Log.e(
+        'subscription fetch failed, trying the backup address',
+        '${uri.host} -> ${backup.host}',
+      );
       try {
         final res = await _fetch(backup, identity, c, probeRouting, wait);
         return res.viaFallback();
@@ -166,7 +171,8 @@ Future<SubscriptionResponse> _fetch(
 ) async {
   final res = await c.get(uri, headers: identity.headers).timeout(timeout);
 
-  final reached = _flag(res.headers, 'x-hwid-max-devices-reached') ||
+  final reached =
+      _flag(res.headers, 'x-hwid-max-devices-reached') ||
       _flag(res.headers, 'x-hwid-limit'); // the older name, still sent
   if (reached) {
     // Reported, not thrown. The panel answers a refused device with a body of
@@ -182,14 +188,19 @@ Future<SubscriptionResponse> _fetch(
   // missing — worth naming, because "not found" would send the user looking at
   // their URL.
   if (res.statusCode == 404 && _flag(res.headers, 'x-hwid-not-supported')) {
-    throw const AppErrorException(AppError(
-      'Your subscription did not accept this device',
-      detail: 'It requires a device id this app did send. Ask your subscription’s support.',
-    ));
+    throw const AppErrorException(
+      AppError(
+        'Your subscription did not accept this device',
+        detail:
+            'It requires a device id this app did send. Ask your subscription’s support.',
+      ),
+    );
   }
   if (res.statusCode ~/ 100 != 2) {
     throw http.ClientException(
-        'subscription fetch failed (${res.statusCode})', Uri(host: uri.host));
+      'subscription fetch failed (${res.statusCode})',
+      Uri(host: uri.host),
+    );
   }
   final (routing, probed) = await _providerRouting(uri, res, c, probeRouting);
 
@@ -225,7 +236,9 @@ Future<SubscriptionResponse> _withGroups(
   bool probe,
 ) async {
   if (!probe) return plain;
-  if (_hasGroups(plain.body)) return plain.renderingProbed ? plain : plain._with(renderingProbed: true);
+  if (_hasGroups(plain.body)) {
+    return plain.renderingProbed ? plain : plain._with(renderingProbed: true);
+  }
 
   for (final name in kClashRenderings) {
     final url = renderingUrl(uri, name);
@@ -264,7 +277,9 @@ Uri? renderingUrl(Uri uri, String name) {
     if (name != 'clash') return null;
     return uri.replace(pathSegments: ['clash', ...segments.skip(1)]);
   }
-  if (kSubscriptionRenderings.contains(segments.last.toLowerCase())) return null;
+  if (kSubscriptionRenderings.contains(segments.last.toLowerCase())) {
+    return null;
+  }
   return uri.replace(pathSegments: [...segments, name]);
 }
 
@@ -352,7 +367,6 @@ Future<(ProviderRouting?, bool)> _providerRouting(
   }
 }
 
-
 /// Header flags arrive as "true" (and, in the wild, as "1").
 bool _flag(Map<String, String> headers, String name) {
   final v = headers[name]?.trim().toLowerCase();
@@ -378,9 +392,14 @@ Future<ParsedSubscription?> fetchProxyProvider(
       throw http.ClientException('proxy list fetch failed (${res.statusCode})');
     }
     if (res.bodyBytes.length > kMaxProxyListBytes) {
-      throw http.ClientException('proxy list exceeds ${kMaxProxyListBytes ~/ 1024} KB');
+      throw http.ClientException(
+        'proxy list exceeds ${kMaxProxyListBytes ~/ 1024} KB',
+      );
     }
-    return parseSubscriptionBody(res.body, source: '${provider.name} @ ${uri.host}');
+    return parseSubscriptionBody(
+      res.body,
+      source: '${provider.name} @ ${uri.host}',
+    );
   } catch (e) {
     // Host only: a provider URL can carry a token of its own.
     Log.e('proxy list fetch failed', '${provider.name}: ${uri.host}: $e');

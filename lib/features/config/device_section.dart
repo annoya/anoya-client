@@ -22,10 +22,12 @@ class ThisDeviceSection extends StatelessWidget {
         if (id == null) return const SizedBox.shrink();
         return DeviceSection(
           label: id.label,
-          labelSubtitle: 'Identified to your subscription, which counts devices',
+          labelSubtitle:
+              'Identified to your subscription, which counts devices',
           idTitle: 'Device id',
           idValue: id.hwid,
-          hint: 'Your subscription counts devices by an id this app generates once and '
+          hint:
+              'Your subscription counts devices by an id this app generates once and '
               'keeps. Reinstalling makes a new one, which takes another slot.',
         );
       },
@@ -59,31 +61,35 @@ class DeviceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionHeader('THIS DEVICE'),
-      Card(
-        margin: kCardMargin,
-        child: Column(children: [
-          ListTile(
-            leading: const Icon(Icons.smartphone_outlined),
-            title: Text(label),
-            subtitle: Text(labelSubtitle),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader('THIS DEVICE'),
+        Card(
+          margin: kCardMargin,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.smartphone_outlined),
+                title: Text(label),
+                subtitle: Text(labelSubtitle),
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              IdentifierRow(title: idTitle, value: idValue),
+            ],
           ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          IdentifierRow(title: idTitle, value: idValue),
-        ]),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(kGutter, 10, kGutter, 0),
-        child: Text(
-          hint,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
-      ),
-    ]);
+        Padding(
+          padding: const EdgeInsets.fromLTRB(kGutter, 10, kGutter, 0),
+          child: Text(
+            hint,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

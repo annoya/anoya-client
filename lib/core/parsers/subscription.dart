@@ -7,7 +7,6 @@ import 'singbox_config.dart';
 import 'xray_config.dart';
 import 'share_link.dart';
 
-
 /// A subscription body: whatever a panel returns for a subscription URL.
 ///
 /// This file owns only the question "which format is this?" — the formats
@@ -81,7 +80,8 @@ class ParsedSubscription {
   /// Only meaningful when there is at least one entry: an empty list is not a
   /// message, it is an empty list.
   bool get allPlaceholders =>
-      locations.isNotEmpty && locations.every((l) => _isUnroutable('${l.proxy['server']}'));
+      locations.isNotEmpty &&
+      locations.every((l) => _isUnroutable('${l.proxy['server']}'));
 
   /// The text such a panel sent, which is the entries' own names.
   List<String> get placeholderLines => locations.map((l) => l.label).toList();
@@ -109,12 +109,12 @@ enum SubscriptionFormat {
   /// What the user is told it was. Only reached when nothing usable came out,
   /// so it names the format rather than describing it.
   String get label => switch (this) {
-        SubscriptionFormat.links => 'a link list',
-        SubscriptionFormat.clash => 'a Clash / mihomo subscription',
-        SubscriptionFormat.xray => 'an Xray JSON subscription',
-        SubscriptionFormat.singbox => 'a sing-box subscription',
-        SubscriptionFormat.unknown => 'something unrecognised',
-      };
+    SubscriptionFormat.links => 'a link list',
+    SubscriptionFormat.clash => 'a Clash / mihomo subscription',
+    SubscriptionFormat.xray => 'an Xray JSON subscription',
+    SubscriptionFormat.singbox => 'a sing-box subscription',
+    SubscriptionFormat.unknown => 'something unrecognised',
+  };
 }
 
 /// Parse a subscription body in whichever of the four formats it is.
@@ -185,7 +185,9 @@ ParsedSubscription _parseBody(String body) {
   // what tells a broken template from a single odd entry.
   if (malformed.isNotEmpty) {
     final total = malformed.values.fold(0, (a, b) => a + b);
-    final reasons = [for (final e in malformed.entries) '${e.key} ×${e.value}'].join(', ');
+    final reasons = [
+      for (final e in malformed.entries) '${e.key} ×${e.value}',
+    ].join(', ');
     Log.e('subscription: $total malformed link(s) skipped', reasons);
   }
   return ParsedSubscription(
@@ -201,8 +203,8 @@ ParsedSubscription _parseBody(String body) {
 }
 
 /// Just the servers, for the callers that only need those.
-List<Location> parseSubscription(String body) => parseSubscriptionBody(body).locations;
-
+List<Location> parseSubscription(String body) =>
+    parseSubscriptionBody(body).locations;
 
 /// What a pasted string on the add screen turned out to be — drives the live
 /// detection chip and enables Continue.
@@ -250,18 +252,27 @@ DetectedInput? detectInput(String raw) {
     final loc = parseProxyUri(t);
     return loc == null
         ? null
-        : DetectedInput(InputKind.link, '${loc.proxyType.toUpperCase()} server · ${loc.label}');
+        : DetectedInput(
+            InputKind.link,
+            '${loc.proxyType.toUpperCase()} server · ${loc.label}',
+          );
   }
   if (scheme == 'http' || scheme == 'https') {
     final u = Uri.tryParse(t);
     if (u == null || u.host.isEmpty) return null;
-    return DetectedInput(InputKind.subscriptionUrl, 'Subscription URL · ${u.host}');
+    return DetectedInput(
+      InputKind.subscriptionUrl,
+      'Subscription URL · ${u.host}',
+    );
   }
   final locs = parseSubscription(t);
   if (locs.isEmpty) return null;
   return locs.length == 1
       ? DetectedInput(InputKind.link, 'Server · ${locs.first.label}')
-      : DetectedInput(InputKind.subscriptionText, 'Subscription · ${locs.length} servers');
+      : DetectedInput(
+          InputKind.subscriptionText,
+          'Subscription · ${locs.length} servers',
+        );
 }
 
 /// Why [detectInput] found nothing usable in [raw], in one short phrase for
@@ -278,7 +289,9 @@ String? whyUnusable(String raw) {
   // The first token is the one that says what the user meant to paste; a
   // trailing stray word does not turn a broken vless link into "not a link".
   final first = t.split(RegExp(r'\s+')).first;
-  final scheme = first.contains('://') ? first.split('://').first.toLowerCase() : '';
+  final scheme = first.contains('://')
+      ? first.split('://').first.toLowerCase()
+      : '';
   if (scheme == 'vpn') return 'Not an Amnezia subscription key';
   if (kShareLinkSchemes.contains(scheme)) {
     final parsed = parseShareLink(first);
@@ -325,6 +338,9 @@ class ProxyProvider {
   /// goes to, so it does not arrive over a channel anyone can rewrite.
   bool get isValid {
     final uri = Uri.tryParse(url);
-    return name.isNotEmpty && uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
+    return name.isNotEmpty &&
+        uri != null &&
+        uri.scheme == 'https' &&
+        uri.host.isNotEmpty;
   }
 }

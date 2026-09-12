@@ -24,7 +24,8 @@ import 'package:vpn_client/state/providers.dart';
 /// dropped), and the catalog only offers what the local database contains.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late Directory tmp;
 
   setUp(() async {
@@ -35,18 +36,22 @@ void main() {
     );
     // The shared dir hosts the geo databases; everything else has no platform
     // side in tests.
-    messenger.setMockMethodCallHandler(
-      const MethodChannel('vpn/control'),
-      (call) async {
-        if (call.method == 'shared_dir') return tmp.path;
-        throw PlatformException(code: 'no platform in tests');
-      },
-    );
+    messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), (
+      call,
+    ) async {
+      if (call.method == 'shared_dir') return tmp.path;
+      throw PlatformException(code: 'no platform in tests');
+    });
   });
   tearDown(() {
     messenger.setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'), null);
-    messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), null);
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('vpn/control'),
+      null,
+    );
     tmp.deleteSync(recursive: true);
   });
 
@@ -54,16 +59,15 @@ void main() {
 
   group('geosite index scanner', () {
     test('reads category names and domain counts', () {
-      final dat = geoSiteList({
-        'YOUTUBE': 3,
-        'NETFLIX': 1,
-        'TELEGRAM': 2,
-      });
+      final dat = geoSiteList({'YOUTUBE': 3, 'NETFLIX': 1, 'TELEGRAM': 2});
 
       final scanned = GeositeIndex.scan(dat);
 
       // Sorted, lower-cased, with per-category domain counts.
-      expect([for (final c in scanned) c.name], ['netflix', 'telegram', 'youtube']);
+      expect(
+        [for (final c in scanned) c.name],
+        ['netflix', 'telegram', 'youtube'],
+      );
       expect(scanned.firstWhere((c) => c.name == 'youtube').domainCount, 3);
     });
 
@@ -85,11 +89,14 @@ void main() {
       // Both databases present = geo rules work; the .dat carries real
       // (synthetic) protobuf so the index scanner runs the honest path.
       File('${tmp.path}/geoip.metadb').writeAsBytesSync([1, 2, 3]);
-      File('${tmp.path}/GeoSite.dat').writeAsBytesSync(geoSiteList({
-        for (final c in categories ??
-            [for (final s in kServiceCatalog) s.category.toUpperCase()])
-          c: 2,
-      }));
+      File('${tmp.path}/GeoSite.dat').writeAsBytesSync(
+        geoSiteList({
+          for (final c
+              in categories ??
+                  [for (final s in kServiceCatalog) s.category.toUpperCase()])
+            c: 2,
+        }),
+      );
     }
 
     Future<void> settle(WidgetTester tester) async {
@@ -97,22 +104,26 @@ void main() {
         // runAsync turns the real event loop (file I/O in stores and the index
         // scan); the timed pump advances the fake clock so route/sheet
         // animations actually finish.
-        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 25)));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 25)),
+        );
         await tester.pump(const Duration(milliseconds: 50));
       }
     }
 
     Future<void> pump(WidgetTester tester) async {
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          vpnCoreProvider.overrideWithValue(_QuietCore()),
-          profilesControllerProvider.overrideWith(_NoProfiles.new),
-        ],
-        child: MaterialApp(
-          theme: buildAppTheme(Brightness.light),
-          home: const RuleSetEditorScreen(RuleSet.defaultId),
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            vpnCoreProvider.overrideWithValue(_QuietCore()),
+            profilesControllerProvider.overrideWith(_NoProfiles.new),
+          ],
+          child: MaterialApp(
+            theme: buildAppTheme(Brightness.light),
+            home: const RuleSetEditorScreen(RuleSet.defaultId),
+          ),
         ),
-      ));
+      );
       // _load does real file I/O (rule sets, geo status, the index scan).
       // testWidgets runs inside FakeAsync where real futures never complete on
       // their own — runAsync lets the actual event loop turn, then a pump
@@ -126,7 +137,9 @@ void main() {
         (await tester.runAsync(() => RuleSetStore.byId(RuleSet.defaultId)))!;
 
     Finder switchOf(String title) => find.descendant(
-        of: find.widgetWithText(SwitchListTile, title), matching: find.byType(Switch));
+      of: find.widgetWithText(SwitchListTile, title),
+      matching: find.byType(Switch),
+    );
 
     // The screen is one lazy list; rows outside the viewport have no elements
     // yet, so a finder-driven tap needs the list scrolled first.
@@ -135,29 +148,33 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('a toggle writes a real rule with the direction-implied action',
-        (tester) async {
-      await writeGeo();
-      await pump(tester);
+    testWidgets(
+      'a toggle writes a real rule with the direction-implied action',
+      (tester) async {
+        await writeGeo();
+        await pump(tester);
 
-      // Default set: mode full → picked things bypass the VPN.
-      await scrollBy(tester, -400);
-      await tester.tap(switchOf('YouTube'));
-      await settle(tester);
+        // Default set: mode full → picked things bypass the VPN.
+        await scrollBy(tester, -400);
+        await tester.tap(switchOf('YouTube'));
+        await settle(tester);
 
-      final set = await storedDefault(tester);
-      expect(set.rules, hasLength(1));
-      expect(set.rules.single.type, 'geosite');
-      expect(set.rules.single.value, 'youtube');
-      expect(set.rules.single.action, 'direct');
+        final set = await storedDefault(tester);
+        expect(set.rules, hasLength(1));
+        expect(set.rules.single.type, 'geosite');
+        expect(set.rules.single.value, 'youtube');
+        expect(set.rules.single.action, 'direct');
 
-      // Off removes it again.
-      await tester.tap(switchOf('YouTube'));
-      await settle(tester);
-      expect((await storedDefault(tester)).rules, isEmpty);
-    });
+        // Off removes it again.
+        await tester.tap(switchOf('YouTube'));
+        await settle(tester);
+        expect((await storedDefault(tester)).rules, isEmpty);
+      },
+    );
 
-    testWidgets('flipping the direction re-tags the selections', (tester) async {
+    testWidgets('flipping the direction re-tags the selections', (
+      tester,
+    ) async {
       await writeGeo();
       await pump(tester);
 
@@ -171,22 +188,40 @@ void main() {
 
       final set = await storedDefault(tester);
       expect(set.mode, RoutingMode.split);
-      expect(set.rules.single.action, 'proxy',
-          reason: 'the user changed what "selected" means, not what is selected — '
-              'the toggle must stay on, so the rule follows the new direction');
+      expect(
+        set.rules.single.action,
+        'proxy',
+        reason:
+            'the user changed what "selected" means, not what is selected — '
+            'the toggle must stay on, so the rule follows the new direction',
+      );
       expect(tester.widget<Switch>(switchOf('YouTube')).value, true);
     });
 
-    testWidgets('rules the catalog cannot express are surfaced, not hidden',
-        (tester) async {
+    testWidgets('rules the catalog cannot express are surfaced, not hidden', (
+      tester,
+    ) async {
       await writeGeo();
-      await tester.runAsync(() => RuleSetStore.save([
-            const RuleSet(id: RuleSet.defaultId, name: 'Default', rules: [
+      await tester.runAsync(
+        () => RuleSetStore.save([
+          const RuleSet(
+            id: RuleSet.defaultId,
+            name: 'Default',
+            rules: [
               RoutingRule(
-                  type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),
-              RoutingRule(type: 'ip-cidr', value: '10.0.0.0/8', action: 'direct'),
-            ]),
-          ]));
+                type: 'domain-suffix',
+                value: 'corp.example.com',
+                action: 'proxy',
+              ),
+              RoutingRule(
+                type: 'ip-cidr',
+                value: '10.0.0.0/8',
+                action: 'direct',
+              ),
+            ],
+          ),
+        ]),
+      );
       await pump(tester);
 
       expect(find.text('Advanced rules · 2'), findsOneWidget);
@@ -200,8 +235,9 @@ void main() {
       expect((await storedDefault(tester)).rules, hasLength(2));
     });
 
-    testWidgets('catalog entries missing from the database are hidden',
-        (tester) async {
+    testWidgets('catalog entries missing from the database are hidden', (
+      tester,
+    ) async {
       await writeGeo(categories: ['YOUTUBE', 'NETFLIX']);
       await pump(tester);
 
@@ -211,43 +247,53 @@ void main() {
       expect(find.widgetWithText(SwitchListTile, 'Telegram'), findsNothing);
     });
 
-    testWidgets('any category from the database can be added, not just the catalog',
-        (tester) async {
-      // 'yandex' exists in the database but not in the curated catalog.
-      await writeGeo(categories: ['YOUTUBE', 'YANDEX']);
-      await pump(tester);
+    testWidgets(
+      'any category from the database can be added, not just the catalog',
+      (tester) async {
+        // 'yandex' exists in the database but not in the curated catalog.
+        await writeGeo(categories: ['YOUTUBE', 'YANDEX']);
+        await pump(tester);
 
-      // The add row leads the section — reachable without scrolling.
-      await tester.tap(find.text('Add category'));
-      await settle(tester); // the sheet scans the database for its list
-      await tester.tap(find.text('yandex'));
-      await settle(tester);
+        // The add row leads the section — reachable without scrolling.
+        await tester.tap(find.text('Add category'));
+        await settle(tester); // the sheet scans the database for its list
+        await tester.tap(find.text('yandex'));
+        await settle(tester);
 
-      final set = await storedDefault(tester);
-      expect(set.rules.single.value, 'yandex');
-      expect(set.rules.single.action, 'direct',
-          reason: 'ad-hoc categories follow the direction like catalog toggles');
+        final set = await storedDefault(tester);
+        expect(set.rules.single.value, 'yandex');
+        expect(
+          set.rules.single.action,
+          'direct',
+          reason: 'ad-hoc categories follow the direction like catalog toggles',
+        );
 
-      // It lands right under the Add-category row that created it, with a
-      // delete button rather than a switch: added items are add/remove, and a
-      // switch whose off state deletes the row would be lying about that.
-      expect(find.text('yandex'), findsOneWidget);
-      await tester.tap(find.descendant(
-          of: find.widgetWithText(ListTile, 'yandex'),
-          matching: find.byIcon(Icons.delete_outline)));
-      await settle(tester);
+        // It lands right under the Add-category row that created it, with a
+        // delete button rather than a switch: added items are add/remove, and a
+        // switch whose off state deletes the row would be lying about that.
+        expect(find.text('yandex'), findsOneWidget);
+        await tester.tap(
+          find.descendant(
+            of: find.widgetWithText(ListTile, 'yandex'),
+            matching: find.byIcon(Icons.delete_outline),
+          ),
+        );
+        await settle(tester);
 
-      expect((await storedDefault(tester)).rules, isEmpty);
-      expect(find.text('yandex'), findsNothing);
-    });
+        expect((await storedDefault(tester)).rules, isEmpty);
+        expect(find.text('yandex'), findsNothing);
+      },
+    );
 
-    testWidgets('without the databases the catalog is gated behind download',
-        (tester) async {
+    testWidgets('without the databases the catalog is gated behind download', (
+      tester,
+    ) async {
       await pump(tester);
 
       expect(find.text('Download the site lists first'), findsOneWidget);
       final sw = tester.widget<SwitchListTile>(
-          find.widgetWithText(SwitchListTile, 'YouTube'));
+        find.widgetWithText(SwitchListTile, 'YouTube'),
+      );
       expect(sw.onChanged, isNull);
     });
 
@@ -263,35 +309,48 @@ void main() {
     });
   });
 
-
   // --- platform-gated rule types -------------------------------------------
 
   group('process rules', () {
     // Ordinary routing prefs/geo lookups run through the same tmp dir.
     Future<Routing> effective(List<RoutingRule> rules) async {
-      final container = ProviderContainer(overrides: [
-        vpnCoreProvider.overrideWithValue(_QuietCore()),
-        profilesControllerProvider.overrideWith(_NoProfiles.new),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          vpnCoreProvider.overrideWithValue(_QuietCore()),
+          profilesControllerProvider.overrideWith(_NoProfiles.new),
+        ],
+      );
       addTearDown(container.dispose);
       final ctrl = container.read(profilesControllerProvider.notifier);
-      final config = await ctrl.effectiveConfig(Profile(
-        id: 'p1',
-        type: ProfileType.link,
-        name: 'link',
-        routingEnabled: true,
-        routing: Routing(mode: 'full', rules: rules),
-        locations: [
-          Location(id: 'a', label: 'DE', proxy: const {'type': 'vless', 'server': '1.1.1.1'}),
-        ],
-      ));
+      final config = await ctrl.effectiveConfig(
+        Profile(
+          id: 'p1',
+          type: ProfileType.link,
+          name: 'link',
+          routingEnabled: true,
+          routing: Routing(mode: 'full', rules: rules),
+          locations: [
+            Location(
+              id: 'a',
+              label: 'DE',
+              proxy: const {'type': 'vless', 'server': '1.1.1.1'},
+            ),
+          ],
+        ),
+      );
       return config.routing!;
     }
 
-    const processRule =
-        RoutingRule(type: 'process-name', value: 'Slack', action: 'direct');
-    const domainRule =
-        RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy');
+    const processRule = RoutingRule(
+      type: 'process-name',
+      value: 'Slack',
+      action: 'direct',
+    );
+    const domainRule = RoutingRule(
+      type: 'domain-suffix',
+      value: 'corp.example.com',
+      action: 'proxy',
+    );
 
     tearDown(() => debugDefaultTargetPlatformOverride = null);
 
@@ -310,8 +369,12 @@ void main() {
 
       // A set authored on a Mac travels to the phone; the rule that cannot work
       // there must not reach the engine (nor switch find-process-mode on).
-      expect([for (final r in routing.rules) r.type], isNot(contains('process-name')));
-      expect([for (final r in routing.rules) r.type], contains('domain-suffix'));
+      expect([
+        for (final r in routing.rules) r.type,
+      ], isNot(contains('process-name')));
+      expect([
+        for (final r in routing.rules) r.type,
+      ], contains('domain-suffix'));
     });
   });
 }
@@ -329,7 +392,9 @@ Uint8List geoSiteList(Map<String, int> domainsPerCategory) {
       // irrelevant to the scanner, only the field count matters.
       final domain = BytesBuilder();
       domain.add([0x08, 2]); // type = 2 (Domain.RootDomain)
-      domain.add(_lengthDelimited(2, Uint8List.fromList('d$i.example.com'.codeUnits)));
+      domain.add(
+        _lengthDelimited(2, Uint8List.fromList('d$i.example.com'.codeUnits)),
+      );
       entry.add(_lengthDelimited(2, domain.toBytes()));
     }
     out.add(_lengthDelimited(1, entry.toBytes()));
@@ -370,5 +435,4 @@ class _QuietCore extends VpnCore {
 
   @override
   Future<void> disconnect() async {}
-
 }

@@ -15,16 +15,19 @@ class RefreshCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        margin: kCardMargin,
-        child: ListTile(
-          title: const Text('Last refreshed'),
-          subtitle: Text(refreshedAtLabel(profile)),
-          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-            _RefreshEveryButton(profile: profile),
-            RefreshButton(profile: profile),
-          ]),
-        ),
-      );
+    margin: kCardMargin,
+    child: ListTile(
+      title: const Text('Last refreshed'),
+      subtitle: Text(refreshedAtLabel(profile)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _RefreshEveryButton(profile: profile),
+          RefreshButton(profile: profile),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Sets how often this configuration re-reads itself, in the same unit the
@@ -41,10 +44,10 @@ class _RefreshEveryButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => IconButton(
-        icon: const Icon(Icons.settings_outlined, size: 20),
-        tooltip: 'Refresh every',
-        onPressed: () => _edit(context, ref),
-      );
+    icon: const Icon(Icons.settings_outlined, size: 20),
+    tooltip: 'Refresh every',
+    onPressed: () => _edit(context, ref),
+  );
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
     final asked = profile.providerInfo?.updateInterval;
@@ -74,7 +77,6 @@ class _RefreshEveryButton extends ConsumerWidget {
   }
 }
 
-
 String refreshedAtLabel(Profile p) {
   final at = p.refreshedAt;
   final every = _cadence(p);
@@ -83,10 +85,10 @@ String refreshedAtLabel(Profile p) {
   final ago = d.inDays > 0
       ? '${d.inDays} day${d.inDays > 1 ? 's' : ''} ago'
       : d.inHours > 0
-          ? '${d.inHours} hour${d.inHours > 1 ? 's' : ''} ago'
-          : d.inMinutes > 0
-              ? '${d.inMinutes} min ago'
-              : 'just now';
+      ? '${d.inHours} hour${d.inHours > 1 ? 's' : ''} ago'
+      : d.inMinutes > 0
+      ? '${d.inMinutes} min ago'
+      : 'just now';
   return '$ago · $every';
 }
 
@@ -100,4 +102,3 @@ String _cadence(Profile p) {
   final days = gap.inDays;
   return 'auto every ${days == 1 ? 'day' : '$days days'}';
 }
-

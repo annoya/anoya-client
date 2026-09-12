@@ -24,33 +24,33 @@ class Favorites {
   }
 
   Favorites toggleProfile(String profileId) => Favorites(
-        profiles: {...profiles}..toggle(profileId),
-        locations: locations,
-      );
+    profiles: {...profiles}..toggle(profileId),
+    locations: locations,
+  );
 
   Favorites toggleLocation(String profileId, String locationId) => Favorites(
-        profiles: profiles,
-        locations: {...locations}..toggle(locationKey(profileId, locationId)),
-      );
+    profiles: profiles,
+    locations: {...locations}..toggle(locationKey(profileId, locationId)),
+  );
 
   /// Drop everything belonging to a removed configuration.
   Favorites forgetProfile(String profileId) => Favorites(
-        profiles: {...profiles}..remove(profileId),
-        locations: {
-          for (final key in locations)
-            if (!key.startsWith('$profileId/')) key,
-        },
-      );
+    profiles: {...profiles}..remove(profileId),
+    locations: {
+      for (final key in locations)
+        if (!key.startsWith('$profileId/')) key,
+    },
+  );
 
   factory Favorites.fromJson(Map<String, dynamic> j) => Favorites(
-        profiles: (j['profiles'] as List<dynamic>? ?? []).cast<String>().toSet(),
-        locations: (j['locations'] as List<dynamic>? ?? []).cast<String>().toSet(),
-      );
+    profiles: (j['profiles'] as List<dynamic>? ?? []).cast<String>().toSet(),
+    locations: (j['locations'] as List<dynamic>? ?? []).cast<String>().toSet(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'profiles': profiles.toList(),
-        'locations': locations.toList(),
-      };
+    'profiles': profiles.toList(),
+    'locations': locations.toList(),
+  };
 }
 
 extension on Set<String> {
@@ -61,8 +61,12 @@ class FavoritesStore {
   static final _store = JsonFileStore('favorites.json');
 
   static Future<Favorites> load() => _store.load(
-      (j) => j is Map ? Favorites.fromJson(Map<String, dynamic>.from(j)) : const Favorites(),
-      const Favorites());
+    (j) => j is Map
+        ? Favorites.fromJson(Map<String, dynamic>.from(j))
+        : const Favorites(),
+    const Favorites(),
+  );
 
-  static Future<void> save(Favorites favorites) => _store.save(favorites.toJson());
+  static Future<void> save(Favorites favorites) =>
+      _store.save(favorites.toJson());
 }

@@ -28,70 +28,83 @@ class LocalRoutingCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sets = ref.watch(ruleSetsProvider).value ?? const <RuleSet>[];
-    final ruleSet =
-        sets.where((s) => s.id == (profile.ruleSetId ?? RuleSet.defaultId)).firstOrNull;
+    final ruleSet = sets
+        .where((s) => s.id == (profile.ruleSetId ?? RuleSet.defaultId))
+        .firstOrNull;
     final ctrl = ref.read(profilesControllerProvider.notifier);
 
     return Card(
       margin: kCardMargin,
-      child: Column(children: [
-        SwitchListTile(
-          secondary: const Icon(Icons.alt_route),
-          title: const Text('Routing'),
-          // The subtitle is the policy in force, not a description of the
-          // switch: the set itself is named in the row below, and repeating it
-          // here would say nothing new.
-          subtitle: Text(overriddenBy != null
-              ? 'Replaced by $overriddenBy'
-              : localRoutingSummary(profile, ruleSet)),
-          value: profile.routingEnabled,
-          onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
-        ),
-        const Divider(height: 1, indent: 16, endIndent: 16),
-        // Kept visible while off — hiding it would make the switch look like it
-        // controls nothing, and the chosen set is remembered for when routing
-        // comes back on.
-        Opacity(
-          opacity: profile.routingEnabled ? 1 : 0.38,
-          child: ListTile(
-            leading: const Icon(Icons.layers_outlined),
-            title: const Text('Rule set'),
-            subtitle: Text(ruleSet?.name ?? 'Default'),
-            trailing: const Icon(Icons.expand_more),
-            // Reachable with routing off: picking a set is how it gets turned on.
-            onTap: () => _pick(context, ref, sets),
+      child: Column(
+        children: [
+          SwitchListTile(
+            secondary: const Icon(Icons.alt_route),
+            title: const Text('Routing'),
+            // The subtitle is the policy in force, not a description of the
+            // switch: the set itself is named in the row below, and repeating it
+            // here would say nothing new.
+            subtitle: Text(
+              overriddenBy != null
+                  ? 'Replaced by $overriddenBy'
+                  : localRoutingSummary(profile, ruleSet),
+            ),
+            value: profile.routingEnabled,
+            onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
           ),
-        ),
-      ]),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          // Kept visible while off — hiding it would make the switch look like it
+          // controls nothing, and the chosen set is remembered for when routing
+          // comes back on.
+          Opacity(
+            opacity: profile.routingEnabled ? 1 : 0.38,
+            child: ListTile(
+              leading: const Icon(Icons.layers_outlined),
+              title: const Text('Rule set'),
+              subtitle: Text(ruleSet?.name ?? 'Default'),
+              trailing: const Icon(Icons.expand_more),
+              // Reachable with routing off: picking a set is how it gets turned on.
+              onTap: () => _pick(context, ref, sets),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-
-  Future<void> _pick(BuildContext context, WidgetRef ref, List<RuleSet> sets) async {
+  Future<void> _pick(
+    BuildContext context,
+    WidgetRef ref,
+    List<RuleSet> sets,
+  ) async {
     final picked = await pickOption<String>(
       context,
       title: 'Rule set',
       selected: profile.ruleSetId ?? RuleSet.defaultId,
       options: sets
-          .map((s) => Option(
-                s.id,
-                s.name,
-                subtitle:
-                    '${s.mode.label} · ${s.rules.isEmpty ? 'no rules' : '${s.rules.length} rules'}',
-                leading: const Icon(Icons.layers_outlined),
-              ))
+          .map(
+            (s) => Option(
+              s.id,
+              s.name,
+              subtitle:
+                  '${s.mode.label} · ${s.rules.isEmpty ? 'no rules' : '${s.rules.length} rules'}',
+              leading: const Icon(Icons.layers_outlined),
+            ),
+          )
           .toList(),
     );
     if (picked != null) {
-      await ref.read(profilesControllerProvider.notifier).setRuleSet(profile.id, picked);
+      await ref
+          .read(profilesControllerProvider.notifier)
+          .setRuleSet(profile.id, picked);
     }
   }
 }
 
 /// Opens the read-only view of a policy the configuration did not choose.
 void openManagedRouting(BuildContext context, Routing routing) {
-  Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ManagedPolicyScreen(routing)));
+  Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => ManagedPolicyScreen(routing)));
 }
 
 /// The policy a device's own rule set puts in force, in one line.
@@ -110,17 +123,20 @@ class ManagedRoutingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        margin: kCardMargin,
-        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
-        child: ListTile(
-          leading: const Icon(Icons.business_outlined),
-          title: const Text('Managed by your organization'),
-          subtitle: Text(
-              '${routing.mode == 'split' ? 'Split' : 'Full tunnel'} · ${routing.rules.length} rules, set on the server'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => openManagedRouting(context, routing),
-        ),
-      );
+    margin: kCardMargin,
+    color: Theme.of(
+      context,
+    ).colorScheme.primaryContainer.withValues(alpha: 0.35),
+    child: ListTile(
+      leading: const Icon(Icons.business_outlined),
+      title: const Text('Managed by your organization'),
+      subtitle: Text(
+        '${routing.mode == 'split' ? 'Split' : 'Full tunnel'} · ${routing.rules.length} rules, set on the server',
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => openManagedRouting(context, routing),
+    ),
+  );
 }
 
 /// The one row that stands in for everything about where traffic goes and who
@@ -145,32 +161,40 @@ class RoutingRow extends ConsumerWidget {
       children: [
         const SectionHeader('ROUTING'),
         Card(
-      margin: kCardMargin,
-      child: ListTile(
-        leading: const Icon(Icons.alt_route),
-        title: const Text('Routing'),
-        subtitle: Text.rich(TextSpan(children: [
-          TextSpan(text: '${_routing(ref)} · '),
-          // The refusals were just taken out of a log file nobody reads.
-          // Leaving them two taps away would put them back — in words, and in
-          // the one place a passer-by looks.
-          if (plan.dropped.isEmpty)
-            // "DNS app default" reads as a typo; the app is the one origin
-            // that needs a preposition of its own.
-            TextSpan(
-                text: plan.usingFallback
-                    ? 'DNS by the app'
-                    : 'DNS ${dnsOriginLabel(profile, plan)}')
-          else
-            TextSpan(
-              text: 'DNS: ${plan.dropped.length} refused',
-              style: TextStyle(color: cs.error),
+          margin: kCardMargin,
+          child: ListTile(
+            leading: const Icon(Icons.alt_route),
+            title: const Text('Routing'),
+            subtitle: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: '${_routing(ref)} · '),
+                  // The refusals were just taken out of a log file nobody reads.
+                  // Leaving them two taps away would put them back — in words, and in
+                  // the one place a passer-by looks.
+                  if (plan.dropped.isEmpty)
+                    // "DNS app default" reads as a typo; the app is the one origin
+                    // that needs a preposition of its own.
+                    TextSpan(
+                      text: plan.usingFallback
+                          ? 'DNS by the app'
+                          : 'DNS ${dnsOriginLabel(profile, plan)}',
+                    )
+                  else
+                    TextSpan(
+                      text: 'DNS: ${plan.dropped.length} refused',
+                      style: TextStyle(color: cs.error),
+                    ),
+                ],
+              ),
             ),
-        ])),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => RoutingConfigScreen(profileId: profile.id))),
-      ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => RoutingConfigScreen(profileId: profile.id),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -186,11 +210,14 @@ class RoutingRow extends ConsumerWidget {
     }
     if (profile.providerRouting != null && profile.providerRoutingEnabled) {
       return providerRoutingSummary(
-          profile, ref.watch(providerRuleListsProvider(profile.id)).value);
+        profile,
+        ref.watch(providerRuleListsProvider(profile.id)).value,
+      );
     }
     final sets = ref.watch(ruleSetsProvider).value ?? const <RuleSet>[];
-    final set =
-        sets.where((s) => s.id == (profile.ruleSetId ?? RuleSet.defaultId)).firstOrNull;
+    final set = sets
+        .where((s) => s.id == (profile.ruleSetId ?? RuleSet.defaultId))
+        .firstOrNull;
     return localRoutingSummary(profile, set);
   }
 }

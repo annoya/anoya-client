@@ -27,8 +27,11 @@ void main() {
         expect(described.line, isNot(contains('Exception')));
         expect(described.line, isNot(contains('sql:')));
         expect(described.title, isNotEmpty);
-        expect(described.detail, isNotNull,
-            reason: 'the second line is what tells the user what to do');
+        expect(
+          described.detail,
+          isNotNull,
+          reason: 'the second line is what tells the user what to do',
+        );
       }
     });
 
@@ -36,35 +39,52 @@ void main() {
       // The sign-in and add screens throw these for their own guard
       // conditions; a FormatException in their place used to come out as
       // "this doesn't look like a link".
-      const worded = AppError('Enter the server address first', detail: 'Then try again.');
+      const worded = AppError(
+        'Enter the server address first',
+        detail: 'Then try again.',
+      );
       final described = describeError(const AppErrorException(worded));
       expect(described.title, worded.title);
       expect(described.detail, worded.detail);
     });
 
     test('names the subject so the user knows what to fix', () {
-      final e = describeError(const SocketException('nope'), subject: 'de1.example.com');
+      final e = describeError(
+        const SocketException('nope'),
+        subject: 'de1.example.com',
+      );
       expect(e.detail, contains('de1.example.com'));
       // Without a subject the sentence still reads as a sentence.
-      expect(describeError(const SocketException('nope')).detail, contains('the server'));
+      expect(
+        describeError(const SocketException('nope')).detail,
+        contains('the server'),
+      );
     });
 
     test('a missing tunnel service is named, not blamed on a VPN profile', () {
       // Windows: the tunnel is a service the app does not own. The generic
       // channel-error text sends the user to "system settings" for a VPN
       // profile that does not exist there.
-      final absent = describeError(PlatformException(code: 'service_unavailable'));
+      final absent = describeError(
+        PlatformException(code: 'service_unavailable'),
+      );
       expect(absent.title, 'The tunnel service isn’t running');
       expect(absent.detail, contains('AnnoyaTunnel'));
       expect(absent.detail, isNot(contains('profile')));
-      final gone = describeError(PlatformException(code: 'service_disconnected'));
+      final gone = describeError(
+        PlatformException(code: 'service_disconnected'),
+      );
       expect(gone.title, 'The tunnel service stopped');
       expect(gone.detail, contains('connect again'));
     });
 
     test('a bad password is not the same message as an expired session', () {
-      final wrong = describeError(ApiException(401, 'invalid_credentials', 'unauthorized'));
-      final expired = describeError(ApiException(401, 'token_expired', 'unauthorized'));
+      final wrong = describeError(
+        ApiException(401, 'invalid_credentials', 'unauthorized'),
+      );
+      final expired = describeError(
+        ApiException(401, 'token_expired', 'unauthorized'),
+      );
       expect(wrong.title, 'Wrong username or password');
       expect(expired.title, 'Session expired');
     });
@@ -75,33 +95,49 @@ void main() {
       // "deactivated" is the exact string the server stores — a renamed case
       // here silently downgrades the message to the generic fallback.
       expect(describeAccountStatus('deactivated').title, 'Access disabled');
-      expect(describeAccountStatus('on_hold').title, 'Subscription not started');
+      expect(
+        describeAccountStatus('on_hold').title,
+        'Subscription not started',
+      );
       // Unknown states still read as a sentence rather than an enum.
-      expect(describeAccountStatus('some_new_state').title, 'Account is some new state');
+      expect(
+        describeAccountStatus('some_new_state').title,
+        'Account is some new state',
+      );
     });
   });
 
   group('presentation', () {
-    testWidgets('a toast disappears on its own and closes on tap', (tester) async {
-      await tester.pumpWidget(MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => showToast(context, 'Couldn’t refresh the subscription'),
-              child: const Text('go'),
+    testWidgets('a toast disappears on its own and closes on tap', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () =>
+                    showToast(context, 'Couldn’t refresh the subscription'),
+                child: const Text('go'),
+              ),
             ),
           ),
         ),
-      ));
+      );
 
       await tester.tap(find.text('go'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400)); // let it slide in
       expect(find.text('Couldn’t refresh the subscription'), findsOneWidget);
       // No cross: there is nothing to close by hand about a message that leaves.
-      expect(find.descendant(of: find.byType(SnackBar), matching: find.byIcon(Icons.close)),
-          findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.byIcon(Icons.close),
+        ),
+        findsNothing,
+      );
 
       await tester.tap(find.text('Couldn’t refresh the subscription'));
       await tester.pumpAndSettle();
@@ -117,29 +153,40 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
     });
 
-    testWidgets('an error dialog blocks the screen until the cross is pressed',
-        (tester) async {
+    testWidgets('an error dialog blocks the screen until the cross is pressed', (
+      tester,
+    ) async {
       var dismissed = false;
       var connectTaps = 0;
-      await tester.pumpWidget(MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => Column(children: [
-              TextButton(onPressed: () => connectTaps++, child: const Text('Connect')),
-              TextButton(
-                onPressed: () => showErrorDialog(
-                  context,
-                  const AppError('Couldn’t reach the server',
-                      detail: 'de1.example.com didn’t answer. Check your network.'),
-                  onDismiss: () => dismissed = true,
-                ),
-                child: const Text('fail'),
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => Column(
+                children: [
+                  TextButton(
+                    onPressed: () => connectTaps++,
+                    child: const Text('Connect'),
+                  ),
+                  TextButton(
+                    onPressed: () => showErrorDialog(
+                      context,
+                      const AppError(
+                        'Couldn’t reach the server',
+                        detail:
+                            'de1.example.com didn’t answer. Check your network.',
+                      ),
+                      onDismiss: () => dismissed = true,
+                    ),
+                    child: const Text('fail'),
+                  ),
+                ],
               ),
-            ]),
+            ),
           ),
         ),
-      ));
+      );
 
       await tester.tap(find.text('fail'));
       await tester.pumpAndSettle();
@@ -148,10 +195,14 @@ void main() {
 
       // Ordinary dialog surface: modality marks the problem, not a red sheet.
       final scheme = buildAppTheme(Brightness.light).colorScheme;
-      final material = tester.widget<Material>(find.descendant(
-        of: find.byType(Dialog),
-        matching: find.byType(Material),
-      ).first);
+      final material = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
       expect(material.color, isNot(scheme.errorContainer));
       expect(material.color, isNot(scheme.error));
 
@@ -171,12 +222,15 @@ void main() {
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();
       expect(find.text('Couldn’t reach the server'), findsNothing);
-      expect(dismissed, true, reason: 'the caller must be able to clear its error');
+      expect(
+        dismissed,
+        true,
+        reason: 'the caller must be able to clear its error',
+      );
 
       // And the screen works again.
       await tester.tap(find.text('Connect'));
       expect(connectTaps, 1);
     });
-
   });
 }

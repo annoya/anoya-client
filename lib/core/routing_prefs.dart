@@ -1,5 +1,3 @@
-
-
 import 'norm_config.dart';
 import 'dns_plan.dart';
 import 'json_file_store.dart';
@@ -56,43 +54,45 @@ class RoutingPrefs {
     String? geositeUrl,
     bool? geoAutoUpdate,
     DateTime? geoUpdatedAt,
-  }) =>
-      RoutingPrefs(
-        lanDirect: lanDirect ?? this.lanDirect,
-        defaultDns: defaultDns ?? this.defaultDns,
-        geoipUrl: geoipUrl ?? this.geoipUrl,
-        geositeUrl: geositeUrl ?? this.geositeUrl,
-        geoAutoUpdate: geoAutoUpdate ?? this.geoAutoUpdate,
-        geoUpdatedAt: geoUpdatedAt ?? this.geoUpdatedAt,
-      );
+  }) => RoutingPrefs(
+    lanDirect: lanDirect ?? this.lanDirect,
+    defaultDns: defaultDns ?? this.defaultDns,
+    geoipUrl: geoipUrl ?? this.geoipUrl,
+    geositeUrl: geositeUrl ?? this.geositeUrl,
+    geoAutoUpdate: geoAutoUpdate ?? this.geoAutoUpdate,
+    geoUpdatedAt: geoUpdatedAt ?? this.geoUpdatedAt,
+  );
 
   factory RoutingPrefs.fromJson(Map<String, dynamic> j) => RoutingPrefs(
-        lanDirect: j['lan_direct'] as bool? ?? true,
-        defaultDns: j['default_dns'] as String? ?? kFallbackNameserver,
-        geoipUrl: j['geoip_url'] as String? ?? defaultGeoipUrl,
-        geositeUrl: j['geosite_url'] as String? ?? defaultGeositeUrl,
-        geoAutoUpdate: j['geo_auto_update'] as bool? ?? true,
-        geoUpdatedAt: j['geo_updated_at'] != null
-            ? DateTime.tryParse(j['geo_updated_at'] as String)
-            : null,
-      );
+    lanDirect: j['lan_direct'] as bool? ?? true,
+    defaultDns: j['default_dns'] as String? ?? kFallbackNameserver,
+    geoipUrl: j['geoip_url'] as String? ?? defaultGeoipUrl,
+    geositeUrl: j['geosite_url'] as String? ?? defaultGeositeUrl,
+    geoAutoUpdate: j['geo_auto_update'] as bool? ?? true,
+    geoUpdatedAt: j['geo_updated_at'] != null
+        ? DateTime.tryParse(j['geo_updated_at'] as String)
+        : null,
+  );
 
   Map<String, dynamic> toJson() => {
-        'lan_direct': lanDirect,
-        'default_dns': defaultDns,
-        'geoip_url': geoipUrl,
-        'geosite_url': geositeUrl,
-        'geo_auto_update': geoAutoUpdate,
-        if (geoUpdatedAt != null) 'geo_updated_at': geoUpdatedAt!.toIso8601String(),
-      };
+    'lan_direct': lanDirect,
+    'default_dns': defaultDns,
+    'geoip_url': geoipUrl,
+    'geosite_url': geositeUrl,
+    'geo_auto_update': geoAutoUpdate,
+    if (geoUpdatedAt != null) 'geo_updated_at': geoUpdatedAt!.toIso8601String(),
+  };
 }
 
 class RoutingPrefsStore {
   static final _store = JsonFileStore('routing_prefs.json');
 
   static Future<RoutingPrefs> load() => _store.load(
-      (j) => j is Map ? RoutingPrefs.fromJson(Map<String, dynamic>.from(j)) : const RoutingPrefs(),
-      const RoutingPrefs());
+    (j) => j is Map
+        ? RoutingPrefs.fromJson(Map<String, dynamic>.from(j))
+        : const RoutingPrefs(),
+    const RoutingPrefs(),
+  );
 
   static Future<void> save(RoutingPrefs prefs) => _store.save(prefs.toJson());
 }

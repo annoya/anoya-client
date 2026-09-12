@@ -60,7 +60,11 @@ class PipeTransport implements ControlTransport {
     final id = ++_seq;
     final done = Completer<Object?>();
     _pending[id] = done;
-    link.write(utf8.encode('${jsonEncode({'id': id, 'method': method, 'args': args ?? {}})}\n'));
+    link.write(
+      utf8.encode(
+        '${jsonEncode({'id': id, 'method': method, 'args': args ?? {}})}\n',
+      ),
+    );
     return (await done.future) as T?;
   }
 
@@ -71,7 +75,9 @@ class PipeTransport implements ControlTransport {
     final now = _link;
     if (now == null) {
       throw PlatformException(
-          code: 'service_unavailable', message: 'the tunnel service is not running');
+        code: 'service_unavailable',
+        message: 'the tunnel service is not running',
+      );
     }
     return now;
   }
@@ -96,10 +102,14 @@ class PipeTransport implements ControlTransport {
       }
       _link = link;
       _partial.clear();
-      link.incoming.listen(_onBytes, onDone: _dropLink, onError: (Object e) {
-        Log.e('tunnel service link failed', e);
-        _dropLink();
-      });
+      link.incoming.listen(
+        _onBytes,
+        onDone: _dropLink,
+        onError: (Object e) {
+          Log.e('tunnel service link failed', e);
+          _dropLink();
+        },
+      );
     }();
   }
 
@@ -120,8 +130,12 @@ class PipeTransport implements ControlTransport {
     final waiting = _pending.values.toList();
     _pending.clear();
     for (final c in waiting) {
-      c.completeError(PlatformException(
-          code: 'service_disconnected', message: 'the tunnel service went away'));
+      c.completeError(
+        PlatformException(
+          code: 'service_disconnected',
+          message: 'the tunnel service went away',
+        ),
+      );
     }
     _emit('disconnected');
     _scheduleRetry();
@@ -160,7 +174,9 @@ class PipeTransport implements ControlTransport {
     if (done == null) return;
     final error = decoded['error'];
     if (error is String && error.isNotEmpty) {
-      done.completeError(PlatformException(code: 'service_error', message: error));
+      done.completeError(
+        PlatformException(code: 'service_error', message: error),
+      );
     } else {
       done.complete(decoded['result']);
     }

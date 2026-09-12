@@ -30,15 +30,16 @@ void main() {
   setUpAll(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-      (call) async => switch (call.method) {
-        'read' => store[call.arguments['key']],
-        'write' => store[call.arguments['key']] = call.arguments['value'] as String,
-        'delete' => store.remove(call.arguments['key']),
-        'readAll' => store,
-        _ => null,
-      },
-    );
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+          (call) async => switch (call.method) {
+            'read' => store[call.arguments['key']],
+            'write' =>
+              store[call.arguments['key']] = call.arguments['value'] as String,
+            'delete' => store.remove(call.arguments['key']),
+            'readAll' => store,
+            _ => null,
+          },
+        );
   });
 
   String envelope(Map<String, dynamic> doc) {
@@ -74,16 +75,14 @@ void main() {
     };
   }
 
-  Profile profile({
-    List<Location> locations = const [],
-    AmneziaState? state,
-  }) =>
+  Profile profile({List<Location> locations = const [], AmneziaState? state}) =>
       Profile(
         id: 'p-amnezia',
         type: ProfileType.amnezia,
         name: 'Amnezia Premium',
         locations: locations,
-        amnezia: state ??
+        amnezia:
+            state ??
             const AmneziaState(
               serviceType: 'amnezia-premium',
               serviceProtocol: 'awg',
@@ -98,25 +97,27 @@ void main() {
 
   group('what the gateway offers', () {
     test('premium becomes one location per country and protocol', () async {
-      final gw = _FakeGateway(accountBody: {
-        'active_device_count': 5,
-        'max_device_count': 7,
-        'subscription_end_date': '2027-06-26T13:27:49Z',
-        'available_countries': [
-          {
-            'server_country_code': 'de',
-            'server_country_code_l10n': 'de',
-            'server_country_name': 'Germany',
-            'available_protocols': ['awg', 'vless'],
-          },
-          {
-            'server_country_code': 'nl-ams-1',
-            'server_country_code_l10n': 'nl',
-            'server_country_name': 'Netherlands',
-            'available_protocols': ['awg'],
-          },
-        ],
-      });
+      final gw = _FakeGateway(
+        accountBody: {
+          'active_device_count': 5,
+          'max_device_count': 7,
+          'subscription_end_date': '2027-06-26T13:27:49Z',
+          'available_countries': [
+            {
+              'server_country_code': 'de',
+              'server_country_code_l10n': 'de',
+              'server_country_name': 'Germany',
+              'available_protocols': ['awg', 'vless'],
+            },
+            {
+              'server_country_code': 'nl-ams-1',
+              'server_country_code_l10n': 'nl',
+              'server_country_name': 'Netherlands',
+              'available_protocols': ['awg'],
+            },
+          ],
+        },
+      );
       final updated = await AmneziaSource(profile(), gateway: gw).refresh();
 
       // Two protocols in Germany, one in the Netherlands: three places to
@@ -137,17 +138,22 @@ void main() {
       // (their gateway wants a CAPTCHA we cannot show), and this covers the
       // same shape arriving from a premium key: report having nothing, do not
       // manufacture a place to connect through.
-      final gw = _FakeGateway(accountBody: {
-        'subscription_description': 'Nothing on offer right now.',
-      });
+      final gw = _FakeGateway(
+        accountBody: {
+          'subscription_description': 'Nothing on offer right now.',
+        },
+      );
       final updated = await AmneziaSource(profile(), gateway: gw).refresh();
 
       expect(updated.locations, isEmpty);
       expect(updated.amnezia!.offersLocations, isFalse);
       expect(updated.amnezia!.account.hasDeviceCount, isFalse);
       expect(updated.amnezia!.account.endsAt, isNull);
-      expect(updated.amnezia!.account.expired, isFalse,
-          reason: 'a subscription nobody dated has not run out');
+      expect(
+        updated.amnezia!.account.expired,
+        isFalse,
+        reason: 'a subscription nobody dated has not run out',
+      );
     });
 
     test('a free key is refused with a reason, not imported to fail later', () {
@@ -160,18 +166,23 @@ void main() {
       );
       expect(amneziaKeyUnsupported(free), contains('CAPTCHA'));
       expect(
-          amneziaKeyUnsupported(AmneziaVpnKey(
+        amneziaKeyUnsupported(
+          AmneziaVpnKey(
             name: 'Amnezia Premium',
             serviceType: 'amnezia-premium',
             serviceProtocol: 'awg',
             userCountryCode: 'ru',
             apiKey: 'k',
-          )),
-          isNull);
+          ),
+        ),
+        isNull,
+      );
     });
 
     test('a refusal is reported in words, not as an empty list', () async {
-      final gw = _FakeGateway(accountBody: _refusal(422, kSubscriptionInactive));
+      final gw = _FakeGateway(
+        accountBody: _refusal(422, kSubscriptionInactive),
+      );
       await expectLater(
         AmneziaSource(profile(), gateway: gw).refresh(),
         throwsA(isA<Object>()),
@@ -187,42 +198,50 @@ void main() {
         proxy: const {'type': 'wireguard', 'server': '198.51.100.7'},
         description: 'AmneziaWG',
       );
-      final gw = _FakeGateway(accountBody: {
-        'available_countries': [
-          {
-            'server_country_code': 'de',
-            'server_country_name': 'Germany',
-            'available_protocols': ['awg'],
-          },
-        ],
-      });
-      final updated =
-          await AmneziaSource(profile(locations: [held]), gateway: gw).refresh();
+      final gw = _FakeGateway(
+        accountBody: {
+          'available_countries': [
+            {
+              'server_country_code': 'de',
+              'server_country_name': 'Germany',
+              'available_protocols': ['awg'],
+            },
+          ],
+        },
+      );
+      final updated = await AmneziaSource(
+        profile(locations: [held]),
+        gateway: gw,
+      ).refresh();
       expect(updated.locations.single.proxy['server'], '198.51.100.7');
     });
   });
 
   group('issuing a server', () {
     Profile withPlace() => profile(
-          locations: [
-            Location(
-                id: 'amnezia_de_awg',
-                label: 'Germany',
-                proxy: const {},
-                description: 'AmneziaWG'),
-          ],
-          state: const AmneziaState(
-            serviceType: 'amnezia-premium',
-            serviceProtocol: 'awg',
-            userCountryCode: 'ru',
-          ),
-        );
+      locations: [
+        Location(
+          id: 'amnezia_de_awg',
+          label: 'Germany',
+          proxy: const {},
+          description: 'AmneziaWG',
+        ),
+      ],
+      state: const AmneziaState(
+        serviceType: 'amnezia-premium',
+        serviceProtocol: 'awg',
+        userCountryCode: 'ru',
+      ),
+    );
 
     test('a place with no server yet is resolved on demand', () async {
       final gw = _FakeGateway(
-          configBody: awgConfigAnswer(expiresAt: DateTime.utc(2030)));
-      final updated =
-          await AmneziaSource(withPlace(), gateway: gw).resolveSelection('amnezia_de_awg');
+        configBody: awgConfigAnswer(expiresAt: DateTime.utc(2030)),
+      );
+      final updated = await AmneziaSource(
+        withPlace(),
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
 
       expect(gw.configCalls, 1);
       expect(gw.lastCountry, 'de');
@@ -234,18 +253,27 @@ void main() {
       // back; the gateway only ever saw the public one.
       expect('${proxy['private-key']}'.contains('WIREGUARD_CLIENT'), isFalse);
       expect(gw.lastPublicKey, isNot(contains('WIREGUARD_CLIENT')));
-      expect(updated.dns, ['100.64.0.1'],
-          reason: 'the resolvers the server came with, not ours');
+      expect(updated.dns, [
+        '100.64.0.1',
+      ], reason: 'the resolvers the server came with, not ours');
     });
 
     test('a server still in date is used as it is', () async {
       final gw = _FakeGateway(configBody: awgConfigAnswer());
-      final resolved = await AmneziaSource(withPlace(), gateway: gw)
-          .resolveSelection('amnezia_de_awg');
-      final again = await AmneziaSource(resolved, gateway: gw)
-          .resolveSelection('amnezia_de_awg');
+      final resolved = await AmneziaSource(
+        withPlace(),
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
+      final again = await AmneziaSource(
+        resolved,
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
 
-      expect(gw.configCalls, 1, reason: 'nothing had expired, so nothing was asked');
+      expect(
+        gw.configCalls,
+        1,
+        reason: 'nothing had expired, so nothing was asked',
+      );
       expect(identical(again, resolved), isTrue);
     });
 
@@ -254,9 +282,14 @@ void main() {
       // fails in the least explicable way there is.
       final soon = DateTime.now().toUtc().add(const Duration(minutes: 2));
       final gw = _FakeGateway(configBody: awgConfigAnswer(expiresAt: soon));
-      final resolved = await AmneziaSource(withPlace(), gateway: gw)
-          .resolveSelection('amnezia_de_awg');
-      await AmneziaSource(resolved, gateway: gw).resolveSelection('amnezia_de_awg');
+      final resolved = await AmneziaSource(
+        withPlace(),
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
+      await AmneziaSource(
+        resolved,
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
       expect(gw.configCalls, 2);
     });
 
@@ -266,11 +299,16 @@ void main() {
       // one it has forgotten fails as silence — WireGuard does not answer a
       // peer it does not know.
       final gw = _FakeGateway(
-          configBody: awgConfigAnswer(expiresAt: DateTime.utc(2030)));
-      final resolved = await AmneziaSource(withPlace(), gateway: gw)
-          .resolveSelection('amnezia_de_awg');
-      await AmneziaSource(resolved, gateway: gw)
-          .resolveSelection('amnezia_de_awg', force: true);
+        configBody: awgConfigAnswer(expiresAt: DateTime.utc(2030)),
+      );
+      final resolved = await AmneziaSource(
+        withPlace(),
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
+      await AmneziaSource(
+        resolved,
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg', force: true);
       expect(gw.configCalls, 2);
     });
 
@@ -279,26 +317,42 @@ void main() {
       // already have taken back, and spending nothing to find out until the
       // user picks one again.
       final gw = _FakeGateway(configBody: awgConfigAnswer());
-      final two = profile(locations: [
-        Location(id: 'amnezia_de_awg', label: 'Germany', proxy: const {}),
-        Location(
+      final two = profile(
+        locations: [
+          Location(id: 'amnezia_de_awg', label: 'Germany', proxy: const {}),
+          Location(
             id: 'amnezia_nl_awg',
             label: 'Netherlands',
-            proxy: const {'type': 'wireguard', 'server': '203.0.113.9'}),
-      ]);
-      final updated = await AmneziaSource(two, gateway: gw)
-          .resolveSelection('amnezia_de_awg');
+            proxy: const {'type': 'wireguard', 'server': '203.0.113.9'},
+          ),
+        ],
+      );
+      final updated = await AmneziaSource(
+        two,
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
 
-      expect(updated.locations.firstWhere((l) => l.id == 'amnezia_de_awg').isPlaceholder,
-          isFalse);
-      expect(updated.locations.firstWhere((l) => l.id == 'amnezia_nl_awg').isPlaceholder,
-          isTrue, reason: 'the one we are not using is a name again');
+      expect(
+        updated.locations
+            .firstWhere((l) => l.id == 'amnezia_de_awg')
+            .isPlaceholder,
+        isFalse,
+      );
+      expect(
+        updated.locations
+            .firstWhere((l) => l.id == 'amnezia_nl_awg')
+            .isPlaceholder,
+        isTrue,
+        reason: 'the one we are not using is a name again',
+      );
     });
 
     test('a selection that is not ours is left alone', () async {
       final gw = _FakeGateway(configBody: awgConfigAnswer());
-      final same = await AmneziaSource(withPlace(), gateway: gw)
-          .resolveSelection('sub_1_whatever');
+      final same = await AmneziaSource(
+        withPlace(),
+        gateway: gw,
+      ).resolveSelection('sub_1_whatever');
       expect(gw.configCalls, 0);
       expect(identical(same, gw.lastProfile ?? same), isTrue);
     });
@@ -311,7 +365,11 @@ void main() {
     // be answerable without one. It was not, and the configuration screen
     // threw on open.
     final placeholder = Location(
-        id: 'amnezia_de_awg', label: 'Germany', proxy: const {}, description: 'AmneziaWG');
+      id: 'amnezia_de_awg',
+      label: 'Germany',
+      proxy: const {},
+      description: 'AmneziaWG',
+    );
 
     test('says nothing about itself rather than guessing', () {
       // The enumeration behind a server row answers even for an empty proxy —
@@ -319,17 +377,20 @@ void main() {
       // description (the protocol Amnezia offers the place under) is what these
       // actually carry, and that still wins.
       expect(placeholder.subtitle, 'AmneziaWG');
-      expect(
-          Location(id: 'x', label: 'y', proxy: const {}).subtitle, isEmpty);
+      expect(Location(id: 'x', label: 'y', proxy: const {}).subtitle, isEmpty);
     });
 
     test('is a placeholder, not a broken server', () {
       expect(placeholder.isPlaceholder, isTrue);
       expect(
-          Location(id: 'x', label: 'y', proxy: const {'type': 'vless'}).isPlaceholder,
-          isFalse);
+        Location(
+          id: 'x',
+          label: 'y',
+          proxy: const {'type': 'vless'},
+        ).isPlaceholder,
+        isFalse,
+      );
     });
-
   });
 
   group('what survives a refresh', () {
@@ -368,17 +429,19 @@ void main() {
     });
 
     test('and it survives being written down and read back', () {
-      final restored = Profile.fromJson(Profile(
-        id: 'p',
-        type: ProfileType.amnezia,
-        name: 'Amnezia Premium',
-        locations: const [],
-        amnezia: const AmneziaState(
-          serviceType: 'amnezia-premium',
-          serviceProtocol: 'awg',
-          userCountryCode: 'ru',
-        ),
-      ).toJson());
+      final restored = Profile.fromJson(
+        Profile(
+          id: 'p',
+          type: ProfileType.amnezia,
+          name: 'Amnezia Premium',
+          locations: const [],
+          amnezia: const AmneziaState(
+            serviceType: 'amnezia-premium',
+            serviceProtocol: 'awg',
+            userCountryCode: 'ru',
+          ),
+        ).toJson(),
+      );
       expect(restored.amnezia?.serviceType, 'amnezia-premium');
       expect(restored.amnezia?.userCountryCode, 'ru');
     });
@@ -421,20 +484,28 @@ void main() {
     // nobody to explain it.
     test('a picked place is issued before anything is stored', () async {
       final gw = _FakeGateway(configBody: awgConfigAnswer());
-      final before = profile(locations: [
-        Location(
+      final before = profile(
+        locations: [
+          Location(
             id: 'amnezia_de_awg',
             label: 'Germany',
             proxy: const {},
-            description: 'AmneziaWG'),
-      ]);
+            description: 'AmneziaWG',
+          ),
+        ],
+      );
       expect(before.locations.single.isPlaceholder, isTrue);
 
-      final after = await AmneziaSource(before, gateway: gw)
-          .resolveSelection('amnezia_de_awg');
+      final after = await AmneziaSource(
+        before,
+        gateway: gw,
+      ).resolveSelection('amnezia_de_awg');
 
-      expect(after.locations.single.isPlaceholder, isFalse,
-          reason: 'the stored configuration must carry a server, not a name');
+      expect(
+        after.locations.single.isPlaceholder,
+        isFalse,
+        reason: 'the stored configuration must carry a server, not a name',
+      );
       expect(after.locations.single.proxy['server'], '198.51.100.7');
     });
   });
@@ -454,50 +525,91 @@ void main() {
         final e = describeAmneziaError(AgwResponse(code, ''));
         expect(e.title, isNotEmpty);
         expect(e.detail, isNotNull, reason: 'code $code says what to do');
-        expect(e.title, isNot(contains('$code')),
-            reason: 'the number is for support, not for the sentence');
+        expect(
+          e.title,
+          isNot(contains('$code')),
+          reason: 'the number is for support, not for the sentence',
+        );
       }
     });
 
-    test('every refusal the gateway can write into its answer is read as the reference client reads it', () {
-      final cases = <(int, String, Map<String, Object>, String)>[
-        (429, '', {}, 'Too many requests'),
-        (409, '', {}, 'Device limit reached'),
-        (409, 'Trial subscription already used', {}, 'Trial already used'),
-        (404, '', {}, 'Subscription not found'),
-        (408, '', {}, 'The gateway timed out'),
-        (501, '', {}, 'The gateway requires a newer client'),
-        (422, kSubscriptionInactive, {}, 'Subscription expired'),
-        (402, 'refresh_captcha', {}, 'The CAPTCHA expired'),
-        (402, 'invalid_captcha', {}, 'The CAPTCHA was rejected'),
-        (402, 'rate_limit_exceeded', {}, 'The gateway asked for a CAPTCHA'),
-        (402, '', {'captcha_id': 'abc'}, 'The gateway asked for a CAPTCHA'),
-        (402, '', {}, 'Subscription not active'),
-      ];
-      for (final (status, message, extra, title) in cases) {
-        final res = AgwResponse(AgwStatus.ok, jsonEncode({..._refusal(status, message), ...extra}));
-        expect(res.ok, isFalse, reason: 'HTTP $status is a refusal, not an answer');
-        expect(describeAmneziaError(res).title, title, reason: 'HTTP $status "$message"');
-      }
-    });
+    test(
+      'every refusal the gateway can write into its answer is read as the reference client reads it',
+      () {
+        final cases = <(int, String, Map<String, Object>, String)>[
+          (429, '', {}, 'Too many requests'),
+          (409, '', {}, 'Device limit reached'),
+          (409, 'Trial subscription already used', {}, 'Trial already used'),
+          (404, '', {}, 'Subscription not found'),
+          (408, '', {}, 'The gateway timed out'),
+          (501, '', {}, 'The gateway requires a newer client'),
+          (422, kSubscriptionInactive, {}, 'Subscription expired'),
+          (402, 'refresh_captcha', {}, 'The CAPTCHA expired'),
+          (402, 'invalid_captcha', {}, 'The CAPTCHA was rejected'),
+          (402, 'rate_limit_exceeded', {}, 'The gateway asked for a CAPTCHA'),
+          (402, '', {'captcha_id': 'abc'}, 'The gateway asked for a CAPTCHA'),
+          (402, '', {}, 'Subscription not active'),
+        ];
+        for (final (status, message, extra, title) in cases) {
+          final res = AgwResponse(
+            AgwStatus.ok,
+            jsonEncode({..._refusal(status, message), ...extra}),
+          );
+          expect(
+            res.ok,
+            isFalse,
+            reason: 'HTTP $status is a refusal, not an answer',
+          );
+          expect(
+            describeAmneziaError(res).title,
+            title,
+            reason: 'HTTP $status "$message"',
+          );
+        }
+      },
+    );
 
-    test('an answer is one the gateway did not refuse, with or without a status', () {
-      expect(AgwResponse(AgwStatus.ok, '{"http_status": 200, "config": {}}').ok, isTrue);
-      expect(AgwResponse(AgwStatus.ok, '{"config": {}}').ok, isTrue,
-          reason: 'a document without http_status is read as the reference client reads it');
-      expect(AgwResponse(AgwStatus.network, '').ok, isFalse);
-    });
+    test(
+      'an answer is one the gateway did not refuse, with or without a status',
+      () {
+        expect(
+          AgwResponse(AgwStatus.ok, '{"http_status": 200, "config": {}}').ok,
+          isTrue,
+        );
+        expect(
+          AgwResponse(AgwStatus.ok, '{"config": {}}').ok,
+          isTrue,
+          reason:
+              'a document without http_status is read as the reference client reads it',
+        );
+        expect(AgwResponse(AgwStatus.network, '').ok, isFalse);
+      },
+    );
 
-    test('a code or status we have never seen is quoted rather than guessed at', () {
-      expect(describeAmneziaError(AgwResponse(9999, '')).detail, contains('9999'));
-      expect(describeAmneziaError(AgwResponse(AgwStatus.ok, '{"http_status": 418}')).detail,
-          contains('418'));
-    });
+    test(
+      'a code or status we have never seen is quoted rather than guessed at',
+      () {
+        expect(
+          describeAmneziaError(AgwResponse(9999, '')).detail,
+          contains('9999'),
+        );
+        expect(
+          describeAmneziaError(
+            AgwResponse(AgwStatus.ok, '{"http_status": 418}'),
+          ).detail,
+          contains('418'),
+        );
+      },
+    );
 
     test('the gateway’s own sentence wins over ours', () {
       // Their message is usually more specific than any status-to-text table.
       final e = describeAmneziaError(
-          AgwResponse(AgwStatus.ok, jsonEncode(_refusal(404, 'Account not found.'))));
+        AgwResponse(
+          AgwStatus.ok,
+          jsonEncode(_refusal(404, 'Account not found.')),
+        ),
+      );
       expect(e.title, 'Subscription not found');
       expect(e.detail, 'Account not found.');
     });
@@ -506,21 +618,21 @@ void main() {
 
 /// The sentence the gateway attaches to an inactive subscription, verbatim:
 /// the reference client matches it whole, and so does this one.
-const kSubscriptionInactive = 'Failed to retrieve subscription information. Is it activated?';
+const kSubscriptionInactive =
+    'Failed to retrieve subscription information. Is it activated?';
 
 /// A gateway document that refuses: the library hands these over as answers.
-Map<String, dynamic> _refusal(int status, String message) =>
-    {'http_status': status, if (message.isNotEmpty) 'message': message};
+Map<String, dynamic> _refusal(int status, String message) => {
+  'http_status': status,
+  if (message.isNotEmpty) 'message': message,
+};
 
 /// Stands in for the gateway. Records what it was asked, because when a
 /// question is asked is the thing these tests are about. Every answer is a
 /// transport success, as with the real library; a refusal is a body that says
 /// so.
 class _FakeGateway implements AmneziaGateway {
-  _FakeGateway({
-    this.accountBody = const {},
-    this.configBody = const {},
-  });
+  _FakeGateway({this.accountBody = const {}, this.configBody = const {}});
 
   final Map<String, dynamic> accountBody;
   final Map<String, dynamic> configBody;
@@ -540,8 +652,7 @@ class _FakeGateway implements AmneziaGateway {
     required String serviceType,
     required String userCountryCode,
     String subscriptionStatus = 'active',
-  }) async =>
-      AgwResponse(AgwStatus.ok, jsonEncode(accountBody));
+  }) async => AgwResponse(AgwStatus.ok, jsonEncode(accountBody));
 
   @override
   Future<AgwResponse> config({

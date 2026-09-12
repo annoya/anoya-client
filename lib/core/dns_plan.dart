@@ -72,7 +72,11 @@ const kDnsRespectRules = 'RULES';
 
 /// One resolver as the engine will actually use it.
 class DnsResolver {
-  const DnsResolver({required this.address, this.pin = '', this.pinIgnored = false});
+  const DnsResolver({
+    required this.address,
+    this.pin = '',
+    this.pinIgnored = false,
+  });
 
   /// The resolver itself, without any `#pin`.
   final String address;
@@ -94,10 +98,10 @@ class DnsResolver {
   /// answered here — it depends on which rule matches the resolver's own
   /// address — and claiming either answer would be a guess.
   String get routing => switch (pin) {
-        '' => 'direct',
-        kDnsRespectRules => 'follows your rules',
-        _ => 'through the tunnel',
-      };
+    '' => 'direct',
+    kDnsRespectRules => 'follows your rules',
+    _ => 'through the tunnel',
+  };
 
   /// True only when the query certainly leaves inside the tunnel. Drives the
   /// one place colour is used on the screen; the words above carry the meaning.
@@ -107,12 +111,12 @@ class DnsResolver {
   /// the line is whether anyone between the device and the resolver can read
   /// the query, so an unencrypted resolver says so plainly.
   String get protocol => switch (_scheme(address)) {
-        'https' || 'http' => 'DNS over HTTPS',
-        'tls' => 'DNS over TLS',
-        'quic' => 'DNS over QUIC',
-        'ts' || 'tailscale' => 'Tailscale',
-        _ => 'Plain, unencrypted',
-      };
+    'https' || 'http' => 'DNS over HTTPS',
+    'tls' => 'DNS over TLS',
+    'quic' => 'DNS over QUIC',
+    'ts' || 'tailscale' => 'Tailscale',
+    _ => 'Plain, unencrypted',
+  };
 }
 
 /// Why a resolver the configuration named will not be used.
@@ -143,19 +147,19 @@ class DnsDrop {
   final DnsDropReason reason;
 
   String get explanation => switch (reason) {
-        DnsDropReason.malformed =>
-          'Not a resolver address. Nothing from a subscription is put into the '
-              'engine configuration unchecked.',
-        DnsDropReason.unknownScheme =>
-          'The engine has no scheme for this. Keeping it would have failed the '
-              'whole configuration, not just this line.',
-        DnsDropReason.cannotCarry =>
-          'Plain DNS cannot travel through this server, and sending it outside '
-              'the tunnel would show every site you visit to your network.',
-        DnsDropReason.tooMany =>
-          'Past the $kMaxNameservers the engine is given. It asks them all at '
-              'once, so a longer list costs time without answering better.',
-      };
+    DnsDropReason.malformed =>
+      'Not a resolver address. Nothing from a subscription is put into the '
+          'engine configuration unchecked.',
+    DnsDropReason.unknownScheme =>
+      'The engine has no scheme for this. Keeping it would have failed the '
+          'whole configuration, not just this line.',
+    DnsDropReason.cannotCarry =>
+      'Plain DNS cannot travel through this server, and sending it outside '
+          'the tunnel would show every site you visit to your network.',
+    DnsDropReason.tooMany =>
+      'Past the $kMaxNameservers the engine is given. It asks them all at '
+          'once, so a longer list costs time without answering better.',
+  };
 }
 
 /// The whole DNS decision for one configuration on one tunnel.
@@ -217,7 +221,8 @@ DnsPlan dnsPlanFor({
       continue;
     }
     final at = address.indexOf('://');
-    if (at > 0 && !kMihomoDnsSchemes.contains(address.substring(0, at).toLowerCase())) {
+    if (at > 0 &&
+        !kMihomoDnsSchemes.contains(address.substring(0, at).toLowerCase())) {
       dropped.add(DnsDrop(ns, DnsDropReason.unknownScheme));
       continue;
     }
@@ -243,7 +248,9 @@ DnsPlan dnsPlanFor({
       dropped.add(DnsDrop(ns, DnsDropReason.cannotCarry));
       continue;
     }
-    resolvers.add(DnsResolver(address: address, pin: pin, pinIgnored: !honoured));
+    resolvers.add(
+      DnsResolver(address: address, pin: pin, pinIgnored: !honoured),
+    );
   }
 
   final usingFallback = resolvers.isEmpty;
@@ -259,7 +266,7 @@ DnsPlan dnsPlanFor({
           DnsResolver(
             address: fallback,
             pin: outbounds.contains(kTunnelOutbound) ? kTunnelOutbound : '',
-          )
+          ),
         ]
       : List<DnsResolver>.unmodifiable(resolvers);
   // Bootstrap comes from everything that survived sanitation, not only from
@@ -276,8 +283,10 @@ DnsPlan dnsPlanFor({
   // One line, not one per entry: a hostile body can name hundreds, and the
   // screen is where the detail belongs now.
   if (dropped.isNotEmpty) {
-    Log.e('dns: resolvers not used',
-        dropped.take(8).map((d) => '${d.address} (${d.reason.name})').join(', '));
+    Log.e(
+      'dns: resolvers not used',
+      dropped.take(8).map((d) => '${d.address} (${d.reason.name})').join(', '),
+    );
   }
 
   return DnsPlan(
@@ -342,8 +351,16 @@ class DnsPreset {
 const kDnsPresets = [
   DnsPreset('Cloudflare', 'https://1.1.1.1/dns-query'),
   DnsPreset('Google', 'https://8.8.8.8/dns-query'),
-  DnsPreset('Quad9', 'https://9.9.9.9/dns-query', 'filters known-malicious domains'),
-  DnsPreset('AdGuard', 'https://94.140.14.14/dns-query', 'filters ads and trackers'),
+  DnsPreset(
+    'Quad9',
+    'https://9.9.9.9/dns-query',
+    'filters known-malicious domains',
+  ),
+  DnsPreset(
+    'AdGuard',
+    'https://94.140.14.14/dns-query',
+    'filters ads and trackers',
+  ),
 ];
 
 /// The preset's name for an address, or the address itself when it is not one
@@ -363,8 +380,14 @@ String dnsPresetName(String address) {
 /// cannot enforce: a default addressed by hostname would need resolving before
 /// it could resolve, and there is nothing behind it to do that.
 String? dnsDefaultError(String address) {
-  final plan = dnsPlanFor(dns: [address], outbounds: const {}, carriesUdp: true);
-  if (plan.usingFallback) return plan.dropped.firstOrNull?.explanation ?? 'Not a resolver address.';
+  final plan = dnsPlanFor(
+    dns: [address],
+    outbounds: const {},
+    carriesUdp: true,
+  );
+  if (plan.usingFallback) {
+    return plan.dropped.firstOrNull?.explanation ?? 'Not a resolver address.';
+  }
   if (plan.needsBootstrapNameserver) {
     return 'Addressed by name, so it would need resolving before it could '
         'resolve anything. Use its IP address.';

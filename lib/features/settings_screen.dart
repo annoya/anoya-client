@@ -58,7 +58,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await _load(); // pushed screens may change prefs/sets/geo
     // Rule sets and geo databases both change what the tunnel would run, and
     // those screens don't know about profiles — resync here on the way back.
-    if (mounted) await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
+    if (mounted) {
+      await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
+    }
   }
 
   /// The one resolver the user owns: it applies only where nobody else chose.
@@ -77,9 +79,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       selected: kDnsPresets.any((p) => p.address == current) ? current : custom,
       options: [
         for (final p in kDnsPresets)
-          Option(p.address, p.name,
-              subtitle: p.note.isEmpty ? p.address : '${p.address} · ${p.note}'),
-        const Option(custom, 'Custom…', subtitle: 'any address the engine accepts'),
+          Option(
+            p.address,
+            p.name,
+            subtitle: p.note.isEmpty ? p.address : '${p.address} · ${p.note}',
+          ),
+        const Option(
+          custom,
+          'Custom…',
+          subtitle: 'any address the engine accepts',
+        ),
       ],
     );
     if (picked == null || !mounted) return;
@@ -106,7 +115,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       value = typed.trim();
     }
 
-    await ref.read(routingPrefsProvider.notifier).update((p) => p.copyWith(defaultDns: value));
+    await ref
+        .read(routingPrefsProvider.notifier)
+        .update((p) => p.copyWith(defaultDns: value));
     if (!mounted) return;
     // Only some configurations are affected, but the engine holds one config at
     // a time and the cheapest correct thing is to re-render the live one.
@@ -119,12 +130,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       title: 'Appearance',
       selected: ref.read(appPrefsProvider).themeMode,
       options: const [
-        Option(ThemeMode.system, 'System', subtitle: 'Follow the device setting'),
+        Option(
+          ThemeMode.system,
+          'System',
+          subtitle: 'Follow the device setting',
+        ),
         Option(ThemeMode.light, 'Light'),
         Option(ThemeMode.dark, 'Dark'),
       ],
     );
-    if (picked != null) await ref.read(appPrefsProvider.notifier).setThemeMode(picked);
+    if (picked != null) {
+      await ref.read(appPrefsProvider.notifier).setThemeMode(picked);
+    }
   }
 
   Future<void> _pickLanguage() async {
@@ -134,7 +151,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       selected: ref.read(appPrefsProvider).language,
       options: AppLanguage.values.map((l) => Option(l, l.label)).toList(),
     );
-    if (picked != null) await ref.read(appPrefsProvider.notifier).setLanguage(picked);
+    if (picked != null) {
+      await ref.read(appPrefsProvider.notifier).setLanguage(picked);
+    }
   }
 
   /// The way into a configuration's own settings. A single configuration is
@@ -176,12 +195,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       navigational: true,
       itemNoun: 'configuration',
       options: st.profiles
-          .map((p) => Option(
-                p.id,
-                p.name,
-                subtitle: profileKind(p),
-                leading: Icon(profileIcon(p.type)),
-              ))
+          .map(
+            (p) => Option(
+              p.id,
+              p.name,
+              subtitle: profileKind(p),
+              leading: Icon(profileIcon(p.type)),
+            ),
+          )
           .toList(),
     );
     if (picked != null && mounted) await _push(ConfigScreen(profileId: picked));
@@ -213,46 +234,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             // Apple's VPN protocol and has no counterpart elsewhere.
             const SectionHeader('CONNECTION'),
             if (hasAutoConnect)
-            Card(
-              margin: kCardMargin,
-              child: supportsBootAutoConnect
-                  // Windows: our own service starts with the machine, so the
-                  // facility is ours to offer — and one condition ("when
-                  // Windows starts") is a switch, not a screen.
-                  ? SwitchListTile(
-                      secondary: const Icon(Icons.bolt_outlined),
-                      title: const Text('Auto-connect'),
-                      subtitle: const Text('Connect when Windows starts'),
-                      value: autoConnect,
-                      onChanged: (v) => ref.read(autoConnectProvider.notifier).set(v),
-                    )
-                  : supportsOnDemand
-                  ? Column(children: [
-                      ListTile(
-                        leading: const Icon(Icons.bolt_outlined),
-                        title: const Text('On demand'),
-                        subtitle: Text(onDemand.statusLabel),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _push(const OnDemandScreen()),
-                      ),
-                      const Divider(height: 1, indent: 16, endIndent: 16),
-                      SwitchListTile(
-                        secondary: const Icon(Icons.bedtime_outlined),
-                        title: const Text('Disconnect on sleep'),
-                        subtitle: const Text('Drop the tunnel when the device sleeps'),
-                        value: onDemand.disconnectOnSleep,
+              Card(
+                margin: kCardMargin,
+                child: supportsBootAutoConnect
+                    // Windows: our own service starts with the machine, so the
+                    // facility is ours to offer — and one condition ("when
+                    // Windows starts") is a switch, not a screen.
+                    ? SwitchListTile(
+                        secondary: const Icon(Icons.bolt_outlined),
+                        title: const Text('Auto-connect'),
+                        subtitle: const Text('Connect when Windows starts'),
+                        value: autoConnect,
                         onChanged: (v) =>
-                            ref.read(onDemandProvider.notifier).setDisconnectOnSleep(v),
+                            ref.read(autoConnectProvider.notifier).set(v),
+                      )
+                    : supportsOnDemand
+                    ? Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.bolt_outlined),
+                            title: const Text('On demand'),
+                            subtitle: Text(onDemand.statusLabel),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => _push(const OnDemandScreen()),
+                          ),
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                          SwitchListTile(
+                            secondary: const Icon(Icons.bedtime_outlined),
+                            title: const Text('Disconnect on sleep'),
+                            subtitle: const Text(
+                              'Drop the tunnel when the device sleeps',
+                            ),
+                            value: onDemand.disconnectOnSleep,
+                            onChanged: (v) => ref
+                                .read(onDemandProvider.notifier)
+                                .setDisconnectOnSleep(v),
+                          ),
+                        ],
+                      )
+                    : ListTile(
+                        leading: const Icon(Icons.bolt_outlined),
+                        title: const Text('Always-on VPN'),
+                        subtitle: const Text(
+                          'A system switch — set in Android settings',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _push(const AlwaysOnScreen()),
                       ),
-                    ])
-                  : ListTile(
-                      leading: const Icon(Icons.bolt_outlined),
-                      title: const Text('Always-on VPN'),
-                      subtitle: const Text('A system switch — set in Android settings'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _push(const AlwaysOnScreen()),
-                    ),
-            ),
+              ),
             Card(
               margin: kCardMargin,
               child: ListTile(
@@ -261,7 +290,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 // The state of what is behind it, not a description of the
                 // screen: a row that says only "Advanced" has to be opened to
                 // learn whether the thing it holds is on.
-                subtitle: Text('Connection check · ${check.enabled ? 'on' : 'off'}'),
+                subtitle: Text(
+                  'Connection check · ${check.enabled ? 'on' : 'off'}',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _push(const AdvancedConnectionScreen()),
               ),
@@ -270,73 +301,83 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SectionHeader('ROUTING'),
             Card(
               margin: kCardMargin,
-              child: Column(children: [
-                SwitchListTile(
-                  secondary: const Icon(Icons.wifi),
-                  title: const Text('Local network direct'),
-                  subtitle: const Text('LAN traffic bypasses the VPN'),
-                  value: prefs.lanDirect,
-                  onChanged: (v) async {
-                    await ref
-                        .read(routingPrefsProvider.notifier)
-                        .update((p) => p.copyWith(lanDirect: v));
-                    // Changes the rendered rules, so the system's saved config
-                    // must follow.
-                    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
-                  },
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.layers_outlined),
-                  title: const Text('Rule sets'),
-                  subtitle: Text('$_setCount set${_setCount > 1 ? 's' : ''}'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _push(const RuleSetsScreen()),
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.language_outlined),
-                  title: const Text('Default DNS'),
-                  // Says when it applies, because most configurations bring
-                  // their own and this setting then does nothing at all.
-                  subtitle: Text('${dnsPresetName(prefs.defaultDns)} · '
-                      'used when a configuration brings none'),
-                  trailing: const Icon(Icons.expand_more),
-                  onTap: _pickDefaultDns,
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.public),
-                  title: const Text('GeoIP & GeoSite'),
-                  subtitle: Text(_geo.downloaded
-                      ? 'downloaded · ${formatBytes(_geo.geoipBytes + _geo.geositeBytes)}'
-                      : 'not downloaded'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _push(const GeoScreen()),
-                ),
-              ]),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.wifi),
+                    title: const Text('Local network direct'),
+                    subtitle: const Text('LAN traffic bypasses the VPN'),
+                    value: prefs.lanDirect,
+                    onChanged: (v) async {
+                      await ref
+                          .read(routingPrefsProvider.notifier)
+                          .update((p) => p.copyWith(lanDirect: v));
+                      // Changes the rendered rules, so the system's saved config
+                      // must follow.
+                      await ref
+                          .read(profilesControllerProvider.notifier)
+                          .syncTunnelConfig();
+                    },
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.layers_outlined),
+                    title: const Text('Rule sets'),
+                    subtitle: Text('$_setCount set${_setCount > 1 ? 's' : ''}'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _push(const RuleSetsScreen()),
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.language_outlined),
+                    title: const Text('Default DNS'),
+                    // Says when it applies, because most configurations bring
+                    // their own and this setting then does nothing at all.
+                    subtitle: Text(
+                      '${dnsPresetName(prefs.defaultDns)} · '
+                      'used when a configuration brings none',
+                    ),
+                    trailing: const Icon(Icons.expand_more),
+                    onTap: _pickDefaultDns,
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.public),
+                    title: const Text('GeoIP & GeoSite'),
+                    subtitle: Text(
+                      _geo.downloaded
+                          ? 'downloaded · ${formatBytes(_geo.geoipBytes + _geo.geositeBytes)}'
+                          : 'not downloaded',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _push(const GeoScreen()),
+                  ),
+                ],
+              ),
             ),
 
             const SectionHeader('GENERAL'),
             Card(
               margin: kCardMargin,
-              child: Column(children: [
-                ListTile(
-                  leading: const Icon(Icons.brightness_6_outlined),
-                  title: const Text('Appearance'),
-                  subtitle: Text(appPrefs.themeLabel),
-                  trailing: const Icon(Icons.expand_more),
-                  onTap: _pickTheme,
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ListTile(
-                  leading: const Icon(Icons.translate),
-                  title: const Text('Language'),
-                  subtitle: Text(appPrefs.language.label),
-                  trailing: const Icon(Icons.expand_more),
-                  onTap: _pickLanguage,
-                ),
-              ]),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.brightness_6_outlined),
+                    title: const Text('Appearance'),
+                    subtitle: Text(appPrefs.themeLabel),
+                    trailing: const Icon(Icons.expand_more),
+                    onTap: _pickTheme,
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.translate),
+                    title: const Text('Language'),
+                    subtitle: Text(appPrefs.language.label),
+                    trailing: const Icon(Icons.expand_more),
+                    onTap: _pickLanguage,
+                  ),
+                ],
+              ),
             ),
 
             const SectionHeader('DIAGNOSTICS'),

@@ -59,15 +59,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     // Watched by the piece that needs it, never the whole state: a notice or a
     // flag flipping used to rebuild every card on this screen.
-    final active = ref.watch(profilesControllerProvider.select((s) => s.active));
+    final active = ref.watch(
+      profilesControllerProvider.select((s) => s.active),
+    );
 
     // A connect failure floats above the screen until dismissed: the layout
     // must not jump, and a cause that vanished on its own tells the user
     // nothing about what to fix.
     ref.listen(profilesControllerProvider.select((s) => s.error), (_, error) {
       if (error != null) {
-        showErrorDialog(context, error,
-            onDismiss: ref.read(profilesControllerProvider.notifier).clearError);
+        showErrorDialog(
+          context,
+          error,
+          onDismiss: ref.read(profilesControllerProvider.notifier).clearError,
+        );
       }
     });
 
@@ -111,11 +116,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _statusStrip(active),
                     Expanded(
                       child: Center(
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          const StatusLabel(),
-                          const SizedBox(height: 28),
-                          ConnectButton(status: _status, onTap: _toggle),
-                        ]),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const StatusLabel(),
+                            const SizedBox(height: 28),
+                            ConnectButton(status: _status, onTap: _toggle),
+                          ],
+                        ),
                       ),
                     ),
                     ?_checkBanner(),
@@ -147,7 +155,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// too, since that is where they get turned on.
   Widget _statusStrip(Profile? active) {
     final onDemand = ref.watch(onDemandProvider);
-    final collectLogs = ref.watch(appPrefsProvider.select((p) => p.collectLogs));
+    final collectLogs = ref.watch(
+      appPrefsProvider.select((p) => p.collectLogs),
+    );
     final routing = ref.watch(routingStatusProvider).value;
 
     // "Enabled but not currently working" is its own state: showing it as off
@@ -162,7 +172,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     };
 
     return Padding(
-      padding: const EdgeInsets.only(left: kGutter, right: kGutter, top: 8, bottom: 4),
+      padding: const EdgeInsets.only(
+        left: kGutter,
+        right: kGutter,
+        top: 8,
+        bottom: 4,
+      ),
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: 8,
@@ -184,11 +199,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // it holds its place with an ellipsis instead of the chip appearing
             // a frame late and shifting the row.
             label: 'Routing · ${routing?.label ?? '…'}',
-            tone: routing == null || routing == RoutingStatus.off ? ChipTone.off : ChipTone.on,
+            tone: routing == null || routing == RoutingStatus.off
+                ? ChipTone.off
+                : ChipTone.on,
             // Routing is a per-configuration setting, so the chip leads to the
             // active configuration; with none added yet, to the sets themselves.
             onTap: () => _push(
-                active == null ? const RuleSetsScreen() : ConfigScreen(profileId: active.id)),
+              active == null
+                  ? const RuleSetsScreen()
+                  : ConfigScreen(profileId: active.id),
+            ),
           ),
           StatusChip(
             icon: Icons.description_outlined,
@@ -219,8 +239,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: ListTile(
         leading: Icon(Icons.warning_amber_outlined, color: warn),
         title: const Text('Connected, but nothing came back'),
-        subtitle: const Text('The check found no answer through this server. '
-            'Try another one, or open Advanced.'),
+        subtitle: const Text(
+          'The check found no answer through this server. '
+          'Try another one, or open Advanced.',
+        ),
         isThreeLine: true,
       ),
     );
@@ -234,17 +256,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final busy = ref.watch(sessionProvider.select((s) => s.busy));
     if (!onDemand.enabled || busy) return null;
     final (title, subtitle) = switch (onDemand) {
-      OnDemandPrefs(paused: true) => ('Auto-connect paused', 'Press Connect to arm it again'),
+      OnDemandPrefs(paused: true) => (
+        'Auto-connect paused',
+        'Press Connect to arm it again',
+      ),
       OnDemandPrefs(awaitingFirstConnect: true) => (
-          'Auto-connect not armed yet',
-          'Connect once so the system can take over',
-        ),
+        'Auto-connect not armed yet',
+        'Connect once so the system can take over',
+      ),
       _ => (null, null),
     };
     if (title == null) return null;
     return Card(
       margin: kCardMargin,
-      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
+      color: Theme.of(
+        context,
+      ).colorScheme.primaryContainer.withValues(alpha: 0.35),
       child: ListTile(
         leading: const Icon(Icons.bolt_outlined),
         title: Text(title),
@@ -257,49 +284,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// one: the gear jumps straight into its settings, while the chevron (and the
   /// row tap) only offer a choice when there is something to choose between.
   Widget _profileRow(Profile active) {
-    final pickable = ref.watch(profilesControllerProvider.select((s) => s.profiles.length > 1));
+    final pickable = ref.watch(
+      profilesControllerProvider.select((s) => s.profiles.length > 1),
+    );
     return Card(
       margin: kCardMargin,
       child: ListTile(
         leading: Icon(profileIcon(active.type)),
         title: Text(active.name),
         subtitle: Text(profileKind(active)),
-        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          // A duplicate of the button on the configuration screen, not a move:
-          // that is where it belongs, next to "last refreshed", but it is
-          // pressed from here — the servers ran out or the provider changed
-          // something, and the user is already looking at this screen.
-          if (active.isRefreshable)
-            RefreshButton(profile: active, iconSize: 20, spinnerPadding: 14),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, size: 20),
-            tooltip: 'Configuration settings',
-            onPressed: () => _push(ConfigScreen(profileId: active.id)),
-          ),
-          if (pickable)
-            _status == VpnStatus.connecting
-                ? const Icon(Icons.lock_outline, size: 18)
-                : const Icon(Icons.expand_more),
-        ]),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // A duplicate of the button on the configuration screen, not a move:
+            // that is where it belongs, next to "last refreshed", but it is
+            // pressed from here — the servers ran out or the provider changed
+            // something, and the user is already looking at this screen.
+            if (active.isRefreshable)
+              RefreshButton(profile: active, iconSize: 20, spinnerPadding: 14),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined, size: 20),
+              tooltip: 'Configuration settings',
+              onPressed: () => _push(ConfigScreen(profileId: active.id)),
+            ),
+            if (pickable)
+              _status == VpnStatus.connecting
+                  ? const Icon(Icons.lock_outline, size: 18)
+                  : const Icon(Icons.expand_more),
+          ],
+        ),
         onTap: (!pickable || _locked) ? null : _pickProfile,
       ),
     );
   }
 
   Widget _locationRow(Profile active) {
-    final group = ref.watch(profilesControllerProvider.select((s) => s.selectedGroup));
-    final loc = ref.watch(profilesControllerProvider.select((s) => s.selectedLocation));
+    final group = ref.watch(
+      profilesControllerProvider.select((s) => s.selectedGroup),
+    );
+    final loc = ref.watch(
+      profilesControllerProvider.select((s) => s.selectedLocation),
+    );
     // A single-server profile (a plain link) has nothing to pick between: show
     // the server but no dropdown affordance or picker.
     final pickable =
-        !active.isSingleServer && (active.locations.length > 1 || active.groups.isNotEmpty);
+        !active.isSingleServer &&
+        (active.locations.length > 1 || active.groups.isNotEmpty);
     final picked = group == null ? null : ref.watch(groupMemberProvider).value;
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: group != null ? Icon(groupIcon(group.type)) : flagOrIcon(loc?.label),
-        title: Text(group?.name ??
-            (loc != null ? stripLeadingFlag(loc.label) : 'No servers')),
+        leading: group != null
+            ? Icon(groupIcon(group.type))
+            : flagOrIcon(loc?.label),
+        title: Text(
+          group?.name ??
+              (loc != null ? stripLeadingFlag(loc.label) : 'No servers'),
+        ),
         // With a group, the name alone is a claim the user cannot check — they
         // do not know where their traffic goes. So the line names the method
         // and the result; until the engine has picked, it names only the method
@@ -307,13 +348,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         subtitle: group != null
             ? Text(picked == null || picked.isEmpty ? 'auto' : 'auto · $picked')
             : loc != null && loc.subtitle.isNotEmpty
-                ? Text(loc.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis)
-                : null,
+            ? Text(loc.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis)
+            : null,
         trailing: !pickable
             ? null
             : _status == VpnStatus.connecting
-                ? const Icon(Icons.lock_outline, size: 18)
-                : const Icon(Icons.chevron_right),
+            ? const Icon(Icons.lock_outline, size: 18)
+            : const Icon(Icons.chevron_right),
         onTap: (!pickable || _locked) ? null : () => _pickLocation(active),
       ),
     );
@@ -342,18 +383,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       selected: st.activeId,
       itemNoun: 'configuration',
       favorites: favorites.profiles,
-      onToggleFavorite: (id) => ref.read(favoritesProvider.notifier).toggleProfile(id),
+      onToggleFavorite: (id) =>
+          ref.read(favoritesProvider.notifier).toggleProfile(id),
       onOpenSettings: (id) => _push(ConfigScreen(profileId: id)),
       options: st.profiles
-          .map((p) => Option(
-                p.id,
-                p.name,
-                subtitle: profileKind(p),
-                leading: Icon(profileIcon(p.type)),
-              ))
+          .map(
+            (p) => Option(
+              p.id,
+              p.name,
+              subtitle: profileKind(p),
+              leading: Icon(profileIcon(p.type)),
+            ),
+          )
           .toList(),
     );
-    if (picked != null) ref.read(profilesControllerProvider.notifier).setActive(picked);
+    if (picked != null) {
+      ref.read(profilesControllerProvider.notifier).setActive(picked);
+    }
   }
 
   Future<void> _pickLocation(Profile active) async {
@@ -368,25 +414,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // came for, and it is an answer to the same question as a country.
       pinnedHeader: 'CHOSEN BY THE ENGINE',
       pinned: active.groups
-          .map((g) => Option(
-                g.id,
-                g.name,
-                subtitle: describeGroup(g, st.locations),
-                leading: Icon(groupIcon(g.type)),
-              ))
+          .map(
+            (g) => Option(
+              g.id,
+              g.name,
+              subtitle: describeGroup(g, st.locations),
+              leading: Icon(groupIcon(g.type)),
+            ),
+          )
           .toList(),
       favorites: favorites.locationsOf(active.id),
       onToggleFavorite: (id) =>
           ref.read(favoritesProvider.notifier).toggleLocation(active.id, id),
       options: st.locations
-          .map((l) => Option(
-                l.id,
-                stripLeadingFlag(l.label),
-                subtitle: l.subtitle,
-                leading: flagOrIcon(l.label),
-              ))
+          .map(
+            (l) => Option(
+              l.id,
+              stripLeadingFlag(l.label),
+              subtitle: l.subtitle,
+              leading: flagOrIcon(l.label),
+            ),
+          )
           .toList(),
     );
-    if (picked != null) ref.read(profilesControllerProvider.notifier).selectLocation(picked);
+    if (picked != null) {
+      ref.read(profilesControllerProvider.notifier).selectLocation(picked);
+    }
   }
 }

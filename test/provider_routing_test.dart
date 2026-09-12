@@ -39,15 +39,12 @@ void main() {
       final r = parseXrayRouting(live)!;
       expect(r.skipped, 0);
       expect(r.routing.rules.length, 4);
-      expect(
-        r.routing.rules.map((e) => '${e.action} ${e.type} ${e.value}'),
-        [
-          'block domain-suffix doubleclick.net',
-          'block domain-suffix googleadservices.com',
-          'block domain-suffix googlesyndication.com',
-          'proxy domain-suffix ip.me',
-        ],
-      );
+      expect(r.routing.rules.map((e) => '${e.action} ${e.type} ${e.value}'), [
+        'block domain-suffix doubleclick.net',
+        'block domain-suffix googleadservices.com',
+        'block domain-suffix googlesyndication.com',
+        'proxy domain-suffix ip.me',
+      ]);
     });
 
     test('a catch-all direct is a split tunnel', () {
@@ -57,9 +54,15 @@ void main() {
     });
 
     test('no catch-all is read as full tunnel', () {
-      final body = live.replaceAll('{"type": "field", "outboundTag": "direct"}', '');
-      expect(parseXrayRouting(body.replaceAll(',\n      \n', '\n'))!.routing.mode, 'full',
-          reason: 'the safer reading keeps traffic inside the tunnel');
+      final body = live.replaceAll(
+        '{"type": "field", "outboundTag": "direct"}',
+        '',
+      );
+      expect(
+        parseXrayRouting(body.replaceAll(',\n      \n', '\n'))!.routing.mode,
+        'full',
+        reason: 'the safer reading keeps traffic inside the tunnel',
+      );
     });
 
     test('rules about inbounds and ports are not counted as lost', () {
@@ -81,8 +84,10 @@ void main() {
 ]}}''';
       final r = parseXrayRouting(body)!;
       expect(r.skipped, 1);
-      expect(r.routing.rules.map((e) => '${e.type} ${e.value}'),
-          ['domain-regex .*[.]ad[.].*', 'domain-suffix example.com']);
+      expect(r.routing.rules.map((e) => '${e.type} ${e.value}'), [
+        'domain-regex .*[.]ad[.].*',
+        'domain-suffix example.com',
+      ]);
     });
 
     test('a pattern the rule syntax cannot carry is refused', () {
@@ -103,25 +108,35 @@ void main() {
   {"type": "field", "ip": ["geoip:cn"], "outboundTag": "direct"}
 ]}}''';
       final r = parseXrayRouting(body)!;
-      expect(r.routing.rules.map((e) => '${e.type} ${e.value}'),
-          ['ip-cidr 1.2.3.4/32', 'domain-keyword ads', 'geoip cn']);
+      expect(r.routing.rules.map((e) => '${e.type} ${e.value}'), [
+        'ip-cidr 1.2.3.4/32',
+        'domain-keyword ads',
+        'geoip cn',
+      ]);
     });
 
-    test('a body with no routing yields nothing rather than an empty policy', () {
-      expect(parseXrayRouting('{"outbounds": []}'), isNull);
-      expect(parseXrayRouting('not json'), isNull);
-      expect(parseXrayRouting('{"routing": {"rules": []}}'), isNull);
-    });
+    test(
+      'a body with no routing yields nothing rather than an empty policy',
+      () {
+        expect(parseXrayRouting('{"outbounds": []}'), isNull);
+        expect(parseXrayRouting('not json'), isNull);
+        expect(parseXrayRouting('{"routing": {"rules": []}}'), isNull);
+      },
+    );
   });
 
   group('happ routing header', () {
     test('reads the six lists and the direction', () {
-      final payload = base64Url.encode(utf8.encode(jsonEncode({
-        'GlobalProxy': false,
-        'ProxySites': ['ip.me'],
-        'BlockSites': ['ads.example'],
-        'DirectIp': ['10.0.0.0/8'],
-      })));
+      final payload = base64Url.encode(
+        utf8.encode(
+          jsonEncode({
+            'GlobalProxy': false,
+            'ProxySites': ['ip.me'],
+            'BlockSites': ['ads.example'],
+            'DirectIp': ['10.0.0.0/8'],
+          }),
+        ),
+      );
       final r = parseHappRouting('happ://routing/add/$payload')!;
       expect(r.routing.mode, 'split');
       expect(r.routing.rules.map((e) => '${e.action} ${e.type} ${e.value}'), [
@@ -132,9 +147,14 @@ void main() {
     });
 
     test('a direction with no exceptions is not shown as a policy', () {
-      final payload = base64Url.encode(utf8.encode(jsonEncode({'GlobalProxy': true})));
-      expect(parseHappRouting('happ://routing/add/$payload'), isNull,
-          reason: 'everything through the VPN is what we do anyway');
+      final payload = base64Url.encode(
+        utf8.encode(jsonEncode({'GlobalProxy': true})),
+      );
+      expect(
+        parseHappRouting('happ://routing/add/$payload'),
+        isNull,
+        reason: 'everything through the VPN is what we do anyway',
+      );
     });
   });
 
@@ -153,21 +173,30 @@ void main() {
       expect(r.routing.rules[1].noResolve, isTrue);
     });
 
-    test("a provider's process rules survive to the platform that can run them",
-        () {
-      // They were dropped in the translation, which put the platform decision
-      // in the wrong place: the renderer already removes them where a
-      // connection's process cannot be resolved, and on macOS they work. A
-      // provider routing their game launcher lost the rule everywhere.
-      final r = parseClashRules(const [
-        'PROCESS-NAME,EscapeFromTarkov.exe,DIRECT',
-        'DOMAIN-SUFFIX,ip.me,PROXY',
-        'MATCH,DIRECT',
-      ])!;
-      expect(r.routing.rules.map((x) => x.type), ['process-name', 'domain-suffix']);
-      expect(r.routing.rules.first.value, 'EscapeFromTarkov.exe');
-      expect(r.skipped, 0, reason: 'nothing was skipped, so nothing is counted');
-    });
+    test(
+      "a provider's process rules survive to the platform that can run them",
+      () {
+        // They were dropped in the translation, which put the platform decision
+        // in the wrong place: the renderer already removes them where a
+        // connection's process cannot be resolved, and on macOS they work. A
+        // provider routing their game launcher lost the rule everywhere.
+        final r = parseClashRules(const [
+          'PROCESS-NAME,EscapeFromTarkov.exe,DIRECT',
+          'DOMAIN-SUFFIX,ip.me,PROXY',
+          'MATCH,DIRECT',
+        ])!;
+        expect(r.routing.rules.map((x) => x.type), [
+          'process-name',
+          'domain-suffix',
+        ]);
+        expect(r.routing.rules.first.value, 'EscapeFromTarkov.exe');
+        expect(
+          r.skipped,
+          0,
+          reason: 'nothing was skipped, so nothing is counted',
+        );
+      },
+    );
 
     test('a rules list that is only MATCH says nothing', () {
       // What a panel's own Clash rendering usually carries: one line pointing
@@ -205,8 +234,10 @@ rules:
 
     test('a remote list becomes a rule plus its definition', () {
       final r = parseClashRouting(body)!;
-      expect(r.routing.rules.map((e) => '${e.type} ${e.value}'),
-          ['rule-list reject', 'domain-suffix ip.me']);
+      expect(r.routing.rules.map((e) => '${e.type} ${e.value}'), [
+        'rule-list reject',
+        'domain-suffix ip.me',
+      ]);
       expect(r.routing.lists.single.name, 'reject');
       expect(r.routing.lists.single.behavior, 'domain');
     });
@@ -231,7 +262,8 @@ rules:
 
   group('fetching it', () {
     late Directory tmp;
-    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
     setUp(() {
       tmp = Directory.systemTemp.createTempSync('vpn-provrouting');
@@ -239,12 +271,20 @@ rules:
         const MethodChannel('plugins.flutter.io/path_provider'),
         (call) async => tmp.path,
       );
-      DeviceIdentityStore.debugCache(const DeviceIdentity(
-          hwid: 'aaaabbbbccccdddd', os: 'iOS', osVersion: '18.0', model: 'iPhone16,1'));
+      DeviceIdentityStore.debugCache(
+        const DeviceIdentity(
+          hwid: 'aaaabbbbccccdddd',
+          os: 'iOS',
+          osVersion: '18.0',
+          model: 'iPhone16,1',
+        ),
+      );
     });
     tearDown(() {
       messenger.setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'), null);
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        null,
+      );
       tmp.deleteSync(recursive: true);
       DeviceIdentityStore.debugCache(null);
     });
@@ -255,68 +295,106 @@ rules:
         asked.add(req.url.path);
         if (req.url.path.endsWith('/json')) {
           return http.Response(
-              '{"routing":{"rules":[{"domain":["domain:ip.me"],"outboundTag":"proxy"}]}}', 200);
+            '{"routing":{"rules":[{"domain":["domain:ip.me"],"outboundTag":"proxy"}]}}',
+            200,
+          );
         }
         return http.Response('vless://x', 200);
       });
-      final res = await fetchSubscription('https://sub.example/tok3n',
-        probeRenderings: false, client: client);
-      expect(asked, ['/tok3n', '/tok3n/json'],
-          reason: 'asking for a format by name beats impersonating another app');
+      final res = await fetchSubscription(
+        'https://sub.example/tok3n',
+        probeRenderings: false,
+        client: client,
+      );
+      expect(asked, [
+        '/tok3n',
+        '/tok3n/json',
+      ], reason: 'asking for a format by name beats impersonating another app');
       expect(res.routing!.routing.rules.single.value, 'ip.me');
       expect(res.routingProbed, isTrue);
     });
 
-    test('a url that already names a rendering is not asked to render again', () async {
-      final asked = <String>[];
-      final client = MockClient((req) async {
-        asked.add(req.url.path);
-        return http.Response('{"routing":{"rules":[]}}', 200);
-      });
-      await fetchSubscription('https://sub.example/tok3n/mihomo',
-        probeRenderings: false, client: client);
-      expect(asked, ['/tok3n/mihomo']);
-    });
+    test(
+      'a url that already names a rendering is not asked to render again',
+      () async {
+        final asked = <String>[];
+        final client = MockClient((req) async {
+          asked.add(req.url.path);
+          return http.Response('{"routing":{"rules":[]}}', 200);
+        });
+        await fetchSubscription(
+          'https://sub.example/tok3n/mihomo',
+          probeRenderings: false,
+          client: client,
+        );
+        expect(asked, ['/tok3n/mihomo']);
+      },
+    );
 
     test('the header is read without a second request', () async {
-      final payload = base64Url.encode(utf8.encode(jsonEncode({
-        'GlobalProxy': true,
-        'BlockSites': ['ads.example'],
-      })));
+      final payload = base64Url.encode(
+        utf8.encode(
+          jsonEncode({
+            'GlobalProxy': true,
+            'BlockSites': ['ads.example'],
+          }),
+        ),
+      );
       final asked = <String>[];
       final client = MockClient((req) async {
         asked.add(req.url.path);
-        return http.Response('vless://x', 200,
-            headers: {'routing': 'happ://routing/add/$payload'});
+        return http.Response(
+          'vless://x',
+          200,
+          headers: {'routing': 'happ://routing/add/$payload'},
+        );
       });
-      final res = await fetchSubscription('https://sub.example/tok3n',
-        probeRenderings: false, client: client);
+      final res = await fetchSubscription(
+        'https://sub.example/tok3n',
+        probeRenderings: false,
+        client: client,
+      );
       expect(asked, ['/tok3n']);
       expect(res.routing!.routing.rules.single.value, 'ads.example');
     });
 
     test('a probe that fails leaves the subscription working', () async {
-      final client = MockClient((req) async => req.url.path.endsWith('/json')
-          ? http.Response('nope', 500)
-          : http.Response('vless://x', 200));
-      final res = await fetchSubscription('https://sub.example/tok3n',
-        probeRenderings: false, client: client);
+      final client = MockClient(
+        (req) async => req.url.path.endsWith('/json')
+            ? http.Response('nope', 500)
+            : http.Response('vless://x', 200),
+      );
+      final res = await fetchSubscription(
+        'https://sub.example/tok3n',
+        probeRenderings: false,
+        client: client,
+      );
       expect(res.body, 'vless://x');
       expect(res.routing, isNull);
-      expect(res.routingProbed, isTrue, reason: 'do not repeat it every five minutes');
+      expect(
+        res.routingProbed,
+        isTrue,
+        reason: 'do not repeat it every five minutes',
+      );
     });
 
-    test('probing can be turned off for a source already known to have none', () async {
-      final asked = <String>[];
-      final client = MockClient((req) async {
-        asked.add(req.url.path);
-        return http.Response('vless://x', 200);
-      });
-      final res = await fetchSubscription('https://sub.example/tok3n',
-        probeRenderings: false,
-          client: client, probeRouting: false);
-      expect(asked, ['/tok3n']);
-      expect(res.routingProbed, isFalse);
-    });
+    test(
+      'probing can be turned off for a source already known to have none',
+      () async {
+        final asked = <String>[];
+        final client = MockClient((req) async {
+          asked.add(req.url.path);
+          return http.Response('vless://x', 200);
+        });
+        final res = await fetchSubscription(
+          'https://sub.example/tok3n',
+          probeRenderings: false,
+          client: client,
+          probeRouting: false,
+        );
+        expect(asked, ['/tok3n']);
+        expect(res.routingProbed, isFalse);
+      },
+    );
   });
 }

@@ -24,8 +24,12 @@ class OnDemandRuleScreen extends ConsumerStatefulWidget {
 
 class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
   late OnDemandRule _rule = widget.rule;
-  late final TextEditingController _name = TextEditingController(text: widget.rule.name);
-  late final TextEditingController _probe = TextEditingController(text: widget.rule.probeUrl);
+  late final TextEditingController _name = TextEditingController(
+    text: widget.rule.name,
+  );
+  late final TextEditingController _probe = TextEditingController(
+    text: widget.rule.probeUrl,
+  );
   Timer? _debounce;
 
   @override
@@ -65,9 +69,21 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
       title: 'Action',
       selected: _rule.action,
       options: const [
-        Option(OnDemandAction.connect, 'Connect', subtitle: 'bring the tunnel up'),
-        Option(OnDemandAction.disconnect, 'Disconnect', subtitle: 'tear the tunnel down'),
-        Option(OnDemandAction.ignore, 'Ignore', subtitle: 'leave the tunnel as is'),
+        Option(
+          OnDemandAction.connect,
+          'Connect',
+          subtitle: 'bring the tunnel up',
+        ),
+        Option(
+          OnDemandAction.disconnect,
+          'Disconnect',
+          subtitle: 'tear the tunnel down',
+        ),
+        Option(
+          OnDemandAction.ignore,
+          'Ignore',
+          subtitle: 'leave the tunnel as is',
+        ),
       ],
     );
     if (picked != null) await _update(_rule.copyWith(action: picked));
@@ -89,8 +105,11 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
       margin: kCardMargin,
       child: ListTile(
         title: Text(title),
-        subtitle: Text(values.isEmpty ? 'Any' : values.join(', '),
-            maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          values.isEmpty ? 'Any' : values.join(', '),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () async {
           final updated = await Navigator.of(context).push<List<String>>(
@@ -112,30 +131,33 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
   }
 
   Widget _hint(String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
-        child: Text(text,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-      );
+    padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
 
   /// What the selected interface mode means, in the user's terms.
   String _networkHelp(OnDemandInterface selected) => switch (selected) {
-        OnDemandInterface.any =>
-          'The rule is checked on every network — Wi-Fi, mobile or wired.',
-        OnDemandInterface.wifi =>
-          'When the device joins a Wi-Fi network, the system checks the conditions below and applies the rule.',
-        OnDemandInterface.cellular =>
-          'When the device is on mobile data, the system checks the conditions below and applies the rule.',
-        OnDemandInterface.ethernet =>
-          'When the device is on a wired network, the system checks the conditions below and applies the rule.',
-      };
+    OnDemandInterface.any =>
+      'The rule is checked on every network — Wi-Fi, mobile or wired.',
+    OnDemandInterface.wifi =>
+      'When the device joins a Wi-Fi network, the system checks the conditions below and applies the rule.',
+    OnDemandInterface.cellular =>
+      'When the device is on mobile data, the system checks the conditions below and applies the rule.',
+    OnDemandInterface.ethernet =>
+      'When the device is on a wired network, the system checks the conditions below and applies the rule.',
+  };
 
   @override
   Widget build(BuildContext context) {
     // iOS matches cellular; macOS has ethernet instead.
-    final mobile = Platform.isMacOS ? OnDemandInterface.ethernet : OnDemandInterface.cellular;
+    final mobile = Platform.isMacOS
+        ? OnDemandInterface.ethernet
+        : OnDemandInterface.cellular;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.isNew ? 'New rule' : 'Edit rule')),
@@ -149,14 +171,22 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
               child: TextField(
                 controller: _name,
                 autocorrect: false,
-                decoration: const InputDecoration(labelText: 'Name (optional)', hintText: 'Office'),
-                onChanged: (v) => _updateDebounced(_rule.copyWith(name: v.trim())),
+                decoration: const InputDecoration(
+                  labelText: 'Name (optional)',
+                  hintText: 'Office',
+                ),
+                onChanged: (v) =>
+                    _updateDebounced(_rule.copyWith(name: v.trim())),
               ),
             ),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: SelectField(label: 'Action', value: _rule.action.label, onTap: _pickAction),
+              child: SelectField(
+                label: 'Action',
+                value: _rule.action.label,
+                onTap: _pickAction,
+              ),
             ),
 
             const SectionHeader('NETWORK'),
@@ -167,8 +197,14 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 child: SegmentedButton<OnDemandInterface>(
                   showSelectedIcon: false,
                   segments: [
-                    const ButtonSegment(value: OnDemandInterface.any, label: Text('Any')),
-                    const ButtonSegment(value: OnDemandInterface.wifi, label: Text('Wi-Fi')),
+                    const ButtonSegment(
+                      value: OnDemandInterface.any,
+                      label: Text('Any'),
+                    ),
+                    const ButtonSegment(
+                      value: OnDemandInterface.wifi,
+                      label: Text('Wi-Fi'),
+                    ),
                     ButtonSegment(value: mobile, label: Text(mobile.label)),
                   ],
                   selected: {
@@ -179,7 +215,8 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                         ? mobile
                         : _rule.interface,
                   },
-                  onSelectionChanged: (s) => _update(_rule.copyWith(interface: s.first)),
+                  onSelectionChanged: (s) =>
+                      _update(_rule.copyWith(interface: s.first)),
                 ),
               ),
             ),
@@ -193,7 +230,8 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 unit: 'NETWORKS',
                 addTitle: 'Wi-Fi network',
                 addHint: 'home-5G',
-                help: 'Matches the network name exactly. Leave empty for any Wi-Fi.',
+                help:
+                    'Matches the network name exactly. Leave empty for any Wi-Fi.',
                 apply: (v) => _update(_rule.copyWith(ssids: v)),
               ),
             _conditionRow(
@@ -202,7 +240,8 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
               unit: 'DOMAINS',
               addTitle: 'DNS search domain',
               addHint: 'corp.example.com',
-              help: 'Matches when the network’s search domain ends with an entry.',
+              help:
+                  'Matches when the network’s search domain ends with an entry.',
               apply: (v) => _update(_rule.copyWith(dnsDomains: v)),
             ),
             _conditionRow(
@@ -211,7 +250,8 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
               unit: 'SERVERS',
               addTitle: 'DNS server',
               addHint: '10.0.*',
-              help: 'Matches the network’s DNS servers; a single “*” wildcard is allowed.',
+              help:
+                  'Matches the network’s DNS servers; a single “*” wildcard is allowed.',
               apply: (v) => _update(_rule.copyWith(dnsServers: v)),
             ),
 
@@ -223,12 +263,16 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 autocorrect: false,
                 keyboardType: TextInputType.url,
                 decoration: const InputDecoration(
-                    labelText: 'URL (optional)',
-                    hintText: 'https://intranet.example.com/ping'),
-                onChanged: (v) => _updateDebounced(_rule.copyWith(probeUrl: v.trim())),
+                  labelText: 'URL (optional)',
+                  hintText: 'https://intranet.example.com/ping',
+                ),
+                onChanged: (v) =>
+                    _updateDebounced(_rule.copyWith(probeUrl: v.trim())),
               ),
             ),
-            _hint('The rule matches only if this URL returns 200 without redirects.'),
+            _hint(
+              'The rule matches only if this URL returns 200 without redirects.',
+            ),
           ],
         ),
       ),

@@ -174,8 +174,10 @@ sudo scripts/leak-check.sh        # leak check against a live tunnel (root)
   nobody requested is waste, and it has to be maintained.
 - **Do not start rewriting while a decision is still being discussed.**
 - **Delete unused code** instead of keeping it "for later".
-- **Do not run `dart format` over the project** — it rewrites lines the change
-  never touched.
+- **Keep the code `dart format` clean.** The project was formatted once, in a
+  commit listed in `.git-blame-ignore-revs`, and CI now fails on anything
+  unformatted (`dart format --output=none --set-exit-if-changed lib test`).
+  Format the files the change touches; do not reformat the ones it does not.
 - **Committing is the user's call.** Prepare the change, propose the split, do
   not commit unless asked.
 - **MVP policy: no migrations, no backwards compatibility.** There is no

@@ -84,7 +84,8 @@ String mihomoTunConfigYaml(
   final listLines = _ruleProviderLines(routing, listPaths);
   final hasProcessRules =
       routing?.rules.any((r) => r.type == 'process-name' && r.isValid) ?? false;
-  final hasGeoRules = routing?.rules.any((r) => r.needsGeoData && r.isValid) ?? false;
+  final hasGeoRules =
+      routing?.rules.any((r) => r.needsGeoData && r.isValid) ?? false;
   final lines = <String>[
     // "silent" is how the engine stops writing at all: the log file is in the
     // extension's container, so there is no other way to keep it quiet.
@@ -135,10 +136,7 @@ String mihomoTunConfigYaml(
     "  geosite: ''",
     "  mmdb: ''",
     "  asn: ''",
-    if (hasGeoRules) ...[
-      'geodata-mode: false',
-      'geo-auto-update: false',
-    ],
+    if (hasGeoRules) ...['geodata-mode: false', 'geo-auto-update: false'],
     'dns:',
     '  enable: true',
     // fake-ip settings are app constants, never per-config: the OS caches the
@@ -289,7 +287,9 @@ String mihomoTunConfigYaml(
       kTunnelOutbound,
       'DIRECT',
       'REJECT',
-      if (group == null) 'proxy' else ...[
+      if (group == null)
+        'proxy'
+      else ...[
         kGroupName,
         for (var i = 0; i < members.length; i++) 'p$i',
       ],
@@ -313,8 +313,6 @@ const kGroupName = 'group';
 /// provider's own outbound names do not survive into our config.
 const kTunnelOutbound = 'PROXY';
 
-
-
 /// The engine's own health check runs from the user's device, through the
 /// tunnel, once per interval per member. A provider asking for ten seconds
 /// would have a phone probing their URL 8640 times a day; the floor is ours to
@@ -325,10 +323,7 @@ const kMinGroupInterval = Duration(minutes: 5);
 /// Renders the provider's group. Members are named `p0…pN` rather than by their
 /// own labels: a label is the provider's text, and these are YAML keys.
 List<String> _emitGroup(ProxyGroup group, int memberCount) {
-  final out = <String>[
-    '  - name: $kGroupName',
-    '    type: ${group.type}',
-  ];
+  final out = <String>['  - name: $kGroupName', '    type: ${group.type}'];
   if (group.type == 'load-balance' && group.strategy.isNotEmpty) {
     out.add('    strategy: ${group.strategy}');
   }
@@ -346,7 +341,9 @@ List<String> _emitGroup(ProxyGroup group, int memberCount) {
       out.add('    tolerance: ${group.tolerance}');
     }
   }
-  out.add('    proxies: [${[for (var i = 0; i < memberCount; i++) 'p$i'].join(', ')}]');
+  out.add(
+    '    proxies: [${[for (var i = 0; i < memberCount; i++) 'p$i'].join(', ')}]',
+  );
   return out;
 }
 
@@ -408,8 +405,10 @@ const kSubscriptionProxyTypes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2'};
 Map<String, dynamic> _mihomoProxy(Location location) {
   final type = location.proxyType;
   if (location.isPlaceholder) {
-    throw StateError('this server has no settings yet — it must be issued '
-        'before it can be rendered (ADR-009)');
+    throw StateError(
+      'this server has no settings yet — it must be issued '
+      'before it can be rendered (ADR-009)',
+    );
   }
   if (!kSupportedProxyTypes.contains(type)) {
     throw StateError('unsupported proxy type: $type');
@@ -434,7 +433,10 @@ Map<String, dynamic> _mihomoProxy(Location location) {
     if ((p['flow'] as String?)?.isNotEmpty ?? false) m['flow'] = p['flow'];
     m['servername'] = r['server_name'];
     m['client-fingerprint'] = 'chrome';
-    m['reality-opts'] = {'public-key': r['public_key'], 'short-id': r['short_id']};
+    m['reality-opts'] = {
+      'public-key': r['public_key'],
+      'short-id': r['short_id'],
+    };
     return m;
   }
   // Already a mihomo proxy map — clone with name forced to "proxy".
@@ -517,7 +519,10 @@ List<String> _ruleProviderLines(Routing? routing, Map<String, String> paths) {
 /// Renders ordered routing rules to mihomo rule lines. Invalid rules are
 /// skipped (and logged), never interpolated: values come from the server or
 /// the local editor, and a malformed one must not corrupt the YAML.
-List<String> _routingRuleLines(Routing? routing, [Map<String, String> paths = const {}]) {
+List<String> _routingRuleLines(
+  Routing? routing, [
+  Map<String, String> paths = const {},
+]) {
   if (routing == null) return const [];
   final out = <String>[];
   for (final r in routing.rules) {
@@ -531,12 +536,16 @@ List<String> _routingRuleLines(Routing? routing, [Map<String, String> paths = co
       continue;
     }
     if (type == null || action == null || !r.isValid) {
-      Log.e('routing: skipping invalid rule', '${r.type},${r.value},${r.action}');
+      Log.e(
+        'routing: skipping invalid rule',
+        '${r.type},${r.value},${r.action}',
+      );
       continue;
     }
     // no-resolve: IP-based rules must not force DNS resolution of domain
     // traffic. Always on for ip-cidr; opt-in per geoip rule.
-    final suffix = (r.type == 'ip-cidr' ||
+    final suffix =
+        (r.type == 'ip-cidr' ||
             ((r.type == 'geoip' || r.type == 'rule-list') && r.noResolve))
         ? ',no-resolve'
         : '';

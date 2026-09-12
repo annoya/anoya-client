@@ -65,7 +65,11 @@ class SubscriptionInfo {
   bool get hasPlan => usedBytes > 0 || totalBytes > 0 || expiresAt != null;
   bool get unlimited => totalBytes <= 0;
   bool get isEmpty =>
-      !hasPlan && title.isEmpty && announce.isEmpty && supportUrl.isEmpty && webPageUrl.isEmpty;
+      !hasPlan &&
+      title.isEmpty &&
+      announce.isEmpty &&
+      supportUrl.isEmpty &&
+      webPageUrl.isEmpty;
 
   /// True once the panel's own end date has passed. Reported, never enforced:
   /// the panel keeps serving these servers, and refusing to connect would be
@@ -73,30 +77,30 @@ class SubscriptionInfo {
   bool get expired => expiresAt != null && expiresAt!.isBefore(DateTime.now());
 
   Map<String, dynamic> toJson() => {
-        if (title.isNotEmpty) 'title': title,
-        if (usedBytes > 0) 'used_bytes': usedBytes,
-        if (totalBytes > 0) 'total_bytes': totalBytes,
-        if (expiresAt != null) 'expires_at': expiresAt!.toIso8601String(),
-        if (announce.isNotEmpty) 'announce': announce,
-        if (supportUrl.isNotEmpty) 'support_url': supportUrl,
-        if (webPageUrl.isNotEmpty) 'web_page_url': webPageUrl,
-        if (updateInterval != null) 'update_interval': updateInterval,
-        if (fallbackUrl.isNotEmpty) 'fallback_url': fallbackUrl,
-        if (requestTimeout != null) 'request_timeout': requestTimeout,
-      };
+    if (title.isNotEmpty) 'title': title,
+    if (usedBytes > 0) 'used_bytes': usedBytes,
+    if (totalBytes > 0) 'total_bytes': totalBytes,
+    if (expiresAt != null) 'expires_at': expiresAt!.toIso8601String(),
+    if (announce.isNotEmpty) 'announce': announce,
+    if (supportUrl.isNotEmpty) 'support_url': supportUrl,
+    if (webPageUrl.isNotEmpty) 'web_page_url': webPageUrl,
+    if (updateInterval != null) 'update_interval': updateInterval,
+    if (fallbackUrl.isNotEmpty) 'fallback_url': fallbackUrl,
+    if (requestTimeout != null) 'request_timeout': requestTimeout,
+  };
 
   factory SubscriptionInfo.fromJson(Map<String, dynamic> j) => SubscriptionInfo(
-        title: j['title'] as String? ?? '',
-        usedBytes: j['used_bytes'] as int? ?? 0,
-        totalBytes: j['total_bytes'] as int? ?? 0,
-        expiresAt: DateTime.tryParse(j['expires_at'] as String? ?? ''),
-        announce: j['announce'] as String? ?? '',
-        supportUrl: j['support_url'] as String? ?? '',
-        webPageUrl: j['web_page_url'] as String? ?? '',
-        updateInterval: j['update_interval'] as int?,
-        fallbackUrl: j['fallback_url'] as String? ?? '',
-        requestTimeout: j['request_timeout'] as int?,
-      );
+    title: j['title'] as String? ?? '',
+    usedBytes: j['used_bytes'] as int? ?? 0,
+    totalBytes: j['total_bytes'] as int? ?? 0,
+    expiresAt: DateTime.tryParse(j['expires_at'] as String? ?? ''),
+    announce: j['announce'] as String? ?? '',
+    supportUrl: j['support_url'] as String? ?? '',
+    webPageUrl: j['web_page_url'] as String? ?? '',
+    updateInterval: j['update_interval'] as int?,
+    fallbackUrl: j['fallback_url'] as String? ?? '',
+    requestTimeout: j['request_timeout'] as int?,
+  );
 
   /// Reads the convention out of one response's headers.
   factory SubscriptionInfo.fromHeaders(Map<String, String> headers) {
@@ -108,17 +112,23 @@ class SubscriptionInfo {
       totalBytes: user['total'] ?? 0,
       // 0 is the convention's "no end date", not 1970.
       expiresAt: expire > 0
-          ? DateTime.fromMillisecondsSinceEpoch(expire * 1000, isUtc: true).toLocal()
+          ? DateTime.fromMillisecondsSinceEpoch(
+              expire * 1000,
+              isUtc: true,
+            ).toLocal()
           : null,
       announce: _text(headers['announce']),
       supportUrl: (headers['support-url'] ?? '').trim(),
       webPageUrl: (headers['profile-web-page-url'] ?? '').trim(),
-      updateInterval: int.tryParse((headers['profile-update-interval'] ?? '').trim()),
+      updateInterval: int.tryParse(
+        (headers['profile-update-interval'] ?? '').trim(),
+      ),
       // https only: this address decides which servers the app trusts, so it
       // does not arrive over a channel anyone can rewrite.
       fallbackUrl: _url(headers['fallback-url']),
-      requestTimeout:
-          int.tryParse((headers['subscription-request-timeout'] ?? '').trim()),
+      requestTimeout: int.tryParse(
+        (headers['subscription-request-timeout'] ?? '').trim(),
+      ),
     );
   }
 

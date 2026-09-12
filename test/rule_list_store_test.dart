@@ -14,7 +14,8 @@ import 'package:vpn_client/core/rule_list_store.dart';
 /// anything.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late Directory container;
 
   const reject = RuleList(
@@ -38,7 +39,10 @@ void main() {
     RuleListStore.debugReset();
   });
   tearDown(() {
-    messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), null);
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('vpn/control'),
+      null,
+    );
     container.deleteSync(recursive: true);
   });
 
@@ -49,11 +53,14 @@ void main() {
     return f;
   }
 
-  test('a list we do not hold is not available, and says nothing more', () async {
-    final status = await RuleListStore.status(const [reject]);
-    expect(status.single.available, isFalse);
-    expect(status.single.bytes, 0);
-  });
+  test(
+    'a list we do not hold is not available, and says nothing more',
+    () async {
+      final status = await RuleListStore.status(const [reject]);
+      expect(status.single.available, isFalse);
+      expect(status.single.bytes, 0);
+    },
+  );
 
   test('a list on disk is reported with its size', () async {
     await place(reject, 'payload:\n  - "+.ads.example"\n');
@@ -63,23 +70,32 @@ void main() {
     expect(status.single.updatedAt, isNotNull);
   });
 
-  test('the file lives inside the engine home dir, under its own name',
-      () async {
-    // Inside the container because mihomo refuses a path outside its home
-    // (`IsSafePath`); named by a digest of the URL because two providers can
-    // publish different lists under the same name.
-    final a = (await RuleListStore.pathFor(reject))!;
-    final b = (await RuleListStore.pathFor(other))!;
-    expect(a, startsWith('${container.path}/${RuleListStore.dirName}/'));
-    expect(a, endsWith('.yaml'));
-    expect(b, endsWith('.text'),
-        reason: 'bookkeeping only — the engine reads the format from the config');
-    expect(a, isNot(b));
-  });
+  test(
+    'the file lives inside the engine home dir, under its own name',
+    () async {
+      // Inside the container because mihomo refuses a path outside its home
+      // (`IsSafePath`); named by a digest of the URL because two providers can
+      // publish different lists under the same name.
+      final a = (await RuleListStore.pathFor(reject))!;
+      final b = (await RuleListStore.pathFor(other))!;
+      expect(a, startsWith('${container.path}/${RuleListStore.dirName}/'));
+      expect(a, endsWith('.yaml'));
+      expect(
+        b,
+        endsWith('.text'),
+        reason:
+            'bookkeeping only — the engine reads the format from the config',
+      );
+      expect(a, isNot(b));
+    },
+  );
 
   test('the path for a URL does not move between runs', () async {
     // A refresh has to overwrite the file the running config already names.
-    expect(await RuleListStore.pathFor(reject), await RuleListStore.pathFor(reject));
+    expect(
+      await RuleListStore.pathFor(reject),
+      await RuleListStore.pathFor(reject),
+    );
   });
 
   test('only lists we hold are offered to the renderer', () async {
@@ -92,15 +108,20 @@ void main() {
   test('pruning keeps what is still referenced and drops the rest', () async {
     await place(reject, 'a');
     await place(other, 'b');
-    final stray = File('${container.path}/${RuleListStore.dirName}/leftover.yaml.tmp');
+    final stray = File(
+      '${container.path}/${RuleListStore.dirName}/leftover.yaml.tmp',
+    );
     await stray.writeAsString('half a download');
 
     await RuleListStore.prune(const [reject]);
 
     expect(await File((await RuleListStore.pathFor(reject))!).exists(), isTrue);
     expect(await File((await RuleListStore.pathFor(other))!).exists(), isFalse);
-    expect(await stray.exists(), isFalse,
-        reason: 'nothing points at a half-written file');
+    expect(
+      await stray.exists(),
+      isFalse,
+      reason: 'nothing points at a half-written file',
+    );
   });
 
   test('a file already held is not fetched again', () async {
@@ -112,15 +133,20 @@ void main() {
     final before = await File((await RuleListStore.pathFor(reject))!).stat();
     final status = await RuleListStore.sync(const [reject]);
     expect(status.single.available, isTrue);
-    expect((await File((await RuleListStore.pathFor(reject))!).stat()).modified,
-        before.modified);
+    expect(
+      (await File((await RuleListStore.pathFor(reject))!).stat()).modified,
+      before.modified,
+    );
   });
 
   test('a list the app cannot validate is never fetched', () async {
     // http, not https: a rule list decides where traffic goes, so it does not
     // arrive over a channel anyone can rewrite.
     const insecure = RuleList(
-        name: 'x', url: 'http://lists.example/l.yaml', behavior: 'domain');
+      name: 'x',
+      url: 'http://lists.example/l.yaml',
+      behavior: 'domain',
+    );
     expect(insecure.isValid, isFalse);
     final status = await RuleListStore.sync(const [insecure]);
     expect(status.single.available, isFalse);

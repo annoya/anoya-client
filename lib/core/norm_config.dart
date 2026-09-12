@@ -3,14 +3,15 @@
 // keyed by "type", which the active VpnCore knows how to translate.
 
 class NormConfig {
-  NormConfig(
-      {required this.version,
-      required this.account,
-      required this.locations,
-      this.groups = const [],
-      this.routing,
-      this.dns = const [],
-      this.defaultDns = ''});
+  NormConfig({
+    required this.version,
+    required this.account,
+    required this.locations,
+    this.groups = const [],
+    this.routing,
+    this.dns = const [],
+    this.defaultDns = '',
+  });
 
   final int version;
   final Account account;
@@ -42,7 +43,9 @@ class NormConfig {
       version: json['version'] as int? ?? 1,
       account: Account.fromJson(json['account'] as Map<String, dynamic>? ?? {}),
       locations: locs,
-      routing: routingJson is Map ? Routing.fromJson(Map<String, dynamic>.from(routingJson)) : null,
+      routing: routingJson is Map
+          ? Routing.fromJson(Map<String, dynamic>.from(routingJson))
+          : null,
       dns: (json['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
       defaultDns: json['default_dns'] as String? ?? '',
     );
@@ -52,7 +55,11 @@ class NormConfig {
 /// Split-tunneling policy: mode + ordered rules, first match wins (the same
 /// model the management service stores — see shared/normconfig in Go).
 class Routing {
-  const Routing({required this.mode, required this.rules, this.lists = const []});
+  const Routing({
+    required this.mode,
+    required this.rules,
+    this.lists = const [],
+  });
 
   /// "full": everything via VPN, rules are exceptions.
   /// "split": only matching traffic via VPN, the rest is direct.
@@ -69,22 +76,22 @@ class Routing {
       lists.where((l) => l.name == name).firstOrNull;
 
   factory Routing.fromJson(Map<String, dynamic> json) => Routing(
-        mode: json['mode'] as String? ?? 'full',
-        rules: (json['rules'] as List<dynamic>? ?? [])
-            .whereType<Map>()
-            .map((e) => RoutingRule.fromJson(Map<String, dynamic>.from(e)))
-            .toList(),
-        lists: (json['lists'] as List<dynamic>? ?? [])
-            .whereType<Map>()
-            .map((e) => RuleList.fromJson(Map<String, dynamic>.from(e)))
-            .toList(),
-      );
+    mode: json['mode'] as String? ?? 'full',
+    rules: (json['rules'] as List<dynamic>? ?? [])
+        .whereType<Map>()
+        .map((e) => RoutingRule.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
+    lists: (json['lists'] as List<dynamic>? ?? [])
+        .whereType<Map>()
+        .map((e) => RuleList.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'mode': mode,
-        'rules': rules.map((r) => r.toJson()).toList(),
-        if (lists.isNotEmpty) 'lists': lists.map((l) => l.toJson()).toList(),
-      };
+    'mode': mode,
+    'rules': rules.map((r) => r.toJson()).toList(),
+    if (lists.isNotEmpty) 'lists': lists.map((l) => l.toJson()).toList(),
+  };
 }
 
 /// A set of servers whose member the **engine** picks, not the user.
@@ -137,7 +144,11 @@ class ProxyGroup {
   final String strategy;
 
   static const types = ['url-test', 'fallback', 'load-balance', 'relay'];
-  static const strategies = ['round-robin', 'consistent-hashing', 'sticky-sessions'];
+  static const strategies = [
+    'round-robin',
+    'consistent-hashing',
+    'sticky-sessions',
+  ];
 
   /// A group id is a location id in the picker's eyes, so both can share the
   /// one selection the app already has.
@@ -151,32 +162,32 @@ class ProxyGroup {
   /// What the row says the group does. The type name from someone else's YAML
   /// tells the user nothing; this is the same fact in words they can act on.
   String describe(int memberCount) => switch (type) {
-        'url-test' => 'Lowest latency of $memberCount',
-        'fallback' => 'First of $memberCount that answers · in their order',
-        'load-balance' => 'Spread across $memberCount',
-        'relay' => 'Chain of $memberCount',
-        _ => '$memberCount servers',
-      };
+    'url-test' => 'Lowest latency of $memberCount',
+    'fallback' => 'First of $memberCount that answers · in their order',
+    'load-balance' => 'Spread across $memberCount',
+    'relay' => 'Chain of $memberCount',
+    _ => '$memberCount servers',
+  };
 
   factory ProxyGroup.fromJson(Map<String, dynamic> json) => ProxyGroup(
-        name: json['name'] as String? ?? '',
-        type: json['type'] as String? ?? '',
-        members: (json['members'] as List? ?? const []).map((e) => '$e').toList(),
-        testUrl: json['url'] as String? ?? '',
-        intervalSeconds: (json['interval'] as num?)?.toInt() ?? 0,
-        tolerance: (json['tolerance'] as num?)?.toInt() ?? 0,
-        strategy: json['strategy'] as String? ?? '',
-      );
+    name: json['name'] as String? ?? '',
+    type: json['type'] as String? ?? '',
+    members: (json['members'] as List? ?? const []).map((e) => '$e').toList(),
+    testUrl: json['url'] as String? ?? '',
+    intervalSeconds: (json['interval'] as num?)?.toInt() ?? 0,
+    tolerance: (json['tolerance'] as num?)?.toInt() ?? 0,
+    strategy: json['strategy'] as String? ?? '',
+  );
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'type': type,
-        'members': members,
-        if (testUrl.isNotEmpty) 'url': testUrl,
-        if (intervalSeconds > 0) 'interval': intervalSeconds,
-        if (tolerance > 0) 'tolerance': tolerance,
-        if (strategy.isNotEmpty) 'strategy': strategy,
-      };
+    'name': name,
+    'type': type,
+    'members': members,
+    if (testUrl.isNotEmpty) 'url': testUrl,
+    if (intervalSeconds > 0) 'interval': intervalSeconds,
+    if (tolerance > 0) 'tolerance': tolerance,
+    if (strategy.isNotEmpty) 'strategy': strategy,
+  };
 }
 
 /// A file of rules someone else maintains, named by a `rule-list` rule.
@@ -214,24 +225,26 @@ class RuleList {
   /// interpolated into the engine config, so nothing unvalidated may pass.
   bool get isValid {
     if (!_nameRe.hasMatch(name)) return false;
-    if (!behaviors.contains(behavior) || !formats.contains(format)) return false;
+    if (!behaviors.contains(behavior) || !formats.contains(format)) {
+      return false;
+    }
     final uri = Uri.tryParse(url);
     return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
   }
 
   factory RuleList.fromJson(Map<String, dynamic> json) => RuleList(
-        name: json['name'] as String? ?? '',
-        url: json['url'] as String? ?? '',
-        behavior: json['behavior'] as String? ?? '',
-        format: json['format'] as String? ?? 'yaml',
-      );
+    name: json['name'] as String? ?? '',
+    url: json['url'] as String? ?? '',
+    behavior: json['behavior'] as String? ?? '',
+    format: json['format'] as String? ?? 'yaml',
+  );
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'url': url,
-        'behavior': behavior,
-        'format': format,
-      };
+    'name': name,
+    'url': url,
+    'behavior': behavior,
+    'format': format,
+  };
 }
 
 class RoutingRule {
@@ -253,22 +266,29 @@ class RoutingRule {
   final bool noResolve;
 
   factory RoutingRule.fromJson(Map<String, dynamic> json) => RoutingRule(
-        type: json['type'] as String? ?? '',
-        value: json['value'] as String? ?? '',
-        action: json['action'] as String? ?? '',
-        noResolve: json['no_resolve'] as bool? ?? false,
-      );
+    type: json['type'] as String? ?? '',
+    value: json['value'] as String? ?? '',
+    action: json['action'] as String? ?? '',
+    noResolve: json['no_resolve'] as bool? ?? false,
+  );
 
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'value': value,
-        'action': action,
-        if (noResolve) 'no_resolve': true,
-      };
+    'type': type,
+    'value': value,
+    'action': action,
+    if (noResolve) 'no_resolve': true,
+  };
 
   static const types = [
-    'domain-suffix', 'domain-keyword', 'domain-exact', 'domain-regex', 'ip-cidr',
-    'process-name', 'geoip', 'geosite', 'rule-list',
+    'domain-suffix',
+    'domain-keyword',
+    'domain-exact',
+    'domain-regex',
+    'ip-cidr',
+    'process-name',
+    'geoip',
+    'geosite',
+    'rule-list',
   ];
   static const actions = ['proxy', 'direct', 'block'];
 
@@ -276,7 +296,9 @@ class RoutingRule {
   static final _cidrRe = RegExp(r'^[0-9a-fA-F:.]+/\d{1,3}$');
   static final _processRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9 ._-]*$');
   static final _geoipRe = RegExp(r'^[A-Za-z]{2}$'); // ISO 3166-1 alpha-2
-  static final _geositeRe = RegExp(r'^[a-z0-9][a-z0-9@.!-]*$'); // geosite category
+  static final _geositeRe = RegExp(
+    r'^[a-z0-9][a-z0-9@.!-]*$',
+  ); // geosite category
   static final _listRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
   // A rule line is comma-separated and unquoted in the engine's own parser, so
   // a pattern containing a comma cannot be expressed at all — and `#` would
@@ -341,7 +363,6 @@ class Account {
   final int usedBytes;
   final int dataLimit; // 0 = unlimited
 
-
   /// on_hold users may connect — their expiry starts on first use.
   bool get canConnect => status == 'active' || status == 'on_hold';
 
@@ -357,12 +378,12 @@ class Account {
   }
 
   Map<String, dynamic> toJson() => {
-        'display_name': displayName,
-        'status': status,
-        if (expiresAt != null) 'expires_at': expiresAt!.toIso8601String(),
-        'used_bytes': usedBytes,
-        'data_limit': dataLimit,
-      };
+    'display_name': displayName,
+    'status': status,
+    if (expiresAt != null) 'expires_at': expiresAt!.toIso8601String(),
+    'used_bytes': usedBytes,
+    'data_limit': dataLimit,
+  };
 }
 
 class Location {
@@ -423,7 +444,9 @@ class Location {
   /// the difference is the whole point of the line; silence would be read as
   /// the first.
   String get security {
-    if (proxy['reality-opts'] != null || proxy['reality'] != null) return 'Reality';
+    if (proxy['reality-opts'] != null || proxy['reality'] != null) {
+      return 'Reality';
+    }
     // Two protocols carry TLS by construction and do not carry the flag.
     if (proxyType == 'trojan' || proxyType == 'hysteria2') return 'TLS';
     return proxy['tls'] == true ? 'TLS' : 'No TLS';
@@ -431,13 +454,13 @@ class Location {
 
   /// The protocol as it is written down everywhere else.
   String get protocol => switch (proxyType) {
-        'vless' => 'VLESS',
-        'vmess' => 'VMess',
-        'trojan' => 'Trojan',
-        'ss' => 'Shadowsocks',
-        'hysteria2' => 'Hysteria2',
-        final other => other.toUpperCase(),
-      };
+    'vless' => 'VLESS',
+    'vmess' => 'VMess',
+    'trojan' => 'Trojan',
+    'ss' => 'Shadowsocks',
+    'hysteria2' => 'Hysteria2',
+    final other => other.toUpperCase(),
+  };
 
   /// The line under the server's name: protocol, transport and what protects
   /// it, the enumeration every other client shows.
@@ -459,16 +482,16 @@ class Location {
   }
 
   factory Location.fromJson(Map<String, dynamic> json) => Location(
-        id: json['id'] as String? ?? '',
-        label: json['label'] as String? ?? '',
-        proxy: Map<String, dynamic>.from(json['proxy'] as Map? ?? {}),
-        description: json['description'] as String? ?? '',
-      );
+    id: json['id'] as String? ?? '',
+    label: json['label'] as String? ?? '',
+    proxy: Map<String, dynamic>.from(json['proxy'] as Map? ?? {}),
+    description: json['description'] as String? ?? '',
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'label': label,
-        'proxy': proxy,
-        if (description.isNotEmpty) 'description': description,
-      };
+    'id': id,
+    'label': label,
+    'proxy': proxy,
+    if (description.isNotEmpty) 'description': description,
+  };
 }

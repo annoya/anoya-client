@@ -62,13 +62,17 @@ class VpnColors extends ThemeExtension<VpnColors> {
   );
 
   @override
-  VpnColors copyWith({Color? connected, Color? connecting, Color? onStatusContainer, Color? direct}) =>
-      VpnColors(
-        connected: connected ?? this.connected,
-        connecting: connecting ?? this.connecting,
-        onStatusContainer: onStatusContainer ?? this.onStatusContainer,
-        direct: direct ?? this.direct,
-      );
+  VpnColors copyWith({
+    Color? connected,
+    Color? connecting,
+    Color? onStatusContainer,
+    Color? direct,
+  }) => VpnColors(
+    connected: connected ?? this.connected,
+    connecting: connecting ?? this.connecting,
+    onStatusContainer: onStatusContainer ?? this.onStatusContainer,
+    direct: direct ?? this.direct,
+  );
 
   @override
   VpnColors lerp(VpnColors? other, double t) {
@@ -76,7 +80,11 @@ class VpnColors extends ThemeExtension<VpnColors> {
     return VpnColors(
       connected: Color.lerp(connected, other.connected, t)!,
       connecting: Color.lerp(connecting, other.connecting, t)!,
-      onStatusContainer: Color.lerp(onStatusContainer, other.onStatusContainer, t)!,
+      onStatusContainer: Color.lerp(
+        onStatusContainer,
+        other.onStatusContainer,
+        t,
+      )!,
       direct: Color.lerp(direct, other.direct, t)!,
     );
   }
@@ -108,7 +116,9 @@ ThemeData buildAppTheme(Brightness brightness) {
       // theirs at 24 — hence half the difference as padding, making both 28.
       // Without it "+" and the gear look misaligned (most obvious on macOS).
       leadingWidth: _kLeading,
-      actionsPadding: const EdgeInsets.only(right: (_kLeading - _kIconButton) / 2),
+      actionsPadding: const EdgeInsets.only(
+        right: (_kLeading - _kIconButton) / 2,
+      ),
       titleTextStyle: TextStyle(
         color: scheme.onSurface,
         fontSize: 18,
@@ -129,11 +139,20 @@ ThemeData buildAppTheme(Brightness brightness) {
 
     listTileTheme: ListTileThemeData(
       iconColor: scheme.onSurfaceVariant,
-      titleTextStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: scheme.onSurface),
-      subtitleTextStyle: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+      titleTextStyle: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        color: scheme.onSurface,
+      ),
+      subtitleTextStyle: TextStyle(
+        fontSize: 12.5,
+        color: scheme.onSurfaceVariant,
+      ),
       // Hover/press highlight is a rounded pill inset inside the card, not a
       // full-bleed square-cornered band (very visible with a pointer on macOS).
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rControl)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_rControl),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       minVerticalPadding: 10,
     ),
@@ -141,7 +160,9 @@ ThemeData buildAppTheme(Brightness brightness) {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size(64, 48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rControl)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_rControl),
+        ),
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       ),
     ),
@@ -151,14 +172,18 @@ ThemeData buildAppTheme(Brightness brightness) {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(64, 48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rControl)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_rControl),
+        ),
         side: BorderSide(color: scheme.outlineVariant),
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rControl)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_rControl),
+        ),
       ),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
@@ -171,7 +196,9 @@ ThemeData buildAppTheme(Brightness brightness) {
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: scheme.surfaceContainerHighest.withValues(alpha: dark ? 0.35 : 0.6),
+      fillColor: scheme.surfaceContainerHighest.withValues(
+        alpha: dark ? 0.35 : 0.6,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(_rControl),
         borderSide: BorderSide.none,
@@ -180,11 +207,15 @@ ThemeData buildAppTheme(Brightness brightness) {
         borderRadius: BorderRadius.circular(_rControl),
         borderSide: BorderSide(color: scheme.primary, width: 1.6),
       ),
-      hintStyle: TextStyle(color: scheme.onSurfaceVariant.withValues(alpha: 0.7)),
+      hintStyle: TextStyle(
+        color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+      ),
     ),
 
     dialogTheme: DialogThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rOverlay)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_rOverlay),
+      ),
       backgroundColor: scheme.surfaceContainerLow,
     ),
     bottomSheetTheme: BottomSheetThemeData(
@@ -196,7 +227,9 @@ ThemeData buildAppTheme(Brightness brightness) {
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_rControl)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_rControl),
+      ),
     ),
     dividerTheme: DividerThemeData(color: hairline, space: 1),
     progressIndicatorTheme: ProgressIndicatorThemeData(

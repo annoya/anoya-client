@@ -20,7 +20,11 @@ import 'config_parts.dart';
 /// There is deliberately no Source row. The source is the subscription key,
 /// and the key is the credential: anyone who reads it holds the subscription.
 class AmneziaConfigScreen extends ConsumerWidget {
-  const AmneziaConfigScreen({super.key, required this.profile, required this.isActive});
+  const AmneziaConfigScreen({
+    super.key,
+    required this.profile,
+    required this.isActive,
+  });
 
   final Profile profile;
   final bool isActive;
@@ -33,16 +37,18 @@ class AmneziaConfigScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(p.name)),
       body: PageBody(
-        child: ListView(children: [
-          const SizedBox(height: 8),
-          ProfileHeaderCard(profile: p, isActive: isActive),
-          if (account?.expired == true) const _ExpiredCard(),
-          RefreshCard(profile: p),
-          if (account != null) ..._subscription(account),
-          RoutingRow(profile: p),
-          const _ThisInstallation(),
-          ConfigActions(profile: p, isActive: isActive),
-        ]),
+        child: ListView(
+          children: [
+            const SizedBox(height: 8),
+            ProfileHeaderCard(profile: p, isActive: isActive),
+            if (account?.expired == true) const _ExpiredCard(),
+            RefreshCard(profile: p),
+            if (account != null) ..._subscription(account),
+            RoutingRow(profile: p),
+            const _ThisInstallation(),
+            ConfigActions(profile: p, isActive: isActive),
+          ],
+        ),
       ),
     );
   }
@@ -59,7 +65,9 @@ class AmneziaConfigScreen extends ConsumerWidget {
         ListTile(
           leading: const Icon(Icons.devices_outlined),
           title: const Text('Devices'),
-          subtitle: Text('${account.activeDevices} of ${account.maxDevices} used'),
+          subtitle: Text(
+            '${account.activeDevices} of ${account.maxDevices} used',
+          ),
         ),
     ];
     // The description Amnezia sends is the sales copy from its store page. On
@@ -71,12 +79,14 @@ class AmneziaConfigScreen extends ConsumerWidget {
       const SectionHeader('SUBSCRIPTION'),
       Card(
         margin: kCardMargin,
-        child: Column(children: [
-          for (final (i, row) in rows.indexed) ...[
-            if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-            row,
+        child: Column(
+          children: [
+            for (final (i, row) in rows.indexed) ...[
+              if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+              row,
+            ],
           ],
-        ]),
+        ),
       ),
     ];
   }
@@ -125,10 +135,12 @@ class _ThisInstallationState extends State<_ThisInstallation> {
         if (data == null || data.$2.isEmpty) return const SizedBox.shrink();
         return DeviceSection(
           label: data.$1.label,
-          labelSubtitle: 'Identified to your subscription, which counts devices',
+          labelSubtitle:
+              'Identified to your subscription, which counts devices',
           idTitle: 'Device id',
           idValue: data.$2,
-          hint: 'Your subscription counts devices by this id. It is made once '
+          hint:
+              'Your subscription counts devices by this id. It is made once '
               'and kept, so reconnecting costs no slot — but a reinstall takes '
               'a new one.',
         );
@@ -138,8 +150,18 @@ class _ThisInstallationState extends State<_ThisInstallation> {
 }
 
 const _months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 /// The subscription ran out, in Amnezia's own words (code 1112) so that the
@@ -157,7 +179,8 @@ class _ExpiredCard extends StatelessWidget {
         leading: Icon(Icons.warning_amber_outlined, color: cs.error),
         title: const Text('Subscription expired'),
         subtitle: const Text(
-            'Renew the subscription, then refresh this configuration.'),
+          'Renew the subscription, then refresh this configuration.',
+        ),
         isThreeLine: true,
       ),
     );

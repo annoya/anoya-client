@@ -24,38 +24,47 @@ import 'package:vpn_client/state/profiles_controller.dart';
 /// here is deliberately slower than one frame: that is the case that broke.
 void main() {
   Profile profile(String id, String name) => Profile(
-        id: id,
-        type: ProfileType.subscription,
-        name: name,
-        subscriptionUrl: 'https://panel.example/s/$id',
-        locations: [
-          Location(id: '$id-a', label: 'Germany', proxy: {'type': 'vless', 'server': '1.1.1.1'}),
-        ],
-      );
+    id: id,
+    type: ProfileType.subscription,
+    name: name,
+    subscriptionUrl: 'https://panel.example/s/$id',
+    locations: [
+      Location(
+        id: '$id-a',
+        label: 'Germany',
+        proxy: {'type': 'vless', 'server': '1.1.1.1'},
+      ),
+    ],
+  );
 
   /// The settings screen as the user reaches it: pushed on top of something.
   Future<_SlowRemoval> open(WidgetTester tester, String id) async {
     final ctrl = _SlowRemoval([profile('p1', 'nexus'), profile('p2', 'work')]);
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        onDemandProvider.overrideWith(_QuietOnDemand.new),
-        profilesControllerProvider.overrideWith(() => ctrl),
-      ],
-      child: MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: TextButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => ConfigScreen(profileId: id))),
-                child: const Text('home'),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          onDemandProvider.overrideWith(_QuietOnDemand.new),
+          profilesControllerProvider.overrideWith(() => ctrl),
+        ],
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ConfigScreen(profileId: id),
+                    ),
+                  ),
+                  child: const Text('home'),
+                ),
               ),
             ),
           ),
         ),
       ),
-    ));
+    );
     await tester.tap(find.text('home'));
     await tester.pumpAndSettle();
     return ctrl;
@@ -69,13 +78,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the active one: the screen closes instead of emptying out',
-      (tester) async {
+  testWidgets('the active one: the screen closes instead of emptying out', (
+    tester,
+  ) async {
     final ctrl = await open(tester, 'p1');
     await remove(tester);
     expect(ctrl.removed, ['p1']);
-    expect(find.text('home'), findsOneWidget,
-        reason: 'a screen describing a configuration that is gone must close');
+    expect(
+      find.text('home'),
+      findsOneWidget,
+      reason: 'a screen describing a configuration that is gone must close',
+    );
     expect(find.byType(ConfigScreen), findsNothing);
   });
 

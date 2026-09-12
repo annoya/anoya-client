@@ -20,19 +20,28 @@ class ServiceAvatar extends StatelessWidget {
     return Container(
       width: 26,
       height: 26,
-      decoration: BoxDecoration(color: cs.primaryContainer, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: cs.primaryContainer,
+        shape: BoxShape.circle,
+      ),
       alignment: Alignment.center,
       child: service != null && service.glyph
           ? SvgPicture.asset(
               service.glyphAsset,
               width: 14,
               height: 14,
-              colorFilter: ColorFilter.mode(cs.onPrimaryContainer, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(
+                cs.onPrimaryContainer,
+                BlendMode.srcIn,
+              ),
             )
           : Text(
               label.isEmpty ? '?' : label[0].toUpperCase(),
               style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700, color: cs.onPrimaryContainer),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: cs.onPrimaryContainer,
+              ),
             ),
     );
   }

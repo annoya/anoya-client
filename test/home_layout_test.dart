@@ -16,71 +16,89 @@ import 'package:vpn_client/state/providers.dart';
 /// when there is a choice, and both pickers sit at the bottom edge.
 void main() {
   Profile profile(String id, String name) => Profile(
-        id: id,
-        type: ProfileType.link,
-        name: name,
-        locations: [
-          Location(id: '$id-l', label: 'Germany', proxy: {
-            'type': 'vless',
-            'server': '94.159.101.110',
-          }),
-        ],
-      );
+    id: id,
+    type: ProfileType.link,
+    name: name,
+    locations: [
+      Location(
+        id: '$id-l',
+        label: 'Germany',
+        proxy: {'type': 'vless', 'server': '94.159.101.110'},
+      ),
+    ],
+  );
 
   /// A subscription that offers what this panel offers: several servers plus
   /// sets whose member the engine picks.
   Profile withGroups() => Profile(
-        id: 'sub',
-        type: ProfileType.subscription,
-        name: 'Remnawave',
-        subscriptionUrl: 'https://sub.example/t',
-        locations: [
-          for (var i = 1; i <= 3; i++)
-            Location(id: 's$i', label: 'VLESS Reality $i', proxy: {
-              'type': 'vless',
-              'server': '10.0.0.$i',
-            }),
-        ],
-        groups: const [
-          ProxyGroup(
-            name: '⚡️ Fastest',
-            type: 'url-test',
-            members: ['s1', 's2', 's3'],
-            intervalSeconds: 300,
-            tolerance: 150,
-          ),
-          ProxyGroup(name: '🛟 Failover', type: 'fallback', members: ['s1', 's2', 's3']),
-        ],
-      );
+    id: 'sub',
+    type: ProfileType.subscription,
+    name: 'Remnawave',
+    subscriptionUrl: 'https://sub.example/t',
+    locations: [
+      for (var i = 1; i <= 3; i++)
+        Location(
+          id: 's$i',
+          label: 'VLESS Reality $i',
+          proxy: {'type': 'vless', 'server': '10.0.0.$i'},
+        ),
+    ],
+    groups: const [
+      ProxyGroup(
+        name: '⚡️ Fastest',
+        type: 'url-test',
+        members: ['s1', 's2', 's3'],
+        intervalSeconds: 300,
+        tolerance: 150,
+      ),
+      ProxyGroup(
+        name: '🛟 Failover',
+        type: 'fallback',
+        members: ['s1', 's2', 's3'],
+      ),
+    ],
+  );
 
   Future<void> pump(WidgetTester tester, List<Profile> profiles) async {
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        vpnCoreProvider.overrideWithValue(_IdleCore()),
-        onDemandProvider.overrideWith(_QuietOnDemand.new),
-        profilesControllerProvider.overrideWith(() => _FixedProfiles(profiles)),
-      ],
-      child: MaterialApp(theme: buildAppTheme(Brightness.light), home: const HomeScreen()),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          vpnCoreProvider.overrideWithValue(_IdleCore()),
+          onDemandProvider.overrideWith(_QuietOnDemand.new),
+          profilesControllerProvider.overrideWith(
+            () => _FixedProfiles(profiles),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: const HomeScreen(),
+        ),
+      ),
+    );
     await tester.pump();
   }
 
   // The app bar carries a gear of its own (app settings), so every icon
   // expectation is scoped to the configuration card.
   Finder inConfigCard(IconData icon) => find.descendant(
-        of: find.widgetWithText(Card, 'backup.single'),
-        matching: find.byIcon(icon),
+    of: find.widgetWithText(Card, 'backup.single'),
+    matching: find.byIcon(icon),
+  );
+
+  testWidgets(
+    'a single configuration is still shown, with a gear but no chevron',
+    (tester) async {
+      await pump(tester, [profile('p1', 'backup.single')]);
+
+      expect(find.text('backup.single'), findsOneWidget);
+      expect(inConfigCard(Icons.settings_outlined), findsOneWidget);
+      expect(
+        inConfigCard(Icons.expand_more),
+        findsNothing,
+        reason: 'nothing to pick between',
       );
-
-  testWidgets('a single configuration is still shown, with a gear but no chevron',
-      (tester) async {
-    await pump(tester, [profile('p1', 'backup.single')]);
-
-    expect(find.text('backup.single'), findsOneWidget);
-    expect(inConfigCard(Icons.settings_outlined), findsOneWidget);
-    expect(inConfigCard(Icons.expand_more), findsNothing,
-        reason: 'nothing to pick between');
-  });
+    },
+  );
 
   testWidgets('a second configuration adds the picker chevron', (tester) async {
     await pump(tester, [profile('p1', 'backup.single'), profile('p2', 'work')]);
@@ -89,18 +107,27 @@ void main() {
     expect(inConfigCard(Icons.expand_more), findsOneWidget);
   });
 
-  testWidgets('the pickers sit at the bottom, the ring above them', (tester) async {
+  testWidgets('the pickers sit at the bottom, the ring above them', (
+    tester,
+  ) async {
     await pump(tester, [profile('p1', 'backup.single')]);
 
     final screen = tester.getSize(find.byType(MaterialApp));
     final serverRow = tester.getRect(find.widgetWithText(Card, 'Germany'));
-    expect(screen.height - serverRow.bottom, lessThan(28),
-        reason: 'the last card hugs the bottom edge (16 padding + card margin)');
+    expect(
+      screen.height - serverRow.bottom,
+      lessThan(28),
+      reason: 'the last card hugs the bottom edge (16 padding + card margin)',
+    );
 
-    expect(tester.getRect(find.text('Connect')).bottom, lessThan(serverRow.top));
+    expect(
+      tester.getRect(find.text('Connect')).bottom,
+      lessThan(serverRow.top),
+    );
   });
-  testWidgets('a subscription\'s groups reach the picker, above the servers',
-      (tester) async {
+  testWidgets('a subscription\'s groups reach the picker, above the servers', (
+    tester,
+  ) async {
     // Parsing them is not the same as offering them: the whole point of a group
     // is that the user can choose it.
     await pump(tester, [withGroups()]);
@@ -110,54 +137,81 @@ void main() {
     expect(find.text('CHOSEN BY THE ENGINE'), findsOneWidget);
     expect(find.text('⚡️ Fastest'), findsOneWidget);
     expect(find.text('🛟 Failover'), findsOneWidget);
-    expect(find.textContaining('Lowest latency of 3'), findsOneWidget,
-        reason: 'the row says what the group does, not what its type is called');
+    expect(
+      find.textContaining('Lowest latency of 3'),
+      findsOneWidget,
+      reason: 'the row says what the group does, not what its type is called',
+    );
     // Twice: the sheet lists it, and the row behind the sheet still names the
     // current selection.
-    expect(find.text('VLESS Reality 1'), findsNWidgets(2),
-        reason: 'the servers are still there, below');
+    expect(
+      find.text('VLESS Reality 1'),
+      findsNWidgets(2),
+      reason: 'the servers are still there, below',
+    );
 
     final header = tester.getTopLeft(find.text('CHOSEN BY THE ENGINE')).dy;
-    expect(header, lessThan(tester.getTopLeft(find.text('VLESS Reality 1').last).dy));
+    expect(
+      header,
+      lessThan(tester.getTopLeft(find.text('VLESS Reality 1').last).dy),
+    );
   });
 
-  testWidgets('the configuration line counts the groups it offers', (tester) async {
+  testWidgets('the configuration line counts the groups it offers', (
+    tester,
+  ) async {
     // A section appearing in the picker that was not there before otherwise
     // reads as a new feature of the app rather than as what the provider sent.
     await pump(tester, [withGroups()]);
     expect(find.textContaining('3 servers · 2 groups'), findsOneWidget);
   });
 
-  testWidgets('a refreshable configuration can be refreshed from the home screen',
-      (tester) async {
-    // The button also lives on the configuration screen; this is a duplicate,
-    // because that is not where it gets pressed.
-    await pump(tester, [
-      Profile(
-        id: 'sub',
-        type: ProfileType.subscription,
-        name: 'Remnawave',
-        subscriptionUrl: 'https://sub.example/t',
-        locations: [
-          Location(id: 's1', label: 'Germany', proxy: {'type': 'vless', 'server': '1.2.3.4'}),
-        ],
-      ),
-    ]);
-    final card = find.widgetWithText(Card, 'Remnawave');
-    expect(find.descendant(of: card, matching: find.byIcon(Icons.refresh)), findsOneWidget);
-    expect(find.descendant(of: card, matching: find.byIcon(Icons.settings_outlined)),
+  testWidgets(
+    'a refreshable configuration can be refreshed from the home screen',
+    (tester) async {
+      // The button also lives on the configuration screen; this is a duplicate,
+      // because that is not where it gets pressed.
+      await pump(tester, [
+        Profile(
+          id: 'sub',
+          type: ProfileType.subscription,
+          name: 'Remnawave',
+          subscriptionUrl: 'https://sub.example/t',
+          locations: [
+            Location(
+              id: 's1',
+              label: 'Germany',
+              proxy: {'type': 'vless', 'server': '1.2.3.4'},
+            ),
+          ],
+        ),
+      ]);
+      final card = find.widgetWithText(Card, 'Remnawave');
+      expect(
+        find.descendant(of: card, matching: find.byIcon(Icons.refresh)),
         findsOneWidget,
-        reason: 'refresh sits beside the gear, it does not replace it');
-  });
+      );
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.byIcon(Icons.settings_outlined),
+        ),
+        findsOneWidget,
+        reason: 'refresh sits beside the gear, it does not replace it',
+      );
+    },
+  );
 
-  testWidgets('a single link has no refresh button, having nothing to re-ask',
-      (tester) async {
+  testWidgets('a single link has no refresh button, having nothing to re-ask', (
+    tester,
+  ) async {
     await pump(tester, [profile('a', 'Config')]);
     expect(find.byIcon(Icons.refresh), findsNothing);
   });
 
-  testWidgets('the server row names the transport, not just the protocol',
-      (tester) async {
+  testWidgets('the server row names the transport, not just the protocol', (
+    tester,
+  ) async {
     await pump(tester, [
       Profile(
         id: 'sub',
@@ -165,19 +219,21 @@ void main() {
         name: 'Remnawave',
         subscriptionUrl: 'https://sub.example/t',
         locations: [
-          Location(id: 's1', label: 'Germany', proxy: {
-            'type': 'vless',
-            'server': '1.2.3.4',
-            'network': 'xhttp',
-          }),
+          Location(
+            id: 's1',
+            label: 'Germany',
+            proxy: {'type': 'vless', 'server': '1.2.3.4', 'network': 'xhttp'},
+          ),
         ],
       ),
     ]);
     expect(find.text('VLESS · XHTTP · No TLS'), findsOneWidget);
-    expect(find.textContaining('1.2.3.4'), findsNothing,
-        reason: 'the endpoint is not something the interface shows');
+    expect(
+      find.textContaining('1.2.3.4'),
+      findsNothing,
+      reason: 'the endpoint is not something the interface shows',
+    );
   });
-
 }
 
 class _FixedProfiles extends ProfilesController {
@@ -185,7 +241,8 @@ class _FixedProfiles extends ProfilesController {
   final List<Profile> profiles;
 
   @override
-  ProfilesState build() => ProfilesState(profiles: profiles, activeId: profiles.first.id);
+  ProfilesState build() =>
+      ProfilesState(profiles: profiles, activeId: profiles.first.id);
 }
 
 class _QuietOnDemand extends OnDemandController {
@@ -208,5 +265,4 @@ class _IdleCore extends VpnCore {
 
   @override
   Future<void> disconnect() async {}
-
 }

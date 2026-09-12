@@ -44,9 +44,11 @@ class AppPrefsController extends Notifier<AppPrefs> with ReadyGate {
     return const AppPrefs();
   }
 
-  Future<void> setThemeMode(ThemeMode mode) => _save((p) => p.copyWith(themeMode: mode));
+  Future<void> setThemeMode(ThemeMode mode) =>
+      _save((p) => p.copyWith(themeMode: mode));
 
-  Future<void> setLanguage(AppLanguage language) => _save((p) => p.copyWith(language: language));
+  Future<void> setLanguage(AppLanguage language) =>
+      _save((p) => p.copyWith(language: language));
 
   /// The app side of the switch takes effect immediately; the engine and the
   /// extension read it from the tunnel config, which the caller resyncs.
@@ -63,7 +65,9 @@ class AppPrefsController extends Notifier<AppPrefs> with ReadyGate {
   }
 }
 
-final appPrefsProvider = NotifierProvider<AppPrefsController, AppPrefs>(AppPrefsController.new);
+final appPrefsProvider = NotifierProvider<AppPrefsController, AppPrefs>(
+  AppPrefsController.new,
+);
 
 /// The device's own routing preferences: one owner for the readers on the DNS
 /// screens and the writers on the settings and geo screens. Same shape as
@@ -96,4 +100,6 @@ class RoutingPrefsController extends Notifier<RoutingPrefs> with ReadyGate {
 }
 
 final routingPrefsProvider =
-    NotifierProvider<RoutingPrefsController, RoutingPrefs>(RoutingPrefsController.new);
+    NotifierProvider<RoutingPrefsController, RoutingPrefs>(
+      RoutingPrefsController.new,
+    );

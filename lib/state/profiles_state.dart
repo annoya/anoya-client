@@ -70,7 +70,10 @@ class ProfilesState {
     final g = selectedGroup;
     if (g == null) return const [];
     final byId = {for (final l in locations) l.id: l};
-    return [for (final id in g.members) if (byId[id] != null) byId[id]!];
+    return [
+      for (final id in g.members)
+        if (byId[id] != null) byId[id]!,
+    ];
   }
 
   Location? get selectedLocation {
@@ -89,14 +92,13 @@ class ProfilesState {
     bool? switching,
     AppError? error,
     AppError? notice,
-  }) =>
-      ProfilesState(
-        profiles: profiles ?? this.profiles,
-        activeId: activeId ?? this.activeId,
-        selectedLocationId: selectedLocationId ?? this.selectedLocationId,
-        loading: loading ?? this.loading,
-        switching: switching ?? this.switching,
-        error: error, // reset each transition unless passed
-        notice: notice, // same: a message is for the transition that set it
-      );
+  }) => ProfilesState(
+    profiles: profiles ?? this.profiles,
+    activeId: activeId ?? this.activeId,
+    selectedLocationId: selectedLocationId ?? this.selectedLocationId,
+    loading: loading ?? this.loading,
+    switching: switching ?? this.switching,
+    error: error, // reset each transition unless passed
+    notice: notice, // same: a message is for the transition that set it
+  );
 }

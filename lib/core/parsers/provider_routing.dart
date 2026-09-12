@@ -67,7 +67,9 @@ ProviderRouting? parseXrayRouting(String body) {
         // Rules keyed on an inbound, a port or a protocol describe the client's
         // own listeners. Ours has none: the engine reads a tunnel interface and
         // hijacks DNS itself, so these have nothing to apply to.
-        if (entry['inboundTag'] != null || entry['port'] != null || entry['protocol'] != null) {
+        if (entry['inboundTag'] != null ||
+            entry['port'] != null ||
+            entry['protocol'] != null) {
           continue;
         }
         if (action != null) catchAll = action;
@@ -154,7 +156,10 @@ ProviderRouting? parseHappRouting(String header) {
       // default, so there is nothing to show.
       return null;
     }
-    return ProviderRouting(routing: Routing(mode: mode, rules: rules), skipped: skipped);
+    return ProviderRouting(
+      routing: Routing(mode: mode, rules: rules),
+      skipped: skipped,
+    );
   } catch (e) {
     Log.e('provider routing: unreadable happ routing', '$e');
     return null;
@@ -202,7 +207,10 @@ List<RuleList> _clashRuleLists(Object? node) {
 }
 
 /// The `rules:` half on its own, for a caller that already has the lines.
-ProviderRouting? parseClashRules(List<String> lines, {List<RuleList> lists = const []}) {
+ProviderRouting? parseClashRules(
+  List<String> lines, {
+  List<RuleList> lists = const [],
+}) {
   final rules = <RoutingRule>[];
   var skipped = 0;
   String? catchAll;
@@ -281,7 +289,9 @@ ProviderRouting? parseClashRules(List<String> lines, {List<RuleList> lists = con
 String? _actionForTag(Object? tag) {
   final t = '${tag ?? ''}'.toLowerCase();
   if (t.isEmpty) return null;
-  if (t.contains('block') || t.contains('reject') || t.contains('blackhole')) return 'block';
+  if (t.contains('block') || t.contains('reject') || t.contains('blackhole')) {
+    return 'block';
+  }
   if (t.contains('direct') || t.contains('bypass')) return 'direct';
   if (t.contains('dns')) return null; // handled by the engine, not by routing
   return 'proxy';

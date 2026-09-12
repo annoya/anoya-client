@@ -14,7 +14,11 @@ import 'config_parts.dart';
 /// own unless the panel sent rules, in which case both are offered and the user
 /// picks.
 class SubscriptionConfigScreen extends ConsumerWidget {
-  const SubscriptionConfigScreen({super.key, required this.profile, required this.isActive});
+  const SubscriptionConfigScreen({
+    super.key,
+    required this.profile,
+    required this.isActive,
+  });
 
   final Profile profile;
   final bool isActive;
@@ -25,30 +29,33 @@ class SubscriptionConfigScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(p.name)),
       body: PageBody(
-        child: ListView(children: [
-          const SizedBox(height: 8),
-          ProfileHeaderCard(profile: p, isActive: isActive),
-          if (p.deviceLimitReached) const DeviceLimitCard(),
-          if (p.unsupportedServers.isNotEmpty) UnsupportedServersCard(profile: p),
-          if (p.subscriptionUrl != null)
-            SourceCard(
-              value: p.subscriptionUrl!,
-              // The panel names the page meant for people; its own URL is the
-              // fallback, since that is what a browser would be given anyway.
-              openUrl: p.providerInfo?.webPageUrl.isNotEmpty == true
-                  ? p.providerInfo!.webPageUrl
-                  : p.subscriptionUrl,
-              viaFallback: p.usedFallback,
-            ),
-          RefreshCard(profile: p),
-          // Above the provider's own details: this is the configuration's
-          // behaviour, and what the panel reports about the account is
-          // background to it.
-          RoutingRow(profile: p),
-          if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),
-          if (p.deviceLimitActive) const ThisDeviceSection(),
-          ConfigActions(profile: p, isActive: isActive),
-        ]),
+        child: ListView(
+          children: [
+            const SizedBox(height: 8),
+            ProfileHeaderCard(profile: p, isActive: isActive),
+            if (p.deviceLimitReached) const DeviceLimitCard(),
+            if (p.unsupportedServers.isNotEmpty)
+              UnsupportedServersCard(profile: p),
+            if (p.subscriptionUrl != null)
+              SourceCard(
+                value: p.subscriptionUrl!,
+                // The panel names the page meant for people; its own URL is the
+                // fallback, since that is what a browser would be given anyway.
+                openUrl: p.providerInfo?.webPageUrl.isNotEmpty == true
+                    ? p.providerInfo!.webPageUrl
+                    : p.subscriptionUrl,
+                viaFallback: p.usedFallback,
+              ),
+            RefreshCard(profile: p),
+            // Above the provider's own details: this is the configuration's
+            // behaviour, and what the panel reports about the account is
+            // background to it.
+            RoutingRow(profile: p),
+            if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),
+            if (p.deviceLimitActive) const ThisDeviceSection(),
+            ConfigActions(profile: p, isActive: isActive),
+          ],
+        ),
       ),
     );
   }

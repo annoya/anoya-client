@@ -81,20 +81,27 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       // forget future that throws is an uncaught async error, and a write can
       // fail for reasons this app has no answer to — a full disk, a container
       // that went away. Losing the memory of a choice is not worth that.
-      unawaited(ProfileStore.saveSelection(profileId, selectionId)
-          .catchError((Object e) => Log.e('selection not saved', '$e')));
+      unawaited(
+        ProfileStore.saveSelection(
+          profileId,
+          selectionId,
+        ).catchError((Object e) => Log.e('selection not saved', '$e')),
+      );
     });
   }
 
   Future<void> _init() async {
-    unawaited(GeoStore.maybeAutoUpdate()); // weekly refresh, never a first download
+    unawaited(
+      GeoStore.maybeAutoUpdate(),
+    ); // weekly refresh, never a first download
     final profiles = await ProfileStore.load();
     final saved = await ProfileStore.loadSelection();
     // Ids outlive what they name: a configuration can be gone and a server can
     // disappear from the next refresh of the list it came from. Both are
     // checked against what actually loaded, and the old first-in-the-list
     // behaviour is what remains when either check fails.
-    final active = profiles.where((p) => p.id == saved.profileId).firstOrNull ??
+    final active =
+        profiles.where((p) => p.id == saved.profileId).firstOrNull ??
         (profiles.isEmpty ? null : profiles.first);
     // The saved selection belongs to the saved configuration. When that one is
     // gone and another takes its place, the id is not carried over even if it
@@ -129,14 +136,20 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   // What a configuration is made of — the fetch, the parse, the diagnosis —
   // lives in core/profile_import.dart. Here it only becomes the active one.
 
-  Future<void> addSelfhosted(String serverUrl, String username, String password) async =>
-      _append(await importSelfhosted(serverUrl, username, password));
+  Future<void> addSelfhosted(
+    String serverUrl,
+    String username,
+    String password,
+  ) async => _append(await importSelfhosted(serverUrl, username, password));
 
-  Future<void> addSelfhostedOIDC(String serverUrl, AuthProvider provider) async =>
-      _append(await importSelfhostedOIDC(serverUrl, provider));
+  Future<void> addSelfhostedOIDC(
+    String serverUrl,
+    AuthProvider provider,
+  ) async => _append(await importSelfhostedOIDC(serverUrl, provider));
 
   /// Which auth methods a self-hosted server offers (password + SSO providers).
-  Future<AuthConfig> authConfig(String serverUrl) => ApiClient(serverUrl).authConfig();
+  Future<AuthConfig> authConfig(String serverUrl) =>
+      ApiClient(serverUrl).authConfig();
 
   Future<void> addSubscriptionUrl(String name, String url) async =>
       _append(await importSubscriptionUrl(name, url));
@@ -144,7 +157,8 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Future<void> addFromText(String text, {String? name}) async =>
       _append(await importText(text, name: name));
 
-  Future<void> addAmneziaKey(String text) async => _append(await importAmneziaKey(text));
+  Future<void> addAmneziaKey(String text) async =>
+      _append(await importAmneziaKey(text));
 
   Future<void> _append(Profile p) async {
     await ready;
@@ -163,10 +177,14 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   /// Asks the source to fill in whatever the chosen server still needs, and
   /// keeps the answer. Returns the profile unchanged when there was nothing to
   /// do, which is every source but one.
-  Future<Profile> _resolveSelection(Profile p, String selectionId,
-      {bool force = false}) async {
-    final resolved =
-        await configSourceFor(p).resolveSelection(selectionId, force: force);
+  Future<Profile> _resolveSelection(
+    Profile p,
+    String selectionId, {
+    bool force = false,
+  }) async {
+    final resolved = await configSourceFor(
+      p,
+    ).resolveSelection(selectionId, force: force);
     if (identical(resolved, p)) return p;
     await _replace(resolved);
     return resolved;
@@ -176,7 +194,10 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   /// rest of the state alone.
   Future<void> _replace(Profile p) async {
     state = state.copyWith(
-      profiles: [for (final existing in state.profiles) existing.id == p.id ? p : existing],
+      profiles: [
+        for (final existing in state.profiles)
+          existing.id == p.id ? p : existing,
+      ],
     );
     await ProfileStore.save(state.profiles);
   }
@@ -281,8 +302,11 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       // does something. That makes this a notice, not a dialog (spec §9).
       state = state.copyWith(
         switching: false,
-        notice: AppError('Couldn’t get the server for ${_selectionLabel(selection)}',
-            detail: describeError(e).detail ?? 'The previous one is still in use.'),
+        notice: AppError(
+          'Couldn’t get the server for ${_selectionLabel(selection)}',
+          detail:
+              describeError(e).detail ?? 'The previous one is still in use.',
+        ),
       );
       return;
     }
@@ -301,8 +325,11 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       Log.e('hot switch failed', '$e');
       state = state.copyWith(
         switching: false,
-        error: const AppError('Couldn’t switch',
-            detail: 'The tunnel kept the previous configuration. Try again, or reconnect.'),
+        error: const AppError(
+          'Couldn’t switch',
+          detail:
+              'The tunnel kept the previous configuration. Try again, or reconnect.',
+        ),
       );
     }
   }
@@ -351,8 +378,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       // this request was in flight must not be undone by an older snapshot.
       amnezia: updated.amnezia == null
           ? current.amnezia
-          : (current.amnezia ?? updated.amnezia!)
-              .copyWith(account: updated.amnezia!.account),
+          : (current.amnezia ?? updated.amnezia!).copyWith(
+              account: updated.amnezia!.account,
+            ),
     );
     await _replace(merged);
     // Pruned against every profile, not just this one: the list files are one
@@ -374,8 +402,10 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
 
   /// Apply a global rule set to a profile. Picking a set also turns routing on:
   /// choosing one and seeing nothing happen would read as a bug.
-  Future<void> setRuleSet(String profileId, String ruleSetId) =>
-      _updateRouting(profileId, (p) => p.copyWith(ruleSetId: ruleSetId, routingEnabled: true));
+  Future<void> setRuleSet(String profileId, String ruleSetId) => _updateRouting(
+    profileId,
+    (p) => p.copyWith(ruleSetId: ruleSetId, routingEnabled: true),
+  );
 
   /// Turn this configuration's rule set on or off. Off leaves the chosen set
   /// remembered — it comes back when routing is switched on again.
@@ -385,7 +415,10 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   /// Accept or refuse the routing a subscription's panel sent. Reaches the
   /// tunnel exactly like the local switch — the rules differ only in authorship.
   Future<void> setProviderRoutingEnabled(String profileId, bool enabled) =>
-      _updateRouting(profileId, (p) => p.copyWith(providerRoutingEnabled: enabled));
+      _updateRouting(
+        profileId,
+        (p) => p.copyWith(providerRoutingEnabled: enabled),
+      );
 
   /// Apply or stop applying the provider's rule lists.
   ///
@@ -402,20 +435,26 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   /// go stale in a week on their own, and the sweep that removes what nothing
   /// points at any more belongs to a refresh, where a provider may genuinely
   /// have dropped a list.
-  Future<void> setProviderRuleListsEnabled(String profileId, bool enabled) async {
+  Future<void> setProviderRuleListsEnabled(
+    String profileId,
+    bool enabled,
+  ) async {
     await ready;
     final p = _byId(profileId);
     if (p == null) return;
     if (enabled) await syncRuleLists(profileId);
     await _updateRouting(
-        profileId, (p) => p.copyWith(providerRuleListsEnabled: enabled));
+      profileId,
+      (p) => p.copyWith(providerRuleListsEnabled: enabled),
+    );
   }
 
   /// Download whatever of a provider's lists we do not have. Also the retry
   /// path: a list that failed is worth one more attempt on demand.
   Future<List<RuleListStatus>> syncRuleLists(String profileId) async {
     await ready;
-    final lists = _byId(profileId)?.providerRouting?.lists ?? const <RuleList>[];
+    final lists =
+        _byId(profileId)?.providerRouting?.lists ?? const <RuleList>[];
     if (lists.isEmpty) return const [];
     final status = await RuleListStore.sync(lists);
     // A list that just arrived changes what the engine can run.
@@ -429,12 +468,16 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   /// still refers to them, and its files are worth keeping so turning the
   /// switch back on is free. What this excludes is what nothing points at — a
   /// list the provider dropped, or a configuration the user removed.
-  Iterable<RuleList> _liveRuleLists() =>
-      state.profiles.expand((p) => p.providerRouting?.lists ?? const <RuleList>[]);
+  Iterable<RuleList> _liveRuleLists() => state.profiles.expand(
+    (p) => p.providerRouting?.lists ?? const <RuleList>[],
+  );
 
   /// Routing changes reach the tunnel the same way a server switch does: hot on
   /// a live session, persisted otherwise.
-  Future<void> _updateRouting(String profileId, Profile Function(Profile) change) async {
+  Future<void> _updateRouting(
+    String profileId,
+    Profile Function(Profile) change,
+  ) async {
     await ready;
     final p = _byId(profileId);
     if (p == null) return;
@@ -449,7 +492,8 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   /// a second tap must join the first attempt, not start a parallel one.
   Future<void>? _connecting;
 
-  Future<void> connect() => _connecting ??= _connect().whenComplete(() => _connecting = null);
+  Future<void> connect() =>
+      _connecting ??= _connect().whenComplete(() => _connecting = null);
 
   Future<void> _connect() async {
     await ready;
@@ -459,8 +503,11 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       var p = state.active;
       if (p == null) {
         state = state.copyWith(
-            error: const AppError('No configuration',
-                detail: 'Add a link, a subscription, or sign in to your server.'));
+          error: const AppError(
+            'No configuration',
+            detail: 'Add a link, a subscription, or sign in to your server.',
+          ),
+        );
         return;
       }
       // Server-managed profiles force a refresh before connect (enforces
@@ -475,8 +522,11 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       final selection = state.selectionId;
       if (selection == null) {
         state = state.copyWith(
-            error: const AppError('This configuration has no servers',
-                detail: 'Refresh it, or add another configuration.'));
+          error: const AppError(
+            'This configuration has no servers',
+            detail: 'Refresh it, or add another configuration.',
+          ),
+        );
         return;
       }
       // Some sources issue a server only when it is asked for, and one may
@@ -496,7 +546,8 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       // Named by its label, not its address: the message stays specific about
       // which server failed, and the endpoint stays out of the interface.
       state = state.copyWith(
-          error: describeError(e, subject: state.selectedLocation?.label));
+        error: describeError(e, subject: state.selectedLocation?.label),
+      );
     }
   }
 
@@ -559,7 +610,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       // that publishes its servers, and nothing again for one that issues them
       // once the config in hand is still good.
       p = await _resolveSelection(p, selection);
-      await ref.read(vpnCoreProvider).syncConfig(await buildNormConfig(p), selection);
+      await ref
+          .read(vpnCoreProvider)
+          .syncConfig(await buildNormConfig(p), selection);
     } catch (e) {
       // Best-effort by design: every caller here is a side effect of something
       // else the user did, and the next connect writes the config anyway.
@@ -578,7 +631,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   /// and gave no reason — the system had refused a config we never sent.
   Future<NormConfig> effectiveConfig(Profile p) async {
     final selection = state.selectionId;
-    final resolved = selection == null ? p : await _resolveSelection(p, selection);
+    final resolved = selection == null
+        ? p
+        : await _resolveSelection(p, selection);
     return buildNormConfig(resolved);
   }
 
@@ -622,8 +677,12 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       return;
     }
 
-    final routingDiff = jsonEncode(before.routing?.toJson()) != jsonEncode(after.routing?.toJson());
-    final proxyDiff = jsonEncode(_proxyOf(before, locId)) != jsonEncode(_proxyOf(after, locId));
+    final routingDiff =
+        jsonEncode(before.routing?.toJson()) !=
+        jsonEncode(after.routing?.toJson());
+    final proxyDiff =
+        jsonEncode(_proxyOf(before, locId)) !=
+        jsonEncode(_proxyOf(after, locId));
     if (!routingDiff && !proxyDiff && !_reapplyPending) return;
     if (DateTime.now().difference(_lastReapply) < kReapplyMinGap) {
       // refreshActive already persisted the new profile, so the next poll

@@ -21,7 +21,10 @@ class AutoConnectController extends Notifier<bool> with ReadyGate {
   }
 
   Future<void> _load() async {
-    final on = await _store.load<bool>((j) => (j as Map)['enabled'] as bool? ?? false, false);
+    final on = await _store.load<bool>(
+      (j) => (j as Map)['enabled'] as bool? ?? false,
+      false,
+    );
     if (!ref.mounted) return;
     state = on;
     // The service keeps its own copy — it has to answer at boot with no app

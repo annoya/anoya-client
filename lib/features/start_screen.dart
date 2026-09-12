@@ -52,7 +52,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   String? _subject() {
     final text = _input.text.trim();
     if (!text.startsWith('http')) return null;
-    return Uri.tryParse(text)?.host.isNotEmpty == true ? Uri.parse(text).host : null;
+    return Uri.tryParse(text)?.host.isNotEmpty == true
+        ? Uri.parse(text).host
+        : null;
   }
 
   /// A body the panel answered with that we could not turn into servers.
@@ -99,7 +101,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       if (mounted) setState(() => _rejected = e);
     } catch (e) {
       Log.e('add configuration failed', '$e');
-      if (mounted) showErrorDialog(context, describeError(e, subject: _subject()));
+      if (mounted) {
+        showErrorDialog(context, describeError(e, subject: _subject()));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -115,7 +119,10 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   /// profile exists, and by the time there is anything to warn about, `ref`
   /// and `context` belong to a widget that is gone. The messenger is the root
   /// one, so the toast still lands on whatever the user is looking at.
-  void _warnIfRefused(ProviderContainer container, ScaffoldMessengerState messenger) {
+  void _warnIfRefused(
+    ProviderContainer container,
+    ScaffoldMessengerState messenger,
+  ) {
     final p = container.read(profilesControllerProvider).profiles.lastOrNull;
     if (p == null || !p.deviceLimitReached) return;
     showToastWith(messenger, kDeviceLimitReached.line);
@@ -156,7 +163,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
         }
       } catch (e) {
         Log.e('add subscription failed', '$e');
-        if (mounted) showErrorDialog(context, describeError(e, subject: _subject()));
+        if (mounted) {
+          showErrorDialog(context, describeError(e, subject: _subject()));
+        }
       } finally {
         if (mounted) setState(() => _busy = false);
       }
@@ -179,16 +188,20 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   }
 
   Future<void> _openFile() => _run(() async {
-        final res = await FilePicker.platform.pickFiles(withData: true);
-        if (res == null) return false; // cancelled — nothing added
-        final bytes = res.files.single.bytes;
-        if (bytes == null) {
-          throw const AppErrorException(AppError('Couldn’t read the file',
-              detail: 'Try opening it again, or paste its contents.'));
-        }
-        await _ctrl.addFromText(utf8.decode(bytes), name: res.files.single.name);
-        return true;
-      });
+    final res = await FilePicker.platform.pickFiles(withData: true);
+    if (res == null) return false; // cancelled — nothing added
+    final bytes = res.files.single.bytes;
+    if (bytes == null) {
+      throw const AppErrorException(
+        AppError(
+          'Couldn’t read the file',
+          detail: 'Try opening it again, or paste its contents.',
+        ),
+      );
+    }
+    await _ctrl.addFromText(utf8.decode(bytes), name: res.files.single.name);
+    return true;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -206,19 +219,21 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                 children: [
                   Icon(Icons.shield_outlined, size: 56, color: cs.primary),
                   const SizedBox(height: 14),
-                  Text('Add a connection',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    'Add a connection',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text('Link, subscription or config file',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: cs.onSurfaceVariant)),
+                  Text(
+                    'Link, subscription or config file',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
                   const SizedBox(height: 20),
                   if (_rejected != null) ...[
                     _RejectedCard(
@@ -244,7 +259,10 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                     _DetectChip(text: _detected!.label),
                   ] else if (_verdict != null) ...[
                     const SizedBox(height: 10),
-                    _DetectChip(text: 'Can’t use this · $_verdict', refused: true),
+                    _DetectChip(
+                      text: 'Can’t use this · $_verdict',
+                      refused: true,
+                    ),
                   ],
                   const SizedBox(height: 14),
                   // All three buttons take their 48pt height from the theme.
@@ -254,7 +272,8 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Continue'),
                   ),
                   const SizedBox(height: 8),
@@ -264,25 +283,29 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                     label: const Text('Open a config file…'),
                   ),
                   const SizedBox(height: 18),
-                  Row(children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Text('or',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant)),
-                    ),
-                    const Expanded(child: Divider()),
-                  ]),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'or',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
                   const SizedBox(height: 18),
                   FilledButton.tonalIcon(
                     onPressed: _busy
                         ? null
                         : () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const SignInScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const SignInScreen(),
                             ),
+                          ),
                     icon: const Icon(Icons.business_outlined, size: 18),
                     label: const Text('Sign in to your server'),
                   ),
@@ -315,30 +338,37 @@ class _RejectedCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       color: warn.withValues(alpha: 0.12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        ListTile(
-          leading: Icon(Icons.warning_amber_outlined, color: warn),
-          title: Text(failure.error.title),
-          subtitle: failure.error.detail == null ? null : Text(failure.error.detail!),
-          isThreeLine: failure.error.detail != null,
-          trailing: IconButton(
-            icon: const Icon(Icons.close, size: 20),
-            tooltip: 'Dismiss',
-            color: cs.onSurfaceVariant,
-            onPressed: onClose,
-          ),
-        ),
-        if (url != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.link, size: 18),
-              label: const Text('Open subscription page'),
-              onPressed: () => launchUrl(Uri.parse(url),
-                  mode: LaunchMode.externalApplication),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: Icon(Icons.warning_amber_outlined, color: warn),
+            title: Text(failure.error.title),
+            subtitle: failure.error.detail == null
+                ? null
+                : Text(failure.error.detail!),
+            isThreeLine: failure.error.detail != null,
+            trailing: IconButton(
+              icon: const Icon(Icons.close, size: 20),
+              tooltip: 'Dismiss',
+              color: cs.onSurfaceVariant,
+              onPressed: onClose,
             ),
           ),
-      ]),
+          if (url != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.link, size: 18),
+                label: const Text('Open subscription page'),
+                onPressed: () => launchUrl(
+                  Uri.parse(url),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -363,21 +393,31 @@ class _DetectChip extends StatelessWidget {
             : cs.primaryContainer.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-            color: (refused ? warn : cs.primary).withValues(alpha: 0.4)),
+          color: (refused ? warn : cs.primary).withValues(alpha: 0.4),
+        ),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(refused ? Icons.error_outline : Icons.check_circle_outline,
-            size: 16, color: refused ? warn : cs.primary),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(text,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            refused ? Icons.error_outline : Icons.check_circle_outline,
+            size: 16,
+            color: refused ? warn : cs.primary,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: refused ? cs.onSurface : cs.onPrimaryContainer)),
-        ),
-      ]),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: refused ? cs.onSurface : cs.onPrimaryContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

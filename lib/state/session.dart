@@ -29,7 +29,8 @@ class SessionState {
   final DateTime? startedAt;
 
   bool get connected => status == VpnStatus.connected;
-  bool get busy => status == VpnStatus.connected || status == VpnStatus.connecting;
+  bool get busy =>
+      status == VpnStatus.connected || status == VpnStatus.connecting;
 }
 
 class SessionController extends Notifier<SessionState> {
@@ -55,7 +56,10 @@ class SessionController extends Notifier<SessionState> {
     // The status is applied at once — the ring must not wait on a round trip
     // to the platform — with our own sighting standing in until the system's
     // answer arrives a frame or two later.
-    state = SessionState(status: s, startedAt: state.startedAt ?? DateTime.now());
+    state = SessionState(
+      status: s,
+      startedAt: state.startedAt ?? DateTime.now(),
+    );
     unawaited(_askTheSystem());
   }
 
@@ -71,15 +75,17 @@ class SessionController extends Notifier<SessionState> {
     // ignored.
     if (!ref.mounted || since == null || !state.connected) return;
     final known = state.startedAt;
-    if (known != null && known.difference(since).abs() < const Duration(seconds: 1)) {
+    if (known != null &&
+        known.difference(since).abs() < const Duration(seconds: 1)) {
       return;
     }
     state = SessionState(status: state.status, startedAt: since);
   }
 }
 
-final sessionProvider =
-    NotifierProvider<SessionController, SessionState>(SessionController.new);
+final sessionProvider = NotifierProvider<SessionController, SessionState>(
+  SessionController.new,
+);
 
 /// The session clock as `HH:MM:SS`, empty when there is no session.
 String sessionClock(DateTime? startedAt) {

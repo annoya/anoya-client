@@ -43,6 +43,10 @@ jobs:
           cache: true
 
       - run: flutter pub get
+      # The formatter is part of the language, not a preference: a diff that is
+      # only whitespace is noise in every review that follows it. The one
+      # project-wide reformat is in .git-blame-ignore-revs.
+      - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze
       - run: flutter test
 

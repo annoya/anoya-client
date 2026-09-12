@@ -36,7 +36,10 @@ class _VpnAppState extends ConsumerState<VpnApp> {
     // pushed routes (settings, the configuration itself) would stay on top of
     // it — showing settings for something that no longer exists. Unwind to the
     // root so the user lands on "Add a connection".
-    ref.listen(profilesControllerProvider.select((s) => s.hasProfiles), (had, has) {
+    ref.listen(profilesControllerProvider.select((s) => s.hasProfiles), (
+      had,
+      has,
+    ) {
       if (had == true && has == false) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final nav = _navigator.currentState;

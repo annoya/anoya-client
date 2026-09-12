@@ -67,16 +67,22 @@ ParsedSubscription? parseXrayServers(String body) {
           unsupported.update(skip, (n) => n + 1, ifAbsent: () => 1);
           continue;
         }
-        out.add(locationFor(
-          // Two servers can share a name; the index is what keeps their ids
-          // apart, and ids are what the picker and favourites hold on to.
-          'xray:$index:${proxy['server']}:${proxy['port']}',
-          labelOr(label.isNotEmpty ? label : tag, '${proxy['server']}',
-              proxy['port'] as int? ?? 0),
-          proxy,
-          description:
-              description.isNotEmpty ? description : _metaDescription(ob['meta']),
-        ));
+        out.add(
+          locationFor(
+            // Two servers can share a name; the index is what keeps their ids
+            // apart, and ids are what the picker and favourites hold on to.
+            'xray:$index:${proxy['server']}:${proxy['port']}',
+            labelOr(
+              label.isNotEmpty ? label : tag,
+              '${proxy['server']}',
+              proxy['port'] as int? ?? 0,
+            ),
+            proxy,
+            description: description.isNotEmpty
+                ? description
+                : _metaDescription(ob['meta']),
+          ),
+        );
       } catch (e) {
         // Never the outbound itself: it carries the uuid or password.
         Log.e('xray json: unusable outbound', '$protocol -> $e');
@@ -166,7 +172,9 @@ Map<String, dynamic>? _proxyFor(String protocol, Map ob) {
         'password': '${server['password'] ?? ''}',
         'udp': true,
       };
-      if (protocol == 'shadowsocks') proxy['cipher'] = '${server['method'] ?? ''}';
+      if (protocol == 'shadowsocks') {
+        proxy['cipher'] = '${server['method'] ?? ''}';
+      }
       return proxy;
 
     default:
@@ -177,7 +185,11 @@ Map<String, dynamic>? _proxyFor(String protocol, Map ob) {
 
 /// Translates `streamSettings` into the same normalised bag share links use, so
 /// the mihomo mapping happens in exactly one place.
-String? _applyStream(Map<String, dynamic> proxy, String protocol, Object? stream) {
+String? _applyStream(
+  Map<String, dynamic> proxy,
+  String protocol,
+  Object? stream,
+) {
   final ss = stream is Map ? stream : const {};
   final network = '${ss['network'] ?? 'tcp'}'.toLowerCase();
   final security = '${ss['security'] ?? 'none'}'.toLowerCase();
@@ -192,15 +204,21 @@ String? _applyStream(Map<String, dynamic> proxy, String protocol, Object? stream
     proxy['tls'] = tls;
   }
 
-  final tlsSettings = ss['tlsSettings'] is Map ? ss['tlsSettings'] as Map : const {};
-  final reality = ss['realitySettings'] is Map ? ss['realitySettings'] as Map : const {};
+  final tlsSettings = ss['tlsSettings'] is Map
+      ? ss['tlsSettings'] as Map
+      : const {};
+  final reality = ss['realitySettings'] is Map
+      ? ss['realitySettings'] as Map
+      : const {};
   final sni = '${tlsSettings['serverName'] ?? reality['serverName'] ?? ''}';
   if (tls && sni.isNotEmpty) {
     proxy[proxy['type'] == 'trojan' ? 'sni' : 'servername'] = sni;
   }
   final fp = '${tlsSettings['fingerprint'] ?? reality['fingerprint'] ?? ''}';
   if (fp.isNotEmpty) proxy['client-fingerprint'] = fp;
-  final alpn = (tlsSettings['alpn'] as List? ?? const []).map((e) => '$e').toList();
+  final alpn = (tlsSettings['alpn'] as List? ?? const [])
+      .map((e) => '$e')
+      .toList();
   if (alpn.isNotEmpty) proxy['alpn'] = alpn;
   if (tlsSettings['allowInsecure'] == true) proxy['skip-cert-verify'] = true;
   if (security == 'reality') {
@@ -218,30 +236,31 @@ String? _applyStream(Map<String, dynamic> proxy, String protocol, Object? stream
   final tcp = ss['tcpSettings'] is Map ? ss['tcpSettings'] as Map : const {};
   final header = tcp['header'] is Map ? tcp['header'] as Map : const {};
   final ws = ss['wsSettings'] is Map ? ss['wsSettings'] as Map : const {};
-  final upgrade =
-      ss['httpupgradeSettings'] is Map ? ss['httpupgradeSettings'] as Map : const {};
+  final upgrade = ss['httpupgradeSettings'] is Map
+      ? ss['httpupgradeSettings'] as Map
+      : const {};
   final grpc = ss['grpcSettings'] is Map ? ss['grpcSettings'] as Map : const {};
   final http = ss['httpSettings'] is Map ? ss['httpSettings'] as Map : const {};
-  final xhttp = ss['xhttpSettings'] is Map ? ss['xhttpSettings'] as Map : const {};
+  final xhttp = ss['xhttpSettings'] is Map
+      ? ss['xhttpSettings'] as Map
+      : const {};
 
-  final wsHost = '${(ws['headers'] is Map ? (ws['headers'] as Map)['Host'] : null) ?? ''}';
-  final httpHost = (http['host'] as List? ?? const []).map((e) => '$e').firstOrNull ?? '';
+  final wsHost =
+      '${(ws['headers'] is Map ? (ws['headers'] as Map)['Host'] : null) ?? ''}';
+  final httpHost =
+      (http['host'] as List? ?? const []).map((e) => '$e').firstOrNull ?? '';
 
-  return applyTransport(
-    proxy,
-    network,
-    {
-      'path': '${ws['path'] ?? upgrade['path'] ?? http['path'] ?? xhttp['path'] ?? ''}',
-      'host': wsHost.isNotEmpty
-          ? wsHost
-          : '${upgrade['host'] ?? (httpHost.isNotEmpty ? httpHost : xhttp['host'] ?? '')}',
-      'serviceName': '${grpc['serviceName'] ?? ''}',
-      'headerType': '${header['type'] ?? ''}',
-      'mode': '${xhttp['mode'] ?? ''}',
-      if (xhttp['extra'] != null) 'extra': jsonEncode(xhttp['extra']),
-    },
-    protocol: protocol == 'shadowsocks' ? 'ss' : protocol,
-  );
+  return applyTransport(proxy, network, {
+    'path':
+        '${ws['path'] ?? upgrade['path'] ?? http['path'] ?? xhttp['path'] ?? ''}',
+    'host': wsHost.isNotEmpty
+        ? wsHost
+        : '${upgrade['host'] ?? (httpHost.isNotEmpty ? httpHost : xhttp['host'] ?? '')}',
+    'serviceName': '${grpc['serviceName'] ?? ''}',
+    'headerType': '${header['type'] ?? ''}',
+    'mode': '${xhttp['mode'] ?? ''}',
+    if (xhttp['extra'] != null) 'extra': jsonEncode(xhttp['extra']),
+  }, protocol: protocol == 'shadowsocks' ? 'ss' : protocol);
 }
 
 int _int(Object? v) => v is int ? v : int.tryParse('$v') ?? 0;

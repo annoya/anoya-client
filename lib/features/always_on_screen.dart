@@ -31,36 +31,45 @@ class AlwaysOnScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Always-on VPN')),
       body: PageBody(
-        child: ListView(children: [
-          Card(
-            margin: kCardMargin,
-            child: Column(children: const [
-              ListTile(
-                leading: Icon(Icons.bolt_outlined),
-                title: Text('Started by the system'),
-                subtitle: Text('At boot, and again whenever the tunnel drops'),
+        child: ListView(
+          children: [
+            Card(
+              margin: kCardMargin,
+              child: Column(
+                children: const [
+                  ListTile(
+                    leading: Icon(Icons.bolt_outlined),
+                    title: Text('Started by the system'),
+                    subtitle: Text(
+                      'At boot, and again whenever the tunnel drops',
+                    ),
+                  ),
+                  Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: Icon(Icons.lock_outline),
+                    title: Text('Block connections without VPN'),
+                    subtitle: Text(
+                      'The system’s kill switch, on the same screen',
+                    ),
+                  ),
+                ],
               ),
-              Divider(height: 1, indent: 16, endIndent: 16),
-              ListTile(
-                leading: Icon(Icons.lock_outline),
-                title: Text('Block connections without VPN'),
-                subtitle: Text('The system’s kill switch, on the same screen'),
-              ),
-            ]),
-          ),
-          const SectionNote(
+            ),
+            const SectionNote(
               'Android owns this switch, so it lives in system settings: '
               'Network & internet → VPN → the gear next to this app. '
-              'The system starts whatever configuration was used last.'),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(kGutter, 16, kGutter, 0),
-            child: FilledButton.tonalIcon(
-              icon: const Icon(Icons.settings_outlined, size: 18),
-              label: const Text('Open system VPN settings'),
-              onPressed: _openSettings,
+              'The system starts whatever configuration was used last.',
             ),
-          ),
-        ]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kGutter, 16, kGutter, 0),
+              child: FilledButton.tonalIcon(
+                icon: const Icon(Icons.settings_outlined, size: 18),
+                label: const Text('Open system VPN settings'),
+                onPressed: _openSettings,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

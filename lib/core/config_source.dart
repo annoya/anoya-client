@@ -42,8 +42,10 @@ sealed class ConfigSource {
   /// the answer must come from the source rather than from anything held: what
   /// a place *is* belongs to the gateway, and a server it issued earlier may
   /// since have been rotated away from the account.
-  Future<Profile> resolveSelection(String selectionId, {bool force = false}) async =>
-      profile;
+  Future<Profile> resolveSelection(
+    String selectionId, {
+    bool force = false,
+  }) async => profile;
 
   /// Release any resources tied to this profile (e.g. a stored token) when it
   /// is removed. No-op unless overridden.
@@ -103,7 +105,8 @@ final class SubscriptionSource extends ConfigSource {
     // A panel that was already asked for routing and had none is not asked
     // again on every poll; one that does publish rules is re-read every time,
     // because rules change.
-    final probe = profile.providerRouting != null || !profile.providerRoutingProbed;
+    final probe =
+        profile.providerRouting != null || !profile.providerRoutingProbed;
     // Both come from the last successful answer: a panel's own statement of how
     // long to wait for it and where to ask if it does not answer at all.
     final info = profile.providerInfo;
@@ -120,8 +123,10 @@ final class SubscriptionSource extends ConfigSource {
           ? null
           : Duration(seconds: info!.requestTimeout!),
     );
-    var parsed = parseSubscriptionBody(res.body,
-        source: Uri.parse(profile.subscriptionUrl!).host);
+    var parsed = parseSubscriptionBody(
+      res.body,
+      source: Uri.parse(profile.subscriptionUrl!).host,
+    );
     // A Clash document may name its servers elsewhere. Merged before anything
     // else looks at the result, so "how many servers does this subscription
     // have" has one answer.
@@ -132,17 +137,21 @@ final class SubscriptionSource extends ConfigSource {
     // them). Otherwise the servers we already have are better than text that
     // cannot connect.
     if (parsed.allPlaceholders && !res.deviceLimitReached) {
-      Log.e('subscription refresh ignored',
-          '${Uri.parse(profile.subscriptionUrl!).host} sent placeholders only');
+      Log.e(
+        'subscription refresh ignored',
+        '${Uri.parse(profile.subscriptionUrl!).host} sent placeholders only',
+      );
       return profile;
     }
     // Three outcomes: the panel sent routing, the panel was asked and has none,
     // or we did not ask this time — the last keeps what it told us before,
     // rather than silently dropping its policy.
     final asked = res.routingProbed || profile.providerRoutingProbed;
-    final routing = res.routing?.routing ??
+    final routing =
+        res.routing?.routing ??
         (res.routingProbed ? null : profile.providerRouting);
-    final skipped = res.routing?.skipped ??
+    final skipped =
+        res.routing?.skipped ??
         (res.routingProbed ? 0 : profile.providerRoutingSkipped);
     // Files first, profile second: the screen reads its status straight from
     // disk, so a list that just arrived must already be there when the new
@@ -192,12 +201,17 @@ Future<ParsedSubscription> withProxyProviders(
   for (final provider in parsed.providers) {
     final fetched = await fetchProxyProvider(provider, client: client);
     if (fetched == null) {
-      unsupported.update('unreachable list (${provider.name})', (n) => n + 1,
-          ifAbsent: () => 1);
+      unsupported.update(
+        'unreachable list (${provider.name})',
+        (n) => n + 1,
+        ifAbsent: () => 1,
+      );
       continue;
     }
     locations.addAll(fetched.locations);
-    fetched.unsupported.forEach((k, v) => unsupported.update(k, (n) => n + v, ifAbsent: () => v));
+    fetched.unsupported.forEach(
+      (k, v) => unsupported.update(k, (n) => n + v, ifAbsent: () => v),
+    );
   }
   return ParsedSubscription(
     locations: locations,
@@ -214,9 +228,8 @@ final class LinkSource extends ConfigSource {
 }
 
 ConfigSource configSourceFor(Profile p) => switch (p.type) {
-      ProfileType.selfhosted => SelfhostedSource(p),
-      ProfileType.subscription => SubscriptionSource(p),
-      ProfileType.amnezia => AmneziaConfigSource(p),
-      ProfileType.link => LinkSource(p),
-    };
-
+  ProfileType.selfhosted => SelfhostedSource(p),
+  ProfileType.subscription => SubscriptionSource(p),
+  ProfileType.amnezia => AmneziaConfigSource(p),
+  ProfileType.link => LinkSource(p),
+};

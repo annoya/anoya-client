@@ -1,5 +1,3 @@
-
-
 import 'norm_config.dart';
 import 'json_file_store.dart';
 
@@ -31,7 +29,8 @@ enum RuleEditor {
   /// Raw ordered rules.
   advanced;
 
-  static RuleEditor parse(String? wire) => wire == 'advanced' ? advanced : simple;
+  static RuleEditor parse(String? wire) =>
+      wire == 'advanced' ? advanced : simple;
 }
 
 /// A named, reusable split-tunneling policy. Rule sets are global (device
@@ -61,32 +60,37 @@ class RuleSet {
 
   Routing toRouting() => Routing(mode: mode.wire, rules: rules);
 
-  RuleSet copyWith({String? name, RoutingMode? mode, List<RoutingRule>? rules, RuleEditor? editor}) =>
-      RuleSet(
-          id: id,
-          name: name ?? this.name,
-          mode: mode ?? this.mode,
-          rules: rules ?? this.rules,
-          editor: editor ?? this.editor);
+  RuleSet copyWith({
+    String? name,
+    RoutingMode? mode,
+    List<RoutingRule>? rules,
+    RuleEditor? editor,
+  }) => RuleSet(
+    id: id,
+    name: name ?? this.name,
+    mode: mode ?? this.mode,
+    rules: rules ?? this.rules,
+    editor: editor ?? this.editor,
+  );
 
   factory RuleSet.fromJson(Map<String, dynamic> j) => RuleSet(
-        id: j['id'] as String,
-        name: j['name'] as String? ?? 'Rule set',
-        mode: RoutingMode.parse(j['mode'] as String?),
-        rules: (j['rules'] as List<dynamic>? ?? [])
-            .whereType<Map>()
-            .map((e) => RoutingRule.fromJson(Map<String, dynamic>.from(e)))
-            .toList(),
-        editor: RuleEditor.parse(j['editor'] as String?),
-      );
+    id: j['id'] as String,
+    name: j['name'] as String? ?? 'Rule set',
+    mode: RoutingMode.parse(j['mode'] as String?),
+    rules: (j['rules'] as List<dynamic>? ?? [])
+        .whereType<Map>()
+        .map((e) => RoutingRule.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
+    editor: RuleEditor.parse(j['editor'] as String?),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'mode': mode.wire,
-        'rules': rules.map((r) => r.toJson()).toList(),
-        'editor': editor.name,
-      };
+    'id': id,
+    'name': name,
+    'mode': mode.wire,
+    'rules': rules.map((r) => r.toJson()).toList(),
+    'editor': editor.name,
+  };
 }
 
 /// Persists the global rule sets to rule_sets.json in the app-support
@@ -99,7 +103,9 @@ class RuleSetStore {
 
   static Future<List<RuleSet>> load() async {
     final sets = await _store.load(
-        (j) => decodeListLenient(j, 'rule sets', RuleSet.fromJson), <RuleSet>[]);
+      (j) => decodeListLenient(j, 'rule sets', RuleSet.fromJson),
+      <RuleSet>[],
+    );
     if (!sets.any((s) => s.isDefault)) {
       sets.insert(0, _defaultSet);
     } else {
@@ -113,7 +119,9 @@ class RuleSetStore {
 
   static Future<RuleSet> byId(String? id) async {
     final sets = await load();
-    return sets.firstWhere((s) => s.id == (id ?? RuleSet.defaultId),
-        orElse: () => sets.first);
+    return sets.firstWhere(
+      (s) => s.id == (id ?? RuleSet.defaultId),
+      orElse: () => sets.first,
+    );
   }
 }

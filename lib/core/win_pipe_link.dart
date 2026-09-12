@@ -46,8 +46,15 @@ class WinPipeLink implements PipeLink {
   Future<void> connect() async {
     final name = path.toNativeUtf16();
     try {
-      _handle = CreateFile(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
-          OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+      _handle = CreateFile(
+        name,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_FLAG_OVERLAPPED,
+        NULL,
+      );
       if (_handle == INVALID_HANDLE_VALUE) {
         // Absent (not installed, not running) or busy (an instance still being
         // set up for another client): either way the transport knocks again.
@@ -109,7 +116,9 @@ class WinPipeLink implements PipeLink {
     try {
       while (true) {
         final read = _transfer(
-            handle, (o) => ReadFile(handle, buf, size, nullptr, o));
+          handle,
+          (o) => ReadFile(handle, buf, size, nullptr, o),
+        );
         if (read <= 0) break;
         port.send(Uint8List.fromList(buf.asTypedList(read)));
       }
@@ -128,9 +137,15 @@ class WinPipeLink implements PipeLink {
       var offset = 0;
       while (offset < bytes.length) {
         final written = _transfer(
+          _handle,
+          (o) => WriteFile(
             _handle,
-            (o) => WriteFile(
-                _handle, buf + offset, bytes.length - offset, nullptr, o));
+            buf + offset,
+            bytes.length - offset,
+            nullptr,
+            o,
+          ),
+        );
         if (written <= 0) break;
         offset += written;
       }

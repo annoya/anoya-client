@@ -53,8 +53,7 @@ abstract class VpnCore {
     OnDemandPrefs prefs, {
     NormConfig? config,
     String? locationId,
-  }) async =>
-      false;
+  }) async => false;
 
   /// Keep the system's saved tunnel config in step with the current selection,
   /// without connecting. Called whenever the effective config changes
@@ -66,6 +65,7 @@ abstract class VpnCore {
   /// configuration, so the app should leave nothing behind in the system's VPN
   /// settings. Recreated on the next connect.
   Future<void> removeSystemProfile() async {}
+
   /// Why the tunnel last stopped on its own, as the platform recorded it.
   ///
   /// Empty when there is nothing to tell — an ordinary stop, a platform too old

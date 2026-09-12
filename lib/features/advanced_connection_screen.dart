@@ -24,66 +24,82 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Advanced')),
       body: PageBody(
-        child: ListView(children: [
-          const SectionHeader('CONNECTION CHECK'),
-          Card(
-            margin: kCardMargin,
-            child: Column(children: [
-              SwitchListTile(
-                secondary: const Icon(Icons.check_circle_outline),
-                title: const Text('Check after connecting'),
-                subtitle: const Text('Fetch a page through the server and time the answer'),
-                value: prefs.enabled,
-                onChanged: ctrl.setEnabled,
+        child: ListView(
+          children: [
+            const SectionHeader('CONNECTION CHECK'),
+            Card(
+              margin: kCardMargin,
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.check_circle_outline),
+                    title: const Text('Check after connecting'),
+                    subtitle: const Text(
+                      'Fetch a page through the server and time the answer',
+                    ),
+                    value: prefs.enabled,
+                    onChanged: ctrl.setEnabled,
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.language_outlined),
+                    title: const Text('Test URL'),
+                    subtitle: Text(prefs.url),
+                    trailing: const Icon(Icons.edit_outlined, size: 18),
+                    onTap: () => _editUrl(context, ctrl, prefs),
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: const Icon(Icons.timer_outlined),
+                    title: const Text('Give up after'),
+                    subtitle: Text('${prefs.timeoutSeconds} seconds'),
+                    trailing: const Icon(Icons.expand_more),
+                    onTap: () => _pickTimeout(context, ctrl, prefs),
+                  ),
+                ],
               ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              ListTile(
-                leading: const Icon(Icons.language_outlined),
-                title: const Text('Test URL'),
-                subtitle: Text(prefs.url),
-                trailing: const Icon(Icons.edit_outlined, size: 18),
-                onTap: () => _editUrl(context, ctrl, prefs),
-              ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              ListTile(
-                leading: const Icon(Icons.timer_outlined),
-                title: const Text('Give up after'),
-                subtitle: Text('${prefs.timeoutSeconds} seconds'),
-                trailing: const Icon(Icons.expand_more),
-                onTap: () => _pickTimeout(context, ctrl, prefs),
-              ),
-            ]),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(kGutter, 14, kGutter, 0),
-            child: FilledButton(
-              // Nothing to probe with the engine stopped, and a button that
-              // reports "the tunnel is not running" reads as a fault rather
-              // than as the obvious.
-              onPressed: (!connected || st.running) ? null : ctrl.run,
-              child: st.running
-                  ? const SizedBox(
-                      height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Test now'),
             ),
-          ),
-          if (!connected)
-            const SectionNote('The request goes through the running engine, '
-                'so the tunnel has to be up to test it.'),
-          if (st.last != null) ...[
-            const SectionHeader('LAST CHECK'),
-            _ResultCard(check: st.last!),
-          ],
-          const SectionNote('The request goes through the server itself, so routing '
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kGutter, 14, kGutter, 0),
+              child: FilledButton(
+                // Nothing to probe with the engine stopped, and a button that
+                // reports "the tunnel is not running" reads as a fault rather
+                // than as the obvious.
+                onPressed: (!connected || st.running) ? null : ctrl.run,
+                child: st.running
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Test now'),
+              ),
+            ),
+            if (!connected)
+              const SectionNote(
+                'The request goes through the running engine, '
+                'so the tunnel has to be up to test it.',
+              ),
+            if (st.last != null) ...[
+              const SectionHeader('LAST CHECK'),
+              _ResultCard(check: st.last!),
+            ],
+            const SectionNote(
+              'The request goes through the server itself, so routing '
               'rules do not affect it. It proves the server passes traffic — not '
-              'that your traffic goes through it.'),
-        ]),
+              'that your traffic goes through it.',
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _editUrl(
-      BuildContext context, ConnectionCheckController ctrl, ConnectionCheckPrefs prefs) async {
+    BuildContext context,
+    ConnectionCheckController ctrl,
+    ConnectionCheckPrefs prefs,
+  ) async {
     final typed = await promptText(
       context,
       title: 'Test URL',
@@ -97,15 +113,22 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     if (typed == null) return;
     final trimmed = typed.trim();
     final uri = Uri.tryParse(trimmed);
-    if (trimmed.isEmpty || uri == null || !uri.isScheme('http') && !uri.isScheme('https')) {
-      if (context.mounted) showToast(context, 'Enter an http:// or https:// address.');
+    if (trimmed.isEmpty ||
+        uri == null ||
+        !uri.isScheme('http') && !uri.isScheme('https')) {
+      if (context.mounted) {
+        showToast(context, 'Enter an http:// or https:// address.');
+      }
       return;
     }
     await ctrl.setUrl(trimmed);
   }
 
   Future<void> _pickTimeout(
-      BuildContext context, ConnectionCheckController ctrl, ConnectionCheckPrefs prefs) async {
+    BuildContext context,
+    ConnectionCheckController ctrl,
+    ConnectionCheckPrefs prefs,
+  ) async {
     const choices = [3, 5, 10, 15];
     final picked = await pickOption<int>(
       context,
@@ -161,8 +184,10 @@ class _ResultCardState extends State<_ResultCard> {
         child: ListTile(
           leading: Icon(Icons.warning_amber_outlined, color: warn),
           title: const Text('No answer'),
-          subtitle: Text('${check.failure} '
-              'The tunnel is up, so this is the server or the network beyond it.'),
+          subtitle: Text(
+            '${check.failure} '
+            'The tunnel is up, so this is the server or the network beyond it.',
+          ),
           isThreeLine: true,
         ),
       );
@@ -171,14 +196,21 @@ class _ResultCardState extends State<_ResultCard> {
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: Icon(Icons.check_circle_outline, color: context.vpnColors.connected),
+        leading: Icon(
+          Icons.check_circle_outline,
+          color: context.vpnColors.connected,
+        ),
         // Two different claims, and they must not borrow each other's words:
         // one is a measurement we made, the other is traffic we watched go by.
-        title: Text(check.observed
-            ? 'Traffic is getting through'
-            : 'Answered in ${check.delayMs} ms'),
-        subtitle: Text('${_ago(check.at)}$via',
-            style: TextStyle(color: cs.onSurfaceVariant)),
+        title: Text(
+          check.observed
+              ? 'Traffic is getting through'
+              : 'Answered in ${check.delayMs} ms',
+        ),
+        subtitle: Text(
+          '${_ago(check.at)}$via',
+          style: TextStyle(color: cs.onSurfaceVariant),
+        ),
       ),
     );
   }

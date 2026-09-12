@@ -13,7 +13,8 @@ import 'package:vpn_client/core/norm_config.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late Directory tmp;
 
   setUp(() {
@@ -34,8 +35,13 @@ void main() {
     Log.enabled = true;
     Log.clear();
     messenger.setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'), null);
-    messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), null);
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('vpn/control'),
+      null,
+    );
     tmp.deleteSync(recursive: true);
   });
 
@@ -60,7 +66,8 @@ void main() {
       // switch is about the files the user sees, not about developing the app.
       final printed = <String>[];
       final original = debugPrint;
-      debugPrint = (String? message, {int? wrapWidth}) => printed.add(message ?? '');
+      debugPrint = (String? message, {int? wrapWidth}) =>
+          printed.add(message ?? '');
       addTearDown(() => debugPrint = original);
 
       Log.enabled = false;
@@ -79,7 +86,10 @@ void main() {
       // failed, and the engine reports a handshake that never completed only
       // on its verbose channel.
       expect(mihomoTunConfigYaml(location), contains('log-level: debug'));
-      expect(mihomoTunConfigYaml(location, collectLogs: false), contains('log-level: silent'));
+      expect(
+        mihomoTunConfigYaml(location, collectLogs: false),
+        contains('log-level: silent'),
+      );
     });
 
     test('the preference survives a round trip and defaults to on', () {
@@ -92,23 +102,34 @@ void main() {
   });
 
   group('archive', () {
-    test('holds every log, and says why the extension ones are missing', () async {
-      Log.clear();
-      Log.i('hello from the app');
+    test(
+      'holds every log, and says why the extension ones are missing',
+      () async {
+        Log.clear();
+        Log.i('hello from the app');
 
-      final file = await buildLogArchive(now: DateTime(2026, 8, 6, 14, 5, 9));
-      addTearDown(() => file.delete());
+        final file = await buildLogArchive(now: DateTime(2026, 8, 6, 14, 5, 9));
+        addTearDown(() => file.delete());
 
-      expect(file.path, endsWith('vpn-logs-20260806-140509.zip'));
-      final entries = ZipDecoder().decodeBytes(await file.readAsBytes());
-      expect(entries.files.map((f) => f.name).toSet(), {'app.log', 'tunnel.log', 'mihomo.log'});
+        expect(file.path, endsWith('vpn-logs-20260806-140509.zip'));
+        final entries = ZipDecoder().decodeBytes(await file.readAsBytes());
+        expect(entries.files.map((f) => f.name).toSet(), {
+          'app.log',
+          'tunnel.log',
+          'mihomo.log',
+        });
 
-      String read(String name) =>
-          utf8.decode(entries.files.firstWhere((f) => f.name == name).content as List<int>);
-      expect(read('app.log'), contains('hello from the app'));
-      // No tunnel running in tests: the entry explains itself instead of being
-      // an empty file the user would have to guess about.
-      expect(read('tunnel.log'), contains('only while the tunnel is running'));
-    });
+        String read(String name) => utf8.decode(
+          entries.files.firstWhere((f) => f.name == name).content as List<int>,
+        );
+        expect(read('app.log'), contains('hello from the app'));
+        // No tunnel running in tests: the entry explains itself instead of being
+        // an empty file the user would have to guess about.
+        expect(
+          read('tunnel.log'),
+          contains('only while the tunnel is running'),
+        );
+      },
+    );
   });
 }
