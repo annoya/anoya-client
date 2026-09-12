@@ -25,6 +25,11 @@ cd "$(dirname "$0")"
 OUT="${1:-build/windows}"
 export GOWORK=off                       # standalone module, not in the workspace
 
+if [ ! -f upstream/go.mod ]; then
+  echo "!! upstream/ is empty — run: git submodule update --init --recursive" >&2
+  exit 1
+fi
+
 if [ "${GOOS:-$(go env GOOS)}" = windows ] && command -v gcc >/dev/null 2>&1; then
   CC=gcc                                # native build on Windows
 elif command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
