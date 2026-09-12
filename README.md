@@ -93,7 +93,7 @@ elevated prompt is the same service in the foreground, for development.
 
 ## Requirements
 
-- Flutter 3.38+, Xcode.
+- Flutter 3.47+, Xcode.
 - A **paid Apple Developer account** (Network Extension capability + App Group).
 - iOS: a **real device** — the NE does not run in the Simulator.
 
