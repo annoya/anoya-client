@@ -236,7 +236,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   Future<void> _reorder(int oldIndex, int newIndex) async {
     setState(() {
-      if (newIndex > oldIndex) newIndex--;
       final r = _rules.removeAt(oldIndex);
       _rules.insert(newIndex, r);
     });
@@ -322,7 +321,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
           // outside the card, which reads as a stray control (most
           // visibly on macOS).
           buildDefaultDragHandles: false,
-          onReorder: _reorder,
+          onReorderItem: _reorder,
           children: [
             for (var i = 0; i < _rules.length; i++)
               // Keyed by item identity, not slot: a position key stays with

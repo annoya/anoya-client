@@ -31,12 +31,13 @@
 		631070EFAFE18AF4046AD2EB /* VPNManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06C81186E2A4CE3A01E0844 /* VPNManager.swift */; };
 		6E0B639A2FF2CF9A00464F13 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E0B63992FF2CF9A00464F13 /* NetworkExtension.framework */; };
 		6E0B63A22FF2CF9A00464F13 /* Tunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6E0B63982FF2CF9A00464F13 /* Tunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		9227CCD9FFF6D305C6440BBB /* VpnChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1441E21D385E0FFDC7055046 /* VpnChannel.swift */; };
 		99797FD5735E9477D73A29DD /* WebAuthChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC6C5EE46FF78FE87AD5D9D /* WebAuthChannel.swift */; };
 		A1B2C3D40002MENUBAR00002 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40001MENUBAR00001 /* MenuBarController.swift */; };
+		A6A61AGW0000000000000002 /* Libagw.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A61AGW0000000000000001 /* Libagw.xcframework */; };
 		C6C5FAD35E657B72447E8D33 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B94C26CD213FA714A45BBEB6 /* Pods_RunnerTests.framework */; };
 		F94F5E7CFA1F7A67FCF0301D /* MihomoCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218C4BD64141A24AB0952AEA /* MihomoCore.xcframework */; };
-		A6A61AGW0000000000000002 /* Libagw.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A61AGW0000000000000001 /* Libagw.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +111,7 @@
 		5E17CF0B677978887D0BB245 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		6E0B63982FF2CF9A00464F13 /* Tunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Tunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E0B63992FF2CF9A00464F13 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
+		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		79BE81473810C4AEEF07FC25 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		86713E22E81E3F9B105AC228 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
@@ -117,11 +119,11 @@
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		9F5A311AE706FEF820FCE756 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		A1B2C3D40001MENUBAR00001 /* MenuBarController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		A6A61AGW0000000000000001 /* Libagw.xcframework */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = wrapper.xcframework; name = Libagw.xcframework; path = ../native/libagw/Libagw.xcframework; sourceTree = "<group>"; };
 		AD6CA4BC6B88703DE99898F8 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		B06C81186E2A4CE3A01E0844 /* VPNManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VPNManager.swift; sourceTree = "<group>"; };
 		B94C26CD213FA714A45BBEB6 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DEAC6F423682B3C7032EFDEA /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
-		A6A61AGW0000000000000001 /* Libagw.xcframework */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = wrapper.xcframework; name = Libagw.xcframework; path = ../native/libagw/Libagw.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -162,6 +164,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */,
 				A6A61AGW0000000000000002 /* Libagw.xcframework in Frameworks */,
 				5DF480EBD66DA6E0F1DB3F52 /* Pods_Runner.framework in Frameworks */,
 			);
@@ -235,6 +238,7 @@
 		33CEB47122A05771004F2AC0 /* Flutter */ = {
 			isa = PBXGroup;
 			children = (
+				78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */,
 				335BBD1A22A9A15E00E9071D /* GeneratedPluginRegistrant.swift */,
 				33CEB47222A05771004F2AC0 /* Flutter-Debug.xcconfig */,
 				33CEB47422A05771004F2AC0 /* Flutter-Release.xcconfig */,
@@ -325,7 +329,6 @@
 				33CC10EB2044A3C60003C045 /* Resources */,
 				33CC110E2044A8840003C045 /* Bundle Framework */,
 				3399D490228B24CF009A79C7 /* ShellScript */,
-				83AA0F73CC574FF393D1DFBE /* [CP] Embed Pods Frameworks */,
 				6E0B63A82FF2CF9A00464F13 /* Embed Foundation Extensions */,
 				D9E3C2DC424067FF7C6DDBAD /* Fix native-asset framework layout */,
 			);
@@ -336,6 +339,9 @@
 				6E0B63A12FF2CF9A00464F13 /* PBXTargetDependency */,
 			);
 			name = Runner;
+			packageProductDependencies = (
+				78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */,
+			);
 			productName = Runner;
 			productReference = 33CC10ED2044A3C60003C045 /* AnnoyaTest.app */;
 			productType = "com.apple.product-type.application";
@@ -403,6 +409,9 @@
 				Base,
 			);
 			mainGroup = 33CC10E42044A3C60003C045;
+			packageReferences = (
+				781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */,
+			);
 			productRefGroup = 33CC10EE2044A3C60003C045 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -501,23 +510,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"$FLUTTER_ROOT\"/packages/flutter_tools/bin/macos_assemble.sh && touch Flutter/ephemeral/tripwire";
-		};
-		83AA0F73CC574FF393D1DFBE /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 		D9E3C2DC424067FF7C6DDBAD /* Fix native-asset framework layout */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -731,6 +723,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 989ZJQVA79;
 				INFOPLIST_FILE = Runner/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-Wl,-export_dynamic",
@@ -746,10 +742,6 @@
 					"-Wl,-u,_agw_post",
 					"-Wl,-u,_agw_result_free",
 					"-Wl,-u,_agw_string_free",
-				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -883,6 +875,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 989ZJQVA79;
 				INFOPLIST_FILE = Runner/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-Wl,-export_dynamic",
@@ -898,10 +894,6 @@
 					"-Wl,-u,_agw_post",
 					"-Wl,-u,_agw_result_free",
 					"-Wl,-u,_agw_string_free",
-				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -923,6 +915,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 989ZJQVA79;
 				INFOPLIST_FILE = Runner/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-Wl,-export_dynamic",
@@ -938,10 +934,6 @@
 					"-Wl,-u,_agw_post",
 					"-Wl,-u,_agw_result_free",
 					"-Wl,-u,_agw_string_free",
-				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1199,6 +1191,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FlutterGeneratedPluginSwiftPackage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 33CC10E52044A3C60003C045 /* Project object */;
 }

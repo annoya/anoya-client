@@ -129,7 +129,7 @@ class NetworkExtensionCore implements VpnCore {
         'rules': prefs.rules.map((r) => r.toChannel()).toList(),
         'disconnect_on_sleep': prefs.disconnectOnSleep,
         'log_enabled': Log.enabled,
-        if (rendered != null) ...rendered,
+        ...?rendered,
       });
       Log.i('on-demand ${armed == true ? 'armed' : 'not armed'} (${prefs.rules.length} rule(s))');
       return armed ?? false;
