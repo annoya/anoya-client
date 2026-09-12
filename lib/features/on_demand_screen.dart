@@ -54,7 +54,7 @@ class OnDemandScreen extends ConsumerWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 buildDefaultDragHandles: false,
-                onReorder: (o, n) => ctrl.reorderRules(o, n),
+                onReorderItem: (o, n) => ctrl.reorderRules(o, n),
                 children: [
                   for (var i = 0; i < prefs.rules.length; i++)
                     _ruleTile(context, ref, i, prefs.rules[i]),
