@@ -22,7 +22,7 @@ defaults:
     shell: bash
 
 env:
-  FLUTTER_VERSION: 3.47.2
+  FLUTTER_VERSION: 3.47.4
 
 jobs:
   # The Dart tests run on the host, not on a target, so they run once here
