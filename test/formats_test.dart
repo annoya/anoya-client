@@ -45,7 +45,10 @@ void main() {
     test('every config in the array is one server, named by its remarks', () {
       final p = parseSubscriptionBody(body);
       expect(p.format, SubscriptionFormat.xray);
-      expect(p.locations.map((l) => l.label), ['🇩🇪 Germany', '🇳🇱 Netherlands']);
+      expect(p.locations.map((l) => l.label), [
+        '🇩🇪 Germany',
+        '🇳🇱 Netherlands',
+      ]);
     });
 
     test('reality, vision flow and fingerprint survive the translation', () {
@@ -65,9 +68,16 @@ void main() {
       final nl = parseSubscriptionBody(body).locations[1].proxy;
       expect(nl['type'], 'trojan');
       expect(nl['network'], 'ws');
-      expect(nl['sni'], 'nl.example', reason: 'trojan names it sni, not servername');
+      expect(
+        nl['sni'],
+        'nl.example',
+        reason: 'trojan names it sni, not servername',
+      );
       expect(nl['alpn'], ['h2', 'http/1.1']);
-      expect(nl['ws-opts'], {'path': '/ws', 'headers': {'Host': 'nl.example'}});
+      expect(nl['ws-opts'], {
+        'path': '/ws',
+        'headers': {'Host': 'nl.example'},
+      });
     });
 
     test('plumbing outbounds are not counted as unsupported servers', () {
@@ -133,7 +143,10 @@ void main() {
       const plain = '''
 {"outbounds": [{"tag": "p", "type": "vmess", "server": "p.example",
   "server_port": 80, "uuid": "u", "security": "auto"}]}''';
-      expect(parseSubscriptionBody(plain).locations.single.proxy['tls'], isFalse);
+      expect(
+        parseSubscriptionBody(plain).locations.single.proxy['tls'],
+        isFalse,
+      );
     });
 
     test('http transport means HTTP/2 here, which the engine calls h2', () {
@@ -161,16 +174,22 @@ void main() {
           'ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=v2ray-plugin%3Bmode%3Dwebsocket%3Btls%3Bhost%3Dh.example%3Bpath%3D%2Fws#SS';
       final proxy = parseShareLink(link).location!.proxy;
       expect(proxy['plugin'], 'v2ray-plugin');
-      expect(proxy['plugin-opts'],
-          {'mode': 'websocket', 'host': 'h.example', 'path': '/ws', 'tls': true});
+      expect(proxy['plugin-opts'], {
+        'mode': 'websocket',
+        'host': 'h.example',
+        'path': '/ws',
+        'tls': true,
+      });
     });
 
     test('a plugin the engine cannot run is reported, not dropped', () {
       // Dropping it leaves a server in the list that always fails: the server
       // expects obfuscation the client is not doing.
-      const link = 'ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=shadow-tls%3Bhost%3Dx#SS';
+      const link =
+          'ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=shadow-tls%3Bhost%3Dx#SS';
       expect(parseShareLink(link).unsupported, 'ss+shadow-tls');
-      const bad = 'ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=obfs-local%3Bobfs%3Dquic#SS';
+      const bad =
+          'ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=obfs-local%3Bobfs%3Dquic#SS';
       expect(parseShareLink(bad).unsupported, 'ss+obfs (quic)');
     });
 
@@ -187,7 +206,9 @@ void main() {
       // A live panel answers this way for an account with nothing assigned. The
       // format is fine; there is simply nothing in it, and the fix is with the
       // provider rather than with the app.
-      final p = parseSubscriptionBody('proxies: []\nrules:\n  - MATCH,DIRECT\n');
+      final p = parseSubscriptionBody(
+        'proxies: []\nrules:\n  - MATCH,DIRECT\n',
+      );
       expect(p.format, SubscriptionFormat.clash);
       expect(p.locations, isEmpty);
       expect(p.unsupported, isEmpty);
@@ -217,17 +238,21 @@ void main() {
     test('entries that point nowhere are a message, not servers', () {
       // A live panel's answer to a client it does not recognise: valid links to
       // unroutable addresses whose names carry the text.
-      const body = 'vless://u@0.0.0.0:1?security=none#Приложение%20не%20поддерживается\n'
+      const body =
+          'vless://u@0.0.0.0:1?security=none#Приложение%20не%20поддерживается\n'
           'vless://u@127.0.0.1:1?security=none#Используйте%20Happ';
       final p = parseSubscriptionBody(body);
       expect(p.locations.length, 2);
       expect(p.allPlaceholders, isTrue);
-      expect(p.placeholderLines,
-          ['Приложение не поддерживается', 'Используйте Happ']);
+      expect(p.placeholderLines, [
+        'Приложение не поддерживается',
+        'Используйте Happ',
+      ]);
     });
 
     test('one real server among placeholders is not a message', () {
-      const body = 'vless://u@0.0.0.0:1?security=none#msg\n'
+      const body =
+          'vless://u@0.0.0.0:1?security=none#msg\n'
           'vless://u@real.example:443?security=reality&pbk=PK#DE';
       expect(parseSubscriptionBody(body).allPlaceholders, isFalse);
     });
@@ -239,23 +264,32 @@ void main() {
       // The second link fails inside Uri.parse, whose FormatException prints
       // the whole offending string — uuid included — under its message.
       const uuid = 'd1f8b2c4-aaaa-bbbb-cccc-1234567890ab';
-      const body = 'vless://$uuid@:0?security=none#a\n'
+      const body =
+          'vless://$uuid@:0?security=none#a\n'
           'vless://$uuid@[::1?security=none#b\n'
           'vless://u@real.example:443?security=reality&pbk=PK#DE';
       final parsed = parseSubscriptionBody(body, source: 'sub.example');
       expect(parsed.locations.length, 1);
-      final lines = Log.dump().split('\n').where((l) => l.contains('malformed')).toList();
+      final lines = Log.dump()
+          .split('\n')
+          .where((l) => l.contains('malformed'))
+          .toList();
       expect(lines, hasLength(1), reason: 'one line per body, not per link');
       expect(lines.single, contains('sub.example'));
       expect(lines.single, contains('2 malformed'));
-      expect(lines.single, isNot(contains(uuid)),
-          reason: 'the userinfo is the credential; only the reason may be logged');
+      expect(
+        lines.single,
+        isNot(contains(uuid)),
+        reason: 'the userinfo is the credential; only the reason may be logged',
+      );
     });
   });
 
   group('clash proxy-providers', () {
-    test('a document that only points at its servers is still a subscription', () {
-      const body = '''
+    test(
+      'a document that only points at its servers is still a subscription',
+      () {
+        const body = '''
 proxy-providers:
   main:
     type: http
@@ -268,17 +302,28 @@ proxy-providers:
     type: http
     url: "http://lists.example/p.yaml"
 ''';
-      final p = parseSubscriptionBody(body);
-      expect(p.format, SubscriptionFormat.clash);
-      expect(p.providers.map((e) => e.name), ['main'],
-          reason: 'a file lives on the author\'s disk and http can be rewritten');
-      expect(p.locations, isEmpty, reason: 'the fetch belongs to the network layer');
-    });
+        final p = parseSubscriptionBody(body);
+        expect(p.format, SubscriptionFormat.clash);
+        expect(
+          p.providers.map((e) => e.name),
+          ['main'],
+          reason:
+              'a file lives on the author\'s disk and http can be rewritten',
+        );
+        expect(
+          p.locations,
+          isEmpty,
+          reason: 'the fetch belongs to the network layer',
+        );
+      },
+    );
 
-    test('the lists bring servers; the document keeps its DNS and groups', () async {
-      // Groups are resolved against the document's own proxies at parse time,
-      // so the one here spans NL; the list only adds DE.
-      const body = '''
+    test(
+      'the lists bring servers; the document keeps its DNS and groups',
+      () async {
+        // Groups are resolved against the document's own proxies at parse time,
+        // so the one here spans NL; the list only adds DE.
+        const body = '''
 dns:
   nameserver:
     - tls://9.9.9.9
@@ -295,29 +340,48 @@ proxy-groups:
     proxies: [NL]
     url: https://cp.cloudflare.com
 ''';
-      const list = '''
+        const list = '''
 proxies:
   - {name: DE, type: vless, server: de.example, port: 443, uuid: u, tls: true,
      servername: de.example, reality-opts: {public-key: PK}}
 ''';
-      final client = MockClient((req) async => http.Response(list, 200));
-      final merged = await withProxyProviders(parseSubscriptionBody(body), client: client);
-      expect(merged.locations.map((l) => l.label), ['NL', 'DE']);
-      expect(merged.dns, ['tls://9.9.9.9'],
-          reason: 'a document with proxy-providers used to lose its resolvers here');
-      expect(merged.groups.map((g) => g.name), ['Auto'], reason: 'and its groups');
-    });
+        final client = MockClient((req) async => http.Response(list, 200));
+        final merged = await withProxyProviders(
+          parseSubscriptionBody(body),
+          client: client,
+        );
+        expect(merged.locations.map((l) => l.label), ['NL', 'DE']);
+        expect(
+          merged.dns,
+          ['tls://9.9.9.9'],
+          reason:
+              'a document with proxy-providers used to lose its resolvers here',
+        );
+        expect(merged.groups.map((g) => g.name), [
+          'Auto',
+        ], reason: 'and its groups');
+      },
+    );
   });
 
   group('what the provider calls a server', () {
     test('a description rides in the fragment, base64, after the name', () {
-      const link = 'vless://u@de.example:443?security=none'
+      const link =
+          'vless://u@de.example:443?security=none'
           '#🇳🇱%20Нидерланды?serverDescription=0LTQviAxMCDQk9Cx0LjRgi/RgQ%3D%3D';
       final loc = parseShareLink(link).location!;
-      expect(loc.label, '🇳🇱 Нидерланды', reason: 'the name stops at the parameters');
+      expect(
+        loc.label,
+        '🇳🇱 Нидерланды',
+        reason: 'the name stops at the parameters',
+      );
       expect(loc.description, 'до 10 Гбит/с');
-      expect(loc.subtitle, 'до 10 Гбит/с',
-          reason: 'the description is what the line is for; nothing else is on it');
+      expect(
+        loc.subtitle,
+        'до 10 Гбит/с',
+        reason:
+            'the description is what the line is for; nothing else is on it',
+      );
     });
 
     test('a name that merely contains a question mark is left alone', () {
@@ -348,11 +412,15 @@ proxies:
       const singbox = '''
 {"outbounds": [{"tag": "NL", "type": "vless", "server": "nl.example",
   "server_port": 443, "uuid": "u", "meta": {"serverDescription": "for gaming"}}]}''';
-      expect(parseSubscriptionBody(singbox).locations.single.description, 'for gaming');
+      expect(
+        parseSubscriptionBody(singbox).locations.single.description,
+        'for gaming',
+      );
     });
 
     test('an undecodable description costs the description, not the name', () {
-      const link = 'vless://u@de.example:443?security=none#Germany?serverDescription=%%%';
+      const link =
+          'vless://u@de.example:443?security=none#Germany?serverDescription=%%%';
       final loc = parseShareLink(link).location!;
       expect(loc.label, 'Germany');
     });
@@ -371,13 +439,17 @@ proxies:
           'type': 'vless',
           'server': 'de.example',
           'network': 'xhttp',
-          'reality-opts': {'public-key': 'k'}
+          'reality-opts': {'public-key': 'k'},
         }).subtitle,
         'VLESS · XHTTP · Reality',
       );
       expect(
-        loc({'type': 'vmess', 'server': 'de.example', 'network': 'grpc', 'tls': true})
-            .subtitle,
+        loc({
+          'type': 'vmess',
+          'server': 'de.example',
+          'network': 'grpc',
+          'tls': true,
+        }).subtitle,
         'VMess · gRPC · TLS',
       );
     });
@@ -386,48 +458,82 @@ proxies:
       // It used to be dropped as a default worth no words. That was true while
       // the address stood beside it and space was dear; in an enumeration of
       // three, a missing element reads as unknown rather than as ordinary.
-      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'tcp', 'tls': true})
-          .subtitle, 'VLESS · TCP · TLS');
-      expect(loc({'type': 'vless', 'server': 'de.example', 'tls': true}).subtitle,
-          'VLESS · TCP · TLS');
+      expect(
+        loc({
+          'type': 'vless',
+          'server': 'de.example',
+          'network': 'tcp',
+          'tls': true,
+        }).subtitle,
+        'VLESS · TCP · TLS',
+      );
+      expect(
+        loc({'type': 'vless', 'server': 'de.example', 'tls': true}).subtitle,
+        'VLESS · TCP · TLS',
+      );
     });
 
     test('a protocol whose transport is not a choice still names it', () {
       // hysteria2 carries no `network` because it has no alternative; leaving
       // the slot empty would say we did not look.
-      expect(loc({'type': 'hysteria2', 'server': 'de.example'}).subtitle,
-          'Hysteria2 · QUIC · TLS');
+      expect(
+        loc({'type': 'hysteria2', 'server': 'de.example'}).subtitle,
+        'Hysteria2 · QUIC · TLS',
+      );
     });
 
     test('nothing protecting the connection is said out loud', () {
       // "Not stated" and "nothing there" are different facts, and for a VPN
       // client the difference is the point of the line.
-      expect(loc({'type': 'vless', 'server': 'de.example'}).subtitle,
-          'VLESS · TCP · No TLS');
+      expect(
+        loc({'type': 'vless', 'server': 'de.example'}).subtitle,
+        'VLESS · TCP · No TLS',
+      );
     });
 
-    test('httpupgrade is named as itself, not as the websocket it is stored as', () {
-      final proxy = {
-        'type': 'vless',
-        'server': 'de.example',
-        'network': 'ws',
-        'ws-opts': {'path': '/', 'v2ray-http-upgrade': true},
-      };
-      expect(loc(proxy).transport, 'HTTPUpgrade',
-          reason: 'calling it WS would name a transport the server is not set up for');
-      expect(loc({'type': 'vless', 'server': 'de.example', 'network': 'ws'}).transport, 'WS');
-    });
+    test(
+      'httpupgrade is named as itself, not as the websocket it is stored as',
+      () {
+        final proxy = {
+          'type': 'vless',
+          'server': 'de.example',
+          'network': 'ws',
+          'ws-opts': {'path': '/', 'v2ray-http-upgrade': true},
+        };
+        expect(
+          loc(proxy).transport,
+          'HTTPUpgrade',
+          reason:
+              'calling it WS would name a transport the server is not set up for',
+        );
+        expect(
+          loc({
+            'type': 'vless',
+            'server': 'de.example',
+            'network': 'ws',
+          }).transport,
+          'WS',
+        );
+      },
+    );
 
     test('a provider description replaces the line, all of it', () {
       expect(
-        loc({'type': 'vless', 'server': 'de.example', 'network': 'xhttp'},
-            description: 'до 10 Гбит/с').subtitle,
+        loc({
+          'type': 'vless',
+          'server': 'de.example',
+          'network': 'xhttp',
+        }, description: 'до 10 Гбит/с').subtitle,
         'до 10 Гбит/с',
       );
     });
 
     test('the address is nowhere in it', () {
-      final row = loc({'type': 'vless', 'server': 'secret.example', 'network': 'ws'});
+      final row = loc({
+        'type': 'vless',
+        'server': 'secret.example',
+        'network': 'ws',
+      });
       expect(row.subtitle, isNot(contains('secret.example')));
     });
   });

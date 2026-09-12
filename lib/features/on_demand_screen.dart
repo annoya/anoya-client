@@ -35,7 +35,9 @@ class OnDemandScreen extends ConsumerWidget {
               child: SwitchListTile(
                 secondary: const Icon(Icons.bolt_outlined),
                 title: const Text('Enable on demand'),
-                subtitle: const Text('The system applies the first matching rule'),
+                subtitle: const Text(
+                  'The system applies the first matching rule',
+                ),
                 value: prefs.enabled,
                 onChanged: (v) => ctrl.setEnabled(v),
               ),
@@ -64,10 +66,9 @@ class OnDemandScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
               child: Text(
                 'Rules are evaluated top to bottom. If none matches, the tunnel is left as is.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: cs.onSurfaceVariant),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ),
           ],
@@ -76,7 +77,12 @@ class OnDemandScreen extends ConsumerWidget {
     );
   }
 
-  Widget _ruleTile(BuildContext context, WidgetRef ref, int index, OnDemandRule rule) {
+  Widget _ruleTile(
+    BuildContext context,
+    WidgetRef ref,
+    int index,
+    OnDemandRule rule,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final actionColor = switch (rule.action) {
       OnDemandAction.connect => context.vpnColors.connected,
@@ -95,48 +101,83 @@ class OnDemandScreen extends ConsumerWidget {
         onTap: () => _openRule(context, ref, rule),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-          child: Row(children: [
-            SizedBox(
-              width: 46,
-              child: Text(tag,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 46,
+                child: Text(
+                  tag,
                   style: TextStyle(
-                      color: actionColor, fontWeight: FontWeight.w700, fontSize: 11)),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(rule.name.isNotEmpty ? rule.name : rule.action.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                Text(rule.summary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-              ]),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20),
-              tooltip: 'Remove',
-              visualDensity: VisualDensity.compact,
-              onPressed: () => ref.read(onDemandProvider.notifier).removeRule(rule.id),
-            ),
-            ReorderableDragStartListener(
-              index: index,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: Icon(Icons.drag_handle, size: 20, color: cs.onSurfaceVariant),
+                    color: actionColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
               ),
-            ),
-          ]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rule.name.isNotEmpty ? rule.name : rule.action.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      rule.summary,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 20),
+                tooltip: 'Remove',
+                visualDensity: VisualDensity.compact,
+                onPressed: () =>
+                    ref.read(onDemandProvider.notifier).removeRule(rule.id),
+              ),
+              ReorderableDragStartListener(
+                index: index,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 6,
+                  ),
+                  child: Icon(
+                    Icons.drag_handle,
+                    size: 20,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _openRule(BuildContext context, WidgetRef ref, OnDemandRule rule, {bool isNew = false}) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => OnDemandRuleScreen(rule: rule, isNew: isNew),
-    ));
+  void _openRule(
+    BuildContext context,
+    WidgetRef ref,
+    OnDemandRule rule, {
+    bool isNew = false,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OnDemandRuleScreen(rule: rule, isNew: isNew),
+      ),
+    );
   }
 }

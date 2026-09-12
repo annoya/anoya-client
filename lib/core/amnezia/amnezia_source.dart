@@ -29,7 +29,11 @@ final class AmneziaSource {
 
   AmneziaState get _state =>
       profile.amnezia ??
-      const AmneziaState(serviceType: '', serviceProtocol: '', userCountryCode: '');
+      const AmneziaState(
+        serviceType: '',
+        serviceProtocol: '',
+        userCountryCode: '',
+      );
 
   Future<AmneziaGateway> _gateway() async =>
       _injected ??
@@ -44,8 +48,12 @@ final class AmneziaSource {
   Future<Profile> refresh() async {
     final key = await ProfileStore.amneziaKey(profile.id);
     if (key == null || key.isEmpty) {
-      throw const AppErrorException(AppError('This subscription lost its key',
-          detail: 'Remove the configuration and add it again.'));
+      throw const AppErrorException(
+        AppError(
+          'This subscription lost its key',
+          detail: 'Remove the configuration and add it again.',
+        ),
+      );
     }
     final gw = await _gateway();
     final res = await gw.accountInfo(
@@ -83,7 +91,10 @@ final class AmneziaSource {
   /// one fails a handshake with nothing to explain it — so the expiry is
   /// checked here, before the engine ever sees it, which is the only place
   /// that can tell the difference between "expired" and "broken".
-  Future<Profile> resolveSelection(String selectionId, {bool force = false}) async {
+  Future<Profile> resolveSelection(
+    String selectionId, {
+    bool force = false,
+  }) async {
     final parts = amneziaLocationParts(selectionId);
     if (parts == null) return profile;
     if (!force && _isFresh(selectionId)) return profile;
@@ -91,7 +102,9 @@ final class AmneziaSource {
     final key = await ProfileStore.amneziaKey(profile.id);
     if (key == null || key.isEmpty) return profile;
 
-    final protocol = parts.protocol.isEmpty ? _state.serviceProtocol : parts.protocol;
+    final protocol = parts.protocol.isEmpty
+        ? _state.serviceProtocol
+        : parts.protocol;
     // AWG is issued against a key this device makes: the gateway is told the
     // public half and never sees the private one.
     final wg = protocol == 'awg' ? await generateWgKeyPair() : null;
@@ -110,14 +123,19 @@ final class AmneziaSource {
     if (!res.ok) throw AppErrorException(describeAmneziaError(res));
 
     final label = _labelFor(selectionId);
-    final parsed = parseAmneziaSecondaryConfig(res.json,
-        label: label, privateKey: wg?.privateKey ?? '');
+    final parsed = parseAmneziaSecondaryConfig(
+      res.json,
+      label: label,
+      privateKey: wg?.privateKey ?? '',
+    );
     if (parsed == null) {
       throw const AppErrorException(kAmneziaEmptyAnswer);
     }
 
-    Log.i('amnezia: issued ${amneziaProtocolLabel(protocol)} config for '
-        '${parts.country.isEmpty ? 'the free service' : parts.country}');
+    Log.i(
+      'amnezia: issued ${amneziaProtocolLabel(protocol)} config for '
+      '${parts.country.isEmpty ? 'the free service' : parts.country}',
+    );
 
     return profile.copyWith(
       // Only the place being connected through keeps a server. The others go
@@ -139,7 +157,11 @@ final class AmneziaSource {
             l
           else
             Location(
-                id: l.id, label: l.label, proxy: const {}, description: l.description),
+              id: l.id,
+              label: l.label,
+              proxy: const {},
+              description: l.description,
+            ),
       ],
       // The resolvers the config came with. They are the server's own, often
       // reachable only through the tunnel, and substituting ours would send
@@ -147,9 +169,11 @@ final class AmneziaSource {
       dns: parsed.dns,
       // One selection, one expiry: the others no longer have a server for a
       // date to belong to.
-      amnezia: _state.copyWith(expiries: {
-        if (parsed.expiresAt != null) selectionId: parsed.expiresAt!,
-      }),
+      amnezia: _state.copyWith(
+        expiries: {
+          if (parsed.expiresAt != null) selectionId: parsed.expiresAt!,
+        },
+      ),
     );
   }
 
@@ -167,7 +191,9 @@ final class AmneziaSource {
     if (current == null) return false;
     final expiry = _state.expiries[selectionId];
     if (expiry == null) return true;
-    return DateTime.now().toUtc().isBefore(expiry.subtract(kAmneziaExpiryMargin));
+    return DateTime.now().toUtc().isBefore(
+      expiry.subtract(kAmneziaExpiryMargin),
+    );
   }
 
   String _labelFor(String id) {
@@ -205,15 +231,15 @@ String? amneziaKeyUnsupported(AmneziaVpnKey key) {
 /// not called here — [AmneziaSource.refresh] does that, and doing it in one
 /// place means an import and a later refresh cannot disagree.
 Profile amneziaProfileFor(AmneziaVpnKey key, {required String id}) => Profile(
-      id: id,
-      type: ProfileType.amnezia,
-      // Whatever the key calls itself. The same format and the same gateway
-      // serve providers other than Amnezia, so nothing here may assume one.
-      name: key.name.isEmpty ? 'Subscription' : key.name,
-      locations: const [],
-      amnezia: AmneziaState(
-        serviceType: key.serviceType,
-        serviceProtocol: key.serviceProtocol,
-        userCountryCode: key.userCountryCode,
-      ),
-    );
+  id: id,
+  type: ProfileType.amnezia,
+  // Whatever the key calls itself. The same format and the same gateway
+  // serve providers other than Amnezia, so nothing here may assume one.
+  name: key.name.isEmpty ? 'Subscription' : key.name,
+  locations: const [],
+  amnezia: AmneziaState(
+    serviceType: key.serviceType,
+    serviceProtocol: key.serviceProtocol,
+    userCountryCode: key.userCountryCode,
+  ),
+);

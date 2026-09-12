@@ -16,19 +16,23 @@ class ProfileStore {
   static final _store = JsonFileStore('profiles.json');
 
   static Future<List<Profile>> load() => _store.load(
-      (j) => decodeListLenient(j, 'profiles', Profile.fromJson), <Profile>[]);
+    (j) => decodeListLenient(j, 'profiles', Profile.fromJson),
+    <Profile>[],
+  );
 
   static Future<void> save(List<Profile> profiles) =>
       _store.save(profiles.map((p) => p.toJson()).toList());
 
   // --- self-hosted session token (Keychain) ---
 
-  static Future<String?> token(String profileId) => _secure.read(key: 'token_$profileId');
+  static Future<String?> token(String profileId) =>
+      _secure.read(key: 'token_$profileId');
 
   static Future<void> saveToken(String profileId, String token) =>
       _secure.write(key: 'token_$profileId', value: token);
 
-  static Future<void> deleteToken(String profileId) => _secure.delete(key: 'token_$profileId');
+  static Future<void> deleteToken(String profileId) =>
+      _secure.delete(key: 'token_$profileId');
 
   // --- Amnezia subscription key + install identity (Keychain) ---
 
@@ -74,7 +78,7 @@ class ProfileStore {
         (j) => j is Map
             ? (
                 profileId: j['profile_id'] as String?,
-                selectionId: j['selection_id'] as String?
+                selectionId: j['selection_id'] as String?,
               )
             : (profileId: null, selectionId: null),
         (profileId: null, selectionId: null),

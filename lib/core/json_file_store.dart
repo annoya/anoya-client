@@ -67,7 +67,10 @@ class JsonFileStore {
 /// instead of discarding the whole list — one bad element must not cost the
 /// user everything else in the file.
 List<T> decodeListLenient<T>(
-    dynamic json, String what, T Function(Map<String, dynamic>) fromJson) {
+  dynamic json,
+  String what,
+  T Function(Map<String, dynamic>) fromJson,
+) {
   if (json is! List) return [];
   final out = <T>[];
   for (final e in json) {

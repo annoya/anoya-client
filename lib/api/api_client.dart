@@ -36,18 +36,23 @@ class LoginResult {
 
 /// One SSO provider offered by the server (from /api/client/auth-config).
 class AuthProvider {
-  AuthProvider({required this.id, required this.name, required this.issuer, required this.clientId});
+  AuthProvider({
+    required this.id,
+    required this.name,
+    required this.issuer,
+    required this.clientId,
+  });
   final int id;
   final String name;
   final String issuer;
   final String clientId;
 
   factory AuthProvider.fromJson(Map<String, dynamic> j) => AuthProvider(
-        id: j['id'] as int,
-        name: j['name'] as String? ?? 'SSO',
-        issuer: j['issuer'] as String? ?? '',
-        clientId: j['client_id'] as String? ?? '',
-      );
+    id: j['id'] as int,
+    name: j['name'] as String? ?? 'SSO',
+    issuer: j['issuer'] as String? ?? '',
+    clientId: j['client_id'] as String? ?? '',
+  );
 }
 
 class AuthConfig {
@@ -81,9 +86,9 @@ class ApiClient {
   }
 
   static LoginResult _loginResult(Map<String, dynamic> data) => LoginResult(
-        data['token'] as String,
-        Account.fromJson(data['account'] as Map<String, dynamic>? ?? {}),
-      );
+    data['token'] as String,
+    Account.fromJson(data['account'] as Map<String, dynamic>? ?? {}),
+  );
 
   /// Which auth methods this server offers (pre-login, no token needed).
   Future<AuthConfig> authConfig() async {
@@ -91,7 +96,10 @@ class ApiClient {
     final list = (data['providers'] as List<dynamic>? ?? [])
         .map((e) => AuthProvider.fromJson(e as Map<String, dynamic>))
         .toList();
-    return AuthConfig(passwordLogin: data['password_login'] as bool? ?? true, providers: list);
+    return AuthConfig(
+      passwordLogin: data['password_login'] as bool? ?? true,
+      providers: list,
+    );
   }
 
   /// Exchange a verified OIDC ID token for a client session token.
@@ -133,20 +141,34 @@ class ApiClient {
       }
     } on TimeoutException {
       Log.e('request to $uri timed out');
-      throw ApiException(0, 'timeout', 'No answer from $baseUrl — check the address and the network.');
+      throw ApiException(
+        0,
+        'timeout',
+        'No answer from $baseUrl — check the address and the network.',
+      );
     } on SocketException catch (e) {
       Log.e('network error reaching $uri', e);
-      throw ApiException(0, 'network', 'Cannot reach $baseUrl — check the address/port and that the server is up.');
+      throw ApiException(
+        0,
+        'network',
+        'Cannot reach $baseUrl — check the address/port and that the server is up.',
+      );
     } on HandshakeException catch (e) {
       Log.e('TLS handshake failed for $uri', e);
-      throw ApiException(0, 'tls',
-          'TLS error talking to $baseUrl. If the server runs plain HTTP, enter the address with "http://".');
+      throw ApiException(
+        0,
+        'tls',
+        'TLS error talking to $baseUrl. If the server runs plain HTTP, enter the address with "http://".',
+      );
     } catch (e, st) {
       // The exception's own words go to the log only: this message is what
       // the dialog shows, and a stack of Dart type names is not an answer.
       Log.e('request to $uri failed', e, st);
-      throw ApiException(0, 'request',
-          'The request to $baseUrl could not be completed — check the address and try again.');
+      throw ApiException(
+        0,
+        'request',
+        'The request to $baseUrl could not be completed — check the address and try again.',
+      );
     }
 
     Log.i('$method $path -> ${res.statusCode} (${res.body.length} bytes)');
@@ -164,7 +186,8 @@ class ApiClient {
     if (res.statusCode ~/ 100 != 2) {
       final err = parsed['error'] as Map<String, dynamic>?;
       final code = err?['code'] as String? ?? 'error';
-      final message = err?['message'] as String? ?? 'request failed (${res.statusCode})';
+      final message =
+          err?['message'] as String? ?? 'request failed (${res.statusCode})';
       Log.e('$method $path rejected: $code / $message');
       throw ApiException(res.statusCode, code, message);
     }

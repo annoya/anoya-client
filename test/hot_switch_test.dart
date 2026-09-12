@@ -21,37 +21,55 @@ import 'package:vpn_client/state/providers.dart';
 /// status line while taps are ignored.
 void main() {
   Profile profile(String id, String name) => Profile(
-        id: id,
-        type: ProfileType.subscription,
-        name: name,
-        locations: [
-          Location(id: '$id-a', label: 'Germany', proxy: {'type': 'vless', 'server': '1.1.1.1'}),
-          Location(id: '$id-b', label: 'Japan', proxy: {'type': 'vless', 'server': '2.2.2.2'}),
-        ],
-      );
+    id: id,
+    type: ProfileType.subscription,
+    name: name,
+    locations: [
+      Location(
+        id: '$id-a',
+        label: 'Germany',
+        proxy: {'type': 'vless', 'server': '1.1.1.1'},
+      ),
+      Location(
+        id: '$id-b',
+        label: 'Japan',
+        proxy: {'type': 'vless', 'server': '2.2.2.2'},
+      ),
+    ],
+  );
 
   Future<void> pump(
     WidgetTester tester, {
     required VpnStatus status,
     bool switching = false,
   }) async {
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        vpnCoreProvider.overrideWithValue(_FixedCore(status)),
-        onDemandProvider.overrideWith(_QuietOnDemand.new),
-        profilesControllerProvider.overrideWith(
-            () => _FixedProfiles([profile('p1', 'nexus'), profile('p2', 'work')], switching)),
-      ],
-      child: MaterialApp(theme: buildAppTheme(Brightness.light), home: const HomeScreen()),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          vpnCoreProvider.overrideWithValue(_FixedCore(status)),
+          onDemandProvider.overrideWith(_QuietOnDemand.new),
+          profilesControllerProvider.overrideWith(
+            () => _FixedProfiles([
+              profile('p1', 'nexus'),
+              profile('p2', 'work'),
+            ], switching),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: const HomeScreen(),
+        ),
+      ),
+    );
     await tester.pump();
   }
 
   ListTile tile(WidgetTester tester, String title) =>
       tester.widget<ListTile>(find.widgetWithText(ListTile, title));
 
-  testWidgets('a connected tunnel keeps both pickers active — no locks',
-      (tester) async {
+  testWidgets('a connected tunnel keeps both pickers active — no locks', (
+    tester,
+  ) async {
     await pump(tester, status: VpnStatus.connected);
 
     expect(find.byIcon(Icons.lock_outline), findsNothing);
@@ -59,7 +77,9 @@ void main() {
     expect(tile(tester, 'Germany').onTap, isNotNull);
   });
 
-  testWidgets('the initial connect is the only state with locks', (tester) async {
+  testWidgets('the initial connect is the only state with locks', (
+    tester,
+  ) async {
     await pump(tester, status: VpnStatus.connecting);
 
     expect(find.byIcon(Icons.lock_outline), findsNWidgets(2));
@@ -67,7 +87,9 @@ void main() {
     expect(tile(tester, 'Germany').onTap, isNull);
   });
 
-  testWidgets('a switch in flight announces itself and ignores taps', (tester) async {
+  testWidgets('a switch in flight announces itself and ignores taps', (
+    tester,
+  ) async {
     await pump(tester, status: VpnStatus.connected, switching: true);
 
     expect(find.text('Switching server…'), findsOneWidget);
@@ -79,7 +101,10 @@ void main() {
 
   test('a core without hot reload says so instead of pretending', () {
     final config = NormConfig(
-        version: 1, account: Account.fromJson(const {}), locations: const []);
+      version: 1,
+      account: Account.fromJson(const {}),
+      locations: const [],
+    );
     expect(_MinimalCore().reload(config, 'x'), throwsUnsupportedError);
   });
 
@@ -88,7 +113,8 @@ void main() {
   // leak-freedom of switching is testable as invariants: nothing on the switch
   // path may stop or restart the session, in any outcome.
   group('leak invariants', () {
-    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     late Directory tmp;
 
     setUp(() {
@@ -107,33 +133,51 @@ void main() {
     });
     tearDown(() {
       messenger.setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'), null);
-      messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), null);
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        null,
+      );
+      messenger.setMockMethodCallHandler(
+        const MethodChannel('vpn/control'),
+        null,
+      );
       tmp.deleteSync(recursive: true);
     });
 
     (_RecordingCore, ProfilesController) harness(VpnStatus status) {
       final core = _RecordingCore(status);
-      final container = ProviderContainer(overrides: [
-        vpnCoreProvider.overrideWithValue(core),
-        onDemandProvider.overrideWith(_QuietOnDemand.new),
-        profilesControllerProvider.overrideWith(
-            () => _FixedProfiles([profile('p1', 'nexus'), profile('p2', 'work')], false)),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          vpnCoreProvider.overrideWithValue(core),
+          onDemandProvider.overrideWith(_QuietOnDemand.new),
+          profilesControllerProvider.overrideWith(
+            () => _FixedProfiles([
+              profile('p1', 'nexus'),
+              profile('p2', 'work'),
+            ], false),
+          ),
+        ],
+      );
       addTearDown(container.dispose);
       return (core, container.read(profilesControllerProvider.notifier));
     }
 
-    test('switching a location or profile on a live tunnel is reload-only', () async {
-      final (core, ctrl) = harness(VpnStatus.connected);
+    test(
+      'switching a location or profile on a live tunnel is reload-only',
+      () async {
+        final (core, ctrl) = harness(VpnStatus.connected);
 
-      await ctrl.selectLocation('p1-b');
-      await ctrl.setActive('p2');
+        await ctrl.selectLocation('p1-b');
+        await ctrl.setActive('p2');
 
-      expect(core.calls, ['reload', 'reload'],
-          reason: 'no stop/start anywhere on the switch path — the session '
-              'must stay up, or the OS routes fall back and traffic leaks');
-    });
+        expect(
+          core.calls,
+          ['reload', 'reload'],
+          reason:
+              'no stop/start anywhere on the switch path — the session '
+              'must stay up, or the OS routes fall back and traffic leaks',
+        );
+      },
+    );
 
     test('a poll reapply on a live tunnel is reload-only too', () async {
       final (core, ctrl) = harness(VpnStatus.connected);
@@ -148,15 +192,27 @@ void main() {
         type: ProfileType.subscription,
         name: 'nexus',
         locations: [
-          Location(id: 'p1-a', label: 'Germany', proxy: {'type': 'vless', 'server': '9.9.9.9'}),
-          Location(id: 'p1-b', label: 'Japan', proxy: {'type': 'vless', 'server': '2.2.2.2'}),
+          Location(
+            id: 'p1-a',
+            label: 'Germany',
+            proxy: {'type': 'vless', 'server': '9.9.9.9'},
+          ),
+          Location(
+            id: 'p1-b',
+            label: 'Japan',
+            proxy: {'type': 'vless', 'server': '2.2.2.2'},
+          ),
         ],
       );
       await ctrl.maybeReapply(before, after);
 
-      expect(core.calls, ['reload'],
-          reason: 'a background reapply must never stop/start or re-persist '
-              'the session — that is the reconnect leak ADR-002 closes');
+      expect(
+        core.calls,
+        ['reload'],
+        reason:
+            'a background reapply must never stop/start or re-persist '
+            'the session — that is the reconnect leak ADR-002 closes',
+      );
     });
 
     test('a failed switch leaves the running tunnel alone', () async {
@@ -165,9 +221,13 @@ void main() {
 
       await ctrl.selectLocation('p1-b');
 
-      expect(core.calls, ['reload'],
-          reason: 'no disconnect as error handling: dropping the session is '
-              'the one thing that can actually leak');
+      expect(
+        core.calls,
+        ['reload'],
+        reason:
+            'no disconnect as error handling: dropping the session is '
+            'the one thing that can actually leak',
+      );
       final st = ctrl.state;
       expect(st.switching, false);
       expect(st.error, isNotNull, reason: 'the failure is told, not swallowed');
@@ -178,18 +238,24 @@ void main() {
 
       await ctrl.selectLocation('p1-b');
 
-      expect(core.calls, ['sync'],
-          reason: 'only the persisted config is updated for the next start');
+      expect(core.calls, [
+        'sync',
+      ], reason: 'only the persisted config is updated for the next start');
     });
 
     test('the engine never forwards ICMP itself', () {
       // mihomo's ICMP path is a DIRECT outbound: it dials the target from the
       // physical interface, so a ping placed into the tun leaves outside it and
       // exposes the real address. The stack must answer echo requests instead.
-      final location = Location(id: 'a', label: 'DE', proxy: {
-        'type': 'vless', 'server': '1.1.1.1', 'port': 443, 'uuid': 'u',
-      });
-      expect(mihomoTunConfigYaml(location), contains('disable-icmp-forwarding: true'));
+      final location = Location(
+        id: 'a',
+        label: 'DE',
+        proxy: {'type': 'vless', 'server': '1.1.1.1', 'port': 443, 'uuid': 'u'},
+      );
+      expect(
+        mihomoTunConfigYaml(location),
+        contains('disable-icmp-forwarding: true'),
+      );
     });
 
     test('the tun section is identical across locations and routings', () {
@@ -206,27 +272,50 @@ void main() {
         final start = lines.indexOf('$key:');
         expect(start, isNot(-1));
         final buf = <String>[lines[start]];
-        for (var i = start + 1; i < lines.length && lines[i].startsWith(' '); i++) {
+        for (
+          var i = start + 1;
+          i < lines.length && lines[i].startsWith(' ');
+          i++
+        ) {
           buf.add(lines[i]);
         }
         return buf.join('\n');
       }
 
-      final vless = Location(id: 'a', label: 'DE', proxy: {
-        'type': 'vless', 'server': '1.1.1.1', 'port': 443, 'uuid': 'u',
-      });
-      final trojan = Location(id: 'b', label: 'JP', proxy: {
-        'type': 'trojan', 'server': '2.2.2.2', 'port': 443, 'password': 'p',
-      });
-      const split = Routing(mode: 'split', rules: [
-        RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),
-        RoutingRule(type: 'geoip', value: 'ru', action: 'direct'),
-      ]);
+      final vless = Location(
+        id: 'a',
+        label: 'DE',
+        proxy: {'type': 'vless', 'server': '1.1.1.1', 'port': 443, 'uuid': 'u'},
+      );
+      final trojan = Location(
+        id: 'b',
+        label: 'JP',
+        proxy: {
+          'type': 'trojan',
+          'server': '2.2.2.2',
+          'port': 443,
+          'password': 'p',
+        },
+      );
+      const split = Routing(
+        mode: 'split',
+        rules: [
+          RoutingRule(
+            type: 'domain-suffix',
+            value: 'corp.example.com',
+            action: 'proxy',
+          ),
+          RoutingRule(type: 'geoip', value: 'ru', action: 'direct'),
+        ],
+      );
 
       final a = mihomoTunConfigYaml(vless);
       final b = mihomoTunConfigYaml(trojan, routing: split);
       final c = mihomoTunConfigYaml(vless, collectLogs: false);
-      final d = mihomoTunConfigYaml(vless, dns: ['https://dns.google/dns-query']);
+      final d = mihomoTunConfigYaml(
+        vless,
+        dns: ['https://dns.google/dns-query'],
+      );
       for (final other in [b, c, d]) {
         expect(section(other, 'tun'), section(a, 'tun'));
       }
@@ -247,8 +336,11 @@ class _FixedProfiles extends ProfilesController {
   final bool switching;
 
   @override
-  ProfilesState build() =>
-      ProfilesState(profiles: profiles, activeId: profiles.first.id, switching: switching);
+  ProfilesState build() => ProfilesState(
+    profiles: profiles,
+    activeId: profiles.first.id,
+    switching: switching,
+  );
 }
 
 class _QuietOnDemand extends OnDemandController {
@@ -274,7 +366,6 @@ class _FixedCore extends VpnCore {
 
   @override
   Future<void> disconnect() async {}
-
 }
 
 class _MinimalCore extends _FixedCore {
@@ -304,7 +395,8 @@ class _RecordingCore extends _FixedCore {
   }
 
   @override
-  Future<void> syncConfig(NormConfig config, String locationId) async => calls.add('sync');
+  Future<void> syncConfig(NormConfig config, String locationId) async =>
+      calls.add('sync');
 
   @override
   Future<void> removeSystemProfile() async => calls.add('remove');

@@ -21,36 +21,78 @@ import 'package:ffi/ffi.dart';
 /// behalf, so it belongs here, next to where a subscription is fetched.
 final class _Bindings {
   _Bindings(DynamicLibrary lib)
-      : abiVersion = lib.lookupFunction<Uint32 Function(), int Function()>(
-            'agw_abi_version'),
-        clientCreate = lib.lookupFunction<
+    : abiVersion = lib.lookupFunction<Uint32 Function(), int Function()>(
+        'agw_abi_version',
+      ),
+      clientCreate = lib
+          .lookupFunction<
             UintPtr Function(Pointer<Utf8>, Pointer<Void>),
-            int Function(Pointer<Utf8>, Pointer<Void>)>('agw_client_create'),
-        clientDestroy =
-            lib.lookupFunction<Void Function(UintPtr), void Function(int)>(
-                'agw_client_destroy'),
-        post = lib.lookupFunction<
-            AgwResult Function(UintPtr, Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>, UintPtr),
-            AgwResult Function(int, Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>, int)>('agw_post'),
-        resultFree = lib.lookupFunction<Void Function(Pointer<AgwResult>),
-            void Function(Pointer<AgwResult>)>('agw_result_free'),
-        cancelCreate =
-            lib.lookupFunction<UintPtr Function(), int Function()>('agw_cancel_create'),
-        cancelCancel =
-            lib.lookupFunction<Void Function(UintPtr), void Function(int)>('agw_cancel_cancel'),
-        cancelDestroy =
-            lib.lookupFunction<Void Function(UintPtr), void Function(int)>('agw_cancel_destroy'),
-        exportState = lib.lookupFunction<Pointer<Utf8> Function(UintPtr),
-            Pointer<Utf8> Function(int)>('agw_export_state'),
-        importState = lib.lookupFunction<Int32 Function(UintPtr, Pointer<Utf8>),
-            int Function(int, Pointer<Utf8>)>('agw_import_state'),
-        stringFree = lib.lookupFunction<Void Function(Pointer<Utf8>),
-            void Function(Pointer<Utf8>)>('agw_string_free');
+            int Function(Pointer<Utf8>, Pointer<Void>)
+          >('agw_client_create'),
+      clientDestroy = lib
+          .lookupFunction<Void Function(UintPtr), void Function(int)>(
+            'agw_client_destroy',
+          ),
+      post = lib
+          .lookupFunction<
+            AgwResult Function(
+              UintPtr,
+              Pointer<Utf8>,
+              Pointer<Utf8>,
+              Pointer<Utf8>,
+              UintPtr,
+            ),
+            AgwResult Function(
+              int,
+              Pointer<Utf8>,
+              Pointer<Utf8>,
+              Pointer<Utf8>,
+              int,
+            )
+          >('agw_post'),
+      resultFree = lib
+          .lookupFunction<
+            Void Function(Pointer<AgwResult>),
+            void Function(Pointer<AgwResult>)
+          >('agw_result_free'),
+      cancelCreate = lib.lookupFunction<UintPtr Function(), int Function()>(
+        'agw_cancel_create',
+      ),
+      cancelCancel = lib
+          .lookupFunction<Void Function(UintPtr), void Function(int)>(
+            'agw_cancel_cancel',
+          ),
+      cancelDestroy = lib
+          .lookupFunction<Void Function(UintPtr), void Function(int)>(
+            'agw_cancel_destroy',
+          ),
+      exportState = lib
+          .lookupFunction<
+            Pointer<Utf8> Function(UintPtr),
+            Pointer<Utf8> Function(int)
+          >('agw_export_state'),
+      importState = lib
+          .lookupFunction<
+            Int32 Function(UintPtr, Pointer<Utf8>),
+            int Function(int, Pointer<Utf8>)
+          >('agw_import_state'),
+      stringFree = lib
+          .lookupFunction<
+            Void Function(Pointer<Utf8>),
+            void Function(Pointer<Utf8>)
+          >('agw_string_free');
 
   final int Function() abiVersion;
   final int Function(Pointer<Utf8>, Pointer<Void>) clientCreate;
   final void Function(int) clientDestroy;
-  final AgwResult Function(int, Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>, int) post;
+  final AgwResult Function(
+    int,
+    Pointer<Utf8>,
+    Pointer<Utf8>,
+    Pointer<Utf8>,
+    int,
+  )
+  post;
   final void Function(Pointer<AgwResult>) resultFree;
   final int Function() cancelCreate;
   final void Function(int) cancelCancel;
@@ -188,14 +230,14 @@ class AgwConfig {
   final List<String> s3Fallback;
 
   Map<String, dynamic> toJson() => {
-        'gateway_endpoint': endpoint,
-        // Real newlines, byte for byte as shipped: the same PEM text is the
-        // SHA-512 input that unlocks the S3 proxy lists, so reformatting it
-        // silently disables the bypass path.
-        'public_key_pem': publicKeyPem,
-        if (s3Primary.isNotEmpty) 's3_primary_endpoints': s3Primary,
-        if (s3Fallback.isNotEmpty) 's3_fallback_endpoints': s3Fallback,
-      };
+    'gateway_endpoint': endpoint,
+    // Real newlines, byte for byte as shipped: the same PEM text is the
+    // SHA-512 input that unlocks the S3 proxy lists, so reformatting it
+    // silently disables the bypass path.
+    'public_key_pem': publicKeyPem,
+    if (s3Primary.isNotEmpty) 's3_primary_endpoints': s3Primary,
+    if (s3Fallback.isNotEmpty) 's3_fallback_endpoints': s3Fallback,
+  };
 }
 
 /// One gateway call, executed off the platform thread.
@@ -307,7 +349,13 @@ _AgwOutcome _postSync(_AgwCall call) {
       b.importState(client, statePtr);
       calloc.free(statePtr);
     }
-    holder.ref = b.post(client, endpointPtr, payloadPtr, optionsPtr, call.cancel);
+    holder.ref = b.post(
+      client,
+      endpointPtr,
+      payloadPtr,
+      optionsPtr,
+      call.cancel,
+    );
     final r = holder.ref;
     final body = r.body == nullptr
         ? ''

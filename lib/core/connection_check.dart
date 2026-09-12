@@ -29,36 +29,44 @@ class ConnectionCheckPrefs {
 
   Duration get timeout => Duration(seconds: timeoutSeconds);
 
-  ConnectionCheckPrefs copyWith({bool? enabled, String? url, int? timeoutSeconds}) =>
-      ConnectionCheckPrefs(
-        enabled: enabled ?? this.enabled,
-        url: url ?? this.url,
-        timeoutSeconds: timeoutSeconds ?? this.timeoutSeconds,
-      );
+  ConnectionCheckPrefs copyWith({
+    bool? enabled,
+    String? url,
+    int? timeoutSeconds,
+  }) => ConnectionCheckPrefs(
+    enabled: enabled ?? this.enabled,
+    url: url ?? this.url,
+    timeoutSeconds: timeoutSeconds ?? this.timeoutSeconds,
+  );
 
-  factory ConnectionCheckPrefs.fromJson(Map<String, dynamic> j) => ConnectionCheckPrefs(
+  factory ConnectionCheckPrefs.fromJson(Map<String, dynamic> j) =>
+      ConnectionCheckPrefs(
         enabled: j['enabled'] as bool? ?? true,
-        url: (j['url'] as String?)?.isNotEmpty == true ? j['url'] as String : defaultUrl,
+        url: (j['url'] as String?)?.isNotEmpty == true
+            ? j['url'] as String
+            : defaultUrl,
         timeoutSeconds: j['timeout_seconds'] as int? ?? 5,
       );
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'url': url,
-        'timeout_seconds': timeoutSeconds,
-      };
+    'enabled': enabled,
+    'url': url,
+    'timeout_seconds': timeoutSeconds,
+  };
 }
 
 class ConnectionCheckStore {
   static final _store = JsonFileStore('connection_check.json');
 
   static Future<ConnectionCheckPrefs> load() => _store.load(
-      (j) => j is Map
-          ? ConnectionCheckPrefs.fromJson(Map<String, dynamic>.from(j))
-          : const ConnectionCheckPrefs(),
-      const ConnectionCheckPrefs());
+    (j) => j is Map
+        ? ConnectionCheckPrefs.fromJson(Map<String, dynamic>.from(j))
+        : const ConnectionCheckPrefs(),
+    const ConnectionCheckPrefs(),
+  );
 
-  static Future<void> save(ConnectionCheckPrefs prefs) => _store.save(prefs.toJson());
+  static Future<void> save(ConnectionCheckPrefs prefs) =>
+      _store.save(prefs.toJson());
 }
 
 /// The engine's failure, said in words the reader can act on.
@@ -86,7 +94,11 @@ String describeProbeFailure(String raw) {
   // Anything we have not seen keeps the engine's own first line rather than
   // being folded into "something went wrong": an unexplained sentence the user
   // can quote is worth more than a tidy one that fits every failure.
-  final first = raw.split('\n').first.replaceFirst('connect failed: ', '').trim();
+  final first = raw
+      .split('\n')
+      .first
+      .replaceFirst('connect failed: ', '')
+      .trim();
   if (first.isEmpty) return 'Nothing came back.';
   return first.endsWith('.') ? first : '$first.';
 }
@@ -113,9 +125,9 @@ class ConnectionCheck {
   /// inventing one for the sake of a uniform line would be a lie about what we
   /// did.
   const ConnectionCheck.observed({required this.at, this.via = ''})
-      : delayMs = null,
-        failure = null,
-        observed = true;
+    : delayMs = null,
+      failure = null,
+      observed = true;
 
   final DateTime at;
   final int? delayMs;
@@ -141,7 +153,11 @@ class ConnectionCheck {
   /// One string in both directions because that is what the tunnel transports
   /// speak on both platforms — and because a delay of 0 is otherwise
   /// indistinguishable from a failure.
-  factory ConnectionCheck.parse(String answer, {required DateTime at, String via = ''}) {
+  factory ConnectionCheck.parse(
+    String answer, {
+    required DateTime at,
+    String via = '',
+  }) {
     if (answer.startsWith('ms:')) {
       final ms = int.tryParse(answer.substring(3));
       if (ms != null) return ConnectionCheck(at: at, delayMs: ms, via: via);
@@ -149,7 +165,9 @@ class ConnectionCheck {
     final reason = answer.startsWith('err:') ? answer.substring(4) : answer;
     return ConnectionCheck(
       at: at,
-      failure: reason.trim().isEmpty ? 'The engine did not answer.' : describeProbeFailure(reason),
+      failure: reason.trim().isEmpty
+          ? 'The engine did not answer.'
+          : describeProbeFailure(reason),
       via: via,
     );
   }

@@ -33,8 +33,12 @@ Future<NormConfig> buildNormConfig(Profile p) async {
   // A set authored on a desktop can travel to a phone (same account, same
   // sets). Its process rules cannot match there, and leaving them in would
   // turn find-process-mode on for nothing.
-  if (!supportsProcessRules && routing.rules.any((r) => r.type == 'process-name')) {
-    Log.e('routing', 'process rules skipped: this platform cannot resolve processes');
+  if (!supportsProcessRules &&
+      routing.rules.any((r) => r.type == 'process-name')) {
+    Log.e(
+      'routing',
+      'process rules skipped: this platform cannot resolve processes',
+    );
     routing = Routing(
       mode: routing.mode,
       rules: routing.rules.where((r) => r.type != 'process-name').toList(),
@@ -45,9 +49,10 @@ Future<NormConfig> buildNormConfig(Profile p) async {
   final prefs = await RoutingPrefsStore.load();
   if (prefs.lanDirect) {
     routing = Routing(
-        mode: routing.mode,
-        rules: [...kLanDirectRules, ...routing.rules],
-        lists: routing.lists);
+      mode: routing.mode,
+      rules: [...kLanDirectRules, ...routing.rules],
+      lists: routing.lists,
+    );
   }
 
   return NormConfig(

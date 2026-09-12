@@ -33,12 +33,11 @@ class ConnectionCheckState {
     ConnectionCheck? last,
     bool clearLast = false,
     bool? running,
-  }) =>
-      ConnectionCheckState(
-        prefs: prefs ?? this.prefs,
-        last: clearLast ? null : (last ?? this.last),
-        running: running ?? this.running,
-      );
+  }) => ConnectionCheckState(
+    prefs: prefs ?? this.prefs,
+    last: clearLast ? null : (last ?? this.last),
+    running: running ?? this.running,
+  );
 }
 
 /// Runs the probe and remembers its answer.
@@ -46,7 +45,8 @@ class ConnectionCheckState {
 /// Separate from the profiles controller on purpose: what it measures belongs
 /// to the *session*, not to a configuration, and a configuration switch must
 /// not carry an old measurement with it.
-class ConnectionCheckController extends Notifier<ConnectionCheckState> with ReadyGate {
+class ConnectionCheckController extends Notifier<ConnectionCheckState>
+    with ReadyGate {
   StreamSubscription<VpnStatus>? _sub;
 
   @override
@@ -69,10 +69,16 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState> with Read
     // server did, and a verdict about the previous one is exactly the stale
     // measurement this controller exists not to carry. The pick forgets;
     // the end of the switch asks again, once the engine runs the new server.
-    ref.listen(profilesControllerProvider.select((s) => s.selectionId), (was, now) {
+    ref.listen(profilesControllerProvider.select((s) => s.selectionId), (
+      was,
+      now,
+    ) {
       if (was != null && was != now) forget();
     });
-    ref.listen(profilesControllerProvider.select((s) => s.switching), (was, now) {
+    ref.listen(profilesControllerProvider.select((s) => s.switching), (
+      was,
+      now,
+    ) {
       if (was == true && now == false && core.status == VpnStatus.connected) {
         unawaited(runAfterConnect());
       }
@@ -188,8 +194,10 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState> with Read
     final counters = await ref.read(vpnCoreProvider).proxyBytes();
     if (ConnectionCheck.downloadedFrom(counters) <= 0) return null;
     final via = await _serverLabel();
-    Log.i('connection check: traffic already flowing through '
-        '${via.isEmpty ? 'the tunnel' : via} ($counters) — not probing');
+    Log.i(
+      'connection check: traffic already flowing through '
+      '${via.isEmpty ? 'the tunnel' : via} ($counters) — not probing',
+    );
     return ConnectionCheck.observed(at: DateTime.now(), via: via);
   }
 
@@ -205,9 +213,11 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState> with Read
     // The engine's own words go here and nowhere else: the screen shows a
     // sentence, and this is where the dial chain is still readable when
     // somebody has to work out which hop failed.
-    Log.i(result.passed
-        ? 'connection check: ${result.delayMs} ms through ${via.isEmpty ? 'the tunnel' : via}'
-        : 'connection check failed: $answer');
+    Log.i(
+      result.passed
+          ? 'connection check: ${result.delayMs} ms through ${via.isEmpty ? 'the tunnel' : via}'
+          : 'connection check failed: $answer',
+    );
     return result;
   }
 }
@@ -224,4 +234,5 @@ const kCheckRetryGap = Duration(seconds: 2);
 
 final connectionCheckProvider =
     NotifierProvider<ConnectionCheckController, ConnectionCheckState>(
-        ConnectionCheckController.new);
+      ConnectionCheckController.new,
+    );

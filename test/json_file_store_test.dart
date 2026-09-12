@@ -14,7 +14,8 @@ import 'package:vpn_client/core/profile_store.dart';
 /// half-written file behind for the next load to trip over.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late Directory tmp;
 
   setUp(() {
@@ -26,7 +27,9 @@ void main() {
   });
   tearDown(() {
     messenger.setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'), null);
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
     tmp.deleteSync(recursive: true);
   });
 
@@ -38,21 +41,28 @@ void main() {
 
   test('one damaged entry never discards the rest of the list', () async {
     File('${tmp.path}/profiles.json').writeAsStringSync(
-        '[{"id":"a","type":"link","name":"Good","locations":[]},'
-        '{"id":"b","type":"unknown-type","name":"Bad"},'
-        '{"id":"c","type":"link","name":"Also good","locations":[]}]');
+      '[{"id":"a","type":"link","name":"Good","locations":[]},'
+      '{"id":"b","type":"unknown-type","name":"Bad"},'
+      '{"id":"c","type":"link","name":"Also good","locations":[]}]',
+    );
     final profiles = await ProfileStore.load();
     expect(profiles.map((p) => p.id), ['a', 'c']);
   });
 
-  test('save is temp+rename: the target is whole json or absent, never partial', () async {
-    final store = JsonFileStore('atomic.json');
-    await store.save({'v': 1});
-    await store.save({'v': 2});
-    expect(tmp.listSync().where((e) => e.path.endsWith('.tmp')), isEmpty,
-        reason: 'the scratch file must not outlive the rename');
-    expect(await store.load((j) => (j as Map)['v'], 0), 2);
-  });
+  test(
+    'save is temp+rename: the target is whole json or absent, never partial',
+    () async {
+      final store = JsonFileStore('atomic.json');
+      await store.save({'v': 1});
+      await store.save({'v': 2});
+      expect(
+        tmp.listSync().where((e) => e.path.endsWith('.tmp')),
+        isEmpty,
+        reason: 'the scratch file must not outlive the rename',
+      );
+      expect(await store.load((j) => (j as Map)['v'], 0), 2);
+    },
+  );
 
   test('concurrent saves never corrupt the file or throw', () async {
     // A background refresh landing while the user edits is the ordinary case,
@@ -67,37 +77,51 @@ void main() {
       final back = await store.load<Map?>((j) => j as Map, null);
       expect(back, isNotNull, reason: 'round $i left an unparseable file');
     }
-    expect(tmp.listSync().where((e) => e.path.endsWith('.tmp')), isEmpty,
-        reason: 'no scratch file may outlive its write');
+    expect(
+      tmp.listSync().where((e) => e.path.endsWith('.tmp')),
+      isEmpty,
+      reason: 'no scratch file may outlive its write',
+    );
   });
 
   test('a save that fails does not poison the next one', () async {
     // The write chain has to survive an error, or one bad save would wedge
     // every later save of that store.
     final store = JsonFileStore('chain.json');
-    await expectLater(store.save(Object()), throwsA(isA<JsonUnsupportedObjectError>()));
+    await expectLater(
+      store.save(Object()),
+      throwsA(isA<JsonUnsupportedObjectError>()),
+    );
     await store.save({'v': 1});
     expect(await store.load((j) => (j as Map)['v'], 0), 1);
   });
 
-  test('what the panel said about device counting survives a restart', () async {
-    // The subscription screen reads this to decide whether to mention the
-    // device slot at all; re-asking the panel on every screen open would be
-    // both slow and, when it is unreachable, wrong.
-    final p = Profile(
+  test(
+    'what the panel said about device counting survives a restart',
+    () async {
+      // The subscription screen reads this to decide whether to mention the
+      // device slot at all; re-asking the panel on every screen open would be
+      // both slow and, when it is unreachable, wrong.
+      final p = Profile(
         id: 's',
         type: ProfileType.subscription,
         name: 'Sub',
         locations: const [],
         subscriptionUrl: 'https://panel.example/sub/abc',
-        deviceLimitActive: true);
-    await ProfileStore.save([p]);
-    expect((await ProfileStore.load()).single.deviceLimitActive, isTrue);
-  });
+        deviceLimitActive: true,
+      );
+      await ProfileStore.save([p]);
+      expect((await ProfileStore.load()).single.deviceLimitActive, isTrue);
+    },
+  );
 
   test('round trip through the shared store', () async {
     final p = Profile(
-        id: 'x', type: ProfileType.link, name: 'One', locations: const []);
+      id: 'x',
+      type: ProfileType.link,
+      name: 'One',
+      locations: const [],
+    );
     await ProfileStore.save([p]);
     final back = await ProfileStore.load();
     expect(back.single.id, 'x');

@@ -35,7 +35,9 @@ class OnDemandRule {
   /// Condition summary for list rows: "Wi-Fi · SSID corp-net · DNS 10.0.*".
   String get summary {
     final parts = <String>[interface.label];
-    if (effectiveSsids.isNotEmpty) parts.add('SSID ${effectiveSsids.join(', ')}');
+    if (effectiveSsids.isNotEmpty) {
+      parts.add('SSID ${effectiveSsids.join(', ')}');
+    }
     if (dnsDomains.isNotEmpty) parts.add('domain ${dnsDomains.join(', ')}');
     if (dnsServers.isNotEmpty) parts.add('DNS ${dnsServers.join(', ')}');
     if (probeUrl.isNotEmpty) parts.add('probe');
@@ -50,56 +52,61 @@ class OnDemandRule {
     List<String>? dnsDomains,
     List<String>? dnsServers,
     String? probeUrl,
-  }) =>
-      OnDemandRule(
-        id: id,
-        name: name ?? this.name,
-        action: action ?? this.action,
-        interface: interface ?? this.interface,
-        ssids: ssids ?? this.ssids,
-        dnsDomains: dnsDomains ?? this.dnsDomains,
-        dnsServers: dnsServers ?? this.dnsServers,
-        probeUrl: probeUrl ?? this.probeUrl,
-      );
+  }) => OnDemandRule(
+    id: id,
+    name: name ?? this.name,
+    action: action ?? this.action,
+    interface: interface ?? this.interface,
+    ssids: ssids ?? this.ssids,
+    dnsDomains: dnsDomains ?? this.dnsDomains,
+    dnsServers: dnsServers ?? this.dnsServers,
+    probeUrl: probeUrl ?? this.probeUrl,
+  );
 
   factory OnDemandRule.fromJson(Map<String, dynamic> j) => OnDemandRule(
-        id: j['id'] as String,
-        name: j['name'] as String? ?? '',
-        action: OnDemandAction.values.firstWhere(
-            (a) => a.name == (j['action'] as String? ?? 'connect'),
-            orElse: () => OnDemandAction.connect),
-        interface: OnDemandInterface.values.firstWhere(
-            (i) => i.name == (j['interface'] as String? ?? 'any'),
-            orElse: () => OnDemandInterface.any),
-        // whereType, not cast: cast() is a lazy view whose type error would
-        // surface far from load()'s try/catch — in the UI or on connect.
-        ssids: (j['ssids'] as List<dynamic>? ?? []).whereType<String>().toList(),
-        dnsDomains: (j['dns_domains'] as List<dynamic>? ?? []).whereType<String>().toList(),
-        dnsServers: (j['dns_servers'] as List<dynamic>? ?? []).whereType<String>().toList(),
-        probeUrl: j['probe_url'] as String? ?? '',
-      );
+    id: j['id'] as String,
+    name: j['name'] as String? ?? '',
+    action: OnDemandAction.values.firstWhere(
+      (a) => a.name == (j['action'] as String? ?? 'connect'),
+      orElse: () => OnDemandAction.connect,
+    ),
+    interface: OnDemandInterface.values.firstWhere(
+      (i) => i.name == (j['interface'] as String? ?? 'any'),
+      orElse: () => OnDemandInterface.any,
+    ),
+    // whereType, not cast: cast() is a lazy view whose type error would
+    // surface far from load()'s try/catch — in the UI or on connect.
+    ssids: (j['ssids'] as List<dynamic>? ?? []).whereType<String>().toList(),
+    dnsDomains: (j['dns_domains'] as List<dynamic>? ?? [])
+        .whereType<String>()
+        .toList(),
+    dnsServers: (j['dns_servers'] as List<dynamic>? ?? [])
+        .whereType<String>()
+        .toList(),
+    probeUrl: j['probe_url'] as String? ?? '',
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        if (name.isNotEmpty) 'name': name,
-        'action': action.name,
-        'interface': interface.name,
-        if (ssids.isNotEmpty) 'ssids': ssids,
-        if (dnsDomains.isNotEmpty) 'dns_domains': dnsDomains,
-        if (dnsServers.isNotEmpty) 'dns_servers': dnsServers,
-        if (probeUrl.isNotEmpty) 'probe_url': probeUrl,
-      };
+    'id': id,
+    if (name.isNotEmpty) 'name': name,
+    'action': action.name,
+    'interface': interface.name,
+    if (ssids.isNotEmpty) 'ssids': ssids,
+    if (dnsDomains.isNotEmpty) 'dns_domains': dnsDomains,
+    if (dnsServers.isNotEmpty) 'dns_servers': dnsServers,
+    if (probeUrl.isNotEmpty) 'probe_url': probeUrl,
+  };
 
   /// The dictionary the platform channel sends to Swift (no id/name — the
   /// system rule has neither).
   Map<String, dynamic> toChannel() => {
-        'action': action.name,
-        'interface': interface.name,
-        'ssids': effectiveSsids,
-        'dns_domains': dnsDomains,
-        'dns_servers': dnsServers,
-        'probe_url': probeUrl,
-      };
+    'action': action.name,
+    'interface': interface.name,
+    'ssids': effectiveSsids,
+    'dns_domains': dnsDomains,
+    'dns_servers': dnsServers,
+    'probe_url': probeUrl,
+  };
 }
 
 enum OnDemandAction {
@@ -166,39 +173,41 @@ class OnDemandPrefs {
     bool? disconnectOnSleep,
     List<OnDemandRule>? rules,
     bool? systemArmed,
-  }) =>
-      OnDemandPrefs(
-        enabled: enabled ?? this.enabled,
-        paused: paused ?? this.paused,
-        disconnectOnSleep: disconnectOnSleep ?? this.disconnectOnSleep,
-        rules: rules ?? this.rules,
-        systemArmed: systemArmed ?? this.systemArmed,
-      );
+  }) => OnDemandPrefs(
+    enabled: enabled ?? this.enabled,
+    paused: paused ?? this.paused,
+    disconnectOnSleep: disconnectOnSleep ?? this.disconnectOnSleep,
+    rules: rules ?? this.rules,
+    systemArmed: systemArmed ?? this.systemArmed,
+  );
 
   factory OnDemandPrefs.fromJson(Map<String, dynamic> j) => OnDemandPrefs(
-        enabled: j['enabled'] as bool? ?? false,
-        paused: j['paused'] as bool? ?? false,
-        disconnectOnSleep: j['disconnect_on_sleep'] as bool? ?? false,
-        rules: (j['rules'] as List<dynamic>? ?? [])
-            .whereType<Map>()
-            .map((e) => OnDemandRule.fromJson(Map<String, dynamic>.from(e)))
-            .toList(),
-      );
+    enabled: j['enabled'] as bool? ?? false,
+    paused: j['paused'] as bool? ?? false,
+    disconnectOnSleep: j['disconnect_on_sleep'] as bool? ?? false,
+    rules: (j['rules'] as List<dynamic>? ?? [])
+        .whereType<Map>()
+        .map((e) => OnDemandRule.fromJson(Map<String, dynamic>.from(e)))
+        .toList(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'paused': paused,
-        'disconnect_on_sleep': disconnectOnSleep,
-        'rules': rules.map((r) => r.toJson()).toList(),
-      };
+    'enabled': enabled,
+    'paused': paused,
+    'disconnect_on_sleep': disconnectOnSleep,
+    'rules': rules.map((r) => r.toJson()).toList(),
+  };
 }
 
 class OnDemandStore {
   static final _store = JsonFileStore('on_demand.json');
 
   static Future<OnDemandPrefs> load() => _store.load(
-      (j) => j is Map ? OnDemandPrefs.fromJson(Map<String, dynamic>.from(j)) : const OnDemandPrefs(),
-      const OnDemandPrefs());
+    (j) => j is Map
+        ? OnDemandPrefs.fromJson(Map<String, dynamic>.from(j))
+        : const OnDemandPrefs(),
+    const OnDemandPrefs(),
+  );
 
   static Future<void> save(OnDemandPrefs prefs) => _store.save(prefs.toJson());
 }

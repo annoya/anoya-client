@@ -7,7 +7,12 @@ import '../core/log.dart';
 /// Shows one log: the in-app log buffer (appLog) or an extension log fetched
 /// over IPC by [logKey] (e.g. "tunnel", "mihomo").
 class LogViewerScreen extends StatefulWidget {
-  const LogViewerScreen({super.key, required this.title, this.logKey, this.appLog = false});
+  const LogViewerScreen({
+    super.key,
+    required this.title,
+    this.logKey,
+    this.appLog = false,
+  });
 
   final String title;
   final String? logKey;
@@ -65,7 +70,11 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), tooltip: 'Refresh', onPressed: _load),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _load,
+          ),
           IconButton(
             icon: const Icon(Icons.copy),
             tooltip: 'Copy',
@@ -80,15 +89,19 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _content.trim().isEmpty
-              ? const Center(child: Text('Empty'))
-              : SingleChildScrollView(
-                  controller: _scroll,
-                  padding: const EdgeInsets.all(12),
-                  child: SelectableText(
-                    _content,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 11, height: 1.4),
-                  ),
+          ? const Center(child: Text('Empty'))
+          : SingleChildScrollView(
+              controller: _scroll,
+              padding: const EdgeInsets.all(12),
+              child: SelectableText(
+                _content,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  height: 1.4,
                 ),
+              ),
+            ),
     );
   }
 }

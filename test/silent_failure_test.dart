@@ -19,17 +19,21 @@ import 'package:vpn_client/state/providers.dart';
 /// engine would not run.
 void main() {
   ProviderContainer boot(_FakeCore core) {
-    final c = ProviderContainer(overrides: [
-      vpnCoreProvider.overrideWithValue(core),
-      onDemandProvider.overrideWith(_QuietOnDemand.new),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        vpnCoreProvider.overrideWithValue(core),
+        onDemandProvider.overrideWith(_QuietOnDemand.new),
+      ],
+    );
     addTearDown(c.dispose);
     c.read(profilesControllerProvider);
     return c;
   }
 
   test('a tunnel that stops on its own says why', () async {
-    final core = _FakeCore(reason: 'mihomo start failed: rule GEOSITE not found');
+    final core = _FakeCore(
+      reason: 'mihomo start failed: rule GEOSITE not found',
+    );
     final c = boot(core);
 
     core.emit(VpnStatus.connecting);
@@ -73,8 +77,11 @@ void main() {
     core.emit(VpnStatus.disconnected);
     await Future<void>.delayed(Duration.zero);
 
-    expect(c.read(profilesControllerProvider).error, isNull,
-        reason: 'the reason belongs to a session this one never started');
+    expect(
+      c.read(profilesControllerProvider).error,
+      isNull,
+      reason: 'the reason belongs to a session this one never started',
+    );
   });
 }
 
@@ -115,10 +122,11 @@ class _FakeCore extends VpnCore {
   Future<void> syncConfig(NormConfig config, String locationId) async {}
 
   @override
-  Future<bool> applyOnDemand(OnDemandPrefs prefs,
-          {NormConfig? config, String? locationId}) async =>
-      false;
-
+  Future<bool> applyOnDemand(
+    OnDemandPrefs prefs, {
+    NormConfig? config,
+    String? locationId,
+  }) async => false;
 }
 
 class _QuietOnDemand extends OnDemandController {

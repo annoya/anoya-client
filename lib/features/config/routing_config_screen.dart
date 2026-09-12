@@ -38,10 +38,12 @@ class RoutingConfigScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Routing')),
       body: PageBody(
-        child: ListView(children: [
-          ..._routing(ref, p),
-          NamesSection(profile: p),
-        ]),
+        child: ListView(
+          children: [
+            ..._routing(ref, p),
+            NamesSection(profile: p),
+          ],
+        ),
       ),
     );
   }
@@ -55,8 +57,10 @@ class RoutingConfigScreen extends ConsumerWidget {
       return [
         const SectionHeader('ORGANIZATION ROUTING'),
         ManagedRoutingCard(routing: p.routing!),
-        const SectionNote('Your organization sets this policy and applies it. '
-            'You can see what it is; changing it is done on their side.'),
+        const SectionNote(
+          'Your organization sets this policy and applies it. '
+          'You can see what it is; changing it is done on their side.',
+        ),
       ];
     }
     if (p.providerRouting != null) {
@@ -64,8 +68,8 @@ class RoutingConfigScreen extends ConsumerWidget {
       // on there is nothing to have failed.
       final failed = p.providerRuleListsEnabled
           ? (ref.watch(providerRuleListsProvider(p.id)).value ?? const [])
-              .where((s) => !s.available)
-              .toList()
+                .where((s) => !s.available)
+                .toList()
           : const <RuleListStatus>[];
       return [
         const SectionHeader('SUBSCRIPTION ROUTING'),
@@ -85,20 +89,26 @@ class RoutingConfigScreen extends ConsumerWidget {
             opacity: p.providerRoutingEnabled ? 0.38 : 1,
             child: LocalRoutingCard(
               profile: p,
-              overriddenBy: p.providerRoutingEnabled ? 'the subscription’s routes' : null,
+              overriddenBy: p.providerRoutingEnabled
+                  ? 'the subscription’s routes'
+                  : null,
             ),
           ),
         ),
-        const SectionNote('Turn the switch off to use your own rule set '
-            'instead. Your subscription cannot enforce this either way.'),
+        const SectionNote(
+          'Turn the switch off to use your own rule set '
+          'instead. Your subscription cannot enforce this either way.',
+        ),
       ];
     }
     return [
       const SectionHeader('DEVICE ROUTING'),
       LocalRoutingCard(profile: p),
-      const SectionNote('Rule sets are shared by every configuration; the '
-          'switch is per configuration, so a work subscription and a personal '
-          'one can use the same set differently.'),
+      const SectionNote(
+        'Rule sets are shared by every configuration; the '
+        'switch is per configuration, so a work subscription and a personal '
+        'one can use the same set differently.',
+      ),
     ];
   }
 }

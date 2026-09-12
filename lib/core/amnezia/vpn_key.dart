@@ -107,7 +107,10 @@ Map<String, dynamic>? _asJsonObject(String text) {
 /// Qt's decoder is lenient about both alphabet and padding, and keys travel
 /// through chat apps and QR codes, so ours has to be too.
 Uint8List? _decodeBase64Url(String input) {
-  var s = input.replaceAll(RegExp(r'\s'), '').replaceAll('-', '+').replaceAll('_', '/');
+  var s = input
+      .replaceAll(RegExp(r'\s'), '')
+      .replaceAll('-', '+')
+      .replaceAll('_', '/');
   s = s.replaceAll(RegExp(r'[^A-Za-z0-9+/=]'), '');
   s = s.replaceAll('=', '');
   final pad = (4 - s.length % 4) % 4;

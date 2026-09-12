@@ -19,63 +19,74 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('About')),
       body: PageBody(
-        child: ListView(children: [
-          // Not a card: a card would promise that tapping it does something.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(kGutter, 28, kGutter, 20),
-            child: Column(children: [
-              Icon(Icons.shield_outlined, size: 56, color: cs.primary),
-              const SizedBox(height: 12),
-              Text(kAppName,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 4),
-              Text('Version $appVersionLabel',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: cs.onSurfaceVariant)),
-            ]),
-          ),
-          Card(
-            margin: kCardMargin,
-            child: ListTile(
-              leading: const Icon(Icons.bolt_outlined),
-              title: const Text('Engine'),
-              subtitle: Text(engineVersionLabel),
-              // The row is shortened for reading; a bug report wants the whole
-              // pin, so that is what copying gives.
-              trailing: IconButton(
-                icon: const Icon(Icons.copy_all_outlined, size: 18),
-                tooltip: 'Copy',
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(
-                      text: '$kAppName $appVersionLabel · mihomo $kEnginePin'));
-                  if (context.mounted) showToast(context, 'Version copied');
-                },
+        child: ListView(
+          children: [
+            // Not a card: a card would promise that tapping it does something.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kGutter, 28, kGutter, 20),
+              child: Column(
+                children: [
+                  Icon(Icons.shield_outlined, size: 56, color: cs.primary),
+                  const SizedBox(height: 12),
+                  Text(
+                    kAppName,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Version $appVersionLabel',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ],
               ),
             ),
-          ),
-          const Card(
-            margin: kCardMargin,
-            child: Column(children: [
-              _LegalRow(
-                icon: Icons.description_outlined,
-                title: 'Terms of Service',
-                url: kTermsUrl,
+            Card(
+              margin: kCardMargin,
+              child: ListTile(
+                leading: const Icon(Icons.bolt_outlined),
+                title: const Text('Engine'),
+                subtitle: Text(engineVersionLabel),
+                // The row is shortened for reading; a bug report wants the whole
+                // pin, so that is what copying gives.
+                trailing: IconButton(
+                  icon: const Icon(Icons.copy_all_outlined, size: 18),
+                  tooltip: 'Copy',
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      ClipboardData(
+                        text: '$kAppName $appVersionLabel · mihomo $kEnginePin',
+                      ),
+                    );
+                    if (context.mounted) showToast(context, 'Version copied');
+                  },
+                ),
               ),
-              Divider(height: 1, indent: 16, endIndent: 16),
-              _LegalRow(
-                icon: Icons.lock_outline,
-                title: 'Privacy Policy',
-                url: kPrivacyUrl,
+            ),
+            const Card(
+              margin: kCardMargin,
+              child: Column(
+                children: [
+                  _LegalRow(
+                    icon: Icons.description_outlined,
+                    title: 'Terms of Service',
+                    url: kTermsUrl,
+                  ),
+                  Divider(height: 1, indent: 16, endIndent: 16),
+                  _LegalRow(
+                    icon: Icons.lock_outline,
+                    title: 'Privacy Policy',
+                    url: kPrivacyUrl,
+                  ),
+                ],
               ),
-            ]),
-          ),
-          const SizedBox(height: 24),
-        ]),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -108,8 +119,13 @@ class _LegalRow extends StatelessWidget {
             : () async {
                 final uri = Uri.tryParse(url);
                 if (uri == null ||
-                    !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-                  if (context.mounted) showToast(context, 'Couldn’t open that page.');
+                    !await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    )) {
+                  if (context.mounted) {
+                    showToast(context, 'Couldn’t open that page.');
+                  }
                 }
               },
       ),

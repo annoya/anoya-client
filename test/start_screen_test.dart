@@ -8,9 +8,14 @@ import 'package:vpn_client/features/start_screen.dart';
 /// only after they stop — and never for an empty field.
 void main() {
   Future<void> pump(WidgetTester tester) async {
-    await tester.pumpWidget(ProviderScope(
-      child: MaterialApp(theme: buildAppTheme(Brightness.light), home: const StartScreen()),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: const StartScreen(),
+        ),
+      ),
+    );
     await tester.pump();
   }
 
@@ -18,41 +23,63 @@ void main() {
 
   testWidgets('a recognised link is confirmed immediately', (tester) async {
     await pump(tester);
-    await tester.enterText(find.byType(TextField), 'vless://uuid@1.2.3.4:443?type=tcp#Tokyo');
+    await tester.enterText(
+      find.byType(TextField),
+      'vless://uuid@1.2.3.4:443?type=tcp#Tokyo',
+    );
     await tester.pump();
     expect(chip('server · Tokyo'), findsOneWidget);
     expect(chip('Can’t use this'), findsNothing);
   });
 
-  testWidgets('a refusal waits for the typing to stop, then says why', (tester) async {
+  testWidgets('a refusal waits for the typing to stop, then says why', (
+    tester,
+  ) async {
     await pump(tester);
     await tester.enterText(find.byType(TextField), 'tuic://a:b@h.example:443');
     await tester.pump();
-    expect(chip('Can’t use this'), findsNothing, reason: 'half a paste is not a verdict yet');
+    expect(
+      chip('Can’t use this'),
+      findsNothing,
+      reason: 'half a paste is not a verdict yet',
+    );
 
     await tester.pump(const Duration(milliseconds: 700));
     expect(chip('Can’t use this · tuic:// isn’t supported'), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue')).onPressed,
-        isNull);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'))
+          .onPressed,
+      isNull,
+    );
   });
 
-  testWidgets('more typing restarts the wait; a recognised link clears the verdict',
-      (tester) async {
-    await pump(tester);
-    await tester.enterText(find.byType(TextField), 'vless://asd');
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byType(TextField), 'vless://asdasd');
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(chip('Can’t use this'), findsNothing, reason: 'the clock restarts on every change');
+  testWidgets(
+    'more typing restarts the wait; a recognised link clears the verdict',
+    (tester) async {
+      await pump(tester);
+      await tester.enterText(find.byType(TextField), 'vless://asd');
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.enterText(find.byType(TextField), 'vless://asdasd');
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+        chip('Can’t use this'),
+        findsNothing,
+        reason: 'the clock restarts on every change',
+      );
 
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(chip('vless:// link can’t be read'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(chip('vless:// link can’t be read'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField), 'vless://uuid@1.2.3.4:443?type=tcp#Tokyo');
-    await tester.pump();
-    expect(chip('Can’t use this'), findsNothing);
-    expect(chip('server · Tokyo'), findsOneWidget);
-  });
+      await tester.enterText(
+        find.byType(TextField),
+        'vless://uuid@1.2.3.4:443?type=tcp#Tokyo',
+      );
+      await tester.pump();
+      expect(chip('Can’t use this'), findsNothing);
+      expect(chip('server · Tokyo'), findsOneWidget);
+    },
+  );
 
   testWidgets('clearing the field says nothing', (tester) async {
     await pump(tester);

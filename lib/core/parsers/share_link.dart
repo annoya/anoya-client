@@ -13,7 +13,14 @@ import 'mihomo_proxy.dart';
 
 /// The schemes this file understands. Shared with the paste detector so a new
 /// protocol is added in one place rather than two that drift.
-const kShareLinkSchemes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2', 'hy2'};
+const kShareLinkSchemes = {
+  'vless',
+  'vmess',
+  'trojan',
+  'ss',
+  'hysteria2',
+  'hy2',
+};
 
 /// What one share link turned out to be: a server we can run, or the name of
 /// what stopped us.
@@ -23,18 +30,18 @@ const kShareLinkSchemes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2', 'hy2'}
 /// reason has to be the transport, which is also the thing they can look up.
 class ShareLink {
   const ShareLink.server(Location this.location)
-      : unsupported = null,
-        malformed = null;
+    : unsupported = null,
+      malformed = null;
   const ShareLink.unsupported(String this.unsupported)
-      : location = null,
-        malformed = null;
+    : location = null,
+      malformed = null;
   const ShareLink.malformed(String this.malformed)
-      : location = null,
-        unsupported = null;
+    : location = null,
+      unsupported = null;
   const ShareLink.junk()
-      : location = null,
-        unsupported = null,
-        malformed = null;
+    : location = null,
+      unsupported = null,
+      malformed = null;
 
   /// Null when this link is not something we can run.
   final Location? location;
@@ -80,7 +87,6 @@ ShareLink parseShareLink(String raw) {
   }
 }
 
-
 // --- per-protocol ---
 
 /// A `vless://` or `trojan://` link whose payload is base64 rather than a URI.
@@ -104,7 +110,9 @@ String _unwrapBase64Uri(String s, String scheme) {
   if (body.isEmpty || body.contains('@')) return s;
   final decoded = tryDecodeLooseBase64(body);
   if (decoded == null || !decoded.contains('@')) return s;
-  final unwrapped = decoded.startsWith(prefix) ? decoded.substring(prefix.length) : decoded;
+  final unwrapped = decoded.startsWith(prefix)
+      ? decoded.substring(prefix.length)
+      : decoded;
   final (inner, innerQuery, innerFragment) = _splitUriTail(unwrapped);
   // Both halves may carry a query — the panel's own parameters inside, the
   // ones it appended outside. Keeping both, outside last, means a repeated
@@ -162,7 +170,9 @@ ShareLink _parseVless(String raw) {
   if (flow != null && flow.isNotEmpty) proxy['flow'] = flow;
   final sni = q['sni'] ?? q['host'];
   if (tls && sni != null && sni.isNotEmpty) proxy['servername'] = sni;
-  if (q['fp'] != null && q['fp']!.isNotEmpty) proxy['client-fingerprint'] = q['fp'];
+  if (q['fp'] != null && q['fp']!.isNotEmpty) {
+    proxy['client-fingerprint'] = q['fp'];
+  }
   applyAlpn(proxy, q['alpn']);
   if (security == 'reality') {
     final r = <String, dynamic>{};
@@ -170,16 +180,25 @@ ShareLink _parseVless(String raw) {
     if (q['sid'] != null && q['sid']!.isNotEmpty) r['short-id'] = q['sid'];
     // Post-quantum key exchange: the server advertises it, and a client that
     // ignores the flag negotiates the classical curve instead.
-    if (q['pqv'] == '1' || q['pqv'] == 'true') r['support-x25519mlkem768'] = true;
+    if (q['pqv'] == '1' || q['pqv'] == 'true') {
+      r['support-x25519mlkem768'] = true;
+    }
     proxy['reality-opts'] = r;
   }
-  if (q['allowInsecure'] == '1' || q['insecure'] == '1') proxy['skip-cert-verify'] = true;
+  if (q['allowInsecure'] == '1' || q['insecure'] == '1') {
+    proxy['skip-cert-verify'] = true;
+  }
   final skip = applyTransport(proxy, network, q, protocol: 'vless');
   if (skip != null) return ShareLink.unsupported(skip);
   final meta = splitFragment(safeDecode(u.fragment));
-  return ShareLink.server(locationFor(
-      s, labelOr(meta.name, u.host, u.port), proxy,
-      description: meta.description));
+  return ShareLink.server(
+    locationFor(
+      s,
+      labelOr(meta.name, u.host, u.port),
+      proxy,
+      description: meta.description,
+    ),
+  );
 }
 
 /// The uuid out of a vless userinfo.
@@ -196,19 +215,26 @@ String _vlessUuid(String userInfo) {
 }
 
 ShareLink _parseVmess(String s) {
-  final json = jsonDecode(decodeLooseBase64(s.substring('vmess://'.length))) as Map<String, dynamic>;
+  final json =
+      jsonDecode(decodeLooseBase64(s.substring('vmess://'.length)))
+          as Map<String, dynamic>;
   return _parseJsonPayload(s, json, 'vmess');
 }
 
 /// The base64-JSON payload: vmess's native form, and the one some panels emit
 /// for vless under the same field names (`add`, `port`, `id`, `net`, `tls`,
 /// `sni`, `host`, `path`, `ps`), plus vless's own `flow`, `fp`, `pbk`, `sid`.
-ShareLink _parseJsonPayload(String s, Map<String, dynamic> json, String protocol) {
+ShareLink _parseJsonPayload(
+  String s,
+  Map<String, dynamic> json,
+  String protocol,
+) {
   String str(String k) => json[k]?.toString() ?? '';
   final net = (str('net').isEmpty ? 'tcp' : str('net')).toLowerCase();
   // `tls` carries the security name in this form; vmess only ever says "tls",
   // vless payloads also say "reality" (some under `security` instead).
-  final security = (str('tls').isEmpty ? str('security') : str('tls')).toLowerCase();
+  final security = (str('tls').isEmpty ? str('security') : str('tls'))
+      .toLowerCase();
   final tls = security == 'tls' || security == 'reality' || security == 'xtls';
   final proxy = <String, dynamic>{
     'type': protocol,
@@ -243,9 +269,14 @@ ShareLink _parseJsonPayload(String s, Map<String, dynamic> json, String protocol
   }, protocol: protocol);
   if (skip != null) return ShareLink.unsupported(skip);
   final meta = splitFragment(str('ps'));
-  return ShareLink.server(locationFor(
-      s, labelOr(meta.name, str('add'), _int(json['port'])), proxy,
-      description: meta.description));
+  return ShareLink.server(
+    locationFor(
+      s,
+      labelOr(meta.name, str('add'), _int(json['port'])),
+      proxy,
+      description: meta.description,
+    ),
+  );
 }
 
 ShareLink _parseTrojan(String raw) {
@@ -263,22 +294,33 @@ ShareLink _parseTrojan(String raw) {
   };
   final sni = q['sni'] ?? q['peer'];
   if (sni != null && sni.isNotEmpty) proxy['sni'] = sni;
-  if (q['fp'] != null && q['fp']!.isNotEmpty) proxy['client-fingerprint'] = q['fp'];
+  if (q['fp'] != null && q['fp']!.isNotEmpty) {
+    proxy['client-fingerprint'] = q['fp'];
+  }
   applyAlpn(proxy, q['alpn']);
-  if (q['allowInsecure'] == '1' || q['insecure'] == '1') proxy['skip-cert-verify'] = true;
+  if (q['allowInsecure'] == '1' || q['insecure'] == '1') {
+    proxy['skip-cert-verify'] = true;
+  }
   final skip = applyTransport(proxy, network, q, protocol: 'trojan');
   if (skip != null) return ShareLink.unsupported(skip);
   final meta = splitFragment(safeDecode(u.fragment));
-  return ShareLink.server(locationFor(
-      s, labelOr(meta.name, u.host, u.port), proxy,
-      description: meta.description));
+  return ShareLink.server(
+    locationFor(
+      s,
+      labelOr(meta.name, u.host, u.port),
+      proxy,
+      description: meta.description,
+    ),
+  );
 }
 
 ShareLink _parseShadowsocks(String s) {
   // SIP002: ss://base64(method:password)@host:port#name
   // legacy:  ss://base64(method:password@host:port)#name
   final hashIdx = s.indexOf('#');
-  final frag = hashIdx >= 0 ? Uri.decodeComponent(s.substring(hashIdx + 1)) : '';
+  final frag = hashIdx >= 0
+      ? Uri.decodeComponent(s.substring(hashIdx + 1))
+      : '';
   var body = s.substring('ss://'.length, hashIdx >= 0 ? hashIdx : s.length);
 
   String method, password, host;
@@ -291,7 +333,14 @@ ShareLink _parseShadowsocks(String s) {
     method = userInfo.split(':').first;
     password = userInfo.substring(userInfo.indexOf(':') + 1);
     host = hostPort.substring(0, hostPort.lastIndexOf(':'));
-    port = int.parse(hostPort.substring(hostPort.lastIndexOf(':') + 1).split('/').first.split('?').first);
+    port = int.parse(
+      hostPort
+          .substring(hostPort.lastIndexOf(':') + 1)
+          .split('/')
+          .first
+          .split('?')
+          .first,
+    );
   } else {
     // legacy: whole thing is base64
     final dec = decodeLooseBase64(body);
@@ -321,8 +370,14 @@ ShareLink _parseShadowsocks(String s) {
     if (skip != null) return ShareLink.unsupported(skip);
   }
   final meta = splitFragment(frag);
-  return ShareLink.server(locationFor(s, labelOr(meta.name, host, port), proxy,
-      description: meta.description));
+  return ShareLink.server(
+    locationFor(
+      s,
+      labelOr(meta.name, host, port),
+      proxy,
+      description: meta.description,
+    ),
+  );
 }
 
 /// Translates a SIP003 `plugin=` into mihomo's `plugin` / `plugin-opts`.
@@ -382,7 +437,6 @@ String? _applySsPlugin(Map<String, dynamic> proxy, String spec) {
   }
 }
 
-
 /// hysteria2://password@host:port/?sni=…&alpn=h3&insecure=0#name
 ///
 /// QUIC-based, so there is no transport to choose — the `type=` and `path=`
@@ -401,9 +455,15 @@ ShareLink _parseHysteria2(String s) {
   final sni = q['sni'] ?? q['peer'];
   if (sni != null && sni.isNotEmpty) proxy['sni'] = sni;
   // A list in mihomo, comma-separated in the URI.
-  final alpn = (q['alpn'] ?? '').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  final alpn = (q['alpn'] ?? '')
+      .split(',')
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList();
   if (alpn.isNotEmpty) proxy['alpn'] = alpn;
-  if (q['insecure'] == '1' || q['allowInsecure'] == '1') proxy['skip-cert-verify'] = true;
+  if (q['insecure'] == '1' || q['allowInsecure'] == '1') {
+    proxy['skip-cert-verify'] = true;
+  }
   if ((q['obfs'] ?? '').isNotEmpty) {
     proxy['obfs'] = q['obfs'];
     final pw = q['obfs-password'] ?? q['obfs_password'];
@@ -415,10 +475,14 @@ ShareLink _parseHysteria2(String s) {
   if (ports != null && ports.isNotEmpty) proxy['ports'] = ports;
   if ((q['pinSHA256'] ?? '').isNotEmpty) proxy['fingerprint'] = q['pinSHA256'];
   final meta = splitFragment(safeDecode(u.fragment));
-  return ShareLink.server(locationFor(
-      s, labelOr(meta.name, u.host, u.port), proxy,
-      description: meta.description));
+  return ShareLink.server(
+    locationFor(
+      s,
+      labelOr(meta.name, u.host, u.port),
+      proxy,
+      description: meta.description,
+    ),
+  );
 }
 
 int _int(dynamic v) => v is int ? v : int.tryParse('$v') ?? 0;
-

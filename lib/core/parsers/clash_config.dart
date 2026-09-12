@@ -26,7 +26,11 @@ ParsedSubscription? parseClashProxies(String body) {
     var i = 0;
     for (final p in (doc['proxies'] as List? ?? const [])) {
       final m = _deepConvert(p);
-      if (m is! Map<String, dynamic> || m['type'] == null || m['server'] == null) continue;
+      if (m is! Map<String, dynamic> ||
+          m['type'] == null ||
+          m['server'] == null) {
+        continue;
+      }
       final type = m['type'].toString();
       // Filtered here rather than left to the renderer: an entry we cannot
       // render would otherwise reach the server picker and fail only when the
@@ -38,7 +42,9 @@ ParsedSubscription? parseClashProxies(String body) {
         continue;
       }
       final name = m['name']?.toString() ?? '${m['server']}:${m['port']}';
-      out.add(Location(id: 'sub_${i++}_${shortDigest(name)}', label: name, proxy: m));
+      out.add(
+        Location(id: 'sub_${i++}_${shortDigest(name)}', label: name, proxy: m),
+      );
     }
     final providers = _proxyProviders(doc['proxy-providers']);
     final groups = _proxyGroups(doc['proxy-groups'], out);
@@ -60,7 +66,6 @@ ParsedSubscription? parseClashProxies(String body) {
   }
 }
 
-
 /// Reads `proxy-groups:` — the sets whose member the engine picks.
 ///
 /// Members are resolved to the servers we actually parsed, so a group naming a
@@ -79,7 +84,8 @@ List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
 
     // `include-all` (and its older spellings) means "every proxy in this
     // document" — the shape Remnawave's own template uses.
-    final all = g['include-all'] == true ||
+    final all =
+        g['include-all'] == true ||
         g['include-all-proxies'] == true ||
         g['include-all-providers'] == true;
     final named = (g['proxies'] as List? ?? const []).map((e) => '$e').toList();
@@ -95,8 +101,10 @@ List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
       keep = _patterns(g['filter']);
       drop = _patterns(g['exclude-filter']);
     } on FormatException catch (e) {
-      Log.e('clash yaml: group filter is not a pattern we can run',
-          '${g['name']}: $e');
+      Log.e(
+        'clash yaml: group filter is not a pattern we can run',
+        '${g['name']}: $e',
+      );
       continue;
     }
     final byId = {for (final l in locations) l.id: l};
@@ -175,7 +183,6 @@ List<String> _dnsServers(Object? node) {
   return out;
 }
 
-
 /// Recursively converts YamlMap/YamlList into plain `Map<String,dynamic>`/List.
 ///
 /// A Clash/mihomo-YAML subscription is attacker-supplied (ADR-005), and its map
@@ -189,7 +196,10 @@ dynamic _deepConvert(dynamic node) {
     for (final e in (node as Map).entries) {
       final k = e.key.toString();
       if (!isSafeConfigKey(k)) {
-        Log.e('clash yaml: dropped unsafe proxy key', k.replaceAll('\n', r'\n'));
+        Log.e(
+          'clash yaml: dropped unsafe proxy key',
+          k.replaceAll('\n', r'\n'),
+        );
         continue;
       }
       out[k] = _deepConvert(e.value);
@@ -235,5 +245,8 @@ List<RegExp>? _patterns(Object? node) {
 bool _excludedType(Object? node, Location? location) {
   final raw = '${node ?? ''}'.trim();
   if (raw.isEmpty || location == null) return false;
-  return raw.split('|').map((t) => t.trim().toLowerCase()).contains(location.proxyType);
+  return raw
+      .split('|')
+      .map((t) => t.trim().toLowerCase())
+      .contains(location.proxyType);
 }

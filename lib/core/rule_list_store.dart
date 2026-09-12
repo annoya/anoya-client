@@ -75,7 +75,10 @@ class RuleListStore {
   }
 
   static String _fileName(RuleList list) {
-    final digest = sha256.convert(utf8.encode(list.url)).toString().substring(0, 16);
+    final digest = sha256
+        .convert(utf8.encode(list.url))
+        .toString()
+        .substring(0, 16);
     return '$digest.${list.format}';
   }
 
@@ -91,7 +94,9 @@ class RuleListStore {
       final f = File('${dir.path}/${_fileName(l)}');
       if (await f.exists()) {
         final stat = await f.stat();
-        out.add(RuleListStatus(list: l, bytes: stat.size, updatedAt: stat.modified));
+        out.add(
+          RuleListStatus(list: l, bytes: stat.size, updatedAt: stat.modified),
+        );
       } else {
         out.add(RuleListStatus(list: l, error: _lastError[l.url]));
       }
@@ -126,7 +131,10 @@ class RuleListStore {
       } catch (e) {
         // The host, not the URL: a list URL can carry a subscription secret.
         _lastError[l.url] = '${Uri.parse(l.url).host}: $e';
-        Log.e('rule list download failed', '${l.name}: ${Uri.parse(l.url).host}');
+        Log.e(
+          'rule list download failed',
+          '${l.name}: ${Uri.parse(l.url).host}',
+        );
       }
     }
     return status(lists);
@@ -140,7 +148,9 @@ class RuleListStore {
           .send(http.Request('GET', Uri.parse(list.url)))
           .timeout(kHttpTimeout);
       if (res.statusCode ~/ 100 != 2) {
-        throw http.ClientException('rule list fetch failed (${res.statusCode})');
+        throw http.ClientException(
+          'rule list fetch failed (${res.statusCode})',
+        );
       }
       // Written under a temp name and renamed: a half-written file must never
       // shadow the copy the running tunnel is already using.
@@ -150,7 +160,9 @@ class RuleListStore {
         await for (final chunk in res.stream.timeout(kDownloadStallTimeout)) {
           written += chunk.length;
           if (written > maxBytes) {
-            throw http.ClientException('rule list exceeds ${maxBytes ~/ 1024} KB');
+            throw http.ClientException(
+              'rule list exceeds ${maxBytes ~/ 1024} KB',
+            );
           }
           sink.add(chunk);
         }
@@ -188,7 +200,9 @@ class RuleListStore {
 
   /// Names of lists we actually hold, mapped to their file. What the renderer
   /// needs: a rule naming anything absent from here cannot run.
-  static Future<Map<String, String>> availablePaths(List<RuleList> lists) async {
+  static Future<Map<String, String>> availablePaths(
+    List<RuleList> lists,
+  ) async {
     final out = <String, String>{};
     for (final s in await status(lists)) {
       if (!s.available) continue;

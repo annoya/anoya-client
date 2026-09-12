@@ -4,10 +4,14 @@ import 'app_error.dart';
 
 /// Shared layout constants so every screen uses the same spacing.
 const double kGutter = 16; // horizontal screen gutter (card margins, headers)
-const double kMaxContentWidth = 560; // cap content width on wide/desktop windows
+const double kMaxContentWidth =
+    560; // cap content width on wide/desktop windows
 
 /// Standard card margin: the horizontal gutter + a small vertical gap.
-const EdgeInsets kCardMargin = EdgeInsets.symmetric(horizontal: kGutter, vertical: 4);
+const EdgeInsets kCardMargin = EdgeInsets.symmetric(
+  horizontal: kGutter,
+  vertical: 4,
+);
 
 /// Centers and width-caps page content so layouts stay readable when the
 /// window is resized wide (macOS) instead of stretching edge to edge, and are
@@ -18,11 +22,11 @@ class PageBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: kMaxContentWidth),
-          child: child,
-        ),
-      );
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: kMaxContentWidth),
+      child: child,
+    ),
+  );
 }
 
 /// A settings/list section label (uppercase, muted), aligned to [kGutter].
@@ -32,13 +36,15 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(kGutter, 20, kGutter, 8),
-        child: Text(text,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.8,
-                )),
-      );
+    padding: const EdgeInsets.fromLTRB(kGutter, 20, kGutter, 8),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        letterSpacing: 0.8,
+      ),
+    ),
+  );
 }
 
 /// Explanatory text under a section, in the muted body size the settings
@@ -49,12 +55,14 @@ class SectionNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 0),
-        child: Text(text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                )),
-      );
+    padding: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 0),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
 }
 
 /// A choice field that looks like the text fields next to it (same fill,
@@ -88,16 +96,21 @@ class SelectField extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InputDecorator(
         decoration: InputDecoration(labelText: label, enabled: enabled),
-        child: Row(children: [
-          Expanded(
-            child: Text(value,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                value,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 15,
-                    color: enabled ? cs.onSurface : cs.onSurfaceVariant)),
-          ),
-          Icon(trailingIcon, size: 20, color: cs.onSurfaceVariant),
-        ]),
+                  fontSize: 15,
+                  color: enabled ? cs.onSurface : cs.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Icon(trailingIcon, size: 20, color: cs.onSurfaceVariant),
+          ],
+        ),
       ),
     );
   }
@@ -105,7 +118,13 @@ class SelectField extends StatelessWidget {
 
 /// One row of a [pickOption] sheet.
 class Option<T> {
-  const Option(this.value, this.title, {this.subtitle, this.enabled = true, this.leading});
+  const Option(
+    this.value,
+    this.title, {
+    this.subtitle,
+    this.enabled = true,
+    this.leading,
+  });
 
   final T value;
   final String title;
@@ -128,17 +147,19 @@ void showToast(BuildContext context, String message) =>
 /// screen — adding the first configuration, for one.
 void showToastWith(ScaffoldMessengerState messenger, String message) {
   messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(SnackBar(
-    duration: const Duration(seconds: 3),
-    content: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: messenger.hideCurrentSnackBar,
-      child: SizedBox(
-        width: double.infinity,
-        child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+  messenger.showSnackBar(
+    SnackBar(
+      duration: const Duration(seconds: 3),
+      content: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: messenger.hideCurrentSnackBar,
+        child: SizedBox(
+          width: double.infinity,
+          child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+        ),
       ),
     ),
-  ));
+  );
 }
 
 /// An error the user has to acknowledge: centred, with the scrim swallowing
@@ -154,45 +175,65 @@ void showToastWith(ScaffoldMessengerState messenger, String message) {
 ///
 /// [onDismiss] runs after it closes, so the caller can clear the error it holds;
 /// otherwise the next rebuild would raise the dialog again.
-Future<void> showErrorDialog(BuildContext context, AppError error,
-    {VoidCallback? onDismiss}) async {
+Future<void> showErrorDialog(
+  BuildContext context,
+  AppError error, {
+  VoidCallback? onDismiss,
+}) async {
   final cs = Theme.of(context).colorScheme;
   await showDialog<void>(
     context: context,
     barrierDismissible: false,
     builder: (context) => Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 12, 0),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(Icons.error_outline, color: cs.onSurfaceVariant),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(error.title,
-                  style: TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w500, color: cs.onSurface)),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 20),
-              color: cs.onSurfaceVariant,
-              tooltip: 'Dismiss',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ]),
-        ),
-        if (error.detail != null)
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-            child: SizedBox(
-              width: double.infinity,
-              child: Text(error.detail!,
-                  style: TextStyle(fontSize: 14, height: 1.45, color: cs.onSurfaceVariant)),
+            padding: const EdgeInsets.fromLTRB(24, 20, 12, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.error_outline, color: cs.onSurfaceVariant),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    error.title,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  color: cs.onSurfaceVariant,
+                  tooltip: 'Dismiss',
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
-          )
-        else
-          const SizedBox(height: 20),
-      ]),
+          ),
+          if (error.detail != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(
+                  error.detail!,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.45,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            )
+          else
+            const SizedBox(height: 20),
+        ],
+      ),
     ),
   );
   onDismiss?.call();
@@ -219,16 +260,17 @@ class DismissKeyboardOnTapOutside extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Actions(
-        actions: <Type, Action<Intent>>{
-          EditableTextTapOutsideIntent: CallbackAction<EditableTextTapOutsideIntent>(
+    actions: <Type, Action<Intent>>{
+      EditableTextTapOutsideIntent:
+          CallbackAction<EditableTextTapOutsideIntent>(
             onInvoke: (intent) {
               intent.focusNode.unfocus();
               return null;
             },
           ),
-        },
-        child: child,
-      );
+    },
+    child: child,
+  );
 }
 
 /// The app's single text-input dialog. Owns its TextEditingController: at the
@@ -281,6 +323,7 @@ class _TextPromptDialog extends StatefulWidget {
   final String confirmLabel;
   final String initial;
   final String? hint;
+
   /// The value is a URL or another long unbreakable string: it wraps over a
   /// few lines in a smaller size instead of scrolling sideways through a
   /// single-line field, where only the tail would ever be visible.
@@ -294,7 +337,9 @@ class _TextPromptDialog extends StatefulWidget {
 }
 
 class _TextPromptDialogState extends State<_TextPromptDialog> {
-  late final TextEditingController _controller = TextEditingController(text: widget.initial);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initial,
+  );
 
   @override
   void dispose() {
@@ -306,32 +351,44 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.title),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextField(
-          controller: _controller,
-          autofocus: true,
-          autocorrect: widget.autocorrect,
-          maxLines: widget.longValue ? kLongValueMaxLines : 1,
-          minLines: 1,
-          style: widget.longValue ? Theme.of(context).textTheme.bodySmall : null,
-          decoration: InputDecoration(labelText: widget.label, hintText: widget.hint),
-          onSubmitted: (v) => Navigator.of(context).pop(v),
-        ),
-        if (widget.resetLabel != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              icon: const Icon(Icons.restart_alt, size: 18),
-              label: Text(widget.resetLabel!),
-              onPressed: () => _controller.text = widget.resetValue ?? '',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            autocorrect: widget.autocorrect,
+            maxLines: widget.longValue ? kLongValueMaxLines : 1,
+            minLines: 1,
+            style: widget.longValue
+                ? Theme.of(context).textTheme.bodySmall
+                : null,
+            decoration: InputDecoration(
+              labelText: widget.label,
+              hintText: widget.hint,
             ),
+            onSubmitted: (v) => Navigator.of(context).pop(v),
           ),
-      ]),
+          if (widget.resetLabel != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.restart_alt, size: 18),
+                label: Text(widget.resetLabel!),
+                onPressed: () => _controller.text = widget.resetValue ?? '',
+              ),
+            ),
+        ],
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
-            onPressed: () => Navigator.of(context).pop(_controller.text),
-            child: Text(widget.confirmLabel)),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(widget.confirmLabel),
+        ),
       ],
     );
   }
@@ -470,9 +527,11 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
   }
 
   void _toggle(T value) {
-    setState(() => _favorites.contains(value)
-        ? _favorites.remove(value)
-        : _favorites.add(value));
+    setState(
+      () => _favorites.contains(value)
+          ? _favorites.remove(value)
+          : _favorites.add(value),
+    );
     widget.onToggleFavorite!(value);
   }
 
@@ -502,7 +561,8 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
           tooltip: 'Settings',
           onPressed: () => _openSettings(o.value),
         ),
-      if (widget.navigational) Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+      if (widget.navigational)
+        Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
     ];
     return Opacity(
       opacity: o.enabled ? 1 : 0.45,
@@ -538,69 +598,84 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
-          ),
-          if (widget.options.length >= kSearchThreshold)
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: TextField(
-                autocorrect: false,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Search',
-                ),
-                onChanged: (v) => setState(() => _query = v),
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                widget.title,
+                style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-          // Row fills and highlights are Ink, which paints on the nearest
-          // Material — the sheet's own, outside the list — so an overscrolled
-          // row used to be drawn over the title. A transparent Material here
-          // makes the list host its own ink, and the ClipRect bounds it (a
-          // shrink-wrapping viewport clips only once its content overflows).
-          Flexible(
-            child: ClipRect(
-              child: Material(
-                type: MaterialType.transparency,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    if (pinnedShown.isNotEmpty) ...[
-                      SectionHeader(widget.pinnedHeader),
-                      ...pinnedShown.map((o) => _row(o, favouritable: false)),
-                    ],
-                    if (!_grouped)
-                      ...shown.map(_row)
-                    else ...[
-                      if (favorites.isNotEmpty) ...[
-                        const SectionHeader('FAVORITES'),
-                        ...favorites.map(_row),
+            if (widget.options.length >= kSearchThreshold)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                child: TextField(
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: 'Search',
+                  ),
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+              ),
+            // Row fills and highlights are Ink, which paints on the nearest
+            // Material — the sheet's own, outside the list — so an overscrolled
+            // row used to be drawn over the title. A transparent Material here
+            // makes the list host its own ink, and the ClipRect bounds it (a
+            // shrink-wrapping viewport clips only once its content overflows).
+            Flexible(
+              child: ClipRect(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      if (pinnedShown.isNotEmpty) ...[
+                        SectionHeader(widget.pinnedHeader),
+                        ...pinnedShown.map((o) => _row(o, favouritable: false)),
                       ],
-                      SectionHeader(searching
-                          ? 'ALL · ${rest.isEmpty ? 'NOTHING MATCHES' : '${rest.length} OF ${widget.options.length} MATCH'}'
-                          : 'ALL'),
-                      if (rest.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(kGutter, 0, kGutter, 8),
-                          child: Text(
-                            'No ${widget.itemNoun} matches “${_query.trim()}”. '
-                            'Clear the search to see all ${widget.options.length}.',
-                            style: TextStyle(color: cs.onSurfaceVariant),
-                          ),
-                        )
-                      else
-                        ...rest.map(_row),
+                      if (!_grouped)
+                        ...shown.map(_row)
+                      else ...[
+                        if (favorites.isNotEmpty) ...[
+                          const SectionHeader('FAVORITES'),
+                          ...favorites.map(_row),
+                        ],
+                        SectionHeader(
+                          searching
+                              ? 'ALL · ${rest.isEmpty ? 'NOTHING MATCHES' : '${rest.length} OF ${widget.options.length} MATCH'}'
+                              : 'ALL',
+                        ),
+                        if (rest.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              kGutter,
+                              0,
+                              kGutter,
+                              8,
+                            ),
+                            child: Text(
+                              'No ${widget.itemNoun} matches “${_query.trim()}”. '
+                              'Clear the search to see all ${widget.options.length}.',
+                              style: TextStyle(color: cs.onSurfaceVariant),
+                            ),
+                          )
+                        else
+                          ...rest.map(_row),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-        ]),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

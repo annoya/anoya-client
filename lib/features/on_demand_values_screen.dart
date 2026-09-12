@@ -40,17 +40,18 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
   late List<String> _values = _sorted(widget.values);
   String _query = '';
 
-
   List<String> _sorted(List<String> v) =>
       [...v]..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
   Future<void> _add() async {
-    final value = await promptText(context,
-        title: widget.addTitle,
-        label: 'Value',
-        hint: widget.addHint,
-        confirmLabel: 'Add',
-        autocorrect: false);
+    final value = await promptText(
+      context,
+      title: widget.addTitle,
+      label: 'Value',
+      hint: widget.addHint,
+      confirmLabel: 'Add',
+      autocorrect: false,
+    );
     final v = value?.trim() ?? '';
     if (v.isEmpty || _values.contains(v)) return;
     setState(() => _values = _sorted([..._values, v]));
@@ -92,9 +93,11 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
                     onChanged: (v) => setState(() => _query = v),
                   ),
                 ),
-              SectionHeader(_values.isEmpty
-                  ? 'NO ENTRIES'
-                  : '${_values.length} ${widget.unit} · ANY OF THEM MATCHES'),
+              SectionHeader(
+                _values.isEmpty
+                    ? 'NO ENTRIES'
+                    : '${_values.length} ${widget.unit} · ANY OF THEM MATCHES',
+              ),
               if (_values.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: kGutter),
@@ -106,29 +109,35 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
               else if (shown.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                  child: Text('Nothing matches “$_query”.',
-                      style: TextStyle(color: cs.onSurfaceVariant)),
+                  child: Text(
+                    'Nothing matches “$_query”.',
+                    style: TextStyle(color: cs.onSurfaceVariant),
+                  ),
                 )
               else
-                ...shown.map((v) => Card(
-                      margin: kCardMargin,
-                      child: ListTile(
-                        title: Text(v),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 20),
-                          tooltip: 'Remove',
-                          onPressed: () =>
-                              setState(() => _values = _values.where((x) => x != v).toList()),
+                ...shown.map(
+                  (v) => Card(
+                    margin: kCardMargin,
+                    child: ListTile(
+                      title: Text(v),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        tooltip: 'Remove',
+                        onPressed: () => setState(
+                          () => _values = _values.where((x) => x != v).toList(),
                         ),
                       ),
-                    )),
+                    ),
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 0),
-                child: Text(widget.help,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant)),
+                child: Text(
+                  widget.help,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                ),
               ),
             ],
           ),

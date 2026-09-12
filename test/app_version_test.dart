@@ -20,32 +20,47 @@ void main() {
 
   test('the version the app reports is the one pubspec carries', () async {
     final pubspec = File('pubspec.yaml').readAsStringSync();
-    final m = RegExp(r'^version:\s*(\S+?)\+(\S+)\s*$', multiLine: true).firstMatch(pubspec);
+    final m = RegExp(
+      r'^version:\s*(\S+?)\+(\S+)\s*$',
+      multiLine: true,
+    ).firstMatch(pubspec);
     expect(m, isNotNull, reason: 'pubspec must carry version: <name>+<build>');
     expect(appVersion, m!.group(1));
     expect(appBuild, m.group(2));
   });
 
-  test('the pubspec is shipped as an asset — without it there is no version', () async {
-    // The one way this arrangement can break: the asset entry goes away and
-    // every build starts reporting "unknown".
-    expect(appVersion, isNotEmpty);
-    expect(appVersionLabel, isNot('unknown'));
-  });
+  test(
+    'the pubspec is shipped as an asset — without it there is no version',
+    () async {
+      // The one way this arrangement can break: the asset entry goes away and
+      // every build starts reporting "unknown".
+      expect(appVersion, isNotEmpty);
+      expect(appVersionLabel, isNot('unknown'));
+    },
+  );
 
   test('the engine pin matches go.mod', () {
     final gomod = File('native/mihomocore/go.mod').readAsStringSync();
     final m = RegExp(r'github\.com/metacubex/mihomo (\S+)').firstMatch(gomod);
     expect(m, isNotNull);
-    expect(kEnginePin, m!.group(1),
-        reason: 'the About section would otherwise name an engine we do not build');
+    expect(
+      kEnginePin,
+      m!.group(1),
+      reason:
+          'the About section would otherwise name an engine we do not build',
+    );
   });
 
   test('the app name matches the bundle it ships as', () {
     // The name is what a panel matches its template rules against, so a rename
     // that misses one of the two places is a silent capability loss.
-    final xcconfig = File('macos/Runner/Configs/AppInfo.xcconfig').readAsStringSync();
-    final m = RegExp(r'^PRODUCT_NAME\s*=\s*(\S+)\s*$', multiLine: true).firstMatch(xcconfig);
+    final xcconfig = File(
+      'macos/Runner/Configs/AppInfo.xcconfig',
+    ).readAsStringSync();
+    final m = RegExp(
+      r'^PRODUCT_NAME\s*=\s*(\S+)\s*$',
+      multiLine: true,
+    ).firstMatch(xcconfig);
     expect(m, isNotNull);
     expect(kAppName, m!.group(1));
   });

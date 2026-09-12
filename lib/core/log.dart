@@ -56,7 +56,9 @@ class Log {
   }
 
   static void _add(String level, String msg) {
-    final line = _context.isEmpty ? '[$level] $msg' : '[$level] $_context: $msg';
+    final line = _context.isEmpty
+        ? '[$level] $msg'
+        : '[$level] $_context: $msg';
     developer.log(msg, name: 'vpn');
     if (kDebugMode) debugPrint('vpn $line');
     if (!enabled) return;
@@ -79,7 +81,8 @@ class Log {
   /// dump() joins with newlines, so the last line has no separator after it.
   static const _separatorBytes = 1;
 
-  static int _encodedSize(String line) => utf8.encode(line).length + _separatorBytes;
+  static int _encodedSize(String line) =>
+      utf8.encode(line).length + _separatorBytes;
 
   static void clear() {
     _buffer.clear();

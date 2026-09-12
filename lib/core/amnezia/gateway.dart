@@ -11,7 +11,7 @@ import 'amnezia_env.dart';
 /// is a behaviour we cannot get wrong.
 class AmneziaGateway {
   AmneziaGateway({required this.installationUuid, AgwClient? client})
-      : _client = client ?? _shared;
+    : _client = client ?? _shared;
 
   /// Stable per installation, and sent on every request. The gateway counts
   /// devices by it, so it must survive app restarts and must not be shared.
@@ -25,24 +25,26 @@ class AmneziaGateway {
   /// gateway meant a fresh discovery sweep for every request. The state now
   /// lives as long as the app does; persisting it across launches is the next
   /// step, not this one.
-  static final AgwClient _shared = AgwClient(AgwConfig(
-    endpoint: AmneziaEnv.endpoint,
-    publicKeyPem: AmneziaEnv.publicKeyPem,
-    s3Primary: AmneziaEnv.s3Endpoints,
-    s3Fallback: AmneziaEnv.s3FallbackEndpoints,
-  ));
+  static final AgwClient _shared = AgwClient(
+    AgwConfig(
+      endpoint: AmneziaEnv.endpoint,
+      publicKeyPem: AmneziaEnv.publicKeyPem,
+      s3Primary: AmneziaEnv.s3Endpoints,
+      s3Fallback: AmneziaEnv.s3FallbackEndpoints,
+    ),
+  );
 
   /// What every request carries, whatever it asks for. Empty values are
   /// dropped rather than sent blank: absent and empty are different answers to
   /// the gateway, and it is theirs to interpret.
   Map<String, dynamic> _base() => {
-        'os_version': _osName,
-        'app_version': AmneziaEnv.clientVersion,
-        'cli_name': AmneziaEnv.clientName,
-        'distribution': AmneziaEnv.distribution,
-        'app_language': Platform.localeName.split(RegExp('[_-]')).first,
-        'installation_uuid': installationUuid,
-      }..removeWhere((_, v) => v is String && v.isEmpty);
+    'os_version': _osName,
+    'app_version': AmneziaEnv.clientVersion,
+    'cli_name': AmneziaEnv.clientName,
+    'distribution': AmneziaEnv.distribution,
+    'app_language': Platform.localeName.split(RegExp('[_-]')).first,
+    'installation_uuid': installationUuid,
+  }..removeWhere((_, v) => v is String && v.isEmpty);
 
   static String get _osName {
     if (Platform.isMacOS) return 'macos';
@@ -92,7 +94,8 @@ class AmneziaGateway {
       {
         ..._base(),
         'user_country_code': userCountryCode,
-        if (serverCountryCode.isNotEmpty) 'server_country_code': serverCountryCode,
+        if (serverCountryCode.isNotEmpty)
+          'server_country_code': serverCountryCode,
         'service_type': serviceType,
         'service_protocol': serviceProtocol,
         // AWG: the client's WireGuard public key, whose private half never

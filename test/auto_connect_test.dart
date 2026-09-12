@@ -32,14 +32,17 @@ void main() {
     tmp = Directory.systemTemp.createTempSync('vpn-auto-connect');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-            const MethodChannel('plugins.flutter.io/path_provider'),
-            (call) async => tmp.path);
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (call) async => tmp.path,
+        );
   });
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-            const MethodChannel('plugins.flutter.io/path_provider'), null);
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          null,
+        );
     debugDefaultTargetPlatformOverride = null;
     tmp.deleteSync(recursive: true);
   });
@@ -53,18 +56,26 @@ void main() {
   group('the setting', () {
     test('is off until somebody turns it on', () async {
       final core = _FakeCore();
-      final c = ProviderContainer(overrides: [vpnCoreProvider.overrideWithValue(core)]);
+      final c = ProviderContainer(
+        overrides: [vpnCoreProvider.overrideWithValue(core)],
+      );
       addTearDown(c.dispose);
 
       expect(c.read(autoConnectProvider), isFalse);
       await settle();
-      expect(core.autoConnect, isFalse,
-          reason: 'a fresh install tells the service nothing new, but tells it truthfully');
+      expect(
+        core.autoConnect,
+        isFalse,
+        reason:
+            'a fresh install tells the service nothing new, but tells it truthfully',
+      );
     });
 
     test('reaches the service, and survives a restart of the app', () async {
       final core = _FakeCore();
-      final first = ProviderContainer(overrides: [vpnCoreProvider.overrideWithValue(core)]);
+      final first = ProviderContainer(
+        overrides: [vpnCoreProvider.overrideWithValue(core)],
+      );
       await first.read(autoConnectProvider.notifier).set(true);
       expect(core.autoConnect, isTrue);
       first.dispose();
@@ -72,7 +83,9 @@ void main() {
       // A new run of the app: the answer comes back off disk and is repeated
       // to the service, whose own copy a reinstall may have taken with it.
       core.autoConnect = false;
-      final second = ProviderContainer(overrides: [vpnCoreProvider.overrideWithValue(core)]);
+      final second = ProviderContainer(
+        overrides: [vpnCoreProvider.overrideWithValue(core)],
+      );
       addTearDown(second.dispose);
       second.read(autoConnectProvider);
       await settle();
@@ -83,7 +96,9 @@ void main() {
 
     test('turning it off is pushed too, not just forgotten locally', () async {
       final core = _FakeCore();
-      final c = ProviderContainer(overrides: [vpnCoreProvider.overrideWithValue(core)]);
+      final c = ProviderContainer(
+        overrides: [vpnCoreProvider.overrideWithValue(core)],
+      );
       addTearDown(c.dispose);
 
       await c.read(autoConnectProvider.notifier).set(true);
@@ -124,13 +139,15 @@ void main() {
 }
 
 Future<void> _pumpSettings(WidgetTester tester) async {
-  await tester.pumpWidget(ProviderScope(
-    overrides: [vpnCoreProvider.overrideWithValue(_FakeCore())],
-    child: MaterialApp(
-      theme: buildAppTheme(Brightness.light),
-      home: const SettingsScreen(),
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [vpnCoreProvider.overrideWithValue(_FakeCore())],
+      child: MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: const SettingsScreen(),
+      ),
     ),
-  ));
+  );
   await tester.pump();
 }
 
@@ -156,7 +173,9 @@ class _FakeCore extends VpnCore {
   Future<void> disconnect() async {}
 
   @override
-  Future<bool> applyOnDemand(OnDemandPrefs prefs,
-          {NormConfig? config, String? locationId}) async =>
-      false;
+  Future<bool> applyOnDemand(
+    OnDemandPrefs prefs, {
+    NormConfig? config,
+    String? locationId,
+  }) async => false;
 }

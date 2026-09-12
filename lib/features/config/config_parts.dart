@@ -21,24 +21,25 @@ export 'routing_cards.dart';
 /// rather than in a chain of conditionals none of the three reads cleanly.
 
 IconData profileIcon(ProfileType t) => switch (t) {
-      ProfileType.selfhosted => Icons.business_outlined,
-      ProfileType.subscription => Icons.folder_outlined,
-      ProfileType.amnezia => Icons.shield_outlined,
-      ProfileType.link => Icons.link,
-    };
+  ProfileType.selfhosted => Icons.business_outlined,
+  ProfileType.subscription => Icons.folder_outlined,
+  ProfileType.amnezia => Icons.shield_outlined,
+  ProfileType.link => Icons.link,
+};
 
 String profileKind(Profile p) => switch (p.type) {
-      ProfileType.selfhosted => 'Self-hosted · ${_servers(p)}',
-      ProfileType.subscription => 'Subscription · ${_servers(p)}${_groups(p)}',
-      // A free subscription has one config and nowhere to choose, so counting
-      // "1 server" would dress a fact up as a choice. Named no more precisely
-      // than a panel's: the key carries whoever sold it, and that name is
-      // already the title above this line.
-      ProfileType.amnezia => p.amnezia?.offersLocations == false
-          ? 'Subscription'
-          : 'Subscription · ${_servers(p)}',
-      ProfileType.link => 'Single server',
-    };
+  ProfileType.selfhosted => 'Self-hosted · ${_servers(p)}',
+  ProfileType.subscription => 'Subscription · ${_servers(p)}${_groups(p)}',
+  // A free subscription has one config and nowhere to choose, so counting
+  // "1 server" would dress a fact up as a choice. Named no more precisely
+  // than a panel's: the key carries whoever sold it, and that name is
+  // already the title above this line.
+  ProfileType.amnezia =>
+    p.amnezia?.offersLocations == false
+        ? 'Subscription'
+        : 'Subscription · ${_servers(p)}',
+  ProfileType.link => 'Single server',
+};
 
 /// "12 servers", or "294 of 306 servers" when the source offered protocols this
 /// app cannot run. The second form exists so the number here matches what the
@@ -65,24 +66,31 @@ String _groups(Profile p) {
 /// how "set active" reports itself: the button below disappears and the mark
 /// appears here, so the result is visible without leaving the screen.
 class ProfileHeaderCard extends StatelessWidget {
-  const ProfileHeaderCard({super.key, required this.profile, required this.isActive});
+  const ProfileHeaderCard({
+    super.key,
+    required this.profile,
+    required this.isActive,
+  });
 
   final Profile profile;
   final bool isActive;
 
   @override
   Widget build(BuildContext context) => Card(
-        margin: kCardMargin,
-        child: ListTile(
-          leading: Icon(profileIcon(profile.type)),
-          title: Text(profile.name),
-          subtitle: Text(profileKind(profile)),
-          trailing: isActive
-              ? Icon(Icons.check_circle,
-                  color: Theme.of(context).colorScheme.primary, size: 20)
-              : null,
-        ),
-      );
+    margin: kCardMargin,
+    child: ListTile(
+      leading: Icon(profileIcon(profile.type)),
+      title: Text(profile.name),
+      subtitle: Text(profileKind(profile)),
+      trailing: isActive
+          ? Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            )
+          : null,
+    ),
+  );
 }
 
 /// Where the configuration came from, and the one thing worth doing with it.
@@ -126,12 +134,19 @@ class SourceCard extends StatelessWidget {
           children: [
             Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
             if (viaFallback)
-              Text('Last refresh used the subscription’s backup address',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              Text(
+                'Last refresh used the subscription’s backup address',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
           ],
         ),
         isThreeLine: viaFallback,
-        trailing: Icon(opens ? Icons.open_in_new : Icons.copy_all_outlined, size: 18),
+        trailing: Icon(
+          opens ? Icons.open_in_new : Icons.copy_all_outlined,
+          size: 18,
+        ),
         onTap: () => opens ? _open(context, openUrl!) : _copy(context),
       ),
     );
@@ -139,7 +154,8 @@ class SourceCard extends StatelessWidget {
 
   Future<void> _open(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (uri == null ||
+        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) showToast(context, 'Couldn’t open that page.');
     }
   }
@@ -171,9 +187,13 @@ class UnsupportedServersCard extends StatelessWidget {
       color: cs.tertiaryContainer.withValues(alpha: 0.35),
       child: ListTile(
         leading: Icon(Icons.info_outline, color: cs.onSurfaceVariant),
-        title: Text('$skipped of ${profile.offeredServers} servers unsupported'),
-        subtitle: Text('They use $kinds, which this app cannot run yet. '
-            'The other ${profile.locations.length} are available.'),
+        title: Text(
+          '$skipped of ${profile.offeredServers} servers unsupported',
+        ),
+        subtitle: Text(
+          'They use $kinds, which this app cannot run yet. '
+          'The other ${profile.locations.length} are available.',
+        ),
         isThreeLine: true,
       ),
     );
@@ -207,7 +227,11 @@ class DeviceLimitCard extends StatelessWidget {
 
 /// Set active / remove, in that order, at the bottom of every screen.
 class ConfigActions extends ConsumerWidget {
-  const ConfigActions({super.key, required this.profile, required this.isActive});
+  const ConfigActions({
+    super.key,
+    required this.profile,
+    required this.isActive,
+  });
 
   final Profile profile;
   final bool isActive;
@@ -218,30 +242,34 @@ class ConfigActions extends ConsumerWidget {
     // stretch, not the default centre: a Column hands its children their
     // intrinsic width, which made these buttons hug their labels instead of
     // spanning the content width the way every other screen's do.
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SizedBox(height: 20),
-      if (!isActive)
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 20),
+        if (!isActive)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: kGutter),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.check, size: 18),
+              label: const Text('Set active'),
+              onPressed: () => ctrl.setActive(profile.id),
+            ),
+          ),
+        const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: kGutter),
           child: OutlinedButton.icon(
-            icon: const Icon(Icons.check, size: 18),
-            label: const Text('Set active'),
-            onPressed: () => ctrl.setActive(profile.id),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Remove configuration'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => _remove(context, ref),
           ),
         ),
-      const SizedBox(height: 8),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: kGutter),
-        child: OutlinedButton.icon(
-          icon: const Icon(Icons.delete_outline),
-          label: const Text('Remove configuration'),
-          style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error),
-          onPressed: () => _remove(context, ref),
-        ),
-      ),
-      const SizedBox(height: 24),
-    ]);
+        const SizedBox(height: 24),
+      ],
+    );
   }
 
   Future<void> _remove(BuildContext context, WidgetRef ref) async {
@@ -257,10 +285,18 @@ class ConfigActions extends ConsumerWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('Remove ${profile.name}?'),
-        content: const Text('This configuration will be removed from this device.'),
+        content: const Text(
+          'This configuration will be removed from this device.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Remove')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remove'),
+          ),
         ],
       ),
     );
@@ -271,7 +307,9 @@ class ConfigActions extends ConsumerWidget {
         // Through the controller, not the raw core: it records the on-demand
         // pause first, so the home chips explain why auto-connect is off.
         await ctrl.disconnect();
-      } catch (_) {/* ignore */}
+      } catch (_) {
+        /* ignore */
+      }
     }
     await ctrl.removeProfile(profile.id);
     // Only close ourselves while other configurations remain. When that was the

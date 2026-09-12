@@ -29,4 +29,5 @@ String? tryDecodeLooseBase64(String s) {
 /// to survive a refresh — favourites and the current selection are keyed by it —
 /// so it is derived from the link (or the proxy name) rather than the position
 /// in the list, and derived the same way for every format.
-String shortDigest(String s) => sha1.convert(utf8.encode(s)).toString().substring(0, 10);
+String shortDigest(String s) =>
+    sha1.convert(utf8.encode(s)).toString().substring(0, 10);

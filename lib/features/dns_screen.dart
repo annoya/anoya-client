@@ -31,28 +31,36 @@ class DnsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('DNS')),
       body: PageBody(
-        child: ListView(children: [
-          const SectionHeader('IN EFFECT'),
-          Card(
-            margin: kCardMargin,
-            child: Column(children: [
-              for (final (i, r) in plan.resolvers.indexed) ...[
-                if (i > 0) const Divider(height: 1),
-                _ResolverRow(resolver: r, origin: _origin(plan)),
-              ],
-            ]),
-          ),
-          SectionNote(plan.resolvers.length > 1
-              ? 'Asked at the same time; the first answer wins.'
-              : _originNote(plan)),
-          if (plan.dropped.isNotEmpty) ...[
-            const SectionHeader('DROPPED'),
-            for (final d in plan.dropped) _Dropped(drop: d),
-          ],
-          const SectionNote('The address of the server you connect through is '
+        child: ListView(
+          children: [
+            const SectionHeader('IN EFFECT'),
+            Card(
+              margin: kCardMargin,
+              child: Column(
+                children: [
+                  for (final (i, r) in plan.resolvers.indexed) ...[
+                    if (i > 0) const Divider(height: 1),
+                    _ResolverRow(resolver: r, origin: _origin(plan)),
+                  ],
+                ],
+              ),
+            ),
+            SectionNote(
+              plan.resolvers.length > 1
+                  ? 'Asked at the same time; the first answer wins.'
+                  : _originNote(plan),
+            ),
+            if (plan.dropped.isNotEmpty) ...[
+              const SectionHeader('DROPPED'),
+              for (final d in plan.dropped) _Dropped(drop: d),
+            ],
+            const SectionNote(
+              'The address of the server you connect through is '
               'always resolved directly. It has to be — nothing could reach the '
-              'tunnel otherwise.'),
-        ]),
+              'tunnel otherwise.',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -63,7 +71,7 @@ class DnsScreen extends ConsumerWidget {
 
   String _originNote(DnsPlan plan) => plan.usingFallback
       ? 'This configuration names no resolver of its own, so the app uses its '
-          'default — change it in Settings › Default DNS.'
+            'default — change it in Settings › Default DNS.'
       : 'Chosen by whoever set up this configuration, and it changes with it.';
 }
 
@@ -79,31 +87,38 @@ class _ResolverRow extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return ListTile(
-      title: Row(children: [
-        Expanded(
-          child: Text(resolver.address, overflow: TextOverflow.ellipsis),
-        ),
-        const SizedBox(width: 8),
-        // Routing is the one property that changes who can see the query, so it
-        // gets the end of the top line. The word carries it; the colour only
-        // agrees with the word.
-        Text(
-          resolver.routing,
-          style: text.bodySmall?.copyWith(
-            color: resolver.viaTunnel ? cs.primary : cs.onSurfaceVariant,
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(resolver.address, overflow: TextOverflow.ellipsis),
           ),
-        ),
-      ]),
+          const SizedBox(width: 8),
+          // Routing is the one property that changes who can see the query, so it
+          // gets the end of the top line. The word carries it; the colour only
+          // agrees with the word.
+          Text(
+            resolver.routing,
+            style: text.bodySmall?.copyWith(
+              color: resolver.viaTunnel ? cs.primary : cs.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
       subtitle: Text('${resolver.protocol} · $origin'),
       isThreeLine: resolver.pinIgnored,
       // Only said when it happened: the provider asked for one of its own
       // outbounds, and ours are not theirs.
       trailing: resolver.pinIgnored
           ? Tooltip(
-              message: 'This configuration asked for an outbound this app does '
+              message:
+                  'This configuration asked for an outbound this app does '
                   'not create, so the request was dropped and the resolver is '
                   'reached directly.',
-              child: Icon(Icons.info_outline, size: 18, color: cs.onSurfaceVariant),
+              child: Icon(
+                Icons.info_outline,
+                size: 18,
+                color: cs.onSurfaceVariant,
+              ),
             )
           : null,
     );
@@ -124,10 +139,15 @@ class _Dropped extends StatelessWidget {
       color: cs.errorContainer,
       child: ListTile(
         leading: Icon(Icons.warning_amber_outlined, color: cs.onErrorContainer),
-        title: Text(drop.address,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: cs.onErrorContainer)),
-        subtitle: Text(drop.explanation, style: TextStyle(color: cs.onErrorContainer)),
+        title: Text(
+          drop.address,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: cs.onErrorContainer),
+        ),
+        subtitle: Text(
+          drop.explanation,
+          style: TextStyle(color: cs.onErrorContainer),
+        ),
       ),
     );
   }
@@ -149,7 +169,8 @@ DnsPlan dnsPlanForProfile(WidgetRef ref, Profile profile) {
   final active = state.active?.id == profile.id;
   final group = active ? state.selectedGroup : null;
   final members = active ? state.selectedGroupMembers : const <Location>[];
-  final location = (active ? state.selectedLocation : null) ??
+  final location =
+      (active ? state.selectedLocation : null) ??
       (profile.locations.isEmpty ? null : profile.locations.first);
   if (location == null) {
     // No server to render means no tunnel to reason about; the resolvers
@@ -157,10 +178,11 @@ DnsPlan dnsPlanForProfile(WidgetRef ref, Profile profile) {
     // (A server that exists but has not been issued yet gets the same answer,
     // from [engineShape] itself.)
     return dnsPlanFor(
-        dns: profile.dns,
-        outbounds: const {},
-        carriesUdp: false,
-        fallback: fallback);
+      dns: profile.dns,
+      outbounds: const {},
+      carriesUdp: false,
+      fallback: fallback,
+    );
   }
   final shape = engineShape(location, group: group, members: members);
   return dnsPlanFor(

@@ -13,8 +13,10 @@ import '../app_version.dart';
 class AmneziaEnv {
   const AmneziaEnv._();
 
-  static const endpoint =
-      String.fromEnvironment('AGW_ENDPOINT', defaultValue: 'http://gw.amnezia.org:80/');
+  static const endpoint = String.fromEnvironment(
+    'AGW_ENDPOINT',
+    defaultValue: 'http://gw.amnezia.org:80/',
+  );
 
   /// The PKIX RSA public key, PEM, carried base64-encoded.
   ///
@@ -39,8 +41,9 @@ class AmneziaEnv {
   /// Comma-separated bucket URLs holding the bypass proxy lists.
   static const _s3 = String.fromEnvironment('AGW_S3_ENDPOINTS');
 
-  static const _s3Fallback =
-      String.fromEnvironment('AGW_S3_FALLBACK_ENDPOINTS');
+  static const _s3Fallback = String.fromEnvironment(
+    'AGW_S3_FALLBACK_ENDPOINTS',
+  );
 
   static List<String> get s3Endpoints => _urls(_s3);
 

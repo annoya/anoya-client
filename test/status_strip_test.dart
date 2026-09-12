@@ -26,17 +26,25 @@ import 'package:vpn_client/state/routing_status.dart';
 /// doing (colour is a second carrier of that meaning, never the only one), and
 /// routing off means no rule set reaches the engine at all.
 void main() {
-  Profile profile({bool routingEnabled = false, Routing? managed, String? ruleSetId}) => Profile(
-        id: 'p1',
-        type: ProfileType.subscription,
-        name: 'nexus',
-        routingEnabled: routingEnabled,
-        routing: managed,
-        ruleSetId: ruleSetId,
-        locations: [
-          Location(id: 'a', label: 'Germany', proxy: {'type': 'vless', 'server': '1.1.1.1'}),
-        ],
-      );
+  Profile profile({
+    bool routingEnabled = false,
+    Routing? managed,
+    String? ruleSetId,
+  }) => Profile(
+    id: 'p1',
+    type: ProfileType.subscription,
+    name: 'nexus',
+    routingEnabled: routingEnabled,
+    routing: managed,
+    ruleSetId: ruleSetId,
+    locations: [
+      Location(
+        id: 'a',
+        label: 'Germany',
+        proxy: {'type': 'vless', 'server': '1.1.1.1'},
+      ),
+    ],
+  );
 
   // Pinned to iOS: the Auto chip belongs to the Apple strip (Android's
   // auto-connect is the system's Always-on switch, whose state the app cannot
@@ -49,98 +57,123 @@ void main() {
       required bool collectLogs,
       bool withProfile = true,
     }) async {
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          vpnCoreProvider.overrideWithValue(_FixedCore()),
-          onDemandProvider.overrideWith(() => _FixedOnDemand(onDemand)),
-          appPrefsProvider.overrideWith(() => _FixedPrefs(collectLogs)),
-          routingStatusProvider.overrideWith((_) async => routing),
-          profilesControllerProvider
-              .overrideWith(() => _FixedProfiles(withProfile ? [profile()] : [])),
-        ],
-        child: MaterialApp(theme: buildAppTheme(Brightness.light), home: const HomeScreen()),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            vpnCoreProvider.overrideWithValue(_FixedCore()),
+            onDemandProvider.overrideWith(() => _FixedOnDemand(onDemand)),
+            appPrefsProvider.overrideWith(() => _FixedPrefs(collectLogs)),
+            routingStatusProvider.overrideWith((_) async => routing),
+            profilesControllerProvider.overrideWith(
+              () => _FixedProfiles(withProfile ? [profile()] : []),
+            ),
+          ],
+          child: MaterialApp(
+            theme: buildAppTheme(Brightness.light),
+            home: const HomeScreen(),
+          ),
+        ),
+      );
       await tester.pump();
     }
 
-    testWidgets('every chip names its state, not just its subject', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-        (tester) async {
-      await pump(
-        tester,
-        onDemand: const OnDemandPrefs(
-            enabled: true, systemArmed: true, rules: [OnDemandRule(id: 'r1')]),
-        routing: RoutingStatus.split,
-        collectLogs: true,
-      );
+    testWidgets(
+      'every chip names its state, not just its subject',
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+      (tester) async {
+        await pump(
+          tester,
+          onDemand: const OnDemandPrefs(
+            enabled: true,
+            systemArmed: true,
+            rules: [OnDemandRule(id: 'r1')],
+          ),
+          routing: RoutingStatus.split,
+          collectLogs: true,
+        );
 
-      expect(find.text('Auto · on'), findsOneWidget);
-      expect(find.text('Routing · split'), findsOneWidget);
-      expect(find.text('Logs · on'), findsOneWidget);
-    });
+        expect(find.text('Auto · on'), findsOneWidget);
+        expect(find.text('Routing · split'), findsOneWidget);
+        expect(find.text('Logs · on'), findsOneWidget);
+      },
+    );
 
-    testWidgets('nothing enabled still shows three chips', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-        (tester) async {
-      await pump(
-        tester,
-        onDemand: const OnDemandPrefs(),
-        routing: RoutingStatus.off,
-        collectLogs: false,
-      );
+    testWidgets(
+      'nothing enabled still shows three chips',
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+      (tester) async {
+        await pump(
+          tester,
+          onDemand: const OnDemandPrefs(),
+          routing: RoutingStatus.off,
+          collectLogs: false,
+        );
 
-      // An empty strip would read as "there are no such settings" rather than
-      // "they are all off".
-      expect(find.text('Auto · off'), findsOneWidget);
-      expect(find.text('Routing · off'), findsOneWidget);
-      expect(find.text('Logs · off'), findsOneWidget);
-    });
+        // An empty strip would read as "there are no such settings" rather than
+        // "they are all off".
+        expect(find.text('Auto · off'), findsOneWidget);
+        expect(find.text('Routing · off'), findsOneWidget);
+        expect(find.text('Logs · off'), findsOneWidget);
+      },
+    );
 
-    testWidgets('armed but not working is its own word', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-        (tester) async {
-      await pump(
-        tester,
-        onDemand: const OnDemandPrefs(
-            enabled: true, paused: true, rules: [OnDemandRule(id: 'r1')]),
-        routing: RoutingStatus.off,
-        collectLogs: false,
-      );
+    testWidgets(
+      'armed but not working is its own word',
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+      (tester) async {
+        await pump(
+          tester,
+          onDemand: const OnDemandPrefs(
+            enabled: true,
+            paused: true,
+            rules: [OnDemandRule(id: 'r1')],
+          ),
+          routing: RoutingStatus.off,
+          collectLogs: false,
+        );
 
-      // Not "off": the switch on the on-demand screen is on, and telling the
-      // user otherwise sends them looking for something to turn on.
-      expect(find.text('Auto · paused'), findsOneWidget);
-      expect(find.text('Auto · off'), findsNothing);
-    });
+        // Not "off": the switch on the on-demand screen is on, and telling the
+        // user otherwise sends them looking for something to turn on.
+        expect(find.text('Auto · paused'), findsOneWidget);
+        expect(find.text('Auto · off'), findsNothing);
+      },
+    );
 
-    testWidgets('chips open the screen that owns the setting', variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-        (tester) async {
-      await pump(
-        tester,
-        onDemand: const OnDemandPrefs(),
-        routing: RoutingStatus.off,
-        collectLogs: false,
-      );
+    testWidgets(
+      'chips open the screen that owns the setting',
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+      (tester) async {
+        await pump(
+          tester,
+          onDemand: const OnDemandPrefs(),
+          routing: RoutingStatus.off,
+          collectLogs: false,
+        );
 
-      await tester.tap(find.text('Logs · off'));
-      await tester.pumpAndSettle();
-      expect(find.byType(LogsScreen), findsOneWidget);
-      Navigator.of(tester.element(find.byType(LogsScreen))).pop();
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Logs · off'));
+        await tester.pumpAndSettle();
+        expect(find.byType(LogsScreen), findsOneWidget);
+        Navigator.of(tester.element(find.byType(LogsScreen))).pop();
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Auto · off'));
-      await tester.pumpAndSettle();
-      expect(find.byType(OnDemandScreen), findsOneWidget);
-      Navigator.of(tester.element(find.byType(OnDemandScreen))).pop();
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Auto · off'));
+        await tester.pumpAndSettle();
+        expect(find.byType(OnDemandScreen), findsOneWidget);
+        Navigator.of(tester.element(find.byType(OnDemandScreen))).pop();
+        await tester.pumpAndSettle();
 
-      // Routing belongs to a configuration, so its chip leads to that
-      // configuration — the switch lives there, not in the global settings.
-      await tester.tap(find.text('Routing · off'));
-      await tester.pumpAndSettle();
-      expect(find.byType(ConfigScreen), findsOneWidget);
-    });
+        // Routing belongs to a configuration, so its chip leads to that
+        // configuration — the switch lives there, not in the global settings.
+        await tester.tap(find.text('Routing · off'));
+        await tester.pumpAndSettle();
+        expect(find.byType(ConfigScreen), findsOneWidget);
+      },
+    );
   });
 
   group('routing switch', () {
-    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     late Directory tmp;
 
     setUp(() {
@@ -156,39 +189,61 @@ void main() {
     });
     tearDown(() {
       messenger.setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'), null);
-      messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), null);
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        null,
+      );
+      messenger.setMockMethodCallHandler(
+        const MethodChannel('vpn/control'),
+        null,
+      );
       tmp.deleteSync(recursive: true);
     });
 
     (_RecordingCore, ProfilesController) harness(Profile p, VpnStatus status) {
       final core = _RecordingCore(status);
-      final container = ProviderContainer(overrides: [
-        vpnCoreProvider.overrideWithValue(core),
-        onDemandProvider.overrideWith(() => _FixedOnDemand(const OnDemandPrefs())),
-        profilesControllerProvider.overrideWith(() => _FixedProfiles([p])),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          vpnCoreProvider.overrideWithValue(core),
+          onDemandProvider.overrideWith(
+            () => _FixedOnDemand(const OnDemandPrefs()),
+          ),
+          profilesControllerProvider.overrideWith(() => _FixedProfiles([p])),
+        ],
+      );
       addTearDown(container.dispose);
       return (core, container.read(profilesControllerProvider.notifier));
     }
 
     const workRules = [
-      RoutingRule(type: 'domain-suffix', value: 'corp.example.com', action: 'proxy'),
+      RoutingRule(
+        type: 'domain-suffix',
+        value: 'corp.example.com',
+        action: 'proxy',
+      ),
     ];
 
     // RoutingRule has no value equality, and rules that came back through the
     // store are fresh instances — compare what they serialise to.
-    List<Map<String, dynamic>> shape(List<RoutingRule> rules) =>
-        [for (final r in rules) r.toJson()];
+    List<Map<String, dynamic>> shape(List<RoutingRule> rules) => [
+      for (final r in rules) r.toJson(),
+    ];
 
     Future<void> writeWorkSet() => RuleSetStore.save([
-          const RuleSet(id: RuleSet.defaultId, name: 'Default'),
-          const RuleSet(id: 'work', name: 'Work', mode: RoutingMode.split, rules: workRules),
-        ]);
+      const RuleSet(id: RuleSet.defaultId, name: 'Default'),
+      const RuleSet(
+        id: 'work',
+        name: 'Work',
+        mode: RoutingMode.split,
+        rules: workRules,
+      ),
+    ]);
 
     test('switched off, no rule set reaches the engine', () async {
       await writeWorkSet();
-      final (_, ctrl) = harness(profile(ruleSetId: 'work'), VpnStatus.disconnected);
+      final (_, ctrl) = harness(
+        profile(ruleSetId: 'work'),
+        VpnStatus.disconnected,
+      );
 
       final config = await ctrl.effectiveConfig(ctrl.state.profiles.single);
 
@@ -200,25 +255,36 @@ void main() {
 
     test('switched on, the chosen set is what runs', () async {
       await writeWorkSet();
-      final (_, ctrl) = harness(profile(ruleSetId: 'work', routingEnabled: true),
-          VpnStatus.disconnected);
+      final (_, ctrl) = harness(
+        profile(ruleSetId: 'work', routingEnabled: true),
+        VpnStatus.disconnected,
+      );
 
       final config = await ctrl.effectiveConfig(ctrl.state.profiles.single);
 
       expect(config.routing!.mode, 'split');
-      expect(shape(config.routing!.rules), shape([...kLanDirectRules, ...workRules]));
+      expect(
+        shape(config.routing!.rules),
+        shape([...kLanDirectRules, ...workRules]),
+      );
     });
 
     test('a server-managed policy ignores the local switch', () async {
       const managed = Routing(mode: 'split', rules: workRules);
-      final (_, ctrl) = harness(profile(managed: managed), VpnStatus.disconnected);
+      final (_, ctrl) = harness(
+        profile(managed: managed),
+        VpnStatus.disconnected,
+      );
 
       final config = await ctrl.effectiveConfig(ctrl.state.profiles.single);
 
       // The switch is not even offered for such configurations: the policy
       // belongs to the server, so it applies whatever the flag says.
       expect(config.routing!.mode, 'split');
-      expect(shape(config.routing!.rules), shape([...kLanDirectRules, ...workRules]));
+      expect(
+        shape(config.routing!.rules),
+        shape([...kLanDirectRules, ...workRules]),
+      );
     });
 
     test('picking a rule set turns routing on', () async {
@@ -227,26 +293,39 @@ void main() {
 
       await ctrl.setRuleSet('p1', 'work');
 
-      expect(ctrl.state.profiles.single.routingEnabled, true,
-          reason: 'choosing a set and seeing nothing happen would read as a bug');
+      expect(
+        ctrl.state.profiles.single.routingEnabled,
+        true,
+        reason: 'choosing a set and seeing nothing happen would read as a bug',
+      );
       expect(ctrl.state.profiles.single.ruleSetId, 'work');
     });
 
     test('toggling routing on a live tunnel is a hot reload', () async {
       await writeWorkSet();
-      final (core, ctrl) = harness(profile(ruleSetId: 'work'), VpnStatus.connected);
+      final (core, ctrl) = harness(
+        profile(ruleSetId: 'work'),
+        VpnStatus.connected,
+      );
 
       await ctrl.setRoutingEnabled('p1', true);
       await ctrl.setRoutingEnabled('p1', false);
 
-      expect(core.calls, ['reload', 'reload'],
-          reason: 'routing is applied under the standing session, like a server '
-              'switch — a stop/start would drop the tunnel and leak');
+      expect(
+        core.calls,
+        ['reload', 'reload'],
+        reason:
+            'routing is applied under the standing session, like a server '
+            'switch — a stop/start would drop the tunnel and leak',
+      );
     });
 
     test('with the tunnel down only the persisted config is updated', () async {
       await writeWorkSet();
-      final (core, ctrl) = harness(profile(ruleSetId: 'work'), VpnStatus.disconnected);
+      final (core, ctrl) = harness(
+        profile(ruleSetId: 'work'),
+        VpnStatus.disconnected,
+      );
 
       await ctrl.setRoutingEnabled('p1', true);
 
@@ -260,8 +339,10 @@ class _FixedProfiles extends ProfilesController {
   final List<Profile> profiles;
 
   @override
-  ProfilesState build() =>
-      ProfilesState(profiles: profiles, activeId: profiles.isEmpty ? null : profiles.first.id);
+  ProfilesState build() => ProfilesState(
+    profiles: profiles,
+    activeId: profiles.isEmpty ? null : profiles.first.id,
+  );
 }
 
 class _FixedOnDemand extends OnDemandController {
@@ -295,7 +376,6 @@ class _FixedCore extends VpnCore {
 
   @override
   Future<void> disconnect() async {}
-
 }
 
 /// Records every call that could touch the tunnel session.
@@ -315,8 +395,10 @@ class _RecordingCore extends _FixedCore {
   Future<void> disconnect() async => calls.add('disconnect');
 
   @override
-  Future<void> reload(NormConfig config, String locationId) async => calls.add('reload');
+  Future<void> reload(NormConfig config, String locationId) async =>
+      calls.add('reload');
 
   @override
-  Future<void> syncConfig(NormConfig config, String locationId) async => calls.add('sync');
+  Future<void> syncConfig(NormConfig config, String locationId) async =>
+      calls.add('sync');
 }

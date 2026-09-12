@@ -29,7 +29,8 @@ Future<File> buildLogArchive({required DateTime now}) async {
     add('$name.log', await fetchExtensionLog(name));
   }
 
-  final stamp = '${now.year}${_two(now.month)}${_two(now.day)}'
+  final stamp =
+      '${now.year}${_two(now.month)}${_two(now.day)}'
       '-${_two(now.hour)}${_two(now.minute)}${_two(now.second)}';
   // Temp dir, not app-support: the zip only exists to be shared/copied away,
   // and app-support archives accumulated forever (and outlived "Clear all

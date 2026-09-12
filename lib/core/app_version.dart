@@ -43,7 +43,10 @@ String get appBuild => _build;
 Future<void> loadAppVersion() async {
   try {
     final text = await rootBundle.loadString('pubspec.yaml');
-    final m = RegExp(r'^version:\s*(\S+?)\+(\S+)\s*$', multiLine: true).firstMatch(text);
+    final m = RegExp(
+      r'^version:\s*(\S+?)\+(\S+)\s*$',
+      multiLine: true,
+    ).firstMatch(text);
     if (m == null) {
       Log.e('app version', 'pubspec carries no version: <name>+<build> line');
       return;
@@ -69,12 +72,15 @@ const kEnginePin = 'v1.19.30';
 String get engineVersionLabel {
   final parts = kEnginePin.split('-');
   final version = parts.first.replaceFirst('v', '');
-  return parts.length >= 3 ? 'mihomo $version-${parts.last}' : 'mihomo $version';
+  return parts.length >= 3
+      ? 'mihomo $version-${parts.last}'
+      : 'mihomo $version';
 }
 
 /// "1.1.0 (11)" — the pairing every Apple platform shows. Says so plainly when
 /// the version could not be read, rather than showing half a number.
-String get appVersionLabel => _version.isEmpty ? 'unknown' : '$_version ($_build)';
+String get appVersionLabel =>
+    _version.isEmpty ? 'unknown' : '$_version ($_build)';
 
 /// Where the legal documents live. Empty until they are published — the About
 /// section shows the rows dimmed rather than pretending they lead somewhere.
