@@ -69,9 +69,12 @@ final class _Bindings {
   static DynamicLibrary _open() {
     final override = Platform.environment['AGW_LIBRARY'] ?? '';
     if (override.isNotEmpty) return DynamicLibrary.open(override);
-    return Platform.isAndroid
-        ? DynamicLibrary.open('libagw.so')
-        : DynamicLibrary.process();
+    // Apple links the archive into the app binary, so the symbols are in the
+    // process itself. Android and Windows ship a library file next to the app
+    // and open it by name.
+    if (Platform.isAndroid) return DynamicLibrary.open('libagw.so');
+    if (Platform.isWindows) return DynamicLibrary.open('libagw.dll');
+    return DynamicLibrary.process();
   }
 
   static _Bindings? _cached;

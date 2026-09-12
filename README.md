@@ -73,9 +73,16 @@ from anywhere:
 
 ```sh
 ./scripts/build-tunnel-service.sh        # build/windows/service/{tunnel-service.exe,wintun.dll}
+./native/libagw/build-dll.sh             # native/libagw/build/windows/libagw.dll
 flutter build windows                    # on Windows
 ISCC.exe windows\installer\AnnoyaTest.iss /DAppVersion=1.1.0   # the setup .exe
 ```
+
+The gateway library is a DLL here rather than something linked in: a Go
+c-archive has no place in the MSVC-built runner, so CMake copies
+`libagw.dll` next to `AnnoyaTest.exe` when it has been built, and Windows
+resolves it from the executable's own directory. A bundle without it runs and
+refuses Amnezia keys, the same as a build without gateway credentials.
 
 The installer registers the service (`AnnoyaTunnel`, runs as SYSTEM, starts
 at boot) and grants Users write access to `%ProgramData%\AnnoyaTest\engine`,
