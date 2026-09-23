@@ -47,14 +47,42 @@ or local, whenever "Local network direct" is on. It answers a different question
 depend on `geoip.metadb` / `GeoSite.dat`, downloaded by the app into the App
 Group container (the engine's home directory) and refreshed weekly. The engine's
 own `geo-auto-update` stays off: a 20+ MB fetch during tunnel start is exactly
-what must not happen. Until the databases are present, geo rules are dropped
-from the rendered config, with a log line and a visibly inactive row in the UI.
+what must not happen. That flag only stops periodic refreshes: a missing
+database still makes mihomo download it *while parsing*, 90 s per file under the
+engine lock, which overruns the `startTunnel` deadline. So the renderer always
+emits empty `geox-url` sources, and a missing file fails the parse at once while
+the previous config keeps running. Until the databases are present, geo rules
+are dropped from the rendered config, with a log line and a visibly inactive row
+in the UI.
+
+**Rule-list providers reach the engine only as `type: file`, never `type:
+http`.** mihomo fetches `http` providers inside config apply (20 s per file) and
+only logs a failure, leaving a rule that matches nothing (ADR-005). The app
+downloads each list itself, HTTPS only, into `rulelists/` in the container:
+inside the engine home, because mihomo's `IsSafePath` refuses anything else.
+The file is named by a digest of the URL, so two providers publishing different
+lists under one name cannot collide and a refresh overwrites the file the
+running config already names. A list is refetched once it is a week old. From a
+panel, a `file` provider (the publisher's own disk), an `http://` URL and a name
+the body never defined are dropped and counted, like `ext:` (ADR-005).
+
+**Simple mode is a view over the same rules, not a second format.** A rule
+shows there only if it is `geosite`/`geoip` with the action the direction
+implies (split → proxy, full → direct); everything else sits under the
+"Advanced rules" row, never hidden or dropped. Flipping the direction in Simple
+re-tags those catalog rules, since the user changed what "selected" means, not
+what is selected. In Advanced it changes only the direction: each rule carries
+its own action and is read as written.
+
+**Service icons are bundled, never fetched.** A request for a brand glyph would
+tell the network which services the user is about to route.
 
 **Rule types are gated by what the platform can enforce.** `process-name` asks
 which local application owns a connection; only desktop can answer. On iOS and
 Android the type is offered but disabled with a reason, and such rules arriving
 from a desktop are shown inactive and dropped before rendering rather than
-deleted from the set.
+deleted from the set. The same holds for a panel's routing: `PROCESS-NAME` is
+translated and left to the renderer, so it still works on desktop.
 
 ## Invariants
 
@@ -118,6 +146,8 @@ disabled with the reason costs one line and answers the question.
 - `lib/core/routing_prefs.dart` — device-level prefs and LAN rules.
 - `lib/core/geo_store.dart`, `geosite_index.dart` — databases.
 - `lib/core/platform_support.dart` — `supportsProcessRules`.
+- `lib/features/rule_set_editor_screen.dart` — the Simple and Advanced views.
+- `lib/core/service_avatar.dart` — bundled service glyphs.
 - `lib/core/rule_list_store.dart` — the provider's list files, on disk in
   the App Group container, refreshed weekly. Turning the switch off stops
   applying them but does not delete them: the switch promises to apply their
@@ -132,4 +162,7 @@ disabled with the reason costs one line and answers the question.
 - `management/internal/store/routingprofiles.go`, `shared/normconfig/routing.go`
   — the server half.
 - Tests: `test/routing_simple_test.dart`, `test/status_strip_test.dart`
-  (group `routing switch`), `test/routing_v2_test.dart`.
+  (group `routing switch`), `test/routing_v2_test.dart`,
+  `test/rule_list_store_test.dart`, `test/provider_routing_test.dart`,
+  `test/mihomo_tun_config_test.dart` (*the engine is forbidden from fetching
+  geo databases itself*).

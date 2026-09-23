@@ -86,6 +86,39 @@ The remaining differences are Android's, not ours:
 - The engine home is the app's files directory (`files/engine`); no App Group
   exists or is needed — service and app share the process.
 
+### The same decision on Windows and Linux
+
+The tunnel is a system service (`native/mihomocore/service`), a port of
+`MihomoVpnService.kt` behind the same contract as the Apple extension and the
+Android tunnel process: start, stop, reload, probes, logs, a pushed status.
+
+- **A second start while one is up or starting is a no-op.** The app and the
+  boot-time start can both ask; two engines on one adapter is what neither
+  meant.
+- **The service creates the tun itself** (`engine.StartOwnDevice`: Wintun on
+  Windows, the kernel tun on Linux). Creating the adapter is the privileged act
+  the service exists to hold; there is no host-owned fd to hand over.
+- **The app writes into the engine directory.** It downloads the geo databases
+  there (`shared_dir`), so the Windows installer grants Users modify on
+  `%ProgramData%\<app>\engine`; on Linux the directory is `1777`.
+- **The Linux socket is world-accessible (`0666`).** No socket mode expresses
+  "the console user", and a dedicated group forces a re-login after install.
+  Mullvad and NetBird ship their daemon sockets the same way. The Windows pipe
+  is limited to the interactive user.
+- **Stopping the service takes the tunnel down.** A stopped service is not a
+  VPN anyone can still rely on.
+
+### The app does not own the tunnel (Apple)
+
+The extension outlives the app process. On a relaunch over a live tunnel the
+host has no manager yet, so every entry point first adopts the system's
+profile without creating one (`VPNManager.adopt`), then reports status.
+
+A failure inside `startTunnel` is reported to the system, not to the app: the
+app only sees connecting → disconnected. `fetchLastDisconnectError` is the one
+API that returns the reason; it is empty before macOS 13 / iOS 16, on an
+ordinary stop, and when the extension was killed.
+
 ## Invariants
 
 - The engine runs inside the extension process. Nothing downloads, extracts or
@@ -142,3 +175,6 @@ gVisor costs some throughput in theory and is the only stack that works here.
   xcframework build script.
 - `lib/core/network_extension_core.dart` — the `VpnCore` implementation.
 - `lib/core/mihomo_tun_config.dart` — config rendering, unit-tested.
+- `native/mihomocore/service/` — the Windows and Linux service;
+  `cmd/tunnel-service/` its SCM and systemd hosts;
+  `windows/installer/AnnoyaTest.iss` — the engine directory's ACL.
