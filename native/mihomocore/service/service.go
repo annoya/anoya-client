@@ -1,14 +1,3 @@
-// Package service is the Windows tunnel: the mihomo engine hosted in a process
-// with the privilege to create a TUN adapter, driven by the unprivileged app
-// over a named pipe.
-//
-// It speaks the same contract as the Apple extension and the Android tunnel
-// process — start, stop, reload, the probes, the logs, a status the app
-// subscribes to — so the Dart side sees one VpnCore with the platform
-// difference on the far side of the pipe. Everything here that is not the wire
-// itself is a port of MihomoVpnService.kt, because the two solve the same
-// problem: a tunnel that outlives the app, dies on its own, and has to be
-// explained afterwards.
 package service
 
 import (
@@ -21,8 +10,7 @@ import (
 	"time"
 )
 
-// The status vocabulary shared with the other platforms (TunnelState.kt,
-// VpnStatus on the Dart side).
+// Shared with TunnelState.kt and VpnStatus in Dart.
 const (
 	StatusDisconnected = "disconnected"
 	StatusConnecting   = "connecting"
@@ -30,20 +18,16 @@ const (
 	StatusError        = "error"
 )
 
-// TunnelOutbound is the group every rendered config routes through
-// (kTunnelOutbound in mihomo_tun_config.dart). Probing the group and not a
-// member means the probe follows whatever the engine picked.
+// Must match kTunnelOutbound in mihomo_tun_config.dart.
 const TunnelOutbound = "PROXY"
 
-// Service owns the engine's state and answers the app.
 type Service struct {
 	eng   Engine
 	files Files
 	now   func() time.Time
 
-	// runMu serialises start, stop and reload — the engine has its own mutex,
-	// but the status transitions around a call have to be atomic with it, or a
-	// stop landing mid-start would be overwritten by "connected".
+	// The engine has its own mutex, but status transitions must be atomic with
+	// the call, or a stop mid-start would be overwritten by "connected".
 	runMu sync.Mutex
 
 	mu     sync.Mutex
@@ -62,7 +46,6 @@ func New(eng Engine, files Files) *Service {
 	}
 }
 
-// Status is the current state, for the process hosting the service.
 func (s *Service) Status() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -82,8 +65,6 @@ func (s *Service) setStatus(st string) {
 	}
 }
 
-// Shutdown is the service being stopped by the system: the tunnel goes down
-// with it, and every client learns so before its pipe closes.
 func (s *Service) Shutdown() {
 	s.stop()
 	s.mu.Lock()
@@ -97,9 +78,6 @@ func (s *Service) Shutdown() {
 	}
 }
 
-// Handle answers one request. Every method the app can send is here; the
-// names are the MethodChannel names, so the Dart side stays a rename away from
-// the other platforms.
 func (s *Service) Handle(method string, args map[string]any) (any, error) {
 	str := func(k string) string {
 		v, _ := args[k].(string)
@@ -135,10 +113,6 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		return nil, nil
 
 	case "set_auto_connect":
-		// The one thing that may raise a tunnel with no app running. Kept
-		// apart from connect and disconnect on purpose: those say what the
-		// user wants now, this says what they want every time the machine
-		// comes back, and the two are not the same question.
 		s.files.SetAutoConnect(boolOr("enabled", false))
 		return nil, nil
 
@@ -151,8 +125,6 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		return nil, s.reload(config)
 
 	case "sync_config":
-		// Keep the saved config in step with the selection, so a start nobody
-		// is watching never resurrects a stale one.
 		config := str("config")
 		if config == "" {
 			return nil, errors.New("config required")
@@ -161,16 +133,11 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		return nil, nil
 
 	case "remove_profile":
-		// No system profile to remove; what must not outlive the last
-		// configuration is the saved config a boot-time start would run. The
-		// auto-connect switch is left alone: it is the user's answer, not a
-		// property of the configuration they just removed.
 		s.stop()
 		s.files.RemoveConfig()
 		return nil, nil
 
 	case "set_on_demand":
-		// Windows has no on-demand rules of its own. Never armed here.
 		return false, nil
 
 	case "connected_since":
@@ -198,9 +165,6 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		return fmt.Sprintf("%d:%d", up, down), nil
 
 	case "url_test":
-		// Refused rather than attempted when the tunnel is down: the engine
-		// would answer "no outbound named PROXY", which reads as a broken
-		// config instead of "there is nothing running to test".
 		if s.Status() != StatusConnected {
 			return "err:the tunnel is not running", nil
 		}
@@ -246,10 +210,6 @@ func (s *Service) persist(config string, logEnabled bool) {
 	s.files.SetLogsEnabled(logEnabled)
 }
 
-// start brings the tunnel up from the config just saved. A second start while
-// one is up or under way is not an error and does nothing, as on Android: the
-// app and a boot-time start can both ask, and two engines on one adapter is not
-// what either of them meant.
 func (s *Service) start(config string) error {
 	s.runMu.Lock()
 	defer s.runMu.Unlock()
@@ -265,8 +225,6 @@ func (s *Service) start(config string) error {
 		s.files.Append("start failed: " + err.Error())
 		s.files.RecordError(err.Error())
 		s.setStatus(StatusError)
-		// Whatever half came up goes down with the attempt; "error" is a
-		// moment, not a state the tunnel can be left in.
 		s.eng.Stop()
 		s.setStatus(StatusDisconnected)
 		return err
@@ -280,14 +238,6 @@ func (s *Service) start(config string) error {
 	return nil
 }
 
-// StartSaved brings the tunnel up from the persisted config with no app
-// involved — the service starting with the machine.
-//
-// It runs only when auto-connect is on. The config is saved on every sync of
-// the selection, so it exists after any run of the app at all; starting from
-// its mere presence turned a reboot into a VPN nobody had asked for. An absent
-// flag is not an error: it is the ordinary answer for anyone who never turned
-// the switch on.
 func (s *Service) StartSaved() error {
 	if !s.files.AutoConnect() {
 		return nil
@@ -313,9 +263,6 @@ func (s *Service) stop() {
 	s.files.Append("tunnel down")
 }
 
-// reload swaps the running engine onto a new config under the standing
-// adapter. Refused when nothing runs; on a rejected config the engine keeps
-// the previous one, and the error says so to the app.
 func (s *Service) reload(config string) error {
 	s.runMu.Lock()
 	defer s.runMu.Unlock()
@@ -330,12 +277,6 @@ func (s *Service) reload(config string) error {
 	return nil
 }
 
-// --- the wire ---------------------------------------------------------------
-
-// One JSON object per line, both ways. The app sends requests and reads
-// responses matched by id; the service pushes status events in between,
-// starting with the current status the moment a client connects — the app may
-// have just been opened over a tunnel the service started at boot.
 type request struct {
 	ID     int64          `json:"id"`
 	Method string         `json:"method"`
@@ -353,15 +294,11 @@ type event struct {
 	Status string `json:"status"`
 }
 
-// A rendered config with a long rule list runs to megabytes; the line buffer
-// has to hold one.
+// A rendered config with a long rule list runs to megabytes.
 const maxLineBytes = 16 << 20
 
-// A client that stops reading must not stop the service: a status push is
-// delivered to every client in turn, and a write that blocks on one of them
-// would hold the response another is waiting for. So each connection owns a
-// queue and a writer; a queue that fills means a client that is not reading,
-// and that client is disconnected rather than waited on.
+// A client that fills its queue is not reading and is dropped, so it cannot
+// block pushes and responses to the others.
 const outboundQueue = 64
 
 type conn struct {
@@ -391,9 +328,8 @@ func (c *conn) writeLoop() {
 	}
 }
 
-// close ends the connection once. The queue is never closed: a request still
-// being handled answers into it after the client has gone, and that answer is
-// dropped here rather than panicking there.
+// The queue is never closed: a request still in flight may answer into it
+// after the client has gone.
 func (c *conn) close() {
 	c.once.Do(func() {
 		_ = c.nc.Close()
@@ -414,7 +350,6 @@ func (c *conn) send(v any) {
 	}
 }
 
-// Serve accepts clients until the listener closes.
 func (s *Service) Serve(ln net.Listener) error {
 	for {
 		nc, err := ln.Accept()
@@ -428,9 +363,6 @@ func (s *Service) Serve(ln net.Listener) error {
 	}
 }
 
-// ServeConn talks to one client until it hangs up. Requests are answered
-// concurrently: a probe blocks for as long as its timeout allows, and it must
-// not hold a stop behind it.
 func (s *Service) ServeConn(nc net.Conn) {
 	c := newConn(nc)
 	s.mu.Lock()
@@ -458,6 +390,7 @@ func (s *Service) ServeConn(nc net.Conn) {
 			c.send(response{ID: 0, Error: "malformed request"})
 			continue
 		}
+		// Concurrent so a blocking probe cannot hold a stop behind it.
 		go func(req request) {
 			res, err := s.Handle(req.Method, req.Args)
 			out := response{ID: req.ID, Result: res}

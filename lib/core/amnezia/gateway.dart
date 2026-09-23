@@ -3,28 +3,14 @@ import 'dart:io';
 import 'agw_ffi.dart';
 import 'amnezia_env.dart';
 
-/// The two gateway calls this app makes.
-///
-/// Everything else Amnezia's client can ask for — services catalogue, trials,
-/// purchases, captchas, renewal links — is deliberately absent: this app
-/// imports a subscription somebody already has, and an endpoint we do not call
-/// is a behaviour we cannot get wrong.
 class AmneziaGateway {
   AmneziaGateway({required this.installationUuid, AgwClient? client})
     : _client = client ?? _shared;
 
-  /// Stable per installation, and sent on every request. The gateway counts
-  /// devices by it, so it must survive app restarts and must not be shared.
   final String installationUuid;
 
   final AgwClient _client;
 
-  /// One client for the process. The client carries the bypass state — which
-  /// proxy reached the gateway last time — and a gateway object is built per
-  /// call (the source that owns it is itself built per call), so a client per
-  /// gateway meant a fresh discovery sweep for every request. The state now
-  /// lives as long as the app does; persisting it across launches is the next
-  /// step, not this one.
   static final AgwClient _shared = AgwClient(
     AgwConfig(
       endpoint: AmneziaEnv.endpoint,
@@ -34,9 +20,6 @@ class AmneziaGateway {
     ),
   );
 
-  /// What every request carries, whatever it asks for. Empty values are
-  /// dropped rather than sent blank: absent and empty are different answers to
-  /// the gateway, and it is theirs to interpret.
   Map<String, dynamic> _base() => {
     'os_version': _osName,
     'app_version': AmneziaEnv.clientVersion,
@@ -54,8 +37,6 @@ class AmneziaGateway {
     return 'linux';
   }
 
-  /// The subscription as a whole: which locations it may use, with which
-  /// protocols, how long it runs and how many devices it allows.
   Future<AgwResponse> accountInfo({
     required String apiKey,
     required String serviceType,
@@ -77,9 +58,6 @@ class AmneziaGateway {
     );
   }
 
-  /// One location's actual protocol config, issued against a key this device
-  /// generated. The gateway hands out a new one per request — which is why a
-  /// location change and a stale key both end here.
   Future<AgwResponse> config({
     required String apiKey,
     required String serviceType,
@@ -98,8 +76,6 @@ class AmneziaGateway {
           'server_country_code': serverCountryCode,
         'service_type': serviceType,
         'service_protocol': serviceProtocol,
-        // AWG: the client's WireGuard public key, whose private half never
-        // leaves this device. VLESS: the user id the server will accept.
         'public_key': publicKey,
         'auth_data': {'api_key': apiKey},
         if (isConnectEvent) 'is_connect_event': true,

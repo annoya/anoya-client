@@ -5,12 +5,6 @@ import '../../core/device_identity.dart';
 import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 
-/// Shown only for a configuration whose panel said it counts devices.
-///
-/// The panel reports *that* it counts and *that* it is full — never how many of
-/// how many — so this says what we know and stops. What it must say is that
-/// this installation occupies a slot: that is a consequence of using the app,
-/// and learning it by hitting the limit somewhere else would be a surprise.
 class ThisDeviceSection extends StatelessWidget {
   const ThisDeviceSection({super.key});
 
@@ -34,14 +28,6 @@ class ThisDeviceSection extends StatelessWidget {
   }
 }
 
-/// How this installation looks to whoever is counting devices: the machine in
-/// words, then the id itself.
-///
-/// Both halves earn their place, and the order is the order of the
-/// conversation they exist for. Support asks "which device is yours" — the
-/// answer starts with "my iPhone" and ends with the id that pins it down. The
-/// provider differs (a panel counts by hwid, Amnezia by an installation uuid)
-/// but the question does not, so neither should the layout.
 class DeviceSection extends StatelessWidget {
   const DeviceSection({
     super.key,
@@ -92,12 +78,6 @@ class DeviceSection extends StatelessWidget {
   }
 }
 
-/// An identifier the user may need to quote, shown short and copied whole.
-///
-/// It exists for one conversation: a provider says a slot is taken and the
-/// user has to say which device is theirs. Truncated because nobody reads a
-/// uuid off a screen, and copied in full because nobody has to — the point is
-/// to paste it somewhere, not to memorise it.
 class IdentifierRow extends StatelessWidget {
   const IdentifierRow({super.key, required this.title, required this.value});
 

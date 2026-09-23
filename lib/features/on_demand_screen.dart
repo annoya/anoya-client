@@ -8,9 +8,6 @@ import '../l10n/l10n.dart';
 import '../state/on_demand_controller.dart';
 import 'on_demand_rule_screen.dart';
 
-/// System auto-connect: the enable switch plus an ordered rule list ("first
-/// match wins", same pattern as the routing rule sets). The OS evaluates the
-/// rules and starts/stops the tunnel by itself.
 class OnDemandScreen extends ConsumerWidget {
   const OnDemandScreen({super.key});
 

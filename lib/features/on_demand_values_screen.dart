@@ -3,13 +3,6 @@ import 'package:flutter/material.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
-/// Editor for one condition list of an on-demand rule (Wi-Fi networks, DNS
-/// search domains, DNS servers).
-///
-/// The list is kept sorted and has no manual ordering: the system matches when
-/// *any* entry matches and the rule has a single action, so the order is not
-/// observable. Priority between different actions is expressed by the order of
-/// the rules themselves.
 class OnDemandValuesScreen extends StatefulWidget {
   const OnDemandValuesScreen({
     super.key,
@@ -23,10 +16,8 @@ class OnDemandValuesScreen extends StatefulWidget {
 
   final String title;
 
-  /// Current entries; the screen returns the edited list on pop.
   final List<String> values;
 
-  /// What one entry is called in the section header ("networks", "domains").
   final String unit;
 
   final String addTitle;

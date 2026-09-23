@@ -2,9 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vpn_client/core/subscription_info.dart';
 
-/// The convention panels speak in response headers. Values here are the shapes
-/// two live Remnawave subscriptions actually returned, so the parser is pinned
-/// against reality rather than against the documentation's examples.
 void main() {
   test('a plan with a quota and an end date', () {
     final info = SubscriptionInfo.fromHeaders({

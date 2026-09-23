@@ -8,9 +8,6 @@ import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 
-/// Self-hosted sign-in: server address + credentials, or SSO when the server
-/// offers providers. Reached from the start screen ("Sign in to your server")
-/// or via server-address detection.
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key, this.initialServer});
 
@@ -41,9 +38,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     return h == null || h.isEmpty ? null : h;
   }
 
-  /// The action returns true only when the sign-in actually happened; false
-  /// means the user backed out (dismissed the provider sheet) — the screen
-  /// stays, with the typed server address intact.
   Future<void> _run(Future<bool> Function() action) async {
     setState(() => _busy = true);
     try {
@@ -63,8 +57,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   });
 
   Future<void> _ssoSignIn() => _run(() async {
-    // Already worded for the user: a FormatException here would be read by
-    // describeError as "this doesn't look like a link".
+    // Pre-worded: describeError would read the empty URL's FormatException as
+    // "not a link".
     if (_server.text.trim().isEmpty) {
       throw AppErrorException(AppError(L10n.current.signInEnterServerFirst));
     }
@@ -80,7 +74,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final provider = cfg.providers.length == 1
         ? cfg.providers.first
         : await _pickProvider(cfg.providers);
-    if (provider == null) return false; // sheet dismissed — user backed out
+    if (provider == null) return false;
     await _ctrl.addSelfhostedOIDC(_server.text, provider);
     return true;
   });
@@ -146,8 +140,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     onSubmitted: (_) => _busy ? null : _signIn(),
                   ),
                   const SizedBox(height: 20),
-                  // Heights come from the theme (48 for both), so the stack
-                  // stays even — no per-button SizedBox.
                   FilledButton(
                     onPressed: _busy ? null : _signIn,
                     child: _busy

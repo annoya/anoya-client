@@ -57,7 +57,10 @@ replacement.
   attempt costs a bcrypt hash, so this bounds both guessing and CPU exhaustion,
   and a failed lookup pays the same hashing cost as a wrong password so the
   response time does not enumerate accounts.
-- Identity binding is by `sub`, not by email. Emails get reassigned.
+- Identity binding is by `sub`, not by email. Emails get reassigned. The one
+  exception is the first SSO login: if no user has this `sub`, a verified email
+  equal to an existing username links that pre-created account, and `sub`
+  binds it from then on.
 - No client secret ships in the app. A public client has none by construction.
 
 ## Alternatives Considered

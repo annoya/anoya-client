@@ -1,12 +1,5 @@
 //go:build linux
 
-// On Linux the service is a systemd unit running as root — creating the TUN
-// device and installing the routes is the privileged act, as on Windows — and
-// the app dials a unix socket instead of a named pipe. Same wire, same state
-// machine (the service package); this file is only how systemd starts and
-// stops it, and how `-install` registers it on a machine without the package
-// manager's help.
-
 package main
 
 import (
@@ -22,9 +15,8 @@ import (
 	"mihomocore/service"
 )
 
-// The unit's name to systemd, and the socket the app dials. Both are part of
-// the contract with the packaging (linux/packaging) and the Dart side
-// (lib/core/unix_socket_link.dart); change them together.
+// Shared with linux/packaging and lib/core/unix_socket_link.dart; change them
+// together.
 const (
 	unitName   = "annoyatest-tunnel.service"
 	unitPath   = "/etc/systemd/system/" + unitName
@@ -32,20 +24,8 @@ const (
 	socketPath = socketDir + "/tunnel.sock"
 )
 
-// The engine's home: the service writes the config and the logs here, the
-// app downloads the geo databases into it (`shared_dir`). The Windows
-// installer grants Users modify on the same directory; here it is created
-// world-writable with the sticky bit, so every local user can add files and
-// none can remove another's.
 func defaultDir() string { return "/var/lib/annoyatest/engine" }
 
-// listen opens the socket any local user may connect to. Anyone reaching it
-// can point the machine's traffic anywhere, which on Windows is why the pipe
-// is limited to the interactive user. Linux has no equivalent of "whoever is
-// logged in at the console" that a socket mode can express, and a dedicated
-// group would mean a re-login after every install for the one person the
-// machine belongs to. Mullvad and NetBird ship their daemon sockets
-// world-accessible for the same reason; this follows them.
 func listen() (net.Listener, error) {
 	if err := os.MkdirAll(socketDir, 0o755); err != nil {
 		return nil, err
@@ -55,6 +35,8 @@ func listen() (net.Listener, error) {
 	if err != nil {
 		return nil, err
 	}
+	// World-accessible on purpose: no socket mode expresses "the console user",
+	// and a dedicated group would need a re-login after install.
 	if err := os.Chmod(socketPath, 0o666); err != nil {
 		_ = ln.Close()
 		return nil, err
@@ -62,10 +44,9 @@ func listen() (net.Listener, error) {
 	return ln, nil
 }
 
-// runService is what systemd runs. SIGTERM (systemctl stop, shutdown) takes
-// the tunnel down with it: a service that is stopped is not a VPN the user
-// can still be relying on.
 func runService(files service.Files) error {
+	// The app writes the geo databases here; the sticky bit stops users removing
+	// each other's files.
 	if err := os.Chmod(files.Dir, 0o1777); err != nil {
 		files.Append("engine dir permissions: " + err.Error())
 	}
@@ -75,9 +56,6 @@ func runService(files service.Files) error {
 		return err
 	}
 	s := newService(files)
-	// A tunnel the user left on comes back with the machine. StartSaved does
-	// nothing when no config was saved, and a start that fails is recorded
-	// where the app will read it.
 	go func() { _ = s.StartSaved() }()
 
 	stop := make(chan os.Signal, 1)
@@ -90,17 +68,12 @@ func runService(files service.Files) error {
 	return s.Serve(ln)
 }
 
-// runConsole is the same service in the foreground, for development: still
-// needs root, because the device does.
 func runConsole(files service.Files) error {
 	fmt.Fprintf(os.Stderr, "listening on %s, engine dir %s\n", socketPath, files.Dir)
 	return runService(files)
 }
 
-// The unit `-install` writes. The .deb ships the same text from
-// linux/packaging; keep the two in step. Restart=on-failure is the Windows
-// recovery action: a crashed service must come back on its own, because the
-// app only knocks on the socket and cannot start it.
+// The .deb ships the same unit from linux/packaging; keep the two in step.
 const unitText = `[Unit]
 Description=AnnoyaTest tunnel
 After=network-online.target
@@ -142,8 +115,7 @@ func uninstallService() error {
 	if _, err := os.Stat(unitPath); err != nil {
 		return fmt.Errorf("%s is not installed", unitName)
 	}
-	// Disable and stop before the file goes, or systemd keeps a unit it can
-	// no longer find.
+	// Disable before removing the file, or systemd keeps a unit it cannot find.
 	err := systemctl("disable", "--now", unitName)
 	if rmErr := os.Remove(unitPath); rmErr != nil && err == nil {
 		err = rmErr

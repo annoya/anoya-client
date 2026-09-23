@@ -10,9 +10,6 @@ import 'package:vpn_client/core/parsers/subscription.dart';
 
 void main() {
   test('a self-hosted AmneziaWG location renders as a wireguard outbound', () {
-    // The shape the amneziawg driver on the server emits: already mihomo's
-    // own keys, so it must pass through untouched — including the obfuscation
-    // set, without which the client would speak plain WireGuard.
     final loc = Location.fromJson({
       'id': 'worker_2',
       'label': 'Berlin',
@@ -88,9 +85,6 @@ void main() {
   });
 
   test('mihomoTunConfigYaml rejects unknown proxy types', () {
-    // Not wireguard, which the renderer emits now that Amnezia's AWG
-    // configurations arrive with their own key material — the same trap the
-    // hysteria2 note below records.
     final loc = Location.fromJson({
       'id': 'w',
       'label': 'x',
@@ -129,8 +123,6 @@ void main() {
   test(
     'the sniffer recovers the domain of a connection whose DNS bypassed the tunnel',
     () {
-      // Android Private DNS (DoT on 853) and Chrome's DoH hand apps real
-      // addresses; without sniffing every domain rule matched nothing there.
       final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
       final doc = loadYaml(mihomoTunConfigYaml(loc)) as YamlMap;
       final sniffer = doc['sniffer'] as YamlMap;
@@ -155,8 +147,6 @@ void main() {
   test(
     'the Android decoy resolver is refused on 853 before any other rule',
     () {
-      // Private DNS probes the resolver it was given for DoT; a probe that is
-      // refused keeps Android on plain DNS, the only path the hijack sees.
       final loc = parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
       final routing = Routing(
         mode: 'split',
@@ -176,7 +166,6 @@ void main() {
               as YamlList;
       expect(rules.first, 'IP-CIDR,172.19.0.2/32,REJECT,no-resolve');
       expect(rules[1], 'DOMAIN-SUFFIX,vk.ru,REJECT');
-      // Only where the decoy is ours: Apple's system resolver never upgrades.
       final apple =
           (loadYaml(mihomoTunConfigYaml(loc, routing: routing))
                   as YamlMap)['rules']
@@ -260,8 +249,6 @@ void main() {
   });
 
   test('rejects unknown proxy types (renderer)', () {
-    // tuic, not hysteria2: hysteria2 is supported now, and a test whose
-    // "unsupported" example quietly became supported stops testing anything.
     final loc = Location.fromJson({
       'id': 'x',
       'label': 'y',
@@ -297,21 +284,9 @@ void main() {
           action: 'proxy',
         ),
         RoutingRule(type: 'domain-suffix', value: 'x\nrules:', action: 'proxy'),
-        RoutingRule(
-          type: 'ip-cidr',
-          value: '10.0.0.1',
-          action: 'proxy',
-        ), // bare IP
-        RoutingRule(
-          type: 'geo-ip',
-          value: 'ru',
-          action: 'proxy',
-        ), // unknown type
-        RoutingRule(
-          type: 'domain-suffix',
-          value: 'y.com',
-          action: 'allow',
-        ), // unknown action
+        RoutingRule(type: 'ip-cidr', value: '10.0.0.1', action: 'proxy'),
+        RoutingRule(type: 'geo-ip', value: 'ru', action: 'proxy'),
+        RoutingRule(type: 'domain-suffix', value: 'y.com', action: 'allow'),
       ],
     );
     final yaml = mihomoTunConfigYaml(vlessLoc(), routing: routing);
@@ -321,24 +296,11 @@ void main() {
   });
 
   test('fake-IP meanings survive a hot switch', () {
-    // Every config apply rebuilds the fake-IP pool, and without persistence
-    // it comes back empty: the OS and the browsers keep the 198.18.x.y they
-    // were handed, the engine no longer knows which domain each one meant, and
-    // sites stop opening for as long as those caches live. The stable range
-    // keeps the addresses valid; this keeps what they stand for.
     final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     expect((doc['profile'] as YamlMap)['store-fake-ip'], true);
   });
 
   test('IPv6 is carried, not resolved', () {
-    // The tunnel owns the v6 default route (ADR-002), so a v6 packet that an
-    // app sends — a literal address, or one it resolved past our hijack — has
-    // to be accepted and routed rather than dropped: that is the general
-    // `ipv6: true` and the tun's v6 address. Names, though, are answered v4
-    // only: `dns.ipv6` is left at mihomo's default (off), so AAAA comes back
-    // empty and apps connect through v4 fake-IPs. Deliberate — a fake-v6
-    // answer would make dual-stack clients prefer v6, and every destination
-    // would then hang on a server without v6 egress instead of falling back.
     final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     expect(doc['ipv6'], true);
     final dns = doc['dns'] as YamlMap;
@@ -351,9 +313,6 @@ void main() {
   });
 
   test('the engine is forbidden from fetching geo databases itself', () {
-    // Not a preference: a missing database makes mihomo download it *while
-    // parsing*, 90s per file inside the engine lock — during startTunnel that
-    // overruns the system's deadline. Empty URLs make it fail immediately.
     final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     final urls = doc['geox-url'] as YamlMap;
     expect(
@@ -364,7 +323,6 @@ void main() {
   });
 
   test('renders a parsed hysteria2 proxy', () {
-    // QUIC-based: no transport section, and alpn is a list rather than a string.
     final loc = parseProxyUri(
       'hysteria2://pw@h.example:30443/?sni=h.example&alpn=h3&insecure=1#HY',
     )!;
@@ -384,18 +342,12 @@ void main() {
   });
 
   test('the single outbound is always named "proxy"', () {
-    // Both the PROXY group and the engine wrapper's egress probe (Go side,
-    // native/mihomocore/engine.go) look the outbound up by this exact name.
-    // A rename here would silently disable the probe rather than fail.
     final doc = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
     expect((doc['proxies'] as YamlList).single['name'], 'proxy');
     expect((doc['proxy-groups'] as YamlList).single['proxies'], ['proxy']);
   });
 
   test('a hostile subscription cannot add config keys of its own', () {
-    // Keys are structural: unlike values, a key carrying a newline escapes its
-    // block and lands at column 0. The payload here would open mihomo's
-    // unauthenticated control API to the network.
     const body = '''
 proxies:
   - name: pwn
@@ -419,16 +371,9 @@ proxies:
 
   test('dns comes from the config; the app default rides the tunnel', () {
     final fallback = loadYaml(mihomoTunConfigYaml(vlessLoc())) as YamlMap;
-    // Pinned, unlike a resolver the configuration chose: unpinned it would go
-    // out on the physical interface, telling the local network which resolver
-    // this device uses and the resolver which addresses are asking. Through the
-    // tunnel it says neither, and a network blocking it stops mattering.
     expect((fallback['dns'] as YamlMap)['nameserver'], [
       'https://1.1.1.1/dns-query#PROXY',
     ]);
-    // Reaching the proxy is the one job that cannot ride the tunnel, so it gets
-    // its own unpinned list — and three operators rather than one, because it
-    // resolves a single hostname the local network already watched us dial.
     expect(
       (fallback['dns'] as YamlMap)['proxy-server-nameserver'],
       hasLength(3),
@@ -452,7 +397,6 @@ proxies:
       '10.0.0.53',
       'tls://1.1.1.1:853',
     ]);
-    // Every resolver is IP-addressed: no bootstrap needed.
     expect((own['dns'] as YamlMap)['default-nameserver'], isNull);
   });
 
@@ -469,11 +413,6 @@ proxies:
   });
 
   test('resolving the proxy never needs the proxy', () {
-    // A panel pins its resolver to the tunnel so DNS does not leak to the local
-    // network. Honouring that pin without saying how proxy hostnames resolve
-    // deadlocks the engine: the query waits on the tunnel, the tunnel waits on
-    // the query, and every dial dies with "couldn't find ip" — a VPN that
-    // connects and carries nothing.
     final dns =
         (loadYaml(
                   mihomoTunConfigYaml(
@@ -498,9 +437,6 @@ proxies:
   });
 
   test('a pin we cannot honour is dropped, its resolver kept', () {
-    // mihomo reads an unknown pin as an interface name and binds the socket to
-    // it, so a provider group name we replaced with ours would send every query
-    // out of a device that does not exist.
     final dns =
         (loadYaml(
                   mihomoTunConfigYaml(
@@ -538,15 +474,9 @@ proxies:
   test('unusable dns entries are dropped, never interpolated', () {
     final yaml = mihomoTunConfigYaml(
       vlessLoc(),
-      dns: [
-        'evil"\n  - injected', // quote + escape
-        'bad entry with spaces',
-        'x\nrules: []', // newline
-        '', // empty
-      ],
+      dns: ['evil"\n  - injected', 'bad entry with spaces', 'x\nrules: []', ''],
     );
     final doc = loadYaml(yaml) as YamlMap;
-    // Everything was dropped, so the fallback applies and nothing leaked in.
     expect((doc['dns'] as YamlMap)['nameserver'], [
       'https://1.1.1.1/dns-query#PROXY',
     ]);
@@ -556,8 +486,6 @@ proxies:
   test(
     'fake-ip settings are app constants, whatever dns the config brings',
     () {
-      // The OS caches the fake addresses the engine handed out; a range that
-      // moved with the config would strand every cached answer on a hot switch.
       for (final dns in [
         <String>[],
         ['10.0.0.53'],
@@ -587,9 +515,6 @@ proxies:
     );
 
     test('a downloaded list is handed over as a local file', () {
-      // Never `type: http`: mihomo fetches providers inside config apply, 20 s
-      // per file under a wait group, which is a stalled connect — and a failure
-      // there is only logged, leaving a rule that matches nothing.
       final doc =
           loadYaml(
                 mihomoTunConfigYaml(
@@ -665,7 +590,7 @@ proxies:
         listPaths: {'a: b': '/tmp/x.yaml'},
       );
       expect(yaml, isNot(contains('a: b')));
-      loadYaml(yaml); // must still parse
+      loadYaml(yaml);
     });
   });
 
@@ -683,7 +608,6 @@ proxies:
       'https://doh.example.net/dns-query',
       '9.9.9.9',
     ]);
-    // Link lists carry no DNS.
     expect(
       parseSubscriptionBody('vless://u@h:443?security=none#x').dns,
       isEmpty,
@@ -691,9 +615,6 @@ proxies:
   });
 
   group('an engine-owned device', () {
-    // The Windows service has no host to open the TUN: the engine creates the
-    // adapter and routes it. Everywhere else the host does both and the engine
-    // must touch neither.
     Location loc() => parseProxyUri('vless://u@1.2.3.4:443?security=tls#A')!;
 
     test('is named, addressed and routed by the engine', () {
@@ -711,9 +632,6 @@ proxies:
     });
 
     test('closes the DNS side door Windows opens on every other adapter', () {
-      // The system resolver asks all adapters at once; the copy that goes to
-      // the ISP never enters the tun, so no rule can catch it. Only WFP can,
-      // and strict-route is how sing-tun installs those filters.
       final tun =
           (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest'))
                   as YamlMap)['tun']

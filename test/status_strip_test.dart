@@ -22,10 +22,6 @@ import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/state/routing_status.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// The home status strip and the per-configuration routing switch behind it.
-/// The contract: the strip says in words what each of the three settings is
-/// doing (colour is a second carrier of that meaning, never the only one), and
-/// routing off means no rule set reaches the engine at all.
 void main() {
   Profile profile({
     bool routingEnabled = false,
@@ -47,9 +43,8 @@ void main() {
     ],
   );
 
-  // Pinned to iOS: the Auto chip belongs to the Apple strip (Android's
-  // auto-connect is the system's Always-on switch, whose state the app cannot
-  // read), and widget tests default to android, where the chip is hidden.
+  // Pinned to iOS: the Auto chip is Apple-only, and widget tests default to
+  // android.
   group('strip', () {
     Future<void> pump(
       WidgetTester tester, {
@@ -112,8 +107,6 @@ void main() {
           collectLogs: false,
         );
 
-        // An empty strip would read as "there are no such settings" rather than
-        // "they are all off".
         expect(find.text('Auto · off'), findsOneWidget);
         expect(find.text('Routing · off'), findsOneWidget);
         expect(find.text('Logs · off'), findsOneWidget);
@@ -135,8 +128,6 @@ void main() {
           collectLogs: false,
         );
 
-        // Not "off": the switch on the on-demand screen is on, and telling the
-        // user otherwise sends them looking for something to turn on.
         expect(find.text('Auto · paused'), findsOneWidget);
         expect(find.text('Auto · off'), findsNothing);
       },
@@ -165,8 +156,6 @@ void main() {
         Navigator.of(tester.element(find.byType(OnDemandScreen))).pop();
         await tester.pumpAndSettle();
 
-        // Routing belongs to a configuration, so its chip leads to that
-        // configuration — the switch lives there, not in the global settings.
         await tester.tap(find.text('Routing · off'));
         await tester.pumpAndSettle();
         expect(find.byType(ConfigScreen), findsOneWidget);
@@ -250,8 +239,6 @@ void main() {
 
       final config = await ctrl.effectiveConfig(ctrl.state.profiles.single);
 
-      // The chosen set is remembered on the profile but must not be applied:
-      // the only rules left are the device-level LAN ones.
       expect(config.routing!.mode, 'full');
       expect(shape(config.routing!.rules), shape(kLanDirectRules));
     });
@@ -281,8 +268,6 @@ void main() {
 
       final config = await ctrl.effectiveConfig(ctrl.state.profiles.single);
 
-      // The switch is not even offered for such configurations: the policy
-      // belongs to the server, so it applies whatever the flag says.
       expect(config.routing!.mode, 'split');
       expect(
         shape(config.routing!.rules),
@@ -381,7 +366,6 @@ class _FixedCore extends VpnCore {
   Future<void> disconnect() async {}
 }
 
-/// Records every call that could touch the tunnel session.
 class _RecordingCore extends _FixedCore {
   _RecordingCore(this._status);
   final VpnStatus _status;

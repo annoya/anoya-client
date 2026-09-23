@@ -1,20 +1,11 @@
 #!/bin/sh
-# Install from the portable archive, for a distribution the packages do not
-# cover: the same layout the packages produce, by hand. Needs root, and
-# systemd for the service. Run from the unpacked archive:
-#
-#   sudo ./install.sh
-#
-# Puts the app in /opt/annoyatest, registers the tunnel service
-# (tunnel-service -install writes the unit and starts it) and creates the
-# engine directory the app and the service share. ./uninstall.sh reverses it.
+# usage: sudo ./install.sh   (from the unpacked portable archive)
 set -e
 cd "$(dirname "$0")"
 [ "$(id -u)" = 0 ] || { echo "run as root: sudo ./install.sh" >&2; exit 1; }
 [ -d /run/systemd/system ] || { echo "the tunnel service needs systemd" >&2; exit 1; }
 
-# A running service holds its executable open; stop it before the files are
-# replaced. Absent is fine — a first install.
+# A running service holds its executable open; stop it before replacing files.
 /opt/annoyatest/service/tunnel-service -uninstall >/dev/null 2>&1 || true
 
 rm -rf /opt/annoyatest
@@ -26,6 +17,7 @@ install -Dm 0644 packaging/annoyatest.png /usr/share/icons/hicolor/256x256/apps/
 ln -sf /opt/annoyatest/annoyatest /usr/bin/annoyatest
 
 mkdir -p /var/lib/annoyatest/engine
+# Every local user's app writes geo databases here; sticky so none can remove another's.
 chmod 1777 /var/lib/annoyatest/engine
 
 /opt/annoyatest/service/tunnel-service -install

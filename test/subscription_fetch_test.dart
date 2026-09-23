@@ -9,12 +9,6 @@ import 'package:vpn_client/core/app_error.dart';
 import 'package:vpn_client/core/device_identity.dart';
 import 'package:vpn_client/core/subscription_fetch.dart';
 
-/// What a panel says about this device, and what the user is told about it.
-///
-/// A device limit turns a working subscription into one that silently stops
-/// refreshing. Without reading these headers the app can only say "couldn't
-/// refresh", which sends the user to check their URL — the one thing that is
-/// not wrong.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
@@ -71,9 +65,6 @@ void main() {
   test(
     'a refusal is reported, and what the panel sent instead is kept',
     () async {
-      // The panel answers a refused device with entries whose names carry its
-      // message. Throwing here would discard exactly what the user needs to read,
-      // so the refusal is a flag and the body travels on.
       final client = answering(
         'vless://x@0.0.0.0:1#Device%20limit%20reached',
         headers: {'x-hwid-max-devices-reached': 'true'},

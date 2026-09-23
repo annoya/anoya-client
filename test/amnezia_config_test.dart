@@ -9,22 +9,11 @@ import 'package:vpn_client/core/amnezia/secondary_config.dart';
 import 'package:vpn_client/core/amnezia/vpn_key.dart';
 import 'package:vpn_client/core/mihomo_tun_config.dart';
 
-/// Reading what Amnezia hands out.
-///
-/// Their format is Qt's, twice over: a `vpn://` key is base64 over a
-/// zlib stream behind a four-byte prefix, and the protocol config that comes
-/// back from the gateway is that same envelope again, with the real settings
-/// as a JSON string nested inside the JSON. The shapes below are the ones a
-/// live premium subscription actually returned; the key material is not
-/// (nobody's working credentials belong in a test).
 void main() {
-  /// Builds a key the way Amnezia's encoder does, so the decoder is tested
-  /// against the format rather than against one recorded string.
   String vpnKey(Map<String, dynamic> doc, {bool premiumSignature = true}) {
     final body = ZLibCodec().encode(utf8.encode(jsonEncode(doc)));
     final prefix = premiumSignature
-        // Their premium encoder overwrites the length with a constant, which
-        // is exactly why the reader must not believe it.
+        // Premium keys carry a constant here instead of the length.
         ? [0, 0, 0, 0xff]
         : [0, 0, 0, jsonEncode(doc).length & 0xff];
     final bytes = Uint8List.fromList([...prefix, ...body]);
@@ -58,7 +47,6 @@ void main() {
     });
 
     test('survives the mangling a key gets between apps', () {
-      // Padding stripped, whitespace inserted by a chat client, no scheme.
       final full = vpnKey(primary());
       final naked = full.substring(6).replaceAll('=', '');
       final wrapped = '${naked.substring(0, 20)}\n${naked.substring(20)}';
@@ -69,8 +57,6 @@ void main() {
     });
 
     test('a length prefix that lies is still readable', () {
-      // The premium encoder's constant prefix is the common case, so a reader
-      // that trusted the number would fail on every premium key there is.
       expect(
         parseAmneziaVpnKey(vpnKey(primary(), premiumSignature: false))?.apiKey,
         'a-subscription-key',
@@ -82,9 +68,6 @@ void main() {
     });
 
     test('the formats this app does not serve are refused, not half-read', () {
-      // v1 is the retired gateway format Amnezia's own client rejects; a
-      // document with no api_config is a self-hosted server bundle, which is
-      // a different domain of this app (ADR-005) and not this one.
       expect(parseAmneziaVpnKey(vpnKey(primary(version: 1))), isNull);
       expect(
         parseAmneziaVpnKey(vpnKey({'name': 'x', 'containers': []})),
@@ -95,8 +78,6 @@ void main() {
     });
   });
 
-  /// The shape a live `/v1/config` answered with for an AWG location, with
-  /// the key material replaced. H1–H4 really do arrive as ranges.
   Map<String, dynamic> awgAnswer({
     String privateKey = r'$WIREGUARD_CLIENT_PRIVATE_KEY',
   }) {
@@ -171,7 +152,6 @@ void main() {
         proxy['public-key'],
         'c2VydmVycHVibGljMDAwMDAwMDAwMDAwMDAwMDAwMDA=',
       );
-      // The mask belongs to the .conf, not to the engine's address field.
       expect(proxy['ip'], '100.98.117.86');
       expect(
         proxy['udp'],
@@ -195,14 +175,9 @@ void main() {
       expect(awg['jmax'], 80);
       expect(awg['s3'], 292);
       expect(awg['s4'], 5);
-      // Ranges, not numbers — the AWG 2+ form. Parsing these into ints would
-      // silently change which packets the server accepts.
       expect(awg['h1'], '758037244-1346176164');
       expect(awg['h4'], '5-758037243');
       expect(awg['i1'], '<b 0xc30000000108>');
-      // Both of the engine's AmneziaWG ports accept this configuration and put
-      // it on the wire differently, so the choice cannot be left to whichever
-      // one happens to be the default: the current protocol is named outright.
       expect(awg['version'], 3);
       expect(
         awg.containsKey('itime'),
@@ -213,7 +188,6 @@ void main() {
 
     test('a v3.1 server is marked as one', () {
       final answer = awgAnswer();
-      // Re-issue the same config with the parameters AWG 3.1 adds.
       final decoded = decodeAmneziaEnvelope(answer['config'] as String)!;
       final container = (decoded['containers'] as List).first as Map;
       final awg = (container['awg'] as Map).cast<String, dynamic>();
@@ -237,8 +211,6 @@ void main() {
     });
 
     test('a config we hold no private key for is refused, not run', () {
-      // The placeholder surviving means the substitution never happened. Run
-      // as-is it would fail a handshake with nothing to explain why.
       expect(
         parseAmneziaSecondaryConfig(
           awgAnswer(),
@@ -281,8 +253,6 @@ void main() {
   test(
     'a VLESS location goes through the Xray reader this app already has',
     () {
-      // Amnezia ships an ordinary Xray document; an Amnezia VLESS server and a
-      // panel's VLESS server differ in provenance, not in what they are.
       final xrayConfig = {
         'log': {'loglevel': 'error'},
         'inbounds': [
@@ -347,12 +317,6 @@ void main() {
   );
 
   test('nothing the user reads names a company behind the subscription', () {
-    // The key format and the gateway are not Amnezia's alone: other providers
-    // sell the same `vpn://` key, carrying their own name and a service type
-    // of their own, through the same gateway. "Renew it with Amnezia" on one
-    // of those subscriptions is not a rough edge — it is a false statement
-    // about who holds the user's money. The name we do show comes from the
-    // key itself, so it is right for whoever issued it.
     final offenders = <String>[];
     for (final path in [
       'lib/core/amnezia/amnezia_errors.dart',
@@ -361,11 +325,6 @@ void main() {
       'lib/features/config/amnezia_config_screen.dart',
     ]) {
       for (final line in File(path).readAsLinesSync()) {
-        // Quoted text only, and not the protocol's own name: AmneziaWG is what
-        // the thing is called, whoever is selling it.
-        // …and neither does it invent one. SPEC-CLIENT §5: everything a
-        // subscription supplies is attributed to the subscription, because
-        // there is no account behind it to attribute it to.
         final quoted = RegExp(
           r"'[^']*(Amnezia|provider)[^']*'",
         ).allMatches(line);

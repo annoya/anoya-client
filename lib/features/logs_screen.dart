@@ -15,11 +15,6 @@ import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import 'log_viewer_screen.dart';
 
-/// Logs hub (happ-style): a switch that stops every log being written, separate
-/// entries for the tunnel log, the core (mihomo) log and the app log — each
-/// opens a viewer — plus the two bulk actions. The tunnel/core logs live in the
-/// extension's container and are fetched over IPC (only while the VPN is
-/// connected); the app log is the in-memory buffer.
 class LogsScreen extends ConsumerStatefulWidget {
   const LogsScreen({super.key});
 
@@ -32,10 +27,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
   Future<void> _setCollecting(bool value) async {
     await ref.read(appPrefsProvider.notifier).setCollectLogs(value);
-    // Two places to reach: the persisted tunnel config (what the next start
-    // uses) and the extension that is running right now — the engine only reads
-    // its log level when a config is applied, so a live tunnel would keep
-    // writing until reconnected.
+    // Both: the live engine reads its log level only when a config is applied.
     await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
     await setExtensionLogging(value);
     if (mounted) setState(() {});
@@ -43,7 +35,6 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
   Future<void> _save() async {
     final l10n = context.l10n;
-    // Ask first, then build: no point zipping anything if the user backs out.
     final where = await pickOption<_SaveTo>(
       context,
       title: l10n.logsSaveAll,
@@ -69,16 +60,15 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
             ShareParams(files: [XFile(archive.path)]),
           );
         case _SaveTo.file:
-          // The mobile plugin writes the file itself and demands the bytes; the
-          // desktop one refuses them ("Bytes are not supported on macOS") and
-          // only hands back the chosen path, leaving the writing to us.
+          // Mobile plugin writes the file and needs the bytes; desktop refuses bytes
+          // ("not supported on macOS") and only returns the path.
           final writesItself = Platform.isIOS || Platform.isAndroid;
           final path = await FilePicker.platform.saveFile(
             dialogTitle: l10n.logsSaveDialogTitle,
             fileName: name,
             bytes: writesItself ? await archive.readAsBytes() : null,
           );
-          if (path == null) return; // cancelled
+          if (path == null) return;
           if (!writesItself) await archive.copy(path);
           if (mounted) showToast(context, l10n.logsSavedTo(path));
       }
@@ -245,6 +235,4 @@ class _LogTile extends StatelessWidget {
   }
 }
 
-/// Where the log archive goes. The button offers both instead of assuming: the
-/// file system for keeping it, the share sheet for sending it on.
 enum _SaveTo { file, share }

@@ -14,47 +14,20 @@ import 'platform_support.dart';
 import 'rule_list_store.dart';
 import 'vpn_core.dart';
 
-/// NetworkExtensionCore drives the real tunnel, which always runs in another
-/// process: the NEPacketTunnelProvider extension on macOS and iOS, the
-/// VpnService in `:tunnel` on Android, the `AnnoyaTunnel` service on Windows.
-/// The mihomo engine lives over there; this class only sends the rendered
-/// config and start/stop commands and reflects the status that comes back.
-/// Screens and state see only [VpnCore], which is what the tests replace with
-/// a fake.
-///
-/// The [ControlTransport] is the one platform difference: channels the runner
-/// registers, or the named pipe to the service. Everything said over it is the
-/// same on every platform.
-///
-/// Note: the connect/disconnect path deliberately does NOT read the shared log
-/// container — doing so from the host triggers a macOS "access data from other
-/// apps" prompt. Logs are viewed on demand in the Logs screen instead.
 class NetworkExtensionCore implements VpnCore {
   NetworkExtensionCore({ControlTransport? transport}) {
     if (transport != null) _transport = transport;
-    // distinct(): NEVPNStatusDidChange can fire repeatedly for one transition
-    // (and several NE statuses map to the same VpnStatus), which would churn
-    // the UI on every flap.
+    // distinct(): NEVPNStatusDidChange can fire repeatedly for one transition.
     _statusStream = _transport.statusEvents
         .map(_mapStatus)
         .distinct()
         .asBroadcastStream();
-    // Lives as long as the app: the core is a process-lifetime provider.
     _statusStream.listen((s) => _status = s);
   }
 
-  /// One transport per process, shared with the static lookups below (geo
-  /// directory, device info, group member) that run before or beside the
-  /// core. The core's constructor installs the platform's; until then, and in
-  /// tests, it is the channels — which throw MissingPluginException where there
-  /// is no platform side, and every caller already reads that as "unavailable".
   static ControlTransport _transport = ChannelTransport();
   static ControlTransport get _control => _transport;
 
-  /// The same transport, for the few calls that live outside this class (the
-  /// log fetchers in ext_logs.dart). They used to open the MethodChannel
-  /// themselves, which on Windows has no handler: the service answers
-  /// `fetch_log` over the pipe, but the Logs screen never asked it.
   static ControlTransport get control => _transport;
 
   late final Stream<VpnStatus> _statusStream;
@@ -152,8 +125,6 @@ class NetworkExtensionCore implements VpnCore {
         'log_enabled': Log.enabled,
       });
     } on PlatformException catch (e) {
-      // Best-effort: the profile may not exist yet, or the user may have
-      // revoked it. The next connect writes the config anyway.
       Log.e('NE sync_config failed', e.message ?? e.code);
     } on MissingPluginException {
       Log.e('NE sync_config failed', 'no platform side');
@@ -172,19 +143,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// Renders the config for one selection — a server, or a group whose member
-  /// the engine picks. Null when there is nothing to render.
-  ///
-  /// The proxy server is deliberately NOT singled out here: the engine binds
-  /// its own dials to the physical interface, so nothing has to be routed
-  /// around the tunnel — which also means the server's hostname is never
-  /// resolved outside it.
-  ///
-  /// gvisor on both macOS and iOS: it is fully userspace (no socket binds), the
-  /// only stack that works inside the iOS NE sandbox (the `system` stack fails
-  /// there trying to bind the fake-ip gateway). Log.enabled is the "collect
-  /// logs" switch; the level rendered here is what an on-demand start (no app
-  /// involved) will use.
   Future<Map<String, String>?> _render(
     NormConfig? config,
     String? locationId,
@@ -204,9 +162,6 @@ class NetworkExtensionCore implements VpnCore {
         for (final id in group.members)
           if (byId[id] != null) byId[id]!,
       ];
-      // A group whose members all disappeared from the subscription would
-      // render an empty `proxies:` list, which the engine rejects — and it
-      // would reject it while applying, i.e. with the tunnel already down.
       if (members.isEmpty) return null;
       location = members.first;
     } else {
@@ -216,10 +171,6 @@ class NetworkExtensionCore implements VpnCore {
       if (location == null) return null;
     }
 
-    // A place whose settings have not been issued yet (ADR-009). There is
-    // nothing to render and nothing has gone wrong: the config is fetched when
-    // the user connects, and syncing before that would spend a device slot on
-    // a server they may never pick.
     if (location.isPlaceholder) return null;
     try {
       final listPaths = await RuleListStore.availablePaths(
@@ -238,12 +189,7 @@ class NetworkExtensionCore implements VpnCore {
           listPaths: listPaths,
           collectLogs: Log.enabled,
           autoDetectInterface: !Platform.isAndroid,
-          // The Windows and Linux services have no host-opened device to hand
-          // the engine; it creates the adapter itself, named after the app so
-          // the user recognises it in the network list.
           device: Platform.isWindows || Platform.isLinux ? kAppName : null,
-          // Android's Private DNS would otherwise upgrade the decoy resolver
-          // to DNS-over-TLS and take every lookup past the hijack.
           dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null,
         ),
       };
@@ -253,12 +199,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// Asks the engine — inside the extension, or in the tunnel process on
-  /// Android — to fetch one page through the outbound the tunnel routes to.
-  ///
-  /// A platform failure is returned as an answer, not thrown: "the tunnel is
-  /// not running" and "the server did not reply" are both results the user
-  /// needs to read, and only one of them is about the server.
   @override
   Future<String> urlTest(String url, Duration timeout) async {
     try {
@@ -275,12 +215,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// Hands the auto-connect answer to the tunnel service, which is the only
-  /// thing still running when the machine next starts.
-  ///
-  /// Best-effort like every other push to the native side: a service that is
-  /// down keeps the answer it already has, and the next toggle (or the next
-  /// app start) says it again.
   @override
   Future<void> setAutoConnect(bool enabled) async {
     if (!supportsBootAutoConnect) return;
@@ -293,10 +227,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// What the engine has carried through the outbound so far.
-  ///
-  /// Best-effort by design — every failure answers "nothing", which sends the
-  /// caller to the active probe rather than to an error.
   @override
   Future<String> proxyBytes() async {
     try {
@@ -309,13 +239,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// When the system established the current session.
-  ///
-  /// `NEVPNConnection.connectedDate` — the moment the connection came up,
-  /// whoever brought it up. The app used to stamp its own time on first sight,
-  /// which is right only when the app was watching: a tunnel started from the
-  /// system's VPN switch, or by an on-demand rule, had been running for hours
-  /// and the clock read seconds.
   @override
   Future<DateTime?> connectedSince() async {
     try {
@@ -330,12 +253,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// Why the tunnel last stopped, as the system recorded it.
-  ///
-  /// Empty when there is nothing to tell. A failure inside the extension never
-  /// reaches the call that started it — the app only sees the status fall back
-  /// — so this is how a refused config stops looking like a connect that gave
-  /// up on its own.
   @override
   Future<String> lastDisconnectError() async {
     try {
@@ -348,11 +265,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// Which member of the rendered proxy group the engine currently uses.
-  ///
-  /// Empty when nothing is running, when the config has no group, or before the
-  /// first health check has landed — all of which mean the same thing to the
-  /// caller: not known yet, so say "auto" and nothing more.
   static Future<String> groupMember(String group) async {
     try {
       final res = await _control.invoke<String>('group_member', {
@@ -367,12 +279,8 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// What the platform says this device is: os, version, model. Null when
-  /// there is no platform side (unsupported host, or tests).
   static Future<Map<String, String>?> deviceInfo() async {
     try {
-      // Windows and Linux have no runner of their own to ask; what the Dart
-      // runtime knows is what the panel gets.
       if (Platform.isWindows || Platform.isLinux) {
         return {
           'os': Platform.isWindows ? 'Windows' : 'Linux',
@@ -391,10 +299,6 @@ class NetworkExtensionCore implements VpnCore {
     }
   }
 
-  /// App Group container shared with the tunnel extension — the engine's home
-  /// dir. GeoIP/GeoSite databases are downloaded here so mihomo (whose home is
-  /// set to the same path) can read them. Null when the platform side has no
-  /// group container (then geo rules are unavailable).
   static Future<String?> sharedDir() async {
     try {
       return await _control.invoke<String>('shared_dir');
@@ -402,8 +306,6 @@ class NetworkExtensionCore implements VpnCore {
       Log.e('NE shared_dir failed', e.message ?? e.code);
       return null;
     } on MissingPluginException {
-      // No platform side at all (unsupported host, or tests): geo rules are
-      // simply unavailable, which the caller already handles.
       return null;
     }
   }

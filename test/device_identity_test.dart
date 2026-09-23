@@ -6,10 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vpn_client/core/device_identity.dart';
 
-/// What this installation tells a subscription panel about itself. The id has
-/// to satisfy the convention panels enforce (10–64 chars, Latin letters,
-/// digits, `=` and `-`) and stay put across runs — a new id on every launch
-/// would burn a device slot each time the app starts.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
@@ -71,21 +67,20 @@ void main() {
     expect(id.hwid, matches(RegExp(r'^[A-Za-z0-9=-]+$')));
   });
 
-  test('headers carry the id always and the device detail when known', () async {
-    final id = await DeviceIdentityStore.load();
-    expect(id.headers['x-hwid'], id.hwid);
-    // Ours, not the Dart SDK's default: panels key their template rules on this
-    // string, so it is part of the app's contract with them.
-    expect(id.headers['user-agent'], DeviceIdentity.userAgent);
-    expect(id.headers['x-device-os'], 'iOS');
-    expect(id.headers['x-ver-os'], '18.0');
-    expect(id.headers['x-device-model'], 'iPhone16,1');
-    expect(id.label, 'iPhone16,1 · iOS 18.0');
-  });
+  test(
+    'headers carry the id always and the device detail when known',
+    () async {
+      final id = await DeviceIdentityStore.load();
+      expect(id.headers['x-hwid'], id.hwid);
+      expect(id.headers['user-agent'], DeviceIdentity.userAgent);
+      expect(id.headers['x-device-os'], 'iOS');
+      expect(id.headers['x-ver-os'], '18.0');
+      expect(id.headers['x-device-model'], 'iPhone16,1');
+      expect(id.label, 'iPhone16,1 · iOS 18.0');
+    },
+  );
 
   test('an unknown device still yields a usable identity', () async {
-    // The optional fields are absent rather than guessed: only x-hwid is
-    // required, and inventing a model would misname the entry in the panel.
     DeviceIdentityStore.debugCache(
       const DeviceIdentity(
         hwid: 'abcdef0123',

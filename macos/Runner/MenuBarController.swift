@@ -1,20 +1,6 @@
 import Cocoa
 import FlutterMacOS
 
-/// The menu bar item and its menu — AppKit's own `NSStatusItem` + `NSMenu`,
-/// not a drawn imitation. The system owns the surface: appearance, metrics,
-/// highlight, keyboard handling and the ⌘Q equivalent all come from it.
-///
-/// The split of responsibility is deliberate. Showing, hiding and quitting are
-/// window-server business and are done here, without a round trip to Dart —
-/// they must work even if the Flutter isolate is busy. Connecting and
-/// disconnecting are not: the app refreshes managed profiles before a connect,
-/// applies routing policy and reports errors, so those are forwarded to Dart
-/// and nothing about the tunnel is decided in this file.
-///
-/// Menu text comes from Dart for the same reason: the status line is the same
-/// sentence the home screen shows, and formatting it twice is how the two start
-/// disagreeing.
 final class MenuBarController: NSObject, NSMenuDelegate {
   private static let channelName = "vpn/tray"
 
@@ -22,9 +8,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
   private let channel: FlutterMethodChannel
   private weak var window: NSWindow?
 
-  /// Everything the menu shows, as last pushed from Dart. Defaults describe an
-  /// app that has not reported yet: no promises about the tunnel, and the only
-  /// actions offered are the ones this file can honour on its own.
   private var statusLine = ""
   private var detailLine = ""
   private var canConnect = false
@@ -61,8 +44,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     }
   }
 
-  // MARK: - State from Dart
-
   private func apply(_ args: [String: Any]) {
     statusLine = args["status"] as? String ?? ""
     detailLine = args["detail"] as? String ?? ""
@@ -71,17 +52,12 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     tunnelUp = args["tunnel_up"] as? Bool ?? false
     connecting = args["connecting"] as? Bool ?? false
     applyIcon()
-    // Rebuilt on every update as well as on open: if the menu is showing, the
-    // user is looking at it and the new state has to land now; if not, the
-    // rebuild is a few items' worth of work nobody sees.
     if let menu = statusItem.menu {
       rebuild(menu)
     }
   }
 
-  /// State is carried by shape, because colour is not available here: a status
-  /// item's image is a template, which the system tints (black on a light menu
-  /// bar, white on a dark one) with no say from us.
+  // State is carried by shape: the image is a template the system tints, so colour is unavailable.
   private func applyIcon() {
     guard let button = statusItem.button else { return }
     let name: String
@@ -102,9 +78,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
       button.image = image
       if button.image != nil { return }
     }
-    // macOS 10.15 has no SF Symbols. The silhouette differs from the symbols
-    // above, but the distinction the menu bar has to carry — filled means the
-    // tunnel is up — survives.
+    // macOS 10.15 has no SF Symbols.
     button.image = MenuBarController.drawnShield(filled: fallbackFilled)
   }
 
@@ -136,12 +110,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     return image
   }
 
-  // MARK: - Menu
-
   func menuNeedsUpdate(_ menu: NSMenu) {
-    // Ask Dart for a fresh snapshot on every open: the session timer runs
-    // there, and a menu that opens showing the duration from the last status
-    // change would be quietly stale.
+    // The session timer runs in Dart; without a sync the menu opens with a stale duration.
     channel.invokeMethod("sync", arguments: nil)
     rebuild(menu)
   }
@@ -159,9 +129,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
                         enabled: true))
     menu.addItem(.separator())
 
-    // Both are always present, and the inapplicable one is disabled rather
-    // than removed: items that come and go move everything below them, and the
-    // click that was aimed at Quit lands on something else.
+    // Disabled rather than removed, so items below never shift under the cursor.
     menu.addItem(action("Connect", #selector(connect), enabled: canConnect))
     menu.addItem(action("Disconnect", #selector(disconnect), enabled: canDisconnect))
     menu.addItem(.separator())
@@ -171,10 +139,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     quit.keyEquivalentModifierMask = [.command]
     menu.addItem(quit)
 
-    // The tunnel lives in a system extension, so quitting does not take it
-    // down (and with on-demand armed the system brings it back). Leaving a VPN
-    // up with no window and no word about it would be a surprise; the line is
-    // only true while it is up, so it only appears then.
     if tunnelUp { menu.addItem(label("Quitting leaves the tunnel connected")) }
   }
 
@@ -196,13 +160,9 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     return window.isVisible && !NSApp.isHidden
   }
 
-  // MARK: - Actions
-
   @objc private func toggleWindow() {
     if isAppVisible {
-      // The app, not just the window: "Hide <App>" is a system-wide verb, and
-      // hiding only the window would leave a menu bar app that still holds the
-      // keyboard focus of a window nobody can see.
+      // Hide the app, not the window, or it keeps key focus on an invisible window.
       NSApp.hide(nil)
     } else {
       NSApp.unhide(nil)

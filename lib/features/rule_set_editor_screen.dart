@@ -16,11 +16,6 @@ import 'geosite_sheet.dart';
 import 'rule_dialog.dart';
 import 'routing_widgets.dart';
 
-/// Edits one global rule set: its direction and its ordered rules, geoip and
-/// geosite included. Two views over the same rules — Simple picks services
-/// from a catalog, Advanced lists every rule — so switching never converts
-/// anything. A policy someone else authored is shown by
-/// `ManagedPolicyScreen` instead.
 class RuleSetEditorScreen extends ConsumerStatefulWidget {
   const RuleSetEditorScreen(this.setId, {super.key});
 
@@ -67,9 +62,8 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   Future<void> _persist() async {
-    // Grab the notifiers before any await: if the user leaves the screen while
-    // the writes are in flight, ref is disposed — and the announce below must
-    // still run, or the system's saved tunnel config keeps the old routing.
+    // Notifiers before any await: ref dies if the user leaves mid-write, and
+    // the resync must still run or the saved tunnel config keeps old routing.
     final revision = ref.read(ruleSetRevisionProvider.notifier);
     final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
@@ -78,31 +72,15 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         s.id == widget.setId ? s.copyWith(mode: _mode, rules: _rules) : s,
     ];
     await RuleSetStore.save(updated);
-    // The edited set is what some configuration routes by, so its new mode has
-    // to reach both the status shown on the home screen and the config the
-    // system starts from.
     revision.bump();
     await profiles.syncTunnelConfig();
   }
 
-  /// The category names present in the local GeoSite.dat; null while loading.
-  /// Simple mode uses it to hide catalog entries the database no longer has,
-  /// the geosite picker to list everything it does have.
   Future<void> _loadIndex() async {
     if (!_geoReady) return;
     final index = await GeositeIndex.load();
     if (mounted) setState(() => _index = index);
   }
-
-  // --- Simple mode ---------------------------------------------------------
-  //
-  // Simple is a view over the same ordered rules, not a second format. A rule
-  // is "simple-representable" when it is geosite/geoip and its action matches
-  // the one the direction implies (split → proxy: picked things go through the
-  // VPN; full → direct: picked things bypass it). Everything else — domains,
-  // ip-cidr, block, wrong-action geo rules — is out of the catalog's language
-  // and is surfaced as the "Advanced rules" row instead of being hidden or
-  // dropped.
 
   String get _expectedAction => _mode == RoutingMode.split ? 'proxy' : 'direct';
 
@@ -121,8 +99,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         (r) => _representable(r) && r.type == type && r.value == value,
       );
       if (on) {
-        // Appended: whatever the advanced rules say comes first, as the
-        // "Advanced rules" row promises.
+        // Appended: advanced rules keep precedence.
         _rules.add(
           RoutingRule(type: type, value: value, action: _expectedAction),
         );
@@ -131,9 +108,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     await _persist();
   }
 
-  /// Flipping the direction re-tags every catalog selection with the action
-  /// the new direction implies — the user changed what "selected" means, not
-  /// which things are selected.
   Future<void> _setSimpleMode(RoutingMode mode) async {
     if (mode == _mode) return;
     final old = _expectedAction;
@@ -155,8 +129,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     await _persist();
   }
 
-  /// Advanced mode changes the direction without touching the rules: there
-  /// every rule carries its own action, and the user reads them as written.
   Future<void> _setMode(RoutingMode mode) async {
     setState(() => _mode = mode);
     await _persist();
@@ -165,8 +137,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   Future<void> _setEditor(RuleEditor editor) async {
     if (editor == _editor) return;
     setState(() => _editor = editor);
-    // A view preference, not a traffic change: saved without touching the
-    // tunnel config.
+    // A view preference: saved without resyncing the tunnel config.
     final sets = await RuleSetStore.load();
     await RuleSetStore.save([
       for (final s in sets)
@@ -209,7 +180,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       ),
     );
     if (ok != true) return;
-    // Same shape as _persist: notifiers first, they outlive the screen.
+    // Notifiers first, as in _persist.
     final revision = ref.read(ruleSetRevisionProvider.notifier);
     final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
@@ -300,8 +271,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     );
   }
 
-  /// Simple | Advanced — two views over the same rules, so switching is always
-  /// safe and never converts anything.
   Widget _editorSegment(BuildContext context) {
     final l10n = context.l10n;
     return Padding(
@@ -345,16 +314,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         ReorderableListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          // Own handle inside each row: the default one is placed
-          // outside the card, which reads as a stray control (most
-          // visibly on macOS).
+          // Own handle in each row: the default sits outside the card (macOS).
           buildDefaultDragHandles: false,
           onReorderItem: _reorder,
           children: [
             for (var i = 0; i < _rules.length; i++)
-              // Keyed by item identity, not slot: a position key stays with
-              // the index after a drop, so the settle animation targets the
-              // wrong tile.
+              // ObjectKey, not index: an index key misdirects the settle animation.
               RuleTile(
                 key: ObjectKey(_rules[i]),
                 rule: _rules[i],
@@ -371,8 +336,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   List<Widget> _simpleChildren(BuildContext context) {
     final l10n = context.l10n;
     if (!_geoReady) {
-      // The whole catalog is geosite/geoip, so without the databases there is
-      // nothing to offer — the download banner IS the screen.
       return [
         GeoDownloadBanner(
           title: l10n.ruleSetDownloadSiteLists,
@@ -423,9 +386,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       ),
       if (q.isEmpty) ...[
         SectionHeader(l10n.ruleSetCountriesHeader),
-        // Each add row leads its section — at the tail of a 30-row catalog
-        // nobody would find it — and what was added sits directly beneath it,
-        // where the user just looked.
         Card(
           margin: kCardMargin,
           child: Column(
@@ -475,7 +435,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     ];
   }
 
-  /// The direction, in the words of what it does to the things you pick.
   Widget _simpleModeCard(BuildContext context) {
     final l10n = context.l10n;
     return Card(
@@ -523,12 +482,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     await _loadIndex();
   }
 
-  /// The catalog groups, filtered by the search query and by what the local
-  /// database actually contains. Selections made in Advanced with categories
-  /// outside the catalog show up too — Simple never hides an active rule.
   List<Widget> _serviceGroups({required bool interactive, String query = ''}) {
-    // Hide entries whose category vanished from the database (upstream rename):
-    // a switch that can't work is worse than an absent one.
     final have = _index == null ? null : {for (final c in _index!) c.name};
     final out = <Widget>[];
 
@@ -566,8 +520,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       );
     }
 
-    // Ad-hoc categories matching the search: with no query they live under the
-    // Add-category row instead, next to the control that creates them.
     final extras = _extraCategories(query);
     if (query.isNotEmpty && extras.isNotEmpty) {
       out.add(SectionHeader(context.l10n.ruleSetOtherCategoriesHeader));
@@ -592,8 +544,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     return out;
   }
 
-  /// Ad-hoc geosite categories: everything selected that the catalog can't
-  /// name — added through the picker here, or authored in Advanced.
   List<String> _extraCategories(String query) {
     final catalog = {for (final s in kServiceCatalog) s.category};
     return [
@@ -615,10 +565,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     onTap: onTap,
   );
 
-  /// A row the user added (country or ad-hoc category): plain entry, delete
-  /// button. Not a switch — there is no "off but keep it" state for something
-  /// that only exists because it was added, and the old switch's off position
-  /// deleted the row anyway, which is exactly what a switch should not do.
   Widget _removableRow(Widget leading, String title, VoidCallback? onRemove) =>
       ListTile(
         leading: leading,

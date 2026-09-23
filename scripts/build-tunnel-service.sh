@@ -1,30 +1,14 @@
 #!/usr/bin/env bash
-# Build the tunnel service for Windows or Linux; on Windows also fetch the
-# Wintun driver next to it.
-#
-#   scripts/build-tunnel-service.sh [windows|linux] [amd64|arm64]
-#
-# Cross-compiles from any host: the service is pure Go (CGO_ENABLED=0; gvisor,
-# which the TUN stack needs on every platform, is pure Go too). mihomo's
-# Windows TUN is Wintun, which is not built here — it is a signed driver
-# WireGuard LLC ships as a DLL, and the engine loads it from the directory of
-# its own executable. The checksum pins the release; a different hash is a
-# different file, not a newer one. On Linux the device is the kernel's tun;
-# nothing to ship.
-#
-# Output: build/windows/service/{tunnel-service.exe,wintun.dll}, which the
-# installer (windows/installer/AnnoyaTest.iss) picks up, or
-# build/linux/service/tunnel-service for scripts/build-linux-packages.sh.
+# usage: scripts/build-tunnel-service.sh [windows|linux] [amd64|arm64]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# The first argument used to be the architecture alone; a bare "amd64" still
-# means Windows.
+# Backward compatible: a bare arch still means Windows.
 TARGET=windows
 case "${1:-}" in
   windows|linux) TARGET="$1"; shift ;;
 esac
-ARCH="${1:-amd64}"                    # amd64 | arm64
+ARCH="${1:-amd64}"
 
 if [ "$TARGET" = linux ]; then
   OUT="build/linux/service"
@@ -51,14 +35,11 @@ zip="build/windows/wintun-$WINTUN_VERSION.zip"
 if [ ! -f "$zip" ]; then
   curl -fsSL -o "$zip" "https://www.wintun.net/builds/wintun-$WINTUN_VERSION.zip"
 fi
-# sha256sum on Linux and in Git Bash, shasum on macOS.
 if command -v sha256sum >/dev/null; then
   echo "$WINTUN_SHA256  $zip" | sha256sum -c - >/dev/null
 else
   echo "$WINTUN_SHA256  $zip" | shasum -a 256 -c - >/dev/null
 fi
-# Whatever unzipper the host has: unzip on macOS and Linux, 7z on a Windows
-# runner's Git Bash, python where neither is around.
 if command -v unzip >/dev/null; then
   unzip -p "$zip" "wintun/bin/$ARCH/wintun.dll" > "$OUT/wintun.dll"
 elif command -v 7z >/dev/null; then

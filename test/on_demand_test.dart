@@ -34,7 +34,7 @@ void main() {
     expect(ch['action'], 'connect');
     expect(ch['interface'], 'wifi');
     expect(ch['ssids'], ['home-5G']);
-    expect(ch.containsKey('id'), false); // system rules carry no id/name
+    expect(ch.containsKey('id'), false);
     expect(ch.containsKey('name'), false);
   });
 
@@ -42,7 +42,7 @@ void main() {
     const withSsid = OnDemandRule(id: 'r', ssids: ['corp-net']);
 
     test('kept for Wi-Fi and Any, dropped for cellular/ethernet', () {
-      expect(withSsid.effectiveSsids, ['corp-net']); // any
+      expect(withSsid.effectiveSsids, ['corp-net']);
       expect(
         withSsid.copyWith(interface: OnDemandInterface.wifi).effectiveSsids,
         ['corp-net'],
@@ -107,7 +107,6 @@ void main() {
         ).statusLabel,
         'Paused',
       );
-      // Enabled but the system hasn't taken it (no persisted tunnel config yet).
       expect(
         const OnDemandPrefs(enabled: true, rules: [rule]).statusLabel,
         'On · after first connect',
@@ -136,7 +135,6 @@ void main() {
         ).awaitingFirstConnect,
         false,
       );
-      // Paused isn't "awaiting" — it's a deliberate stop.
       expect(
         const OnDemandPrefs(
           enabled: true,
@@ -154,7 +152,6 @@ void main() {
         systemArmed: true,
       );
       expect(prefs.toJson().containsKey('system_armed'), false);
-      // A reload starts from "not armed" until the platform confirms.
       expect(OnDemandPrefs.fromJson(prefs.toJson()).systemArmed, false);
     });
 

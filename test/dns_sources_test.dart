@@ -6,14 +6,6 @@ import 'package:vpn_client/core/mihomo_tun_config.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';
 
-/// Where a configuration's resolvers come from, per format.
-///
-/// Every format says two things about a resolver: where it is, and whether the
-/// query is issued locally or sent out through the proxy. The second one is the
-/// reason a provider writes a DNS block at all, and it is spelled differently
-/// in each format — a `detour` tag in sing-box, a `+local` scheme in Xray, a
-/// `#pin` in Clash. These pin the translation into the single form the engine
-/// reads.
 void main() {
   Location loc() => Location(
     id: 'a',
@@ -49,7 +41,6 @@ void main() {
       expect(parseSubscriptionBody(body).dns, [
         'tls://dns.quad9.net#PROXY',
         'udp://77.88.8.8',
-        // No detour is sing-box's own default, and its default is direct.
         'udp://1.1.1.1',
       ]);
     });
@@ -67,8 +58,6 @@ void main() {
     {"type": "vless", "tag": "vpn", "server": "h.example", "server_port": 443, "uuid": "u"}
   ]
 }''';
-      // The two mechanisms are dropped: inside the extension "local" is the
-      // tunnel's own DNS setting, so asking it loops straight back to us.
       expect(parseSubscriptionBody(body).dns, [
         'https://dns.quad9.net:443/dns-query#PROXY',
       ]);
@@ -92,8 +81,6 @@ void main() {
         expect(parseSubscriptionBody(body).dns, [
           'https://dns.quad9.net/dns-query#PROXY',
           'https://dns.google/dns-query',
-          // The object form carries the same address plus filters we cannot
-          // express; the address is the part that survives.
           '8.8.8.8#PROXY',
         ]);
       },
@@ -123,8 +110,6 @@ proxies:
   });
 
   test('HTTP/3 is a transport, not a protocol the engine has a scheme for', () {
-    // mihomo spells the choice `prefer-h3` and rejects the scheme outright —
-    // and rejecting it costs the whole config, not the entry.
     const body = '''
 {"dns": {"servers": [{"tag": "r", "address": "h3://dns.google/dns-query"}]},
  "outbounds": [{"type": "vless", "tag": "v", "server": "h.example", "server_port": 443, "uuid": "u"}]}''';
@@ -133,9 +118,6 @@ proxies:
 
   group('what the renderer will still refuse', () {
     test('a scheme the engine rejects never reaches the config', () {
-      // Clash entries are passed through as written, so this is the last stop.
-      // The engine answers an unknown scheme by failing the parse: the tunnel
-      // would not start at all, for one line in someone else's dns block.
       final dns = dnsBlock(['h3://dns.google/dns-query', 'tls://9.9.9.9']);
       expect(dns['nameserver'], ['tls://9.9.9.9']);
     });
@@ -143,10 +125,6 @@ proxies:
     test(
       'a resolver the tunnel cannot carry is replaced, not left to fail',
       () {
-        // mihomo answers a datagram dial through a UDP-less outbound with an
-        // error on every attempt, so keeping the pin would mean no DNS at all.
-        // Unpinning it instead would put every domain on the local network in
-        // clear text — so the entry goes and the encrypted fallback stands in.
         final noUdp = Location(
           id: 'b',
           label: 'B',
@@ -163,10 +141,6 @@ proxies:
                     as YamlMap)['dns']
                 as YamlMap;
         expect(dns['nameserver'], ['https://1.1.1.1/dns-query#PROXY']);
-        // Reaching the proxy itself is a TCP dial, so the resolver the
-        // configuration named is still fine for that job — and it is the only
-        // entry, because a configuration that chose its own resolver does not
-        // get ours added behind its back.
         expect(dns['proxy-server-nameserver'], ['1.1.1.1']);
       },
     );

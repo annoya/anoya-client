@@ -6,11 +6,6 @@ import '../core/app_version.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
-/// What this build is, and where the documents about it live.
-///
-/// Its own screen rather than a section in Settings: settings are things the
-/// user changes, and nothing here changes anything. The one action is copying
-/// the version, which is what support asks for first.
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
@@ -23,7 +18,6 @@ class AboutScreen extends StatelessWidget {
       body: PageBody(
         child: ListView(
           children: [
-            // Not a card: a card would promise that tapping it does something.
             Padding(
               padding: const EdgeInsets.fromLTRB(kGutter, 28, kGutter, 20),
               child: Column(
@@ -52,8 +46,6 @@ class AboutScreen extends StatelessWidget {
                 leading: const Icon(Icons.bolt_outlined),
                 title: Text(l10n.aboutEngine),
                 subtitle: Text(engineVersionLabel),
-                // The row is shortened for reading; a bug report wants the whole
-                // pin, so that is what copying gives.
                 trailing: IconButton(
                   icon: const Icon(Icons.copy_all_outlined, size: 18),
                   tooltip: l10n.commonCopy,
@@ -96,11 +88,6 @@ class AboutScreen extends StatelessWidget {
   }
 }
 
-/// A document that may not exist yet.
-///
-/// Dimmed and inert while its address is empty, and saying so: a row that looks
-/// alive and leads nowhere reads as broken, and a hidden one does not say the
-/// document is coming. It lights up on its own once the address is filled in.
 class _LegalRow extends StatelessWidget {
   const _LegalRow({required this.icon, required this.title, required this.url});
 

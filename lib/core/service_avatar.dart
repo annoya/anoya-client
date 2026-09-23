@@ -3,10 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'service_catalog.dart';
 
-/// 26pt round avatar for a geosite category: the brand's monochrome glyph
-/// (Simple Icons, bundled — icons are never fetched from the network: a VPN
-/// app must not broadcast which services the user is about to route) tinted to
-/// the theme, or the first letter for categories without one.
 class ServiceAvatar extends StatelessWidget {
   const ServiceAvatar(this.label, {super.key, this.category});
 

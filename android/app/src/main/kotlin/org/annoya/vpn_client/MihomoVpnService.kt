@@ -15,46 +15,19 @@ import java.util.concurrent.Executors
 import mobile.Mobile
 import mobile.SocketProtector
 
-/// The Android tunnel: VpnService owns the tun fd and routing, the mihomo
-/// engine (gomobile AAR) reads the fd — the same split as the Apple Network
-/// Extension, including the process boundary.
-///
-/// It runs in `:tunnel`, and that separation is load-bearing rather than
-/// tidiness. The engine is native code: a fault in it aborts its process. In
-/// one process that took the UI down with it, and the app that was supposed to
-/// report the failure was dead too — the app is built on the opposite
-/// assumption, that a tunnel can die on its own and be explained afterwards
-/// (ADR-004). It also means Android may reclaim the UI process without
-/// touching a tunnel the user asked to stay up.
-///
-/// Two ways in, and only one path: the app starts it over the control channel
-/// with a config it just wrote to disk; the system starts it directly —
-/// always-on at boot, or a restart after a kill — with no app anywhere in
-/// sight. Both read the same persisted config, which is why starting takes no
-/// arguments: a start that needed the app alive would make always-on a lie.
 class MihomoVpnService : VpnService() {
 
     companion object {
         const val ACTION_START = "org.annoya.vpn_client.START"
         const val ACTION_STOP = "org.annoya.vpn_client.STOP"
 
-        /// The group every rendered config routes through (kTunnelOutbound in
-        /// mihomo_tun_config.dart). Probing the group and not a member means
-        /// the probe follows whatever the engine picked.
         const val kTunnelOutbound = "PROXY"
     }
 
-    /// Engine calls run off the caller's thread, one at a time: start, reload
-    /// and stop all touch shared engine state, and neither a binder thread nor
-    /// the one delivering onStartCommand may block on a config parse.
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
 
-    /// The tun fd as a bare number, not a ParcelFileDescriptor: ownership is
-    /// handed to the engine the moment it starts. sing-tun wraps the fd
-    /// directly (no dup) and closes it on Stop — keeping a PFD around meant a
-    /// second close() on the same number, which Android's fdsan answers with
-    /// SIGABRT, not a log line. detachFd() unregisters our claim; from then on
-    /// the engine is the one owner and this is only a number to reload with.
+    // A bare number, not a PFD: the engine owns and closes the fd, and a
+    // second close() from a PFD is a SIGABRT under fdsan.
     @Volatile private var tunFd: Int? = null
     private var logStream: FileOutputStream? = null
 
@@ -64,10 +37,7 @@ class MihomoVpnService : VpnService() {
         override fun reload(config: String): String {
             return try {
                 executor.submit<String> {
-                    // Read on the executor, not on the binder thread: a stop
-                    // already queued ahead of this runs first and clears the fd,
-                    // and a reload that read it earlier would hand the engine a
-                    // closed descriptor.
+                    // Read on the executor: a queued stop may clear the fd first.
                     val fd = tunFd ?: return@submit "tunnel is not running"
                     try {
                         Mobile.reload(fd.toLong(), config)
@@ -90,9 +60,6 @@ class MihomoVpnService : VpnService() {
                 runCatching { Mobile.groupMember(group) }.getOrDefault("")
             } else ""
 
-        // Refused rather than attempted when the tunnel is down: the engine
-        // would answer "no outbound named PROXY", which reads as a broken
-        // config instead of "there is nothing running to test".
         override fun urlTest(url: String, timeoutMs: Int): String =
             if (TunnelState.status == TunnelState.CONNECTED) {
                 runCatching { "ms:" + Mobile.urlTest(kTunnelOutbound, url, timeoutMs.toLong()) }
@@ -113,22 +80,17 @@ class MihomoVpnService : VpnService() {
         override fun unregisterCallback(cb: ITunnelCallback) = TunnelState.unregister(cb)
     }
 
-    /// The system's own bind (action `android.net.VpnService`) must get the
-    /// default VpnService binder, or always-on breaks; ours is for the app.
+    // The system's bind must get the default binder, or always-on breaks.
     override fun onBind(intent: Intent?): IBinder? =
         if (intent?.action == SERVICE_INTERFACE) super.onBind(intent) else binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // A null intent is the system restarting us after a kill; the
-        // SERVICE_INTERFACE action is always-on. Both mean "bring it up".
         if (intent?.action == ACTION_STOP) {
             shutdown()
             return START_NOT_STICKY
         }
-        // Up, or on its way up. The fd alone is not the test: it is set only
-        // after establish() inside bringUp, so a second start intent landing
-        // while the first was still connecting queued a second bringUp — a
-        // second tun and a second engine start on a different fd.
+        // Not tunFd: it is set only after establish(), so a second start
+        // while connecting would bring up a second tun.
         when (TunnelState.status) {
             TunnelState.CONNECTING, TunnelState.CONNECTED -> return START_STICKY
         }
@@ -143,10 +105,6 @@ class MihomoVpnService : VpnService() {
             val config = TunnelFiles.config(this).takeIf { it.exists() }?.readText()
                 ?: throw IllegalStateException("no saved tunnel config to start from")
 
-            // Mirrors the Apple extension's NEPacketTunnelNetworkSettings: the
-            // tunnel owns both families end to end, nothing is excluded — the
-            // engine's own dials bypass the routes via protect(), not via a
-            // route hole, so a failed protect goes silent instead of leaking.
             val builder = Builder()
                 .setSession("VPN")
                 .setMtu(9000)
@@ -154,16 +112,9 @@ class MihomoVpnService : VpnService() {
                 .addRoute("0.0.0.0", 0)
                 .addAddress("fdfe:dcba:9876::1", 126)
                 .addRoute("::", 0)
-                // A decoy, like NEDNSSettings on Apple: the address only has
-                // to be routed into the tun, where dns-hijack any:53 answers.
-                // The other host of our own /30, not a public resolver: with
-                // 1.1.1.1 here, Private DNS in its default "automatic" mode
-                // found that the address speaks DNS-over-TLS, moved every
-                // lookup to port 853 past the hijack, and the engine never saw
-                // a domain name again — in split mode not one domain rule
-                // matched. Nobody answers on 172.19.0.2, and the engine refuses
-                // its port 853 outright (kAndroidDnsDecoy in the renderer), so
-                // Android stays on plain DNS.
+                // Not a public resolver: with 1.1.1.1, automatic Private DNS
+                // switches to DoT on 853 and bypasses dns-hijack. Nothing
+                // answers here, so Android stays on plain DNS.
                 .addDnsServer("172.19.0.2")
             val pfd = builder.establish()
                 ?: throw IllegalStateException("the system refused to establish the tunnel")
@@ -173,9 +124,6 @@ class MihomoVpnService : VpnService() {
             Mobile.setSocketProtector(object : SocketProtector {
                 override fun protect(sock: Long): Boolean {
                     val ok = this@MihomoVpnService.protect(sock.toInt())
-                    // Only the failure is worth a line: a busy tunnel protects
-                    // a socket per dial, and a protect that did not take is
-                    // the difference between a working tunnel and a silent one.
                     if (!ok) log("protect failed for fd $sock")
                     return ok
                 }
@@ -198,7 +146,7 @@ class MihomoVpnService : VpnService() {
 
     fun shutdown() {
         executor.execute {
-            // Stop closes the fd too — the engine owns it (see tunFd).
+            // Stop closes the fd too; do not close it here.
             runCatching { Mobile.stop() }
             tunFd = null
             TunnelState.set(TunnelState.DISCONNECTED)
@@ -208,8 +156,6 @@ class MihomoVpnService : VpnService() {
         }
     }
 
-    /// The user enabled another VPN, or pulled the plug in system settings.
-    /// The system already unrouted us; all that is left is honesty.
     override fun onRevoke() {
         log("revoked by the system")
         TunnelFiles.recordError(this,
@@ -222,9 +168,7 @@ class MihomoVpnService : VpnService() {
         super.onDestroy()
     }
 
-    /// mihomo logs to stdout; point fds 1/2 at a file in the engine dir so
-    /// `fetch_log` has something to read — same trick as the Apple extension,
-    /// which cannot be skipped here either: logcat is not exportable by us.
+    // mihomo logs only to stdout, and logcat is not readable by the app.
     private fun redirectEngineOutput() {
         if (logStream != null) return
         try {
@@ -246,8 +190,6 @@ class MihomoVpnService : VpnService() {
         }
     }
 
-    /// The persistent notification a foreground VpnService must carry. Silent
-    /// and minimal: the OS already shows its own key icon for an active VPN.
     private fun buildNotification(): Notification {
         val channelId = "vpn"
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

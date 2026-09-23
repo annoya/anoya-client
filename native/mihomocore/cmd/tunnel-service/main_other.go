@@ -1,10 +1,5 @@
 //go:build !windows && !linux
 
-// The macOS build exists so the service can be exercised without a Windows or
-// Linux machine: `-console` listens on a unix socket instead of a named pipe
-// and drives the same engine. Starting a tunnel still needs root (the engine
-// creates a utun), but the wire and the state machine do not.
-
 package main
 
 import (
@@ -22,7 +17,6 @@ func defaultDir() string {
 	return filepath.Join(os.TempDir(), "annoya-tunnel")
 }
 
-// socketPath is the unix-socket stand-in for the named pipe.
 func socketPath(files service.Files) string { return filepath.Join(files.Dir, "tunnel.sock") }
 
 func runService(service.Files) error {

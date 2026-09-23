@@ -9,9 +9,6 @@ import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/providers.dart';
 
-/// GeoIP & GeoSite database management: source URLs (editable), current
-/// size/age, manual update and the weekly auto-update switch. geoip/geosite
-/// rules stay inactive until both files are downloaded.
 class GeoScreen extends ConsumerStatefulWidget {
   const GeoScreen({super.key});
 
@@ -31,8 +28,6 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
   }
 
   Future<void> _load() async {
-    // The download stamps geoUpdatedAt into the file behind the provider's
-    // back, so the copy the screen shows is refreshed alongside the sizes.
     await ref.read(routingPrefsProvider.notifier).reload();
     final status = await GeoStore.status();
     if (!mounted) return;
@@ -53,7 +48,6 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
       await _load();
     } catch (e) {
       Log.e('geo update failed', '$e');
-      // Nothing is broken without fresh databases — the old ones keep working.
       if (mounted) {
         showToast(
           context,
@@ -66,8 +60,6 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
   }
 
   Future<void> _editUrl({required bool geoip}) async {
-    // "Reset to default" lives in the content, not in actions: three buttons
-    // in the action bar wrap onto two lines on a phone.
     final l10n = context.l10n;
     final url = await promptText(
       context,
@@ -75,7 +67,7 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
       label: l10n.geoDownloadUrlLabel,
       confirmLabel: l10n.commonSave,
       initial: geoip ? _prefs.geoipUrl : _prefs.geositeUrl,
-      longValue: true, // a 90-character download URL
+      longValue: true,
       autocorrect: false,
       resetLabel: l10n.geoResetToDefault,
       resetValue: geoip
@@ -93,10 +85,6 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
         );
   }
 
-  /// One database row: name + size on the title line, the source URL on one
-  /// truncated line below. The full URL is only shown in the edit dialog —
-  /// wrapping a 90-char URL across three lines made the row dwarf everything
-  /// else on the screen.
   Widget _dbCard({
     required String name,
     required String url,
@@ -127,7 +115,6 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
     );
   }
 
-  /// host + filename, e.g. "github.com/…/geoip.metadb".
   String _shortUrl(String url) {
     final u = Uri.tryParse(url);
     if (u == null || u.host.isEmpty) return url;

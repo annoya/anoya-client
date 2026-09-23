@@ -6,26 +6,8 @@ import 'dns_servers.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
 
-/// Xray JSON as a **server list** — the `xray-json` template family of the
-/// panels, and the format some of them serve by default.
-///
-/// One body, several servers: Remnawave sends a JSON array where each element
-/// is a whole Xray config with its own `remarks` (the server's name) and its own
-/// `outbounds`. A single config object is the other shape in the wild, so both
-/// are read. The routing block of the same body is read elsewhere
-/// ([parseXrayRouting]) — this file only cares about which servers are on offer.
-///
-/// The translation target is mihomo's proxy map, the same one share links
-/// produce, so the transport and TLS mapping is shared rather than written
-/// again per format (see [applyTransport]).
-
-/// Protocols that describe a server we could dial. Everything else in an
-/// `outbounds` array is plumbing — `freedom` is direct, `blackhole` is a sink,
-/// `dns` is the resolver — and counting those as unsupported servers would
-/// invent a shortfall the panel never had.
 const _plumbing = {'freedom', 'blackhole', 'dns', 'loopback'};
 
-/// Reads the servers out of an Xray JSON body. Null when this is not one.
 ParsedSubscription? parseXrayServers(String body) {
   final Object? decoded;
   try {
@@ -39,8 +21,6 @@ ParsedSubscription? parseXrayServers(String body) {
     _ => null,
   };
   if (configs == null || configs.isEmpty) return null;
-  // An Xray config is recognised by having outbounds; without that this is some
-  // other JSON and a different parser's problem.
   if (!configs.any((c) => c is Map && c['outbounds'] is List)) return null;
 
   final out = <Location>[];
@@ -49,7 +29,6 @@ ParsedSubscription? parseXrayServers(String body) {
   for (final cfg in configs) {
     if (cfg is! Map) continue;
     final label = '${cfg['remarks'] ?? ''}'.trim();
-    // Plain text here, unlike the base64 a share link's fragment carries.
     final description = _metaDescription(cfg['meta']);
     for (final ob in (cfg['outbounds'] as List? ?? const [])) {
       if (ob is! Map) continue;
@@ -69,8 +48,6 @@ ParsedSubscription? parseXrayServers(String body) {
         }
         out.add(
           locationFor(
-            // Two servers can share a name; the index is what keeps their ids
-            // apart, and ids are what the picker and favourites hold on to.
             'xray:$index:${proxy['server']}:${proxy['port']}',
             labelOr(
               label.isNotEmpty ? label : tag,
@@ -84,7 +61,6 @@ ParsedSubscription? parseXrayServers(String body) {
           ),
         );
       } catch (e) {
-        // Never the outbound itself: it carries the uuid or password.
         Log.e('xray json: unusable outbound', '$protocol -> $e');
       }
       index++;
@@ -99,14 +75,6 @@ ParsedSubscription? parseXrayServers(String body) {
   );
 }
 
-/// The resolvers an Xray body declares, in mihomo's spelling.
-///
-/// Xray writes the routing decision into the scheme: `https+local://…` is
-/// issued by the DNS module itself, plain `https://…` goes out through the
-/// config's routing — which is how a panel keeps DNS inside the tunnel. We
-/// render one outbound, so "not issued locally" becomes a pin on it. Reading
-/// that as direct instead would quietly undo the provider's choice, which is
-/// the one thing a DNS block is usually there to make.
 List<String> _dnsServers(List configs) {
   final out = <String>[];
   for (final cfg in configs) {
@@ -114,8 +82,6 @@ List<String> _dnsServers(List configs) {
     final dns = cfg['dns'];
     if (dns is! Map) continue;
     for (final entry in (dns['servers'] as List? ?? const [])) {
-      // A string, or an object that carries the same string plus the domain
-      // filters we have no equivalent for.
       final address = switch (entry) {
         String() => entry,
         Map() => '${entry['address'] ?? ''}',
@@ -131,8 +97,6 @@ List<String> _dnsServers(List configs) {
   return out;
 }
 
-/// The protocol-specific half: credentials and address. Null for a protocol we
-/// have no adapter for.
 Map<String, dynamic>? _proxyFor(String protocol, Map ob) {
   final settings = ob['settings'];
   if (settings is! Map) return null;
@@ -178,13 +142,10 @@ Map<String, dynamic>? _proxyFor(String protocol, Map ob) {
       return proxy;
 
     default:
-      // wireguard, socks, http, tuic and whatever comes next.
       return null;
   }
 }
 
-/// Translates `streamSettings` into the same normalised bag share links use, so
-/// the mihomo mapping happens in exactly one place.
 String? _applyStream(
   Map<String, dynamic> proxy,
   String protocol,
@@ -195,8 +156,6 @@ String? _applyStream(
   final security = '${ss['security'] ?? 'none'}'.toLowerCase();
   final tls = security == 'tls' || security == 'reality' || security == 'xtls';
 
-  // trojan is the one protocol whose TLS is not a flag but the point of it;
-  // mihomo names the field differently there.
   if (proxy['type'] == 'trojan') {
     proxy['network'] = network;
   } else {
@@ -265,7 +224,5 @@ String? _applyStream(
 
 int _int(Object? v) => v is int ? v : int.tryParse('$v') ?? 0;
 
-/// `"meta": {"serverDescription": "…"}` — the provider's own caption, which the
-/// JSON formats carry as text rather than as the fragment's base64.
 String _metaDescription(Object? meta) =>
     meta is Map ? '${meta['serverDescription'] ?? ''}'.trim() : '';
