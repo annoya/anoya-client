@@ -130,7 +130,26 @@ one server.
 that the core invariant; it makes sense against a management server that
 enforces status and rotates keys, and no sense against a static link. Cached
 data is used otherwise, with a background poll every five minutes for sources
-that support it.
+that support it. The poll tick is not a cadence: a source that names none is
+re-read hourly (`kDefaultRefreshGap`), and nothing faster than every five
+minutes (`kMinRefreshGap`) whatever it asks — at the floor, silence meant 288
+full fetches a day of somebody else's list.
+
+**What a panel asks for is bounded, never obeyed.** `subscription-request-timeout`
+is clamped to 5–15 s: a minute would hold a manual refresh open, a second fails
+on a slow link. `profile-update-interval` is in hours (the convention's unit),
+and 0 means the panel did not say, not "read constantly". A group's
+health-check `interval` is raised to at least five minutes
+(`kMinGroupInterval`): the probes run from the user's phone, through the tunnel,
+once per member per round. An unknown `load-balance` strategy is left out,
+because mihomo rejects it while applying and would take the running tunnel
+down over one field.
+
+**Only a rendering that answered is remembered** (`shouldProbeRenderings`).
+Remembering "none answered" let one bad minute of 404s pin a subscription to
+its plain body for good — for Remnawave a base64 list with no groups and no
+rules. The price is up to three 404s per refresh from a panel that has no
+Clash rendering.
 
 **The engine config renderer is generic** over proxy types and rejects what it
 does not understand, rather than assuming the self-hosted VLESS+Reality shape.
@@ -147,6 +166,14 @@ does not understand, rather than assuming the self-hosted VLESS+Reality shape.
 - Routing that came from outside the device is always attributed to its source
   on screen, and a rule that could not be translated is never silently dropped:
   either it is applied or its absence is counted where the policy is summarised.
+- The panel device id (`x-hwid`) is random per installation, never a hardware
+  serial: a panel only needs to tell devices apart, and a hardware id would give
+  unrelated providers a common key for the device (SPEC-CLIENT §4.1).
+- The User-Agent is `<app name>/<version>`, the name matching the bundle name and
+  the version read from `pubspec.yaml`. Panels match template rules on it, so a
+  drift is a silent capability loss. Pinned by `test/app_version_test.dart`
+  (*the app name matches the bundle it ships as*, *the User-Agent is the name
+  and that version*) and `test/device_identity_test.dart`.
 - The engine never fetches anything while applying a config. Every external
   file it reads — geo databases, rule lists — is already on disk, put there by
   the app, which is therefore the only party that has to report a failure.
@@ -203,9 +230,9 @@ no business seeing.
 
 - `refreshGapFor` in `lib/core/profile.dart` — three answers in order:
   the user's period (`refreshHours`), the panel's `profile-update-interval`, the
-  app's floor. The user's comes first because a panel asking for a cadence is
-  asking to spend traffic and battery it does not own; the floor survives all
-  three, now also as a courtesy to someone else's server.
+  app's hourly default. The user's comes first because a panel asking for a
+  cadence is asking to spend traffic and battery it does not own; the floor
+  survives all three, also as a courtesy to someone else's server.
 - `lib/core/profile.dart`, `config_source.dart`, `profile_store.dart` —
   the last also remembers which configuration was active and what it connected
   through, in `selection.json` beside the list. Kept out of `profiles.json`
@@ -233,6 +260,7 @@ no business seeing.
 - Tests: `test/parsers_test.dart`,
   `test/provider_routing_test.dart`, `test/routing_policy_test.dart`,
   `test/rule_list_store_test.dart`, `test/formats_test.dart`,
-  `test/proxy_groups_test.dart`,
+  `test/proxy_groups_test.dart`, `test/subscription_resilience_test.dart`,
+  `test/device_identity_test.dart`, `test/app_version_test.dart`,
   `test/config_screen_test.dart`,
   `test/settings_configurations_test.dart`, `test/home_layout_test.dart`.

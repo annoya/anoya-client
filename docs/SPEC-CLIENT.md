@@ -292,6 +292,61 @@ refused, the count travels back up to the configuration screen's row in words
 (`DNS: 1 refused`): a refusal moved one level deeper is the same silence at a
 different depth. Full decision: ADR-008.
 
+### 3.4 IPC contracts
+
+**App ↔ Apple extension.** `sendProviderMessage`; the request is a UTF-8
+string, the reply UTF-8 bytes. Unknown requests get an empty reply.
+
+| Request | Reply |
+|---|---|
+| `reload:<yaml>` | empty on success, else the error; the engine keeps the old config |
+| `logging:<0\|1>` | empty; switches log writing and engine level live |
+| `clear-logs` | empty; truncates `tunnel.log`, `mihomo.log` |
+| `log:<name>` | last 512 KB of `<name>.log` |
+| `group:<name>` | member the group currently uses, or empty |
+| `proxybytes` | `<up>:<down>` through the tunnel outbound |
+| `urltest:<ms>:<url>` | `ms:<n>` or `err:<why>` |
+
+Works only while the extension runs.
+
+**App ↔ Windows/Linux service** (`native/mihomocore/service/service.go`).
+
+| | |
+|---|---|
+| Transport | Windows `\\.\pipe\AnnoyaTest.tunnel`; Linux `/run/annoyatest/tunnel.sock` |
+| Framing | one JSON object per line, both ways; a line up to 16 MB |
+| Request | `{"id", "method", "args"}` |
+| Response | `{"id", "result", "error"?}`, matched by `id`; answered concurrently |
+| Push | `{"event":"status","status":…}` on every change, and the current status on connect |
+| Status | `disconnected`, `connecting`, `connected`, `error` |
+| Slow client | a full outbound queue (64) disconnects it |
+
+Names are shared with the installer / packaging and Dart
+(`lib/core/win_pipe_link.dart`, `lib/core/unix_socket_link.dart`); change them
+together.
+
+| Method | Args | Result |
+|---|---|---|
+| `start` | `config`, `log_enabled` | persists, starts; no-op if already up |
+| `stop` | | |
+| `reload` | `config`, `log_enabled` | persists, hot-swaps |
+| `sync_config` | `config`, `log_enabled` | persists only |
+| `remove_profile` | | stops, deletes the saved config |
+| `set_auto_connect` | `enabled` | |
+| `set_on_demand` | | always `false` |
+| `set_logging` | `enabled` | |
+| `clear_logs` | | |
+| `fetch_log` | `name` (`mihomo` or service log) | last 512 KB |
+| `connected_since` | | epoch seconds, `0` when down |
+| `disconnect_error` | | last recorded reason |
+| `group_member` | `group` | member, or empty when down |
+| `proxy_bytes` | | `<up>:<down>`, `0:0` when down |
+| `url_test` | `url`, `timeout_ms` | `ms:<n>` or `err:<why>` |
+| `shared_dir` | | engine directory |
+| `version` | | engine version |
+
+Method names are the MethodChannel names used on Apple and Android.
+
 ---
 
 ## 4. Configurations

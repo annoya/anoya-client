@@ -49,6 +49,12 @@ answer back to the *domain*, so what leaves the device is a hostname and the
 server chooses the family; only connections made to a literal v6 address need
 v6 at the far end.
 
+**Names are answered v4 only.** `dns.ipv6` stays at mihomo's default (off), so
+AAAA answers are empty and apps connect through v4 fake-IPs. A fake v6 answer
+makes dual-stack clients prefer v6, and on a server without v6 egress every
+such connection hangs instead of falling back. The per-server alternative is
+in OPEN-QUESTIONS.
+
 This forces one engine-wide setting. `config.parseIPV6` probes the host's
 interfaces and, finding no global v6 address, strips `tun.inet6-address` and
 `dns.fake-ip-range6` from the parsed config — which would make the `tun`
@@ -73,6 +79,13 @@ tunnel down.
 Applying a config only changes where *new* connections go; browsers and system
 services hold connections open for minutes, so without this the switch appears
 to do nothing.
+
+**The fake-IP pool survives a reload** (`profile.store-fake-ip: true`, persisted
+to `cache.db` in the engine home). Every apply rebuilds the pool, and without
+this it comes back empty: the OS and browsers keep the `198.18.x.y` they were
+handed, the engine no longer knows which domain each one meant, and sites stop
+opening until those caches expire. The constant range (ADR-008) keeps the
+addresses valid; this keeps what they stand for.
 
 **ICMP forwarding is disabled** (`disable-icmp-forwarding: true`). mihomo's ICMP
 path is a DIRECT outbound dialing from the physical interface: a ping entering
@@ -100,6 +113,14 @@ the user gets a dialog.
   `ApplyConfig` returns nothing and logs apply-stage failures instead — including
   a TUN re-creation that closed our fd and could not rebuild — so the wrapper
   checks `listener.GetTunConf().Enable` before calling a reload successful.
+- After each reload the engine dials the single-server outbound over the
+  physical interface and logs the result (`logProxyEgress`); nothing else tells
+  a dead server from a dial that never reached the interface, since both show
+  as an i/o timeout. It looks the outbound up as `proxy`, the name the renderer
+  gives it, so a rename silently disables the probe (pinned by *the single
+  outbound is always named "proxy"*). Proxies that dial UDP (WireGuard,
+  Hysteria, TUIC) are skipped: the TCP dial is refused by design and reads as
+  a network fault.
 - If the interface binding ever fails, the tunnel goes silent rather than
   leaking. Fail-closed is the intended direction.
 
@@ -192,14 +213,16 @@ never gave it to the tunnel" can be told apart from "it went out both ways".
 
 ## Where It Lives
 
-- `native/mihomocore/engine.go` — `reloadEngine`, connection closing, the
-  `[egress]` probe.
+- `native/mihomocore/engine/engine.go` — `Reload`, connection closing, the
+  `[egress]` probe (`logProxyEgress`).
 - `shared/apple/PacketTunnelProvider.swift` — `applyNetworkSettings`
   (start only) and the `reload:` handler.
 - `lib/state/profiles_controller.dart` — `_applySelection`, and
   `maybeReapply` (the background poll takes the same reload-only path).
 - `lib/core/mihomo_tun_config.dart` — identical `tun`/`dns` sections,
-  `disable-icmp-forwarding`.
+  `disable-icmp-forwarding`, `store-fake-ip`, `ipv6`.
 - Tests: `test/hot_switch_test.dart` (group `leak invariants`),
-  `native/mihomocore/engine_test.go`.
+  `test/mihomo_tun_config_test.dart` (*fake-IP meanings survive a hot switch*,
+  *IPv6 is carried, not resolved*),
+  `native/mihomocore/engine/engine_test.go`.
 - `scripts/leak-check.sh` — the verification tool.
