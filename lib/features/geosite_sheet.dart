@@ -4,6 +4,7 @@ import '../core/geosite_index.dart';
 import '../core/service_avatar.dart';
 import '../core/service_catalog.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 
 /// Geosite category picker: everything the local GeoSite.dat contains, with
 /// the curated catalog pinned as POPULAR (same names and avatars as Simple
@@ -31,6 +32,7 @@ class _GeositeSheetState extends State<GeositeSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final index = _index;
     final q = _query.trim().toLowerCase();
 
@@ -54,7 +56,7 @@ class _GeositeSheetState extends State<GeositeSheet> {
     ];
 
     String subtitle(GeositeCategory c) =>
-        '${c.domainCount} domain${c.domainCount == 1 ? '' : 's'}';
+        l10n.geositeDomainCount(c.domainCount);
 
     return SafeArea(
       child: Padding(
@@ -70,7 +72,9 @@ class _GeositeSheetState extends State<GeositeSheet> {
                 child: TextField(
                   autofocus: true,
                   autocorrect: false,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  decoration: InputDecoration(
+                    labelText: l10n.geositeCategoryLabel,
+                  ),
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
@@ -83,8 +87,8 @@ class _GeositeSheetState extends State<GeositeSheet> {
                   child: Center(
                     child: Text(
                       index.isEmpty
-                          ? 'No categories — download the geo databases first.'
-                          : 'Nothing matches “$_query”.',
+                          ? l10n.geositeNoCategories
+                          : l10n.uiNothingMatches(_query),
                       style: TextStyle(color: cs.onSurfaceVariant),
                     ),
                   ),
@@ -93,7 +97,8 @@ class _GeositeSheetState extends State<GeositeSheet> {
                 Expanded(
                   child: ListView(
                     children: [
-                      if (popular.isNotEmpty) const SectionHeader('POPULAR'),
+                      if (popular.isNotEmpty)
+                        SectionHeader(l10n.geositeSectionPopular),
                       ...popular.map((s) {
                         final c = byName[s.category]!;
                         return ListTile(
@@ -105,8 +110,11 @@ class _GeositeSheetState extends State<GeositeSheet> {
                       }),
                       SectionHeader(
                         q.isEmpty
-                            ? 'ALL · ${all.length}'
-                            : 'ALL · ${all.length} OF ${index.length} MATCH',
+                            ? l10n.geositeSectionAll(all.length)
+                            : l10n.geositeSectionAllMatch(
+                                all.length,
+                                index.length,
+                              ),
                       ),
                       ...all.map(
                         (c) => ListTile(

@@ -6,6 +6,7 @@ import '../core/mihomo_tun_config.dart';
 import '../core/norm_config.dart';
 import '../core/profile.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 
@@ -28,12 +29,13 @@ class DnsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final plan = _planFor(ref);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('DNS')),
+      appBar: AppBar(title: Text(l10n.dnsTitle)),
       body: PageBody(
         child: ListView(
           children: [
-            const SectionHeader('IN EFFECT'),
+            SectionHeader(l10n.dnsSectionInEffect),
             Card(
               margin: kCardMargin,
               child: Column(
@@ -47,18 +49,14 @@ class DnsScreen extends ConsumerWidget {
             ),
             SectionNote(
               plan.resolvers.length > 1
-                  ? 'Asked at the same time; the first answer wins.'
-                  : _originNote(plan),
+                  ? l10n.dnsParallelNote
+                  : _originNote(l10n, plan),
             ),
             if (plan.dropped.isNotEmpty) ...[
-              const SectionHeader('DROPPED'),
+              SectionHeader(l10n.dnsSectionDropped),
               for (final d in plan.dropped) _Dropped(drop: d),
             ],
-            const SectionNote(
-              'The address of the server you connect through is '
-              'always resolved directly. It has to be — nothing could reach the '
-              'tunnel otherwise.',
-            ),
+            SectionNote(l10n.dnsProxyResolvedDirectlyNote),
           ],
         ),
       ),
@@ -69,10 +67,8 @@ class DnsScreen extends ConsumerWidget {
 
   String _origin(DnsPlan plan) => dnsOriginLabel(profile, plan);
 
-  String _originNote(DnsPlan plan) => plan.usingFallback
-      ? 'This configuration names no resolver of its own, so the app uses its '
-            'default — change it in Settings › Default DNS.'
-      : 'Chosen by whoever set up this configuration, and it changes with it.';
+  String _originNote(AppLocalizations l10n, DnsPlan plan) =>
+      plan.usingFallback ? l10n.dnsFallbackNote : l10n.dnsProviderNote;
 }
 
 /// One resolver: where it is, how it is reached, and whose choice it was.
@@ -104,16 +100,15 @@ class _ResolverRow extends StatelessWidget {
           ),
         ],
       ),
-      subtitle: Text('${resolver.protocol} · $origin'),
+      subtitle: Text(
+        context.l10n.dnsResolverSubtitle(resolver.protocol, origin),
+      ),
       isThreeLine: resolver.pinIgnored,
       // Only said when it happened: the provider asked for one of its own
       // outbounds, and ours are not theirs.
       trailing: resolver.pinIgnored
           ? Tooltip(
-              message:
-                  'This configuration asked for an outbound this app does '
-                  'not create, so the request was dropped and the resolver is '
-                  'reached directly.',
+              message: context.l10n.dnsPinIgnoredTooltip,
               child: Icon(
                 Icons.info_outline,
                 size: 18,
@@ -196,11 +191,12 @@ DnsPlan dnsPlanForProfile(WidgetRef ref, Profile profile) {
 /// Whose choice the resolvers are. Short, because it sits at the end of a line
 /// that already carries something else.
 String dnsOriginLabel(Profile profile, DnsPlan plan) {
-  if (plan.usingFallback) return 'app default';
+  final l10n = L10n.current;
+  if (plan.usingFallback) return l10n.dnsOriginAppDefault;
   return switch (profile.type) {
-    ProfileType.subscription => 'from your subscription',
-    ProfileType.selfhosted => 'from your organisation',
-    ProfileType.amnezia => 'from your subscription',
-    ProfileType.link => 'from this configuration',
+    ProfileType.subscription => l10n.dnsOriginSubscription,
+    ProfileType.selfhosted => l10n.dnsOriginOrganisation,
+    ProfileType.amnezia => l10n.dnsOriginSubscription,
+    ProfileType.link => l10n.dnsOriginConfiguration,
   };
 }

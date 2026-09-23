@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/services.dart' show PlatformException;
 
 import '../api/api_client.dart';
+import '../l10n/l10n.dart';
 import 'oidc_login.dart';
 
 /// A message in the two parts the UI always shows: what happened, and what to
@@ -38,11 +39,9 @@ class AppErrorException implements Exception {
 ///
 /// Its own message travels in the entries it sends instead of servers, so this
 /// says the one thing those entries cannot: what to do about it.
-const kDeviceLimitReached = AppError(
-  'Device limit reached',
-  detail:
-      'Your subscription’s device limit is full, so it sent a placeholder '
-      'instead of your servers. Free a slot in your subscription, then refresh.',
+AppError get kDeviceLimitReached => AppError(
+  L10n.current.errorDeviceLimitTitle,
+  detail: L10n.current.errorDeviceLimitDetail,
 );
 
 /// A subscription body that produced no usable servers, with the reason already
@@ -66,11 +65,9 @@ class SubscriptionFormatException extends FormatException {
 /// Naming the formats we do read is not developer detail: it is what turns
 /// "it does not work" into a sentence the user can take to their provider,
 /// who is the only party who can change the template.
-const kUnreadableSubscription = AppError(
-  'Couldn’t read this subscription',
-  detail:
-      'Your subscription sent a format this app does not recognise. It reads '
-      'base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.',
+AppError get kUnreadableSubscription => AppError(
+  L10n.current.errorUnreadableSubscriptionTitle,
+  detail: L10n.current.errorUnreadableSubscriptionDetail,
 );
 
 /// The format was read and there are no servers in it at all.
@@ -80,10 +77,8 @@ const kUnreadableSubscription = AppError(
 /// fix is with the provider, so the message says so instead of blaming the
 /// format.
 AppError emptySubscription(String what) => AppError(
-  'This subscription has no servers',
-  detail:
-      'Your subscription answered with $what that lists none. That usually '
-      'means the account is out of days or its device limit is full — ask them.',
+  L10n.current.errorEmptySubscriptionTitle,
+  detail: L10n.current.errorEmptySubscriptionDetail(what),
 );
 
 /// The body was read and every server in it uses something we cannot run.
@@ -91,10 +86,8 @@ AppError emptySubscription(String what) => AppError(
 /// Distinct from [kUnreadableSubscription] on purpose: here we can count them
 /// and name what they use, which is a different problem with a different fix.
 AppError noRunnableServers(int total, String kinds) => AppError(
-  total == 1
-      ? 'The only server here cannot run'
-      : 'None of the $total servers can run here',
-  detail: 'They use $kinds, which this app cannot run yet. Nothing was added.',
+  L10n.current.errorNoRunnableServersTitle(total),
+  detail: L10n.current.errorNoRunnableServersDetail(kinds),
 );
 
 /// The panel sent entries that are not servers at all — every address is
@@ -104,17 +97,18 @@ AppError noRunnableServers(int total, String kinds) => AppError(
 /// the user locations that can never connect; the honest reading is that this
 /// is text, so it is shown as text.
 AppError providerMessageInstead(Iterable<String> lines) => AppError(
-  'Your subscription sent a message',
-  detail:
-      '${lines.where((l) => l.trim().isNotEmpty).join('\n')}'
-      '\n\nNot servers: every entry points nowhere, so nothing was added.',
+  L10n.current.errorProviderMessageTitle,
+  detail: L10n.current.errorProviderMessageDetail(
+    lines.where((l) => l.trim().isNotEmpty).join('\n'),
+  ),
 );
 
 /// Translates whatever the layers below threw into something a person can act
 /// on. [subject] names what failed — a host, a subscription URL — so the second
 /// line can be specific instead of "connection error".
 AppError describeError(Object error, {String? subject}) {
-  final what = subject ?? 'the server';
+  final l10n = L10n.current;
+  final what = subject ?? l10n.errorSubjectDefault;
 
   AppError err(String title, String? detail) => AppError(title, detail: detail);
 
@@ -124,93 +118,91 @@ AppError describeError(Object error, {String? subject}) {
     SubscriptionFormatException(:final error) => error,
     AppErrorException(:final error) => error,
     SocketException() || TimeoutException() => err(
-      'Server didn’t answer',
-      'Couldn’t reach $what. Check your network, or pick another server.',
+      l10n.errorServerDidNotAnswerTitle,
+      l10n.errorCouldNotReachDetail(what),
     ),
     HandshakeException() || TlsException() => err(
-      'Couldn’t set up a secure connection',
-      'The certificate of $what was rejected. If the address is right, the server may be misconfigured.',
+      l10n.errorSecureConnectionTitle,
+      l10n.errorCertificateRejectedDetail(what),
     ),
     HttpException() => err(
-      'Server didn’t answer',
-      'The connection to $what was closed.',
+      l10n.errorServerDidNotAnswerTitle,
+      l10n.errorConnectionClosedDetail(what),
     ),
     ApiException(status: 401, code: 'invalid_credentials') => err(
-      'Wrong username or password',
-      'Check both and try again.',
+      l10n.errorWrongCredentialsTitle,
+      l10n.errorWrongCredentialsDetail,
     ),
     ApiException(status: 401) => err(
-      'Session expired',
-      'Sign in to $what again.',
+      l10n.errorSessionExpiredTitle,
+      l10n.errorSessionExpiredDetail(what),
     ),
     ApiException(status: 403) => err(
-      'Access is blocked',
-      'The server refused this account.',
+      l10n.errorAccessBlockedTitle,
+      l10n.errorAccessBlockedDetail,
     ),
     ApiException(status: 404) => err(
-      'Nothing at this address',
-      'Check the link — $what has no configuration for this account.',
+      l10n.errorNothingAtAddressTitle,
+      l10n.errorNothingAtAddressDetail(what),
     ),
     ApiException(status: >= 500) => err(
-      'The server returned an error',
-      'Nothing to fix on this side — try again in a few minutes.',
+      l10n.errorServerErrorTitle,
+      l10n.errorServerErrorDetail,
     ),
-    ApiException(message: final m) => err('The server refused the request', m),
+    ApiException(message: final m) => err(l10n.errorServerRefusedTitle, m),
     // A parse failure, and only that. Anything that already has words for the
     // user throws [AppErrorException]; a FormatException carrying a sentence
     // would land here and be replaced by this one.
-    FormatException() => err(
-      'This doesn’t look like a link we know',
-      'Expected vless://, vmess://, trojan://, ss:// or a subscription URL.',
-    ),
+    FormatException() => err(l10n.errorNotALinkTitle, l10n.errorNotALinkDetail),
     // The Windows tunnel is a service the app does not own. Absent (not
     // installed, stopped) and vanished mid-request are different situations
     // with different fixes, and neither has anything to do with a VPN profile.
     PlatformException(code: 'service_unavailable') => err(
-      'The tunnel service isn’t running',
-      'AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, '
-          'or start the service in Services, then connect again.',
+      l10n.errorTunnelServiceNotRunningTitle,
+      l10n.errorTunnelServiceNotRunningDetail,
     ),
     PlatformException(code: 'service_disconnected') => err(
-      'The tunnel service stopped',
-      'It restarts on its own within a few seconds — connect again. If this keeps '
-          'happening, the tunnel log in Settings → Logs says why.',
+      l10n.errorTunnelServiceStoppedTitle,
+      l10n.errorTunnelServiceStoppedDetail,
     ),
     // NEVPNError / permission denial arrives as a channel error.
     PlatformException() => err(
-      'The system refused to start the tunnel',
-      'Allow the VPN profile in system settings, then connect again.',
+      l10n.errorSystemRefusedTunnelTitle,
+      l10n.errorSystemRefusedTunnelDetail,
     ),
     OidcException() => err(
-      'Sign-in didn’t finish',
-      'The browser window was closed or the provider refused.',
+      l10n.errorSignInNotFinishedTitle,
+      l10n.errorSignInNotFinishedDetail,
     ),
-    _ => err('Something went wrong', 'The details are in Settings → Logs.'),
+    _ => err(
+      l10n.errorSomethingWentWrongTitle,
+      l10n.errorSomethingWentWrongDetail,
+    ),
   };
 }
 
 /// Why an account cannot connect, in the user's terms rather than the server's
 /// status enum.
 AppError describeAccountStatus(String status) => switch (status) {
-  'expired' => const AppError(
-    'Subscription expired',
-    detail: 'Renew it in your account, then connect again.',
+  'expired' => AppError(
+    L10n.current.accountExpiredTitle,
+    detail: L10n.current.accountExpiredDetail,
   ),
-  'limited' => const AppError(
-    'Traffic limit reached',
-    detail: 'The plan is used up until it renews.',
+  'limited' => AppError(
+    L10n.current.accountLimitedTitle,
+    detail: L10n.current.accountLimitedDetail,
   ),
   // The server's stored status is "deactivated" (shared/normconfig).
-  'deactivated' => const AppError(
-    'Access disabled',
-    detail: 'The administrator turned this account off.',
+  'deactivated' => AppError(
+    L10n.current.accountDeactivatedTitle,
+    detail: L10n.current.accountDeactivatedDetail,
   ),
-  'on_hold' => const AppError(
-    'Subscription not started',
-    detail: 'It begins on the first connection — try again in a moment.',
+  'on_hold' => AppError(
+    L10n.current.accountOnHoldTitle,
+    detail: L10n.current.accountOnHoldDetail,
   ),
   _ => AppError(
-    'Account is ${status.replaceAll('_', ' ')}',
-    detail: 'Connecting is not allowed in this state.',
+    L10n.current.accountOtherStateTitle(status.replaceAll('_', ' ')),
+    detail: L10n.current.accountOtherStateDetail,
   ),
 };

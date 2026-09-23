@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/on_demand.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/on_demand_controller.dart';
 import 'on_demand_values_screen.dart';
 
@@ -64,25 +65,26 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
   }
 
   Future<void> _pickAction() async {
+    final l10n = context.l10n;
     final picked = await pickOption<OnDemandAction>(
       context,
-      title: 'Action',
+      title: l10n.ruleAction,
       selected: _rule.action,
-      options: const [
+      options: [
         Option(
           OnDemandAction.connect,
-          'Connect',
-          subtitle: 'bring the tunnel up',
+          l10n.commonConnect,
+          subtitle: l10n.onDemandActionConnectSubtitle,
         ),
         Option(
           OnDemandAction.disconnect,
-          'Disconnect',
-          subtitle: 'tear the tunnel down',
+          l10n.commonDisconnect,
+          subtitle: l10n.onDemandActionDisconnectSubtitle,
         ),
         Option(
           OnDemandAction.ignore,
-          'Ignore',
-          subtitle: 'leave the tunnel as is',
+          l10n.onDemandActionIgnore,
+          subtitle: l10n.onDemandActionIgnoreSubtitle,
         ),
       ],
     );
@@ -106,7 +108,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
       child: ListTile(
         title: Text(title),
         subtitle: Text(
-          values.isEmpty ? 'Any' : values.join(', '),
+          values.isEmpty ? context.l10n.onDemandAny : values.join(', '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -142,14 +144,10 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
 
   /// What the selected interface mode means, in the user's terms.
   String _networkHelp(OnDemandInterface selected) => switch (selected) {
-    OnDemandInterface.any =>
-      'The rule is checked on every network — Wi-Fi, mobile or wired.',
-    OnDemandInterface.wifi =>
-      'When the device joins a Wi-Fi network, the system checks the conditions below and applies the rule.',
-    OnDemandInterface.cellular =>
-      'When the device is on mobile data, the system checks the conditions below and applies the rule.',
-    OnDemandInterface.ethernet =>
-      'When the device is on a wired network, the system checks the conditions below and applies the rule.',
+    OnDemandInterface.any => context.l10n.onDemandNetworkHelpAny,
+    OnDemandInterface.wifi => context.l10n.onDemandNetworkHelpWifi,
+    OnDemandInterface.cellular => context.l10n.onDemandNetworkHelpCellular,
+    OnDemandInterface.ethernet => context.l10n.onDemandNetworkHelpEthernet,
   };
 
   @override
@@ -158,9 +156,12 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
     final mobile = Platform.isMacOS
         ? OnDemandInterface.ethernet
         : OnDemandInterface.cellular;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.isNew ? 'New rule' : 'Edit rule')),
+      appBar: AppBar(
+        title: Text(widget.isNew ? l10n.onDemandNewRule : l10n.ruleEdit),
+      ),
       body: PageBody(
         child: ListView(
           padding: const EdgeInsets.only(bottom: 24),
@@ -171,9 +172,9 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
               child: TextField(
                 controller: _name,
                 autocorrect: false,
-                decoration: const InputDecoration(
-                  labelText: 'Name (optional)',
-                  hintText: 'Office',
+                decoration: InputDecoration(
+                  labelText: l10n.onDemandNameOptional,
+                  hintText: l10n.onDemandNameHint,
                 ),
                 onChanged: (v) =>
                     _updateDebounced(_rule.copyWith(name: v.trim())),
@@ -183,13 +184,13 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kGutter),
               child: SelectField(
-                label: 'Action',
+                label: l10n.ruleAction,
                 value: _rule.action.label,
                 onTap: _pickAction,
               ),
             ),
 
-            const SectionHeader('NETWORK'),
+            SectionHeader(l10n.onDemandNetworkHeader),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kGutter),
               child: SizedBox(
@@ -197,13 +198,13 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                 child: SegmentedButton<OnDemandInterface>(
                   showSelectedIcon: false,
                   segments: [
-                    const ButtonSegment(
+                    ButtonSegment(
                       value: OnDemandInterface.any,
-                      label: Text('Any'),
+                      label: Text(l10n.onDemandAny),
                     ),
-                    const ButtonSegment(
+                    ButtonSegment(
                       value: OnDemandInterface.wifi,
-                      label: Text('Wi-Fi'),
+                      label: Text(l10n.onDemandInterfaceWifi),
                     ),
                     ButtonSegment(value: mobile, label: Text(mobile.label)),
                   ],
@@ -222,57 +223,52 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
             ),
             _hint(_networkHelp(_rule.interface)),
 
-            const SectionHeader('CONDITIONS'),
+            SectionHeader(l10n.onDemandConditionsHeader),
             if (_rule.ssidsApply)
               _conditionRow(
-                title: 'Wi-Fi networks',
+                title: l10n.onDemandWifiNetworks,
                 values: _rule.ssids,
-                unit: 'NETWORKS',
-                addTitle: 'Wi-Fi network',
+                unit: l10n.onDemandNetworksUnit,
+                addTitle: l10n.onDemandWifiNetwork,
                 addHint: 'home-5G',
-                help:
-                    'Matches the network name exactly. Leave empty for any Wi-Fi.',
+                help: l10n.onDemandWifiNetworksHelp,
                 apply: (v) => _update(_rule.copyWith(ssids: v)),
               ),
             _conditionRow(
-              title: 'DNS search domains',
+              title: l10n.onDemandDnsDomains,
               values: _rule.dnsDomains,
-              unit: 'DOMAINS',
-              addTitle: 'DNS search domain',
+              unit: l10n.onDemandDomainsUnit,
+              addTitle: l10n.onDemandDnsDomain,
               addHint: 'corp.example.com',
-              help:
-                  'Matches when the network’s search domain ends with an entry.',
+              help: l10n.onDemandDnsDomainsHelp,
               apply: (v) => _update(_rule.copyWith(dnsDomains: v)),
             ),
             _conditionRow(
-              title: 'DNS servers',
+              title: l10n.onDemandDnsServers,
               values: _rule.dnsServers,
-              unit: 'SERVERS',
-              addTitle: 'DNS server',
+              unit: l10n.onDemandServersUnit,
+              addTitle: l10n.onDemandDnsServer,
               addHint: '10.0.*',
-              help:
-                  'Matches the network’s DNS servers; a single “*” wildcard is allowed.',
+              help: l10n.onDemandDnsServersHelp,
               apply: (v) => _update(_rule.copyWith(dnsServers: v)),
             ),
 
-            const SectionHeader('URL PROBE'),
+            SectionHeader(l10n.onDemandUrlProbeHeader),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kGutter),
               child: TextField(
                 controller: _probe,
                 autocorrect: false,
                 keyboardType: TextInputType.url,
-                decoration: const InputDecoration(
-                  labelText: 'URL (optional)',
+                decoration: InputDecoration(
+                  labelText: l10n.onDemandUrlOptional,
                   hintText: 'https://intranet.example.com/ping',
                 ),
                 onChanged: (v) =>
                     _updateDebounced(_rule.copyWith(probeUrl: v.trim())),
               ),
             ),
-            _hint(
-              'The rule matches only if this URL returns 200 without redirects.',
-            ),
+            _hint(l10n.onDemandUrlProbeHelp),
           ],
         ),
       ),

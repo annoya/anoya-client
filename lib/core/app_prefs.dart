@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'json_file_store.dart';
 
-/// UI languages the app ships with. Only English for now; the enum exists so
-/// adding a locale is a one-line change and the picker already has a shape.
+/// UI languages the app ships with — one per `lib/l10n/app_*.arb`. The label
+/// is the language's own name, which is what a person who cannot read the
+/// current language needs to find theirs.
 enum AppLanguage {
-  en('English', Locale('en'));
+  en('English', Locale('en')),
+  ru('Русский', Locale('ru')),
+  zh('中文', Locale('zh')),
+  fr('Français', Locale('fr')),
+  es('Español', Locale('es'));
 
   const AppLanguage(this.label, this.locale);
 
@@ -27,13 +32,6 @@ class AppPrefs {
   /// Whether the app, the tunnel and the engine write logs at all. Off means
   /// "stop writing", not "hide": what was already collected stays readable.
   final bool collectLogs;
-
-  /// What the settings row shows under "Appearance".
-  String get themeLabel => switch (themeMode) {
-    ThemeMode.system => 'System',
-    ThemeMode.light => 'Light',
-    ThemeMode.dark => 'Dark',
-  };
 
   AppPrefs copyWith({
     ThemeMode? themeMode,

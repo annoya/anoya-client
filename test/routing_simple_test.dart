@@ -16,6 +16,7 @@ import 'package:vpn_client/core/vpn_core.dart';
 import 'package:vpn_client/features/rule_set_editor_screen.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 /// Simple mode of the rule-set editor: a catalog view over ordinary
 /// geosite/geoip rules. The contract pinned here: toggles write real rules
@@ -120,6 +121,8 @@ void main() {
           ],
           child: MaterialApp(
             theme: buildAppTheme(Brightness.light),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: const RuleSetEditorScreen(RuleSet.defaultId),
           ),
         ),

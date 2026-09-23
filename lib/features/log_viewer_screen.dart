@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../core/ext_logs.dart';
 import '../core/log.dart';
+import '../l10n/l10n.dart';
 
 /// Shows one log: the in-app log buffer (appLog) or an extension log fetched
 /// over IPC by [logKey] (e.g. "tunnel", "mihomo").
@@ -47,7 +48,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       return;
     }
     if (widget.logKey == null) {
-      _set('No log.');
+      _set(context.l10n.logsNoLog);
       return;
     }
     setState(() => _loading = true);
@@ -66,22 +67,25 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: l10n.commonRefresh,
             onPressed: _load,
           ),
           IconButton(
             icon: const Icon(Icons.copy),
-            tooltip: 'Copy',
+            tooltip: l10n.commonCopy,
             onPressed: () async {
               final messenger = ScaffoldMessenger.of(context);
               await Clipboard.setData(ClipboardData(text: _content));
-              messenger.showSnackBar(const SnackBar(content: Text('Copied')));
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.commonCopied)),
+              );
             },
           ),
         ],
@@ -89,7 +93,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _content.trim().isEmpty
-          ? const Center(child: Text('Empty'))
+          ? Center(child: Text(l10n.logsEmpty))
           : SingleChildScrollView(
               controller: _scroll,
               padding: const EdgeInsets.all(12),

@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import 'control_transport.dart';
 import 'log.dart';
 import 'network_extension_core.dart';
@@ -23,7 +24,7 @@ Future<String> fetchExtensionLog(String name) async {
   try {
     final text = await _control.invoke<String>('fetch_log', {'name': name});
     final t = text ?? '';
-    return t.trim().isEmpty ? 'No log yet.' : t;
+    return t.trim().isEmpty ? L10n.current.logsNoLogYet : t;
   } on PlatformException {
     return _unavailable;
   } on MissingPluginException {
@@ -33,10 +34,7 @@ Future<String> fetchExtensionLog(String name) async {
   }
 }
 
-const _unavailable =
-    'Logs are available only while the tunnel is running.\n'
-    '(The tunnel process keeps its logs on its own side and '
-    'streams them to the app over IPC.)';
+String get _unavailable => L10n.current.logsUnavailable;
 
 /// Names of the logs the extension keeps in its container.
 const extensionLogNames = ['tunnel', 'mihomo'];

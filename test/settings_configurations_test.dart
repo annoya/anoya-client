@@ -11,6 +11,7 @@ import 'package:vpn_client/features/about_screen.dart';
 import 'package:vpn_client/features/settings_screen.dart';
 import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 /// Settings never grows a per-configuration list: one configuration is named
 /// inline, several hide behind a sheet, and neither offers to switch the active
@@ -44,6 +45,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const SettingsScreen(),
         ),
       ),

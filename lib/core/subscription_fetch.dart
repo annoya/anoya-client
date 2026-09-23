@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 
 import '../api/api_client.dart';
+import '../l10n/l10n.dart';
 import 'app_error.dart';
 import 'device_identity.dart';
 import 'log.dart';
@@ -188,11 +189,10 @@ Future<SubscriptionResponse> _fetch(
   // missing — worth naming, because "not found" would send the user looking at
   // their URL.
   if (res.statusCode == 404 && _flag(res.headers, 'x-hwid-not-supported')) {
-    throw const AppErrorException(
+    throw AppErrorException(
       AppError(
-        'Your subscription did not accept this device',
-        detail:
-            'It requires a device id this app did send. Ask your subscription’s support.',
+        L10n.current.errorDeviceNotAcceptedTitle,
+        detail: L10n.current.errorDeviceNotAcceptedDetail,
       ),
     );
   }

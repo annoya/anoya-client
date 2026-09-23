@@ -1,3 +1,4 @@
+import '../l10n/l10n.dart';
 import 'json_file_store.dart';
 
 /// What the app asks the engine after a connect, and what it does with the
@@ -79,18 +80,19 @@ class ConnectionCheckStore {
 /// needs is which of the three things happened — nothing came back, the server
 /// hung up, or it was never reached. The engine's own text stays in the log.
 String describeProbeFailure(String raw) {
+  final l10n = L10n.current;
   final text = raw.toLowerCase();
   if (text.contains('deadline exceeded') || text.contains('timeout')) {
-    return 'The server did not answer in time.';
+    return l10n.connectionCheckTimedOut;
   }
   if (text.contains('eof') || text.contains('connection reset')) {
-    return 'The server closed the connection.';
+    return l10n.connectionCheckClosed;
   }
-  if (text.contains('refused')) return 'The server refused the connection.';
+  if (text.contains('refused')) return l10n.connectionCheckRefused;
   if (text.contains('no outbound named')) {
-    return 'There is no server to test — the tunnel is running something else.';
+    return l10n.connectionCheckNoServer;
   }
-  if (text.contains('not running')) return 'The tunnel is not running.';
+  if (text.contains('not running')) return l10n.connectionCheckTunnelNotRunning;
   // Anything we have not seen keeps the engine's own first line rather than
   // being folded into "something went wrong": an unexplained sentence the user
   // can quote is worth more than a tidy one that fits every failure.
@@ -99,7 +101,7 @@ String describeProbeFailure(String raw) {
       .first
       .replaceFirst('connect failed: ', '')
       .trim();
-  if (first.isEmpty) return 'Nothing came back.';
+  if (first.isEmpty) return l10n.connectionCheckNothingCameBack;
   return first.endsWith('.') ? first : '$first.';
 }
 
@@ -166,7 +168,7 @@ class ConnectionCheck {
     return ConnectionCheck(
       at: at,
       failure: reason.trim().isEmpty
-          ? 'The engine did not answer.'
+          ? L10n.current.connectionCheckEngineDidNotAnswer
           : describeProbeFailure(reason),
       via: via,
     );

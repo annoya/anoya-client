@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../core/app_error.dart';
 import '../core/log.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 
 /// Self-hosted sign-in: server address + credentials, or SSO when the server
@@ -65,14 +66,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     // Already worded for the user: a FormatException here would be read by
     // describeError as "this doesn't look like a link".
     if (_server.text.trim().isEmpty) {
-      throw const AppErrorException(AppError('Enter the server address first'));
+      throw AppErrorException(AppError(L10n.current.signInEnterServerFirst));
     }
     final cfg = await _ctrl.authConfig(_server.text);
     if (cfg.providers.isEmpty) {
-      throw const AppErrorException(
+      throw AppErrorException(
         AppError(
-          'This server has no SSO providers',
-          detail: 'Sign in with a username and password instead.',
+          L10n.current.signInNoSsoProviders,
+          detail: L10n.current.signInNoSsoProvidersDetail,
         ),
       );
     }
@@ -87,7 +88,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Future<AuthProvider?> _pickProvider(List<AuthProvider> providers) =>
       pickOption(
         context,
-        title: 'Sign in with',
+        title: context.l10n.signInWith,
         options: [
           for (final p in providers)
             Option(p, p.name, leading: const Icon(Icons.login)),
@@ -96,9 +97,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
+      appBar: AppBar(title: Text(l10n.signIn)),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -111,7 +113,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   Icon(Icons.business_outlined, size: 48, color: cs.primary),
                   const SizedBox(height: 10),
                   Text(
-                    'Your organization’s or personal server',
+                    l10n.signInSubtitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(
                       context,
@@ -123,9 +125,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     keyboardType: TextInputType.url,
                     autocorrect: false,
                     enabled: !_busy,
-                    decoration: const InputDecoration(
-                      labelText: 'Server address',
-                      hintText: 'https://your-server',
+                    decoration: InputDecoration(
+                      labelText: l10n.signInServerAddress,
+                      hintText: l10n.signInServerHint,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -133,14 +135,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     controller: _username,
                     autocorrect: false,
                     enabled: !_busy,
-                    decoration: const InputDecoration(labelText: 'Username'),
+                    decoration: InputDecoration(labelText: l10n.signInUsername),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _password,
                     obscureText: true,
                     enabled: !_busy,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    decoration: InputDecoration(labelText: l10n.signInPassword),
                     onSubmitted: (_) => _busy ? null : _signIn(),
                   ),
                   const SizedBox(height: 20),
@@ -154,13 +156,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sign in'),
+                        : Text(l10n.signIn),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _ssoSignIn,
                     icon: const Icon(Icons.login, size: 18),
-                    label: const Text('Sign in with SSO'),
+                    label: Text(l10n.signInWithSso),
                   ),
                 ],
               ),

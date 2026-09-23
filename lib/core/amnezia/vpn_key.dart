@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../../l10n/l10n.dart';
+
 /// The `vpn://` key an Amnezia subscription is handed out as.
 ///
 /// It is a Qt artefact and decodes like one: URL-safe base64 over a
@@ -76,7 +78,7 @@ AmneziaVpnKey? parseAmneziaVpnKey(String text) {
   final auth = doc['auth_data'];
   if (api is! Map || auth is! Map) return null;
   final key = AmneziaVpnKey(
-    name: '${doc['name'] ?? 'Subscription'}',
+    name: '${doc['name'] ?? L10n.current.configKindSubscriptionPlain}',
     serviceType: '${api['service_type'] ?? ''}',
     serviceProtocol: '${api['service_protocol'] ?? ''}',
     userCountryCode: '${api['user_country_code'] ?? ''}',

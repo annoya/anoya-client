@@ -6,6 +6,7 @@ import '../../core/device_identity.dart';
 import '../../core/profile.dart';
 import '../../core/profile_store.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import 'config_parts.dart';
 
 /// An Amnezia Premium/Free subscription.
@@ -43,7 +44,7 @@ class AmneziaConfigScreen extends ConsumerWidget {
             ProfileHeaderCard(profile: p, isActive: isActive),
             if (account?.expired == true) const _ExpiredCard(),
             RefreshCard(profile: p),
-            if (account != null) ..._subscription(account),
+            if (account != null) ..._subscription(context.l10n, account),
             RoutingRow(profile: p),
             const _ThisInstallation(),
             ConfigActions(profile: p, isActive: isActive),
@@ -53,20 +54,22 @@ class AmneziaConfigScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _subscription(AmneziaAccount account) {
+  List<Widget> _subscription(AppLocalizations l10n, AmneziaAccount account) {
     final rows = <Widget>[
       if (account.endsAt != null)
         ListTile(
           leading: const Icon(Icons.event_outlined),
-          title: Text(account.expired ? 'Ran until' : 'Runs until'),
-          subtitle: Text(_endLabel(account)),
+          title: Text(
+            account.expired ? l10n.configRanUntil : l10n.configRunsUntil,
+          ),
+          subtitle: Text(_endLabel(l10n, account)),
         ),
       if (account.hasDeviceCount)
         ListTile(
           leading: const Icon(Icons.devices_outlined),
-          title: const Text('Devices'),
+          title: Text(l10n.configDevices),
           subtitle: Text(
-            '${account.activeDevices} of ${account.maxDevices} used',
+            l10n.configDevicesUsed(account.activeDevices, account.maxDevices),
           ),
         ),
     ];
@@ -76,7 +79,7 @@ class AmneziaConfigScreen extends ConsumerWidget {
     // left — so nothing is shown when those are all we would have.
     if (rows.isEmpty) return const [];
     return [
-      const SectionHeader('SUBSCRIPTION'),
+      SectionHeader(l10n.configSectionSubscription),
       Card(
         margin: kCardMargin,
         child: Column(
@@ -91,14 +94,13 @@ class AmneziaConfigScreen extends ConsumerWidget {
     ];
   }
 
-  String _endLabel(AmneziaAccount account) {
-    final end = account.endsAt!.toLocal();
-    final date = '${end.day} ${_months[end.month - 1]} ${end.year}';
+  String _endLabel(AppLocalizations l10n, AmneziaAccount account) {
+    final date = l10n.configDateLong(account.endsAt!.toLocal());
     if (account.expired) return date;
     final left = account.endsAt!.difference(DateTime.now().toUtc()).inDays;
     // The date alone answers "when"; the count answers "should I do something
     // about it", which is the question someone opens this screen with.
-    return left <= 0 ? date : '$date · $left days left';
+    return left <= 0 ? date : l10n.configDaysLeft(date, left);
   }
 }
 
@@ -128,6 +130,7 @@ class _ThisInstallationState extends State<_ThisInstallation> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return FutureBuilder<(DeviceIdentity, String)>(
       future: _identity,
       builder: (context, snap) {
@@ -135,34 +138,15 @@ class _ThisInstallationState extends State<_ThisInstallation> {
         if (data == null || data.$2.isEmpty) return const SizedBox.shrink();
         return DeviceSection(
           label: data.$1.label,
-          labelSubtitle:
-              'Identified to your subscription, which counts devices',
-          idTitle: 'Device id',
+          labelSubtitle: l10n.configDeviceIdentifiedSubtitle,
+          idTitle: l10n.configDeviceId,
           idValue: data.$2,
-          hint:
-              'Your subscription counts devices by this id. It is made once '
-              'and kept, so reconnecting costs no slot — but a reinstall takes '
-              'a new one.',
+          hint: l10n.configDeviceHintAmnezia,
         );
       },
     );
   }
 }
-
-const _months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
 
 /// The subscription ran out, in Amnezia's own words (code 1112) so that the
 /// same failure reads the same in both clients.
@@ -172,15 +156,14 @@ class _ExpiredCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Card(
       margin: kCardMargin,
       color: cs.errorContainer.withValues(alpha: 0.35),
       child: ListTile(
         leading: Icon(Icons.warning_amber_outlined, color: cs.error),
-        title: const Text('Subscription expired'),
-        subtitle: const Text(
-          'Renew the subscription, then refresh this configuration.',
-        ),
+        title: Text(l10n.accountExpiredTitle),
+        subtitle: Text(l10n.configSubscriptionExpiredDetail),
         isThreeLine: true,
       ),
     );

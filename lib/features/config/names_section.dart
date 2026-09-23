@@ -6,6 +6,7 @@ import '../../core/mihomo_tun_config.dart';
 import '../../core/norm_config.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/providers.dart';
 import '../dns_screen.dart';
@@ -42,6 +43,8 @@ class NamesSection extends ConsumerWidget {
       fallback: ref.watch(routingPrefsProvider.select((p) => p.defaultDns)),
     );
     final first = plan.resolvers.first;
+    final l10n = context.l10n;
+    final more = plan.resolvers.length - 1;
 
     return Column(
       // Without this a Column hands its children their intrinsic width and
@@ -49,17 +52,17 @@ class NamesSection extends ConsumerWidget {
       // every other one on the page stayed flush left.
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader('DNS'),
+        SectionHeader(l10n.dnsTitle),
         Card(
           margin: kCardMargin,
           child: ListTile(
             leading: const Icon(Icons.language_outlined),
-            title: const Text('DNS'),
+            title: Text(l10n.dnsTitle),
             // Host and routing, not a count: the first is what the user came to
             // check, the second is the one that decides who else sees the query.
             subtitle: Text(
-              '${_host(first.address)} · ${first.routing}'
-              '${plan.resolvers.length > 1 ? ' · +${plan.resolvers.length - 1} more' : ''}',
+              l10n.configDnsSummary(_host(first.address), first.routing) +
+                  (more > 0 ? l10n.configDnsMore(more) : ''),
             ),
             // Refusals are the reason this row leads anywhere at all, so they are
             // announced before the screen is opened.
@@ -69,7 +72,7 @@ class NamesSection extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${plan.dropped.length} dropped',
+                        l10n.configDnsDropped(plan.dropped.length),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.error,
                         ),

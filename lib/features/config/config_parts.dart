@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_error.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 
 export 'device_section.dart';
@@ -27,19 +28,25 @@ IconData profileIcon(ProfileType t) => switch (t) {
   ProfileType.link => Icons.link,
 };
 
-String profileKind(Profile p) => switch (p.type) {
-  ProfileType.selfhosted => 'Self-hosted · ${_servers(p)}',
-  ProfileType.subscription => 'Subscription · ${_servers(p)}${_groups(p)}',
-  // A free subscription has one config and nowhere to choose, so counting
-  // "1 server" would dress a fact up as a choice. Named no more precisely
-  // than a panel's: the key carries whoever sold it, and that name is
-  // already the title above this line.
-  ProfileType.amnezia =>
-    p.amnezia?.offersLocations == false
-        ? 'Subscription'
-        : 'Subscription · ${_servers(p)}',
-  ProfileType.link => 'Single server',
-};
+String profileKind(Profile p) {
+  final l10n = L10n.current;
+  return switch (p.type) {
+    ProfileType.selfhosted => l10n.configKindSelfhosted(_servers(p)),
+    ProfileType.subscription => l10n.configKindSubscription(
+      _servers(p),
+      _groups(p),
+    ),
+    // A free subscription has one config and nowhere to choose, so counting
+    // "1 server" would dress a fact up as a choice. Named no more precisely
+    // than a panel's: the key carries whoever sold it, and that name is
+    // already the title above this line.
+    ProfileType.amnezia =>
+      p.amnezia?.offersLocations == false
+          ? l10n.configKindSubscriptionPlain
+          : l10n.configKindSubscription(_servers(p), ''),
+    ProfileType.link => l10n.configKindSingleServer,
+  };
+}
 
 /// "12 servers", or "294 of 306 servers" when the source offered protocols this
 /// app cannot run. The second form exists so the number here matches what the
@@ -47,8 +54,9 @@ String profileKind(Profile p) => switch (p.type) {
 String _servers(Profile p) {
   final offered = p.offeredServers;
   final ours = p.locations.length;
-  final noun = offered == 1 ? 'server' : 'servers';
-  return ours == offered ? '$ours $noun' : '$ours of $offered $noun';
+  return ours == offered
+      ? L10n.current.commonServersCount(ours)
+      : L10n.current.configServersOfOffered(ours, offered);
 }
 
 /// "· 3 groups", when the subscription offered sets the engine picks from.
@@ -59,7 +67,7 @@ String _servers(Profile p) {
 String _groups(Profile p) {
   final n = p.groups.length;
   if (n == 0) return '';
-  return ' · $n group${n > 1 ? 's' : ''}';
+  return L10n.current.configGroupsSuffix(n);
 }
 
 /// Identity card at the top of every configuration screen. The check mark is
@@ -124,18 +132,19 @@ class SourceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final opens = (openUrl ?? '').isNotEmpty;
+    final l10n = context.l10n;
     return Card(
       margin: kCardMargin,
       child: ListTile(
         leading: const Icon(Icons.link),
-        title: const Text('Source'),
+        title: Text(l10n.configSource),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
             if (viaFallback)
               Text(
-                'Last refresh used the subscription’s backup address',
+                l10n.configSourceViaFallback,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -156,13 +165,15 @@ class SourceCard extends StatelessWidget {
     final uri = Uri.tryParse(url);
     if (uri == null ||
         !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) showToast(context, 'Couldn’t open that page.');
+      if (context.mounted) {
+        showToast(context, context.l10n.uiCouldNotOpenPage);
+      }
     }
   }
 
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: value));
-    if (context.mounted) showToast(context, 'Link copied');
+    if (context.mounted) showToast(context, context.l10n.configLinkCopied);
   }
 }
 
@@ -182,17 +193,17 @@ class UnsupportedServersCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final skipped = profile.offeredServers - profile.locations.length;
     final kinds = (profile.unsupportedServers.keys.toList()..sort()).join(', ');
+    final l10n = context.l10n;
     return Card(
       margin: kCardMargin,
       color: cs.tertiaryContainer.withValues(alpha: 0.35),
       child: ListTile(
         leading: Icon(Icons.info_outline, color: cs.onSurfaceVariant),
         title: Text(
-          '$skipped of ${profile.offeredServers} servers unsupported',
+          l10n.configUnsupportedTitle(skipped, profile.offeredServers),
         ),
         subtitle: Text(
-          'They use $kinds, which this app cannot run yet. '
-          'The other ${profile.locations.length} are available.',
+          l10n.configUnsupportedDetail(kinds, profile.locations.length),
         ),
         isThreeLine: true,
       ),
@@ -239,6 +250,7 @@ class ConfigActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ctrl = ref.read(profilesControllerProvider.notifier);
+    final l10n = context.l10n;
     // stretch, not the default centre: a Column hands its children their
     // intrinsic width, which made these buttons hug their labels instead of
     // spanning the content width the way every other screen's do.
@@ -251,7 +263,7 @@ class ConfigActions extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: kGutter),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.check, size: 18),
-              label: const Text('Set active'),
+              label: Text(l10n.configSetActive),
               onPressed: () => ctrl.setActive(profile.id),
             ),
           ),
@@ -260,7 +272,7 @@ class ConfigActions extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: kGutter),
           child: OutlinedButton.icon(
             icon: const Icon(Icons.delete_outline),
-            label: const Text('Remove configuration'),
+            label: Text(l10n.configRemoveConfiguration),
             style: OutlinedButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
@@ -281,21 +293,20 @@ class ConfigActions extends ConsumerWidget {
     // first, so by the time the pop was reached there was nobody to ask.
     final nav = Navigator.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Remove ${profile.name}?'),
-        content: const Text(
-          'This configuration will be removed from this device.',
-        ),
+        title: Text(l10n.configRemoveTitle(profile.name)),
+        content: Text(l10n.configRemoveDetail),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove'),
+            child: Text(l10n.commonRemove),
           ),
         ],
       ),
