@@ -150,7 +150,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsAutoConnectSubtitle =>
-      'Se connecter au démarrage de Windows';
+      'Se connecter au démarrage de l’ordinateur';
 
   @override
   String get onDemandTitle => 'À la demande';
@@ -2045,6 +2045,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errorTunnelServiceNotRunningDetail =>
       'AnnoyaTest l’installe comme service Windows « AnnoyaTunnel ». Réinstallez l’app, ou démarrez le service dans Services, puis reconnectez-vous.';
+
+  @override
+  String get errorTunnelServiceNotRunningDetailLinux =>
+      'AnnoyaTest l’installe comme service systemd « annoyatest-tunnel ». Réinstallez le paquet, ou lancez « sudo systemctl start annoyatest-tunnel », puis reconnectez-vous.';
 
   @override
   String get errorTunnelServiceStoppedTitle =>

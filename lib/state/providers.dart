@@ -8,14 +8,16 @@ import '../core/routing_prefs.dart';
 import '../core/log.dart';
 import '../core/network_extension_core.dart';
 import '../core/pipe_transport.dart';
+import '../core/unix_socket_link.dart';
 import '../core/vpn_core.dart';
 import '../core/win_pipe_link.dart';
 import 'ready_gate.dart';
 
 /// The VPN core. macOS/iOS drive the system Network Extension, Android a
-/// VpnService in its own process, Windows a service behind a named pipe. All
-/// speak the same control vocabulary, so one Dart class serves the four — the
-/// platform difference is the transport and what sits at the far end of it.
+/// VpnService in its own process, Windows and Linux a service behind a named
+/// pipe or a unix socket. All speak the same control vocabulary, so one Dart
+/// class serves the five — the platform difference is the transport and what
+/// sits at the far end of it.
 final vpnCoreProvider = Provider<VpnCore>((_) {
   if (Platform.isMacOS || Platform.isIOS || Platform.isAndroid) {
     return NetworkExtensionCore();
@@ -23,11 +25,15 @@ final vpnCoreProvider = Provider<VpnCore>((_) {
   if (Platform.isWindows) {
     return NetworkExtensionCore(transport: PipeTransport(WinPipeLink.new));
   }
-  // Anywhere else — Linux, which is not a target but is where CI runs the
-  // tests — the channels have no platform side, every call answers
-  // MissingPluginException, and every caller already reads that as
-  // "unavailable". Throwing here instead took the whole state layer down
-  // with it, since the session and the controllers all reach the core.
+  // Linux is also where CI runs the Dart tests. A transport knocks on the
+  // socket from the moment it exists and keeps a retry timer alive, which a
+  // widget test that never asked for a tunnel reports as a leak — so under
+  // the test runner the core gets no transport: the channels have no platform
+  // side there, every call answers MissingPluginException, and every caller
+  // already reads that as "unavailable".
+  if (Platform.isLinux && !Platform.environment.containsKey('FLUTTER_TEST')) {
+    return NetworkExtensionCore(transport: PipeTransport(UnixSocketLink.new));
+  }
   return NetworkExtensionCore();
 });
 

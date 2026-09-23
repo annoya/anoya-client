@@ -4,7 +4,7 @@ import '../core/json_file_store.dart';
 import 'providers.dart';
 import 'ready_gate.dart';
 
-/// "Connect when Windows starts", and nothing else.
+/// "Connect when the computer starts", and nothing else.
 ///
 /// Kept apart from [OnDemandPrefs] deliberately: that models Apple's rules —
 /// conditions, an armed system side, a pause a manual disconnect causes — and

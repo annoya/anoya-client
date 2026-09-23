@@ -238,10 +238,10 @@ class NetworkExtensionCore implements VpnCore {
           listPaths: listPaths,
           collectLogs: Log.enabled,
           autoDetectInterface: !Platform.isAndroid,
-          // The Windows service has no host-opened device to hand the engine;
-          // it creates the adapter itself, named after the app so the user
-          // recognises it in the network list.
-          device: Platform.isWindows ? kAppName : null,
+          // The Windows and Linux services have no host-opened device to hand
+          // the engine; it creates the adapter itself, named after the app so
+          // the user recognises it in the network list.
+          device: Platform.isWindows || Platform.isLinux ? kAppName : null,
           // Android's Private DNS would otherwise upgrade the decoy resolver
           // to DNS-over-TLS and take every lookup past the hijack.
           dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null,
@@ -371,11 +371,11 @@ class NetworkExtensionCore implements VpnCore {
   /// there is no platform side (unsupported host, or tests).
   static Future<Map<String, String>?> deviceInfo() async {
     try {
-      // Windows has no runner of its own to ask; what the Dart runtime knows
-      // is what the panel gets.
-      if (Platform.isWindows) {
+      // Windows and Linux have no runner of their own to ask; what the Dart
+      // runtime knows is what the panel gets.
+      if (Platform.isWindows || Platform.isLinux) {
         return {
-          'os': 'Windows',
+          'os': Platform.isWindows ? 'Windows' : 'Linux',
           'version': Platform.operatingSystemVersion,
           'model': '',
         };

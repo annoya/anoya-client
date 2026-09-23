@@ -9,7 +9,8 @@ boundary (`lib/core/vpn_core.dart`), which tests replace with a fake tunnel.
 The implementation is **`NetworkExtensionCore`**
 (`lib/core/network_extension_core.dart`); on macOS/iOS it drives a real
 system-wide VPN via a **`NEPacketTunnelProvider`** extension, on Windows the
-`AnnoyaTunnel` service over a named pipe. The mihomo engine is compiled as a Go
+`AnnoyaTunnel` service over a named pipe, on Linux the `annoyatest-tunnel`
+systemd service over a unix socket. The mihomo engine is compiled as a Go
 c-archive (`MihomoCore.xcframework`) and linked into the extension; Dart only
 renders the mihomo TUN config and sends start/stop over a MethodChannel.
 
@@ -56,9 +57,9 @@ server has an OIDC provider configured.
 ### CI
 
 `.github/workflows/build-client.yml` runs the analyzer and the tests, and
-builds the Android APK and the Windows installer, on every push to `main`, on
-tags and on every pull request; the builds are published as
-workflow artifacts. The three jobs are independent, so a red test does not
+builds the Android APK, the Windows installer and the Linux .deb, on every
+push to `main`, on tags and on every pull request; the builds are published as
+workflow artifacts. The four jobs are independent, so a red test does not
 withhold a build. Amnezia credentials come from four repository secrets —
 `AGW_ENDPOINT`, `AGW_PUBLIC_KEY_B64`, `AGW_S3_ENDPOINTS` and
 `AGW_S3_FALLBACK_ENDPOINTS` — each passed to the build as its own
@@ -90,6 +91,35 @@ where the app downloads the geo databases and the service writes its logs.
 Without the service installed the app runs, shows the tunnel as disconnected and
 knocks on the pipe every few seconds; `tunnel-service.exe -console` in an
 elevated prompt is the same service in the foreground, for development.
+
+### Linux
+
+The same service (`native/mihomocore/cmd/tunnel-service`) as a systemd unit,
+`annoyatest-tunnel`, running as root; the app talks to it over the unix socket
+`/run/annoyatest/tunnel.sock`. The device is the kernel's tun, so there is no
+driver to ship. Building the app needs a Linux host with GTK 3 development
+headers, clang, cmake and ninja; the service cross-compiles from anywhere:
+
+```sh
+./scripts/build-tunnel-service.sh linux   # build/linux/service/tunnel-service
+./native/libagw/build-linux.sh            # native/libagw/build/linux/libagw.so (on Linux)
+flutter build linux                       # on Linux
+./scripts/build-linux-deb.sh              # build/linux/deb/annoyatest_<version>_amd64.deb
+```
+
+The gateway library is a shared object in the bundle's `lib/`, opened by path
+(dlopen by name would search the Flutter engine's rpath, not ours). A bundle
+without it runs and refuses Amnezia keys.
+
+The package installs the app under `/opt/annoyatest`, registers and starts the
+unit, and creates `/var/lib/annoyatest/engine` world-writable with the sticky
+bit — the app downloads the geo databases there while the service reads them,
+as `%ProgramData%\AnnoyaTest\engine` does on Windows. The socket is
+reachable by every local user, as Mullvad's and NetBird's daemon sockets are:
+Linux has no socket mode for "whoever is at the console", and a group would
+cost a re-login on every install. Without the package, `tunnel-service
+-install` as root writes the unit and starts it; `sudo tunnel-service -console`
+is the same service in the foreground.
 
 ## Requirements
 

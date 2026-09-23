@@ -113,9 +113,15 @@ final class _Bindings {
     if (override.isNotEmpty) return DynamicLibrary.open(override);
     // Apple links the archive into the app binary, so the symbols are in the
     // process itself. Android and Windows ship a library file next to the app
-    // and open it by name.
+    // and open it by name. Linux ships it in the bundle's lib/ — by path,
+    // because dlopen by name searches the caller's rpath, and the caller is
+    // the Flutter engine, not our executable.
     if (Platform.isAndroid) return DynamicLibrary.open('libagw.so');
     if (Platform.isWindows) return DynamicLibrary.open('libagw.dll');
+    if (Platform.isLinux) {
+      final dir = File(Platform.resolvedExecutable).parent.path;
+      return DynamicLibrary.open('$dir/lib/libagw.so');
+    }
     return DynamicLibrary.process();
   }
 
