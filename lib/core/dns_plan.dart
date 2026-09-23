@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../l10n/l10n.dart';
 import 'log.dart';
 import 'mihomo_tun_config.dart';
 
@@ -98,9 +99,9 @@ class DnsResolver {
   /// answered here — it depends on which rule matches the resolver's own
   /// address — and claiming either answer would be a guess.
   String get routing => switch (pin) {
-    '' => 'direct',
-    kDnsRespectRules => 'follows your rules',
-    _ => 'through the tunnel',
+    '' => L10n.current.dnsRoutingDirect,
+    kDnsRespectRules => L10n.current.dnsRoutingFollowsRules,
+    _ => L10n.current.dnsRoutingThroughTunnel,
   };
 
   /// True only when the query certainly leaves inside the tunnel. Drives the
@@ -111,11 +112,11 @@ class DnsResolver {
   /// the line is whether anyone between the device and the resolver can read
   /// the query, so an unencrypted resolver says so plainly.
   String get protocol => switch (_scheme(address)) {
-    'https' || 'http' => 'DNS over HTTPS',
-    'tls' => 'DNS over TLS',
-    'quic' => 'DNS over QUIC',
+    'https' || 'http' => L10n.current.dnsProtocolDoh,
+    'tls' => L10n.current.dnsProtocolDot,
+    'quic' => L10n.current.dnsProtocolDoq,
     'ts' || 'tailscale' => 'Tailscale',
-    _ => 'Plain, unencrypted',
+    _ => L10n.current.dnsProtocolPlain,
   };
 }
 
@@ -147,18 +148,10 @@ class DnsDrop {
   final DnsDropReason reason;
 
   String get explanation => switch (reason) {
-    DnsDropReason.malformed =>
-      'Not a resolver address. Nothing from a subscription is put into the '
-          'engine configuration unchecked.',
-    DnsDropReason.unknownScheme =>
-      'The engine has no scheme for this. Keeping it would have failed the '
-          'whole configuration, not just this line.',
-    DnsDropReason.cannotCarry =>
-      'Plain DNS cannot travel through this server, and sending it outside '
-          'the tunnel would show every site you visit to your network.',
-    DnsDropReason.tooMany =>
-      'Past the $kMaxNameservers the engine is given. It asks them all at '
-          'once, so a longer list costs time without answering better.',
+    DnsDropReason.malformed => L10n.current.dnsDropMalformed,
+    DnsDropReason.unknownScheme => L10n.current.dnsDropUnknownScheme,
+    DnsDropReason.cannotCarry => L10n.current.dnsDropCannotCarry,
+    DnsDropReason.tooMany => L10n.current.dnsDropTooMany(kMaxNameservers),
   };
 }
 
@@ -334,7 +327,7 @@ bool _needsBootstrap(String address) {
 /// One of the resolvers offered as the app's default, and what tells them apart
 /// beyond the address.
 class DnsPreset {
-  const DnsPreset(this.name, this.address, [this.note = '']);
+  const DnsPreset(this.name, this.address);
 
   final String name;
   final String address;
@@ -342,7 +335,11 @@ class DnsPreset {
   /// Why someone would pick this one over the neighbours. Two of them filter,
   /// which changes what the user can reach — a fact that belongs before the
   /// choice, not after it.
-  final String note;
+  String get note => switch (name) {
+    'Quad9' => L10n.current.dnsPresetQuad9Note,
+    'AdGuard' => L10n.current.dnsPresetAdGuardNote,
+    _ => '',
+  };
 }
 
 /// The defaults offered without typing. All addressed by IP: a resolver named
@@ -351,16 +348,8 @@ class DnsPreset {
 const kDnsPresets = [
   DnsPreset('Cloudflare', 'https://1.1.1.1/dns-query'),
   DnsPreset('Google', 'https://8.8.8.8/dns-query'),
-  DnsPreset(
-    'Quad9',
-    'https://9.9.9.9/dns-query',
-    'filters known-malicious domains',
-  ),
-  DnsPreset(
-    'AdGuard',
-    'https://94.140.14.14/dns-query',
-    'filters ads and trackers',
-  ),
+  DnsPreset('Quad9', 'https://9.9.9.9/dns-query'),
+  DnsPreset('AdGuard', 'https://94.140.14.14/dns-query'),
 ];
 
 /// The preset's name for an address, or the address itself when it is not one
@@ -386,11 +375,11 @@ String? dnsDefaultError(String address) {
     carriesUdp: true,
   );
   if (plan.usingFallback) {
-    return plan.dropped.firstOrNull?.explanation ?? 'Not a resolver address.';
+    return plan.dropped.firstOrNull?.explanation ??
+        L10n.current.dnsErrorNotResolverAddress;
   }
   if (plan.needsBootstrapNameserver) {
-    return 'Addressed by name, so it would need resolving before it could '
-        'resolve anything. Use its IP address.';
+    return L10n.current.dnsErrorAddressedByName;
   }
   return null;
 }

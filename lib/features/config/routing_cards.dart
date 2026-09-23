@@ -5,6 +5,7 @@ import '../../core/norm_config.dart';
 import '../../core/profile.dart';
 import '../../core/rule_set.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/routing_status.dart';
 import '../dns_screen.dart';
@@ -32,6 +33,7 @@ class LocalRoutingCard extends ConsumerWidget {
         .where((s) => s.id == (profile.ruleSetId ?? RuleSet.defaultId))
         .firstOrNull;
     final ctrl = ref.read(profilesControllerProvider.notifier);
+    final l10n = context.l10n;
 
     return Card(
       margin: kCardMargin,
@@ -39,13 +41,13 @@ class LocalRoutingCard extends ConsumerWidget {
         children: [
           SwitchListTile(
             secondary: const Icon(Icons.alt_route),
-            title: const Text('Routing'),
+            title: Text(l10n.configRouting),
             // The subtitle is the policy in force, not a description of the
             // switch: the set itself is named in the row below, and repeating it
             // here would say nothing new.
             subtitle: Text(
               overriddenBy != null
-                  ? 'Replaced by $overriddenBy'
+                  ? l10n.configReplacedBy(overriddenBy!)
                   : localRoutingSummary(profile, ruleSet),
             ),
             value: profile.routingEnabled,
@@ -59,8 +61,8 @@ class LocalRoutingCard extends ConsumerWidget {
             opacity: profile.routingEnabled ? 1 : 0.38,
             child: ListTile(
               leading: const Icon(Icons.layers_outlined),
-              title: const Text('Rule set'),
-              subtitle: Text(ruleSet?.name ?? 'Default'),
+              title: Text(l10n.configRuleSet),
+              subtitle: Text(ruleSet?.name ?? l10n.configRuleSetDefault),
               trailing: const Icon(Icons.expand_more),
               // Reachable with routing off: picking a set is how it gets turned on.
               onTap: () => _pick(context, ref, sets),
@@ -76,17 +78,22 @@ class LocalRoutingCard extends ConsumerWidget {
     WidgetRef ref,
     List<RuleSet> sets,
   ) async {
+    final l10n = context.l10n;
     final picked = await pickOption<String>(
       context,
-      title: 'Rule set',
+      title: l10n.configRuleSet,
       selected: profile.ruleSetId ?? RuleSet.defaultId,
       options: sets
           .map(
             (s) => Option(
               s.id,
               s.name,
-              subtitle:
-                  '${s.mode.label} · ${s.rules.isEmpty ? 'no rules' : '${s.rules.length} rules'}',
+              subtitle: l10n.ruleSetSummary(
+                s.mode.label,
+                s.rules.isEmpty
+                    ? l10n.ruleSetNoRules
+                    : l10n.configRulesCount(s.rules.length),
+              ),
               leading: const Icon(Icons.layers_outlined),
             ),
           )
@@ -109,10 +116,14 @@ void openManagedRouting(BuildContext context, Routing routing) {
 
 /// The policy a device's own rule set puts in force, in one line.
 String localRoutingSummary(Profile p, RuleSet? set) {
-  if (!p.routingEnabled) return 'Off · everything through the VPN';
+  final l10n = L10n.current;
+  if (!p.routingEnabled) return l10n.configRoutingOffSummary;
   final mode = (set?.mode ?? RoutingMode.full).label;
   final rules = set?.rules.length ?? 0;
-  return '$mode · ${rules == 0 ? 'no rules' : '$rules rule${rules > 1 ? 's' : ''}'}';
+  return l10n.ruleSetSummary(
+    mode,
+    rules == 0 ? l10n.ruleSetNoRules : l10n.configRulesCount(rules),
+  );
 }
 
 /// A policy the organization owns: shown, never switched.
@@ -129,9 +140,14 @@ class ManagedRoutingCard extends StatelessWidget {
     ).colorScheme.primaryContainer.withValues(alpha: 0.35),
     child: ListTile(
       leading: const Icon(Icons.business_outlined),
-      title: const Text('Managed by your organization'),
+      title: Text(context.l10n.configManagedByOrganization),
       subtitle: Text(
-        '${routing.mode == 'split' ? 'Split' : 'Full tunnel'} · ${routing.rules.length} rules, set on the server',
+        context.l10n.configManagedSummary(
+          routing.mode == 'split'
+              ? context.l10n.ruleSetModeSplit
+              : context.l10n.ruleSetModeFull,
+          routing.rules.length,
+        ),
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => openManagedRouting(context, routing),
@@ -156,19 +172,20 @@ class RoutingRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final plan = dnsPlanForProfile(ref, profile);
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader('ROUTING'),
+        SectionHeader(l10n.settingsSectionRouting),
         Card(
           margin: kCardMargin,
           child: ListTile(
             leading: const Icon(Icons.alt_route),
-            title: const Text('Routing'),
+            title: Text(l10n.configRouting),
             subtitle: Text.rich(
               TextSpan(
                 children: [
-                  TextSpan(text: '${_routing(ref)} · '),
+                  TextSpan(text: '${_routing(l10n, ref)} · '),
                   // The refusals were just taken out of a log file nobody reads.
                   // Leaving them two taps away would put them back — in words, and in
                   // the one place a passer-by looks.
@@ -177,12 +194,12 @@ class RoutingRow extends ConsumerWidget {
                     // that needs a preposition of its own.
                     TextSpan(
                       text: plan.usingFallback
-                          ? 'DNS by the app'
-                          : 'DNS ${dnsOriginLabel(profile, plan)}',
+                          ? l10n.configDnsByApp
+                          : l10n.configDnsOrigin(dnsOriginLabel(profile, plan)),
                     )
                   else
                     TextSpan(
-                      text: 'DNS: ${plan.dropped.length} refused',
+                      text: l10n.configDnsRefused(plan.dropped.length),
                       style: TextStyle(color: cs.error),
                     ),
                 ],
@@ -201,12 +218,14 @@ class RoutingRow extends ConsumerWidget {
   }
 
   /// Whichever of the three policies is actually in force.
-  String _routing(WidgetRef ref) {
+  String _routing(AppLocalizations l10n, WidgetRef ref) {
     // Named rather than summarised: a row that leads to something the user
     // cannot change should say so before it is tapped.
     if (profile.routing != null) {
-      final mode = profile.routing!.mode == 'split' ? 'Split' : 'Full tunnel';
-      return '$mode · set by your organization';
+      final mode = profile.routing!.mode == 'split'
+          ? l10n.ruleSetModeSplit
+          : l10n.ruleSetModeFull;
+      return l10n.configSetByOrganization(mode);
     }
     if (profile.providerRouting != null && profile.providerRoutingEnabled) {
       return providerRoutingSummary(

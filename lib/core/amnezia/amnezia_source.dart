@@ -1,3 +1,4 @@
+import '../../l10n/l10n.dart';
 import '../app_error.dart';
 import '../log.dart';
 import '../norm_config.dart';
@@ -48,10 +49,10 @@ final class AmneziaSource {
   Future<Profile> refresh() async {
     final key = await ProfileStore.amneziaKey(profile.id);
     if (key == null || key.isEmpty) {
-      throw const AppErrorException(
+      throw AppErrorException(
         AppError(
-          'This subscription lost its key',
-          detail: 'Remove the configuration and add it again.',
+          L10n.current.amneziaErrorLostKeyTitle,
+          detail: L10n.current.amneziaErrorLostKeyDetail,
         ),
       );
     }
@@ -129,7 +130,7 @@ final class AmneziaSource {
       privateKey: wg?.privateKey ?? '',
     );
     if (parsed == null) {
-      throw const AppErrorException(kAmneziaEmptyAnswer);
+      throw AppErrorException(kAmneziaEmptyAnswer);
     }
 
     Log.i(
@@ -220,9 +221,7 @@ const kAmneziaExpiryMargin = Duration(minutes: 5);
 /// the user somewhere that works.
 String? amneziaKeyUnsupported(AmneziaVpnKey key) {
   if (key.serviceType == 'amnezia-free') {
-    return 'This subscription is free-tier, and its gateway asks for a CAPTCHA '
-        'before it issues a configuration — which this app cannot show. Use '
-        'the app it came from, or add a paid key here.';
+    return L10n.current.amneziaErrorFreeTierUnsupported;
   }
   return null;
 }
@@ -235,7 +234,7 @@ Profile amneziaProfileFor(AmneziaVpnKey key, {required String id}) => Profile(
   type: ProfileType.amnezia,
   // Whatever the key calls itself. The same format and the same gateway
   // serve providers other than Amnezia, so nothing here may assume one.
-  name: key.name.isEmpty ? 'Subscription' : key.name,
+  name: key.name.isEmpty ? L10n.current.configKindSubscriptionPlain : key.name,
   locations: const [],
   amnezia: AmneziaState(
     serviceType: key.serviceType,

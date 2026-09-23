@@ -5,6 +5,7 @@ import '../core/app_error.dart';
 import '../core/log.dart';
 import '../core/profile.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 
 /// The manual re-pull of one configuration: the button, its spinner, and the
@@ -57,9 +58,12 @@ class _RefreshButtonState extends ConsumerState<RefreshButton> {
     } catch (e) {
       Log.e('manual refresh failed', '$e');
       if (mounted) {
+        final l10n = context.l10n;
         showToast(
           context,
-          'Couldn’t refresh — ${describeError(e).detail ?? 'showing the servers we already have.'}',
+          l10n.configRefreshFailed(
+            describeError(e).detail ?? l10n.configRefreshFailedFallback,
+          ),
         );
       }
     } finally {
@@ -81,7 +85,7 @@ class _RefreshButtonState extends ConsumerState<RefreshButton> {
     }
     return IconButton(
       icon: Icon(Icons.refresh, size: widget.iconSize),
-      tooltip: 'Refresh now',
+      tooltip: context.l10n.configRefreshNow,
       onPressed: _refresh,
     );
   }

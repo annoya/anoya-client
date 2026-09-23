@@ -174,6 +174,13 @@ sudo scripts/leak-check.sh        # leak check against a live tunnel (root)
   nobody requested is waste, and it has to be maintained.
 - **Do not start rewriting while a decision is still being discussed.**
 - **Delete unused code** instead of keeping it "for later".
+- **Every sentence the user reads lives in `lib/l10n/app_en.arb`**, with the
+  other languages beside it (`app_ru.arb`, `app_zh.arb`, `app_fr.arb`,
+  `app_es.arb`); `flutter gen-l10n` turns them into `AppLocalizations`.
+  Widgets read `context.l10n`, code with no `BuildContext` (errors, the menu
+  bar, controllers) reads `L10n.current`. A new string is a key in all five
+  files, never a literal in Dart; log lines, config keys and protocol names
+  stay literals.
 - **Keep the code `dart format` clean.** The project was formatted once, in a
   commit listed in `.git-blame-ignore-revs`, and CI now fails on anything
   unformatted (`dart format --output=none --set-exit-if-changed lib test`).

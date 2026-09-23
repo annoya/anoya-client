@@ -1,4 +1,5 @@
 import '../amnezia/vpn_key.dart';
+import '../../l10n/l10n.dart';
 import '../log.dart';
 import '../norm_config.dart';
 import 'base64_text.dart';
@@ -109,11 +110,11 @@ enum SubscriptionFormat {
   /// What the user is told it was. Only reached when nothing usable came out,
   /// so it names the format rather than describing it.
   String get label => switch (this) {
-    SubscriptionFormat.links => 'a link list',
-    SubscriptionFormat.clash => 'a Clash / mihomo subscription',
-    SubscriptionFormat.xray => 'an Xray JSON subscription',
-    SubscriptionFormat.singbox => 'a sing-box subscription',
-    SubscriptionFormat.unknown => 'something unrecognised',
+    SubscriptionFormat.links => L10n.current.importFormatLinks,
+    SubscriptionFormat.clash => L10n.current.importFormatClash,
+    SubscriptionFormat.xray => L10n.current.importFormatXray,
+    SubscriptionFormat.singbox => L10n.current.importFormatSingbox,
+    SubscriptionFormat.unknown => L10n.current.importFormatUnknown,
   };
 }
 
@@ -243,7 +244,10 @@ DetectedInput? detectInput(String raw) {
     final key = parseAmneziaVpnKey(t);
     return key == null
         ? null
-        : DetectedInput(InputKind.amneziaKey, '${key.name} · subscription key');
+        : DetectedInput(
+            InputKind.amneziaKey,
+            L10n.current.importDetectedAmneziaKey(key.name),
+          );
   }
   // A share link is a single token; multi-line vless:// lists are a
   // subscription and fall through to the parser below.
@@ -254,7 +258,10 @@ DetectedInput? detectInput(String raw) {
         ? null
         : DetectedInput(
             InputKind.link,
-            '${loc.proxyType.toUpperCase()} server · ${loc.label}',
+            L10n.current.importDetectedServer(
+              loc.proxyType.toUpperCase(),
+              loc.label,
+            ),
           );
   }
   if (scheme == 'http' || scheme == 'https') {
@@ -262,16 +269,19 @@ DetectedInput? detectInput(String raw) {
     if (u == null || u.host.isEmpty) return null;
     return DetectedInput(
       InputKind.subscriptionUrl,
-      'Subscription URL · ${u.host}',
+      L10n.current.importDetectedSubscriptionUrl(u.host),
     );
   }
   final locs = parseSubscription(t);
   if (locs.isEmpty) return null;
   return locs.length == 1
-      ? DetectedInput(InputKind.link, 'Server · ${locs.first.label}')
+      ? DetectedInput(
+          InputKind.link,
+          L10n.current.importDetectedSingleServer(locs.first.label),
+        )
       : DetectedInput(
           InputKind.subscriptionText,
-          'Subscription · ${locs.length} servers',
+          L10n.current.importDetectedSubscriptionText(locs.length),
         );
 }
 
@@ -292,7 +302,8 @@ String? whyUnusable(String raw) {
   final scheme = first.contains('://')
       ? first.split('://').first.toLowerCase()
       : '';
-  if (scheme == 'vpn') return 'Not an Amnezia subscription key';
+  final l10n = L10n.current;
+  if (scheme == 'vpn') return l10n.importUnusableNotAmneziaKey;
   if (kShareLinkSchemes.contains(scheme)) {
     final parsed = parseShareLink(first);
     final why = parsed.unsupported;
@@ -300,15 +311,15 @@ String? whyUnusable(String raw) {
       // A transport name ("kcp") reads as "vless over kcp"; a plugin or
       // anything already naming its protocol ("ss+kcptun") stands alone.
       return why.contains('+') || why.startsWith(scheme)
-          ? '$why isn’t supported'
-          : '$scheme over $why isn’t supported';
+          ? l10n.importUnusableNotSupported(why)
+          : l10n.importUnusableTransportNotSupported(scheme, why);
     }
-    return '$scheme:// link can’t be read';
+    return l10n.importUnusableLinkUnreadable(scheme);
   }
   if (scheme.isNotEmpty && scheme != 'http' && scheme != 'https') {
-    return '$scheme:// isn’t supported';
+    return l10n.importUnusableNotSupported('$scheme://');
   }
-  return 'Not a link or subscription';
+  return l10n.importUnusableNotALink;
 }
 
 /// Addresses that cannot be dialed anywhere. A server on one of these was

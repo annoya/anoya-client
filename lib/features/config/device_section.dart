@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/device_identity.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 
 /// Shown only for a configuration whose panel said it counts devices.
 ///
@@ -15,6 +16,7 @@ class ThisDeviceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return FutureBuilder<DeviceIdentity>(
       future: DeviceIdentityStore.load(),
       builder: (context, snap) {
@@ -22,13 +24,10 @@ class ThisDeviceSection extends StatelessWidget {
         if (id == null) return const SizedBox.shrink();
         return DeviceSection(
           label: id.label,
-          labelSubtitle:
-              'Identified to your subscription, which counts devices',
-          idTitle: 'Device id',
+          labelSubtitle: l10n.configDeviceIdentifiedSubtitle,
+          idTitle: l10n.configDeviceId,
           idValue: id.hwid,
-          hint:
-              'Your subscription counts devices by an id this app generates once and '
-              'keeps. Reinstalling makes a new one, which takes another slot.',
+          hint: l10n.configDeviceHintPanel,
         );
       },
     );
@@ -64,7 +63,7 @@ class DeviceSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader('THIS DEVICE'),
+        SectionHeader(context.l10n.configSectionThisDevice),
         Card(
           margin: kCardMargin,
           child: Column(
@@ -116,10 +115,12 @@ class IdentifierRow extends StatelessWidget {
       subtitle: Text(shorten(value)),
       trailing: IconButton(
         icon: const Icon(Icons.copy_outlined, size: 18),
-        tooltip: 'Copy',
+        tooltip: context.l10n.commonCopy,
         onPressed: () async {
           await Clipboard.setData(ClipboardData(text: value));
-          if (context.mounted) showToast(context, '$title copied');
+          if (context.mounted) {
+            showToast(context, context.l10n.configCopiedTitle(title));
+          }
         },
       ),
     );

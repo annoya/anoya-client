@@ -15,6 +15,7 @@ import 'package:vpn_client/core/vpn_core.dart';
 import 'package:vpn_client/features/settings_screen.dart';
 import 'package:vpn_client/state/auto_connect_controller.dart';
 import 'package:vpn_client/state/providers.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 /// Bringing the tunnel up with the machine — the one thing that happens with
 /// no app running, and therefore the one thing the user has to have agreed to.
@@ -144,6 +145,8 @@ Future<void> _pumpSettings(WidgetTester tester) async {
       overrides: [vpnCoreProvider.overrideWithValue(_FakeCore())],
       child: MaterialApp(
         theme: buildAppTheme(Brightness.light),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const SettingsScreen(),
       ),
     ),

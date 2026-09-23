@@ -8,6 +8,7 @@ import 'package:vpn_client/api/api_client.dart';
 import 'package:vpn_client/core/app_error.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/ui.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 void main() {
   group('describeError', () {
@@ -114,6 +115,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -161,6 +164,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Builder(
               builder: (context) => Column(

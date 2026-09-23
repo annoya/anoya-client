@@ -5,6 +5,7 @@ import '../core/country_flag.dart';
 import '../core/norm_config.dart';
 import '../core/platform_support.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import 'geosite_sheet.dart';
 
 /// Rule editor dialog. The value control depends on the match type: free text
@@ -38,17 +39,21 @@ class _RuleDialogState extends State<RuleDialog> {
     'domain-regex': r'^.*\.example\.(com|net)$',
   };
 
-  static const _typeDescriptions = {
-    'domain-suffix': 'domain and subdomains',
-    'domain-keyword': 'domain contains',
-    'domain-exact': 'exact domain',
-    'ip-cidr': 'IP range',
-    'process-name': 'app by name',
-    'geoip': 'country by IP',
-    'geosite': 'domain lists',
-    'domain-regex': 'domain matches a pattern',
-    'rule-list': 'a list from your subscription',
-  };
+  String? _typeDescription(String type) {
+    final l10n = context.l10n;
+    return switch (type) {
+      'domain-suffix' => l10n.ruleTypeDomainSuffix,
+      'domain-keyword' => l10n.ruleTypeDomainKeyword,
+      'domain-exact' => l10n.ruleTypeDomainExact,
+      'ip-cidr' => l10n.ruleTypeIpCidr,
+      'process-name' => l10n.ruleTypeProcessName,
+      'geoip' => l10n.ruleTypeGeoip,
+      'geosite' => l10n.ruleTypeGeosite,
+      'domain-regex' => l10n.ruleTypeDomainRegex,
+      'rule-list' => l10n.ruleTypeRuleList,
+      _ => null,
+    };
+  }
 
   @override
   void dispose() {
@@ -68,8 +73,8 @@ class _RuleDialogState extends State<RuleDialog> {
     if (!rule.isValid) {
       setState(
         () => _error = _type == 'geoip'
-            ? 'Pick a country.'
-            : 'Invalid value for ${rule.type}.',
+            ? context.l10n.rulePickCountry
+            : context.l10n.ruleInvalidValue(rule.type),
       );
       return;
     }
@@ -92,9 +97,10 @@ class _RuleDialogState extends State<RuleDialog> {
   }
 
   Future<void> _pickType() async {
+    final l10n = context.l10n;
     final picked = await pickOption<String>(
       context,
-      title: 'Match',
+      title: l10n.ruleMatch,
       selected: _type,
       // rule-list is absent by design: a list rule is only meaningful next to
       // the definition of where that list comes from, and only a provider's
@@ -107,10 +113,10 @@ class _RuleDialogState extends State<RuleDialog> {
           t,
           t,
           subtitle: unsupported
-              ? 'not available on this platform'
+              ? l10n.ruleNotAvailableOnPlatform
               : geoLocked
-              ? 'needs geo databases'
-              : _typeDescriptions[t],
+              ? l10n.ruleNeedsGeoDatabases
+              : _typeDescription(t),
           enabled: !geoLocked && !unsupported,
         );
       }).toList(),
@@ -124,14 +130,15 @@ class _RuleDialogState extends State<RuleDialog> {
   }
 
   Future<void> _pickAction() async {
+    final l10n = context.l10n;
     final picked = await pickOption<String>(
       context,
-      title: 'Action',
+      title: l10n.ruleAction,
       selected: _action,
-      options: const [
-        Option('proxy', 'proxy', subtitle: 'through the VPN'),
-        Option('direct', 'direct', subtitle: 'bypass the VPN'),
-        Option('block', 'block', subtitle: 'drop the connection'),
+      options: [
+        Option('proxy', 'proxy', subtitle: l10n.ruleActionProxyDescription),
+        Option('direct', 'direct', subtitle: l10n.ruleActionDirectDescription),
+        Option('block', 'block', subtitle: l10n.ruleActionBlockDescription),
       ],
     );
     if (picked != null) setState(() => _action = picked);
@@ -139,21 +146,22 @@ class _RuleDialogState extends State<RuleDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return AlertDialog(
-      title: Text(widget.initial == null ? 'Add rule' : 'Edit rule'),
+      title: Text(widget.initial == null ? l10n.ruleAdd : l10n.ruleEdit),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SelectField(label: 'Match', value: _type, onTap: _pickType),
+            SelectField(label: l10n.ruleMatch, value: _type, onTap: _pickType),
             const SizedBox(height: 8),
             if (_type == 'geoip') ...[
               SelectField(
-                label: 'Country',
+                label: l10n.ruleCountry,
                 value: _value.text.isEmpty
-                    ? 'Choose…'
+                    ? l10n.ruleChoose
                     : _countryLabel(_value.text),
                 trailingIcon: Icons.chevron_right,
                 onTap: _pickCountry,
@@ -161,9 +169,7 @@ class _RuleDialogState extends State<RuleDialog> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('no-resolve'),
-                subtitle: const Text(
-                  'Match only plain-IP connections, don’t resolve domains',
-                ),
+                subtitle: Text(l10n.ruleNoResolveDescription),
                 value: _noResolve,
                 onChanged: (v) => setState(() => _noResolve = v),
               ),
@@ -172,8 +178,8 @@ class _RuleDialogState extends State<RuleDialog> {
               // can be chosen, so a typo can't produce a category the engine
               // will fail to load.
               SelectField(
-                label: 'Category',
-                value: _value.text.isEmpty ? 'Choose…' : _value.text,
+                label: l10n.geositeCategoryLabel,
+                value: _value.text.isEmpty ? l10n.ruleChoose : _value.text,
                 trailingIcon: Icons.chevron_right,
                 onTap: _pickCategory,
               ),
@@ -192,7 +198,7 @@ class _RuleDialogState extends State<RuleDialog> {
                   FilteringTextInputFormatter.deny(RegExp(r'\s')),
                 ],
                 decoration: InputDecoration(
-                  labelText: 'Value',
+                  labelText: l10n.ruleValue,
                   hintText: _hints[_type],
                 ),
                 onChanged: (_) => setState(() {}),
@@ -200,7 +206,11 @@ class _RuleDialogState extends State<RuleDialog> {
               ),
             ],
             const SizedBox(height: 8),
-            SelectField(label: 'Action', value: _action, onTap: _pickAction),
+            SelectField(
+              label: l10n.ruleAction,
+              value: _action,
+              onTap: _pickAction,
+            ),
             if (_summary() != null)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
@@ -225,9 +235,9 @@ class _RuleDialogState extends State<RuleDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.commonCancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
+        FilledButton(onPressed: _submit, child: Text(l10n.commonSave)),
       ],
     );
   }
@@ -243,18 +253,22 @@ class _RuleDialogState extends State<RuleDialog> {
   /// Human-readable preview of what this rule will do.
   String? _summary() {
     if (_value.text.trim().isEmpty) return null;
+    final l10n = context.l10n;
     final target = switch (_type) {
-      'geoip' => 'traffic to IPs in ${_countryLabel(_value.text)}',
-      'geosite' => '"${_value.text}" domains (GeoSite list)',
-      'process-name' => 'traffic of "${_value.text}"',
-      _ => 'traffic matching ${_value.text}',
+      'geoip' => l10n.ruleSummaryGeoip(_countryLabel(_value.text)),
+      'geosite' => l10n.ruleSummaryGeosite(_value.text),
+      'process-name' => l10n.ruleSummaryProcess(_value.text),
+      _ => l10n.ruleSummaryMatching(_value.text),
     };
     final verb = switch (_action) {
-      'proxy' => 'goes through the VPN',
-      'direct' => 'connects directly, bypassing the VPN',
-      _ => 'is blocked',
+      'proxy' => l10n.ruleSummaryProxy,
+      'direct' => l10n.ruleSummaryDirect,
+      _ => l10n.ruleSummaryBlock,
     };
-    return '→ ${target[0].toUpperCase()}${target.substring(1)} $verb.';
+    return l10n.ruleSummary(
+      '${target[0].toUpperCase()}${target.substring(1)}',
+      verb,
+    );
   }
 }
 
@@ -263,8 +277,8 @@ class _RuleDialogState extends State<RuleDialog> {
 /// searchable by either).
 Future<String?> pickCountry(BuildContext context) => pickOption<String>(
   context,
-  title: 'Country',
-  itemNoun: 'country',
+  title: context.l10n.ruleCountry,
+  itemNoun: context.l10n.uiNounCountry,
   options: [
     for (final c in geoCountries())
       Option(

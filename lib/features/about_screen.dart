@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/app_version.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 
 /// What this build is, and where the documents about it live.
 ///
@@ -16,8 +17,9 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(title: Text(l10n.aboutTitle)),
       body: PageBody(
         child: ListView(
           children: [
@@ -36,7 +38,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Version $appVersionLabel',
+                    l10n.aboutVersion(appVersionLabel),
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -48,37 +50,39 @@ class AboutScreen extends StatelessWidget {
               margin: kCardMargin,
               child: ListTile(
                 leading: const Icon(Icons.bolt_outlined),
-                title: const Text('Engine'),
+                title: Text(l10n.aboutEngine),
                 subtitle: Text(engineVersionLabel),
                 // The row is shortened for reading; a bug report wants the whole
                 // pin, so that is what copying gives.
                 trailing: IconButton(
                   icon: const Icon(Icons.copy_all_outlined, size: 18),
-                  tooltip: 'Copy',
+                  tooltip: l10n.commonCopy,
                   onPressed: () async {
                     await Clipboard.setData(
                       ClipboardData(
                         text: '$kAppName $appVersionLabel · mihomo $kEnginePin',
                       ),
                     );
-                    if (context.mounted) showToast(context, 'Version copied');
+                    if (context.mounted) {
+                      showToast(context, l10n.aboutVersionCopied);
+                    }
                   },
                 ),
               ),
             ),
-            const Card(
+            Card(
               margin: kCardMargin,
               child: Column(
                 children: [
                   _LegalRow(
                     icon: Icons.description_outlined,
-                    title: 'Terms of Service',
+                    title: l10n.aboutTermsOfService,
                     url: kTermsUrl,
                   ),
-                  Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
                   _LegalRow(
                     icon: Icons.lock_outline,
-                    title: 'Privacy Policy',
+                    title: l10n.aboutPrivacyPolicy,
                     url: kPrivacyUrl,
                   ),
                 ],
@@ -112,7 +116,7 @@ class _LegalRow extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
-        subtitle: published ? null : const Text('Not published yet'),
+        subtitle: published ? null : Text(context.l10n.aboutNotPublishedYet),
         trailing: published ? const Icon(Icons.open_in_new, size: 18) : null,
         onTap: !published
             ? null
@@ -124,7 +128,7 @@ class _LegalRow extends StatelessWidget {
                       mode: LaunchMode.externalApplication,
                     )) {
                   if (context.mounted) {
-                    showToast(context, 'Couldn’t open that page.');
+                    showToast(context, context.l10n.uiCouldNotOpenPage);
                   }
                 }
               },

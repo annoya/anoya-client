@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/norm_config.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import 'config_parts.dart';
 
 /// Settings of a self-hosted configuration.
@@ -25,6 +26,7 @@ class SelfhostedConfigScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = profile;
     final account = p.account;
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(title: Text(p.name)),
       body: PageBody(
@@ -39,8 +41,8 @@ class SelfhostedConfigScreen extends ConsumerWidget {
               Card(
                 margin: kCardMargin,
                 child: ListTile(
-                  title: const Text('Account'),
-                  subtitle: Text(_accountSummary(account)),
+                  title: Text(l10n.configAccount),
+                  subtitle: Text(_accountSummary(l10n, account)),
                 ),
               ),
               if (account.dataLimit > 0) _TrafficCard(account: account),
@@ -52,13 +54,16 @@ class SelfhostedConfigScreen extends ConsumerWidget {
     );
   }
 
-  String _accountSummary(Account a) {
+  String _accountSummary(AppLocalizations l10n, Account a) {
     final status = a.status.replaceAll('_', ' ');
-    if (a.status == 'on_hold') return 'Status: $status · starts on first use';
+    if (a.status == 'on_hold') return l10n.configStatusOnHold(status);
     if (a.expiresAt != null) {
-      return 'Status: $status · expires ${a.expiresAt!.toLocal().toString().split('.').first}';
+      return l10n.configStatusExpires(
+        status,
+        a.expiresAt!.toLocal().toString().split('.').first,
+      );
     }
-    return 'Status: $status';
+    return l10n.configStatus(status);
   }
 }
 
@@ -76,7 +81,10 @@ class _TrafficCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Traffic: ${formatBytes(account.usedBytes)} of ${formatBytes(account.dataLimit)}',
+            context.l10n.configTrafficOf(
+              formatBytes(account.usedBytes),
+              formatBytes(account.dataLimit),
+            ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 8),

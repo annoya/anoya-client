@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../core/log.dart';
+import '../l10n/l10n.dart';
 import '../core/norm_config.dart';
 
 /// Ceiling for every HTTP call the app makes. Without one, a server behind a
@@ -141,34 +142,18 @@ class ApiClient {
       }
     } on TimeoutException {
       Log.e('request to $uri timed out');
-      throw ApiException(
-        0,
-        'timeout',
-        'No answer from $baseUrl — check the address and the network.',
-      );
+      throw ApiException(0, 'timeout', L10n.current.errorApiTimeout(baseUrl));
     } on SocketException catch (e) {
       Log.e('network error reaching $uri', e);
-      throw ApiException(
-        0,
-        'network',
-        'Cannot reach $baseUrl — check the address/port and that the server is up.',
-      );
+      throw ApiException(0, 'network', L10n.current.errorApiNetwork(baseUrl));
     } on HandshakeException catch (e) {
       Log.e('TLS handshake failed for $uri', e);
-      throw ApiException(
-        0,
-        'tls',
-        'TLS error talking to $baseUrl. If the server runs plain HTTP, enter the address with "http://".',
-      );
+      throw ApiException(0, 'tls', L10n.current.errorApiTls(baseUrl));
     } catch (e, st) {
       // The exception's own words go to the log only: this message is what
       // the dialog shows, and a stack of Dart type names is not an answer.
       Log.e('request to $uri failed', e, st);
-      throw ApiException(
-        0,
-        'request',
-        'The request to $baseUrl could not be completed — check the address and try again.',
-      );
+      throw ApiException(0, 'request', L10n.current.errorApiRequest(baseUrl));
     }
 
     Log.i('$method $path -> ${res.statusCode} (${res.body.length} bytes)');

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/connection_check.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/connection_check_controller.dart';
 import '../state/session.dart';
 
@@ -20,30 +21,29 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     final ctrl = ref.read(connectionCheckProvider.notifier);
     final connected = ref.watch(sessionProvider).connected;
     final prefs = st.prefs;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Advanced')),
+      appBar: AppBar(title: Text(l10n.settingsAdvanced)),
       body: PageBody(
         child: ListView(
           children: [
-            const SectionHeader('CONNECTION CHECK'),
+            SectionHeader(l10n.advancedSectionConnectionCheck),
             Card(
               margin: kCardMargin,
               child: Column(
                 children: [
                   SwitchListTile(
                     secondary: const Icon(Icons.check_circle_outline),
-                    title: const Text('Check after connecting'),
-                    subtitle: const Text(
-                      'Fetch a page through the server and time the answer',
-                    ),
+                    title: Text(l10n.advancedCheckAfterConnecting),
+                    subtitle: Text(l10n.advancedCheckAfterConnectingSubtitle),
                     value: prefs.enabled,
                     onChanged: ctrl.setEnabled,
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
                     leading: const Icon(Icons.language_outlined),
-                    title: const Text('Test URL'),
+                    title: Text(l10n.advancedTestUrl),
                     subtitle: Text(prefs.url),
                     trailing: const Icon(Icons.edit_outlined, size: 18),
                     onTap: () => _editUrl(context, ctrl, prefs),
@@ -51,8 +51,8 @@ class AdvancedConnectionScreen extends ConsumerWidget {
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
                     leading: const Icon(Icons.timer_outlined),
-                    title: const Text('Give up after'),
-                    subtitle: Text('${prefs.timeoutSeconds} seconds'),
+                    title: Text(l10n.advancedGiveUpAfter),
+                    subtitle: Text(l10n.advancedSeconds(prefs.timeoutSeconds)),
                     trailing: const Icon(Icons.expand_more),
                     onTap: () => _pickTimeout(context, ctrl, prefs),
                   ),
@@ -72,23 +72,15 @@ class AdvancedConnectionScreen extends ConsumerWidget {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Test now'),
+                    : Text(l10n.advancedTestNow),
               ),
             ),
-            if (!connected)
-              const SectionNote(
-                'The request goes through the running engine, '
-                'so the tunnel has to be up to test it.',
-              ),
+            if (!connected) SectionNote(l10n.advancedNeedsTunnelNote),
             if (st.last != null) ...[
-              const SectionHeader('LAST CHECK'),
+              SectionHeader(l10n.advancedSectionLastCheck),
               _ResultCard(check: st.last!),
             ],
-            const SectionNote(
-              'The request goes through the server itself, so routing '
-              'rules do not affect it. It proves the server passes traffic — not '
-              'that your traffic goes through it.',
-            ),
+            SectionNote(l10n.advancedCheckScopeNote),
           ],
         ),
       ),
@@ -100,14 +92,15 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     ConnectionCheckController ctrl,
     ConnectionCheckPrefs prefs,
   ) async {
+    final l10n = context.l10n;
     final typed = await promptText(
       context,
-      title: 'Test URL',
-      label: 'URL',
-      confirmLabel: 'Save',
+      title: l10n.advancedTestUrl,
+      label: l10n.advancedUrlLabel,
+      confirmLabel: l10n.commonSave,
       initial: prefs.url,
       autocorrect: false,
-      resetLabel: 'Use the default',
+      resetLabel: l10n.advancedUseDefault,
       resetValue: ConnectionCheckPrefs.defaultUrl,
     );
     if (typed == null) return;
@@ -117,7 +110,7 @@ class AdvancedConnectionScreen extends ConsumerWidget {
         uri == null ||
         !uri.isScheme('http') && !uri.isScheme('https')) {
       if (context.mounted) {
-        showToast(context, 'Enter an http:// or https:// address.');
+        showToast(context, l10n.advancedInvalidUrl);
       }
       return;
     }
@@ -130,11 +123,12 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     ConnectionCheckPrefs prefs,
   ) async {
     const choices = [3, 5, 10, 15];
+    final l10n = context.l10n;
     final picked = await pickOption<int>(
       context,
-      title: 'Give up after',
+      title: l10n.advancedGiveUpAfter,
       selected: prefs.timeoutSeconds,
-      options: [for (final s in choices) Option(s, '$s seconds')],
+      options: [for (final s in choices) Option(s, l10n.advancedSeconds(s))],
     );
     if (picked != null) await ctrl.setTimeout(picked);
   }
@@ -177,22 +171,20 @@ class _ResultCardState extends State<_ResultCard> {
     final check = widget.check;
     final cs = Theme.of(context).colorScheme;
     final warn = context.vpnColors.connecting;
+    final l10n = context.l10n;
     if (!check.passed) {
       return Card(
         margin: kCardMargin,
         color: warn.withValues(alpha: 0.12),
         child: ListTile(
           leading: Icon(Icons.warning_amber_outlined, color: warn),
-          title: const Text('No answer'),
-          subtitle: Text(
-            '${check.failure} '
-            'The tunnel is up, so this is the server or the network beyond it.',
-          ),
+          title: Text(l10n.advancedNoAnswer),
+          subtitle: Text(l10n.advancedNoAnswerDetail(check.failure ?? '')),
           isThreeLine: true,
         ),
       );
     }
-    final via = check.via.isEmpty ? '' : ' · through ${check.via}';
+    final ago = _ago(l10n, check.at);
     return Card(
       margin: kCardMargin,
       child: ListTile(
@@ -204,21 +196,21 @@ class _ResultCardState extends State<_ResultCard> {
         // one is a measurement we made, the other is traffic we watched go by.
         title: Text(
           check.observed
-              ? 'Traffic is getting through'
-              : 'Answered in ${check.delayMs} ms',
+              ? l10n.advancedTrafficGettingThrough
+              : l10n.advancedAnsweredIn(check.delayMs ?? 0),
         ),
         subtitle: Text(
-          '${_ago(check.at)}$via',
+          check.via.isEmpty ? ago : l10n.advancedResultVia(ago, check.via),
           style: TextStyle(color: cs.onSurfaceVariant),
         ),
       ),
     );
   }
 
-  static String _ago(DateTime at) {
+  static String _ago(AppLocalizations l10n, DateTime at) {
     final d = DateTime.now().difference(at);
-    if (d.inMinutes < 1) return 'just now';
-    if (d.inHours < 1) return '${d.inMinutes} min ago';
-    return '${d.inHours} h ago';
+    if (d.inMinutes < 1) return l10n.commonJustNow;
+    if (d.inHours < 1) return l10n.commonMinutesAgo(d.inMinutes);
+    return l10n.advancedHoursAgo(d.inHours);
   }
 }

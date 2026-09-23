@@ -1,3 +1,4 @@
+import '../l10n/l10n.dart';
 import 'norm_config.dart';
 import 'json_file_store.dart';
 
@@ -15,7 +16,9 @@ enum RoutingMode {
   String get wire => name;
 
   /// As the summaries print it.
-  String get label => this == split ? 'Split' : 'Full tunnel';
+  String get label => this == split
+      ? L10n.current.ruleSetModeSplit
+      : L10n.current.ruleSetModeFull;
 
   static RoutingMode parse(String? wire) => wire == 'split' ? split : full;
 }

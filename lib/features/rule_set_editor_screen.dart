@@ -9,6 +9,7 @@ import '../core/rule_set.dart';
 import '../core/service_avatar.dart';
 import '../core/service_catalog.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 import '../state/routing_status.dart';
 import 'geosite_sheet.dart';
@@ -31,7 +32,7 @@ class RuleSetEditorScreen extends ConsumerStatefulWidget {
 }
 
 class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
-  String _name = 'Split tunneling';
+  late String _name = L10n.current.ruleSetSplitTunneling;
   RoutingMode _mode = RoutingMode.full;
   RuleEditor _editor = RuleEditor.simple;
   List<RoutingRule> _rules = [];
@@ -189,21 +190,20 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   Future<void> _deleteSet() async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Delete "$_name"?'),
-        content: const Text(
-          'Configurations using this set fall back to Default.',
-        ),
+        title: Text(l10n.ruleSetDeleteTitle(_name)),
+        content: Text(l10n.ruleSetDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(l10n.commonDelete),
           ),
         ],
       ),
@@ -263,6 +263,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
         title: Text(_name),
@@ -270,7 +271,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
           if (!_isDefault && !_loading)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Delete rule set',
+              tooltip: l10n.ruleSetDeleteTooltip,
               onPressed: _deleteSet,
             ),
         ],
@@ -278,7 +279,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       floatingActionButton: _editor == RuleEditor.simple
           ? null
           : FloatingActionButton(
-              tooltip: 'Add rule',
+              tooltip: l10n.ruleAdd,
               onPressed: () => _editRule(),
               child: const Icon(Icons.add),
             ),
@@ -302,15 +303,22 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   /// Simple | Advanced — two views over the same rules, so switching is always
   /// safe and never converts anything.
   Widget _editorSegment(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
       child: SizedBox(
         width: double.infinity,
         child: SegmentedButton<RuleEditor>(
           showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(value: RuleEditor.simple, label: Text('Simple')),
-            ButtonSegment(value: RuleEditor.advanced, label: Text('Advanced')),
+          segments: [
+            ButtonSegment(
+              value: RuleEditor.simple,
+              label: Text(l10n.ruleSetSimple),
+            ),
+            ButtonSegment(
+              value: RuleEditor.advanced,
+              label: Text(l10n.settingsAdvanced),
+            ),
           ],
           selected: {_editor},
           onSelectionChanged: (v) => _setEditor(v.first),
@@ -320,16 +328,17 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   List<Widget> _advancedChildren(BuildContext context) {
+    final l10n = context.l10n;
     return [
       if (!_geoReady && _rules.any((r) => r.needsGeoData))
         GeoDownloadBanner(
-          title: 'Geo databases not downloaded',
-          subtitle: 'geoip / geosite rules are inactive until then (~25 MB)',
+          title: l10n.ruleSetGeoNotDownloaded,
+          subtitle: l10n.ruleSetGeoNotDownloadedDetail,
           busy: _geoBusy,
           onDownload: _downloadGeo,
         ),
       RoutingModeCard(mode: _mode, onChanged: _setMode),
-      const SectionHeader('RULES — FIRST MATCH WINS'),
+      SectionHeader(l10n.ruleSetRulesHeader),
       if (_rules.isEmpty)
         emptyRulesNote(context, _mode)
       else
@@ -360,14 +369,14 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   List<Widget> _simpleChildren(BuildContext context) {
+    final l10n = context.l10n;
     if (!_geoReady) {
       // The whole catalog is geosite/geoip, so without the databases there is
       // nothing to offer — the download banner IS the screen.
       return [
         GeoDownloadBanner(
-          title: 'Download the site lists first',
-          subtitle:
-              'Picking services needs the geo databases (~25 MB, one time)',
+          title: l10n.ruleSetDownloadSiteLists,
+          subtitle: l10n.ruleSetDownloadSiteListsDetail,
           busy: _geoBusy,
           onDownload: _downloadGeoThenIndex,
         ),
@@ -395,10 +404,8 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
           ).colorScheme.primaryContainer.withValues(alpha: 0.35),
           child: ListTile(
             leading: const Icon(Icons.layers_outlined),
-            title: Text('Advanced rules · $_advancedCount'),
-            subtitle: const Text(
-              'Apply before the list below · edit in Advanced',
-            ),
+            title: Text(l10n.ruleSetAdvancedRules(_advancedCount)),
+            subtitle: Text(l10n.ruleSetAdvancedRulesDetail),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _setEditor(RuleEditor.advanced),
           ),
@@ -407,15 +414,15 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
         child: TextField(
           autocorrect: false,
-          decoration: const InputDecoration(
-            labelText: 'Search services',
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            labelText: l10n.ruleSetSearchServices,
+            prefixIcon: const Icon(Icons.search),
           ),
           onChanged: (v) => setState(() => _query = v),
         ),
       ),
       if (q.isEmpty) ...[
-        const SectionHeader('COUNTRIES'),
+        SectionHeader(l10n.ruleSetCountriesHeader),
         // Each add row leads its section — at the tail of a 30-row catalog
         // nobody would find it — and what was added sits directly beneath it,
         // where the user just looked.
@@ -423,7 +430,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
           margin: kCardMargin,
           child: Column(
             children: [
-              _addRow('Add country', _addCountry),
+              _addRow(l10n.ruleSetAddCountry, _addCountry),
               for (final code in countries) ...[
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 _countryRow(code),
@@ -431,12 +438,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             ],
           ),
         ),
-        const SectionHeader('SERVICES'),
+        SectionHeader(l10n.ruleSetServicesHeader),
         Card(
           margin: kCardMargin,
           child: Column(
             children: [
-              _addRow('Add category', _addCategory),
+              _addRow(l10n.ruleSetAddCategory, _addCategory),
               for (final cat in _extraCategories('')) ...[
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 _removableRow(
@@ -455,11 +462,11 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         child: Text(
           selected == 0
               ? (_mode == RoutingMode.split
-                    ? 'Nothing selected · no traffic goes through the VPN yet'
-                    : 'Nothing selected · everything goes through the VPN')
+                    ? l10n.ruleSetNothingSelectedSplit
+                    : l10n.ruleSetNothingSelectedFull)
               : (_mode == RoutingMode.split
-                    ? '$selected selected · everything else connects directly'
-                    : '$selected selected · they connect directly, the rest goes through the VPN'),
+                    ? l10n.ruleSetSelectedSplit(selected)
+                    : l10n.ruleSetSelectedFull(selected)),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -470,6 +477,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   /// The direction, in the words of what it does to the things you pick.
   Widget _simpleModeCard(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
       child: Padding(
@@ -481,14 +489,14 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
               width: double.infinity,
               child: SegmentedButton<RoutingMode>(
                 showSelectedIcon: false,
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: RoutingMode.split,
-                    label: Text('Only selected'),
+                    label: Text(l10n.ruleSetOnlySelected),
                   ),
                   ButtonSegment(
                     value: RoutingMode.full,
-                    label: Text('All except selected'),
+                    label: Text(l10n.ruleSetAllExceptSelected),
                   ),
                 ],
                 selected: {_mode},
@@ -498,8 +506,8 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             const SizedBox(height: 8),
             Text(
               _mode == RoutingMode.split
-                  ? 'Only the services you pick go through the VPN. Everything else connects directly.'
-                  : 'Everything goes through the VPN. The services you pick connect directly.',
+                  ? l10n.ruleSetOnlySelectedDescription
+                  : l10n.ruleSetAllExceptSelectedDescription,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -562,7 +570,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     // Add-category row instead, next to the control that creates them.
     final extras = _extraCategories(query);
     if (query.isNotEmpty && extras.isNotEmpty) {
-      out.add(const SectionHeader('OTHER CATEGORIES'));
+      out.add(SectionHeader(context.l10n.ruleSetOtherCategoriesHeader));
       out.add(
         Card(
           margin: kCardMargin,
@@ -617,7 +625,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         title: Text(title),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline, size: 20),
-          tooltip: 'Remove',
+          tooltip: context.l10n.commonRemove,
           onPressed: onRemove,
         ),
       );

@@ -1,0 +1,1867 @@
+{
+  "@@locale": "en",
+  "appTitle": "VPN",
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonDone": "Done",
+  "commonOk": "OK",
+  "commonDelete": "Delete",
+  "commonRemove": "Remove",
+  "commonAdd": "Add",
+  "commonClose": "Close",
+  "commonRetry": "Retry",
+  "commonCopy": "Copy",
+  "commonCopied": "Copied",
+  "commonSettings": "Settings",
+  "commonSearch": "Search",
+  "commonDismiss": "Dismiss",
+  "commonOn": "On",
+  "commonOff": "Off",
+  "commonConnect": "Connect",
+  "commonDisconnect": "Disconnect",
+  "commonRefresh": "Refresh",
+  "commonOpen": "Open",
+  "commonBack": "Back",
+  "commonContinue": "Continue",
+  "commonEdit": "Edit",
+  "commonRename": "Rename",
+  "commonName": "Name",
+  "commonAll": "ALL",
+  "commonFavorites": "FAVORITES",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "settingsLanguage": "Language",
+  "commonClear": "Clear",
+  "commonJustNow": "just now",
+  "@commonJustNow": {
+    "description": "Relative time: an event less than a minute ago"
+  },
+  "settingsSectionConfigurations": "CONFIGURATIONS",
+  "@settingsSectionConfigurations": {
+    "description": "Section header, all caps"
+  },
+  "settingsSectionConnection": "CONNECTION",
+  "@settingsSectionConnection": {
+    "description": "Section header, all caps"
+  },
+  "settingsSectionRouting": "ROUTING",
+  "@settingsSectionRouting": {
+    "description": "Section header, all caps"
+  },
+  "settingsSectionGeneral": "GENERAL",
+  "@settingsSectionGeneral": {
+    "description": "Section header, all caps"
+  },
+  "settingsSectionDiagnostics": "DIAGNOSTICS",
+  "@settingsSectionDiagnostics": {
+    "description": "Section header, all caps"
+  },
+  "settingsSectionAbout": "ABOUT",
+  "@settingsSectionAbout": {
+    "description": "Section header, all caps"
+  },
+  "settingsConfigurations": "Configurations",
+  "settingsConfigurationsCount": "{count, plural, =1{1 configuration} other{{count} configurations}}",
+  "@settingsConfigurationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uiNounConfiguration": "configuration",
+  "@uiNounConfiguration": {
+    "description": "Singular noun inserted into the picker's empty-search message: 'No configuration matches ...'"
+  },
+  "settingsAutoConnect": "Auto-connect",
+  "settingsAutoConnectSubtitle": "Connect when Windows starts",
+  "onDemandTitle": "On demand",
+  "settingsDisconnectOnSleep": "Disconnect on sleep",
+  "settingsDisconnectOnSleepSubtitle": "Drop the tunnel when the device sleeps",
+  "settingsAlwaysOnSubtitle": "A system switch — set in Android settings",
+  "settingsAdvanced": "Advanced",
+  "settingsConnectionCheckOn": "Connection check · on",
+  "settingsConnectionCheckOff": "Connection check · off",
+  "settingsLanDirect": "Local network direct",
+  "settingsLanDirectSubtitle": "LAN traffic bypasses the VPN",
+  "ruleSetsTitle": "Rule sets",
+  "settingsRuleSetCount": "{count, plural, =1{1 set} other{{count} sets}}",
+  "@settingsRuleSetCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsDefaultDns": "Default DNS",
+  "settingsDefaultDnsSubtitle": "{name} · used when a configuration brings none",
+  "@settingsDefaultDnsSubtitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsDnsCustom": "Custom…",
+  "settingsDnsCustomSubtitle": "any address the engine accepts",
+  "settingsDnsResolverLabel": "Resolver",
+  "settingsDnsUseCloudflare": "Use Cloudflare",
+  "settingsGeoDownloaded": "downloaded · {size}",
+  "@settingsGeoDownloaded": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAppearance": "Appearance",
+  "settingsThemeSystemSubtitle": "Follow the device setting",
+  "aboutTitle": "About",
+  "aboutVersion": "Version {version}",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutEngine": "Engine",
+  "aboutVersionCopied": "Version copied",
+  "aboutTermsOfService": "Terms of Service",
+  "aboutPrivacyPolicy": "Privacy Policy",
+  "aboutNotPublishedYet": "Not published yet",
+  "uiCouldNotOpenPage": "Couldn’t open that page.",
+  "advancedSectionConnectionCheck": "CONNECTION CHECK",
+  "@advancedSectionConnectionCheck": {
+    "description": "Section header, all caps"
+  },
+  "advancedSectionLastCheck": "LAST CHECK",
+  "@advancedSectionLastCheck": {
+    "description": "Section header, all caps"
+  },
+  "advancedCheckAfterConnecting": "Check after connecting",
+  "advancedCheckAfterConnectingSubtitle": "Fetch a page through the server and time the answer",
+  "advancedTestUrl": "Test URL",
+  "advancedUrlLabel": "URL",
+  "advancedUseDefault": "Use the default",
+  "advancedInvalidUrl": "Enter an http:// or https:// address.",
+  "advancedGiveUpAfter": "Give up after",
+  "advancedSeconds": "{count, plural, =1{1 second} other{{count} seconds}}",
+  "@advancedSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advancedTestNow": "Test now",
+  "advancedNeedsTunnelNote": "The request goes through the running engine, so the tunnel has to be up to test it.",
+  "advancedCheckScopeNote": "The request goes through the server itself, so routing rules do not affect it. It proves the server passes traffic — not that your traffic goes through it.",
+  "advancedNoAnswer": "No answer",
+  "advancedNoAnswerDetail": "{failure} The tunnel is up, so this is the server or the network beyond it.",
+  "@advancedNoAnswerDetail": {
+    "placeholders": {
+      "failure": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedTrafficGettingThrough": "Traffic is getting through",
+  "advancedAnsweredIn": "Answered in {ms} ms",
+  "@advancedAnsweredIn": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
+  "advancedResultVia": "{ago} · through {via}",
+  "@advancedResultVia": {
+    "description": "When the check ran, and which server carried it",
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      },
+      "via": {
+        "type": "String"
+      }
+    }
+  },
+  "commonMinutesAgo": "{count} min ago",
+  "@commonMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advancedHoursAgo": "{count} h ago",
+  "@advancedHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "alwaysOnTitle": "Always-on VPN",
+  "alwaysOnStartedBySystem": "Started by the system",
+  "alwaysOnStartedBySystemSubtitle": "At boot, and again whenever the tunnel drops",
+  "alwaysOnBlockWithoutVpn": "Block connections without VPN",
+  "alwaysOnBlockWithoutVpnSubtitle": "The system’s kill switch, on the same screen",
+  "alwaysOnNote": "Android owns this switch, so it lives in system settings: Network & internet → VPN → the gear next to this app. The system starts whatever configuration was used last.",
+  "alwaysOnOpenSystemSettings": "Open system VPN settings",
+  "dnsTitle": "DNS",
+  "dnsSectionInEffect": "IN EFFECT",
+  "@dnsSectionInEffect": {
+    "description": "Section header, all caps: the resolvers currently in use"
+  },
+  "dnsSectionDropped": "DROPPED",
+  "@dnsSectionDropped": {
+    "description": "Section header, all caps: resolvers the app refused to use"
+  },
+  "dnsParallelNote": "Asked at the same time; the first answer wins.",
+  "dnsFallbackNote": "This configuration names no resolver of its own, so the app uses its default — change it in Settings › Default DNS.",
+  "dnsProviderNote": "Chosen by whoever set up this configuration, and it changes with it.",
+  "dnsProxyResolvedDirectlyNote": "The address of the server you connect through is always resolved directly. It has to be — nothing could reach the tunnel otherwise.",
+  "dnsResolverSubtitle": "{protocol} · {origin}",
+  "@dnsResolverSubtitle": {
+    "placeholders": {
+      "protocol": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "dnsPinIgnoredTooltip": "This configuration asked for an outbound this app does not create, so the request was dropped and the resolver is reached directly.",
+  "dnsOriginAppDefault": "app default",
+  "dnsOriginSubscription": "from your subscription",
+  "dnsOriginOrganisation": "from your organisation",
+  "dnsOriginConfiguration": "from this configuration",
+  "dnsRoutingDirect": "direct",
+  "@dnsRoutingDirect": {
+    "description": "How a resolver is reached: off the physical interface, not through the tunnel"
+  },
+  "dnsRoutingFollowsRules": "follows your rules",
+  "dnsRoutingThroughTunnel": "through the tunnel",
+  "dnsProtocolDoh": "DNS over HTTPS",
+  "dnsProtocolDot": "DNS over TLS",
+  "dnsProtocolDoq": "DNS over QUIC",
+  "dnsProtocolPlain": "Plain, unencrypted",
+  "dnsDropMalformed": "Not a resolver address. Nothing from a subscription is put into the engine configuration unchecked.",
+  "dnsDropUnknownScheme": "The engine has no scheme for this. Keeping it would have failed the whole configuration, not just this line.",
+  "dnsDropCannotCarry": "Plain DNS cannot travel through this server, and sending it outside the tunnel would show every site you visit to your network.",
+  "dnsDropTooMany": "Past the {max} the engine is given. It asks them all at once, so a longer list costs time without answering better.",
+  "@dnsDropTooMany": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "dnsPresetQuad9Note": "filters known-malicious domains",
+  "dnsPresetAdGuardNote": "filters ads and trackers",
+  "dnsErrorNotResolverAddress": "Not a resolver address.",
+  "dnsErrorAddressedByName": "Addressed by name, so it would need resolving before it could resolve anything. Use its IP address.",
+  "geoTitle": "GeoIP & GeoSite",
+  "geoSectionDatabases": "DATABASES",
+  "@geoSectionDatabases": {
+    "description": "Section header, all caps"
+  },
+  "geoSectionUpdates": "UPDATES",
+  "@geoSectionUpdates": {
+    "description": "Section header, all caps"
+  },
+  "geoGeoipSource": "GeoIP source",
+  "geoGeositeSource": "GeoSite source",
+  "geoDownloadUrlLabel": "Download URL",
+  "geoResetToDefault": "Reset to default",
+  "geoNotDownloaded": "not downloaded",
+  "geoNever": "never",
+  "@geoNever": {
+    "description": "Shown under 'Last updated' when the databases were never downloaded"
+  },
+  "commonDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@commonDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonHoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@commonHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "geoLastUpdated": "Last updated",
+  "geoAutoUpdate": "Auto-update",
+  "geoAutoUpdateSubtitle": "Weekly, when already downloaded",
+  "geoUpdateNow": "Update now",
+  "geoDownload": "Download (~25 MB)",
+  "geoDatabaseHostSubject": "the database host",
+  "@geoDatabaseHostSubject": {
+    "description": "What failed, inserted into an error sentence such as 'Could not reach {subject}'"
+  },
+  "geositeCategoryLabel": "Category",
+  "geositeDomainCount": "{count, plural, =1{1 domain} other{{count} domains}}",
+  "@geositeDomainCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "geositeNoCategories": "No categories — download the geo databases first.",
+  "uiNothingMatches": "Nothing matches “{query}”.",
+  "@uiNothingMatches": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "geositeSectionPopular": "POPULAR",
+  "@geositeSectionPopular": {
+    "description": "Section header, all caps"
+  },
+  "geositeSectionAll": "ALL · {count}",
+  "@geositeSectionAll": {
+    "description": "Section header, all caps: every category with its count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "geositeSectionAllMatch": "ALL · {count} OF {total} MATCH",
+  "@geositeSectionAllMatch": {
+    "description": "Section header, all caps: how many categories match the search",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "logsTitle": "Logs",
+  "logsSectionCollection": "COLLECTION",
+  "@logsSectionCollection": {
+    "description": "Section header, all caps"
+  },
+  "logsSectionTunnel": "TUNNEL",
+  "@logsSectionTunnel": {
+    "description": "Section header, all caps"
+  },
+  "logsSectionApp": "APP",
+  "@logsSectionApp": {
+    "description": "Section header, all caps"
+  },
+  "logsCollect": "Collect logs",
+  "logsCollectSubtitle": "Off: the app, the tunnel and the core stop writing. Existing files stay readable.",
+  "logsTunnel": "Tunnel",
+  "logsTunnelSubtitle": "Network Extension events",
+  "logsCore": "Core (mihomo)",
+  "logsCoreSubtitle": "Engine log: dials, DNS, routing",
+  "logsApplication": "Application",
+  "logsApplicationSubtitle": "Client-side events",
+  "logsSaveAllZip": "Save all logs (.zip)",
+  "logsSaveAll": "Save all logs",
+  "logsSaveToFile": "Save to file…",
+  "logsSaveToFileSubtitle": "Pick a folder on this device",
+  "logsShare": "Share…",
+  "logsShareSubtitle": "Send the archive somewhere",
+  "logsSaveDialogTitle": "Save logs",
+  "logsSavedTo": "Saved to {path}",
+  "@logsSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "logsClearAll": "Clear all logs",
+  "logsClearAllQuestion": "Clear all logs?",
+  "logsClearAllContent": "The app, tunnel and core logs will be deleted from this device. The tunnel and core logs can only be cleared while the VPN is connected.",
+  "logsCleared": "Logs cleared.",
+  "logsAppLogClearedOnly": "App log cleared. The tunnel and core logs need the VPN connected.",
+  "logsNoLog": "No log.",
+  "logsNoLogYet": "No log yet.",
+  "logsEmpty": "Empty",
+  "@logsEmpty": {
+    "description": "Log viewer body when the log has no content"
+  },
+  "logsUnavailable": "Logs are available only while the tunnel is running.\n(The tunnel process keeps its logs on its own side and streams them to the app over IPC.)",
+  "commonTryAgain": "Try again",
+  "configKindSelfhosted": "Self-hosted · {servers}",
+  "@configKindSelfhosted": {
+    "placeholders": {
+      "servers": {
+        "type": "String"
+      }
+    }
+  },
+  "configKindSubscription": "Subscription · {servers}{groups}",
+  "@configKindSubscription": {
+    "placeholders": {
+      "servers": {
+        "type": "String"
+      },
+      "groups": {
+        "type": "String"
+      }
+    }
+  },
+  "configKindSubscriptionPlain": "Subscription",
+  "configKindSingleServer": "Single server",
+  "commonServersCount": "{count, plural, =1{1 server} other{{count} servers}}",
+  "@commonServersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configServersOfOffered": "{offered, plural, =1{{ours} of 1 server} other{{ours} of {offered} servers}}",
+  "@configServersOfOffered": {
+    "placeholders": {
+      "ours": {
+        "type": "int"
+      },
+      "offered": {
+        "type": "int"
+      }
+    }
+  },
+  "configGroupsSuffix": "{count, plural, =1{ · 1 group} other{ · {count} groups}}",
+  "@configGroupsSuffix": {
+    "description": "Appended to the subscription kind line after the server count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configSource": "Source",
+  "configSourceViaFallback": "Last refresh used the subscription’s backup address",
+  "configCouldNotOpenLink": "Couldn’t open that link.",
+  "configLinkCopied": "Link copied",
+  "configUnsupportedTitle": "{skipped} of {offered} servers unsupported",
+  "@configUnsupportedTitle": {
+    "placeholders": {
+      "skipped": {
+        "type": "int"
+      },
+      "offered": {
+        "type": "int"
+      }
+    }
+  },
+  "configUnsupportedDetail": "They use {kinds}, which this app cannot run yet. The other {available} are available.",
+  "@configUnsupportedDetail": {
+    "placeholders": {
+      "kinds": {
+        "type": "String"
+      },
+      "available": {
+        "type": "int"
+      }
+    }
+  },
+  "configSetActive": "Set active",
+  "configRemoveConfiguration": "Remove configuration",
+  "configRemoveTitle": "Remove {name}?",
+  "@configRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "configRemoveDetail": "This configuration will be removed from this device.",
+  "configSectionSubscription": "SUBSCRIPTION",
+  "@configSectionSubscription": {
+    "description": "Section header"
+  },
+  "configRanUntil": "Ran until",
+  "configRunsUntil": "Runs until",
+  "configDevices": "Devices",
+  "configDevicesUsed": "{active} of {max} used",
+  "@configDevicesUsed": {
+    "placeholders": {
+      "active": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "configDateLong": "{date}",
+  "@configDateLong": {
+    "description": "A date such as 21 September 2026",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "d MMMM y",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "configDateShort": "{date}",
+  "@configDateShort": {
+    "description": "A date such as 21 Sep 2026",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "d MMM y",
+        "isCustomDateFormat": "true"
+      }
+    }
+  },
+  "configDaysLeft": "{date} · {count, plural, =1{1 day left} other{{count} days left}}",
+  "@configDaysLeft": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountExpiredTitle": "Subscription expired",
+  "configSubscriptionExpiredDetail": "Renew the subscription, then refresh this configuration.",
+  "configSectionThisDevice": "THIS DEVICE",
+  "@configSectionThisDevice": {
+    "description": "Section header"
+  },
+  "configDeviceIdentifiedSubtitle": "Identified to your subscription, which counts devices",
+  "configDeviceId": "Device id",
+  "configDeviceHintAmnezia": "Your subscription counts devices by this id. It is made once and kept, so reconnecting costs no slot — but a reinstall takes a new one.",
+  "configDeviceHintPanel": "Your subscription counts devices by an id this app generates once and keeps. Reinstalling makes a new one, which takes another slot.",
+  "configCopiedTitle": "{title} copied",
+  "@configCopiedTitle": {
+    "description": "Toast after copying the identifier named by title, e.g. 'Device id copied'",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "configDnsSummary": "{host} · {routing}",
+  "@configDnsSummary": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      },
+      "routing": {
+        "type": "String"
+      }
+    }
+  },
+  "configDnsMore": " · +{count} more",
+  "@configDnsMore": {
+    "description": "Appended to the DNS summary when more resolvers follow the first",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configDnsDropped": "{count} dropped",
+  "@configDnsDropped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configDnsByApp": "DNS by the app",
+  "configDnsOrigin": "DNS {origin}",
+  "@configDnsOrigin": {
+    "description": "origin is a phrase such as 'from the subscription'",
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "configDnsRefused": "DNS: {count} refused",
+  "@configDnsRefused": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configRouting": "Routing",
+  "configRuleSet": "Rule set",
+  "configRuleSetDefault": "Default",
+  "@configRuleSetDefault": {
+    "description": "Name of the built-in rule set"
+  },
+  "configRuleLists": "Rule lists",
+  "ruleSetModeSplit": "Split",
+  "ruleSetModeFull": "Full tunnel",
+  "ruleSetSummary": "{mode} · {rules}",
+  "@ruleSetSummary": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "rules": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSetNoRules": "no rules",
+  "configNoExceptions": "no exceptions",
+  "configRulesCount": "{count, plural, =1{1 rule} other{{count} rules}}",
+  "@configRulesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configSkippedNotSupported": "{count} not supported",
+  "@configSkippedNotSupported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configListsUnavailable": "{count, plural, =1{1 list unavailable} other{{count} lists unavailable}}",
+  "@configListsUnavailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configRulesNeedLists": "{count, plural, =1{1 needs their lists} other{{count} need their lists}}",
+  "@configRulesNeedLists": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configDownloadingLists": "{count, plural, =1{Downloading one list…} other{Downloading {count} lists…}}",
+  "@configDownloadingLists": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configRuleListsOff": "Off · {count, plural, =1{1 rule needs them} other{{count} rules need them}}",
+  "@configRuleListsOff": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configChecking": "Checking…",
+  "configNoneDownloadedYet": "None downloaded yet",
+  "configListsCount": "{count, plural, =1{1 list} other{{count} lists}}",
+  "@configListsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configListsDownloadedOf": "{have} of {total} downloaded",
+  "@configListsDownloadedOf": {
+    "placeholders": {
+      "have": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "configListsSize": "{count} · {kb} KB",
+  "@configListsSize": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "kb": {
+        "type": "int"
+      }
+    }
+  },
+  "configListsFailedTitle": "{count, plural, =1{One list could not be downloaded} other{{count} lists could not be downloaded}}",
+  "@configListsFailedTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configListsFailedDetail": "{count, plural, =1{{names} from {hosts} — the rule using it is not applied.} other{{names} from {hosts} — the rules using them are not applied.}}",
+  "@configListsFailedDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      },
+      "hosts": {
+        "type": "String"
+      }
+    }
+  },
+  "configReplacedBy": "Replaced by {name}",
+  "@configReplacedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "configRoutingOffSummary": "Off · everything through the VPN",
+  "configManagedByOrganization": "Managed by your organization",
+  "configManagedSummary": "{mode} · {count} rules, set on the server",
+  "@configManagedSummary": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configSetByOrganization": "{mode} · set by your organization",
+  "@configSetByOrganization": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "configSectionOrganizationRouting": "ORGANIZATION ROUTING",
+  "@configSectionOrganizationRouting": {
+    "description": "Section header"
+  },
+  "configSectionSubscriptionRouting": "SUBSCRIPTION ROUTING",
+  "@configSectionSubscriptionRouting": {
+    "description": "Section header"
+  },
+  "configSectionDeviceRouting": "DEVICE ROUTING",
+  "@configSectionDeviceRouting": {
+    "description": "Section header"
+  },
+  "configOrganizationRoutingNote": "Your organization sets this policy and applies it. You can see what it is; changing it is done on their side.",
+  "configSubscriptionRoutes": "the subscription’s routes",
+  "@configSubscriptionRoutes": {
+    "description": "Fills 'Replaced by {name}'"
+  },
+  "configSubscriptionRoutingNote": "Turn the switch off to use your own rule set instead. Your subscription cannot enforce this either way.",
+  "configDeviceRoutingNote": "Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.",
+  "configSectionDetails": "DETAILS",
+  "@configSectionDetails": {
+    "description": "Section header"
+  },
+  "configGetSupport": "Get support",
+  "configNoPlanDetails": "Your subscription reported no plan details.",
+  "configUsedNoLimit": "Used {used} · no limit",
+  "@configUsedNoLimit": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+  "configTrafficOf": "Traffic: {used} of {total}",
+  "@configTrafficOf": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "configNoExpiryDate": "No expiry date given",
+  "configExpiredOn": "Expired {date}",
+  "@configExpiredOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "configActiveUntil": "Active until {date}",
+  "@configActiveUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "configPlanLine": "{when} · what the subscription reports, not verified here",
+  "@configPlanLine": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "configAccount": "Account",
+  "configStatus": "Status: {status}",
+  "@configStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "configStatusOnHold": "Status: {status} · starts on first use",
+  "@configStatusOnHold": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "configStatusExpires": "Status: {status} · expires {date}",
+  "@configStatusExpires": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "configLastRefreshed": "Last refreshed",
+  "configRefreshEvery": "Refresh every",
+  "configHours": "Hours",
+  "configRefreshAsSubscriptionAsks": "As the subscription asks",
+  "configRefreshEnterWholeHours": "Enter a whole number of hours.",
+  "configRefreshNever": "never · {every}",
+  "@configRefreshNever": {
+    "placeholders": {
+      "every": {
+        "type": "String"
+      }
+    }
+  },
+  "configRefreshAgo": "{ago} · {every}",
+  "@configRefreshAgo": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      },
+      "every": {
+        "type": "String"
+      }
+    }
+  },
+  "configAutoEveryMinutes": "auto every {count} min",
+  "@configAutoEveryMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configAutoEveryHours": "auto every {count} h",
+  "@configAutoEveryHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configAutoEveryDays": "{count, plural, =1{auto every day} other{auto every {count} days}}",
+  "@configAutoEveryDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "configRefreshNow": "Refresh now",
+  "configRefreshFailed": "Couldn’t refresh — {detail}",
+  "@configRefreshFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "configRefreshFailedFallback": "showing the servers we already have.",
+  "configOrganizationPolicyDetail": "These rules are set on the server and cannot be changed here.",
+  "configSentBy": "Sent by {name}",
+  "@configSentBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "configProviderPolicyDetail": "Read-only. Refreshing the subscription replaces them.",
+  "configProviderPolicyDetailSkipped": "Read-only. Refreshing the subscription replaces them. {count, plural, =1{1 more rule could not be translated for this app and is not applied.} other{{count} more rules could not be translated for this app and are not applied.}}",
+  "@configProviderPolicyDetailSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleSetSplitTunneling": "Split tunneling",
+  "ruleSetGeoNotDownloaded": "Geo databases not downloaded",
+  "ruleSetGeoNotDownloadedDetail": "geoip / geosite rules are inactive until then (~25 MB)",
+  "ruleSetRulesHeader": "RULES — FIRST MATCH WINS",
+  "@ruleSetRulesHeader": {
+    "description": "Section header"
+  },
+  "homeAddConfiguration": "Add configuration",
+  "homeConfigurationSettings": "Configuration settings",
+  "homeChipAuto": "Auto · {state}",
+  "@homeChipAuto": {
+    "description": "Status chip: whether the system auto-connects; state is one of homeAutoOff/homeAutoPaused/homeAutoNoRules/homeAutoNotArmed/homeStateOn",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "homeChipRouting": "Routing · {state}",
+  "@homeChipRouting": {
+    "description": "Status chip: the active routing mode",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "homeChipLogs": "Logs · {state}",
+  "@homeChipLogs": {
+    "description": "Status chip: whether logs are collected; state is homeStateOn/homeStateOff",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "homeStateOn": "on",
+  "@homeStateOn": {
+    "description": "Lowercase chip state: the feature is on"
+  },
+  "homeStateOff": "off",
+  "@homeStateOff": {
+    "description": "Lowercase chip state: the feature is off"
+  },
+  "homeAutoPaused": "paused",
+  "@homeAutoPaused": {
+    "description": "Lowercase chip state: auto-connect is paused"
+  },
+  "@ruleSetNoRules": {
+    "description": "Lowercase chip state: auto-connect has no rules"
+  },
+  "homeAutoNotArmed": "not armed",
+  "@homeAutoNotArmed": {
+    "description": "Lowercase chip state: the system has not armed auto-connect yet"
+  },
+  "homeCheckFailedTitle": "Connected, but nothing came back",
+  "homeCheckFailedDetail": "The check found no answer through this server. Try another one, or open Advanced.",
+  "homeAutoConnectPausedTitle": "Auto-connect paused",
+  "homeAutoConnectPausedDetail": "Press Connect to arm it again",
+  "homeAutoConnectNotArmedTitle": "Auto-connect not armed yet",
+  "homeAutoConnectNotArmedDetail": "Connect once so the system can take over",
+  "homeNoServers": "No servers",
+  "homeGroupAuto": "auto",
+  "@homeGroupAuto": {
+    "description": "Location row subtitle for a proxy group: the engine picks the server"
+  },
+  "homeGroupAutoPicked": "auto · {server}",
+  "@homeGroupAutoPicked": {
+    "description": "Location row subtitle for a proxy group, naming the server the engine picked",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "homeAccountUntil": "{status} · until {until}",
+  "@homeAccountUntil": {
+    "description": "Account line: the account status and its expiry date",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "homeConfiguration": "Configuration",
+  "homeServer": "Server",
+  "homeChosenByEngine": "CHOSEN BY THE ENGINE",
+  "@homeChosenByEngine": {
+    "description": "Section header in the server picker above the proxy groups"
+  },
+  "homeSwitchingServer": "Switching server…",
+  "homeGettingServer": "Getting the server…",
+  "statusConnected": "Connected",
+  "homeConnectedClock": "Connected · {clock}",
+  "@homeConnectedClock": {
+    "description": "Status line with the session duration, e.g. 00:12:03",
+    "placeholders": {
+      "clock": {
+        "type": "String"
+      }
+    }
+  },
+  "homeStatusAuto": "{status} · auto",
+  "@homeStatusAuto": {
+    "description": "Status line suffix when the system is auto-connecting",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "statusConnecting": "Connecting…",
+  "statusError": "Error",
+  "statusNotConnected": "Not connected",
+  "homeGroupRechecks": "{summary} · rechecks every {minutes} min",
+  "@homeGroupRechecks": {
+    "description": "Proxy group subtitle: what the group does and how often it re-tests its members",
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "startCouldntReadFile": "Couldn’t read the file",
+  "startCouldntReadFileDetail": "Try opening it again, or paste its contents.",
+  "startAddConnection": "Add a connection",
+  "startSubtitle": "Link, subscription or config file",
+  "startLinkLabel": "Link or subscription",
+  "startLinkHint": "vless://…  or  https://…/sub",
+  "startCantUseThis": "Can’t use this · {reason}",
+  "@startCantUseThis": {
+    "description": "Chip under the link field explaining why the text cannot be added",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "startOpenConfigFile": "Open a config file…",
+  "startOr": "or",
+  "@startOr": {
+    "description": "Divider word between the two ways of adding a connection"
+  },
+  "startSignInToServer": "Sign in to your server",
+  "startOpenSubscriptionPage": "Open subscription page",
+  "signInEnterServerFirst": "Enter the server address first",
+  "signInNoSsoProviders": "This server has no SSO providers",
+  "signInNoSsoProvidersDetail": "Sign in with a username and password instead.",
+  "signInWith": "Sign in with",
+  "@signInWith": {
+    "description": "Title of the SSO provider picker"
+  },
+  "signIn": "Sign in",
+  "signInSubtitle": "Your organization’s or personal server",
+  "signInServerAddress": "Server address",
+  "signInServerHint": "https://your-server",
+  "signInUsername": "Username",
+  "signInPassword": "Password",
+  "signInWithSso": "Sign in with SSO",
+  "uiNounItem": "item",
+  "@uiNounItem": {
+    "description": "Singular noun for a picker row, used in uiNoMatches"
+  },
+  "uiNounServer": "server",
+  "@uiNounServer": {
+    "description": "Singular noun for a picker row, used in uiNoMatches"
+  },
+  "uiNounCountry": "country",
+  "@uiNounCountry": {
+    "description": "Singular noun for a picker row, used in uiNoMatches"
+  },
+  "uiRemoveFromFavorites": "Remove from favorites",
+  "uiAddToFavorites": "Add to favorites",
+  "uiAllNothingMatches": "ALL · NOTHING MATCHES",
+  "@uiAllNothingMatches": {
+    "description": "Picker section header while a search matches nothing"
+  },
+  "uiAllMatchCount": "ALL · {shown} OF {total} MATCH",
+  "@uiAllMatchCount": {
+    "description": "Picker section header while searching: how many rows match",
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "uiNoMatches": "No {noun} matches “{query}”. Clear the search to see all {total}.",
+  "@uiNoMatches": {
+    "description": "Picker empty state; noun is one of the uiNoun* keys",
+    "placeholders": {
+      "noun": {
+        "type": "String"
+      },
+      "query": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleSetModeFullDescription": "All traffic goes through the VPN; rules define exceptions.",
+  "ruleSetModeSplitDescription": "Only traffic matching the rules goes through the VPN; the rest connects directly.",
+  "ruleSetNoRulesSplit": "No rules: no traffic goes through the VPN. Add rules for what should be tunneled.",
+  "ruleSetNoRulesFull": "No rules: all traffic goes through the VPN.",
+  "ruleSetDownload": "Download",
+  "ruleKindRuleList": "rule list",
+  "@ruleKindRuleList": {
+    "description": "Rule row subtitle: the rule matches a downloaded rule list"
+  },
+  "ruleInactiveNoDatabase": "{kind} · inactive — no database",
+  "@ruleInactiveNoDatabase": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleInactiveDesktopOnly": "{kind} · inactive — desktop only",
+  "@ruleInactiveDesktopOnly": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleInactiveListsOff": "{kind} · inactive — lists are off",
+  "@ruleInactiveListsOff": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleInactiveNotDownloaded": "{kind} · inactive — not downloaded",
+  "@ruleInactiveNotDownloaded": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleNoResolveKind": "{kind} · no-resolve",
+  "@ruleNoResolveKind": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleTypeDomainSuffix": "domain and subdomains",
+  "ruleTypeDomainKeyword": "domain contains",
+  "ruleTypeDomainExact": "exact domain",
+  "ruleTypeIpCidr": "IP range",
+  "ruleTypeProcessName": "app by name",
+  "ruleTypeGeoip": "country by IP",
+  "ruleTypeGeosite": "domain lists",
+  "ruleTypeDomainRegex": "domain matches a pattern",
+  "ruleTypeRuleList": "a list from your subscription",
+  "rulePickCountry": "Pick a country.",
+  "ruleInvalidValue": "Invalid value for {type}.",
+  "@ruleInvalidValue": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleMatch": "Match",
+  "@ruleMatch": {
+    "description": "Label of the rule's match-type field"
+  },
+  "ruleNotAvailableOnPlatform": "not available on this platform",
+  "ruleNeedsGeoDatabases": "needs geo databases",
+  "ruleAction": "Action",
+  "ruleActionProxyDescription": "through the VPN",
+  "ruleActionDirectDescription": "bypass the VPN",
+  "ruleActionBlockDescription": "drop the connection",
+  "ruleAdd": "Add rule",
+  "ruleEdit": "Edit rule",
+  "ruleCountry": "Country",
+  "ruleChoose": "Choose…",
+  "ruleNoResolveDescription": "Match only plain-IP connections, don’t resolve domains",
+  "ruleValue": "Value",
+  "ruleSummaryGeoip": "traffic to IPs in {country}",
+  "@ruleSummaryGeoip": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSummaryGeosite": "\"{category}\" domains (GeoSite list)",
+  "@ruleSummaryGeosite": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSummaryProcess": "traffic of \"{name}\"",
+  "@ruleSummaryProcess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSummaryMatching": "traffic matching {value}",
+  "@ruleSummaryMatching": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSummaryProxy": "goes through the VPN",
+  "ruleSummaryDirect": "connects directly, bypassing the VPN",
+  "ruleSummaryBlock": "is blocked",
+  "ruleSummary": "→ {target} {verb}.",
+  "@ruleSummary": {
+    "description": "Preview of what a rule does: target is a ruleSummaryGeoip/Geosite/Process/Matching phrase, verb a ruleSummaryProxy/Direct/Block phrase",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      },
+      "verb": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSetDeleteTitle": "Delete \"{name}\"?",
+  "@ruleSetDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSetDeleteBody": "Configurations using this set fall back to Default.",
+  "ruleSetDeleteTooltip": "Delete rule set",
+  "ruleSetSimple": "Simple",
+  "ruleSetDownloadSiteLists": "Download the site lists first",
+  "ruleSetDownloadSiteListsDetail": "Picking services needs the geo databases (~25 MB, one time)",
+  "ruleSetAdvancedRules": "Advanced rules · {count}",
+  "@ruleSetAdvancedRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleSetAdvancedRulesDetail": "Apply before the list below · edit in Advanced",
+  "ruleSetSearchServices": "Search services",
+  "ruleSetCountriesHeader": "COUNTRIES",
+  "ruleSetAddCountry": "Add country",
+  "ruleSetServicesHeader": "SERVICES",
+  "ruleSetAddCategory": "Add category",
+  "ruleSetOtherCategoriesHeader": "OTHER CATEGORIES",
+  "ruleSetNothingSelectedSplit": "Nothing selected · no traffic goes through the VPN yet",
+  "ruleSetNothingSelectedFull": "Nothing selected · everything goes through the VPN",
+  "ruleSetSelectedSplit": "{count} selected · everything else connects directly",
+  "@ruleSetSelectedSplit": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleSetSelectedFull": "{count} selected · they connect directly, the rest goes through the VPN",
+  "@ruleSetSelectedFull": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleSetOnlySelected": "Only selected",
+  "ruleSetAllExceptSelected": "All except selected",
+  "ruleSetOnlySelectedDescription": "Only the services you pick go through the VPN. Everything else connects directly.",
+  "ruleSetAllExceptSelectedDescription": "Everything goes through the VPN. The services you pick connect directly.",
+  "ruleSetNew": "New rule set",
+  "ruleSetNameHint": "Work",
+  "@ruleSetNameHint": {
+    "description": "Example name in the new-rule-set prompt"
+  },
+  "ruleSetCreate": "Create",
+  "ruleSetRuleCount": "{count, plural, =0{no rules} other{{count} rules}}",
+  "@ruleSetRuleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleSetUsedBy": "{count, plural, =1{used by 1 config} other{used by {count} configs}}",
+  "@ruleSetUsedBy": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleSetSummaryUsed": "{mode} · {rules} · {used}",
+  "@ruleSetSummaryUsed": {
+    "description": "Rule set row subtitle with how many configurations use it",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "rules": {
+        "type": "String"
+      },
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+  "onDemandEnable": "Enable on demand",
+  "onDemandEnableSubtitle": "The system applies the first matching rule",
+  "onDemandNoRules": "No rules. Enabling on demand adds “Connect · Any network”.",
+  "onDemandRulesFootnote": "Rules are evaluated top to bottom. If none matches, the tunnel is left as is.",
+  "onDemandTagConnect": "CONN.",
+  "@onDemandTagConnect": {
+    "description": "Short tag in a rule row for the Connect action"
+  },
+  "onDemandTagDisconnect": "DISC.",
+  "@onDemandTagDisconnect": {
+    "description": "Short tag in a rule row for the Disconnect action"
+  },
+  "onDemandTagIgnore": "IGNORE",
+  "@onDemandTagIgnore": {
+    "description": "Short tag in a rule row for the Ignore action"
+  },
+  "onDemandNewRule": "New rule",
+  "onDemandActionIgnore": "Ignore",
+  "onDemandActionConnectSubtitle": "bring the tunnel up",
+  "onDemandActionDisconnectSubtitle": "tear the tunnel down",
+  "onDemandActionIgnoreSubtitle": "leave the tunnel as is",
+  "onDemandAny": "Any",
+  "@onDemandAny": {
+    "description": "Network segment / empty condition list: matches any network or value"
+  },
+  "onDemandNameOptional": "Name (optional)",
+  "onDemandNameHint": "Office",
+  "onDemandNetworkHeader": "NETWORK",
+  "onDemandNetworkHelpAny": "The rule is checked on every network — Wi-Fi, mobile or wired.",
+  "onDemandNetworkHelpWifi": "When the device joins a Wi-Fi network, the system checks the conditions below and applies the rule.",
+  "onDemandNetworkHelpCellular": "When the device is on mobile data, the system checks the conditions below and applies the rule.",
+  "onDemandNetworkHelpEthernet": "When the device is on a wired network, the system checks the conditions below and applies the rule.",
+  "onDemandConditionsHeader": "CONDITIONS",
+  "onDemandWifiNetworks": "Wi-Fi networks",
+  "onDemandWifiNetwork": "Wi-Fi network",
+  "onDemandNetworksUnit": "NETWORKS",
+  "@onDemandNetworksUnit": {
+    "description": "Unit word in the header '3 NETWORKS · ANY OF THEM MATCHES'"
+  },
+  "onDemandWifiNetworksHelp": "Matches the network name exactly. Leave empty for any Wi-Fi.",
+  "onDemandDnsDomains": "DNS search domains",
+  "onDemandDnsDomain": "DNS search domain",
+  "onDemandDomainsUnit": "DOMAINS",
+  "@onDemandDomainsUnit": {
+    "description": "Unit word in the header '3 DOMAINS · ANY OF THEM MATCHES'"
+  },
+  "onDemandDnsDomainsHelp": "Matches when the network’s search domain ends with an entry.",
+  "onDemandDnsServers": "DNS servers",
+  "onDemandDnsServer": "DNS server",
+  "onDemandServersUnit": "SERVERS",
+  "@onDemandServersUnit": {
+    "description": "Unit word in the header '3 SERVERS · ANY OF THEM MATCHES'"
+  },
+  "onDemandDnsServersHelp": "Matches the network’s DNS servers; a single “*” wildcard is allowed.",
+  "onDemandUrlProbeHeader": "URL PROBE",
+  "onDemandUrlOptional": "URL (optional)",
+  "onDemandUrlProbeHelp": "The rule matches only if this URL returns 200 without redirects.",
+  "onDemandNoEntries": "NO ENTRIES",
+  "onDemandEntriesHeader": "{count} {unit} · ANY OF THEM MATCHES",
+  "@onDemandEntriesHeader": {
+    "description": "Section header of a condition list; unit is one of the *Unit strings (NETWORKS, DOMAINS, SERVERS)",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "onDemandConditionIgnored": "The condition is ignored and the rule matches any network of the selected type.",
+  "onDemandInterfaceAny": "Any network",
+  "onDemandInterfaceWifi": "Wi-Fi",
+  "onDemandInterfaceCellular": "Mobile",
+  "onDemandInterfaceEthernet": "Ethernet",
+  "onDemandSummarySsid": "SSID {values}",
+  "@onDemandSummarySsid": {
+    "placeholders": {
+      "values": {
+        "type": "String"
+      }
+    }
+  },
+  "onDemandSummaryDomain": "domain {values}",
+  "@onDemandSummaryDomain": {
+    "placeholders": {
+      "values": {
+        "type": "String"
+      }
+    }
+  },
+  "onDemandSummaryDns": "DNS {values}",
+  "@onDemandSummaryDns": {
+    "placeholders": {
+      "values": {
+        "type": "String"
+      }
+    }
+  },
+  "onDemandSummaryProbe": "probe",
+  "@onDemandSummaryProbe": {
+    "description": "Rule summary part: the rule has a URL probe condition"
+  },
+  "onDemandStatusPaused": "Paused",
+  "onDemandStatusAwaitingFirstConnect": "On · after first connect",
+  "onDemandStatusOnRules": "{count, plural, =1{On · 1 rule} other{On · {count} rules}}",
+  "@onDemandStatusOnRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onDemandDefaultRuleName": "Everywhere",
+  "@onDemandDefaultRuleName": {
+    "description": "Name of the rule seeded when on demand is enabled with an empty list"
+  },
+  "statusNoConfiguration": "No configuration",
+  "menuBarSwitching": "Switching…",
+  "profilesCouldntGetServer": "Couldn’t get the server for {label}",
+  "@profilesCouldntGetServer": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "profilesPreviousServerStillInUse": "The previous one is still in use.",
+  "profilesCouldntSwitch": "Couldn’t switch",
+  "profilesCouldntSwitchDetail": "The tunnel kept the previous configuration. Try again, or reconnect.",
+  "profilesNoConfigurationDetail": "Add a link, a subscription, or sign in to your server.",
+  "profilesNoServers": "This configuration has no servers",
+  "profilesNoServersDetail": "Refresh it, or add another configuration.",
+  "profilesTunnelStopped": "The tunnel stopped",
+  "connectionCheckTimedOut": "The server did not answer in time.",
+  "connectionCheckClosed": "The server closed the connection.",
+  "connectionCheckRefused": "The server refused the connection.",
+  "connectionCheckNoServer": "There is no server to test — the tunnel is running something else.",
+  "connectionCheckTunnelNotRunning": "The tunnel is not running.",
+  "connectionCheckNothingCameBack": "Nothing came back.",
+  "connectionCheckEngineDidNotAnswer": "The engine did not answer.",
+  "errorDeviceLimitTitle": "Device limit reached",
+  "errorDeviceLimitDetail": "Your subscription’s device limit is full, so it sent a placeholder instead of your servers. Free a slot in your subscription, then refresh.",
+  "errorUnreadableSubscriptionTitle": "Couldn’t read this subscription",
+  "errorUnreadableSubscriptionDetail": "Your subscription sent a format this app does not recognise. It reads base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.",
+  "errorEmptySubscriptionTitle": "This subscription has no servers",
+  "errorEmptySubscriptionDetail": "Your subscription answered with {what} that lists none. That usually means the account is out of days or its device limit is full — ask them.",
+  "@errorEmptySubscriptionDetail": {
+    "description": "{what} is one of the importFormat* phrases, e.g. 'a Clash / mihomo subscription'",
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNoRunnableServersTitle": "{total, plural, =1{The only server here cannot run} other{None of the {total} servers can run here}}",
+  "@errorNoRunnableServersTitle": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "errorNoRunnableServersDetail": "They use {kinds}, which this app cannot run yet. Nothing was added.",
+  "@errorNoRunnableServersDetail": {
+    "placeholders": {
+      "kinds": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProviderMessageTitle": "Your subscription sent a message",
+  "errorProviderMessageDetail": "{lines}\n\nNot servers: every entry points nowhere, so nothing was added.",
+  "@errorProviderMessageDetail": {
+    "placeholders": {
+      "lines": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSubjectDefault": "the server",
+  "@errorSubjectDefault": {
+    "description": "Stands in for the host name in sentences like 'Couldn’t reach {what}' when none is known"
+  },
+  "errorServerDidNotAnswerTitle": "Server didn’t answer",
+  "errorCouldNotReachDetail": "Couldn’t reach {what}. Check your network, or pick another server.",
+  "@errorCouldNotReachDetail": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSecureConnectionTitle": "Couldn’t set up a secure connection",
+  "errorCertificateRejectedDetail": "The certificate of {what} was rejected. If the address is right, the server may be misconfigured.",
+  "@errorCertificateRejectedDetail": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "errorConnectionClosedDetail": "The connection to {what} was closed.",
+  "@errorConnectionClosedDetail": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWrongCredentialsTitle": "Wrong username or password",
+  "errorWrongCredentialsDetail": "Check both and try again.",
+  "errorSessionExpiredTitle": "Session expired",
+  "errorSessionExpiredDetail": "Sign in to {what} again.",
+  "@errorSessionExpiredDetail": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAccessBlockedTitle": "Access is blocked",
+  "errorAccessBlockedDetail": "The server refused this account.",
+  "errorNothingAtAddressTitle": "Nothing at this address",
+  "errorNothingAtAddressDetail": "Check the link — {what} has no configuration for this account.",
+  "@errorNothingAtAddressDetail": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "errorServerErrorTitle": "The server returned an error",
+  "errorServerErrorDetail": "Nothing to fix on this side — try again in a few minutes.",
+  "errorServerRefusedTitle": "The server refused the request",
+  "errorNotALinkTitle": "This doesn’t look like a link we know",
+  "errorNotALinkDetail": "Expected vless://, vmess://, trojan://, ss:// or a subscription URL.",
+  "errorTunnelServiceNotRunningTitle": "The tunnel service isn’t running",
+  "errorTunnelServiceNotRunningDetail": "AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.",
+  "errorTunnelServiceStoppedTitle": "The tunnel service stopped",
+  "errorTunnelServiceStoppedDetail": "It restarts on its own within a few seconds — connect again. If this keeps happening, the tunnel log in Settings → Logs says why.",
+  "errorSystemRefusedTunnelTitle": "The system refused to start the tunnel",
+  "errorSystemRefusedTunnelDetail": "Allow the VPN profile in system settings, then connect again.",
+  "errorSignInNotFinishedTitle": "Sign-in didn’t finish",
+  "errorSignInNotFinishedDetail": "The browser window was closed or the provider refused.",
+  "errorSomethingWentWrongTitle": "Something went wrong",
+  "errorSomethingWentWrongDetail": "The details are in Settings → Logs.",
+  "errorDeviceNotAcceptedTitle": "Your subscription did not accept this device",
+  "errorDeviceNotAcceptedDetail": "It requires a device id this app did send. Ask your subscription’s support.",
+  "errorApiTimeout": "No answer from {baseUrl} — check the address and the network.",
+  "@errorApiTimeout": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  },
+  "errorApiNetwork": "Cannot reach {baseUrl} — check the address/port and that the server is up.",
+  "@errorApiNetwork": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  },
+  "errorApiTls": "TLS error talking to {baseUrl}. If the server runs plain HTTP, enter the address with \"http://\".",
+  "@errorApiTls": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  },
+  "errorApiRequest": "The request to {baseUrl} could not be completed — check the address and try again.",
+  "@errorApiRequest": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  },
+  "accountExpiredDetail": "Renew it in your account, then connect again.",
+  "accountLimitedTitle": "Traffic limit reached",
+  "accountLimitedDetail": "The plan is used up until it renews.",
+  "accountDeactivatedTitle": "Access disabled",
+  "accountDeactivatedDetail": "The administrator turned this account off.",
+  "accountOnHoldTitle": "Subscription not started",
+  "accountOnHoldDetail": "It begins on the first connection — try again in a moment.",
+  "accountOtherStateTitle": "Account is {state}",
+  "@accountOtherStateTitle": {
+    "description": "{state} is an account status the app does not know, with underscores turned into spaces",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "accountOtherStateDetail": "Connecting is not allowed in this state.",
+  "amneziaErrorEmptyAnswerTitle": "The gateway sent nothing",
+  "amneziaErrorEmptyAnswerDetail": "It answered without a configuration. Try again; if it repeats, support for this subscription will need to look.",
+  "amneziaErrorCancelledTitle": "Took too long",
+  "amneziaErrorCancelledDetail": "The gateway did not answer in time. Check the connection and try again.",
+  "amneziaErrorNetworkTitle": "Couldn’t reach the gateway",
+  "amneziaErrorNetworkDetail": "The gateway did not answer. This is usually the network, not the subscription — try again in a moment.",
+  "amneziaErrorTimeoutTitle": "The gateway timed out",
+  "amneziaErrorTimeoutDetail": "No answer within the time allowed. Check the connection and try again.",
+  "amneziaErrorSslTitle": "The connection was not trusted",
+  "amneziaErrorSslDetail": "Something interfered with the secure connection to the gateway.",
+  "amneziaErrorConfigTitle": "This build cannot talk to the gateway",
+  "amneziaErrorConfigDetail": "It was built without the gateway credentials, so subscriptions of this kind are unavailable in it.",
+  "amneziaErrorDecryptTitle": "The answer could not be read",
+  "amneziaErrorDecryptDetail": "The reply was not what the gateway should have sent — often a network that intercepts traffic.",
+  "amneziaErrorInvalidArgumentTitle": "The gateway request was malformed",
+  "amneziaErrorInvalidArgumentDetail": "A defect in this app, not in the subscription. Restarting the app helps; if it repeats, the log in Settings → Logs is what support needs.",
+  "amneziaErrorRefusedTitle": "The gateway refused the request",
+  "amneziaErrorRefusedCodeDetail": "The gateway answered with code {code}.",
+  "@amneziaErrorRefusedCodeDetail": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "amneziaErrorRefusedHttpDetail": "The gateway answered with HTTP {status}.",
+  "@amneziaErrorRefusedHttpDetail": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "amneziaErrorTooManyRequestsTitle": "Too many requests",
+  "amneziaErrorTooManyRequestsDetail": "The gateway is throttling this subscription. Wait a few minutes before trying again.",
+  "amneziaErrorTrialUsedTitle": "Trial already used",
+  "amneziaErrorTrialUsedDetail": "This address has already activated a trial.",
+  "amneziaErrorDeviceLimitDetail": "This subscription is already installed on as many devices as it allows. Remove one from the subscription, then try again.",
+  "amneziaErrorNotFoundTitle": "Subscription not found",
+  "amneziaErrorNotFoundDetail": "The gateway does not recognise this key. Check that it was pasted whole.",
+  "amneziaErrorNewerClientTitle": "The gateway requires a newer client",
+  "amneziaErrorNewerClientDetail": "The gateway refused this app’s version. It will work again once the app is updated.",
+  "amneziaErrorCaptchaPass": "Pass it in the app this subscription came from, then refresh here.",
+  "amneziaErrorCaptchaExpiredTitle": "The CAPTCHA expired",
+  "amneziaErrorCaptchaRejectedTitle": "The CAPTCHA was rejected",
+  "amneziaErrorCaptchaAskedTitle": "The gateway asked for a CAPTCHA",
+  "amneziaErrorCaptchaAskedDetail": "This app cannot show one. {pass}",
+  "@amneziaErrorCaptchaAskedDetail": {
+    "description": "{pass} is amneziaErrorCaptchaPass",
+    "placeholders": {
+      "pass": {
+        "type": "String"
+      }
+    }
+  },
+  "amneziaErrorNotActiveTitle": "Subscription not active",
+  "amneziaErrorNotActiveDetail": "The gateway has no active subscription for this key.",
+  "amneziaErrorLostKeyTitle": "This subscription lost its key",
+  "amneziaErrorLostKeyDetail": "Remove the configuration and add it again.",
+  "amneziaErrorFreeTierUnsupported": "This subscription is free-tier, and its gateway asks for a CAPTCHA before it issues a configuration — which this app cannot show. Use the app it came from, or add a paid key here.",
+  "importNotAKeyTitle": "This isn’t a subscription key",
+  "importNotAKeyDetail": "Expected a vpn:// key from your subscription.",
+  "importKeyUnsupportedTitle": "{name} isn’t supported here",
+  "@importKeyUnsupportedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@configKindSubscriptionPlain": {
+    "description": "Name of an imported subscription whose key carries no name"
+  },
+  "importImportedName": "Imported ({count})",
+  "@importImportedName": {
+    "description": "Name of a configuration made from pasted text with {count} servers",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importFormatLinks": "a link list",
+  "importFormatClash": "a Clash / mihomo subscription",
+  "importFormatXray": "an Xray JSON subscription",
+  "importFormatSingbox": "a sing-box subscription",
+  "importFormatUnknown": "something unrecognised",
+  "importDetectedAmneziaKey": "{name} · subscription key",
+  "@importDetectedAmneziaKey": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "importDetectedServer": "{type} server · {label}",
+  "@importDetectedServer": {
+    "description": "{type} is the protocol in capitals, e.g. VLESS",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "importDetectedSubscriptionUrl": "Subscription URL · {host}",
+  "@importDetectedSubscriptionUrl": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "importDetectedSingleServer": "Server · {label}",
+  "@importDetectedSingleServer": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "importDetectedSubscriptionText": "Subscription · {count, plural, =1{1 server} other{{count} servers}}",
+  "@importDetectedSubscriptionText": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importUnusableNotAmneziaKey": "Not an Amnezia subscription key",
+  "importUnusableNotSupported": "{what} isn’t supported",
+  "@importUnusableNotSupported": {
+    "description": "{what} is a protocol or plugin name, e.g. 'ss+kcptun' or 'tuic://'",
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "importUnusableTransportNotSupported": "{scheme} over {transport} isn’t supported",
+  "@importUnusableTransportNotSupported": {
+    "description": "e.g. 'vless over kcp isn’t supported'",
+    "placeholders": {
+      "scheme": {
+        "type": "String"
+      },
+      "transport": {
+        "type": "String"
+      }
+    }
+  },
+  "importUnusableLinkUnreadable": "{scheme}:// link can’t be read",
+  "@importUnusableLinkUnreadable": {
+    "placeholders": {
+      "scheme": {
+        "type": "String"
+      }
+    }
+  },
+  "importUnusableNotALink": "Not a link or subscription",
+  "catalogGroupStreaming": "STREAMING",
+  "@catalogGroupStreaming": {
+    "description": "Section header in the service catalog"
+  },
+  "catalogGroupMessengers": "MESSENGERS",
+  "@catalogGroupMessengers": {
+    "description": "Section header in the service catalog"
+  },
+  "catalogGroupSocial": "SOCIAL",
+  "@catalogGroupSocial": {
+    "description": "Section header in the service catalog"
+  },
+  "catalogGroupOther": "OTHER",
+  "@catalogGroupOther": {
+    "description": "Section header in the service catalog"
+  },
+  "proxyGroupUrlTest": "Lowest latency of {count}",
+  "@proxyGroupUrlTest": {
+    "description": "What a proxy group of {count} servers does",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "proxyGroupFallback": "First of {count} that answers · in their order",
+  "@proxyGroupFallback": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "proxyGroupLoadBalance": "Spread across {count}",
+  "@proxyGroupLoadBalance": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "proxyGroupRelay": "Chain of {count}",
+  "@proxyGroupRelay": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}

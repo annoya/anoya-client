@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme.dart';
 import 'core/ui.dart';
+import 'l10n/l10n.dart';
 import 'features/start_screen.dart';
 import 'features/home_screen.dart';
 import 'state/menu_bar_controller.dart';
@@ -48,8 +49,15 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       }
     });
 
+    // The context-free accessor follows the preference, so a sentence produced
+    // below the widget tree — an error, the menu bar — speaks the same language
+    // as the screen that shows it.
+    L10n.current = lookupAppLocalizations(prefs.language.locale);
+
     return MaterialApp(
-      title: 'VPN',
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigator,
       // Above the navigator, so it covers dialogs and sheets too — every text

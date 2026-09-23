@@ -1,3 +1,4 @@
+import '../l10n/l10n.dart';
 import 'json_file_store.dart';
 
 /// One system on-demand rule (mirrors NEOnDemandRule). Conditions are ANDed;
@@ -34,13 +35,18 @@ class OnDemandRule {
 
   /// Condition summary for list rows: "Wi-Fi · SSID corp-net · DNS 10.0.*".
   String get summary {
+    final l10n = L10n.current;
     final parts = <String>[interface.label];
     if (effectiveSsids.isNotEmpty) {
-      parts.add('SSID ${effectiveSsids.join(', ')}');
+      parts.add(l10n.onDemandSummarySsid(effectiveSsids.join(', ')));
     }
-    if (dnsDomains.isNotEmpty) parts.add('domain ${dnsDomains.join(', ')}');
-    if (dnsServers.isNotEmpty) parts.add('DNS ${dnsServers.join(', ')}');
-    if (probeUrl.isNotEmpty) parts.add('probe');
+    if (dnsDomains.isNotEmpty) {
+      parts.add(l10n.onDemandSummaryDomain(dnsDomains.join(', ')));
+    }
+    if (dnsServers.isNotEmpty) {
+      parts.add(l10n.onDemandSummaryDns(dnsServers.join(', ')));
+    }
+    if (probeUrl.isNotEmpty) parts.add(l10n.onDemandSummaryProbe);
     return parts.join(' · ');
   }
 
@@ -110,25 +116,32 @@ class OnDemandRule {
 }
 
 enum OnDemandAction {
-  connect('Connect'),
-  disconnect('Disconnect'),
-  ignore('Ignore');
+  connect,
+  disconnect,
+  ignore;
 
-  const OnDemandAction(this.label);
-  final String label;
+  String get label => switch (this) {
+    connect => L10n.current.commonConnect,
+    disconnect => L10n.current.commonDisconnect,
+    ignore => L10n.current.onDemandActionIgnore,
+  };
 }
 
 enum OnDemandInterface {
-  any('Any network'),
-  wifi('Wi-Fi'),
+  any,
+  wifi,
   // iOS matches cellular; macOS has no cellular and matches ethernet instead.
   // The UI shows whichever fits the platform; both serialize distinctly so a
   // synced config stays unambiguous.
-  cellular('Mobile'),
-  ethernet('Ethernet');
+  cellular,
+  ethernet;
 
-  const OnDemandInterface(this.label);
-  final String label;
+  String get label => switch (this) {
+    any => L10n.current.onDemandInterfaceAny,
+    wifi => L10n.current.onDemandInterfaceWifi,
+    cellular => L10n.current.onDemandInterfaceCellular,
+    ethernet => L10n.current.onDemandInterfaceEthernet,
+  };
 }
 
 /// On-demand preferences: the user's intent (enabled), the transient pause
@@ -161,10 +174,11 @@ class OnDemandPrefs {
 
   /// Settings row subtitle: Off / Paused / On · N rules.
   String get statusLabel {
-    if (!enabled) return 'Off';
-    if (paused) return 'Paused';
-    if (awaitingFirstConnect) return 'On · after first connect';
-    return 'On · ${rules.length} rule${rules.length > 1 ? 's' : ''}';
+    final l10n = L10n.current;
+    if (!enabled) return l10n.commonOff;
+    if (paused) return l10n.onDemandStatusPaused;
+    if (awaitingFirstConnect) return l10n.onDemandStatusAwaitingFirstConnect;
+    return l10n.onDemandStatusOnRules(rules.length);
   }
 
   OnDemandPrefs copyWith({

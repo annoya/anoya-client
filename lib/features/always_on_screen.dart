@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../core/log.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 
 /// Android's counterpart of on-demand — described, not controlled.
 ///
@@ -28,43 +29,36 @@ class AlwaysOnScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Always-on VPN')),
+      appBar: AppBar(title: Text(l10n.alwaysOnTitle)),
       body: PageBody(
         child: ListView(
           children: [
             Card(
               margin: kCardMargin,
               child: Column(
-                children: const [
+                children: [
                   ListTile(
-                    leading: Icon(Icons.bolt_outlined),
-                    title: Text('Started by the system'),
-                    subtitle: Text(
-                      'At boot, and again whenever the tunnel drops',
-                    ),
+                    leading: const Icon(Icons.bolt_outlined),
+                    title: Text(l10n.alwaysOnStartedBySystem),
+                    subtitle: Text(l10n.alwaysOnStartedBySystemSubtitle),
                   ),
-                  Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
-                    leading: Icon(Icons.lock_outline),
-                    title: Text('Block connections without VPN'),
-                    subtitle: Text(
-                      'The system’s kill switch, on the same screen',
-                    ),
+                    leading: const Icon(Icons.lock_outline),
+                    title: Text(l10n.alwaysOnBlockWithoutVpn),
+                    subtitle: Text(l10n.alwaysOnBlockWithoutVpnSubtitle),
                   ),
                 ],
               ),
             ),
-            const SectionNote(
-              'Android owns this switch, so it lives in system settings: '
-              'Network & internet → VPN → the gear next to this app. '
-              'The system starts whatever configuration was used last.',
-            ),
+            SectionNote(l10n.alwaysOnNote),
             Padding(
               padding: const EdgeInsets.fromLTRB(kGutter, 16, kGutter, 0),
               child: FilledButton.tonalIcon(
                 icon: const Icon(Icons.settings_outlined, size: 18),
-                label: const Text('Open system VPN settings'),
+                label: Text(l10n.alwaysOnOpenSystemSettings),
                 onPressed: _openSettings,
               ),
             ),

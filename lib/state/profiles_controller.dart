@@ -16,6 +16,7 @@ import '../core/profile_import.dart';
 import '../core/profile_store.dart';
 import '../core/rule_list_store.dart';
 import '../core/vpn_core.dart';
+import '../l10n/l10n.dart';
 import 'favorites_controller.dart';
 import 'on_demand_controller.dart';
 import 'profiles_state.dart';
@@ -303,9 +304,10 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       state = state.copyWith(
         switching: false,
         notice: AppError(
-          'Couldn’t get the server for ${_selectionLabel(selection)}',
+          L10n.current.profilesCouldntGetServer(_selectionLabel(selection)),
           detail:
-              describeError(e).detail ?? 'The previous one is still in use.',
+              describeError(e).detail ??
+              L10n.current.profilesPreviousServerStillInUse,
         ),
       );
       return;
@@ -325,10 +327,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       Log.e('hot switch failed', '$e');
       state = state.copyWith(
         switching: false,
-        error: const AppError(
-          'Couldn’t switch',
-          detail:
-              'The tunnel kept the previous configuration. Try again, or reconnect.',
+        error: AppError(
+          L10n.current.profilesCouldntSwitch,
+          detail: L10n.current.profilesCouldntSwitchDetail,
         ),
       );
     }
@@ -503,9 +504,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       var p = state.active;
       if (p == null) {
         state = state.copyWith(
-          error: const AppError(
-            'No configuration',
-            detail: 'Add a link, a subscription, or sign in to your server.',
+          error: AppError(
+            L10n.current.statusNoConfiguration,
+            detail: L10n.current.profilesNoConfigurationDetail,
           ),
         );
         return;
@@ -522,9 +523,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       final selection = state.selectionId;
       if (selection == null) {
         state = state.copyWith(
-          error: const AppError(
-            'This configuration has no servers',
-            detail: 'Refresh it, or add another configuration.',
+          error: AppError(
+            L10n.current.profilesNoServers,
+            detail: L10n.current.profilesNoServersDetail,
           ),
         );
         return;
@@ -589,7 +590,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       if (!ref.mounted || reason.isEmpty) return;
       Log.e('tunnel stopped on its own', reason);
       state = state.copyWith(
-        error: AppError('The tunnel stopped', detail: reason),
+        error: AppError(L10n.current.profilesTunnelStopped, detail: reason),
       );
     });
     ref.onDispose(() => _statusSub?.cancel());
