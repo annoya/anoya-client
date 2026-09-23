@@ -49,11 +49,14 @@ scripts:
   preremove: linux/packaging/scripts/preremove.sh
   postremove: linux/packaging/scripts/postremove.sh
 
-# The GTK the runner links, under each distribution's name for it.
+# The GTK the runner links and the libsecret the secure-storage plugin
+# links, under each distribution's names for them. libsecret talks to a
+# Secret Service (GNOME Keyring, KWallet); which one is the desktop's choice,
+# so none is depended on.
 overrides:
   deb:
-    depends: [libgtk-3-0, systemd]
+    depends: [libgtk-3-0, libsecret-1-0, systemd]
   rpm:
-    depends: [gtk3, systemd]
+    depends: [gtk3, libsecret, systemd]
   archlinux:
-    depends: [gtk3, systemd]
+    depends: [gtk3, libsecret, systemd]
