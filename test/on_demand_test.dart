@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/on_demand.dart';
+import 'package:anoya/core/on_demand.dart';
 
 void main() {
   test('rule json round-trip keeps every field', () {

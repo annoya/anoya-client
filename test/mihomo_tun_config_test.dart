@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
-import 'package:vpn_client/core/mihomo_tun_config.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/parsers/share_link.dart';
-import 'package:vpn_client/core/parsers/subscription.dart';
+import 'package:anoya/core/mihomo_tun_config.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/parsers/share_link.dart';
+import 'package:anoya/core/parsers/subscription.dart';
 
 void main() {
   test('a self-hosted AmneziaWG location renders as a wireguard outbound', () {
@@ -619,10 +619,10 @@ proxies:
 
     test('is named, addressed and routed by the engine', () {
       final tun =
-          (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest'))
+          (loadYaml(mihomoTunConfigYaml(loc(), device: 'Anoya'))
                   as YamlMap)['tun']
               as YamlMap;
-      expect(tun['device'], 'AnnoyaTest');
+      expect(tun['device'], 'Anoya');
       expect(tun['auto-route'], isTrue);
       expect(tun['auto-detect-interface'], isTrue);
       expect(tun['inet4-address'], [kTunInet4Address]);
@@ -633,7 +633,7 @@ proxies:
 
     test('closes the DNS side door Windows opens on every other adapter', () {
       final tun =
-          (loadYaml(mihomoTunConfigYaml(loc(), device: 'AnnoyaTest'))
+          (loadYaml(mihomoTunConfigYaml(loc(), device: 'Anoya'))
                   as YamlMap)['tun']
               as YamlMap;
       expect(tun['strict-route'], isTrue);

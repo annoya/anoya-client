@@ -7,14 +7,14 @@
 ; downloads the geo databases into it while the service reads them.
 ;
 ; Build: scripts/build-tunnel-service.sh, then `flutter build windows`, then
-; ISCC.exe windows\installer\AnnoyaTest.iss. Version comes from pubspec via
+; ISCC.exe windows\installer\Anoya.iss. Version comes from pubspec via
 ; /DAppVersion=<x.y.z> on the ISCC command line.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
-#define AppName "AnnoyaTest"
-#define ServiceName "AnnoyaTunnel"
+#define AppName "Anoya"
+#define ServiceName "AnoyaTunnel"
 #define Release "..\..\build\windows\x64\runner\Release"
 #define Service "..\..\build\windows\service"
 
@@ -22,7 +22,7 @@
 AppId={{BE54423E-D634-4FEE-A089-40B1E3C6AA64}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisher=org.annoya
+AppPublisher=org.anoya
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 OutputBaseFilename={#AppName}-{#AppVersion}-setup

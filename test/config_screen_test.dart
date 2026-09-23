@@ -6,20 +6,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/amnezia/amnezia_account.dart';
-import 'package:vpn_client/core/device_identity.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/on_demand.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/rule_list_store.dart';
-import 'package:vpn_client/core/subscription_info.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/core/ui.dart';
-import 'package:vpn_client/state/provider_rule_lists.dart';
-import 'package:vpn_client/features/config/config_screen.dart';
-import 'package:vpn_client/l10n/l10n.dart';
-import 'package:vpn_client/state/on_demand_controller.dart';
-import 'package:vpn_client/state/profiles_controller.dart';
+import 'package:anoya/core/amnezia/amnezia_account.dart';
+import 'package:anoya/core/device_identity.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/on_demand.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/rule_list_store.dart';
+import 'package:anoya/core/subscription_info.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/core/ui.dart';
+import 'package:anoya/state/provider_rule_lists.dart';
+import 'package:anoya/features/config/config_screen.dart';
+import 'package:anoya/l10n/l10n.dart';
+import 'package:anoya/state/on_demand_controller.dart';
+import 'package:anoya/state/profiles_controller.dart';
 
 void main() {
   Profile profile(

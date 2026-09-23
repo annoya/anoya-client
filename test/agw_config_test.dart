@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/amnezia/agw_ffi.dart';
+import 'package:anoya/core/amnezia/agw_ffi.dart';
 
 void main() {
   test(

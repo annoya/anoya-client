@@ -5,11 +5,11 @@ import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/app_prefs.dart';
-import 'package:vpn_client/core/log.dart';
-import 'package:vpn_client/core/log_archive.dart';
-import 'package:vpn_client/core/mihomo_tun_config.dart';
-import 'package:vpn_client/core/norm_config.dart';
+import 'package:anoya/core/app_prefs.dart';
+import 'package:anoya/core/log.dart';
+import 'package:anoya/core/log_archive.dart';
+import 'package:anoya/core/mihomo_tun_config.dart';
+import 'package:anoya/core/norm_config.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

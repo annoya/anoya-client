@@ -177,4 +177,4 @@ gVisor costs some throughput in theory and is the only stack that works here.
 - `lib/core/mihomo_tun_config.dart` — config rendering, unit-tested.
 - `native/mihomocore/service/` — the Windows and Linux service;
   `cmd/tunnel-service/` its SCM and systemd hosts;
-  `windows/installer/AnnoyaTest.iss` — the engine directory's ACL.
+  `windows/installer/Anoya.iss` — the engine directory's ACL.

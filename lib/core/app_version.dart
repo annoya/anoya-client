@@ -4,7 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'log.dart';
 
-const kAppName = 'AnnoyaTest';
+const kAppName = 'Anoya';
 
 String _version = '';
 String _build = '';

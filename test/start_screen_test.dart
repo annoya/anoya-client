@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/features/start_screen.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/features/start_screen.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   Future<void> pump(WidgetTester tester) async {

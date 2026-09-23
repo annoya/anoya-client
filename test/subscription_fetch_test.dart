@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:vpn_client/core/app_error.dart';
-import 'package:vpn_client/core/device_identity.dart';
-import 'package:vpn_client/core/subscription_fetch.dart';
+import 'package:anoya/core/app_error.dart';
+import 'package:anoya/core/device_identity.dart';
+import 'package:anoya/core/subscription_fetch.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

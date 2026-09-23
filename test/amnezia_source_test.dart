@@ -4,16 +4,16 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/amnezia/agw_ffi.dart';
-import 'package:vpn_client/core/amnezia/amnezia_account.dart';
-import 'package:vpn_client/core/amnezia/amnezia_errors.dart';
-import 'package:vpn_client/core/amnezia/amnezia_source.dart';
-import 'package:vpn_client/core/amnezia/vpn_key.dart';
-import 'package:vpn_client/core/amnezia/gateway.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/profile_store.dart';
-import 'package:vpn_client/features/config/config_parts.dart';
+import 'package:anoya/core/amnezia/agw_ffi.dart';
+import 'package:anoya/core/amnezia/amnezia_account.dart';
+import 'package:anoya/core/amnezia/amnezia_errors.dart';
+import 'package:anoya/core/amnezia/amnezia_source.dart';
+import 'package:anoya/core/amnezia/vpn_key.dart';
+import 'package:anoya/core/amnezia/gateway.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/profile_store.dart';
+import 'package:anoya/features/config/config_parts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/on_demand.dart';
-import 'package:vpn_client/core/vpn_core.dart';
-import 'package:vpn_client/state/on_demand_controller.dart';
-import 'package:vpn_client/state/profiles_controller.dart';
-import 'package:vpn_client/state/providers.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/on_demand.dart';
+import 'package:anoya/core/vpn_core.dart';
+import 'package:anoya/state/on_demand_controller.dart';
+import 'package:anoya/state/profiles_controller.dart';
+import 'package:anoya/state/providers.dart';
 
 void main() {
   ProviderContainer boot(_FakeCore core) {

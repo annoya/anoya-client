@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "org.annoya" "\0"
-            VALUE "FileDescription", "AnnoyaTest" "\0"
+            VALUE "CompanyName", "org.anoya" "\0"
+            VALUE "FileDescription", "Anoya" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "AnnoyaTest" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 org.annoya. All rights reserved." "\0"
-            VALUE "OriginalFilename", "AnnoyaTest.exe" "\0"
-            VALUE "ProductName", "AnnoyaTest" "\0"
+            VALUE "InternalName", "Anoya" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 org.anoya. All rights reserved." "\0"
+            VALUE "OriginalFilename", "Anoya.exe" "\0"
+            VALUE "ProductName", "Anoya" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -1,13 +1,13 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
-project(vpn_client LANGUAGES CXX)
+project(anoya LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 # The product's name: the executable, the window title and the version block in
-# Runner.rc all say AnnoyaTest, the same as PRODUCT_NAME on Apple and kAppName
+# Runner.rc all say Anoya, the same as PRODUCT_NAME on Apple and kAppName
 # in Dart — the User-Agent panels match rules against.
-set(BINARY_NAME "AnnoyaTest")
+set(BINARY_NAME "Anoya")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

@@ -3,14 +3,14 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/on_demand.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/features/config/config_screen.dart';
-import 'package:vpn_client/l10n/l10n.dart';
-import 'package:vpn_client/state/on_demand_controller.dart';
-import 'package:vpn_client/state/profiles_controller.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/on_demand.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/features/config/config_screen.dart';
+import 'package:anoya/l10n/l10n.dart';
+import 'package:anoya/state/on_demand_controller.dart';
+import 'package:anoya/state/profiles_controller.dart';
 
 void main() {
   Profile profile(String id, String name) => Profile(

@@ -3,13 +3,13 @@ import 'dart:io' show Platform;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/menu_bar.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/vpn_core.dart';
-import 'package:vpn_client/state/menu_bar_controller.dart';
-import 'package:vpn_client/state/profiles_controller.dart';
-import 'package:vpn_client/state/session.dart';
+import 'package:anoya/core/menu_bar.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/vpn_core.dart';
+import 'package:anoya/state/menu_bar_controller.dart';
+import 'package:anoya/state/profiles_controller.dart';
+import 'package:anoya/state/session.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

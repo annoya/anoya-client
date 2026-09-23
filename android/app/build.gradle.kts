@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "org.annoya.vpn_client"
+    namespace = "org.anoya.vpn"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "org.annoya.vpn_client"
+        applicationId = "org.anoya.vpn"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

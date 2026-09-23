@@ -13,7 +13,7 @@ Dart lives in `lib/` and `test/`, the platform projects in `macos/`, `ios/`,
 `android/`, `windows/` and `linux/`, the Go engine wrapper in `native/`.
 
 The server side lives in its own repository,
-[annoya-web-panel](https://github.com/annoya/annoya-web-panel): `management`
+[anoya-web-panel](https://github.com/anoya/anoya-web-panel): `management`
 (Go service + embedded React admin panel — source of truth for users, user
 lists, workers and routing profiles, and what hands out client configs),
 `worker` (Go agent on each VPN server, running Xray or amneziawg-go) and
@@ -245,7 +245,7 @@ profile, the selected location and the connect path.
 ### Server side
 
 Documented in the
-[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository. The
+[anoya-web-panel](https://github.com/anoya/anoya-web-panel) repository. The
 two facts that matter from here: it is pull only — the worker fetches its user
 set, management never pushes — and protocol specifics live behind
 `protocol.Driver` there, not in this app.
@@ -259,7 +259,7 @@ set, management never pushes — and protocol specifics live behind
 - `docs/SPEC-CLIENT.md` — what the client is: the three domains it serves, the
   tunnel, routing, screens, and the contract it expects from a server. The
   other side of that contract is `docs/SPEC-SERVICE.md` in the
-  [annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository.
+  [anoya-web-panel](https://github.com/anoya/anoya-web-panel) repository.
 - `design/ui-spec.html` — every screen drawn 1:1 in Flutter logical
   points, with `check.js` as its validator. The source of truth for UI geometry.
 - `README.md`, `macos/Tunnel/SETUP.md`,

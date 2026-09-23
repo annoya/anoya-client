@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/features/rule_dialog.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/features/rule_dialog.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   testWidgets('a space never reaches the value, typed or pasted', (

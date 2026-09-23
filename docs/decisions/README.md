@@ -6,7 +6,7 @@ tried and dropped.
 
 Records are numbered in one sequence shared with the server side. The
 service-only records (007, 011, 013) live in the
-[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository; the
+[anoya-web-panel](https://github.com/anoya/anoya-web-panel) repository; the
 ones marked `both` are decisions about the boundary between the two products,
 so they are
 kept in both repositories and must be edited in both. The **Product** column is

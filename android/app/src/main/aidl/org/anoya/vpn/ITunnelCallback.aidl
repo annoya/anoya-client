@@ -1,4 +1,4 @@
-package org.annoya.vpn_client;
+package org.anoya.vpn;
 
 /** Status pushed from the tunnel process to the app. */
 oneway interface ITunnelCallback {

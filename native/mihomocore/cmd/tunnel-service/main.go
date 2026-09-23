@@ -12,8 +12,8 @@ import (
 
 // Shared with the installer and the Dart side; change them together.
 const (
-	serviceName = "AnnoyaTunnel"
-	pipeName    = `\\.\pipe\AnnoyaTest.tunnel`
+	serviceName = "AnoyaTunnel"
+	pipeName    = `\\.\pipe\Anoya.tunnel`
 )
 
 // SYSTEM, admins and the interactive user only: whoever reaches the pipe can

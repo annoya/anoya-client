@@ -4,11 +4,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/api/api_client.dart';
-import 'package:vpn_client/core/app_error.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/core/ui.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/api/api_client.dart';
+import 'package:anoya/core/app_error.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/core/ui.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   group('describeError', () {
@@ -63,7 +63,7 @@ void main() {
         PlatformException(code: 'service_unavailable'),
       );
       expect(absent.title, 'The tunnel service isn’t running');
-      expect(absent.detail, contains('AnnoyaTunnel'));
+      expect(absent.detail, contains('AnoyaTunnel'));
       expect(absent.detail, isNot(contains('profile')));
       final gone = describeError(
         PlatformException(code: 'service_disconnected'),

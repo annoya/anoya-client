@@ -1,4 +1,4 @@
-package org.annoya.vpn_client
+package org.anoya.vpn
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -18,8 +18,8 @@ import mobile.SocketProtector
 class MihomoVpnService : VpnService() {
 
     companion object {
-        const val ACTION_START = "org.annoya.vpn_client.START"
-        const val ACTION_STOP = "org.annoya.vpn_client.STOP"
+        const val ACTION_START = "org.anoya.vpn.START"
+        const val ACTION_STOP = "org.anoya.vpn.STOP"
 
         const val kTunnelOutbound = "PROXY"
     }

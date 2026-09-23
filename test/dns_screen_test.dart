@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
-import 'package:vpn_client/core/dns_plan.dart';
-import 'package:vpn_client/core/mihomo_tun_config.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/features/dns_screen.dart';
-import 'package:vpn_client/state/profiles_controller.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/core/dns_plan.dart';
+import 'package:anoya/core/mihomo_tun_config.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/features/dns_screen.dart';
+import 'package:anoya/state/profiles_controller.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   Location server({bool udp = true}) => Location(

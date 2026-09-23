@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Anoya
+Comment=VPN client
+Exec=/opt/anoya/anoya
+Icon=anoya
+Terminal=false
+Categories=Network;
+StartupWMClass=org.anoya

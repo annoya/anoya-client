@@ -274,7 +274,7 @@ A user-facing override on top remains open — it would slot into the same
 - Bundle schema: `shared/normconfig/normconfig.go` (`Bundle.DNS`)
 - OS-level decoy: `applyNetworkSettings` in
   `shared/apple/PacketTunnelProvider.swift`; `addDnsServer` in
-  `android/app/src/main/kotlin/org/annoya/vpn_client/MihomoVpnService.kt`,
+  `android/app/src/main/kotlin/org/anoya/vpn/MihomoVpnService.kt`,
   with `kAndroidDnsDecoy` and the sniffer in `lib/core/mihomo_tun_config.dart`
 - Tests: `test/dns_screen_test.dart`,
   `test/dns_sources_test.dart`,

@@ -5,10 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:vpn_client/core/device_identity.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/subscription_fetch.dart';
-import 'package:vpn_client/core/subscription_info.dart';
+import 'package:anoya/core/device_identity.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/subscription_fetch.dart';
+import 'package:anoya/core/subscription_info.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

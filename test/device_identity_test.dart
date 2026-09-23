@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/device_identity.dart';
+import 'package:anoya/core/device_identity.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

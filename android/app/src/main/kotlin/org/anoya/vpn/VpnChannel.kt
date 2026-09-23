@@ -1,4 +1,4 @@
-package org.annoya.vpn_client
+package org.anoya.vpn
 
 import android.Manifest
 import android.app.Activity

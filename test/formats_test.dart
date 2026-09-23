@@ -2,11 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:vpn_client/core/config_source.dart';
-import 'package:vpn_client/core/log.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/parsers/share_link.dart';
-import 'package:vpn_client/core/parsers/subscription.dart';
+import 'package:anoya/core/config_source.dart';
+import 'package:anoya/core/log.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/parsers/share_link.dart';
+import 'package:anoya/core/parsers/subscription.dart';
 
 void main() {
   group('xray json', () {

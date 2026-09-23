@@ -2085,11 +2085,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errorTunnelServiceNotRunningDetail =>
-      'AnnoyaTest устанавливает её как службу Windows «AnnoyaTunnel». Переустановите приложение или запустите службу в «Службах», затем подключитесь снова.';
+      'Anoya устанавливает её как службу Windows «AnoyaTunnel». Переустановите приложение или запустите службу в «Службах», затем подключитесь снова.';
 
   @override
   String get errorTunnelServiceNotRunningDetailLinux =>
-      'AnnoyaTest устанавливает её как службу systemd «annoyatest-tunnel». Переустановите пакет или выполните «sudo systemctl start annoyatest-tunnel», затем подключитесь снова.';
+      'Anoya устанавливает её как службу systemd «anoya-tunnel». Переустановите пакет или выполните «sudo systemctl start anoya-tunnel», затем подключитесь снова.';
 
   @override
   String get errorTunnelServiceStoppedTitle => 'Служба туннеля остановилась';
