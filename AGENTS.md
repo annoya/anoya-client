@@ -10,7 +10,7 @@ is the repository root: a Flutter app for macOS, iOS and Android that drives a
 system VPN through the `VpnCore` boundary. The engine is mihomo and only
 mihomo, compiled into a Network Extension (Apple) or a VpnService (Android).
 Dart lives in `lib/` and `test/`, the platform projects in `macos/`, `ios/`,
-`android/` and `windows/`, the Go engine wrapper in `native/`.
+`android/`, `windows/` and `linux/`, the Go engine wrapper in `native/`.
 
 The server side lives in its own repository,
 [annoya-web-panel](https://github.com/annoya/annoya-web-panel): `management`

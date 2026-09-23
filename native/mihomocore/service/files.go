@@ -41,9 +41,12 @@ func (f Files) autoConnectFlag() string { return filepath.Join(f.Dir, "auto_conn
 func (f Files) Ensure() error { return os.MkdirAll(f.Dir, 0o755) }
 
 // SaveConfig persists the config a start nobody is watching will run from —
-// the boot-time equivalent of Android's always-on.
+// the boot-time equivalent of Android's always-on. Owner-only: it carries the
+// servers' credentials, and on Linux the directory around it is writable by
+// every local user so the app can put the geo databases there. (Windows
+// ignores the mode; its ACL comes from the installer.)
 func (f Files) SaveConfig(yaml string) error {
-	return writeFileAtomic(f.Config(), []byte(yaml))
+	return writeFileAtomic(f.Config(), []byte(yaml), 0o600)
 }
 
 func (f Files) LoadConfig() (string, error) {
@@ -184,9 +187,9 @@ func (f Files) ClearLogs() {
 
 // writeFileAtomic lands the whole file or none of it: a start that raced a
 // half-written config would run half a config.
-func writeFileAtomic(path string, data []byte) error {
+func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
 	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	if err := os.WriteFile(tmp, data, perm); err != nil {
 		return err
 	}
 	return os.Rename(tmp, path)

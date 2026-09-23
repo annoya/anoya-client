@@ -75,7 +75,7 @@
     "description": "Singular noun inserted into the picker's empty-search message: 'No configuration matches ...'"
   },
   "settingsAutoConnect": "Auto-connect",
-  "settingsAutoConnectSubtitle": "Connect when Windows starts",
+  "settingsAutoConnectSubtitle": "Connect when the computer starts",
   "onDemandTitle": "On demand",
   "settingsDisconnectOnSleep": "Disconnect on sleep",
   "settingsDisconnectOnSleepSubtitle": "Drop the tunnel when the device sleeps",
@@ -1594,6 +1594,10 @@
   "errorNotALinkDetail": "Expected vless://, vmess://, trojan://, ss:// or a subscription URL.",
   "errorTunnelServiceNotRunningTitle": "The tunnel service isn’t running",
   "errorTunnelServiceNotRunningDetail": "AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.",
+  "errorTunnelServiceNotRunningDetailLinux": "AnnoyaTest installs it as the “annoyatest-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start annoyatest-tunnel”, then connect again.",
+  "@errorTunnelServiceNotRunningDetailLinux": {
+    "description": "The Linux counterpart of errorTunnelServiceNotRunningDetail; the service is a systemd unit."
+  },
   "errorTunnelServiceStoppedTitle": "The tunnel service stopped",
   "errorTunnelServiceStoppedDetail": "It restarts on its own within a few seconds — connect again. If this keeps happening, the tunnel log in Settings → Logs says why.",
   "errorSystemRefusedTunnelTitle": "The system refused to start the tunnel",

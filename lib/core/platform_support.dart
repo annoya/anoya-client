@@ -30,21 +30,24 @@ bool get supportsOnDemand => switch (defaultTargetPlatform) {
 
 /// Whether the tunnel comes up with the machine because *we* bring it up.
 ///
-/// Windows has no rules the system would evaluate for us and no switch to
-/// point the user at — but our own service starts with the machine, so the
-/// facility exists and the decision is the user's to make. One switch, not a
-/// screen: the condition is "when Windows starts" and there is nothing else to
-/// edit about it.
-bool get supportsBootAutoConnect =>
-    defaultTargetPlatform == TargetPlatform.windows;
+/// Windows and Linux have no rules the system would evaluate for us and no
+/// switch to point the user at — but our own service starts with the machine,
+/// so the facility exists and the decision is the user's to make. One switch,
+/// not a screen: the condition is "when the computer starts" and there is
+/// nothing else to edit about it.
+bool get supportsBootAutoConnect => switch (defaultTargetPlatform) {
+  TargetPlatform.windows || TargetPlatform.linux => true,
+  _ => false,
+};
 
 /// Whether the platform has any auto-connect facility to speak of — ours
-/// (on-demand rules, or the service that starts with Windows) or the system's
-/// (Android's Always-on switch).
+/// (on-demand rules, or the service that starts with the machine) or the
+/// system's (Android's Always-on switch).
 bool get hasAutoConnect => switch (defaultTargetPlatform) {
   TargetPlatform.macOS ||
   TargetPlatform.iOS ||
   TargetPlatform.android ||
-  TargetPlatform.windows => true,
+  TargetPlatform.windows ||
+  TargetPlatform.linux => true,
   _ => false,
 };

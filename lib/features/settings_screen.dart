@@ -250,9 +250,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Card(
                 margin: kCardMargin,
                 child: supportsBootAutoConnect
-                    // Windows: our own service starts with the machine, so the
-                    // facility is ours to offer — and one condition ("when
-                    // Windows starts") is a switch, not a screen.
+                    // Windows and Linux: our own service starts with the
+                    // machine, so the facility is ours to offer — and one
+                    // condition ("when the computer starts") is a switch, not
+                    // a screen.
                     ? SwitchListTile(
                         secondary: const Icon(Icons.bolt_outlined),
                         title: Text(l10n.settingsAutoConnect),
