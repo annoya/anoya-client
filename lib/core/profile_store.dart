@@ -4,12 +4,6 @@ import 'amnezia/wg_keys.dart';
 import 'json_file_store.dart';
 import 'profile.dart';
 
-/// Persists the list of [Profile]s and their secrets.
-///
-/// Profile metadata + cached locations go to `profiles.json` in the app-support
-/// container (sandboxed, fine for share links / subscription URLs which are
-/// bearer-style but not passwords). The self-hosted session **JWT** is a real
-/// credential and lives in the Keychain, keyed by profile id.
 class ProfileStore {
   static const _secure = FlutterSecureStorage();
 
@@ -23,8 +17,6 @@ class ProfileStore {
   static Future<void> save(List<Profile> profiles) =>
       _store.save(profiles.map((p) => p.toJson()).toList());
 
-  // --- self-hosted session token (Keychain) ---
-
   static Future<String?> token(String profileId) =>
       _secure.read(key: 'token_$profileId');
 
@@ -34,12 +26,6 @@ class ProfileStore {
   static Future<void> deleteToken(String profileId) =>
       _secure.delete(key: 'token_$profileId');
 
-  // --- Amnezia subscription key + install identity (Keychain) ---
-
-  /// The subscription's bearer credential. In the keychain rather than in
-  /// `profiles.json` because that is what it is: anyone holding it can use the
-  /// subscription, and it is the one field of an Amnezia configuration that
-  /// must never be exported or logged.
   static Future<String?> amneziaKey(String profileId) =>
       _secure.read(key: 'amnezia_key_$profileId');
 
@@ -49,9 +35,6 @@ class ProfileStore {
   static Future<void> deleteAmneziaKey(String profileId) =>
       _secure.delete(key: 'amnezia_key_$profileId');
 
-  /// Identifies this installation to the gateway, which counts devices by it.
-  /// Created once and kept: a new one on every launch would spend a device
-  /// slot each time the app started.
   static Future<String> amneziaInstallId() async {
     const key = 'amnezia_install_uuid';
     final existing = await _secure.read(key: key);
@@ -61,18 +44,10 @@ class ProfileStore {
     return fresh;
   }
 
-  // --- which configuration and server were in use ---
-
-  /// Kept beside the profiles rather than inside them: `profiles.json` is a
-  /// bare JSON array, and turning it into an object to hold two more fields
-  /// would make every existing file unreadable — the profiles would be gone,
-  /// not just the selection.
+  // Separate file: profiles.json is a bare JSON array, and changing its shape
+  // would make every existing file unreadable.
   static final _selection = JsonFileStore('selection.json');
 
-  /// The last active configuration and what it was connecting through, or two
-  /// nulls. Nothing is validated here: ids outlive the things they name — a
-  /// server can vanish on the next refresh — so the caller checks them against
-  /// what it actually loaded.
   static Future<({String? profileId, String? selectionId})> loadSelection() =>
       _selection.load(
         (j) => j is Map

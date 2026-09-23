@@ -24,8 +24,6 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       (call) async => tmp.path,
     );
-    // No tunnel in tests: the extension channel is simply not there, which is
-    // exactly what the app sees while the VPN is down.
     messenger.setMockMethodCallHandler(
       const MethodChannel('vpn/control'),
       (call) async => throw PlatformException(code: 'tunnel not running'),
@@ -62,8 +60,6 @@ void main() {
     });
 
     test('off silences the buffer, never the console', () {
-      // debugPrint is where the console output goes in a debug build; the
-      // switch is about the files the user sees, not about developing the app.
       final printed = <String>[];
       final original = debugPrint;
       debugPrint = (String? message, {int? wrapWidth}) =>
@@ -82,9 +78,6 @@ void main() {
         label: 'DE',
         proxy: {'type': 'vless', 'server': '1.2.3.4', 'port': 443, 'uuid': 'u'},
       );
-      // debug, not info: collecting logs is for finding out why something
-      // failed, and the engine reports a handshake that never completed only
-      // on its verbose channel.
       expect(mihomoTunConfigYaml(location), contains('log-level: debug'));
       expect(
         mihomoTunConfigYaml(location, collectLogs: false),
@@ -96,7 +89,6 @@ void main() {
       expect(const AppPrefs().collectLogs, true);
       final off = const AppPrefs().copyWith(collectLogs: false);
       expect(AppPrefs.fromJson(off.toJson()).collectLogs, false);
-      // A file written before this setting existed must not silence logging.
       expect(AppPrefs.fromJson({'theme_mode': 'dark'}).collectLogs, true);
     });
   });
@@ -123,8 +115,6 @@ void main() {
           entries.files.firstWhere((f) => f.name == name).content as List<int>,
         );
         expect(read('app.log'), contains('hello from the app'));
-        // No tunnel running in tests: the entry explains itself instead of being
-        // an empty file the user would have to guess about.
         expect(
           read('tunnel.log'),
           contains('only while the tunnel is running'),

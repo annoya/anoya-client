@@ -10,13 +10,6 @@ import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 
-/// A tunnel that stops without being asked to.
-///
-/// An extension that refuses a config reports it to the system, not to the call
-/// that started it, so the app used to see the status fall back to disconnected
-/// and nothing else — which reads as a connect that hung and then gave up. That
-/// was the whole of what a user saw when a rule set produced a config the
-/// engine would not run.
 void main() {
   ProviderContainer boot(_FakeCore core) {
     final c = ProviderContainer(
@@ -58,8 +51,6 @@ void main() {
   });
 
   test('a platform that kept no reason stays quiet', () async {
-    // An extension the system killed for memory leaves nothing behind, and a
-    // dialog saying "the tunnel stopped" with no reason helps nobody.
     final core = _FakeCore(reason: '');
     final c = boot(core);
 

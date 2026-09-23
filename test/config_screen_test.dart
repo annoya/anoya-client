@@ -21,12 +21,6 @@ import 'package:vpn_client/l10n/l10n.dart';
 import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 
-/// One screen per domain (ADR-005), each showing only what its domain has.
-///
-/// The width assertions look pedantic until you know why they exist: the three
-/// screens were split out of one, and a Column added along the way handed its
-/// children their intrinsic width — so the action buttons quietly stopped
-/// spanning the content and no test noticed.
 void main() {
   Profile profile(
     ProfileType type, {
@@ -67,9 +61,6 @@ void main() {
           profilesControllerProvider.overrideWith(
             () => _FixedProfiles([p], onSetLists: onSetLists),
           ),
-          // The real one reads the App Group container over a platform channel.
-          // A widget test has neither, and what is under test here is what the
-          // screen does with the answer, not how it is obtained.
           if (lists != null)
             providerRuleListsProvider.overrideWith((ref, id) async => lists),
         ],
@@ -84,19 +75,14 @@ void main() {
     await tester.pump();
   }
 
-  /// Routing and DNS live one tap away now. Reaching them is part of what
-  /// these tests assert: a control that exists but cannot be found from the
-  /// configuration screen is not a control the user has.
   Future<void> openRouting(WidgetTester tester) async {
     await tester.scrollUntilVisible(find.text('Routing'), 200);
     await tester.tap(find.text('Routing'));
     await tester.pumpAndSettle();
   }
 
-  /// Every button on the screen spans the content width, so a stack of them
-  /// reads as one column of controls rather than a ragged edge. The buttons sit
-  /// at the bottom of a lazy list, so they have to be scrolled into existence
-  /// before they can be measured.
+  // The buttons sit at the bottom of a lazy list, so they have to be scrolled
+  // into existence before they can be measured.
   Future<void> expectFullWidthButtons(WidgetTester tester) async {
     await tester.scrollUntilVisible(find.text('Remove configuration'), 200);
     await tester.pump();
@@ -152,8 +138,6 @@ void main() {
   testWidgets('the id the subscription counts this device by can be copied', (
     tester,
   ) async {
-    // The panel says a slot is taken, never which device holds it — so the one
-    // question support asks has to be answerable from this screen.
     DeviceIdentityStore.debugCache(
       const DeviceIdentity(
         hwid: '7f3a9c21e4b84a2c9d0f1b3e5a6c5d0146',
@@ -184,7 +168,6 @@ void main() {
     await tester.pump();
     await tester.scrollUntilVisible(find.text('Device id'), 200);
 
-    // Short enough to read back over the phone, whole in the clipboard.
     expect(find.text('7f3a9c21e4b8…6c5d0146'), findsOneWidget);
     await tester.tap(find.byTooltip('Copy'));
     await tester.pump();
@@ -195,9 +178,6 @@ void main() {
     testWidgets('carries both facts the sections it replaced used to show', (
       tester,
     ) async {
-      // Neither the policy nor whose resolvers it is follows from the word
-      // "Routing", and both were readable at a glance before the move. A row
-      // that only names itself would make the move a loss.
       await pump(
         tester,
         profile(
@@ -217,8 +197,6 @@ void main() {
     testWidgets(
       'a refusal stays on the configuration screen, not behind a tap',
       (tester) async {
-        // These refusals were just taken out of a log nobody reads. Putting them
-        // one level deeper would be the same silence at a different depth.
         await pump(
           tester,
           profile(
@@ -248,8 +226,6 @@ void main() {
         ),
       );
       await openRouting(tester);
-      // The section header carries the same word, so the row is named by what
-      // it is rather than by its text.
       await tester.tap(find.widgetWithText(ListTile, 'DNS'));
       await tester.pumpAndSettle();
       expect(find.text('https://dns.quad9.net/dns-query'), findsOneWidget);
@@ -298,10 +274,6 @@ void main() {
   testWidgets('an Amnezia subscription opens before any server is issued', (
     tester,
   ) async {
-    // Its locations are real and pickable, but they carry no settings until
-    // the gateway is asked for one (ADR-009). Everything on this screen that
-    // asks "what would the engine get" meets them first, and the renderer
-    // refuses an empty proxy on purpose — so the screen threw on open.
     await pump(
       tester,
       Profile(
@@ -327,8 +299,6 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    // And the screen behind the routing row, which asks the same question a
-    // second time and threw on its own after the first was fixed.
     await openRouting(tester);
     expect(tester.takeException(), isNull);
     expect(find.text('DNS'), findsWidgets);
@@ -337,16 +307,12 @@ void main() {
     expect(find.text('Amnezia Premium'), findsWidgets);
     expect(find.text('Devices'), findsOneWidget);
     expect(find.text('5 of 7 used'), findsOneWidget);
-    // Nothing was said about an end date, so nothing claims one.
     expect(find.text('Runs until'), findsNothing);
   });
 
   testWidgets('a subscription shows no numbers it was never given', (
     tester,
   ) async {
-    // The gateway answers about premium and free with different amounts, and
-    // it can answer about either with less than usual. A dash where a number
-    // would go, or "0 of 0" devices, asserts a value exists and is empty.
     await pump(
       tester,
       Profile(
@@ -369,18 +335,10 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Devices'), findsNothing);
     expect(find.text('Runs until'), findsNothing);
-    // Not even the description fills the gap: what Amnezia sends there is the
-    // sales copy for a plan the user has already bought, and printing it where
-    // the dates and slots should be would read as an answer.
     expect(find.textContaining('Premium, one year.'), findsNothing);
   });
 
   testWidgets('every refresh that fails says so the same way', (tester) async {
-    // One event, one wording, whichever screen it was pressed from: the user
-    // should not have to work out whether two screens are telling them about
-    // the same thing. Four copies of the handler once diverged in wording, so
-    // the wording now lives in exactly one place and the screens embed it.
-    // The sentence itself is an ARB key; what is guarded here is who says it.
     const shared = 'lib/features/refresh_button.dart';
     final pattern = RegExp(r'configRefreshFailed\(');
     expect(
@@ -455,8 +413,6 @@ void main() {
   testWidgets(
     'servers the app cannot run are counted in the header and explained',
     (tester) async {
-      // The user counted locations in their provider's panel. A smaller number
-      // here with no reason reads as the app losing them.
       await pump(
         tester,
         profile(
@@ -481,9 +437,6 @@ void main() {
   testWidgets('a refused device is stated on the screen, not only in a toast', (
     tester,
   ) async {
-    // The toast leaves after three seconds; the condition does not. Without a
-    // card here, a location list full of the provider's placeholders would be
-    // unexplainable the moment the toast is gone.
     await pump(
       tester,
       profile(ProfileType.subscription).copyWithDeviceLimitReached(),
@@ -492,51 +445,45 @@ void main() {
     expect(find.textContaining('Free a slot'), findsOneWidget);
   });
 
-  testWidgets('a subscription\'s routes are applied, attributed and switchable', (
-    tester,
-  ) async {
-    // The difference from a self-hosted policy is the switch: a panel can stop
-    // returning servers, but it cannot decide where this device's traffic goes
-    // (ADR-005), so the choice has to exist and be visible.
-    await pump(
-      tester,
-      profile(ProfileType.subscription).copyWithProviderRoutes(),
-    );
-    await openRouting(tester);
-    expect(find.text('SUBSCRIPTION ROUTING'), findsOneWidget);
-    expect(
-      find.text('Split · 2 rules · 1 not supported'),
-      findsOneWidget,
-      reason: 'a summary that reads as complete is the one place this misleads',
-    );
-    expect(
-      find.text('Rule set'),
-      findsNWidgets(2),
-      reason: 'one row per owner, named the same on both halves',
-    );
-    // The rows are named the same on both halves of the page now, so the
-    // provider's switch is found by what only it says.
-    final sw = tester.widget<SwitchListTile>(
-      find.ancestor(
-        of: find.text('Split · 2 rules · 1 not supported'),
-        matching: find.byType(SwitchListTile),
-      ),
-    );
-    expect(sw.value, isTrue, reason: 'a provider that sent rules meant them');
-    expect(
-      find.text('Replaced by the subscription\u2019s routes'),
-      findsOneWidget,
-      reason: 'the local set must say why it is dimmed, not just look disabled',
-    );
-  });
+  testWidgets(
+    'a subscription\'s routes are applied, attributed and switchable',
+    (tester) async {
+      await pump(
+        tester,
+        profile(ProfileType.subscription).copyWithProviderRoutes(),
+      );
+      await openRouting(tester);
+      expect(find.text('SUBSCRIPTION ROUTING'), findsOneWidget);
+      expect(
+        find.text('Split · 2 rules · 1 not supported'),
+        findsOneWidget,
+        reason:
+            'a summary that reads as complete is the one place this misleads',
+      );
+      expect(
+        find.text('Rule set'),
+        findsNWidgets(2),
+        reason: 'one row per owner, named the same on both halves',
+      );
+      final sw = tester.widget<SwitchListTile>(
+        find.ancestor(
+          of: find.text('Split · 2 rules · 1 not supported'),
+          matching: find.byType(SwitchListTile),
+        ),
+      );
+      expect(sw.value, isTrue, reason: 'a provider that sent rules meant them');
+      expect(
+        find.text('Replaced by the subscription\u2019s routes'),
+        findsOneWidget,
+        reason:
+            'the local set must say why it is dimmed, not just look disabled',
+      );
+    },
+  );
 
   testWidgets(
     'the device\'s routing is out of reach while the provider\'s is on',
     (tester) async {
-      // Dimming alone left the switch tappable and the rule set openable, and
-      // neither changed anything: the provider's policy is what the engine gets.
-      // A control that moves and does nothing teaches the user to distrust every
-      // other control on the screen.
       await pump(
         tester,
         profile(ProfileType.subscription).copyWithProviderRoutes(),
@@ -549,8 +496,6 @@ void main() {
   testWidgets(
     'and it takes input again the moment the subscription\'s switch is off',
     (tester) async {
-      // The whole reason the card stays visible is that taking over must be one
-      // tap away; blocked forever it would be decoration.
       await pump(
         tester,
         profile(
@@ -569,8 +514,6 @@ void main() {
   testWidgets(
     'a rule that needs the subscription\'s lists says so and offers the switch',
     (tester) async {
-      // The count is the point: "not supported" that names its own remedy is
-      // actionable, while a bare number only discourages.
       await pump(
         tester,
         profile(ProfileType.subscription).copyWithProviderLists(),
@@ -594,10 +537,6 @@ void main() {
   testWidgets('turning their lists on says so, and refuses a second tap', (
     tester,
   ) async {
-    // A dozen files from someone else's hosts is seconds, more on a phone, and
-    // the switch cannot move until they are here — a rule whose list is missing
-    // matches nothing, so an early "on" would be a lie. Without a word from the
-    // row the tap simply goes unanswered, and an unanswered tap gets repeated.
     final gate = Completer<void>();
     await pump(
       tester,
@@ -644,8 +583,6 @@ void main() {
   testWidgets(
     'a list that never arrived is reported, with the rest still applied',
     (tester) async {
-      // The engine says nothing in this state — a rule whose list is missing
-      // matches nothing and the policy quietly changes — so the screen must.
       await pump(
         tester,
         profile(ProfileType.subscription).copyWithProviderLists(accepted: true),
@@ -717,7 +654,6 @@ void main() {
 }
 
 extension on Profile {
-  /// A source that offered protocols this app cannot run.
   Profile copyWithUnsupported(Map<String, int> kinds) => Profile(
     id: id,
     type: type,
@@ -728,7 +664,6 @@ extension on Profile {
     refreshedAt: refreshedAt,
   );
 
-  /// A panel that says it counts devices, without saying it is full.
   Profile copyWithDeviceLimit() => Profile(
     id: id,
     type: type,
@@ -739,7 +674,6 @@ extension on Profile {
     refreshedAt: refreshedAt,
   );
 
-  /// A panel that sent routing, one rule of which we could not translate.
   Profile copyWithProviderRoutes({bool enabled = true}) => Profile(
     id: id,
     type: type,
@@ -762,7 +696,6 @@ extension on Profile {
     refreshedAt: refreshedAt,
   );
 
-  /// A panel that asked for its own refresh cadence.
   Profile copyWithInterval(int hours) => Profile(
     id: id,
     type: type,
@@ -775,7 +708,6 @@ extension on Profile {
     refreshedAt: refreshedAt,
   );
 
-  /// A panel whose policy points at a list file it hosts itself.
   Profile copyWithProviderLists({bool accepted = false}) => Profile(
     id: id,
     type: type,
@@ -800,8 +732,6 @@ extension on Profile {
     refreshedAt: refreshedAt,
   );
 
-  /// The shape a refused refresh leaves behind: the panel's placeholders as
-  /// locations, and the flag that explains why they read like that.
   Profile copyWithDeviceLimitReached() => Profile(
     id: id,
     type: type,
@@ -820,9 +750,6 @@ extension on Profile {
   );
 }
 
-/// Whether the device's own routing card is currently taking input. Read off
-/// the tree rather than by tapping: with the card blocked there is nothing to
-/// observe from a tap, which is exactly the property under test.
 bool _ignoringLocalCard(WidgetTester tester) {
   final card = find.ancestor(
     of: find.widgetWithText(SwitchListTile, 'Routing'),
@@ -835,8 +762,6 @@ class _FixedProfiles extends ProfilesController {
   _FixedProfiles(this.profiles, {this.onSetLists});
   final List<Profile> profiles;
 
-  /// Held open by a test that wants to look at the screen mid-download. The
-  /// real one reaches the network and the shared container.
   final Future<void> Function(bool)? onSetLists;
 
   @override

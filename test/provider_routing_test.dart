@@ -10,17 +10,10 @@ import 'package:vpn_client/core/device_identity.dart';
 import 'package:vpn_client/core/parsers/provider_routing.dart';
 import 'package:vpn_client/core/subscription_fetch.dart';
 
-/// Routing that arrives with a subscription.
-///
-/// The risk here is not a crash but a quiet wrong turn: a rule translated
-/// loosely sends traffic somewhere the user never agreed to, and a rule dropped
-/// without saying so presents a partial policy as complete. So these tests are
-/// mostly about what the translator *refuses* to do.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('xray routing', () {
-    // The routing block of a live Remnawave subscription, verbatim.
     const live = '''
 {
   "outbounds": [{"tag": "proxy", "protocol": "vless"}],
@@ -48,8 +41,6 @@ void main() {
     });
 
     test('a catch-all direct is a split tunnel', () {
-      // The direction is not written down anywhere: it is the rule with no
-      // matcher, and reading it wrong reverses the whole policy.
       expect(parseXrayRouting(live)!.routing.mode, 'split');
     });
 
@@ -66,16 +57,10 @@ void main() {
     });
 
     test('rules about inbounds and ports are not counted as lost', () {
-      // Our engine has no inbounds — it reads a tunnel interface and hijacks
-      // DNS itself — so these have nothing to apply to and nothing is missing.
       expect(parseXrayRouting(live)!.skipped, 0);
     });
 
     test('a regular expression is translated, an external file is not', () {
-      // mihomo has DOMAIN-REGEX (`rules/parser.go`), so a pattern is carried
-      // rather than approximated. `ext:` names a file on the panel server's own
-      // disk — there is no address to fetch it from, so it is dropped and
-      // counted instead of guessed at.
       const body = '''
 {"routing": {"rules": [
   {"type": "field", "domain": ["regexp:.*[.]ad[.].*"], "outboundTag": "block"},
@@ -91,8 +76,6 @@ void main() {
     });
 
     test('a pattern the rule syntax cannot carry is refused', () {
-      // A rule line is comma-separated in mihomo's own parser, so a comma in
-      // the pattern would silently become a different rule.
       const body = r'''
 {"routing": {"rules": [
   {"type": "field", "domain": ["regexp:^a{1,3}[.]example$"], "outboundTag": "block"}
@@ -176,10 +159,6 @@ void main() {
     test(
       "a provider's process rules survive to the platform that can run them",
       () {
-        // They were dropped in the translation, which put the platform decision
-        // in the wrong place: the renderer already removes them where a
-        // connection's process cannot be resolved, and on macOS they work. A
-        // provider routing their game launcher lost the rule everywhere.
         final r = parseClashRules(const [
           'PROCESS-NAME,EscapeFromTarkov.exe,DIRECT',
           'DOMAIN-SUFFIX,ip.me,PROXY',
@@ -199,8 +178,6 @@ void main() {
     );
 
     test('a rules list that is only MATCH says nothing', () {
-      // What a panel's own Clash rendering usually carries: one line pointing
-      // everything at its proxy group. That is not a policy, it is the default.
       expect(parseClashRules(['MATCH,→ Provider']), isNull);
     });
   });
@@ -243,10 +220,6 @@ rules:
     });
 
     test('lists we cannot fetch are dropped and counted', () {
-      // `file` points at the publisher's own disk, `http` is not TLS, and a
-      // name the body never defined has nowhere to come from. Three different
-      // reasons, one honest outcome: the rule cannot run, so it is not applied
-      // and the count says so.
       expect(parseClashRouting(body)!.skipped, 3);
     });
 

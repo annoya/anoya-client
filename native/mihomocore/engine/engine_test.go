@@ -14,10 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// The engine logs while it *parses* a config (geo rule loading, "initial
-// configuration in progress") — before ApplyConfig gets to read log-level out of
-// the YAML. So the level has to be settable up front; this pins that
-// SetLogLevel does exactly that.
 func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 	var out bytes.Buffer
 	logrus.SetOutput(&out)
@@ -37,7 +33,6 @@ func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 		t.Fatalf("expected silence, got %q", out.String())
 	}
 
-	// An unknown level must not silently disable logging.
 	SetLogLevel("nonsense")
 	log.Infoln("still silent")
 	if out.Len() != 0 {
@@ -50,14 +45,8 @@ func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 	}
 }
 
-// A hot reload must never be able to take the running tunnel down: a config
-// that does not parse has to be rejected *before* anything is applied, leaving
-// the engine on the previous config. (Parse happens in full before ApplyConfig
-// in Start/Reload, so a returned error means the engine was never
-// touched.)
 func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
-	// "{" is not parseable YAML; anything parseable would reach ApplyConfig,
-	// which starts real listeners — exactly what this test must not do.
+	// Only unparseable input: anything parseable would start real listeners.
 	if err := Reload(5, "{"); err == nil {
 		t.Fatal("a config that does not parse must be rejected")
 	}
@@ -69,17 +58,10 @@ func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
 	}
 }
 
-// Geo rules are the one thing mihomo will go to the network for while merely
-// PARSING a config: a missing or unverifiable database is downloaded on the
-// spot, with a 90-second timeout per file, inside the engine lock. The client
-// renders empty `geox-url` entries to forbid that, and this pins the property
-// against the real engine — a config that needs a database we do not have must
-// be rejected immediately, without a request.
 func TestMissingGeoDatabaseFailsFastInsteadOfDownloading(t *testing.T) {
-	constant.SetHomeDir(t.TempDir()) // empty: no databases at all
+	constant.SetHomeDir(t.TempDir())
 
-	// DIRECT, not PROXY: this config has no proxies, and an unknown outbound
-	// would fail the rule before geo loading is ever reached.
+	// DIRECT: an unknown outbound would fail before geo loading is reached.
 	const cfg = "log-level: silent\n" +
 		"geox-url:\n  geoip: ''\n  geosite: ''\n  mmdb: ''\n  asn: ''\n" +
 		"rules:\n  - GEOSITE,youtube,DIRECT\n"
@@ -94,16 +76,11 @@ func TestMissingGeoDatabaseFailsFastInsteadOfDownloading(t *testing.T) {
 	if !strings.Contains(err.Error(), "not downloaded") {
 		t.Fatalf("the error must name the cause, got: %v", err)
 	}
-	// A real download attempt cannot finish this fast; anything slower means
-	// the engine went to the network after all.
 	if elapsed > time.Second {
 		t.Fatalf("parsing took %v — the engine attempted a download", elapsed)
 	}
 }
 
-// Parse errors cross into the extension log, which the user exports from the
-// app. mihomo's decoder quotes the offending config value, and config bodies
-// carry uuids and passwords.
 func TestParseErrorsCarryNoConfigText(t *testing.T) {
 	err := Reload(5, "log-level: info\nport: 'a-secret-looking-value'\n")
 	if err == nil {
@@ -125,11 +102,6 @@ func TestSanitizeConfigErrorRedactsQuotedValues(t *testing.T) {
 	}
 }
 
-// The egress probe and the PROXY group both look the outbound up by the name
-// "proxy", which the Dart renderer assigns. Renaming it on either side would
-// not fail anything — the probe would just quietly stop running, taking with it
-// the only signal that distinguishes "server is down" from "the dial never
-// reached the physical interface".
 func TestEgressProbeLooksUpTheAgreedOutboundName(t *testing.T) {
 	if !strings.Contains(engineSource(t), `cfg.Proxies["proxy"]`) {
 		t.Fatal("the probe no longer looks up the outbound named \"proxy\"; " +
@@ -146,19 +118,6 @@ func engineSource(t *testing.T) string {
 	return string(b)
 }
 
-// mihomo's config.parseIPV6 probes the host's interfaces and, finding no
-// global IPv6 address, strips tun.inet6-address from the parsed config. That
-// would make the `tun` section a function of the current network: connect on
-// v4-only Wi-Fi, move to cellular, and Tun.Equal fails on the next hot reload —
-// mihomo re-creates the TUN listener, closing the Network Extension's fd with
-// it. The probe asks whether the HOST has IPv6, which is the wrong question for
-// a VPN that supplies IPv6 over its own interface, so the engine wrapper turns
-// it off.
-//
-// The first assertion is the load-bearing one: it fails on any machine if the
-// knob is ever dropped. The parse below checks the consequence, and can only
-// fail on a host without IPv6 — which is precisely the host where the bug
-// bites, and never the developer machine that introduces it.
 func TestTunSectionDoesNotDependOnHostIPv6(t *testing.T) {
 	configureEngineGlobals()
 	if os.Getenv("SKIP_SYSTEM_IPV6_CHECK") != "1" {

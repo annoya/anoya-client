@@ -10,12 +10,6 @@ import 'package:vpn_client/core/profile.dart';
 import 'package:vpn_client/core/subscription_fetch.dart';
 import 'package:vpn_client/core/subscription_info.dart';
 
-/// The three headers a panel uses to stay reachable: where to ask when its main
-/// address is blocked, how long to wait for it, and how often to bother.
-///
-/// All three are the provider's statements about their own service, so the app
-/// honours them — within bounds it sets itself, because each one is also a way
-/// for a panel to make the app do work on its behalf.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
@@ -94,8 +88,6 @@ void main() {
     });
 
     test('a failure on both is the failure of the main one', () async {
-      // What the user can act on is the address they added; the backup is the
-      // provider's business.
       final client = MockClient((req) async => http.Response('nope', 500));
       try {
         await fetchSubscription(
@@ -112,7 +104,6 @@ void main() {
     });
 
     test('only an https backup is honoured', () async {
-      // The address decides which servers the app trusts.
       final asked = <String>[];
       final client = MockClient((req) async {
         asked.add(req.url.host);
@@ -147,22 +138,23 @@ void main() {
   });
 
   group('the request timeout', () {
-    test('the panel\'s number is honoured inside the window we allow', () async {
-      // A panel asking for a minute would hold a manual refresh — and the user
-      // watching it — open for that long.
-      final client = MockClient((req) async {
-        await Future<void>.delayed(const Duration(milliseconds: 40));
-        return http.Response('vless://u@h.example:443?security=none#DE', 200);
-      });
-      final res = await fetchSubscription(
-        'https://main.example/t',
-        probeRenderings: false,
-        client: client,
-        probeRouting: false,
-        timeout: const Duration(seconds: 5),
-      );
-      expect(res.body, contains('vless://'));
-    });
+    test(
+      'the panel\'s number is honoured inside the window we allow',
+      () async {
+        final client = MockClient((req) async {
+          await Future<void>.delayed(const Duration(milliseconds: 40));
+          return http.Response('vless://u@h.example:443?security=none#DE', 200);
+        });
+        final res = await fetchSubscription(
+          'https://main.example/t',
+          probeRenderings: false,
+          client: client,
+          probeRouting: false,
+          timeout: const Duration(seconds: 5),
+        );
+        expect(res.body, contains('vless://'));
+      },
+    );
 
     test('a header out of range is clamped, not obeyed', () {
       expect(
@@ -171,8 +163,6 @@ void main() {
         }).requestTimeout,
         9,
       );
-      // The clamp itself lives in the fetch; what the parser must not do is
-      // invent a value the panel never sent.
       expect(SubscriptionInfo.fromHeaders({}).requestTimeout, isNull);
     });
   });
@@ -192,27 +182,16 @@ void main() {
     );
 
     test('the header is hours, which is the convention\'s unit', () {
-      // It was read as days before: a panel asking for 12 hours was shown as
-      // "every 12 days" and polled 144 times inside each of those hours.
       expect(refreshGapFor(sub(hours: 12)), const Duration(hours: 12));
       expect(refreshGapFor(sub(hours: 1)), const Duration(hours: 1));
     });
 
     test('a source that asks for nothing is read hourly, not at the floor', () {
-      // The floor is what a source may ask *down to*, never what silence
-      // means. Read as a schedule it fetched the whole list every five
-      // minutes — 288 times a day, off someone else's server.
       expect(refreshGapFor(sub()), const Duration(hours: 1));
-      // A zero in the header is that same silence, spelled out. It used to
-      // clamp to the floor, which made the least meaningful answer a panel can
-      // give the most expensive one to receive.
       expect(refreshGapFor(sub(hours: 0)), const Duration(hours: 1));
     });
 
     test('a key subscription is polled in hours, and actually polled', () {
-      // Its gateway has no interval field to answer in, so it takes the
-      // default like any other silent source. The screen says "auto every
-      // 1 h"; both halves of that have to be true.
       final key = Profile(
         id: 'a1',
         type: ProfileType.amnezia,
@@ -221,10 +200,7 @@ void main() {
         refreshedAt: DateTime.now(),
       );
       expect(refreshGapFor(key), const Duration(hours: 1));
-      // The poll skipped this domain entirely, so the line above the gear was
-      // a promise nothing kept.
       expect(key.isRefreshable, isTrue);
-      // The gear still wins: it is the user's battery.
       expect(
         refreshGapFor(key.copyWith(refreshHours: (value: 3))),
         const Duration(hours: 3),
@@ -253,7 +229,6 @@ void main() {
 
     group('when the user has set a period', () {
       test('theirs wins over the panel’s request', () {
-        // The panel asks; the traffic and the battery are not its own to spend.
         expect(
           refreshGapFor(sub(hours: 12, chosen: 1)),
           const Duration(hours: 1),
@@ -349,12 +324,6 @@ proxy-groups:
     );
 
     group('what the next refresh asks for', () {
-      // Only the positive outcome is worth remembering. "Nothing answered" used
-      // to be remembered just as firmly, and one 404 during a bad minute pinned
-      // a subscription to its plain body for good — for a panel like Remnawave
-      // that body is a base64 link list, so the policy fell through to the Xray
-      // probe and arrived as a fraction of itself, with no way back from the
-      // interface.
       test('a rendering that answered is gone to directly', () {
         expect(shouldProbeRenderings('mihomo'), isFalse);
       });

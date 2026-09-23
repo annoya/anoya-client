@@ -73,16 +73,8 @@ void main() {
       routing: const Routing(
         mode: 'full',
         rules: [
-          RoutingRule(
-            type: 'geoip',
-            value: 'rus',
-            action: 'direct',
-          ), // 3 letters
-          RoutingRule(
-            type: 'geosite',
-            value: 'Net flix',
-            action: 'direct',
-          ), // space/case
+          RoutingRule(type: 'geoip', value: 'rus', action: 'direct'),
+          RoutingRule(type: 'geosite', value: 'Net flix', action: 'direct'),
         ],
       ),
     );
@@ -97,7 +89,6 @@ void main() {
     );
     expect(yaml, contains('  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve'));
     expect(yaml, contains('  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve'));
-    // LAN exceptions must come before the final MATCH.
     expect(
       yaml.indexOf('IP-CIDR,10.0.0.0/8'),
       lessThan(yaml.indexOf('MATCH,PROXY')),
@@ -159,7 +150,6 @@ void main() {
   });
 
   group('whyUnusable', () {
-    // The chip names the thing the user can act on, never the text itself.
     test('a scheme we have no protocol for', () {
       expect(
         whyUnusable('tuic://a:b@h.example:443'),

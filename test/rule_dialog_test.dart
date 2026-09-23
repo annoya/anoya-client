@@ -4,8 +4,6 @@ import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/features/rule_dialog.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// The value field takes a domain or an address, and a phone keyboard does its
-/// best to turn those into prose.
 void main() {
   testWidgets('a space never reaches the value, typed or pasted', (
     tester,

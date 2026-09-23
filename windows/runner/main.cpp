@@ -26,8 +26,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
-  // Phone-shaped, like the macOS window: the screens are designed for 393×852 and
-  // stretch, and a desktop default of 1280×720 shows one column in a field.
   Win32Window::Size size(420, 760);
   if (!window.Create(L"AnnoyaTest", origin, size)) {
     return EXIT_FAILURE;

@@ -11,13 +11,6 @@ import '../policy_origin.dart';
 import '../managed_policy_screen.dart';
 import '../../state/provider_rule_lists.dart';
 
-/// The routing section for a subscription whose panel sent rules of its own.
-///
-/// Applied by default — a provider that sent rules meant them — but with a
-/// switch, which is the whole difference from a self-hosted policy: an
-/// organization's server both sets and enforces its policy, while a panel can
-/// only stop returning servers (ADR-005). It cannot decide where this device's
-/// traffic goes, so the decision is stated in words rather than implied.
 class ProviderRoutingCard extends ConsumerStatefulWidget {
   const ProviderRoutingCard({super.key, required this.profile});
 
@@ -29,10 +22,6 @@ class ProviderRoutingCard extends ConsumerStatefulWidget {
 }
 
 class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
-  /// A dozen files from someone else's hosts is seconds, and more on a phone.
-  /// The switch cannot move until they are here — a rule whose list is missing
-  /// matches nothing, so an early "on" would be a lie — so the row carries the
-  /// state instead of leaving the tap unanswered.
   bool _downloading = false;
 
   Future<void> _setLists(bool enabled) async {
@@ -64,18 +53,12 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
         children: [
           SwitchListTile(
             secondary: const Icon(Icons.alt_route),
-            // Named like the device's own controls below it. Whose policy this
-            // is comes from the section header, once, instead of from every row —
-            // the width a repeated "from your provider" costs is width the
-            // subtitle needs for facts.
             title: Text(l10n.configRouting),
             subtitle: Text(providerRoutingSummary(profile, lists)),
             value: on,
             onChanged: (v) => ctrl.setProviderRoutingEnabled(profile.id, v),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          // Readable with the switch off: deciding whether to accept someone
-          // else's rules requires seeing them first.
           ListTile(
             leading: const Icon(Icons.layers_outlined),
             title: Text(l10n.configRuleSet),
@@ -88,9 +71,6 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
                     profile.name,
                     skipped: profile.providerRoutingSkipped,
                   ),
-                  // Null while the lists are refused, so the rules that need them
-                  // can say "off" rather than "not downloaded" — the user's own
-                  // decision reads differently from a failure.
                   listsAvailable: profile.providerRuleListsEnabled
                       ? (lists ?? const [])
                             .where((s) => s.available)
@@ -101,14 +81,9 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
               ),
             ),
           ),
-          // Only when there is something to decide: a policy with no external
-          // lists would get a switch that governs nothing.
           if (needLists > 0) ...[
             const Divider(height: 1, indent: 16, endIndent: 16),
             SwitchListTile(
-              // The spinner takes the icon's place rather than the switch's, so
-              // the row does not change width and it stays clear which operation
-              // is running — the same shape as the refresh card.
               secondary: _downloading
                   ? const SizedBox(
                       width: 24,
@@ -123,8 +98,7 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
                     : _listSummary(profile, needLists, lists),
               ),
               value: profile.providerRuleListsEnabled,
-              // A second tap would not hurry the first, and two writers on the
-              // same files is how half a list ends up on disk.
+              // Disabled mid-download: two writers on one file leave half a list.
               onChanged: _downloading ? null : _setLists,
             ),
           ],
@@ -134,9 +108,6 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
   }
 }
 
-/// The line under the switch. Says what is in force, and — when something is
-/// missing — says that too, because a summary that reads as complete is the
-/// one place this could mislead.
 String providerRoutingSummary(Profile profile, List<RuleListStatus>? lists) {
   final l10n = L10n.current;
   final routing = profile.providerRouting!;
@@ -165,8 +136,7 @@ String providerRoutingSummary(Profile profile, List<RuleListStatus>? lists) {
 
 bool _isAvailable(Profile p, String name, List<RuleListStatus>? lists) {
   if (!p.providerRuleListsEnabled) return false;
-  // Unknown status is not the same as absent: while the read is in flight,
-  // assume what the user asked for rather than flashing a failure.
+  // Unknown is not absent: assume available while the read is in flight.
   if (lists == null) return true;
   return lists.any((s) => s.list.name == name && s.available);
 }
@@ -183,13 +153,6 @@ String _listSummary(Profile p, int needed, List<RuleListStatus>? lists) {
       : l10n.configListsDownloadedOf(have.length, lists.length);
   return l10n.configListsSize(count, kb);
 }
-
-/// Shown when the provider named a list we could not fetch.
-///
-/// The engine would say nothing here: a rule whose list is missing matches
-/// nothing, traffic falls through to the next rule, and the policy quietly
-/// changes. So this is the same choice as for geo rules — the rule is not
-/// applied and the fact is stated, with the one action that can fix it.
 
 class RuleListFailureCard extends ConsumerStatefulWidget {
   const RuleListFailureCard({

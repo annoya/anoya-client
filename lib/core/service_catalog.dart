@@ -1,12 +1,3 @@
-/// The curated service catalog behind the routing editor's Simple mode and the
-/// POPULAR group of the geosite picker.
-///
-/// Each entry is only a mapping "display name → geosite category": the domains
-/// themselves live in the downloaded GeoSite.dat and stay fresh with its
-/// updates, so nothing here goes stale when a service adds a domain. What can
-/// go stale is a category being renamed upstream — a test validates every
-/// entry against a downloaded database, and at runtime entries missing from
-/// the local database are hidden rather than shown as dead switches.
 library;
 
 import '../l10n/l10n.dart';
@@ -35,17 +26,12 @@ class CatalogService {
 
   final String name;
 
-  /// geosite category id in GeoSite.dat (v2fly domain-list-community naming).
   final String category;
 
   final ServiceGroup group;
 
-  /// Whether an assets/brands/ SVG exists for this entry. Simple Icons dropped some brands
-  /// (trademark requests) — those fall back to a letter avatar.
   final bool glyph;
 
-  /// Asset slug: the category name except where the icon set names it
-  /// differently.
   String get glyphAsset =>
       'assets/brands/${_slugOverrides[category] ?? category}.svg';
 
@@ -53,7 +39,6 @@ class CatalogService {
 }
 
 const kServiceCatalog = [
-  // Streaming
   CatalogService('YouTube', 'youtube', ServiceGroup.streaming),
   CatalogService('Netflix', 'netflix', ServiceGroup.streaming),
   CatalogService('Twitch', 'twitch', ServiceGroup.streaming),
@@ -65,7 +50,6 @@ const kServiceCatalog = [
   CatalogService('SoundCloud', 'soundcloud', ServiceGroup.streaming),
   CatalogService('TikTok', 'tiktok', ServiceGroup.streaming),
   CatalogService('Vimeo', 'vimeo', ServiceGroup.streaming),
-  // Messengers
   CatalogService('Telegram', 'telegram', ServiceGroup.messengers),
   CatalogService('WhatsApp', 'whatsapp', ServiceGroup.messengers),
   CatalogService('Signal', 'signal', ServiceGroup.messengers),
@@ -75,7 +59,6 @@ const kServiceCatalog = [
   CatalogService('Slack', 'slack', ServiceGroup.messengers),
   CatalogService('Zoom', 'zoom', ServiceGroup.messengers),
   CatalogService('LINE', 'line', ServiceGroup.messengers),
-  // Social
   CatalogService('Instagram', 'instagram', ServiceGroup.social),
   CatalogService('Facebook', 'facebook', ServiceGroup.social),
   CatalogService('X (Twitter)', 'twitter', ServiceGroup.social),
@@ -85,7 +68,6 @@ const kServiceCatalog = [
   CatalogService('Pinterest', 'pinterest', ServiceGroup.social),
   CatalogService('Snapchat', 'snapchat', ServiceGroup.social),
   CatalogService('Tumblr', 'tumblr', ServiceGroup.social),
-  // Other
   CatalogService('Google', 'google', ServiceGroup.other),
   CatalogService('ChatGPT', 'openai', ServiceGroup.other),
   CatalogService('GitHub', 'github', ServiceGroup.other),

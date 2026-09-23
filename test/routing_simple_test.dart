@@ -18,11 +18,6 @@ import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// Simple mode of the rule-set editor: a catalog view over ordinary
-/// geosite/geoip rules. The contract pinned here: toggles write real rules
-/// with the direction-implied action, flipping the direction re-tags the
-/// selections, rules the catalog can't express are surfaced (never hidden or
-/// dropped), and the catalog only offers what the local database contains.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
@@ -35,8 +30,6 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       (call) async => tmp.path,
     );
-    // The shared dir hosts the geo databases; everything else has no platform
-    // side in tests.
     messenger.setMockMethodCallHandler(const MethodChannel('vpn/control'), (
       call,
     ) async {
@@ -56,15 +49,12 @@ void main() {
     tmp.deleteSync(recursive: true);
   });
 
-  // --- GeoSite.dat scanner --------------------------------------------------
-
   group('geosite index scanner', () {
     test('reads category names and domain counts', () {
       final dat = geoSiteList({'YOUTUBE': 3, 'NETFLIX': 1, 'TELEGRAM': 2});
 
       final scanned = GeositeIndex.scan(dat);
 
-      // Sorted, lower-cased, with per-category domain counts.
       expect(
         [for (final c in scanned) c.name],
         ['netflix', 'telegram', 'youtube'],
@@ -78,17 +68,12 @@ void main() {
 
       final scanned = GeositeIndex.scan(cut);
 
-      // The picker being shorter beats the editor dying on a bad download.
       expect(scanned.length, lessThan(2));
     });
   });
 
-  // --- Simple mode ----------------------------------------------------------
-
   group('simple editor', () {
     Future<void> writeGeo({List<String>? categories}) async {
-      // Both databases present = geo rules work; the .dat carries real
-      // (synthetic) protobuf so the index scanner runs the honest path.
       File('${tmp.path}/geoip.metadb').writeAsBytesSync([1, 2, 3]);
       File('${tmp.path}/GeoSite.dat').writeAsBytesSync(
         geoSiteList({
@@ -127,11 +112,8 @@ void main() {
           ),
         ),
       );
-      // _load does real file I/O (rule sets, geo status, the index scan).
-      // testWidgets runs inside FakeAsync where real futures never complete on
-      // their own — runAsync lets the actual event loop turn, then a pump
-      // renders what arrived. pumpAndSettle would be worse than useless here:
-      // it spins the fake clock, not the event loop.
+      // testWidgets runs in FakeAsync, where real I/O futures never complete:
+      // runAsync turns the real event loop. pumpAndSettle only spins the fake clock.
       await settle(tester);
       await settle(tester);
     }
@@ -144,8 +126,6 @@ void main() {
       matching: find.byType(Switch),
     );
 
-    // The screen is one lazy list; rows outside the viewport have no elements
-    // yet, so a finder-driven tap needs the list scrolled first.
     Future<void> scrollBy(WidgetTester tester, double dy) async {
       await tester.drag(find.byType(ListView).first, Offset(0, dy));
       await tester.pump();
@@ -157,7 +137,6 @@ void main() {
         await writeGeo();
         await pump(tester);
 
-        // Default set: mode full → picked things bypass the VPN.
         await scrollBy(tester, -400);
         await tester.tap(switchOf('YouTube'));
         await settle(tester);
@@ -168,7 +147,6 @@ void main() {
         expect(set.rules.single.value, 'youtube');
         expect(set.rules.single.action, 'direct');
 
-        // Off removes it again.
         await tester.tap(switchOf('YouTube'));
         await settle(tester);
         expect((await storedDefault(tester)).rules, isEmpty);
@@ -229,12 +207,10 @@ void main() {
 
       expect(find.text('Advanced rules · 2'), findsOneWidget);
 
-      // The row leads to the editor that can show them.
       await tester.tap(find.text('Advanced rules · 2'));
       await settle(tester);
       expect(find.text('corp.example.com'), findsOneWidget);
 
-      // And nothing was dropped by the round trip.
       expect((await storedDefault(tester)).rules, hasLength(2));
     });
 
@@ -245,21 +221,17 @@ void main() {
       await pump(tester);
 
       expect(find.widgetWithText(SwitchListTile, 'YouTube'), findsOneWidget);
-      // In the db catalog but absent from the local one — a switch that cannot
-      // work is worse than none.
       expect(find.widgetWithText(SwitchListTile, 'Telegram'), findsNothing);
     });
 
     testWidgets(
       'any category from the database can be added, not just the catalog',
       (tester) async {
-        // 'yandex' exists in the database but not in the curated catalog.
         await writeGeo(categories: ['YOUTUBE', 'YANDEX']);
         await pump(tester);
 
-        // The add row leads the section — reachable without scrolling.
         await tester.tap(find.text('Add category'));
-        await settle(tester); // the sheet scans the database for its list
+        await settle(tester);
         await tester.tap(find.text('yandex'));
         await settle(tester);
 
@@ -271,9 +243,6 @@ void main() {
           reason: 'ad-hoc categories follow the direction like catalog toggles',
         );
 
-        // It lands right under the Add-category row that created it, with a
-        // delete button rather than a switch: added items are add/remove, and a
-        // switch whose off state deletes the row would be lying about that.
         expect(find.text('yandex'), findsOneWidget);
         await tester.tap(
           find.descendant(
@@ -312,10 +281,7 @@ void main() {
     });
   });
 
-  // --- platform-gated rule types -------------------------------------------
-
   group('process rules', () {
-    // Ordinary routing prefs/geo lookups run through the same tmp dir.
     Future<Routing> effective(List<RoutingRule> rules) async {
       final container = ProviderContainer(
         overrides: [
@@ -370,8 +336,6 @@ void main() {
 
       final routing = await effective([processRule, domainRule]);
 
-      // A set authored on a Mac travels to the phone; the rule that cannot work
-      // there must not reach the engine (nor switch find-process-mode on).
       expect([
         for (final r in routing.rules) r.type,
       ], isNot(contains('process-name')));
@@ -382,17 +346,15 @@ void main() {
   });
 }
 
-/// Builds a valid GeoSiteList protobuf:
-///   GeoSiteList { repeated GeoSite entry = 1; }
-///   GeoSite     { string country_code = 1; repeated Domain domain = 2; }
+// GeoSiteList { repeated GeoSite entry = 1; }
+// GeoSite     { string country_code = 1; repeated Domain domain = 2; }
 Uint8List geoSiteList(Map<String, int> domainsPerCategory) {
   final out = BytesBuilder();
   domainsPerCategory.forEach((name, domains) {
     final entry = BytesBuilder();
     entry.add(_lengthDelimited(1, Uint8List.fromList(name.codeUnits)));
     for (var i = 0; i < domains; i++) {
-      // Domain { type = 1 (varint); value = 2 (string) } — content is
-      // irrelevant to the scanner, only the field count matters.
+      // Domain { type = 1 (varint); value = 2 (string) }
       final domain = BytesBuilder();
       domain.add([0x08, 2]); // type = 2 (Domain.RootDomain)
       domain.add(

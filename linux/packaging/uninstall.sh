@@ -1,6 +1,5 @@
 #!/bin/sh
-# Reverse install.sh. The engine directory (geo databases, last config) is
-# kept unless asked: sudo ./uninstall.sh --purge
+# usage: sudo ./uninstall.sh [--purge]
 set -e
 [ "$(id -u)" = 0 ] || { echo "run as root: sudo ./uninstall.sh" >&2; exit 1; }
 /opt/annoyatest/service/tunnel-service -uninstall || true

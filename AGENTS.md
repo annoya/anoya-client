@@ -168,8 +168,17 @@ sudo scripts/leak-check.sh        # leak check against a live tunnel (root)
   seams above are the only "framework-y" investment we make on purpose.
 - **Mockup before code** for any visible change. Show it, get an explicit go
   ahead, then implement.
-- **Comments explain business logic and hard-won technical decisions.** Never
-  narrate what the code already says.
+- **Code documents itself; comments are for dirty hacks only.** Names and
+  structure carry the meaning, so the code stays simple enough to read without
+  help. A comment is justified only where the code does something that looks
+  wrong on purpose — a workaround for a platform bug, an ordering that must not
+  be "fixed" — and the reason has to sit right next to it. Business logic and
+  big product or technical decisions go to an ADR in `docs/decisions/`, not
+  into comments. Small changes such as swapping two buttons are neither: git
+  remembers them.
+- **ADRs are short and plain too.** The decision, the constraint behind it and
+  why each alternative lost — no history of the work, no restating the code, no
+  filler. See the `write-adr` skill.
 - **Do not add what was not asked for.** A screen, a button, or an abstraction
   nobody requested is waste, and it has to be maintained.
 - **Do not start rewriting while a decision is still being discussed.**

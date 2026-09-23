@@ -1,31 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Design system.
-///
-/// One seed color drives both Material 3 color schemes (light/dark follow the
-/// OS via `ThemeMode.system` in app.dart). Everything screens need beyond the
-/// scheme — VPN status colors, routing-action colors — lives in the
-/// [VpnColors] theme extension so no screen hardcodes `Colors.*` and both
-/// themes stay legible.
-///
-/// Shape language: cards 16, buttons/inputs 12, dialogs/sheets 20. Surfaces are
-/// flat (elevation 0) and separated by tone + a hairline outline, which reads
-/// modern on desktop and mobile alike.
-
 const _seed = Color(0xFF4F7CFF);
 
-// Radii
 const _rCard = 16.0;
 const _rControl = 12.0;
 const _rOverlay = 20.0;
 
-// App-bar geometry: the leading slot is square (kToolbarHeight) and an icon
-// button is 48, which is what keeps both edges at the same 28pt inset.
 const _kLeading = 56.0;
 const _kIconButton = 48.0;
 
-/// Semantic colors that aren't part of ColorScheme. Resolved per brightness;
-/// read with `context.vpnColors`.
 @immutable
 class VpnColors extends ThemeExtension<VpnColors> {
   const VpnColors({
@@ -35,16 +18,12 @@ class VpnColors extends ThemeExtension<VpnColors> {
     required this.direct,
   });
 
-  /// Tunnel up / rule action "proxy".
   final Color connected;
 
-  /// Handshake in progress.
   final Color connecting;
 
-  /// Text/icons placed on a `connected/connecting`-tinted container.
   final Color onStatusContainer;
 
-  /// Rule action "direct" (bypasses the tunnel) — intentionally neutral.
   final Color direct;
 
   static const light = VpnColors(
@@ -111,10 +90,8 @@ ThemeData buildAppTheme(Brightness brightness) {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      // The leading slot is 56 wide and centres a 48pt icon button, so its
-      // centre lands 28 from the left edge. Actions are flush right, which puts
-      // theirs at 24 — hence half the difference as padding, making both 28.
-      // Without it "+" and the gear look misaligned (most obvious on macOS).
+      // Leading slot centres its 48pt button at 28 from the edge, actions sit at
+      // 24; this padding makes both 28.
       leadingWidth: _kLeading,
       actionsPadding: const EdgeInsets.only(
         right: (_kLeading - _kIconButton) / 2,
@@ -134,7 +111,7 @@ ThemeData buildAppTheme(Brightness brightness) {
         borderRadius: BorderRadius.circular(_rCard),
         side: BorderSide(color: hairline),
       ),
-      clipBehavior: Clip.antiAlias, // ink + content follow the rounded corners
+      clipBehavior: Clip.antiAlias,
     ),
 
     listTileTheme: ListTileThemeData(
@@ -148,8 +125,6 @@ ThemeData buildAppTheme(Brightness brightness) {
         fontSize: 12.5,
         color: scheme.onSurfaceVariant,
       ),
-      // Hover/press highlight is a rounded pill inset inside the card, not a
-      // full-bleed square-cornered band (very visible with a pointer on macOS).
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(_rControl),
       ),
@@ -166,9 +141,6 @@ ThemeData buildAppTheme(Brightness brightness) {
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       ),
     ),
-    // Same 48pt height as FilledButton: these sit stacked under each other
-    // (Sign in / Sign in with SSO, Set active / Remove), and mismatched heights
-    // read as a mistake.
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(64, 48),

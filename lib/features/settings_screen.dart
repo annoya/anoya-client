@@ -24,9 +24,6 @@ import 'logs_screen.dart';
 import 'on_demand_screen.dart';
 import 'rule_sets_screen.dart';
 
-/// App settings. Top: every configuration, each row a way into its own
-/// settings — which one is active is decided on the home screen, not here.
-/// Then the global CONNECTION, ROUTING, GENERAL and DIAGNOSTICS sections.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -56,21 +53,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _push(Widget screen) async {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-    await _load(); // pushed screens may change prefs/sets/geo
-    // Rule sets and geo databases both change what the tunnel would run, and
-    // those screens don't know about profiles — resync here on the way back.
+    await _load();
+    // Pushed screens don't know about profiles: resync what the tunnel runs.
     if (mounted) {
       await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
     }
   }
 
-  /// The one resolver the user owns: it applies only where nobody else chose.
-  ///
-  /// Presets rather than a bare field — a typo here breaks every name lookup on
-  /// the device, and four addresses cover almost everyone. "Custom" is the door
-  /// for a private resolver, held to the same standard the renderer holds a
-  /// subscription's to, plus one the renderer cannot check: a default named by
-  /// domain would need resolving before it could resolve.
   Future<void> _pickDefaultDns() async {
     const custom = '__custom__';
     final l10n = context.l10n;
@@ -121,8 +110,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         .read(routingPrefsProvider.notifier)
         .update((p) => p.copyWith(defaultDns: value));
     if (!mounted) return;
-    // Only some configurations are affected, but the engine holds one config at
-    // a time and the cheapest correct thing is to re-render the live one.
     await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
   }
 
@@ -159,16 +146,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  /// What the settings row shows under "Appearance".
   String _themeLabel(ThemeMode mode) => switch (mode) {
     ThemeMode.system => context.l10n.themeSystem,
     ThemeMode.light => context.l10n.themeLight,
     ThemeMode.dark => context.l10n.themeDark,
   };
 
-  /// The way into a configuration's own settings. A single configuration is
-  /// named right here; several open as a sheet, so a long list never turns the
-  /// settings screen into an endless scroll.
   Widget _configurationsRow(ProfilesState st) {
     if (st.profiles.length == 1) {
       final only = st.profiles.single;
@@ -194,11 +177,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _openConfigurations() async {
     final st = ref.read(profilesControllerProvider);
     final favorites = ref.read(favoritesProvider);
-    // The same sheet as the home-screen picker, in its navigational mode: the
-    // returned value is "open this configuration", not "make it active" —
-    // that choice belongs to the home screen. Passing the favourites still
-    // buys the shared order (favourites first) without the stars, which are
-    // edited where they are used.
     final picked = await pickOption<String>(
       context,
       title: context.l10n.settingsConfigurations,
@@ -240,20 +218,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Card(margin: kCardMargin, child: _configurationsRow(st)),
             ],
 
-            // Auto-connect differs by platform in kind, not in detail: Apple
-            // evaluates our on-demand rules, Android has the system's own
-            // Always-on switch we can only point at, Windows has nothing of
-            // the sort and shows no card. Disconnect-on-sleep is a flag of
-            // Apple's VPN protocol and has no counterpart elsewhere.
             SectionHeader(l10n.settingsSectionConnection),
             if (hasAutoConnect)
               Card(
                 margin: kCardMargin,
                 child: supportsBootAutoConnect
-                    // Windows and Linux: our own service starts with the
-                    // machine, so the facility is ours to offer — and one
-                    // condition ("when the computer starts") is a switch, not
-                    // a screen.
                     ? SwitchListTile(
                         secondary: const Icon(Icons.bolt_outlined),
                         title: Text(l10n.settingsAutoConnect),
@@ -299,9 +268,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: ListTile(
                 leading: const Icon(Icons.tune),
                 title: Text(l10n.settingsAdvanced),
-                // The state of what is behind it, not a description of the
-                // screen: a row that says only "Advanced" has to be opened to
-                // learn whether the thing it holds is on.
                 subtitle: Text(
                   check.enabled
                       ? l10n.settingsConnectionCheckOn
@@ -326,8 +292,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       await ref
                           .read(routingPrefsProvider.notifier)
                           .update((p) => p.copyWith(lanDirect: v));
-                      // Changes the rendered rules, so the system's saved config
-                      // must follow.
                       await ref
                           .read(profilesControllerProvider.notifier)
                           .syncTunnelConfig();
@@ -345,8 +309,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ListTile(
                     leading: const Icon(Icons.language_outlined),
                     title: Text(l10n.settingsDefaultDns),
-                    // Says when it applies, because most configurations bring
-                    // their own and this setting then does nothing at all.
                     subtitle: Text(
                       l10n.settingsDefaultDnsSubtitle(
                         dnsPresetName(prefs.defaultDns),
@@ -413,9 +375,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: ListTile(
                 leading: const Icon(Icons.shield_outlined),
                 title: Text(l10n.aboutTitle),
-                // The version in the subtitle is what most visits come for, so
-                // it is readable without opening anything — and it marks the
-                // row as a reference rather than a setting.
                 subtitle: Text('$kAppName $appVersionLabel'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _push(const AboutScreen()),

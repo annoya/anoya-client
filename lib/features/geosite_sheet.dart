@@ -6,10 +6,6 @@ import '../core/service_catalog.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
-/// Geosite category picker: everything the local GeoSite.dat contains, with
-/// the curated catalog pinned as POPULAR (same names and avatars as Simple
-/// mode) and the domain count telling a service apart from a three-domain
-/// list.
 class GeositeSheet extends StatefulWidget {
   const GeositeSheet({super.key});
 

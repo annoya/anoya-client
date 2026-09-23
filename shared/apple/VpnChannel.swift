@@ -6,10 +6,6 @@ import Flutter
 import Foundation
 import Libagw
 
-/// VpnChannel bridges Flutter <-> VPNManager.
-///   MethodChannel "vpn/control":  start(config) / stop / reload / … — one case
-///                                 per request the Dart core makes
-///   EventChannel  "vpn/status":   stream of "connected|connecting|disconnected"
 enum VpnChannel {
     static func register(messenger: FlutterBinaryMessenger) {
         let control = FlutterMethodChannel(name: "vpn/control", binaryMessenger: messenger)
@@ -41,8 +37,6 @@ enum VpnChannel {
                 let sleep = args["disconnect_on_sleep"] as? Bool ?? false
                 Task { @MainActor in
                     do {
-                        // Returns whether the system actually armed — it refuses
-                        // when there is no tunnel config to start from.
                         let armed = try await VPNManager.shared.setOnDemand(
                             enabled: enabled, rules: rules, disconnectOnSleep: sleep,
                             config: args["config"] as? String,
@@ -54,8 +48,6 @@ enum VpnChannel {
                     }
                 }
             case "reload":
-                // Hot-swap the running tunnel onto a new config (location or
-                // profile switch) without dropping the NE session.
                 let args = call.arguments as? [String: Any] ?? [:]
                 guard let config = args["config"] as? String else {
                     result(FlutterError(code: "bad_args", message: "config required", details: nil))
@@ -72,8 +64,6 @@ enum VpnChannel {
                     }
                 }
             case "sync_config":
-                // Mirror the current selection into the saved profile without
-                // starting anything (and without creating the profile).
                 let args = call.arguments as? [String: Any] ?? [:]
                 guard let config = args["config"] as? String else {
                     result(FlutterError(code: "bad_args", message: "config required", details: nil))
@@ -119,20 +109,11 @@ enum VpnChannel {
             case "device_info":
                 result(deviceInfo())
             case "gateway_abi":
-                // Also the reason this file imports Libagw at all: the library
-                // is a static archive whose only caller is Dart over FFI, so
-                // without one reference from linked code the linker would drop
-                // it and every agw_* lookup would fail at runtime with nothing
-                // to explain why. This call pulls the archive in; the -u flags
-                // in the Runner's OTHER_LDFLAGS keep every other agw_* entry
-                // point alive through a release link's dead stripping, which
-                // used to remove all but this one.
+                // This reference keeps the linker from dropping the Libagw static archive,
+                // whose only other caller is Dart FFI. The -u flags in OTHER_LDFLAGS keep
+                // the remaining agw_* symbols alive through dead stripping.
                 result(Int(agw_abi_version()))
             case "shared_dir":
-                // App Group container shared with the tunnel extension — the
-                // engine's home dir, where GeoIP/GeoSite databases live. Dart
-                // writes there with dart:io (POSIX), which avoids the macOS
-                // "access data from other apps" TCC probe.
                 let url = FileManager.default.containerURL(
                     forSecurityApplicationGroupIdentifier: "group.org.annoya.test")
                 result(url?.path)
@@ -143,17 +124,12 @@ enum VpnChannel {
                     result(nil)
                 }
             case "clear_logs":
-                // Only the extension may delete files in its own container, so
-                // this needs a running tunnel — the app side says so when it
-                // fails rather than pretending the logs are gone.
                 Task { @MainActor in
                     do { try await VPNManager.shared.clearLogs(); result(nil) }
                     catch { result(FlutterError(code: "clear_logs_failed",
                                                 message: error.localizedDescription, details: nil)) }
                 }
             case "fetch_log":
-                // Pull a log file from the running extension over provider IPC
-                // (the extension logs into its own container, not a shared one).
                 let name = (call.arguments as? [String: Any])?["name"] as? String ?? ""
                 Task { @MainActor in
                     do { let text = try await VPNManager.shared.fetchLog(name); result(text) }
@@ -169,11 +145,7 @@ enum VpnChannel {
     }
 }
 
-/// What this device is, for the subscription panels that count devices.
-///
-/// The model comes from sysctl rather than the host name: `hw.model` is
-/// "MacBookPro18,3", while the host name is routinely "Ivan's MacBook Pro" —
-/// which would hand a third-party panel the user's name for nothing.
+// The model comes from sysctl, not the host name: the host name often carries the user's name.
 private func deviceInfo() -> [String: String] {
     let v = ProcessInfo.processInfo.operatingSystemVersion
     var model = ""
@@ -201,19 +173,16 @@ private func deviceInfo() -> [String: String] {
     ]
 }
 
-/// Flutter calls stream handlers on the platform thread, which is main; the
-/// protocol does not say so in its types, hence the assumeIsolated at each
-/// entry — it traps rather than races if that ever stops being true.
+// Flutter calls stream handlers on the main thread, but the protocol does not say so;
+// assumeIsolated traps rather than races if that ever changes.
 private final class StatusStreamHandler: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         MainActor.assumeIsolated {
             VPNManager.shared.onStatus = { status in events(status) }
-            events(VPNManager.shared.currentStatus()) // what we know right now
+            events(VPNManager.shared.currentStatus())
         }
-        // …and what is actually true: on a fresh launch the app has not touched
-        // the system profile yet, so the line above says "disconnected" even
-        // over a live tunnel. Adopting the existing profile publishes the real
-        // status (and starts the status observer) as soon as it loads.
+        // On a fresh launch the line above says "disconnected" even over a live
+        // tunnel; adopting the system profile publishes the real status.
         Task { @MainActor in events(await VPNManager.shared.refreshStatus()) }
         return nil
     }

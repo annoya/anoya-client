@@ -7,13 +7,6 @@ import '../core/network_extension_core.dart';
 import 'profiles_controller.dart';
 import 'session.dart';
 
-/// Which server a selected group is currently sending traffic through, as the
-/// label the provider gave it.
-///
-/// The engine decides this and re-decides it on its own schedule, so the app
-/// can only ask. It asks while a group is selected and the tunnel is up, and
-/// says nothing otherwise: a name from a previous session would be a claim
-/// about where traffic goes right now.
 final groupMemberProvider = StreamProvider<String>((ref) async* {
   final profiles = ref.watch(profilesControllerProvider);
   final connected = ref.watch(sessionProvider).connected;
@@ -22,9 +15,6 @@ final groupMemberProvider = StreamProvider<String>((ref) async* {
     yield '';
     return;
   }
-  // The engine names members positionally (`p0`, `p1`, …) — the names the
-  // renderer generated — so the provider's own text never has to cross the
-  // extension boundary.
   final members = profiles.selectedGroupMembers;
   while (true) {
     final picked = await NetworkExtensionCore.groupMember(kGroupName);
@@ -33,14 +23,9 @@ final groupMemberProvider = StreamProvider<String>((ref) async* {
   }
 });
 
-/// How often the app asks. Slower than the engine's own health check on
-/// purpose: this only feeds a subtitle, and each ask is an IPC round trip to
-/// the extension.
+// Slower than the engine's health check on purpose: each poll is an IPC call.
 const kGroupMemberPoll = Duration(seconds: 10);
 
-/// Turns the engine's positional member name (`p0`, `p1`, …) back into the
-/// label the provider gave that server. Shared with the connection check,
-/// which has to name the same server the same way.
 String labelForGroupMember(String engineName, List<dynamic> members) {
   if (!engineName.startsWith('p')) return '';
   final index = int.tryParse(engineName.substring(1));

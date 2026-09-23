@@ -8,9 +8,6 @@ import '../state/profiles_controller.dart';
 import '../state/routing_status.dart';
 import 'rule_set_editor_screen.dart';
 
-/// Global rule sets: created here, applied per configuration (see the
-/// configuration screen). Each row shows mode, rule count and how many
-/// configurations use the set.
 class RuleSetsScreen extends ConsumerStatefulWidget {
   const RuleSetsScreen({super.key});
 
@@ -52,8 +49,7 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
       id: 'rs${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}',
       name: trimmed,
     );
-    // Notifier before the await: the bump must land even if the user leaves
-    // the screen while the write is in flight (ref dies with the state).
+    // Read before the await: ref dies with the state if the user leaves.
     final revision = ref.read(ruleSetRevisionProvider.notifier);
     await RuleSetStore.save([..._sets, set]);
     revision.bump();
@@ -77,11 +73,10 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    // Usage counts: profiles without an explicit set use Default.
     final profiles = ref.watch(profilesControllerProvider).profiles;
     final usage = <String, int>{};
     for (final p in profiles) {
-      if (p.routing != null) continue; // managed profiles don't use local sets
+      if (p.routing != null) continue;
       final id = p.ruleSetId ?? RuleSet.defaultId;
       usage[id] = (usage[id] ?? 0) + 1;
     }

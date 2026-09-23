@@ -13,9 +13,6 @@ import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// Settings never grows a per-configuration list: one configuration is named
-/// inline, several hide behind a sheet, and neither offers to switch the active
-/// one — that lives on the home screen.
 void main() {
   // The version is read from the shipped pubspec at startup; without this the
   // rows below would assert the "unknown" placeholder against itself.
@@ -92,7 +89,6 @@ void main() {
       findsNothing,
       reason: 'the sheet navigates, it does not select the active one',
     );
-    // Navigational mode: every row in the sheet promises to open something.
     expect(
       find.descendant(
         of: find.byType(BottomSheet),
@@ -105,9 +101,6 @@ void main() {
   testWidgets('Windows shows no auto-connect card, but keeps Advanced', (
     tester,
   ) async {
-    // No on-demand rules and no system switch to point at: the card would
-    // have nothing true to say. The connection check works there, so its row
-    // stays.
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     await pump(tester, [profile('a', 'Config')]);
 
@@ -121,8 +114,6 @@ void main() {
   });
 
   testWidgets('About is one row that already names the build', (tester) async {
-    // Settings is what the user changes; About changes nothing, so it is a row
-    // into its own screen rather than a tail of static text.
     await pump(tester, [profile('a', 'Config')]);
     await tester.scrollUntilVisible(find.text('About'), 200);
 
@@ -152,8 +143,6 @@ void main() {
     expect(find.byType(AboutScreen), findsOneWidget);
     expect(find.text(kAppName), findsOneWidget);
     expect(find.text('Version $appVersionLabel'), findsOneWidget);
-    // Ours, not the engine's own constant, which says 1.10.0 in the source we
-    // build from — see app_version.dart.
     expect(find.text(engineVersionLabel), findsOneWidget);
 
     for (final title in ['Terms of Service', 'Privacy Policy']) {

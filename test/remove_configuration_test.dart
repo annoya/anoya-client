@@ -12,17 +12,6 @@ import 'package:vpn_client/l10n/l10n.dart';
 import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 
-/// Removing a configuration from its own settings screen.
-///
-/// The screen describes something that no longer exists, so it has to close
-/// itself. It stopped doing that for the *active* configuration: removing that
-/// one also re-points the tunnel, and that extra await lets a frame through —
-/// by the time the pop was reached, the widget asking for it had already been
-/// replaced by the screen's "nothing to show" placeholder, and the user was
-/// left on a blank page with a back arrow.
-///
-/// Removal outliving the widget that asked for it is normal, so the removal
-/// here is deliberately slower than one frame: that is the case that broke.
 void main() {
   Profile profile(String id, String name) => Profile(
     id: id,
@@ -38,7 +27,6 @@ void main() {
     ],
   );
 
-  /// The settings screen as the user reaches it: pushed on top of something.
   Future<_SlowRemoval> open(WidgetTester tester, String id) async {
     final ctrl = _SlowRemoval([profile('p1', 'nexus'), profile('p2', 'work')]);
     await tester.pumpWidget(
@@ -103,9 +91,6 @@ void main() {
   });
 }
 
-/// Removal that takes longer than the frame in which the state changed — the
-/// real one writes the list, drops the favourites and re-renders the tunnel
-/// config for the engine.
 class _SlowRemoval extends ProfilesController {
   _SlowRemoval(this.profiles);
   final List<Profile> profiles;
@@ -120,9 +105,7 @@ class _SlowRemoval extends ProfilesController {
     removed.add(id);
     final left = state.profiles.where((p) => p.id != id).toList();
     state = ProfilesState(profiles: left, activeId: left.first.id);
-    // A frame goes by before the removal finishes — which is what happens on a
-    // device the moment anything after the state change touches the disk or the
-    // engine, and the condition the screen has to survive.
+    // A frame must pass before the removal finishes: that is the case that broke.
     await SchedulerBinding.instance.endOfFrame;
     await Future<void>.delayed(const Duration(milliseconds: 20));
   }

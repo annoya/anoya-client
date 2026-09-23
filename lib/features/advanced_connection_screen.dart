@@ -10,8 +10,6 @@ import '../l10n/l10n.dart';
 import '../state/connection_check_controller.dart';
 import '../state/session.dart';
 
-/// Settings for the one thing the system's "connected" cannot tell the user:
-/// whether the tunnel carries traffic.
 class AdvancedConnectionScreen extends ConsumerWidget {
   const AdvancedConnectionScreen({super.key});
 
@@ -62,9 +60,6 @@ class AdvancedConnectionScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(kGutter, 14, kGutter, 0),
               child: FilledButton(
-                // Nothing to probe with the engine stopped, and a button that
-                // reports "the tunnel is not running" reads as a fault rather
-                // than as the obvious.
                 onPressed: (!connected || st.running) ? null : ctrl.run,
                 child: st.running
                     ? const SizedBox(
@@ -134,12 +129,6 @@ class AdvancedConnectionScreen extends ConsumerWidget {
   }
 }
 
-/// The answer, kept as a line rather than announced as a toast: "143 ms" only
-/// means something next to the last one, and a toast leaves nothing to compare.
-///
-/// Stateful for one reason: "just now" stops being true while the screen is
-/// open, and a timestamp that freezes is worse than none — it dates the
-/// measurement wrongly rather than vaguely.
 class _ResultCard extends StatefulWidget {
   const _ResultCard({required this.check});
 
@@ -192,8 +181,6 @@ class _ResultCardState extends State<_ResultCard> {
           Icons.check_circle_outline,
           color: context.vpnColors.connected,
         ),
-        // Two different claims, and they must not borrow each other's words:
-        // one is a measurement we made, the other is traffic we watched go by.
         title: Text(
           check.observed
               ? l10n.advancedTrafficGettingThrough

@@ -6,12 +6,6 @@ import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';
 import 'package:vpn_client/core/subscription_fetch.dart';
 
-/// Groups a subscription offers, whose member the **engine** picks.
-///
-/// The risk here is not a crash: a group that renders wrong produces a tunnel
-/// that works through the wrong server, or one that silently carries traffic
-/// through a member the user was never offered. So these tests are about what
-/// reaches the engine and what the engine is allowed to do with it.
 void main() {
   const body = '''
 proxies:
@@ -64,18 +58,11 @@ rules:
     test('include-all means every server we can actually run', () {
       final p = parseSubscriptionBody(body);
       final fastest = p.groups.first;
-      // tuic is in the document and not in the group: a member we cannot run is
-      // not a member, and offering it would be offering a dead choice.
       expect(fastest.members.length, 2);
       expect(p.unsupported, {'tuic': 1});
     });
 
     group('membership by pattern', () {
-      // A provider that writes `exclude-filter: 🇷🇺` is saying "not through a
-      // Russian exit". Read without the pattern, the group is built from every
-      // server in the document and sends the user exactly where they were being
-      // steered away from — so this is not cosmetic, and a group we cannot
-      // build correctly is dropped rather than widened.
       const filtered = '''
 proxies:
   - {name: "🇩🇪 Germany", type: vless, server: de.example, port: 443, uuid: u1}
@@ -114,8 +101,6 @@ proxy-groups:
       });
 
       test('exclude-filter applies to an explicit list too', () {
-        // The engine skips `filter` for a hand-written list but not
-        // `exclude-filter` — it runs over the membership however it was built.
         expect(labels('Listed'), ['🇩🇪 Germany']);
       });
 
@@ -170,8 +155,6 @@ proxy-groups:
     );
 
     test('a load-balance strategy is carried, and an unknown one is not', () {
-      // mihomo rejects an unknown strategy while *applying* the config, which
-      // would take the running tunnel down over one mistyped field.
       final groups = parseSubscriptionBody(body).groups;
       expect(groups[2].strategy, 'consistent-hashing');
       expect(
@@ -238,8 +221,6 @@ proxy-groups:
     });
 
     test('the rules still point at PROXY, whatever PROXY now contains', () {
-      // Rules and the `tun` section are what a hot switch compares; a group must
-      // not reach into either, or switching to one would drop the session.
       final doc = render(group);
       final proxy = (doc['proxy-groups'] as YamlList).last;
       expect(proxy['name'], 'PROXY');
@@ -248,8 +229,6 @@ proxy-groups:
     });
 
     test('members are named by position, never by the provider\'s text', () {
-      // A label can hold anything — emoji, colons, newlines — and these are
-      // YAML keys and rule targets.
       final doc = render(group);
       expect(
         mihomoTunConfigYaml(members.first, group: group, members: members),
@@ -262,8 +241,6 @@ proxy-groups:
     });
 
     test('an interval below the floor is raised to it', () {
-      // The check runs from the user's device, through the tunnel, once per
-      // member per round. A provider asking for ten seconds does not get it.
       final doc = render(
         const ProxyGroup(
           name: 'g',
@@ -338,8 +315,6 @@ proxy-groups:
 
   group('selecting one', () {
     test('a group id is distinguishable from a server id', () {
-      // They share one selection — the user answers a single question — so the
-      // id has to say which kind of answer it is.
       const g = ProxyGroup(
         name: '⚡️ Fastest',
         type: 'url-test',
@@ -360,8 +335,6 @@ proxy-groups:
 
   group('asking for a rendering by name', () {
     test('the panel names differ, and each is tried in turn', () {
-      // Remnawave calls it mihomo, Marzban clash-meta — Marzban has no
-      // "mihomo" at all.
       final base = Uri.parse('https://sub.example/tok3n');
       expect(
         renderingUrl(base, 'mihomo').toString(),
@@ -374,8 +347,6 @@ proxy-groups:
     });
 
     test('3x-ui serves it from another path, not a suffix', () {
-      // /sub/<id> next to /clash/<id> and /json/<id>: appending would ask the
-      // subscription endpoint for a server named "clash".
       final u = Uri.parse('https://panel.example/sub/abc123');
       expect(
         renderingUrl(u, 'clash').toString(),

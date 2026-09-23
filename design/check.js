@@ -1,5 +1,4 @@
-// Mockup self-check: every canvas must fit its frame and every component must
-// match the metrics table. Run in the page; returns a list of violations.
+// Run in the mockup page; returns the list of violations.
 (() => {
   const S = 0.62;                       // display scale
   const pt = px => Math.round(px / S);  // back to logical points
@@ -9,8 +8,7 @@
     return b?.querySelector('.cap .id')?.textContent?.trim() || '(no id)';
   };
 
-  // 1. frames must not overflow (phone 393×852; macOS window 400×738 — its
-  //    default content area plus a 38pt title bar)
+  // macOS 738 = default content area plus a 38pt title bar.
   document.querySelectorAll('.ph, .mac').forEach(f => {
     const limit = f.classList.contains('ph') ? 852 : 738;
     const over = f.scrollHeight - limit;
@@ -19,7 +17,6 @@
     if (wide > 2) bad.push(`${label(f)}: content wider than frame by ${wide}pt`);
   });
 
-  // 2. inputs and selects: 56pt tall, select must be a row
   document.querySelectorAll('.inp').forEach(i => {
     const h = pt(i.getBoundingClientRect().height);
     const multiline = i.querySelector('.vl.multi');
@@ -29,7 +26,6 @@
     }
   });
 
-  // 3. list rows: 56 (one line) or 72 (two lines); rule rows 64
   document.querySelectorAll('.row').forEach(r => {
     const h = pt(r.getBoundingClientRect().height);
     const two = !!r.querySelector('.s');
@@ -43,13 +39,10 @@
     if (Math.abs(h - 64) > 8) bad.push(`${label(r)}: rule row ${h}pt, expected 64`);
   });
 
-  // 4. every button is 48pt — filled, tonal and outlined alike, so a stack of
-  // them never looks ragged
   document.querySelectorAll('.btn').forEach(b => {
     const h = pt(b.getBoundingClientRect().height);
     if (Math.abs(h - 48) > 3) bad.push(`${label(b)}: button ${h}pt, expected 48`);
   });
-  // 4b. buttons stacked in the same container must share a height
   document.querySelectorAll('.ph, .mac').forEach(f => {
     const groups = new Map();
     f.querySelectorAll('.btn').forEach(b => {
@@ -61,7 +54,6 @@
     });
   });
 
-  // 5. segmented: 40pt and full width of its container
   document.querySelectorAll('.segm').forEach(s => {
     const h = pt(s.getBoundingClientRect().height);
     if (Math.abs(h - 40) > 3) bad.push(`${label(s)}: segmented ${h}pt, expected 40`);
@@ -71,12 +63,9 @@
     if (own < parent - padding - 2) bad.push(`${label(s)}: segmented not full width`);
   });
 
-  // 6. app bars 56, section headers 12pt caps, ring 180, fab 56, switch 52x32
   document.querySelectorAll('.ab').forEach(a => {
     const h = pt(a.getBoundingClientRect().height);
     if (Math.abs(h - 56) > 3) bad.push(`${label(a)}: app bar ${h}pt, expected 56`);
-    // Leading and trailing icons must be inset equally (28pt to their centre),
-    // otherwise "+" and the gear look off-balance.
     const ics = [...a.querySelectorAll('.ic')];
     if (ics.length >= 2) {
       const ab = a.getBoundingClientRect();
@@ -89,8 +78,7 @@
       }
     }
   });
-  // ".demo" marks a component shown at a reduced size purely to illustrate a
-  // state — exempt from the size rules.
+  // .demo is a deliberately shrunk illustration, exempt from size rules.
   document.querySelectorAll('.ring:not(.demo)').forEach(r => {
     const b = r.getBoundingClientRect();
     if (Math.abs(pt(b.width) - 180) > 3) bad.push(`${label(r)}: ring ${pt(b.width)}pt, expected 180`);
@@ -106,7 +94,6 @@
     }
   });
 
-  // 7. nothing may stick out of the frame horizontally
   document.querySelectorAll('.ph, .mac').forEach(f => {
     const fr = f.getBoundingClientRect();
     f.querySelectorAll('.card, .btn, .inp, .dlg, .sheet').forEach(el => {
@@ -117,10 +104,6 @@
     });
   });
 
-  // 8. class-name collisions: a class used inside a canvas must not also be a
-  // page-chrome class (".wrap" as a text modifier once inherited the page
-  // container's 36/28/80 padding; ".ph" as a placeholder inherited the phone's
-  // 852pt height). Page chrome = anything outside .ph/.mac.
   const inside = new Set();
   document.querySelectorAll('.ph *, .mac *').forEach(el => {
     (el.classList || []).forEach(c => inside.add(c));

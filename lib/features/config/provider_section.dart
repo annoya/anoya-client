@@ -5,15 +5,6 @@ import '../../core/subscription_info.dart';
 import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 
-/// Everything the subscription's panel reported, in its own voice.
-///
-/// The header is neutral because the rows already carry the attribution: the
-/// provider's message stands without an icon of ours, and the plan's numbers
-/// say "what the subscription reports, not verified here". Naming the section
-/// after the source said it a third time, and in testing it read as the name of
-/// some separate thing rather than as "details of this subscription". What must
-/// not happen is the opposite — calling it ACCOUNT, which would claim an
-/// authority a subscription does not have (ADR-005).
 class ProviderSection extends StatelessWidget {
   const ProviderSection({super.key, required this.info});
 
@@ -32,9 +23,6 @@ class ProviderSection extends StatelessWidget {
             margin: kCardMargin,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-              // Their text, rendered as text: no links made clickable out of it,
-              // and no warning icon lent to it. A provider's message is not a
-              // state of the app.
               child: Text(
                 info.announce,
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -97,8 +85,6 @@ class _PlanCard extends StatelessWidget {
           children: [
             Text(
               info.unlimited
-                  // A share of zero is not a number: a bar here would read as
-                  // "all used up" for a plan that has no ceiling at all.
                   ? l10n.configUsedNoLimit(formatBytes(info.usedBytes))
                   : l10n.configTrafficOf(
                       formatBytes(info.usedBytes),

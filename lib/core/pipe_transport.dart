@@ -6,13 +6,9 @@ import 'package:flutter/services.dart';
 import 'control_transport.dart';
 import 'log.dart';
 
-/// One byte-stream connection to the tunnel service. [WinPipeLink] is the
-/// named pipe; tests substitute a fake.
 abstract class PipeLink {
-  /// Opens the connection. Throws when the service is not there to answer.
   Future<void> connect();
 
-  /// Bytes from the service. Ends when the service hangs up.
   Stream<List<int>> get incoming;
 
   void write(List<int> bytes);
@@ -20,19 +16,6 @@ abstract class PipeLink {
   void close();
 }
 
-/// The wire to the Windows tunnel service: one JSON object per line each way.
-///
-/// The app sends `{"id","method","args"}` and reads `{"id","result","error"}`
-/// back, matched by id; the service pushes `{"event":"status","status"}` in
-/// between, and the first thing a fresh connection carries is the current
-/// status — the app may have been opened over a tunnel the service brought up
-/// at boot. Mirrors `service.go` on the other end.
-///
-/// The service can be absent (not installed, stopped, still starting) and the
-/// app has to say so without breaking: a request then fails with
-/// `service_unavailable`, the status reads disconnected, and the transport
-/// keeps knocking every [retryDelay] so the moment the service appears the app
-/// picks up its state.
 class PipeTransport implements ControlTransport {
   PipeTransport(this._open, {this.retryDelay = const Duration(seconds: 3)}) {
     unawaited(_connect());
@@ -119,9 +102,6 @@ class PipeTransport implements ControlTransport {
     _retry = Timer(retryDelay, () => unawaited(_connect()));
   }
 
-  /// The service hung up — stopped, crashed, or upgraded under us. Every
-  /// caller still waiting gets an answer, the status says what the tunnel is
-  /// now, and the next knock is scheduled.
   void _dropLink() {
     final link = _link;
     if (link == null) return;
@@ -182,7 +162,6 @@ class PipeTransport implements ControlTransport {
     }
   }
 
-  /// For tests: stops retrying and drops the connection.
   void dispose() {
     _disposed = true;
     _retry?.cancel();

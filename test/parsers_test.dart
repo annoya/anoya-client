@@ -35,8 +35,8 @@ void main() {
       ((p['ws-opts'] as Map)['headers'] as Map)['Host'],
       'cdn.example.com',
     );
-    expect(p['label'], isNull); // label lives on Location, not proxy
-    expect(loc.label, 'example.com:443'); // no fragment → host:port
+    expect(p['label'], isNull);
+    expect(loc.label, 'example.com:443');
   });
 
   test('vless percent-encoded fragment (flag emoji) is decoded', () {
@@ -150,8 +150,6 @@ rules:
     expect(locs[1].proxy['cipher'], 'aes-256-gcm');
   });
   test('an IPv6 literal loses its brackets, whichever form carried it', () {
-    // ss:// carries host:port as text; vless:// goes through Uri, which
-    // already strips them. Both must land on the bare address.
     final ss = parseProxyUri(
       'ss://YWVzLTEyOC1nY206cGFzcw==@[2001:db8::1]:8388#v6',
     )!;
@@ -165,8 +163,7 @@ rules:
   test(
     'a proxy with an unusable port is rejected, not emitted with port 0',
     () {
-      // {"add":"1.2.3.4","port":"bad","id":"x"} — a vmess payload whose port is
-      // not a number at all.
+      // {"add":"1.2.3.4","port":"bad","id":"x"}
       expect(
         parseProxyUri(
           'vmess://eyJhZGQiOiIxLjIuMy40IiwicG9ydCI6ImJhZCIsImlkIjoieCJ9',
@@ -185,8 +182,6 @@ rules:
 
   group('hysteria2', () {
     test('a hysteria2 link becomes a mihomo hysteria2 proxy', () {
-      // The shape a live panel sends: password in the userinfo, sni + alpn +
-      // insecure in the query, and no transport — it is QUIC.
       final loc = parseProxyUri(
         'hysteria2://s3cret@de.example.com:30443/?sni=de.example.com&alpn=h3&insecure=0#DE',
       )!;
@@ -258,7 +253,6 @@ rules:
     });
 
     test('a Clash body drops what the engine cannot render, and says so', () {
-      // Left in, these would reach the server picker and fail only on Connect.
       final parsed = parseSubscriptionBody(
         'proxies:\n'
         '  - {name: ok, type: vless, server: a.example, port: 443, uuid: u}\n'
@@ -282,8 +276,6 @@ rules:
 
   group('transports the engine expresses differently from the URI', () {
     test('tcp with an HTTP header is a different network, not plain tcp', () {
-      // Dropping the header used to leave network: tcp — a server expecting
-      // HTTP obfuscation then refuses, with the server still listed as fine.
       final loc = parseProxyUri(
         'vless://u@h.example:443?security=tls&type=tcp&headerType=http&path=/p&host=h.example',
       )!;
@@ -325,8 +317,6 @@ rules:
     test(
       'an xhttp server with a split download channel is refused, not guessed',
       () {
-        // Two channels dialed as one fails in a way no message could explain, so
-        // it is counted as unsupported instead.
         final r = parseShareLink(
           'vless://u@h.example:443?security=tls&type=xhttp&path=/x'
           '&extra=%7B%22downloadSettings%22%3A%7B%22address%22%3A%22d.example%22%7D%7D',
@@ -348,8 +338,6 @@ rules:
     );
 
     test('trojan is held to what the engine allows it', () {
-      // The engine's trojan adapter carries only ws and grpc; emitting xhttp
-      // for it would produce a config it rejects.
       expect(
         parseShareLink(
           'trojan://p@h.example:443?type=xhttp&path=/x',
@@ -365,8 +353,6 @@ rules:
     test(
       'a malformed link of a known scheme is junk, not an unsupported protocol',
       () {
-        // "vless unsupported" would be a lie, and would put vless in the count
-        // the user is shown.
         final r = parseShareLink('vless://u@h.example:99999?security=tls');
         expect(r.location, isNull);
         expect(r.unsupported, isNull);
@@ -376,7 +362,6 @@ rules:
 
   group('TLS parameters that decide whether the handshake succeeds', () {
     test('alpn is carried for vless and trojan, as a list', () {
-      // A server expecting h2 refuses a client that offers nothing else.
       expect(
         parseProxyUri(
           'vless://u@h.example:443?security=tls&alpn=h2,http/1.1',
@@ -429,8 +414,6 @@ rules:
   });
 
   group('base64 payloads on vless:// and trojan://', () {
-    // Not a standard form for either protocol, but panels and older clients
-    // emit it — the whole URI body encoded, sometimes with the name outside.
     String b64(String s) =>
         base64Url.encode(utf8.encode(s)).replaceAll('=', '');
     const uuid = 'd1f8b2c4-aaaa-bbbb-cccc-1234567890ab';
@@ -447,9 +430,6 @@ rules:
     });
 
     test('the query may sit outside the base64, not only inside it', () {
-      // A live panel's shape: base64 over `encryption:uuid@host:port` only,
-      // with the parameters and the name appended in the clear. Reading that
-      // base64 as a hostname is what made every such link "can't be read".
       final loc = parseProxyUri(
         'vless://${b64('none:$uuid@h.example:443')}'
         '?security=reality&pbk=KEY&sni=h.example&fp=chrome#Server 1',
@@ -462,9 +442,6 @@ rules:
     });
 
     test('the encryption in front of the uuid is not part of the uuid', () {
-      // VLESS negotiates no encryption; the `none:` is Shadowsocks' shape
-      // borrowed by the panel. Carried into the config it would be a
-      // credential the server has never heard of.
       final loc = parseProxyUri(
         'vless://${b64('none:$uuid@h.example:443')}?security=tls',
       )!;

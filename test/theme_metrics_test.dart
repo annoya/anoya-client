@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/theme.dart';
 
-/// Guards the metrics the design spec fixes, so a stray SizedBox or a Material
-/// default can't quietly break alignment again:
-///  - app-bar leading and trailing icons are inset equally;
-///  - every button in a stack is the same height (48).
 Widget _app(Widget home, {Brightness brightness = Brightness.dark}) =>
     MaterialApp(theme: buildAppTheme(brightness), home: home);
 
@@ -39,8 +35,7 @@ void main() {
 
     final insetLeft = leftCentre - bar.left;
     final insetRight = bar.right - rightCentre;
-    // 28 = half of the 56pt leading slot. The number matters
-    // less than both sides agreeing, which is what actually looked broken.
+    // 28 = half of the 56pt leading slot.
     expect(
       insetLeft,
       closeTo(28, 1),
@@ -104,8 +99,6 @@ void main() {
       theme.listTileTheme.contentPadding,
       const EdgeInsets.symmetric(horizontal: 16),
     );
-    // A rounded shape is what keeps the pointer highlight a pill inside the
-    // card instead of a full-bleed band with square corners.
     expect(theme.listTileTheme.shape, isA<RoundedRectangleBorder>());
   });
 }

@@ -5,8 +5,6 @@ import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/features/start_screen.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// The field answers as the user types: a recognised input at once, a refusal
-/// only after they stop — and never for an empty field.
 void main() {
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
