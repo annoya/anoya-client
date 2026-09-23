@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/routing_policy.dart';
-import 'package:vpn_client/core/rule_set.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/routing_policy.dart';
+import 'package:anoya/core/rule_set.dart';
 
 void main() {
   const localSet = RuleSet(

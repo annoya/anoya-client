@@ -7,5 +7,5 @@ Before changing a subsystem, read the ADR that governs it in
 [docs/decisions/](docs/decisions/README.md). This repository is the client, and
 it is specified in [docs/SPEC-CLIENT.md](docs/SPEC-CLIENT.md). The server side
 lives in its own repository,
-[annoya-web-panel](https://github.com/annoya/annoya-web-panel), which carries
+[anoya-web-panel](https://github.com/anoya/anoya-web-panel), which carries
 `SPEC-SERVICE.md` and the service-side ADRs.

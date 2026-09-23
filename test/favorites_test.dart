@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/favorites.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/core/ui.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/core/favorites.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/core/ui.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   group('model', () {

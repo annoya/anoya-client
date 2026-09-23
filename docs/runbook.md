@@ -86,7 +86,7 @@ is entirely unusable without them.
 ## Server side
 
 Server tests, image pushes and deploy live in the
-[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository's
+[anoya-web-panel](https://github.com/anoya/anoya-web-panel) repository's
 runbook. What matters from this side: during MVP an upgrade may wipe the
 server's data volume and redeploy, so nothing the client stored about a server
 survives it by contract.

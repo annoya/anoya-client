@@ -6,7 +6,7 @@ worthless if nobody can find where.
 
 This is the client's list. The server side's non-goals — what management and
 the workers deliberately do not do — live in the
-[annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository's
+[anoya-web-panel](https://github.com/anoya/anoya-web-panel) repository's
 `docs/NON_GOALS.md`.
 
 ## Product

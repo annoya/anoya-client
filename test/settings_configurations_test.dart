@@ -2,16 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/app_version.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/on_demand.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/features/about_screen.dart';
-import 'package:vpn_client/features/settings_screen.dart';
-import 'package:vpn_client/state/on_demand_controller.dart';
-import 'package:vpn_client/state/profiles_controller.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/core/app_version.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/on_demand.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/features/about_screen.dart';
+import 'package:anoya/features/settings_screen.dart';
+import 'package:anoya/state/on_demand_controller.dart';
+import 'package:anoya/state/profiles_controller.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   // The version is read from the shipped pubspec at startup; without this the

@@ -6,21 +6,21 @@ cd "$(dirname "$0")"
 [ -d /run/systemd/system ] || { echo "the tunnel service needs systemd" >&2; exit 1; }
 
 # A running service holds its executable open; stop it before replacing files.
-/opt/annoyatest/service/tunnel-service -uninstall >/dev/null 2>&1 || true
+/opt/anoya/service/tunnel-service -uninstall >/dev/null 2>&1 || true
 
-rm -rf /opt/annoyatest
-mkdir -p /opt/annoyatest/service
-cp -a bundle/. /opt/annoyatest/
-install -m 0755 service/tunnel-service /opt/annoyatest/service/tunnel-service
-install -Dm 0644 packaging/org.annoya.test.desktop /usr/share/applications/org.annoya.test.desktop
-install -Dm 0644 packaging/annoyatest.png /usr/share/icons/hicolor/256x256/apps/annoyatest.png
-ln -sf /opt/annoyatest/annoyatest /usr/bin/annoyatest
+rm -rf /opt/anoya
+mkdir -p /opt/anoya/service
+cp -a bundle/. /opt/anoya/
+install -m 0755 service/tunnel-service /opt/anoya/service/tunnel-service
+install -Dm 0644 packaging/org.anoya.desktop /usr/share/applications/org.anoya.desktop
+install -Dm 0644 packaging/anoya.png /usr/share/icons/hicolor/256x256/apps/anoya.png
+ln -sf /opt/anoya/anoya /usr/bin/anoya
 
-mkdir -p /var/lib/annoyatest/engine
+mkdir -p /var/lib/anoya/engine
 # Every local user's app writes geo databases here; sticky so none can remove another's.
-chmod 1777 /var/lib/annoyatest/engine
+chmod 1777 /var/lib/anoya/engine
 
-/opt/annoyatest/service/tunnel-service -install
+/opt/anoya/service/tunnel-service -install
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q || true
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q /usr/share/icons/hicolor || true
-echo "installed: /opt/annoyatest, service annoyatest-tunnel running"
+echo "installed: /opt/anoya, service anoya-tunnel running"

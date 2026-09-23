@@ -5,7 +5,7 @@
 # The other two platforms link it: Apple takes the c-archive out of
 # Libagw.xcframework into the app binary, Android ships libagw.so in the APK.
 # Windows has nowhere to link a Go c-archive into the MSVC-built runner, so the
-# library ships as a DLL next to AnnoyaTest.exe and Dart opens it by name (see
+# library ships as a DLL next to Anoya.exe and Dart opens it by name (see
 # lib/core/amnezia/agw_ffi.dart). Windows resolves a DLL from the executable's
 # own directory first, so no search path has to be set up.
 #

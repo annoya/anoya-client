@@ -28,7 +28,7 @@ bool FlutterWindow::OnCreate() {
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   tray_ = std::make_unique<TrayIcon>(GetHandle(), flutter_controller_->engine()->messenger(),
-                                     L"AnnoyaTest");
+                                     L"Anoya");
   tray_->on_toggle_window = [this]() { ToggleWindow(); };
   // Posted, not done inline: this runs inside TrackPopupMenuEx's modal loop,
   // and tearing down there destroys the live TrayIcon and hangs engine shutdown.

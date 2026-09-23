@@ -1,7 +1,7 @@
 # One description, three package formats: nfpm (https://nfpm.goreleaser.com)
 # turns this into a .deb, an .rpm and an Arch package from the same file
 # tree, so a Fedora or Arch user gets the same install as a Debian one. The
-# Linux counterpart of windows/installer/AnnoyaTest.iss.
+# Linux counterpart of windows/installer/Anoya.iss.
 #
 # What a package has to do here that `flutter build linux` cannot: put the
 # tunnel service next to the app, register it with systemd (it runs as root —
@@ -12,36 +12,36 @@
 # Driven by scripts/build-linux-packages.sh, which sets VERSION and ARCH from
 # pubspec and the target, and stages the Flutter bundle at the fixed path
 # below (nfpm expands variables in fields, not in file paths).
-name: annoyatest
+name: anoya
 arch: ${ARCH}
 platform: linux
 version: ${VERSION}
 section: net
 priority: optional
-maintainer: org.annoya <noreply@annoya.org>
+maintainer: org.anoya <noreply@anoya.org>
 description: |
-  AnnoyaTest VPN client.
+  Anoya VPN client.
   A VPN client with a system-wide tunnel. The tunnel is hosted by the
-  annoyatest-tunnel service, which this package registers with systemd.
-homepage: https://github.com/annoya/annoya-client
+  anoya-tunnel service, which this package registers with systemd.
+homepage: https://github.com/anoya/anoya-client
 license: Proprietary
 
 contents:
   - src: build/linux/stage/bundle
-    dst: /opt/annoyatest
+    dst: /opt/anoya
     type: tree
   - src: build/linux/service/tunnel-service
-    dst: /opt/annoyatest/service/tunnel-service
+    dst: /opt/anoya/service/tunnel-service
     file_info:
       mode: 0755
-  - src: linux/packaging/annoyatest-tunnel.service
-    dst: /usr/lib/systemd/system/annoyatest-tunnel.service
-  - src: linux/packaging/org.annoya.test.desktop
-    dst: /usr/share/applications/org.annoya.test.desktop
-  - src: linux/packaging/annoyatest.png
-    dst: /usr/share/icons/hicolor/256x256/apps/annoyatest.png
-  - src: /opt/annoyatest/annoyatest
-    dst: /usr/bin/annoyatest
+  - src: linux/packaging/anoya-tunnel.service
+    dst: /usr/lib/systemd/system/anoya-tunnel.service
+  - src: linux/packaging/org.anoya.desktop
+    dst: /usr/share/applications/org.anoya.desktop
+  - src: linux/packaging/anoya.png
+    dst: /usr/share/icons/hicolor/256x256/apps/anoya.png
+  - src: /opt/anoya/anoya
+    dst: /usr/bin/anoya
     type: symlink
 
 scripts:

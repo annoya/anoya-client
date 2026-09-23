@@ -77,7 +77,7 @@ designed for 393×852; a 1280×720 default shows one column in a field.
 ### Linux packaging
 
 `preremove` stops and disables the service before its files go. Only a dpkg
-purge removes `/var/lib/annoyatest` (geo databases, last config); rpm and
+purge removes `/var/lib/anoya` (geo databases, last config); rpm and
 pacman have no purge and keep it (`linux/packaging/scripts`).
 
 ## Alternatives Considered
@@ -117,7 +117,7 @@ is for.
   `MainFlutterWindow.swift`
 - `windows/runner/tray_icon.cpp`, `flutter_window.cpp`, `main.cpp`;
   `linux/runner/my_application.cc`
-- `android/app/src/main/kotlin/org/annoya/vpn_client/VpnChannel.kt`,
+- `android/app/src/main/kotlin/org/anoya/vpn/VpnChannel.kt`,
   `WebAuthChannel.kt`, `TunnelFiles.kt`
 - `shared/apple/PacketTunnelProvider.swift`,
   `native/mihomocore/service/files.go`

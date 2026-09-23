@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/subscription_info.dart';
+import 'package:anoya/core/subscription_info.dart';
 
 void main() {
   test('a plan with a quota and an end date', () {

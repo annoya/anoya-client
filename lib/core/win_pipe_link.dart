@@ -9,7 +9,7 @@ import 'package:win32/win32.dart';
 import 'pipe_transport.dart';
 
 // Contract with `cmd/tunnel-service`; change them together.
-const kTunnelPipe = r'\\.\pipe\AnnoyaTest.tunnel';
+const kTunnelPipe = r'\\.\pipe\Anoya.tunnel';
 
 // FILE_FLAG_OVERLAPPED is required: on a synchronous handle a WriteFile waits
 // behind the reader's pending ReadFile and the app deadlocks.

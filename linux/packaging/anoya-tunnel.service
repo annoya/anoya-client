@@ -5,17 +5,17 @@
 # recovery action: a crashed service must come back on its own, because the
 # app only knocks on the socket and cannot start it.
 [Unit]
-Description=AnnoyaTest tunnel
+Description=Anoya tunnel
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/opt/annoyatest/service/tunnel-service
+ExecStart=/opt/anoya/service/tunnel-service
 Restart=on-failure
 RestartSec=5
-RuntimeDirectory=annoyatest
-StateDirectory=annoyatest
+RuntimeDirectory=anoya
+StateDirectory=anoya
 
 [Install]
 WantedBy=multi-user.target

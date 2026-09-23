@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/theme.dart';
+import 'package:anoya/core/theme.dart';
 
 Widget _app(Widget home, {Brightness brightness = Brightness.dark}) =>
     MaterialApp(theme: buildAppTheme(brightness), home: home);

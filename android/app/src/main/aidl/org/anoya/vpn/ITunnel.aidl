@@ -1,6 +1,6 @@
-package org.annoya.vpn_client;
+package org.anoya.vpn;
 
-import org.annoya.vpn_client.ITunnelCallback;
+import org.anoya.vpn.ITunnelCallback;
 
 /**
  * What the app may ask of the tunnel process.

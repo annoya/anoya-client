@@ -18,13 +18,13 @@ import (
 // Shared with linux/packaging and lib/core/unix_socket_link.dart; change them
 // together.
 const (
-	unitName   = "annoyatest-tunnel.service"
+	unitName   = "anoya-tunnel.service"
 	unitPath   = "/etc/systemd/system/" + unitName
-	socketDir  = "/run/annoyatest"
+	socketDir  = "/run/anoya"
 	socketPath = socketDir + "/tunnel.sock"
 )
 
-func defaultDir() string { return "/var/lib/annoyatest/engine" }
+func defaultDir() string { return "/var/lib/anoya/engine" }
 
 func listen() (net.Listener, error) {
 	if err := os.MkdirAll(socketDir, 0o755); err != nil {
@@ -75,7 +75,7 @@ func runConsole(files service.Files) error {
 
 // The .deb ships the same unit from linux/packaging; keep the two in step.
 const unitText = `[Unit]
-Description=AnnoyaTest tunnel
+Description=Anoya tunnel
 After=network-online.target
 Wants=network-online.target
 
@@ -84,8 +84,8 @@ Type=simple
 ExecStart=%s
 Restart=on-failure
 RestartSec=5
-RuntimeDirectory=annoyatest
-StateDirectory=annoyatest
+RuntimeDirectory=anoya
+StateDirectory=anoya
 
 [Install]
 WantedBy=multi-user.target
