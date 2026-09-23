@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/on_demand.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/on_demand_controller.dart';
 import 'on_demand_rule_screen.dart';
 
@@ -18,11 +19,12 @@ class OnDemandScreen extends ConsumerWidget {
     final prefs = ref.watch(onDemandProvider);
     final ctrl = ref.read(onDemandProvider.notifier);
     final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('On demand')),
+      appBar: AppBar(title: Text(l10n.onDemandTitle)),
       floatingActionButton: FloatingActionButton(
-        tooltip: 'Add rule',
+        tooltip: l10n.ruleAdd,
         onPressed: () => _openRule(context, ref, ctrl.newRule(), isNew: true),
         child: const Icon(Icons.add),
       ),
@@ -34,20 +36,18 @@ class OnDemandScreen extends ConsumerWidget {
               margin: kCardMargin,
               child: SwitchListTile(
                 secondary: const Icon(Icons.bolt_outlined),
-                title: const Text('Enable on demand'),
-                subtitle: const Text(
-                  'The system applies the first matching rule',
-                ),
+                title: Text(l10n.onDemandEnable),
+                subtitle: Text(l10n.onDemandEnableSubtitle),
                 value: prefs.enabled,
                 onChanged: (v) => ctrl.setEnabled(v),
               ),
             ),
-            const SectionHeader('RULES — FIRST MATCH WINS'),
+            SectionHeader(l10n.ruleSetRulesHeader),
             if (prefs.rules.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(kGutter),
                 child: Text(
-                  'No rules. Enabling on demand adds “Connect · Any network”.',
+                  l10n.onDemandNoRules,
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
               )
@@ -65,7 +65,7 @@ class OnDemandScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
               child: Text(
-                'Rules are evaluated top to bottom. If none matches, the tunnel is left as is.',
+                l10n.onDemandRulesFootnote,
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -84,15 +84,16 @@ class OnDemandScreen extends ConsumerWidget {
     OnDemandRule rule,
   ) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final actionColor = switch (rule.action) {
       OnDemandAction.connect => context.vpnColors.connected,
       OnDemandAction.disconnect => cs.error,
       OnDemandAction.ignore => context.vpnColors.direct,
     };
     final tag = switch (rule.action) {
-      OnDemandAction.connect => 'CONN.',
-      OnDemandAction.disconnect => 'DISC.',
-      OnDemandAction.ignore => 'IGNORE',
+      OnDemandAction.connect => l10n.onDemandTagConnect,
+      OnDemandAction.disconnect => l10n.onDemandTagDisconnect,
+      OnDemandAction.ignore => l10n.onDemandTagIgnore,
     };
     return Card(
       key: ValueKey(rule.id),
@@ -142,7 +143,7 @@ class OnDemandScreen extends ConsumerWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 20),
-                tooltip: 'Remove',
+                tooltip: l10n.commonRemove,
                 visualDensity: VisualDensity.compact,
                 onPressed: () =>
                     ref.read(onDemandProvider.notifier).removeRule(rule.id),

@@ -9,6 +9,7 @@ import '../core/profile.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
+import '../l10n/l10n.dart';
 import '../state/connection_check_controller.dart';
 import '../state/favorites_controller.dart';
 import '../state/group_member.dart';
@@ -57,6 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     // Watched by the piece that needs it, never the whole state: a notice or a
     // flag flipping used to rebuild every card on this screen.
     final active = ref.watch(
@@ -89,15 +91,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.add),
-          tooltip: 'Add configuration',
+          tooltip: l10n.homeAddConfiguration,
           onPressed: () => _push(const StartScreen()),
         ),
-        title: const Text('VPN'),
+        title: Text(l10n.appTitle),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
+            tooltip: l10n.commonSettings,
             onPressed: () => _push(const SettingsScreen()),
           ),
         ],
@@ -154,6 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// written to the log. Each chip opens the screen that owns it — the off ones
   /// too, since that is where they get turned on.
   Widget _statusStrip(Profile? active) {
+    final l10n = context.l10n;
     final onDemand = ref.watch(onDemandProvider);
     final collectLogs = ref.watch(
       appPrefsProvider.select((p) => p.collectLogs),
@@ -164,11 +167,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // would send the user to a screen where the switch is already on. Only the
     // last case means the OS confirmed it is auto-connecting.
     final (autoLabel, autoTone) = switch (onDemand) {
-      OnDemandPrefs(enabled: false) => ('off', ChipTone.off),
-      OnDemandPrefs(paused: true) => ('paused', ChipTone.pending),
-      OnDemandPrefs(rules: []) => ('no rules', ChipTone.pending),
-      OnDemandPrefs(systemArmed: false) => ('not armed', ChipTone.pending),
-      _ => ('on', ChipTone.on),
+      OnDemandPrefs(enabled: false) => (l10n.homeStateOff, ChipTone.off),
+      OnDemandPrefs(paused: true) => (l10n.homeAutoPaused, ChipTone.pending),
+      OnDemandPrefs(rules: []) => (l10n.ruleSetNoRules, ChipTone.pending),
+      OnDemandPrefs(systemArmed: false) => (
+        l10n.homeAutoNotArmed,
+        ChipTone.pending,
+      ),
+      _ => (l10n.homeStateOn, ChipTone.on),
     };
 
     return Padding(
@@ -189,7 +195,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (supportsOnDemand)
             StatusChip(
               icon: Icons.bolt_outlined,
-              label: 'Auto · $autoLabel',
+              label: l10n.homeChipAuto(autoLabel),
               tone: autoTone,
               onTap: () => _push(const OnDemandScreen()),
             ),
@@ -198,7 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // The value is unknown only until the rule set is read off disk, so
             // it holds its place with an ellipsis instead of the chip appearing
             // a frame late and shifting the row.
-            label: 'Routing · ${routing?.label ?? '…'}',
+            label: l10n.homeChipRouting(routing?.label ?? '…'),
             tone: routing == null || routing == RoutingStatus.off
                 ? ChipTone.off
                 : ChipTone.on,
@@ -212,7 +218,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           StatusChip(
             icon: Icons.description_outlined,
-            label: 'Logs · ${collectLogs ? 'on' : 'off'}',
+            label: l10n.homeChipLogs(
+              collectLogs ? l10n.homeStateOn : l10n.homeStateOff,
+            ),
             tone: collectLogs ? ChipTone.on : ChipTone.off,
             onTap: () => _push(const LogsScreen()),
           ),
@@ -232,17 +240,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget? _checkBanner() {
     final check = ref.watch(connectionCheckProvider.select((s) => s.last));
     if (check == null || check.passed) return null;
+    final l10n = context.l10n;
     final warn = context.vpnColors.connecting;
     return Card(
       margin: kCardMargin,
       color: warn.withValues(alpha: 0.12),
       child: ListTile(
         leading: Icon(Icons.warning_amber_outlined, color: warn),
-        title: const Text('Connected, but nothing came back'),
-        subtitle: const Text(
-          'The check found no answer through this server. '
-          'Try another one, or open Advanced.',
-        ),
+        title: Text(l10n.homeCheckFailedTitle),
+        subtitle: Text(l10n.homeCheckFailedDetail),
         isThreeLine: true,
       ),
     );
@@ -255,14 +261,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final onDemand = ref.watch(onDemandProvider);
     final busy = ref.watch(sessionProvider.select((s) => s.busy));
     if (!onDemand.enabled || busy) return null;
+    final l10n = context.l10n;
     final (title, subtitle) = switch (onDemand) {
       OnDemandPrefs(paused: true) => (
-        'Auto-connect paused',
-        'Press Connect to arm it again',
+        l10n.homeAutoConnectPausedTitle,
+        l10n.homeAutoConnectPausedDetail,
       ),
       OnDemandPrefs(awaitingFirstConnect: true) => (
-        'Auto-connect not armed yet',
-        'Connect once so the system can take over',
+        l10n.homeAutoConnectNotArmedTitle,
+        l10n.homeAutoConnectNotArmedDetail,
       ),
       _ => (null, null),
     };
@@ -304,7 +311,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               RefreshButton(profile: active, iconSize: 20, spinnerPadding: 14),
             IconButton(
               icon: const Icon(Icons.settings_outlined, size: 20),
-              tooltip: 'Configuration settings',
+              tooltip: context.l10n.homeConfigurationSettings,
               onPressed: () => _push(ConfigScreen(profileId: active.id)),
             ),
             if (pickable)
@@ -319,6 +326,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _locationRow(Profile active) {
+    final l10n = context.l10n;
     final group = ref.watch(
       profilesControllerProvider.select((s) => s.selectedGroup),
     );
@@ -339,14 +347,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : flagOrIcon(loc?.label),
         title: Text(
           group?.name ??
-              (loc != null ? stripLeadingFlag(loc.label) : 'No servers'),
+              (loc != null ? stripLeadingFlag(loc.label) : l10n.homeNoServers),
         ),
         // With a group, the name alone is a claim the user cannot check — they
         // do not know where their traffic goes. So the line names the method
         // and the result; until the engine has picked, it names only the method
         // rather than a server from a previous session.
         subtitle: group != null
-            ? Text(picked == null || picked.isEmpty ? 'auto' : 'auto · $picked')
+            ? Text(
+                picked == null || picked.isEmpty
+                    ? l10n.homeGroupAuto
+                    : l10n.homeGroupAutoPicked(picked),
+              )
             : loc != null && loc.subtitle.isNotEmpty
             ? Text(loc.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis)
             : null,
@@ -366,7 +378,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: kGutter),
       child: Text(
         account.expiresAt != null
-            ? '${account.status} · until ${account.expiresAt!.toLocal().toString().split('.').first}'
+            ? context.l10n.homeAccountUntil(
+                account.status,
+                account.expiresAt!.toLocal().toString().split('.').first,
+              )
             : account.status,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
@@ -379,9 +394,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
-      title: 'Configuration',
+      title: context.l10n.homeConfiguration,
       selected: st.activeId,
-      itemNoun: 'configuration',
+      itemNoun: context.l10n.uiNounConfiguration,
       favorites: favorites.profiles,
       onToggleFavorite: (id) =>
           ref.read(favoritesProvider.notifier).toggleProfile(id),
@@ -407,12 +422,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
-      title: 'Server',
+      title: context.l10n.homeServer,
       selected: st.selectionId,
-      itemNoun: 'server',
+      itemNoun: context.l10n.uiNounServer,
       // Groups first: for most people "the fastest one" is the answer they
       // came for, and it is an answer to the same question as a country.
-      pinnedHeader: 'CHOSEN BY THE ENGINE',
+      pinnedHeader: context.l10n.homeChosenByEngine,
       pinned: active.groups
           .map(
             (g) => Option(

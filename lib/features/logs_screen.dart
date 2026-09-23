@@ -10,6 +10,7 @@ import '../core/ext_logs.dart';
 import '../core/log.dart';
 import '../core/log_archive.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import 'log_viewer_screen.dart';
@@ -41,17 +42,18 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     // Ask first, then build: no point zipping anything if the user backs out.
     final where = await pickOption<_SaveTo>(
       context,
-      title: 'Save all logs',
-      options: const [
+      title: l10n.logsSaveAll,
+      options: [
         Option(
           _SaveTo.file,
-          'Save to file…',
-          subtitle: 'Pick a folder on this device',
+          l10n.logsSaveToFile,
+          subtitle: l10n.logsSaveToFileSubtitle,
         ),
-        Option(_SaveTo.share, 'Share…', subtitle: 'Send the archive somewhere'),
+        Option(_SaveTo.share, l10n.logsShare, subtitle: l10n.logsShareSubtitle),
       ],
     );
     if (where == null || !mounted) return;
@@ -72,13 +74,13 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
           // only hands back the chosen path, leaving the writing to us.
           final writesItself = Platform.isIOS || Platform.isAndroid;
           final path = await FilePicker.platform.saveFile(
-            dialogTitle: 'Save logs',
+            dialogTitle: l10n.logsSaveDialogTitle,
             fileName: name,
             bytes: writesItself ? await archive.readAsBytes() : null,
           );
           if (path == null) return; // cancelled
           if (!writesItself) await archive.copy(path);
-          if (mounted) showToast(context, 'Saved to $path');
+          if (mounted) showToast(context, l10n.logsSavedTo(path));
       }
     } catch (e) {
       Log.e('saving logs failed', '$e');
@@ -89,22 +91,20 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
   }
 
   Future<void> _clear() async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear all logs?'),
-        content: const Text(
-          'The app, tunnel and core logs will be deleted from this device. '
-          'The tunnel and core logs can only be cleared while the VPN is connected.',
-        ),
+        title: Text(l10n.logsClearAllQuestion),
+        content: Text(l10n.logsClearAllContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Clear'),
+            child: Text(l10n.commonClear),
           ),
         ],
       ),
@@ -114,57 +114,52 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
     final wiped = await clearExtensionLogs();
     if (!mounted) return;
     setState(() {});
-    showToast(
-      context,
-      wiped
-          ? 'Logs cleared.'
-          : 'App log cleared. The tunnel and core logs need the VPN connected.',
-    );
+    showToast(context, wiped ? l10n.logsCleared : l10n.logsAppLogClearedOnly);
   }
 
   @override
   Widget build(BuildContext context) {
     final collecting = ref.watch(appPrefsProvider).collectLogs;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Logs')),
+      appBar: AppBar(title: Text(l10n.logsTitle)),
       body: PageBody(
         child: ListView(
           children: [
-            const SectionHeader('COLLECTION'),
+            SectionHeader(l10n.logsSectionCollection),
             Card(
               margin: kCardMargin,
               child: SwitchListTile(
                 secondary: const Icon(Icons.article_outlined),
-                title: const Text('Collect logs'),
-                subtitle: const Text(
-                  'Off: the app, the tunnel and the core stop writing. '
-                  'Existing files stay readable.',
-                ),
+                title: Text(l10n.logsCollect),
+                subtitle: Text(l10n.logsCollectSubtitle),
                 value: collecting,
                 onChanged: _busy ? null : _setCollecting,
               ),
             ),
-            const SectionHeader('TUNNEL'),
+            SectionHeader(l10n.logsSectionTunnel),
             _LogTile(
-              title: 'Tunnel',
-              subtitle: 'Network Extension events',
-              onTap: () => _open(context, 'Tunnel', logKey: 'tunnel'),
+              title: l10n.logsTunnel,
+              subtitle: l10n.logsTunnelSubtitle,
+              onTap: () => _open(context, l10n.logsTunnel, logKey: 'tunnel'),
             ),
             _LogTile(
-              title: 'Core (mihomo)',
-              subtitle: 'Engine log: dials, DNS, routing',
-              onTap: () => _open(context, 'Core (mihomo)', logKey: 'mihomo'),
+              title: l10n.logsCore,
+              subtitle: l10n.logsCoreSubtitle,
+              onTap: () => _open(context, l10n.logsCore, logKey: 'mihomo'),
             ),
-            const SectionHeader('APP'),
+            SectionHeader(l10n.logsSectionApp),
             _LogTile(
-              title: 'Application',
-              subtitle: 'Client-side events',
+              title: l10n.logsApplication,
+              subtitle: l10n.logsApplicationSubtitle,
               size: formatBytes(Log.sizeBytes),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) =>
-                      const LogViewerScreen(title: 'Application', appLog: true),
+                  builder: (_) => LogViewerScreen(
+                    title: l10n.logsApplication,
+                    appLog: true,
+                  ),
                 ),
               ),
             ),
@@ -179,7 +174,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.archive_outlined, size: 18),
-                label: const Text('Save all logs (.zip)'),
+                label: Text(l10n.logsSaveAllZip),
                 onPressed: _busy ? null : _save,
               ),
             ),
@@ -188,7 +183,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: kGutter),
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.delete_outline, size: 18),
-                label: const Text('Clear all logs'),
+                label: Text(l10n.logsClearAll),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.error,
                 ),

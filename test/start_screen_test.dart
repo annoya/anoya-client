@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/features/start_screen.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 /// The field answers as the user types: a recognised input at once, a refusal
 /// only after they stop — and never for an empty field.
@@ -12,6 +13,8 @@ void main() {
       ProviderScope(
         child: MaterialApp(
           theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const StartScreen(),
         ),
       ),

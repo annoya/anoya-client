@@ -20,6 +20,7 @@ import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/state/routing_status.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 /// The home status strip and the per-configuration routing switch behind it.
 /// The contract: the strip says in words what each of the three settings is
@@ -70,6 +71,8 @@ void main() {
           ],
           child: MaterialApp(
             theme: buildAppTheme(Brightness.light),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: const HomeScreen(),
           ),
         ),

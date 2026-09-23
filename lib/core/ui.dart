@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import 'app_error.dart';
 
 /// Shared layout constants so every screen uses the same spacing.
@@ -209,7 +210,7 @@ Future<void> showErrorDialog(
                 IconButton(
                   icon: const Icon(Icons.close, size: 20),
                   color: cs.onSurfaceVariant,
-                  tooltip: 'Dismiss',
+                  tooltip: context.l10n.commonDismiss,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -383,7 +384,7 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_controller.text),
@@ -454,7 +455,7 @@ Future<T?> pickOption<T>(
   ValueChanged<T>? onToggleFavorite,
   ValueChanged<T>? onOpenSettings,
   bool navigational = false,
-  String itemNoun = 'item',
+  String? itemNoun,
   List<Option<T>> pinned = const [],
   String pinnedHeader = '',
 }) {
@@ -473,7 +474,7 @@ Future<T?> pickOption<T>(
       onToggleFavorite: onToggleFavorite,
       onOpenSettings: onOpenSettings,
       navigational: navigational,
-      itemNoun: itemNoun,
+      itemNoun: itemNoun ?? context.l10n.uiNounItem,
       pinned: pinned,
       pinnedHeader: pinnedHeader,
     ),
@@ -543,6 +544,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
   }
 
   Widget _row(Option<T> o, {bool favouritable = true}) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final favorite = _favorites.contains(o.value);
     final selected = o.value == widget.selected;
@@ -551,14 +553,16 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
         IconButton(
           icon: Icon(favorite ? Icons.star : Icons.star_border, size: 20),
           color: favorite ? cs.primary : cs.onSurfaceVariant,
-          tooltip: favorite ? 'Remove from favorites' : 'Add to favorites',
+          tooltip: favorite
+              ? l10n.uiRemoveFromFavorites
+              : l10n.uiAddToFavorites,
           onPressed: () => _toggle(o.value),
         ),
       if (widget.onOpenSettings != null)
         IconButton(
           icon: const Icon(Icons.settings_outlined, size: 20),
           color: cs.onSurfaceVariant,
-          tooltip: 'Settings',
+          tooltip: l10n.commonSettings,
           onPressed: () => _openSettings(o.value),
         ),
       if (widget.navigational)
@@ -589,6 +593,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final shown = widget.options.where(_matches).toList();
     final pinnedShown = widget.pinned.where(_matches).toList();
@@ -616,9 +621,9 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
                 padding: const EdgeInsets.symmetric(horizontal: kGutter),
                 child: TextField(
                   autocorrect: false,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'Search',
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: l10n.commonSearch,
                   ),
                   onChanged: (v) => setState(() => _query = v),
                 ),
@@ -643,13 +648,18 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
                         ...shown.map(_row)
                       else ...[
                         if (favorites.isNotEmpty) ...[
-                          const SectionHeader('FAVORITES'),
+                          SectionHeader(l10n.commonFavorites),
                           ...favorites.map(_row),
                         ],
                         SectionHeader(
-                          searching
-                              ? 'ALL · ${rest.isEmpty ? 'NOTHING MATCHES' : '${rest.length} OF ${widget.options.length} MATCH'}'
-                              : 'ALL',
+                          !searching
+                              ? l10n.commonAll
+                              : rest.isEmpty
+                              ? l10n.uiAllNothingMatches
+                              : l10n.uiAllMatchCount(
+                                  rest.length,
+                                  widget.options.length,
+                                ),
                         ),
                         if (rest.isEmpty)
                           Padding(
@@ -660,8 +670,11 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
                               8,
                             ),
                             child: Text(
-                              'No ${widget.itemNoun} matches “${_query.trim()}”. '
-                              'Clear the search to see all ${widget.options.length}.',
+                              l10n.uiNoMatches(
+                                widget.itemNoun,
+                                _query.trim(),
+                                widget.options.length,
+                              ),
                               style: TextStyle(color: cs.onSurfaceVariant),
                             ),
                           )

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 
 /// Editor for one condition list of an on-demand rule (Wi-Fi networks, DNS
 /// search domains, DNS servers).
@@ -47,9 +48,9 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
     final value = await promptText(
       context,
       title: widget.addTitle,
-      label: 'Value',
+      label: context.l10n.ruleValue,
       hint: widget.addHint,
-      confirmLabel: 'Add',
+      confirmLabel: context.l10n.commonAdd,
       autocorrect: false,
     );
     final v = value?.trim() ?? '';
@@ -60,6 +61,7 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final q = _query.trim().toLowerCase();
     final shown = q.isEmpty
         ? _values
@@ -73,7 +75,7 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
       child: Scaffold(
         appBar: AppBar(title: Text(widget.title)),
         floatingActionButton: FloatingActionButton(
-          tooltip: 'Add',
+          tooltip: l10n.commonAdd,
           onPressed: _add,
           child: const Icon(Icons.add),
         ),
@@ -86,23 +88,23 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
                   padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
                   child: TextField(
                     autocorrect: false,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Search',
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: l10n.commonSearch,
                     ),
                     onChanged: (v) => setState(() => _query = v),
                   ),
                 ),
               SectionHeader(
                 _values.isEmpty
-                    ? 'NO ENTRIES'
-                    : '${_values.length} ${widget.unit} · ANY OF THEM MATCHES',
+                    ? l10n.onDemandNoEntries
+                    : l10n.onDemandEntriesHeader(_values.length, widget.unit),
               ),
               if (_values.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: kGutter),
                   child: Text(
-                    'The condition is ignored and the rule matches any network of the selected type.',
+                    l10n.onDemandConditionIgnored,
                     style: TextStyle(color: cs.onSurfaceVariant),
                   ),
                 )
@@ -110,7 +112,7 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: kGutter),
                   child: Text(
-                    'Nothing matches “$_query”.',
+                    l10n.uiNothingMatches(_query),
                     style: TextStyle(color: cs.onSurfaceVariant),
                   ),
                 )
@@ -122,7 +124,7 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
                       title: Text(v),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline, size: 20),
-                        tooltip: 'Remove',
+                        tooltip: l10n.commonRemove,
                         onPressed: () => setState(
                           () => _values = _values.where((x) => x != v).toList(),
                         ),

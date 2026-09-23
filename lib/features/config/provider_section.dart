@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/subscription_info.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 
 /// Everything the subscription's panel reported, in its own voice.
 ///
@@ -21,10 +22,11 @@ class ProviderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader('DETAILS'),
+        SectionHeader(l10n.configSectionDetails),
         if (info.announce.isNotEmpty)
           Card(
             margin: kCardMargin,
@@ -45,7 +47,7 @@ class ProviderSection extends StatelessWidget {
             margin: kCardMargin,
             child: ListTile(
               leading: const Icon(Icons.support_agent_outlined),
-              title: const Text('Get support'),
+              title: Text(l10n.configGetSupport),
               trailing: const Icon(Icons.open_in_new, size: 18),
               onTap: () async {
                 final uri = Uri.tryParse(info.supportUrl);
@@ -55,7 +57,7 @@ class ProviderSection extends StatelessWidget {
                       mode: LaunchMode.externalApplication,
                     )) {
                   if (context.mounted) {
-                    showToast(context, 'Couldn’t open that link.');
+                    showToast(context, l10n.configCouldNotOpenLink);
                   }
                 }
               },
@@ -65,7 +67,7 @@ class ProviderSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(kGutter, 4, kGutter, 0),
             child: Text(
-              'Your subscription reported no plan details.',
+              l10n.configNoPlanDetails,
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: muted),
@@ -85,6 +87,7 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     final warn = Theme.of(context).colorScheme.error;
+    final l10n = context.l10n;
     return Card(
       margin: kCardMargin,
       child: Padding(
@@ -96,8 +99,11 @@ class _PlanCard extends StatelessWidget {
               info.unlimited
                   // A share of zero is not a number: a bar here would read as
                   // "all used up" for a plan that has no ceiling at all.
-                  ? 'Used ${formatBytes(info.usedBytes)} · no limit'
-                  : 'Traffic: ${formatBytes(info.usedBytes)} of ${formatBytes(info.totalBytes)}',
+                  ? l10n.configUsedNoLimit(formatBytes(info.usedBytes))
+                  : l10n.configTrafficOf(
+                      formatBytes(info.usedBytes),
+                      formatBytes(info.totalBytes),
+                    ),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             if (!info.unlimited) ...[
@@ -112,7 +118,7 @@ class _PlanCard extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             Text(
-              _planLine(info),
+              _planLine(l10n, info),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: info.expired ? warn : muted,
               ),
@@ -123,29 +129,13 @@ class _PlanCard extends StatelessWidget {
     );
   }
 
-  String _planLine(SubscriptionInfo info) {
+  String _planLine(AppLocalizations l10n, SubscriptionInfo info) {
     final at = info.expiresAt;
     final when = at == null
-        ? 'No expiry date given'
-        : '${info.expired ? 'Expired' : 'Active until'} ${_date(at)}';
-    return '$when · what the subscription reports, not verified here';
-  }
-
-  String _date(DateTime d) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${d.day} ${months[d.month - 1]} ${d.year}';
+        ? l10n.configNoExpiryDate
+        : info.expired
+        ? l10n.configExpiredOn(l10n.configDateShort(at))
+        : l10n.configActiveUntil(l10n.configDateShort(at));
+    return l10n.configPlanLine(when);
   }
 }

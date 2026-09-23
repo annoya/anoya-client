@@ -7,6 +7,7 @@ import '../core/geo_store.dart';
 import '../core/dns_plan.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/favorites_controller.dart';
 import '../state/auto_connect_controller.dart';
 import '../state/connection_check_controller.dart';
@@ -72,10 +73,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// domain would need resolving before it could resolve.
   Future<void> _pickDefaultDns() async {
     const custom = '__custom__';
+    final l10n = context.l10n;
     final current = ref.read(routingPrefsProvider).defaultDns;
     final picked = await pickOption<String>(
       context,
-      title: 'Default DNS',
+      title: l10n.settingsDefaultDns,
       selected: kDnsPresets.any((p) => p.address == current) ? current : custom,
       options: [
         for (final p in kDnsPresets)
@@ -84,10 +86,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             p.name,
             subtitle: p.note.isEmpty ? p.address : '${p.address} · ${p.note}',
           ),
-        const Option(
+        Option(
           custom,
-          'Custom…',
-          subtitle: 'any address the engine accepts',
+          l10n.settingsDnsCustom,
+          subtitle: l10n.settingsDnsCustomSubtitle,
         ),
       ],
     );
@@ -97,13 +99,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (picked == custom) {
       final typed = await promptText(
         context,
-        title: 'Default DNS',
-        label: 'Resolver',
-        confirmLabel: 'Save',
+        title: l10n.settingsDefaultDns,
+        label: l10n.settingsDnsResolverLabel,
+        confirmLabel: l10n.commonSave,
         initial: current,
         hint: 'https://1.1.1.1/dns-query',
         autocorrect: false,
-        resetLabel: 'Use Cloudflare',
+        resetLabel: l10n.settingsDnsUseCloudflare,
         resetValue: kFallbackNameserver,
       );
       if (typed == null || !mounted) return;
@@ -125,18 +127,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _pickTheme() async {
+    final l10n = context.l10n;
     final picked = await pickOption<ThemeMode>(
       context,
-      title: 'Appearance',
+      title: l10n.settingsAppearance,
       selected: ref.read(appPrefsProvider).themeMode,
-      options: const [
+      options: [
         Option(
           ThemeMode.system,
-          'System',
-          subtitle: 'Follow the device setting',
+          l10n.themeSystem,
+          subtitle: l10n.settingsThemeSystemSubtitle,
         ),
-        Option(ThemeMode.light, 'Light'),
-        Option(ThemeMode.dark, 'Dark'),
+        Option(ThemeMode.light, l10n.themeLight),
+        Option(ThemeMode.dark, l10n.themeDark),
       ],
     );
     if (picked != null) {
@@ -147,7 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _pickLanguage() async {
     final picked = await pickOption<AppLanguage>(
       context,
-      title: 'Language',
+      title: context.l10n.settingsLanguage,
       selected: ref.read(appPrefsProvider).language,
       options: AppLanguage.values.map((l) => Option(l, l.label)).toList(),
     );
@@ -155,6 +158,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await ref.read(appPrefsProvider.notifier).setLanguage(picked);
     }
   }
+
+  /// What the settings row shows under "Appearance".
+  String _themeLabel(ThemeMode mode) => switch (mode) {
+    ThemeMode.system => context.l10n.themeSystem,
+    ThemeMode.light => context.l10n.themeLight,
+    ThemeMode.dark => context.l10n.themeDark,
+  };
 
   /// The way into a configuration's own settings. A single configuration is
   /// named right here; several open as a sheet, so a long list never turns the
@@ -172,8 +182,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
     return ListTile(
       leading: const Icon(Icons.folder_copy_outlined),
-      title: const Text('Configurations'),
-      subtitle: Text('${st.profiles.length} configurations'),
+      title: Text(context.l10n.settingsConfigurations),
+      subtitle: Text(
+        context.l10n.settingsConfigurationsCount(st.profiles.length),
+      ),
       trailing: const Icon(Icons.expand_more),
       onTap: _openConfigurations,
     );
@@ -189,11 +201,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // edited where they are used.
     final picked = await pickOption<String>(
       context,
-      title: 'Configurations',
+      title: context.l10n.settingsConfigurations,
       selected: st.activeId,
       favorites: favorites.profiles,
       navigational: true,
-      itemNoun: 'configuration',
+      itemNoun: context.l10n.uiNounConfiguration,
       options: st.profiles
           .map(
             (p) => Option(
@@ -216,14 +228,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final onDemand = ref.watch(onDemandProvider);
     final check = ref.watch(connectionCheckProvider).prefs;
     final autoConnect = ref.watch(autoConnectProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.commonSettings)),
       body: PageBody(
         child: ListView(
           children: [
             if (st.profiles.isNotEmpty) ...[
-              const SectionHeader('CONFIGURATIONS'),
+              SectionHeader(l10n.settingsSectionConfigurations),
               Card(margin: kCardMargin, child: _configurationsRow(st)),
             ],
 
@@ -232,7 +245,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             // Always-on switch we can only point at, Windows has nothing of
             // the sort and shows no card. Disconnect-on-sleep is a flag of
             // Apple's VPN protocol and has no counterpart elsewhere.
-            const SectionHeader('CONNECTION'),
+            SectionHeader(l10n.settingsSectionConnection),
             if (hasAutoConnect)
               Card(
                 margin: kCardMargin,
@@ -242,8 +255,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     // Windows starts") is a switch, not a screen.
                     ? SwitchListTile(
                         secondary: const Icon(Icons.bolt_outlined),
-                        title: const Text('Auto-connect'),
-                        subtitle: const Text('Connect when Windows starts'),
+                        title: Text(l10n.settingsAutoConnect),
+                        subtitle: Text(l10n.settingsAutoConnectSubtitle),
                         value: autoConnect,
                         onChanged: (v) =>
                             ref.read(autoConnectProvider.notifier).set(v),
@@ -253,7 +266,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         children: [
                           ListTile(
                             leading: const Icon(Icons.bolt_outlined),
-                            title: const Text('On demand'),
+                            title: Text(l10n.onDemandTitle),
                             subtitle: Text(onDemand.statusLabel),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => _push(const OnDemandScreen()),
@@ -261,9 +274,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const Divider(height: 1, indent: 16, endIndent: 16),
                           SwitchListTile(
                             secondary: const Icon(Icons.bedtime_outlined),
-                            title: const Text('Disconnect on sleep'),
-                            subtitle: const Text(
-                              'Drop the tunnel when the device sleeps',
+                            title: Text(l10n.settingsDisconnectOnSleep),
+                            subtitle: Text(
+                              l10n.settingsDisconnectOnSleepSubtitle,
                             ),
                             value: onDemand.disconnectOnSleep,
                             onChanged: (v) => ref
@@ -274,10 +287,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       )
                     : ListTile(
                         leading: const Icon(Icons.bolt_outlined),
-                        title: const Text('Always-on VPN'),
-                        subtitle: const Text(
-                          'A system switch — set in Android settings',
-                        ),
+                        title: Text(l10n.alwaysOnTitle),
+                        subtitle: Text(l10n.settingsAlwaysOnSubtitle),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _push(const AlwaysOnScreen()),
                       ),
@@ -286,27 +297,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               margin: kCardMargin,
               child: ListTile(
                 leading: const Icon(Icons.tune),
-                title: const Text('Advanced'),
+                title: Text(l10n.settingsAdvanced),
                 // The state of what is behind it, not a description of the
                 // screen: a row that says only "Advanced" has to be opened to
                 // learn whether the thing it holds is on.
                 subtitle: Text(
-                  'Connection check · ${check.enabled ? 'on' : 'off'}',
+                  check.enabled
+                      ? l10n.settingsConnectionCheckOn
+                      : l10n.settingsConnectionCheckOff,
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _push(const AdvancedConnectionScreen()),
               ),
             ),
 
-            const SectionHeader('ROUTING'),
+            SectionHeader(l10n.settingsSectionRouting),
             Card(
               margin: kCardMargin,
               child: Column(
                 children: [
                   SwitchListTile(
                     secondary: const Icon(Icons.wifi),
-                    title: const Text('Local network direct'),
-                    subtitle: const Text('LAN traffic bypasses the VPN'),
+                    title: Text(l10n.settingsLanDirect),
+                    subtitle: Text(l10n.settingsLanDirectSubtitle),
                     value: prefs.lanDirect,
                     onChanged: (v) async {
                       await ref
@@ -322,20 +335,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
                     leading: const Icon(Icons.layers_outlined),
-                    title: const Text('Rule sets'),
-                    subtitle: Text('$_setCount set${_setCount > 1 ? 's' : ''}'),
+                    title: Text(l10n.ruleSetsTitle),
+                    subtitle: Text(l10n.settingsRuleSetCount(_setCount)),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _push(const RuleSetsScreen()),
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
                     leading: const Icon(Icons.language_outlined),
-                    title: const Text('Default DNS'),
+                    title: Text(l10n.settingsDefaultDns),
                     // Says when it applies, because most configurations bring
                     // their own and this setting then does nothing at all.
                     subtitle: Text(
-                      '${dnsPresetName(prefs.defaultDns)} · '
-                      'used when a configuration brings none',
+                      l10n.settingsDefaultDnsSubtitle(
+                        dnsPresetName(prefs.defaultDns),
+                      ),
                     ),
                     trailing: const Icon(Icons.expand_more),
                     onTap: _pickDefaultDns,
@@ -343,11 +357,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
                     leading: const Icon(Icons.public),
-                    title: const Text('GeoIP & GeoSite'),
+                    title: Text(l10n.geoTitle),
                     subtitle: Text(
                       _geo.downloaded
-                          ? 'downloaded · ${formatBytes(_geo.geoipBytes + _geo.geositeBytes)}'
-                          : 'not downloaded',
+                          ? l10n.settingsGeoDownloaded(
+                              formatBytes(_geo.geoipBytes + _geo.geositeBytes),
+                            )
+                          : l10n.geoNotDownloaded,
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _push(const GeoScreen()),
@@ -356,22 +372,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
 
-            const SectionHeader('GENERAL'),
+            SectionHeader(l10n.settingsSectionGeneral),
             Card(
               margin: kCardMargin,
               child: Column(
                 children: [
                   ListTile(
                     leading: const Icon(Icons.brightness_6_outlined),
-                    title: const Text('Appearance'),
-                    subtitle: Text(appPrefs.themeLabel),
+                    title: Text(l10n.settingsAppearance),
+                    subtitle: Text(_themeLabel(appPrefs.themeMode)),
                     trailing: const Icon(Icons.expand_more),
                     onTap: _pickTheme,
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
                     leading: const Icon(Icons.translate),
-                    title: const Text('Language'),
+                    title: Text(l10n.settingsLanguage),
                     subtitle: Text(appPrefs.language.label),
                     trailing: const Icon(Icons.expand_more),
                     onTap: _pickLanguage,
@@ -380,22 +396,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
 
-            const SectionHeader('DIAGNOSTICS'),
+            SectionHeader(l10n.settingsSectionDiagnostics),
             Card(
               margin: kCardMargin,
               child: ListTile(
                 leading: const Icon(Icons.article_outlined),
-                title: const Text('Logs'),
+                title: Text(l10n.logsTitle),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _push(const LogsScreen()),
               ),
             ),
-            const SectionHeader('ABOUT'),
+            SectionHeader(l10n.settingsSectionAbout),
             Card(
               margin: kCardMargin,
               child: ListTile(
                 leading: const Icon(Icons.shield_outlined),
-                title: const Text('About'),
+                title: Text(l10n.aboutTitle),
                 // The version in the subtitle is what most visits come for, so
                 // it is readable without opening anything — and it marks the
                 // row as a reference rather than a setting.

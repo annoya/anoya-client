@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/profile.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../refresh_button.dart';
 
@@ -17,7 +18,7 @@ class RefreshCard extends StatelessWidget {
   Widget build(BuildContext context) => Card(
     margin: kCardMargin,
     child: ListTile(
-      title: const Text('Last refreshed'),
+      title: Text(context.l10n.configLastRefreshed),
       subtitle: Text(refreshedAtLabel(profile)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -45,30 +46,33 @@ class _RefreshEveryButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => IconButton(
     icon: const Icon(Icons.settings_outlined, size: 20),
-    tooltip: 'Refresh every',
+    tooltip: context.l10n.configRefreshEvery,
     onPressed: () => _edit(context, ref),
   );
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
     final asked = profile.providerInfo?.updateInterval;
+    final l10n = context.l10n;
     final typed = await promptText(
       context,
-      title: 'Refresh every',
-      label: 'Hours',
-      confirmLabel: 'Save',
+      title: l10n.configRefreshEvery,
+      label: l10n.configHours,
+      confirmLabel: l10n.commonSave,
       initial: profile.refreshHours?.toString() ?? '',
       hint: asked != null && asked > 0 ? '$asked' : '',
       autocorrect: false,
       // Getting back to the source's own period has to be an action, not an
       // empty field: a cleared box reads as a mistake, not as a decision.
-      resetLabel: 'As the subscription asks',
+      resetLabel: l10n.configRefreshAsSubscriptionAsks,
       resetValue: '',
     );
     if (typed == null) return;
     final trimmed = typed.trim();
     final hours = trimmed.isEmpty ? null : int.tryParse(trimmed);
     if (trimmed.isNotEmpty && (hours == null || hours <= 0)) {
-      if (context.mounted) showToast(context, 'Enter a whole number of hours.');
+      if (context.mounted) {
+        showToast(context, l10n.configRefreshEnterWholeHours);
+      }
       return;
     }
     await ref
@@ -78,27 +82,27 @@ class _RefreshEveryButton extends ConsumerWidget {
 }
 
 String refreshedAtLabel(Profile p) {
+  final l10n = L10n.current;
   final at = p.refreshedAt;
-  final every = _cadence(p);
-  if (at == null) return 'never · $every';
+  final every = _cadence(l10n, p);
+  if (at == null) return l10n.configRefreshNever(every);
   final d = DateTime.now().difference(at);
   final ago = d.inDays > 0
-      ? '${d.inDays} day${d.inDays > 1 ? 's' : ''} ago'
+      ? l10n.commonDaysAgo(d.inDays)
       : d.inHours > 0
-      ? '${d.inHours} hour${d.inHours > 1 ? 's' : ''} ago'
+      ? l10n.commonHoursAgo(d.inHours)
       : d.inMinutes > 0
-      ? '${d.inMinutes} min ago'
-      : 'just now';
-  return '$ago · $every';
+      ? l10n.commonMinutesAgo(d.inMinutes)
+      : l10n.commonJustNow;
+  return l10n.configRefreshAgo(ago, every);
 }
 
 /// How often this configuration re-pulls — what the app actually does, which is
 /// the user's period where they set one, the panel's `profile-update-interval`
 /// (in **hours**) otherwise, and our polling floor when neither says.
-String _cadence(Profile p) {
+String _cadence(AppLocalizations l10n, Profile p) {
   final gap = refreshGapFor(p);
-  if (gap.inMinutes < 60) return 'auto every ${gap.inMinutes} min';
-  if (gap.inHours < 24) return 'auto every ${gap.inHours} h';
-  final days = gap.inDays;
-  return 'auto every ${days == 1 ? 'day' : '$days days'}';
+  if (gap.inMinutes < 60) return l10n.configAutoEveryMinutes(gap.inMinutes);
+  if (gap.inHours < 24) return l10n.configAutoEveryHours(gap.inHours);
+  return l10n.configAutoEveryDays(gap.inDays);
 }

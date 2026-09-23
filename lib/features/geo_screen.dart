@@ -6,6 +6,7 @@ import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/routing_prefs.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/providers.dart';
 
 /// GeoIP & GeoSite database management: source URLs (editable), current
@@ -54,7 +55,10 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
       Log.e('geo update failed', '$e');
       // Nothing is broken without fresh databases — the old ones keep working.
       if (mounted) {
-        showToast(context, describeError(e, subject: 'the database host').line);
+        showToast(
+          context,
+          describeError(e, subject: context.l10n.geoDatabaseHostSubject).line,
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -64,15 +68,16 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
   Future<void> _editUrl({required bool geoip}) async {
     // "Reset to default" lives in the content, not in actions: three buttons
     // in the action bar wrap onto two lines on a phone.
+    final l10n = context.l10n;
     final url = await promptText(
       context,
-      title: geoip ? 'GeoIP source' : 'GeoSite source',
-      label: 'Download URL',
-      confirmLabel: 'Save',
+      title: geoip ? l10n.geoGeoipSource : l10n.geoGeositeSource,
+      label: l10n.geoDownloadUrlLabel,
+      confirmLabel: l10n.commonSave,
       initial: geoip ? _prefs.geoipUrl : _prefs.geositeUrl,
       longValue: true, // a 90-character download URL
       autocorrect: false,
-      resetLabel: 'Reset to default',
+      resetLabel: l10n.geoResetToDefault,
       resetValue: geoip
           ? RoutingPrefs.defaultGeoipUrl
           : RoutingPrefs.defaultGeositeUrl,
@@ -130,30 +135,31 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
     return file.isEmpty ? u.host : '${u.host}/…/$file';
   }
 
-  String _bytes(int n) => n <= 0 ? 'not downloaded' : formatBytes(n);
+  String _bytes(int n) =>
+      n <= 0 ? context.l10n.geoNotDownloaded : formatBytes(n);
 
   String _updatedAt(RoutingPrefs prefs) {
+    final l10n = context.l10n;
     final at = prefs.geoUpdatedAt;
-    if (at == null || !_status.downloaded) return 'never';
+    if (at == null || !_status.downloaded) return l10n.geoNever;
     final d = DateTime.now().difference(at);
-    if (d.inDays > 0) return '${d.inDays} day${d.inDays > 1 ? 's' : ''} ago';
-    if (d.inHours > 0) {
-      return '${d.inHours} hour${d.inHours > 1 ? 's' : ''} ago';
-    }
-    return 'just now';
+    if (d.inDays > 0) return l10n.commonDaysAgo(d.inDays);
+    if (d.inHours > 0) return l10n.commonHoursAgo(d.inHours);
+    return l10n.commonJustNow;
   }
 
   @override
   Widget build(BuildContext context) {
     final prefs = ref.watch(routingPrefsProvider);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('GeoIP & GeoSite')),
+      appBar: AppBar(title: Text(l10n.geoTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : PageBody(
               child: ListView(
                 children: [
-                  const SectionHeader('DATABASES'),
+                  SectionHeader(l10n.geoSectionDatabases),
                   _dbCard(
                     name: 'GeoIP',
                     url: prefs.geoipUrl,
@@ -166,20 +172,18 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
                     bytes: _status.geositeBytes,
                     onEdit: () => _editUrl(geoip: false),
                   ),
-                  const SectionHeader('UPDATES'),
+                  SectionHeader(l10n.geoSectionUpdates),
                   Card(
                     margin: kCardMargin,
                     child: Column(
                       children: [
                         ListTile(
-                          title: const Text('Last updated'),
+                          title: Text(l10n.geoLastUpdated),
                           subtitle: Text(_updatedAt(prefs)),
                         ),
                         SwitchListTile(
-                          title: const Text('Auto-update'),
-                          subtitle: const Text(
-                            'Weekly, when already downloaded',
-                          ),
+                          title: Text(l10n.geoAutoUpdate),
+                          subtitle: Text(l10n.geoAutoUpdateSubtitle),
                           value: prefs.geoAutoUpdate,
                           onChanged: (v) => ref
                               .read(routingPrefsProvider.notifier)
@@ -201,7 +205,9 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
                             )
                           : const Icon(Icons.refresh, size: 18),
                       label: Text(
-                        _status.downloaded ? 'Update now' : 'Download (~25 MB)',
+                        _status.downloaded
+                            ? l10n.geoUpdateNow
+                            : l10n.geoDownload,
                       ),
                     ),
                   ),

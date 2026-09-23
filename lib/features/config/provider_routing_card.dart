@@ -5,6 +5,7 @@ import '../../core/profile.dart';
 import '../../core/rule_list_store.dart';
 import '../../core/theme.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../policy_origin.dart';
 import '../managed_policy_screen.dart';
@@ -55,6 +56,7 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
     final ctrl = ref.read(profilesControllerProvider.notifier);
     final lists = ref.watch(providerRuleListsProvider(profile.id)).value;
     final needLists = routing.rules.where((r) => r.needsRuleList).length;
+    final l10n = context.l10n;
     return Card(
       margin: kCardMargin,
       color: cs.primaryContainer.withValues(alpha: 0.35),
@@ -66,7 +68,7 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
             // is comes from the section header, once, instead of from every row —
             // the width a repeated "from your provider" costs is width the
             // subtitle needs for facts.
-            title: const Text('Routing'),
+            title: Text(l10n.configRouting),
             subtitle: Text(providerRoutingSummary(profile, lists)),
             value: on,
             onChanged: (v) => ctrl.setProviderRoutingEnabled(profile.id, v),
@@ -76,7 +78,7 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
           // else's rules requires seeing them first.
           ListTile(
             leading: const Icon(Icons.layers_outlined),
-            title: const Text('Rule set'),
+            title: Text(l10n.configRuleSet),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -114,10 +116,10 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
                   : const Icon(Icons.description_outlined),
-              title: const Text('Rule lists'),
+              title: Text(l10n.configRuleLists),
               subtitle: Text(
                 _downloading
-                    ? 'Downloading ${needLists == 1 ? 'one list' : '$needLists lists'}…'
+                    ? l10n.configDownloadingLists(needLists)
                     : _listSummary(profile, needLists, lists),
               ),
               value: profile.providerRuleListsEnabled,
@@ -136,23 +138,26 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
 /// missing — says that too, because a summary that reads as complete is the
 /// one place this could mislead.
 String providerRoutingSummary(Profile profile, List<RuleListStatus>? lists) {
+  final l10n = L10n.current;
   final routing = profile.providerRouting!;
-  final mode = routing.mode == 'split' ? 'Split' : 'Full tunnel';
+  final mode = routing.mode == 'split'
+      ? l10n.ruleSetModeSplit
+      : l10n.ruleSetModeFull;
   final applied = routing.rules
       .where((r) => !r.needsRuleList || _isAvailable(profile, r.value, lists))
       .length;
   final rules = applied == 0
-      ? 'no exceptions'
-      : '$applied rule${applied > 1 ? 's' : ''}';
-  final parts = ['$mode · $rules'];
+      ? l10n.configNoExceptions
+      : l10n.configRulesCount(applied);
+  final parts = [l10n.ruleSetSummary(mode, rules)];
   final skipped = profile.providerRoutingSkipped;
-  if (skipped > 0) parts.add('$skipped not supported');
+  if (skipped > 0) parts.add(l10n.configSkippedNotSupported(skipped));
   final missing = routing.rules.length - applied;
   if (missing > 0) {
     parts.add(
       profile.providerRuleListsEnabled
-          ? '$missing list${missing > 1 ? 's' : ''} unavailable'
-          : '$missing need${missing > 1 ? '' : 's'} their lists',
+          ? l10n.configListsUnavailable(missing)
+          : l10n.configRulesNeedLists(missing),
     );
   }
   return parts.join(' · ');
@@ -167,17 +172,16 @@ bool _isAvailable(Profile p, String name, List<RuleListStatus>? lists) {
 }
 
 String _listSummary(Profile p, int needed, List<RuleListStatus>? lists) {
-  if (!p.providerRuleListsEnabled) {
-    return 'Off · $needed rule${needed > 1 ? 's' : ''} need${needed > 1 ? '' : 's'} them';
-  }
-  if (lists == null) return 'Checking…';
+  final l10n = L10n.current;
+  if (!p.providerRuleListsEnabled) return l10n.configRuleListsOff(needed);
+  if (lists == null) return l10n.configChecking;
   final have = lists.where((s) => s.available).toList();
-  if (have.isEmpty) return 'None downloaded yet';
+  if (have.isEmpty) return l10n.configNoneDownloadedYet;
   final kb = have.fold<int>(0, (a, s) => a + s.bytes) ~/ 1024;
   final count = have.length == lists.length
-      ? '${have.length} list${have.length > 1 ? 's' : ''}'
-      : '${have.length} of ${lists.length} downloaded';
-  return '$count · $kb KB';
+      ? l10n.configListsCount(have.length)
+      : l10n.configListsDownloadedOf(have.length, lists.length);
+  return l10n.configListsSize(count, kb);
 }
 
 /// Shown when the provider named a list we could not fetch.
@@ -226,6 +230,7 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
         .map((s) => Uri.parse(s.list.url).host)
         .toSet()
         .join(', ');
+    final l10n = context.l10n;
     return Card(
       margin: kCardMargin,
       color: warn.withValues(alpha: 0.12),
@@ -233,16 +238,8 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
         children: [
           ListTile(
             leading: Icon(Icons.warning_amber_outlined, color: warn),
-            title: Text(
-              n == 1
-                  ? 'One list could not be downloaded'
-                  : '$n lists could not be downloaded',
-            ),
-            subtitle: Text(
-              '$names from $hosts — '
-              'the rule${n > 1 ? 's' : ''} using ${n > 1 ? 'them' : 'it'} '
-              '${n > 1 ? 'are' : 'is'} not applied.',
-            ),
+            title: Text(l10n.configListsFailedTitle(n)),
+            subtitle: Text(l10n.configListsFailedDetail(n, names, hosts)),
             isThreeLine: true,
           ),
           Align(
@@ -257,7 +254,7 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Try again'),
+                    : Text(l10n.commonTryAgain),
               ),
             ),
           ),

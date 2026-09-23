@@ -10,6 +10,7 @@ import 'package:vpn_client/features/home_screen.dart';
 import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 /// The home screen contract from the spec: the configuration is always on
 /// screen (a single one still gets its gear), the picker chevron only appears
@@ -71,6 +72,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const HomeScreen(),
         ),
       ),

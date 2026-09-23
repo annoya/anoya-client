@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
+
 /// Who authored a policy shown read-only, in the words its banner uses.
 class PolicyOrigin {
   const PolicyOrigin({
@@ -14,21 +16,19 @@ class PolicyOrigin {
 
   /// A self-hosted deployment: the server both sets the policy and enforces it,
   /// so there is nothing here for the user to decide.
-  static const organization = PolicyOrigin(
+  static PolicyOrigin get organization => PolicyOrigin(
     icon: Icons.business_outlined,
-    title: 'Managed by your organization',
-    detail: 'These rules are set on the server and cannot be changed here.',
+    title: L10n.current.configManagedByOrganization,
+    detail: L10n.current.configOrganizationPolicyDetail,
   );
 
   /// A subscription's panel: it sent rules, and the next refresh may send
   /// different ones, but it cannot make this device obey them (ADR-005).
   static PolicyOrigin provider(String name, {int skipped = 0}) => PolicyOrigin(
     icon: Icons.cloud_outlined,
-    title: 'Sent by $name',
+    title: L10n.current.configSentBy(name),
     detail: skipped == 0
-        ? 'Read-only. Refreshing the subscription replaces them.'
-        : 'Read-only. Refreshing the subscription replaces them. '
-              '$skipped more rule${skipped > 1 ? 's' : ''} could not be '
-              'translated for this app and ${skipped > 1 ? 'are' : 'is'} not applied.',
+        ? L10n.current.configProviderPolicyDetail
+        : L10n.current.configProviderPolicyDetailSkipped(skipped),
   );
 }

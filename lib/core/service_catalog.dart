@@ -9,15 +9,20 @@
 /// the local database are hidden rather than shown as dead switches.
 library;
 
+import '../l10n/l10n.dart';
+
 enum ServiceGroup {
-  streaming('STREAMING'),
-  messengers('MESSENGERS'),
-  social('SOCIAL'),
-  other('OTHER');
+  streaming,
+  messengers,
+  social,
+  other;
 
-  const ServiceGroup(this.header);
-
-  final String header;
+  String get header => switch (this) {
+    ServiceGroup.streaming => L10n.current.catalogGroupStreaming,
+    ServiceGroup.messengers => L10n.current.catalogGroupMessengers,
+    ServiceGroup.social => L10n.current.catalogGroupSocial,
+    ServiceGroup.other => L10n.current.catalogGroupOther,
+  };
 }
 
 class CatalogService {

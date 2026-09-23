@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/profile.dart';
 import '../../core/rule_list_store.dart';
 import '../../core/ui.dart';
+import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/provider_rule_lists.dart';
 import 'config_parts.dart';
@@ -35,12 +36,13 @@ class RoutingConfigScreen extends ConsumerWidget {
       return Scaffold(appBar: AppBar(), body: const SizedBox.shrink());
     }
     final p = profile;
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Routing')),
+      appBar: AppBar(title: Text(l10n.configRouting)),
       body: PageBody(
         child: ListView(
           children: [
-            ..._routing(ref, p),
+            ..._routing(l10n, ref, p),
             NamesSection(profile: p),
           ],
         ),
@@ -52,15 +54,12 @@ class RoutingConfigScreen extends ConsumerWidget {
   /// is. They differ in what they *are*, not in details (ADR-005): a policy the
   /// organization sets and enforces, one a panel offered and the user may
   /// refuse, and the device's own.
-  List<Widget> _routing(WidgetRef ref, Profile p) {
+  List<Widget> _routing(AppLocalizations l10n, WidgetRef ref, Profile p) {
     if (p.routing != null) {
       return [
-        const SectionHeader('ORGANIZATION ROUTING'),
+        SectionHeader(l10n.configSectionOrganizationRouting),
         ManagedRoutingCard(routing: p.routing!),
-        const SectionNote(
-          'Your organization sets this policy and applies it. '
-          'You can see what it is; changing it is done on their side.',
-        ),
+        SectionNote(l10n.configOrganizationRoutingNote),
       ];
     }
     if (p.providerRouting != null) {
@@ -72,12 +71,12 @@ class RoutingConfigScreen extends ConsumerWidget {
                 .toList()
           : const <RuleListStatus>[];
       return [
-        const SectionHeader('SUBSCRIPTION ROUTING'),
+        SectionHeader(l10n.configSectionSubscriptionRouting),
         ProviderRoutingCard(profile: p),
         if (failed.isNotEmpty) RuleListFailureCard(profile: p, failed: failed),
         // Two owners, two headers: without them the page reads as one setting
         // shown twice.
-        const SectionHeader('DEVICE ROUTING'),
+        SectionHeader(l10n.configSectionDeviceRouting),
         // Visible but genuinely out of reach while the provider's routes are
         // on. Dimming alone left the switch tappable and the rule set
         // openable, and neither changed anything — a control that moves and
@@ -90,25 +89,18 @@ class RoutingConfigScreen extends ConsumerWidget {
             child: LocalRoutingCard(
               profile: p,
               overriddenBy: p.providerRoutingEnabled
-                  ? 'the subscription’s routes'
+                  ? l10n.configSubscriptionRoutes
                   : null,
             ),
           ),
         ),
-        const SectionNote(
-          'Turn the switch off to use your own rule set '
-          'instead. Your subscription cannot enforce this either way.',
-        ),
+        SectionNote(l10n.configSubscriptionRoutingNote),
       ];
     }
     return [
-      const SectionHeader('DEVICE ROUTING'),
+      SectionHeader(l10n.configSectionDeviceRouting),
       LocalRoutingCard(profile: p),
-      const SectionNote(
-        'Rule sets are shared by every configuration; the '
-        'switch is per configuration, so a work subscription and a personal '
-        'one can use the same set differently.',
-      ),
+      SectionNote(l10n.configDeviceRoutingNote),
     ];
   }
 }

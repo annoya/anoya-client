@@ -1,3 +1,4 @@
+import '../../l10n/l10n.dart';
 import '../app_error.dart';
 import 'agw_ffi.dart';
 
@@ -33,124 +34,107 @@ AppError describeAmneziaError(AgwResponse res) {
 
 /// The gateway answered, but not with a configuration: an empty or unreadable
 /// document. Not a refusal — it said nothing about why.
-const kAmneziaEmptyAnswer = AppError(
-  'The gateway sent nothing',
-  detail:
-      'It answered without a configuration. Try again; if it repeats, support '
-      'for this subscription will need to look.',
+AppError get kAmneziaEmptyAnswer => AppError(
+  L10n.current.amneziaErrorEmptyAnswerTitle,
+  detail: L10n.current.amneziaErrorEmptyAnswerDetail,
 );
 
-(String, String) _transport(int code) => switch (code) {
-  AgwStatus.cancelled => (
-    'Took too long',
-    'The gateway did not answer in time. Check the connection and try again.',
-  ),
-  AgwStatus.network => (
-    'Couldn’t reach the gateway',
-    'The gateway did not answer. This is usually the network, not the '
-        'subscription — try again in a moment.',
-  ),
-  AgwStatus.timeout => (
-    'The gateway timed out',
-    'No answer within the time allowed. Check the connection and try again.',
-  ),
-  AgwStatus.ssl => (
-    'The connection was not trusted',
-    'Something interfered with the secure connection to the gateway.',
-  ),
-  AgwStatus.config => (
-    'This build cannot talk to the gateway',
-    'It was built without the gateway credentials, so subscriptions of this '
-        'kind are unavailable in it.',
-  ),
-  AgwStatus.decrypt => (
-    'The answer could not be read',
-    'The reply was not what the gateway should have sent — often a network '
-        'that intercepts traffic.',
-  ),
-  AgwStatus.invalidArgument => (
-    'The gateway request was malformed',
-    'A defect in this app, not in the subscription. Restarting the app helps; '
-        'if it repeats, the log in Settings → Logs is what support needs.',
-  ),
-  _ => (
-    'The gateway refused the request',
-    'The gateway answered with code $code.',
-  ),
-};
+(String, String) _transport(int code) {
+  final l10n = L10n.current;
+  return switch (code) {
+    AgwStatus.cancelled => (
+      l10n.amneziaErrorCancelledTitle,
+      l10n.amneziaErrorCancelledDetail,
+    ),
+    AgwStatus.network => (
+      l10n.amneziaErrorNetworkTitle,
+      l10n.amneziaErrorNetworkDetail,
+    ),
+    AgwStatus.timeout => (
+      l10n.amneziaErrorTimeoutTitle,
+      l10n.amneziaErrorTimeoutDetail,
+    ),
+    AgwStatus.ssl => (l10n.amneziaErrorSslTitle, l10n.amneziaErrorSslDetail),
+    AgwStatus.config => (
+      l10n.amneziaErrorConfigTitle,
+      l10n.amneziaErrorConfigDetail,
+    ),
+    AgwStatus.decrypt => (
+      l10n.amneziaErrorDecryptTitle,
+      l10n.amneziaErrorDecryptDetail,
+    ),
+    AgwStatus.invalidArgument => (
+      l10n.amneziaErrorInvalidArgumentTitle,
+      l10n.amneziaErrorInvalidArgumentDetail,
+    ),
+    _ => (
+      l10n.amneziaErrorRefusedTitle,
+      l10n.amneziaErrorRefusedCodeDetail(code),
+    ),
+  };
+}
 
 /// The gateway's refusals, by the status it wrote into its document. The
 /// statuses and the message fragments that split them are the gateway's
 /// contract as the reference client reads it; a status outside this list is
 /// quoted, not guessed at.
 (String, String) _refusal(AgwResponse res) {
+  final l10n = L10n.current;
   final message = res.message.toLowerCase();
   bool says(String needle) => message.contains(needle);
   switch (res.httpStatus) {
     case 429:
       return (
-        'Too many requests',
-        'The gateway is throttling this subscription. Wait a few minutes before '
-            'trying again.',
+        l10n.amneziaErrorTooManyRequestsTitle,
+        l10n.amneziaErrorTooManyRequestsDetail,
       );
     case 409:
       if (says('trial subscription already used')) {
         return (
-          'Trial already used',
-          'This address has already activated a trial.',
+          l10n.amneziaErrorTrialUsedTitle,
+          l10n.amneziaErrorTrialUsedDetail,
         );
       }
-      return (
-        'Device limit reached',
-        'This subscription is already installed on as many devices as it allows. '
-            'Remove one from the subscription, then try again.',
-      );
+      return (l10n.errorDeviceLimitTitle, l10n.amneziaErrorDeviceLimitDetail);
     case 404:
-      return (
-        'Subscription not found',
-        'The gateway does not recognise this key. Check that it was pasted whole.',
-      );
+      return (l10n.amneziaErrorNotFoundTitle, l10n.amneziaErrorNotFoundDetail);
     case 408:
-      return (
-        'The gateway timed out',
-        'No answer within the time allowed. Check the connection and try again.',
-      );
+      return (l10n.amneziaErrorTimeoutTitle, l10n.amneziaErrorTimeoutDetail);
     case 501:
       return (
-        'The gateway requires a newer client',
-        'The gateway refused this app’s version. It will work again once the app '
-            'is updated.',
+        l10n.amneziaErrorNewerClientTitle,
+        l10n.amneziaErrorNewerClientDetail,
       );
     case 422:
       if (says('failed to retrieve subscription information')) {
-        return (
-          'Subscription expired',
-          'Renew the subscription, then refresh this configuration.',
-        );
+        return (l10n.accountExpiredTitle, l10n.configSubscriptionExpiredDetail);
       }
     case 402:
       // The captcha family: the client this subscription came from can show
       // and solve one, and this app deliberately cannot — so it says which
       // door is open rather than offering a control that does nothing.
-      const pass =
-          'Pass it in the app this subscription came from, then refresh here.';
-      if (says('refresh_captcha')) return ('The CAPTCHA expired', pass);
-      if (says('invalid_captcha')) return ('The CAPTCHA was rejected', pass);
+      final pass = l10n.amneziaErrorCaptchaPass;
+      if (says('refresh_captcha')) {
+        return (l10n.amneziaErrorCaptchaExpiredTitle, pass);
+      }
+      if (says('invalid_captcha')) {
+        return (l10n.amneziaErrorCaptchaRejectedTitle, pass);
+      }
       if (says('rate_limit_exceeded') ||
           res.json.containsKey('captcha_id') ||
           res.json.containsKey('captcha_image')) {
         return (
-          'The gateway asked for a CAPTCHA',
-          'This app cannot show one. $pass',
+          l10n.amneziaErrorCaptchaAskedTitle,
+          l10n.amneziaErrorCaptchaAskedDetail(pass),
         );
       }
       return (
-        'Subscription not active',
-        'The gateway has no active subscription for this key.',
+        l10n.amneziaErrorNotActiveTitle,
+        l10n.amneziaErrorNotActiveDetail,
       );
   }
   return (
-    'The gateway refused the request',
-    'The gateway answered with HTTP ${res.httpStatus}.',
+    l10n.amneziaErrorRefusedTitle,
+    l10n.amneziaErrorRefusedHttpDetail(res.httpStatus),
   );
 }

@@ -9,6 +9,7 @@ import '../core/platform_support.dart';
 import '../core/rule_set.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 
 /// What the rule-set editor and the managed-policy viewer share: the same rule
 /// row, the same direction card, the same download banner. A rule has to read
@@ -25,6 +26,7 @@ class RoutingModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       margin: kCardMargin,
       child: Padding(
@@ -38,12 +40,15 @@ class RoutingModeCard extends StatelessWidget {
               width: double.infinity,
               child: SegmentedButton<RoutingMode>(
                 showSelectedIcon: false,
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: RoutingMode.full,
-                    label: Text('Full tunnel'),
+                    label: Text(l10n.ruleSetModeFull),
                   ),
-                  ButtonSegment(value: RoutingMode.split, label: Text('Split')),
+                  ButtonSegment(
+                    value: RoutingMode.split,
+                    label: Text(l10n.ruleSetModeSplit),
+                  ),
                 ],
                 selected: {mode},
                 onSelectionChanged: onChanged == null
@@ -54,8 +59,8 @@ class RoutingModeCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               mode == RoutingMode.full
-                  ? 'All traffic goes through the VPN; rules define exceptions.'
-                  : 'Only traffic matching the rules goes through the VPN; the rest connects directly.',
+                  ? l10n.ruleSetModeFullDescription
+                  : l10n.ruleSetModeSplitDescription,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -72,8 +77,8 @@ Widget emptyRulesNote(BuildContext context, RoutingMode mode) => Padding(
   padding: const EdgeInsets.all(kGutter),
   child: Text(
     mode == RoutingMode.split
-        ? 'No rules: no traffic goes through the VPN. Add rules for what should be tunneled.'
-        : 'No rules: all traffic goes through the VPN.',
+        ? context.l10n.ruleSetNoRulesSplit
+        : context.l10n.ruleSetNoRulesFull,
     style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
   ),
 );
@@ -120,7 +125,7 @@ class GeoDownloadBanner extends StatelessWidget {
                         width: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Download'),
+                    : Text(context.l10n.ruleSetDownload),
               ),
             ),
           ],
@@ -139,7 +144,10 @@ Future<bool?> downloadGeoDatabases(BuildContext context) async {
   } catch (e) {
     Log.e('geo download failed', '$e');
     if (context.mounted) {
-      showToast(context, describeError(e, subject: 'the database host').line);
+      showToast(
+        context,
+        describeError(e, subject: context.l10n.geoDatabaseHostSubject).line,
+      );
     }
     return null;
   }
@@ -185,6 +193,7 @@ class RuleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final actionColor = switch (rule.action) {
       'proxy' => context.vpnColors.connected,
       'direct' => context.vpnColors.direct,
@@ -195,15 +204,17 @@ class RuleTile extends StatelessWidget {
     final noList = rule.needsRuleList && !listNames.contains(rule.value);
     final inactive = noDatabase || unsupported || noList;
     final title = rule.type == 'geoip' ? geoipTitle(rule.value) : rule.value;
-    final kind = rule.type == 'rule-list' ? 'rule list' : rule.type;
+    final kind = rule.type == 'rule-list' ? l10n.ruleKindRuleList : rule.type;
     final subtitle = noDatabase
-        ? '$kind · inactive — no database'
+        ? l10n.ruleInactiveNoDatabase(kind)
         : unsupported
-        ? '$kind · inactive — desktop only'
+        ? l10n.ruleInactiveDesktopOnly(kind)
         : noList
-        ? '$kind · inactive — ${listsOff ? 'lists are off' : 'not downloaded'}'
+        ? (listsOff
+              ? l10n.ruleInactiveListsOff(kind)
+              : l10n.ruleInactiveNotDownloaded(kind))
         : rule.noResolve
-        ? '$kind · no-resolve'
+        ? l10n.ruleNoResolveKind(kind)
         : kind;
     final cs = Theme.of(context).colorScheme;
     return Opacity(
@@ -256,7 +267,7 @@ class RuleTile extends StatelessWidget {
                 if (onRemove != null)
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 20),
-                    tooltip: 'Remove',
+                    tooltip: l10n.commonRemove,
                     visualDensity: VisualDensity.compact,
                     onPressed: onRemove,
                   ),

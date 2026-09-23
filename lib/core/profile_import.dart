@@ -1,4 +1,5 @@
 import '../api/api_client.dart';
+import '../l10n/l10n.dart';
 import 'amnezia/amnezia_source.dart';
 import 'amnezia/vpn_key.dart';
 import 'app_error.dart';
@@ -153,7 +154,9 @@ Future<Profile> importText(String text, {String? name}) async {
     type: single ? ProfileType.link : ProfileType.subscription,
     name: name?.trim().isNotEmpty == true
         ? name!.trim()
-        : (single ? locations.first.label : 'Imported (${locations.length})'),
+        : (single
+              ? locations.first.label
+              : L10n.current.importImportedName(locations.length)),
     locations: locations,
     dns: parsed.dns,
     unsupportedServers: parsed.unsupported,
@@ -173,17 +176,20 @@ Future<Profile> importAmneziaKey(String text) async {
   if (key == null) {
     // Not a FormatException: describeError would then talk about share
     // links, and the user typed something that looked like a key.
-    throw const AppErrorException(
+    throw AppErrorException(
       AppError(
-        'This isn’t a subscription key',
-        detail: 'Expected a vpn:// key from your subscription.',
+        L10n.current.importNotAKeyTitle,
+        detail: L10n.current.importNotAKeyDetail,
       ),
     );
   }
   final refusal = amneziaKeyUnsupported(key);
   if (refusal != null) {
     throw AppErrorException(
-      AppError('${key.name} isn’t supported here', detail: refusal),
+      AppError(
+        L10n.current.importKeyUnsupportedTitle(key.name),
+        detail: refusal,
+      ),
     );
   }
   final id = newProfileId();

@@ -2,6 +2,8 @@
 // (shared/normconfig in Go). Core-agnostic: a Location's proxy is an open map
 // keyed by "type", which the active VpnCore knows how to translate.
 
+import '../l10n/l10n.dart';
+
 class NormConfig {
   NormConfig({
     required this.version,
@@ -162,11 +164,11 @@ class ProxyGroup {
   /// What the row says the group does. The type name from someone else's YAML
   /// tells the user nothing; this is the same fact in words they can act on.
   String describe(int memberCount) => switch (type) {
-    'url-test' => 'Lowest latency of $memberCount',
-    'fallback' => 'First of $memberCount that answers · in their order',
-    'load-balance' => 'Spread across $memberCount',
-    'relay' => 'Chain of $memberCount',
-    _ => '$memberCount servers',
+    'url-test' => L10n.current.proxyGroupUrlTest(memberCount),
+    'fallback' => L10n.current.proxyGroupFallback(memberCount),
+    'load-balance' => L10n.current.proxyGroupLoadBalance(memberCount),
+    'relay' => L10n.current.proxyGroupRelay(memberCount),
+    _ => L10n.current.commonServersCount(memberCount),
   };
 
   factory ProxyGroup.fromJson(Map<String, dynamic> json) => ProxyGroup(

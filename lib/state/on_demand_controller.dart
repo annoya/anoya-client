@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/log.dart';
 import '../core/on_demand.dart';
+import '../l10n/l10n.dart';
 import 'profiles_controller.dart';
 import 'providers.dart';
 import 'ready_gate.dart';
@@ -28,7 +29,9 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
   Future<void> setEnabled(bool enabled) async {
     var rules = state.rules;
     if (enabled && rules.isEmpty) {
-      rules = [OnDemandRule(id: _newId(), name: 'Everywhere')];
+      rules = [
+        OnDemandRule(id: _newId(), name: L10n.current.onDemandDefaultRuleName),
+      ];
     }
     await _apply(state.copyWith(enabled: enabled, paused: false, rules: rules));
   }

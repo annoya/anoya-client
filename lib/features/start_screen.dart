@@ -12,6 +12,7 @@ import '../core/log.dart';
 import '../core/parsers/subscription.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 import 'sign_in_screen.dart';
 
@@ -192,10 +193,10 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     if (res == null) return false; // cancelled — nothing added
     final bytes = res.files.single.bytes;
     if (bytes == null) {
-      throw const AppErrorException(
+      throw AppErrorException(
         AppError(
-          'Couldn’t read the file',
-          detail: 'Try opening it again, or paste its contents.',
+          L10n.current.startCouldntReadFile,
+          detail: L10n.current.startCouldntReadFileDetail,
         ),
       );
     }
@@ -205,6 +206,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: Navigator.of(context).canPop() ? AppBar() : null,
@@ -220,7 +222,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                   Icon(Icons.shield_outlined, size: 56, color: cs.primary),
                   const SizedBox(height: 14),
                   Text(
-                    'Add a connection',
+                    l10n.startAddConnection,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w600,
@@ -228,7 +230,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Link, subscription or config file',
+                    l10n.startSubtitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(
                       context,
@@ -249,9 +251,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                     autocorrect: false,
                     enabled: !_busy,
                     onChanged: _onChanged,
-                    decoration: const InputDecoration(
-                      labelText: 'Link or subscription',
-                      hintText: 'vless://…  or  https://…/sub',
+                    decoration: InputDecoration(
+                      labelText: l10n.startLinkLabel,
+                      hintText: l10n.startLinkHint,
                     ),
                   ),
                   if (_detected != null) ...[
@@ -260,7 +262,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                   ] else if (_verdict != null) ...[
                     const SizedBox(height: 10),
                     _DetectChip(
-                      text: 'Can’t use this · $_verdict',
+                      text: l10n.startCantUseThis(_verdict!),
                       refused: true,
                     ),
                   ],
@@ -274,13 +276,13 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Continue'),
+                        : Text(l10n.commonContinue),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _openFile,
                     icon: const Icon(Icons.folder_open, size: 18),
-                    label: const Text('Open a config file…'),
+                    label: Text(l10n.startOpenConfigFile),
                   ),
                   const SizedBox(height: 18),
                   Row(
@@ -289,7 +291,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
-                          'or',
+                          l10n.startOr,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: cs.onSurfaceVariant),
                         ),
@@ -307,7 +309,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                             ),
                           ),
                     icon: const Icon(Icons.business_outlined, size: 18),
-                    label: const Text('Sign in to your server'),
+                    label: Text(l10n.startSignInToServer),
                   ),
                 ],
               ),
@@ -350,7 +352,7 @@ class _RejectedCard extends StatelessWidget {
             isThreeLine: failure.error.detail != null,
             trailing: IconButton(
               icon: const Icon(Icons.close, size: 20),
-              tooltip: 'Dismiss',
+              tooltip: context.l10n.commonDismiss,
               color: cs.onSurfaceVariant,
               onPressed: onClose,
             ),
@@ -360,7 +362,7 @@ class _RejectedCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.link, size: 18),
-                label: const Text('Open subscription page'),
+                label: Text(context.l10n.startOpenSubscriptionPage),
                 onPressed: () => launchUrl(
                   Uri.parse(url),
                   mode: LaunchMode.externalApplication,

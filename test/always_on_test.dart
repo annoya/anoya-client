@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/platform_support.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/features/always_on_screen.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 /// Android's auto-connect surface: honesty about who owns the switch.
 ///
@@ -22,6 +23,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(Brightness.light),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const AlwaysOnScreen(),
       ),
     );
@@ -51,6 +54,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(Brightness.light),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const AlwaysOnScreen(),
       ),
     );

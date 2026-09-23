@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/menu_bar.dart';
 import '../core/profile.dart';
 import '../core/vpn_core.dart';
+import '../l10n/l10n.dart';
 import 'profiles_controller.dart';
 import 'session.dart';
 
@@ -47,13 +48,14 @@ void _push(Ref ref, MenuBar menu) => menu.update(
 /// that offers "Connect" with nothing to connect to, or a status line that
 /// claims a tunnel the app does not have, is the only way this can mislead.
 MenuBarState menuBarStateFor(SessionState session, ProfilesState profiles) {
+  final l10n = L10n.current;
   final Profile? active = profiles.active;
   final location = profiles.selectedLocation;
 
   if (active == null) {
     // Nothing to connect to, and saying so is what makes the disabled items
     // legible: the reason is on screen instead of left to be guessed.
-    return const MenuBarState(status: 'No configuration');
+    return MenuBarState(status: l10n.statusNoConfiguration);
   }
 
   final where = location == null ? '' : ' · ${location.label}';
@@ -61,11 +63,11 @@ MenuBarState menuBarStateFor(SessionState session, ProfilesState profiles) {
   final status = switch (session.status) {
     // A hot switch keeps the session up, so the word for it is not
     // "connecting" — the same distinction the home screen makes.
-    _ when profiles.switching => 'Switching…$where',
-    VpnStatus.connected => 'Connected$where',
-    VpnStatus.connecting => 'Connecting…$where',
-    VpnStatus.error => 'Error',
-    VpnStatus.disconnected => 'Not connected',
+    _ when profiles.switching => '${l10n.menuBarSwitching}$where',
+    VpnStatus.connected => '${l10n.statusConnected}$where',
+    VpnStatus.connecting => '${l10n.statusConnecting}$where',
+    VpnStatus.error => l10n.statusError,
+    VpnStatus.disconnected => l10n.statusNotConnected,
   };
 
   return MenuBarState(

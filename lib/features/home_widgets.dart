@@ -9,6 +9,7 @@ import '../core/norm_config.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../core/vpn_core.dart';
+import '../l10n/l10n.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/session.dart';
@@ -61,6 +62,7 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final vpn = context.vpnColors;
     final session = ref.watch(sessionProvider);
     final style = Theme.of(
@@ -72,26 +74,30 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
       // session to switch, only a server still being fetched, and promising a
       // switch would describe something that is not happening.
       final label = session.connected
-          ? 'Switching server…'
-          : 'Getting the server…';
+          ? l10n.homeSwitchingServer
+          : l10n.homeGettingServer;
       // The ring stays green (the session never dropped); the status line is
       // the only telltale of the in-flight switch.
       return Text(label, style: style?.copyWith(color: vpn.connecting));
     }
     // "· auto" only when the OS confirmed it is auto-connecting.
-    final auto = ref.watch(onDemandProvider.select((p) => p.systemArmed))
-        ? ' · auto'
-        : '';
+    final auto = ref.watch(onDemandProvider.select((p) => p.systemArmed));
     final clock = sessionClock(session.startedAt);
+    final connected = clock.isEmpty
+        ? l10n.statusConnected
+        : l10n.homeConnectedClock(clock);
     final (text, color) = switch (session.status) {
       VpnStatus.connected => (
-        'Connected${clock.isEmpty ? '' : ' · $clock'}$auto',
+        auto ? l10n.homeStatusAuto(connected) : connected,
         vpn.connected,
       ),
-      VpnStatus.connecting => ('Connecting…', vpn.connecting),
-      VpnStatus.error => ('Error', Theme.of(context).colorScheme.error),
+      VpnStatus.connecting => (l10n.statusConnecting, vpn.connecting),
+      VpnStatus.error => (
+        l10n.statusError,
+        Theme.of(context).colorScheme.error,
+      ),
       VpnStatus.disconnected => (
-        'Not connected',
+        l10n.statusNotConnected,
         Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     };
@@ -108,6 +114,7 @@ class ConnectButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final connected = status == VpnStatus.connected;
     final connecting = status == VpnStatus.connecting;
     final vpn = context.vpnColors;
@@ -120,7 +127,7 @@ class ConnectButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: !connecting,
-      label: connected ? 'Disconnect' : 'Connect',
+      label: connected ? l10n.commonDisconnect : l10n.commonConnect,
       child: GestureDetector(
         onTap: connecting ? null : onTap,
         child: AnimatedContainer(
@@ -149,7 +156,7 @@ class ConnectButton extends StatelessWidget {
                       Icon(Icons.power_settings_new, size: 56, color: color),
                       const SizedBox(height: 8),
                       Text(
-                        connected ? 'Disconnect' : 'Connect',
+                        connected ? l10n.commonDisconnect : l10n.commonConnect,
                         style: TextStyle(
                           color: color,
                           fontWeight: FontWeight.w600,
@@ -243,7 +250,7 @@ String describeGroup(ProxyGroup g, List<Location> locations) {
       ? kMinGroupInterval
       : Duration(seconds: g.intervalSeconds);
   return every
-      ? '${g.describe(n)} · rechecks every ${interval.inMinutes} min'
+      ? L10n.current.homeGroupRechecks(g.describe(n), interval.inMinutes)
       : g.describe(n);
 }
 

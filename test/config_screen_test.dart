@@ -17,6 +17,7 @@ import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/ui.dart';
 import 'package:vpn_client/state/provider_rule_lists.dart';
 import 'package:vpn_client/features/config/config_screen.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 import 'package:vpn_client/state/on_demand_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 
@@ -74,6 +75,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const ConfigScreen(profileId: 'p1'),
         ),
       ),
@@ -377,8 +380,9 @@ void main() {
     // should not have to work out whether two screens are telling them about
     // the same thing. Four copies of the handler once diverged in wording, so
     // the wording now lives in exactly one place and the screens embed it.
+    // The sentence itself is an ARB key; what is guarded here is who says it.
     const shared = 'lib/features/refresh_button.dart';
-    final pattern = RegExp(r"Couldn’t refresh");
+    final pattern = RegExp(r'configRefreshFailed\(');
     expect(
       pattern.allMatches(File(shared).readAsStringSync()),
       hasLength(1),
@@ -393,7 +397,7 @@ void main() {
       final src = f.readAsStringSync();
       expect(
         src,
-        isNot(contains('Couldn’t refresh')),
+        isNot(contains('configRefreshFailed')),
         reason: '${f.path} has grown its own copy of the message',
       );
       expect(

@@ -30,9 +30,17 @@ bool FlutterWindow::OnCreate() {
   tray_ = std::make_unique<TrayIcon>(GetHandle(), flutter_controller_->engine()->messenger(),
                                      L"AnnoyaTest");
   tray_->on_toggle_window = [this]() { ToggleWindow(); };
+  // Quit is posted, never done here. The WM_COMMAND that carries it is
+  // dispatched from inside TrackPopupMenuEx's own modal loop, so this runs
+  // several frames below TrayIcon::ShowMenu — and tearing down from there
+  // destroys the TrayIcon whose method is still on the stack, then shuts the
+  // engine down on a platform thread that is blocked in that loop and cannot
+  // pump the tasks the shutdown waits for. Which is the hang. Posting lets
+  // the menu unwind first; WM_CLOSE then arrives at the main message loop
+  // with quitting_ set, and takes the ordinary close path.
   tray_->on_quit = [this]() {
     quitting_ = true;
-    Destroy();
+    PostMessageW(GetHandle(), WM_CLOSE, 0, 0);
   };
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/favorites.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/ui.dart';
+import 'package:vpn_client/l10n/l10n.dart';
 
 void main() {
   group('model', () {
@@ -59,6 +60,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -203,6 +206,8 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: buildAppTheme(Brightness.light),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(

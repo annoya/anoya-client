@@ -4,6 +4,7 @@ import '../core/geo_store.dart';
 import '../core/norm_config.dart';
 import '../core/rule_set.dart';
 import '../core/ui.dart';
+import '../l10n/l10n.dart';
 import 'policy_origin.dart';
 import 'routing_widgets.dart';
 
@@ -16,7 +17,7 @@ import 'routing_widgets.dart';
 class ManagedPolicyScreen extends StatefulWidget {
   const ManagedPolicyScreen(
     this.policy, {
-    this.origin = PolicyOrigin.organization,
+    this.origin,
     this.listsAvailable,
     super.key,
   });
@@ -26,7 +27,8 @@ class ManagedPolicyScreen extends StatefulWidget {
   /// Whose policy this is. A read-only screen has to answer that before
   /// anything else: the rules are identical whoever sent them, and only the
   /// author decides whether the user is looking at an obligation or an offer.
-  final PolicyOrigin origin;
+  /// Null means the organization's.
+  final PolicyOrigin? origin;
 
   /// Names of the policy's rule lists this device actually holds. Null means
   /// the user has not accepted them at all — a different thing from a download
@@ -64,8 +66,9 @@ class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
   Widget build(BuildContext context) {
     final policy = widget.policy;
     final geoReady = _geoReady;
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Split tunneling')),
+      appBar: AppBar(title: Text(l10n.ruleSetSplitTunneling)),
       body: geoReady == null
           ? const Center(child: CircularProgressIndicator())
           : PageBody(
@@ -75,14 +78,13 @@ class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
                   _originBanner(context),
                   if (!geoReady && policy.rules.any((r) => r.needsGeoData))
                     GeoDownloadBanner(
-                      title: 'Geo databases not downloaded',
-                      subtitle:
-                          'geoip / geosite rules are inactive until then (~25 MB)',
+                      title: l10n.ruleSetGeoNotDownloaded,
+                      subtitle: l10n.ruleSetGeoNotDownloadedDetail,
                       busy: _geoBusy,
                       onDownload: _downloadGeo,
                     ),
                   RoutingModeCard(mode: RoutingMode.parse(policy.mode)),
-                  const SectionHeader('RULES — FIRST MATCH WINS'),
+                  SectionHeader(l10n.ruleSetRulesHeader),
                   if (policy.rules.isEmpty)
                     emptyRulesNote(context, RoutingMode.parse(policy.mode))
                   else
@@ -102,7 +104,7 @@ class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
   }
 
   Widget _originBanner(BuildContext context) {
-    final origin = widget.origin;
+    final origin = widget.origin ?? PolicyOrigin.organization;
     return Card(
       margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
       color: Theme.of(
