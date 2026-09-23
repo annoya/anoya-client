@@ -38,6 +38,28 @@ carry DNS), and bare share links (cannot carry DNS by format).
 send DNS queries as packets into the tunnel, where the `any:53` hijack takes
 them. Those addresses never receive a query.
 
+**On Android the decoy is `172.19.0.2`, the other host of the tunnel's own /30,
+never a public resolver.** With `1.1.1.1` there, Private DNS in its default
+"automatic" mode found the address speaks DNS-over-TLS, moved every lookup to
+port 853 past the hijack, and in split mode no domain rule matched again. The
+renderer rejects all traffic to the decoy ahead of every rule
+(`IP-CIDR,172.19.0.2/32,REJECT`), so the DoT probe fails and Android stays on
+plain DNS. Apple gets no such rule: its system resolver never upgrades.
+
+**Sniffing is on everywhere** (TLS, HTTP, QUIC). Chrome's own DoH, and Private
+DNS where it still wins, hand apps real addresses; the connection arrives as a
+bare IP and every domain rule silently matches nothing. The sniffer reads the
+name back out of the handshake for rule matching and leaves the destination as
+the app chose: re-resolving it would send a direct connection's lookup through
+the resolvers above.
+
+**Where the engine owns the device (Windows, Linux), the tun runs with
+`strict-route`.** Windows asks every adapter's resolver in parallel, and the copy
+sent to the ISP never enters the tun, so no rule can catch it; only the WFP
+filters sing-tun installs for `strict-route` block it. Pinned by
+`test/mihomo_tun_config_test.dart` (*closes the DNS side door Windows opens on
+every other adapter*).
+
 **The real resolvers live in the engine config and travel with it.** The
 config's DNS enters the pipeline at its source — the self-hosted bundle's
 `dns` field (`shared/normconfig`), a Clash-YAML subscription's
@@ -222,9 +244,10 @@ A user-facing override on top remains open — it would slot into the same
   expresses that as `nameserver-policy`, and adopting it would mean adopting a
   second routing language from a body we do not control. The resolver list is
   taken; the filters are not.
-- The decoy `1.1.1.1/8.8.8.8` in NEDNSSettings looks meaningful to a reader of
-  the Swift code; the comment there and this record are the defence against
-  someone "fixing" per-config DNS by editing it.
+- The decoys look meaningful, or arbitrary, to a reader of the platform code:
+  `1.1.1.1, 8.8.8.8` in NEDNSSettings, `172.19.0.2` on Android. This record is
+  the defence against someone "fixing" per-config DNS by editing one, or
+  swapping Android's for a public resolver.
 
 ## Where It Lives
 
@@ -250,7 +273,9 @@ A user-facing override on top remains open — it would slot into the same
   `lib/core/network_extension_core.dart`
 - Bundle schema: `shared/normconfig/normconfig.go` (`Bundle.DNS`)
 - OS-level decoy: `applyNetworkSettings` in
-  `shared/apple/PacketTunnelProvider.swift`
+  `shared/apple/PacketTunnelProvider.swift`; `addDnsServer` in
+  `android/app/src/main/kotlin/org/annoya/vpn_client/MihomoVpnService.kt`,
+  with `kAndroidDnsDecoy` and the sniffer in `lib/core/mihomo_tun_config.dart`
 - Tests: `test/dns_screen_test.dart`,
   `test/dns_sources_test.dart`,
   `test/mihomo_tun_config_test.dart`, `test/hot_switch_test.dart`

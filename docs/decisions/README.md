@@ -5,7 +5,7 @@ building a thing belongs in that thing's ADR, including the options that were
 tried and dropped.
 
 Records are numbered in one sequence shared with the server side. The
-service-only records (007, 011) live in the
+service-only records (007, 011, 013) live in the
 [annoya-web-panel](https://github.com/annoya/annoya-web-panel) repository; the
 ones marked `both` are decisions about the boundary between the two products,
 so they are
@@ -31,6 +31,7 @@ test.
 | [008](ADR-008-dns-rides-the-config.md) | both | DNS resolvers ride the config; the OS-level DNS setting is a decoy | dns-hijack + fake-ip, per-source resolvers, Cloudflare DoH fallback, sanitation, bootstrap, `Bundle.DNS` |
 | [009](ADR-009-amnezia-subscriptions.md) | client | Key subscriptions as a fourth domain, with the gateway transport borrowed | `vpn://` codec, servers issued on demand, location × protocol, libagw, why no provider is named in the UI |
 | [010](ADR-010-connection-check.md) | client | The app verifies the tunnel carries traffic, and never drops it over the answer | passive byte counters first, mihomo `URLTest` second, handshake warm-up, why not `external-controller` |
+| [012](ADR-012-app-shell-per-platform.md) | client | The window closes to the menu bar or tray; the tunnel outlives the app | macOS menu bar split, Windows tray, window size, Android notification ask, log caps, Linux purge, APK naming |
 
 ## Open Questions
 

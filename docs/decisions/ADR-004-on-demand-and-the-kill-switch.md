@@ -43,6 +43,21 @@ only passed in start options. An on-demand start comes from the OS with no
 options at all; without the persisted copy the extension would have nothing to
 run.
 
+**Keeping that copy current never creates the VPN profile.** The first save of
+a profile raises the system approval dialog, and that dialog belongs to an
+explicit Connect or to arming on-demand, not to adding a configuration.
+`syncConfig` updates an existing profile and does nothing without one.
+
+**Arming is refused until a config is persisted.** Otherwise the OS starts the
+extension, the extension fails for lack of a config, and the OS retries at
+once: a connect/disconnect loop several times a second (`VPNManager.setOnDemand`).
+
+**The session clock counts from the system's `NEVPNConnection.connectedDate`,**
+not from when the app first saw the tunnel: the system switch or an on-demand
+rule may have raised it long before the app opened. The app's own sighting
+stands in until the system answers, and stays if it cannot
+(`lib/state/session.dart`).
+
 **Removing the last configuration removes the system VPN profile,** so the user
 is never left with an entry in System Settings that can still auto-start.
 Disarming on-demand never creates a profile — asking for VPN permission in
@@ -84,7 +99,8 @@ app does not have (ADR-005), with nowhere to decline it.
 - Nothing brings a tunnel up on its own unless the user armed it: on-demand
   rules on Apple, the system's switch on Android, the `Auto-connect` switch on
   Windows and Linux. The presence of a saved config is never the arming
-  (`TestBootConnectsOnlyWhenAutoConnectIsOn`).
+  (`TestBootConnectsOnlyWhenAutoConnectIsOn`; `test/auto_connect_test.dart`,
+  "is off until somebody turns it on").
 - The three on-demand facts are never collapsed into one boolean. "Off",
   "paused", "armed but not accepted by the system" and "working" are four
   different states and the UI names all four.
@@ -140,6 +156,7 @@ affects it, and a second write path is one more thing to keep in step.
 - `lib/core/on_demand.dart` — the model, `statusLabel`, `armed`,
   `awaitingFirstConnect`.
 - `lib/state/on_demand_controller.dart` — intent and platform sync.
+- `lib/state/session.dart` — status and the session start time.
 - `lib/features/on_demand_screen.dart` and the rule/value screens.
 - `shared/apple/VPNManager.swift` — `setOnDemand`, rule compilation,
   `persist` into `providerConfiguration`.

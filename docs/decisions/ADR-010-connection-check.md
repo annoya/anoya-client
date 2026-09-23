@@ -98,6 +98,10 @@ exposed — its range syntax is a way to make the check silently meaningless.
   disconnect publishes nothing. Pinned by *a measurement does not outlive the
   session it describes* and *a session that ends mid-sequence gets no verdict at
   all*.
+- With the tunnel down the desktop service refuses `url_test`
+  (`err:the tunnel is not running`) instead of asking the engine, which would
+  answer "no outbound named PROXY" and read as a broken config
+  (`native/mihomocore/service/service.go`).
 - The check switched off sends nothing. Pinned by *switched off, nothing is sent
   to anybody*.
 - What the user reads is a sentence, not the engine's dial chain. Pinned by *the
@@ -191,7 +195,8 @@ issued seconds earlier.
 - Transports: `shared/apple/PacketTunnelProvider.swift` (`urltest:`,
   `proxybytes`), `VPNManager.swift`, `VpnChannel.swift`;
   `android/app/src/main/aidl/org/annoya/vpn_client/ITunnel.aidl`,
-  `MihomoVpnService.kt`, `VpnChannel.kt`.
+  `MihomoVpnService.kt`, `VpnChannel.kt`; the desktop service's `url_test` in
+  `native/mihomocore/service/service.go`.
 - App: `lib/core/connection_check.dart`,
   `lib/state/connection_check_controller.dart`,
   `lib/features/advanced_connection_screen.dart`, the banner in
