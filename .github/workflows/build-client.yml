@@ -233,12 +233,13 @@ jobs:
           cache: true
 
       # What `flutter build linux` needs from the distribution: the GTK
-      # toolkit the runner links, and a C++ toolchain.
+      # toolkit the runner links, a C++ toolchain, and libsecret for the
+      # flutter_secure_storage plugin (the keyring the tokens live in).
       - name: Desktop build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
 
       # Pure Go, as on Windows; no driver to fetch, the device is the kernel's.
       - name: Tunnel service

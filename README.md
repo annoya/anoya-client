@@ -97,8 +97,9 @@ elevated prompt is the same service in the foreground, for development.
 The same service (`native/mihomocore/cmd/tunnel-service`) as a systemd unit,
 `annoyatest-tunnel`, running as root; the app talks to it over the unix socket
 `/run/annoyatest/tunnel.sock`. The device is the kernel's tun, so there is no
-driver to ship. Building the app needs a Linux host with GTK 3 development
-headers, clang, cmake and ninja; the service cross-compiles from anywhere:
+driver to ship. Building the app needs a Linux host with the GTK 3 and
+libsecret development headers, clang, cmake and ninja; the service
+cross-compiles from anywhere:
 
 ```sh
 ./scripts/build-tunnel-service.sh linux   # build/linux/service/tunnel-service
@@ -106,6 +107,10 @@ headers, clang, cmake and ninja; the service cross-compiles from anywhere:
 flutter build linux                       # on Linux
 ./scripts/build-linux-packages.sh         # build/linux/packages/: .deb, .rpm, Arch package, portable tar.gz
 ```
+
+Sign-in tokens go through `flutter_secure_storage`, which on Linux is
+libsecret: the desktop has to provide a Secret Service (GNOME Keyring or
+KWallet), which every mainstream desktop does and the packages do not force.
 
 The gateway library is a shared object in the bundle's `lib/`, opened by path
 (dlopen by name would search the Flutter engine's rpath, not ours). A bundle
