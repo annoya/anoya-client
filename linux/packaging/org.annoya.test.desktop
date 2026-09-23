@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=AnnoyaTest
+Comment=VPN client
+Exec=/opt/annoyatest/annoyatest
+Icon=annoyatest
+Terminal=false
+Categories=Network;
+StartupWMClass=org.annoya.test

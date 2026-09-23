@@ -74,4 +74,3 @@ non-goals:
 - Traffic statistics in the client (`statsStream` is currently empty).
 - Live Activity / Dynamic Island on iOS. It was designed and never built; the
   design was removed from the mockup rather than left as a promise.
-- Android, Windows, Linux clients.

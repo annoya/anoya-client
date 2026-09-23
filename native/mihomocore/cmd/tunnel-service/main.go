@@ -1,13 +1,15 @@
-// tunnel-service hosts the mihomo engine on Windows as a service: the one
-// process on the machine with the privilege to create the TUN adapter, driven
-// by the unprivileged app over a named pipe. Everything it does is in the
-// service package; this file is how the operating system starts and stops it.
+// tunnel-service hosts the mihomo engine on Windows and Linux as a service:
+// the one process on the machine with the privilege to create the TUN device,
+// driven by the unprivileged app over a named pipe (Windows) or a unix socket
+// (Linux). Everything it does is in the service package; this file is how the
+// operating system starts and stops it.
 //
-//	tunnel-service                 run as a Windows service (what the SCM does)
+//	tunnel-service                 run as a service (what the SCM / systemd does)
 //	tunnel-service -console        run in the foreground, logging to stderr
-//	tunnel-service -install        register the service, start type automatic
+//	tunnel-service -install        register the service, started at boot
 //	tunnel-service -uninstall      stop and remove it
-//	tunnel-service -dir <path>     engine directory (default %ProgramData%\AnnoyaTest\engine)
+//	tunnel-service -dir <path>     engine directory (default %ProgramData%\AnnoyaTest\engine
+//	                               on Windows, /var/lib/annoyatest/engine on Linux)
 package main
 
 import (
@@ -35,8 +37,8 @@ const pipeSDDL = "D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;IU)"
 
 func main() {
 	console := flag.Bool("console", false, "run in the foreground")
-	install := flag.Bool("install", false, "register the Windows service")
-	uninstall := flag.Bool("uninstall", false, "remove the Windows service")
+	install := flag.Bool("install", false, "register the system service")
+	uninstall := flag.Bool("uninstall", false, "remove the system service")
 	dir := flag.String("dir", defaultDir(), "engine directory")
 	flag.Parse()
 

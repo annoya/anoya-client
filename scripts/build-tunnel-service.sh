@@ -1,19 +1,41 @@
 #!/usr/bin/env bash
-# Build the Windows tunnel service and fetch the Wintun driver next to it.
+# Build the tunnel service for Windows or Linux; on Windows also fetch the
+# Wintun driver next to it.
+#
+#   scripts/build-tunnel-service.sh [windows|linux] [amd64|arm64]
 #
 # Cross-compiles from any host: the service is pure Go (CGO_ENABLED=0; gvisor,
-# which the TUN stack needs on every platform, is pure Go too), and
-# mihomo's Windows TUN is Wintun, which is not built here — it is a signed
-# driver WireGuard LLC ships as a DLL, and the engine loads it from the
-# directory of its own executable. The checksum pins the release; a different
-# hash is a different file, not a newer one.
+# which the TUN stack needs on every platform, is pure Go too). mihomo's
+# Windows TUN is Wintun, which is not built here — it is a signed driver
+# WireGuard LLC ships as a DLL, and the engine loads it from the directory of
+# its own executable. The checksum pins the release; a different hash is a
+# different file, not a newer one. On Linux the device is the kernel's tun;
+# nothing to ship.
 #
 # Output: build/windows/service/{tunnel-service.exe,wintun.dll}, which the
-# installer (windows/installer/AnnoyaTest.iss) picks up.
+# installer (windows/installer/AnnoyaTest.iss) picks up, or
+# build/linux/service/tunnel-service for scripts/build-linux-deb.sh.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# The first argument used to be the architecture alone; a bare "amd64" still
+# means Windows.
+TARGET=windows
+case "${1:-}" in
+  windows|linux) TARGET="$1"; shift ;;
+esac
 ARCH="${1:-amd64}"                    # amd64 | arm64
+
+if [ "$TARGET" = linux ]; then
+  OUT="build/linux/service"
+  mkdir -p "$OUT"
+  echo ">> tunnel-service (linux/$ARCH)"
+  ( cd native/mihomocore && GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" \
+      go build -tags with_gvisor -trimpath -ldflags "-s -w" -o "../../$OUT/tunnel-service" ./cmd/tunnel-service )
+  ls -la "$OUT"
+  exit 0
+fi
+
 OUT="build/windows/service"
 WINTUN_VERSION="0.14.1"
 WINTUN_SHA256="07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51"

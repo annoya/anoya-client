@@ -1,0 +1,21 @@
+# The tunnel service on Linux: the same text tunnel-service -install writes
+# (native/mihomocore/cmd/tunnel-service/main_linux.go); keep the two in step.
+# Runs as root — creating the TUN device and installing the routes is the
+# privileged act, as SYSTEM is on Windows. Restart=on-failure is the Windows
+# recovery action: a crashed service must come back on its own, because the
+# app only knocks on the socket and cannot start it.
+[Unit]
+Description=AnnoyaTest tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/annoyatest/service/tunnel-service
+Restart=on-failure
+RestartSec=5
+RuntimeDirectory=annoyatest
+StateDirectory=annoyatest
+
+[Install]
+WantedBy=multi-user.target

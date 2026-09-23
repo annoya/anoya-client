@@ -371,7 +371,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAutoConnectSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Connect when Windows starts'**
+  /// **'Connect when the computer starts'**
   String get settingsAutoConnectSubtitle;
 
   /// No description provided for @onDemandTitle.
@@ -3223,6 +3223,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.'**
   String get errorTunnelServiceNotRunningDetail;
+
+  /// The Linux counterpart of errorTunnelServiceNotRunningDetail; the service is a systemd unit.
+  ///
+  /// In en, this message translates to:
+  /// **'AnnoyaTest installs it as the “annoyatest-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start annoyatest-tunnel”, then connect again.'**
+  String get errorTunnelServiceNotRunningDetailLinux;
 
   /// No description provided for @errorTunnelServiceStoppedTitle.
   ///

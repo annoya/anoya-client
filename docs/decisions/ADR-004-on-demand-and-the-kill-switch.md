@@ -64,10 +64,10 @@ maintain `providerConfiguration` on Apple. Verified end to end: always-on
 enabled in system settings brings the tunnel up at boot with the app never
 opened.
 
-**Windows gets one switch, because the facility is one condition.** The tunnel
-there is our own service, started by the Service Control Manager with the
-machine — so unlike Android there *is* something we can arm, and unlike Apple
-there are no rules to arm it with. Settings → Connection carries an
+**Windows and Linux get one switch, because the facility is one condition.**
+The tunnel there is our own service, started by the Service Control Manager or
+systemd with the machine — so unlike Android there *is* something we can arm,
+and unlike Apple there are no rules to arm it with. Settings → Connection carries an
 `Auto-connect` switch, off by default; the app writes the answer into the
 service's directory, and the service consults it at boot, when there is no app
 to ask. It is not a memory of the last session: connecting and disconnecting
@@ -83,7 +83,7 @@ app does not have (ADR-005), with nowhere to decline it.
 
 - Nothing brings a tunnel up on its own unless the user armed it: on-demand
   rules on Apple, the system's switch on Android, the `Auto-connect` switch on
-  Windows. The presence of a saved config is never the arming
+  Windows and Linux. The presence of a saved config is never the arming
   (`TestBootConnectsOnlyWhenAutoConnectIsOn`).
 - The three on-demand facts are never collapsed into one boolean. "Off",
   "paused", "armed but not accepted by the system" and "working" are four
@@ -146,7 +146,7 @@ affects it, and a second write path is one more thing to keep in step.
 - `lib/features/home_screen.dart` — the `Auto` chip and the explanatory
   banner.
 - `lib/state/auto_connect_controller.dart` and the switch in
-  `lib/features/settings_screen.dart` — Windows.
+  `lib/features/settings_screen.dart` — Windows and Linux.
 - `native/mihomocore/service/service.go` — `set_auto_connect` and
   `StartSaved`, the only path that raises a tunnel with no app running.
 - Tests: `test/on_demand_test.dart`, `test/status_strip_test.dart`,

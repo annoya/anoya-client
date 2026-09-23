@@ -118,7 +118,7 @@ void main() {
       await _pumpSettings(tester);
 
       expect(find.text('Auto-connect'), findsOneWidget);
-      expect(find.text('Connect when Windows starts'), findsOneWidget);
+      expect(find.text('Connect when the computer starts'), findsOneWidget);
       // Apple's screen and Android's explainer answer to facilities Windows
       // does not have; offering either here would name something imaginary.
       expect(find.text('On demand'), findsNothing);

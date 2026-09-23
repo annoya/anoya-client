@@ -140,6 +140,15 @@ never "run it". Connecting and disconnecting say what the user wants now; the
 switch says what they want every time the machine comes back, and neither
 changes the other.
 
+On Linux the same service is a systemd unit (`annoyatest-tunnel`,
+`native/mihomocore/cmd/tunnel-service`, `main_linux.go`), running as root and
+spoken to over the unix socket `/run/annoyatest/tunnel.sock`; the device is
+the kernel's tun, the engine's home is `/var/lib/annoyatest/engine`. The same
+`tun` section as Windows — `auto-route` and `strict-route`, which sing-tun
+implements there with routing rules and nftables. The auto-connect switch and
+the boot-time start are exactly the Windows ones: the service package does not
+know which of the two systems runs it.
+
 ### 3.1 The `VpnCore` seam
 
 Screens and state never talk to the platform directly; they go through
@@ -156,11 +165,11 @@ Screens and state never talk to the platform directly; they go through
 | `status`, `statusStream()`, `statsStream()` | state and telemetry |
 | `engineVersion()` | diagnostics |
 
-`NetworkExtensionCore` implements it for macOS, iOS, Android and Windows — the class
-only speaks one control vocabulary, over the platform channels the runners
-register or, on Windows, over a named pipe to the tunnel service
-(`native/mihomocore/service`), and all four natives answer the same
-contract. Config translation (bundle → mihomo YAML) lives entirely inside the
+`NetworkExtensionCore` implements it for macOS, iOS, Android, Windows and
+Linux — the class only speaks one control vocabulary, over the platform
+channels the runners register or, on Windows and Linux, over a named pipe or a
+unix socket to the tunnel service (`native/mihomocore/service`), and all five
+natives answer the same contract. Config translation (bundle → mihomo YAML) lives entirely inside the
 core implementation and is unit-tested
 (`lib/core/mihomo_tun_config.dart`). Other platforms throw
 `UnsupportedError` until their core is written.

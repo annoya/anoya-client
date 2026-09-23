@@ -154,12 +154,15 @@ AppError describeError(Object error, {String? subject}) {
     // user throws [AppErrorException]; a FormatException carrying a sentence
     // would land here and be replaced by this one.
     FormatException() => err(l10n.errorNotALinkTitle, l10n.errorNotALinkDetail),
-    // The Windows tunnel is a service the app does not own. Absent (not
-    // installed, stopped) and vanished mid-request are different situations
-    // with different fixes, and neither has anything to do with a VPN profile.
+    // The Windows and Linux tunnel is a service the app does not own. Absent
+    // (not installed, stopped) and vanished mid-request are different
+    // situations with different fixes, and neither has anything to do with a
+    // VPN profile.
     PlatformException(code: 'service_unavailable') => err(
       l10n.errorTunnelServiceNotRunningTitle,
-      l10n.errorTunnelServiceNotRunningDetail,
+      Platform.isLinux
+          ? l10n.errorTunnelServiceNotRunningDetailLinux
+          : l10n.errorTunnelServiceNotRunningDetail,
     ),
     PlatformException(code: 'service_disconnected') => err(
       l10n.errorTunnelServiceStoppedTitle,

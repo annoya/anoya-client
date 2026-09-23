@@ -151,7 +151,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsAutoConnect => 'Автоподключение';
 
   @override
-  String get settingsAutoConnectSubtitle => 'Подключаться при запуске Windows';
+  String get settingsAutoConnectSubtitle =>
+      'Подключаться при запуске компьютера';
 
   @override
   String get onDemandTitle => 'По запросу';
@@ -2085,6 +2086,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get errorTunnelServiceNotRunningDetail =>
       'AnnoyaTest устанавливает её как службу Windows «AnnoyaTunnel». Переустановите приложение или запустите службу в «Службах», затем подключитесь снова.';
+
+  @override
+  String get errorTunnelServiceNotRunningDetailLinux =>
+      'AnnoyaTest устанавливает её как службу systemd «annoyatest-tunnel». Переустановите пакет или выполните «sudo systemctl start annoyatest-tunnel», затем подключитесь снова.';
 
   @override
   String get errorTunnelServiceStoppedTitle => 'Служба туннеля остановилась';

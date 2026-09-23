@@ -1,7 +1,7 @@
-//go:build !windows
+//go:build !windows && !linux
 
-// The non-Windows build exists so the service can be exercised without a
-// Windows machine: `-console` listens on a unix socket instead of a named pipe
+// The macOS build exists so the service can be exercised without a Windows or
+// Linux machine: `-console` listens on a unix socket instead of a named pipe
 // and drives the same engine. Starting a tunnel still needs root (the engine
 // creates a utun), but the wire and the state machine do not.
 
@@ -26,7 +26,7 @@ func defaultDir() string {
 func socketPath(files service.Files) string { return filepath.Join(files.Dir, "tunnel.sock") }
 
 func runService(service.Files) error {
-	return errors.New("a Windows service only; use -console")
+	return errors.New("a Windows or Linux service only; use -console")
 }
 
 func runConsole(files service.Files) error {
@@ -48,5 +48,5 @@ func runConsole(files service.Files) error {
 	return s.Serve(ln)
 }
 
-func installService() error   { return errors.New("a Windows service only") }
-func uninstallService() error { return errors.New("a Windows service only") }
+func installService() error   { return errors.New("a Windows or Linux service only") }
+func uninstallService() error { return errors.New("a Windows or Linux service only") }

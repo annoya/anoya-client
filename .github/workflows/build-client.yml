@@ -1,6 +1,6 @@
-# Builds the client for the two platforms that can be built on hosted runners:
-# an Android APK and a Windows installer. Apple needs signing identities and a
-# paid team, so those builds stay on a Mac for now.
+# Builds the client for the three platforms that can be built on hosted
+# runners: an Android APK, a Windows installer and a Linux .deb. Apple needs
+# signing identities and a paid team, so those builds stay on a Mac for now.
 #
 # Amnezia support needs credentials that are not in the repository. Set them as
 # four repository secrets — AGW_ENDPOINT, AGW_PUBLIC_KEY_B64, AGW_S3_ENDPOINTS
@@ -209,4 +209,90 @@ jobs:
           path: |
             build/windows/x64/runner/Release/
             build/windows/service/
+          if-no-files-found: error
+
+  linux:
+    name: Linux package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: native/mihomocore/go.mod
+          cache-dependency-path: |
+            native/mihomocore/go.sum
+            native/libagw/upstream/go.sum
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # What `flutter build linux` needs from the distribution: the GTK
+      # toolkit the runner links, and a C++ toolchain.
+      - name: Desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      # Pure Go, as on Windows; no driver to fetch, the device is the kernel's.
+      - name: Tunnel service
+        run: scripts/build-tunnel-service.sh linux
+
+      # The gateway library is cgo and builds natively here. It has to exist
+      # before the app is built — CMake copies it into the bundle then.
+      - name: Gateway library
+        run: native/libagw/build-linux.sh
+
+      - name: Build app
+        env:
+          AGW_ENDPOINT: ${{ secrets.AGW_ENDPOINT }}
+          AGW_PUBLIC_KEY_B64: ${{ secrets.AGW_PUBLIC_KEY_B64 }}
+          AGW_S3_ENDPOINTS: ${{ secrets.AGW_S3_ENDPOINTS }}
+          AGW_S3_FALLBACK_ENDPOINTS: ${{ secrets.AGW_S3_FALLBACK_ENDPOINTS }}
+        run: |
+          # One --dart-define per secret that is set. Passing an empty one
+          # would override the code's default with nothing.
+          args=()
+          for name in AGW_ENDPOINT AGW_PUBLIC_KEY_B64 \
+                      AGW_S3_ENDPOINTS AGW_S3_FALLBACK_ENDPOINTS; do
+            value="${!name}"
+            if [ -n "$value" ]; then args+=(--dart-define="$name=$value"); fi
+          done
+          flutter pub get
+          flutter build linux --release "${args[@]+"${args[@]}"}"
+
+      # The .deb registers the systemd unit and creates the engine directory;
+      # the version comes from pubspec, the one place it is written.
+      - name: Package
+        run: scripts/build-linux-deb.sh amd64
+
+      - name: Artifact names
+        id: meta
+        run: |
+          name="$(sed -n 's/^set(BINARY_NAME "\([^"]*\)").*/\1/p' \
+                  linux/CMakeLists.txt | head -1)"
+          version="$(awk '/^version:/ {print $2}' pubspec.yaml)"
+          echo "prefix=$name-$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.prefix }}-linux-x64-deb
+          path: build/linux/deb/*.deb
+          if-no-files-found: error
+
+      # The bare build too, for a distribution without dpkg: the app bundle
+      # plus the service and the unit it expects.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.prefix }}-linux-x64-portable
+          path: |
+            build/linux/x64/release/bundle/
+            build/linux/service/
+            linux/packaging/annoyatest-tunnel.service
           if-no-files-found: error
