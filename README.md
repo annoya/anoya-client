@@ -57,7 +57,7 @@ server has an OIDC provider configured.
 ### CI
 
 `.github/workflows/build-client.yml` runs the analyzer and the tests, and
-builds the Android APK, the Windows installer and the Linux .deb, on every
+builds the Android APK, the Windows installer and the Linux packages, on every
 push to `main`, on tags and on every pull request; the builds are published as
 workflow artifacts. The four jobs are independent, so a red test does not
 withhold a build. Amnezia credentials come from four repository secrets —
@@ -104,22 +104,27 @@ headers, clang, cmake and ninja; the service cross-compiles from anywhere:
 ./scripts/build-tunnel-service.sh linux   # build/linux/service/tunnel-service
 ./native/libagw/build-linux.sh            # native/libagw/build/linux/libagw.so (on Linux)
 flutter build linux                       # on Linux
-./scripts/build-linux-deb.sh              # build/linux/deb/annoyatest_<version>_amd64.deb
+./scripts/build-linux-packages.sh         # build/linux/packages/: .deb, .rpm, Arch package, portable tar.gz
 ```
 
 The gateway library is a shared object in the bundle's `lib/`, opened by path
 (dlopen by name would search the Flutter engine's rpath, not ours). A bundle
 without it runs and refuses Amnezia keys.
 
-The package installs the app under `/opt/annoyatest`, registers and starts the
-unit, and creates `/var/lib/annoyatest/engine` world-writable with the sticky
-bit — the app downloads the geo databases there while the service reads them,
-as `%ProgramData%\AnnoyaTest\engine` does on Windows. The socket is
+The packages come from one nfpm description (`linux/packaging/nfpm.yaml`), so
+Debian, Fedora and Arch users get the same install: the app under
+`/opt/annoyatest`, the unit registered and started, and
+`/var/lib/annoyatest/engine` created world-writable with the sticky bit — the app downloads the geo databases there while the service reads them,
+as `%ProgramData%\AnnoyaTest\engine` does on Windows. For any other
+distribution with systemd, the portable tar.gz carries the same files and an
+`install.sh` that lays them out the same way (`uninstall.sh` reverses it).
+Distributions without systemd are not covered: the service is registered
+through `systemctl`. The socket is
 reachable by every local user, as Mullvad's and NetBird's daemon sockets are:
 Linux has no socket mode for "whoever is at the console", and a group would
-cost a re-login on every install. Without the package, `tunnel-service
--install` as root writes the unit and starts it; `sudo tunnel-service -console`
-is the same service in the foreground.
+cost a re-login on every install. `tunnel-service -install` as root writes the
+unit and starts it (what install.sh calls); `sudo tunnel-service -console` is
+the same service in the foreground.
 
 ## Requirements
 

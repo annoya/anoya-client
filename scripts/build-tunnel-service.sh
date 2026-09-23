@@ -14,7 +14,7 @@
 #
 # Output: build/windows/service/{tunnel-service.exe,wintun.dll}, which the
 # installer (windows/installer/AnnoyaTest.iss) picks up, or
-# build/linux/service/tunnel-service for scripts/build-linux-deb.sh.
+# build/linux/service/tunnel-service for scripts/build-linux-packages.sh.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

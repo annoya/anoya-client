@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Lower case, as
-# Linux binaries are; the packaging (linux/packaging, scripts/build-linux-deb.sh)
+# Linux binaries are; the packaging (linux/packaging, scripts/build-linux-packages.sh)
 # reads it from here.
 set(BINARY_NAME "annoyatest")
 # The unique GTK application identifier for this application. See:
