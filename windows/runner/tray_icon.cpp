@@ -11,13 +11,11 @@ namespace {
 constexpr UINT kTrayMessage = WM_APP + 1;
 constexpr UINT kIconId = 1;
 
-// Menu command ids. Fixed rather than generated: WM_COMMAND hands back the
-// id and nothing else.
 constexpr UINT kCmdToggleWindow = 1001;
 constexpr UINT kCmdConnect = 1002;
 constexpr UINT kCmdDisconnect = 1003;
 constexpr UINT kCmdQuit = 1004;
-constexpr UINT kCmdLabel = 1100;  // status lines; disabled, never sent
+constexpr UINT kCmdLabel = 1100;
 
 std::wstring Widen(const std::string& utf8) {
   if (utf8.empty()) return L"";
@@ -89,8 +87,6 @@ void TrayIcon::AddIcon() {
   nid.hIcon = icon_;
   wcsncpy_s(nid.szTip, state_.status.c_str(), _TRUNCATE);
   added_ = Shell_NotifyIconW(NIM_ADD, &nid) != FALSE;
-  // Version 4 delivers the cursor position with the event, which is what
-  // TrackPopupMenu wants and the older protocol makes us query.
   nid.uVersion = NOTIFYICON_VERSION_4;
   Shell_NotifyIconW(NIM_SETVERSION, &nid);
 }
@@ -126,9 +122,6 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
       case WM_CONTEXTMENU:
         ShowMenu();
         return true;
-      // A left click is the window toggle, the same as the menu's first item:
-      // that is what background apps on Windows do, and the user reaches for
-      // it before they open the menu.
       case NIN_SELECT:
       case NIN_KEYSELECT:
         if (on_toggle_window) on_toggle_window();
@@ -160,16 +153,7 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
   return false;
 }
 
-// The menu mirrors MenuBarController.rebuild on macOS item for item: two
-// status lines, the window item named by what it will do, Connect and
-// Disconnect both always present with the inapplicable one greyed (items that
-// come and go move everything below them), Quit, and — only while the tunnel
-// is up — the line saying quitting leaves it up, because it does: the tunnel
-// lives in the service.
 void TrayIcon::ShowMenu() {
-  // Dart pushes state on every change already; asking once more before the
-  // menu opens is how the macOS side keeps the session clock fresh, and the
-  // reply lands before the user has read the first line.
   channel_->InvokeMethod("sync", nullptr);
 
   HMENU menu = CreatePopupMenu();
@@ -199,9 +183,8 @@ void TrayIcon::ShowMenu() {
 
   POINT pt;
   GetCursorPos(&pt);
-  // The two lines every tray menu needs and nobody documents together: the
-  // menu closes only when its owner is in the foreground, and a WM_NULL after
-  // it lets the next click on the taskbar dismiss it properly.
+  // Win32 tray quirk: the menu only closes if its owner is foreground, and the
+  // trailing WM_NULL lets the next taskbar click dismiss it.
   SetForegroundWindow(owner_);
   TrackPopupMenuEx(menu, TPM_RIGHTBUTTON | TPM_BOTTOMALIGN | TPM_RIGHTALIGN, pt.x, pt.y, owner_,
                    nullptr);
@@ -209,11 +192,8 @@ void TrayIcon::ShowMenu() {
   DestroyMenu(menu);
 }
 
-// A shield, drawn at the small-icon size the shell asks for. Windows does not
-// recolour tray icons, and the taskbar is dark or light by the user's choice,
-// so the shape is white with a one-pixel dark outline and reads on both.
-// State is the shape, as on macOS: filled means the tunnel is up, outlined
-// means down, outlined with a dot means connecting or switching.
+// White with a dark outline: Windows does not recolour tray icons for a
+// light or dark taskbar.
 HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
   const int size = GetSystemMetrics(SM_CXSMICON) > 0 ? GetSystemMetrics(SM_CXSMICON) : 16;
 
@@ -242,8 +222,7 @@ HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
   }
   HGDIOBJ old_bitmap = SelectObject(dc, color);
 
-  // Everything GDI touches gets an opaque alpha below; what it leaves black
-  // stays transparent, so the outline must not be pure black.
+  // Not pure black: the alpha pass below treats black as transparent.
   const COLORREF outline = RGB(40, 40, 40);
   const COLORREF fill = RGB(255, 255, 255);
   const double k = size / 16.0;
@@ -251,13 +230,11 @@ HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
 
   HPEN pen = CreatePen(PS_SOLID, std::max(1, px(1.2)), outline);
   HBRUSH white = CreateSolidBrush(fill);
-  // Black is what the alpha pass below reads as transparent, so a black fill
-  // is how a hole is cut.
+  // A black fill cuts a hole (see the alpha pass).
   HBRUSH hole = CreateSolidBrush(RGB(0, 0, 0));
   HGDIOBJ old_pen = SelectObject(dc, pen);
   HGDIOBJ old_brush = SelectObject(dc, white);
 
-  // The shield: flat top, straight sides, rounded to a point at the bottom.
   POINT shield[] = {
       {px(8), px(1)},  {px(14), px(3.5)}, {px(14), px(8)},  {px(13), px(11)},
       {px(11), px(13.5)}, {px(8), px(15)},  {px(5), px(13.5)}, {px(3), px(11)},
@@ -265,8 +242,6 @@ HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
   };
   Polygon(dc, shield, static_cast<int>(sizeof(shield) / sizeof(shield[0])));
   if (!filled) {
-    // Hollow: the inside is cut out again with the same dark pen, leaving a
-    // white band with a dark edge on both sides.
     SelectObject(dc, hole);
     POINT inner[] = {
         {px(8), px(3.6)},  {px(12), px(5.2)}, {px(12), px(8)}, {px(11.2), px(10.2)},
@@ -286,8 +261,7 @@ HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
   DeleteObject(hole);
   GdiFlush();
 
-  // GDI wrote colour and left alpha at zero everywhere. Anything non-black is
-  // ours and opaque; black is background and stays clear.
+  // GDI leaves alpha at zero; make every non-black pixel opaque.
   auto* pixels = static_cast<uint32_t*>(bits);
   for (int i = 0; i < size * size; i++) {
     if (pixels[i] & 0x00FFFFFF) pixels[i] |= 0xFF000000;

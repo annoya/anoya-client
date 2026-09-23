@@ -10,27 +10,14 @@
 #include <memory>
 #include <string>
 
-// The notification-area icon and its menu: the Windows counterpart of the
-// macOS menu bar item (MenuBarController.swift), speaking the same "vpn/tray"
-// channel. Dart composes every word the menu shows (menu_bar_controller.dart);
-// this class owns only the surface — the icon, the popup menu, the window's
-// show/hide — and asks Dart to connect or disconnect.
-//
-// Bare Win32: Shell_NotifyIcon for the icon, TrackPopupMenu for the menu,
-// GDI for the icon itself, which is drawn at runtime so the shape can follow
-// the tunnel's state the way the macOS symbol does.
 class TrayIcon {
  public:
-  // |owner| receives the tray callback and the menu commands through
-  // HandleMessage; |app_name| is what "Show …" and "Quit …" say.
   TrayIcon(HWND owner, flutter::BinaryMessenger* messenger,
            std::wstring app_name);
   ~TrayIcon();
 
-  // Routes one window message. Returns true when it was the tray's.
   bool HandleMessage(UINT message, WPARAM wparam, LPARAM lparam);
 
-  // What the menu's window item and Quit do; the window owns both decisions.
   std::function<void()> on_toggle_window;
   std::function<void()> on_quit;
 

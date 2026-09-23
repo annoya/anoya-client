@@ -2,20 +2,13 @@ import '../l10n/l10n.dart';
 import 'norm_config.dart';
 import 'json_file_store.dart';
 
-/// The direction of a rule set: what happens to traffic no rule names.
-///
-/// An enum here, a string on the wire: `Routing.mode` mirrors the server's
-/// normconfig and stays text, and [wire] is the one place the two meet.
 enum RoutingMode {
-  /// Everything via VPN; rules are the exceptions.
   full,
 
-  /// Only matching traffic via VPN; the rest connects directly.
   split;
 
   String get wire => name;
 
-  /// As the summaries print it.
   String get label => this == split
       ? L10n.current.ruleSetModeSplit
       : L10n.current.ruleSetModeFull;
@@ -23,24 +16,15 @@ enum RoutingMode {
   static RoutingMode parse(String? wire) => wire == 'split' ? split : full;
 }
 
-/// Which view a rule set opens in. Views over the same rules, not formats —
-/// switching never converts or discards anything.
 enum RuleEditor {
-  /// The service catalog.
   simple,
 
-  /// Raw ordered rules.
   advanced;
 
   static RuleEditor parse(String? wire) =>
       wire == 'advanced' ? advanced : simple;
 }
 
-/// A named, reusable split-tunneling policy. Rule sets are global (device
-/// level) and are applied to configurations individually via
-/// Profile.ruleSetId; self-hosted profiles with a server-managed policy ignore
-/// them. The built-in "Default" set (no rules, full mode) always exists and
-/// cannot be deleted.
 class RuleSet {
   const RuleSet({
     required this.id,
@@ -96,9 +80,6 @@ class RuleSet {
   };
 }
 
-/// Persists the global rule sets to rule_sets.json in the app-support
-/// directory. Load always yields at least the Default set, in stable order
-/// (Default first).
 class RuleSetStore {
   static final _store = JsonFileStore('rule_sets.json');
 

@@ -30,14 +30,8 @@ bool FlutterWindow::OnCreate() {
   tray_ = std::make_unique<TrayIcon>(GetHandle(), flutter_controller_->engine()->messenger(),
                                      L"AnnoyaTest");
   tray_->on_toggle_window = [this]() { ToggleWindow(); };
-  // Quit is posted, never done here. The WM_COMMAND that carries it is
-  // dispatched from inside TrackPopupMenuEx's own modal loop, so this runs
-  // several frames below TrayIcon::ShowMenu — and tearing down from there
-  // destroys the TrayIcon whose method is still on the stack, then shuts the
-  // engine down on a platform thread that is blocked in that loop and cannot
-  // pump the tasks the shutdown waits for. Which is the hang. Posting lets
-  // the menu unwind first; WM_CLOSE then arrives at the main message loop
-  // with quitting_ set, and takes the ordinary close path.
+  // Posted, not done inline: this runs inside TrackPopupMenuEx's modal loop,
+  // and tearing down there destroys the live TrayIcon and hangs engine shutdown.
   tray_->on_quit = [this]() {
     quitting_ = true;
     PostMessageW(GetHandle(), WM_CLOSE, 0, 0);
@@ -56,8 +50,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
-  // Before the engine: the icon's channel handler holds a messenger the
-  // engine owns.
+  // Before the engine: the icon's channel holds the engine's messenger.
   tray_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
@@ -81,9 +74,7 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
-  // The tray's callback and its menu commands are ours before they are
-  // anybody's: a plugin's window-proc hook must not swallow a WM_COMMAND
-  // meant for the menu.
+  // Before Flutter: a plugin's window-proc hook could swallow menu WM_COMMANDs.
   if (tray_ && tray_->HandleMessage(message, wparam, lparam)) {
     return 0;
   }
@@ -102,9 +93,6 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;
-    // The close button hides the window into the tray; the app keeps running
-    // with the icon as its only surface. Quit from the menu sets quitting_
-    // and the default close (DestroyWindow) proceeds.
     case WM_CLOSE:
       if (!quitting_) {
         ShowWindow(hwnd, SW_HIDE);

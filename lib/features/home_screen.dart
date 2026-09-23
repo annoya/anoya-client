@@ -35,14 +35,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  /// Status and session start are owned by [sessionProvider] — the menu bar
-  /// shows the same clock, and two owners print two durations for one tunnel.
-  /// The once-a-second repaint for the clock is [StatusLabel]'s own business.
   VpnStatus get _status => ref.watch(sessionProvider.select((s) => s.status));
 
-  /// When the pickers refuse taps. A connected tunnel is NOT locked: switching
-  /// is a hot reload under the live session. Locked only while the initial
-  /// connect is in flight, or during the (brief) hot switch itself.
+  // Not locked while connected: a switch is a hot reload under the live
+  // session. Only the initial connect and the switch itself lock.
   bool get _locked =>
       _status == VpnStatus.connecting ||
       ref.watch(profilesControllerProvider.select((s) => s.switching));
@@ -59,15 +55,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    // Watched by the piece that needs it, never the whole state: a notice or a
-    // flag flipping used to rebuild every card on this screen.
+    // Select, never the whole state: a notice flipping would rebuild every card.
     final active = ref.watch(
       profilesControllerProvider.select((s) => s.active),
     );
 
-    // A connect failure floats above the screen until dismissed: the layout
-    // must not jump, and a cause that vanished on its own tells the user
-    // nothing about what to fix.
     ref.listen(profilesControllerProvider.select((s) => s.error), (_, error) {
       if (error != null) {
         showErrorDialog(
@@ -78,9 +70,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     });
 
-    // What happened, changed nothing, and needs no decision — a toast, in the
-    // same form the configuration screens use for the same class of event
-    // (spec §9). The dialog above is for what blocks the user.
     ref.listen(profilesControllerProvider.select((s) => s.notice), (_, notice) {
       if (notice == null) return;
       showToast(context, notice.line);
@@ -104,9 +93,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      // The ring owns the free space and stays centred in it; the pickers are
-      // pinned to the bottom edge, within thumb reach and steady when a banner
-      // appears above them.
       body: PageBody(
         child: LayoutBuilder(
           builder: (context, box) => SingleChildScrollView(
@@ -150,11 +136,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _push(Widget screen) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
-  /// The three things that change how the tunnel behaves and otherwise live on
-  /// three separate settings screens: whether the system connects on its own,
-  /// whether any traffic is routed around the tunnel, and whether anything is
-  /// written to the log. Each chip opens the screen that owns it — the off ones
-  /// too, since that is where they get turned on.
   Widget _statusStrip(Profile? active) {
     final l10n = context.l10n;
     final onDemand = ref.watch(onDemandProvider);
@@ -163,9 +144,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     final routing = ref.watch(routingStatusProvider).value;
 
-    // "Enabled but not currently working" is its own state: showing it as off
-    // would send the user to a screen where the switch is already on. Only the
-    // last case means the OS confirmed it is auto-connecting.
     final (autoLabel, autoTone) = switch (onDemand) {
       OnDemandPrefs(enabled: false) => (l10n.homeStateOff, ChipTone.off),
       OnDemandPrefs(paused: true) => (l10n.homeAutoPaused, ChipTone.pending),
@@ -189,9 +167,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         spacing: 8,
         runSpacing: 8,
         children: [
-          // Only where the label can be true: on Android auto-connect is the
-          // system's Always-on switch, whose state the app cannot read while
-          // the tunnel is down — a chip would show a guess.
           if (supportsOnDemand)
             StatusChip(
               icon: Icons.bolt_outlined,
@@ -201,15 +176,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           StatusChip(
             icon: Icons.alt_route,
-            // The value is unknown only until the rule set is read off disk, so
-            // it holds its place with an ellipsis instead of the chip appearing
-            // a frame late and shifting the row.
             label: l10n.homeChipRouting(routing?.label ?? '…'),
             tone: routing == null || routing == RoutingStatus.off
                 ? ChipTone.off
                 : ChipTone.on,
-            // Routing is a per-configuration setting, so the chip leads to the
-            // active configuration; with none added yet, to the sets themselves.
             onTap: () => _push(
               active == null
                   ? const RuleSetsScreen()
@@ -229,14 +199,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// The one thing a green ring cannot say: the tunnel is up and nothing is
-  /// getting through it.
-  ///
-  /// A banner rather than a toast — the state holds until the user changes
-  /// something, and a message that leaves on its own is a way of both telling
-  /// them and not telling them. The ring stays green on purpose: the tunnel
-  /// really is up, and recolouring it would misreport the system's state to
-  /// deliver a warning about the server.
   Widget? _checkBanner() {
     final check = ref.watch(connectionCheckProvider.select((s) => s.last));
     if (check == null || check.passed) return null;
@@ -254,9 +216,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// Explains why the system is not auto-connecting: either the user paused it
-  /// with a manual disconnect, or it is enabled but has no tunnel config to
-  /// start from yet (the system only accepts on-demand after one connect).
   Widget? _onDemandBanner() {
     final onDemand = ref.watch(onDemandProvider);
     final busy = ref.watch(sessionProvider.select((s) => s.busy));
@@ -287,9 +246,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// The active configuration is always on screen, even when it is the only
-  /// one: the gear jumps straight into its settings, while the chevron (and the
-  /// row tap) only offer a choice when there is something to choose between.
   Widget _profileRow(Profile active) {
     final pickable = ref.watch(
       profilesControllerProvider.select((s) => s.profiles.length > 1),
@@ -303,10 +259,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // A duplicate of the button on the configuration screen, not a move:
-            // that is where it belongs, next to "last refreshed", but it is
-            // pressed from here — the servers ran out or the provider changed
-            // something, and the user is already looking at this screen.
             if (active.isRefreshable)
               RefreshButton(profile: active, iconSize: 20, spinnerPadding: 14),
             IconButton(
@@ -333,8 +285,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final loc = ref.watch(
       profilesControllerProvider.select((s) => s.selectedLocation),
     );
-    // A single-server profile (a plain link) has nothing to pick between: show
-    // the server but no dropdown affordance or picker.
     final pickable =
         !active.isSingleServer &&
         (active.locations.length > 1 || active.groups.isNotEmpty);
@@ -349,10 +299,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           group?.name ??
               (loc != null ? stripLeadingFlag(loc.label) : l10n.homeNoServers),
         ),
-        // With a group, the name alone is a claim the user cannot check — they
-        // do not know where their traffic goes. So the line names the method
-        // and the result; until the engine has picked, it names only the method
-        // rather than a server from a previous session.
         subtitle: group != null
             ? Text(
                 picked == null || picked.isEmpty
@@ -425,8 +371,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       title: context.l10n.homeServer,
       selected: st.selectionId,
       itemNoun: context.l10n.uiNounServer,
-      // Groups first: for most people "the fastest one" is the answer they
-      // came for, and it is an answer to the same question as a country.
       pinnedHeader: context.l10n.homeChosenByEngine,
       pinned: active.groups
           .map(

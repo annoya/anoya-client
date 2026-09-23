@@ -1,8 +1,6 @@
 import '../l10n/l10n.dart';
 import 'json_file_store.dart';
 
-/// One system on-demand rule (mirrors NEOnDemandRule). Conditions are ANDed;
-/// the OS applies the first rule whose conditions all match.
 class OnDemandRule {
   const OnDemandRule({
     required this.id,
@@ -24,16 +22,11 @@ class OnDemandRule {
   final List<String> dnsServers;
   final String probeUrl;
 
-  /// An SSID only exists on Wi-Fi: pairing it with a cellular/ethernet rule
-  /// would produce a condition the system can never satisfy. The values stay in
-  /// the model (so switching back restores them) but are neither shown nor
-  /// compiled while another interface is selected.
   bool get ssidsApply =>
       interface == OnDemandInterface.wifi || interface == OnDemandInterface.any;
 
   List<String> get effectiveSsids => ssidsApply ? ssids : const [];
 
-  /// Condition summary for list rows: "Wi-Fi · SSID corp-net · DNS 10.0.*".
   String get summary {
     final l10n = L10n.current;
     final parts = <String>[interface.label];
@@ -80,8 +73,8 @@ class OnDemandRule {
       (i) => i.name == (j['interface'] as String? ?? 'any'),
       orElse: () => OnDemandInterface.any,
     ),
-    // whereType, not cast: cast() is a lazy view whose type error would
-    // surface far from load()'s try/catch — in the UI or on connect.
+    // whereType, not cast: cast() is lazy, so its type error would surface far
+    // from load()'s try/catch.
     ssids: (j['ssids'] as List<dynamic>? ?? []).whereType<String>().toList(),
     dnsDomains: (j['dns_domains'] as List<dynamic>? ?? [])
         .whereType<String>()
@@ -103,8 +96,6 @@ class OnDemandRule {
     if (probeUrl.isNotEmpty) 'probe_url': probeUrl,
   };
 
-  /// The dictionary the platform channel sends to Swift (no id/name — the
-  /// system rule has neither).
   Map<String, dynamic> toChannel() => {
     'action': action.name,
     'interface': interface.name,
@@ -130,9 +121,6 @@ enum OnDemandAction {
 enum OnDemandInterface {
   any,
   wifi,
-  // iOS matches cellular; macOS has no cellular and matches ethernet instead.
-  // The UI shows whichever fits the platform; both serialize distinctly so a
-  // synced config stays unambiguous.
   cellular,
   ethernet;
 
@@ -144,8 +132,6 @@ enum OnDemandInterface {
   };
 }
 
-/// On-demand preferences: the user's intent (enabled), the transient pause
-/// (manual disconnect while armed), the rules and the sleep flag.
 class OnDemandPrefs {
   const OnDemandPrefs({
     this.enabled = false,
@@ -160,19 +146,12 @@ class OnDemandPrefs {
   final bool disconnectOnSleep;
   final List<OnDemandRule> rules;
 
-  /// What the platform reported back: whether the OS is actually auto-
-  /// connecting right now. Not persisted — it lives in the system's own VPN
-  /// preferences and is re-read by pushing the prefs.
   final bool systemArmed;
 
-  /// What we ask the system for: intent, not paused, and something to match.
   bool get armed => enabled && !paused && rules.isNotEmpty;
 
-  /// Enabled but the system hasn't taken it yet — happens before the first
-  /// successful connect, since there is no tunnel config to auto-start with.
   bool get awaitingFirstConnect => armed && !systemArmed;
 
-  /// Settings row subtitle: Off / Paused / On · N rules.
   String get statusLabel {
     final l10n = L10n.current;
     if (!enabled) return l10n.commonOff;

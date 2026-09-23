@@ -7,12 +7,6 @@ import '../norm_config.dart';
 import 'base64_text.dart';
 import 'subscription.dart';
 
-/// Clash / mihomo YAML, the second shape a subscription body arrives in.
-///
-/// Unlike a share link, the proxy entries here are already mihomo-shaped maps
-/// with keys chosen by whoever wrote the document — which is why key sanitation
-/// (AGENTS invariant 5) lives in this file and not in the renderer alone.
-
 ParsedSubscription? parseClashProxies(String body) {
   final hasProxies = RegExp(r'(^|\n)\s*proxies\s*:').hasMatch(body);
   final hasProviders = RegExp(r'(^|\n)\s*proxy-providers\s*:').hasMatch(body);
@@ -32,11 +26,6 @@ ParsedSubscription? parseClashProxies(String body) {
         continue;
       }
       final type = m['type'].toString();
-      // Filtered here rather than left to the renderer: an entry we cannot
-      // render would otherwise reach the server picker and fail only when the
-      // user taps Connect, which is the worst possible moment to find out.
-      // The subscription list is the narrower one — the renderer can also emit
-      // WireGuard, but only where the key material is issued with the config.
       if (!kSubscriptionProxyTypes.contains(type)) {
         unsupported[type] = (unsupported[type] ?? 0) + 1;
         continue;
@@ -48,10 +37,6 @@ ParsedSubscription? parseClashProxies(String body) {
     }
     final providers = _proxyProviders(doc['proxy-providers']);
     final groups = _proxyGroups(doc['proxy-groups'], out);
-    // No early return on an empty result: a document with `proxies: []` is
-    // recognisably Clash, and a panel does answer that way (an expired account,
-    // a full device limit). Calling it "a format we cannot read" would send the
-    // user to fix the one thing that is not wrong.
     return ParsedSubscription(
       locations: out,
       unsupported: unsupported,
@@ -66,11 +51,6 @@ ParsedSubscription? parseClashProxies(String body) {
   }
 }
 
-/// Reads `proxy-groups:` — the sets whose member the engine picks.
-///
-/// Members are resolved to the servers we actually parsed, so a group naming a
-/// proxy we cannot run comes out smaller, and one left with nothing comes out
-/// not at all: offering a choice that cannot work is worse than not offering it.
 List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
   if (node is! List) return const [];
   final byName = {for (final l in locations) l.label: l.id};
@@ -79,23 +59,14 @@ List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
     final g = _deepConvert(raw);
     if (g is! Map<String, dynamic>) continue;
     final type = '${g['type'] ?? ''}'.toLowerCase();
-    // `select` is a human's choice, which our own picker already is.
     if (!ProxyGroup.types.contains(type)) continue;
 
-    // `include-all` (and its older spellings) means "every proxy in this
-    // document" — the shape Remnawave's own template uses.
     final all =
         g['include-all'] == true ||
         g['include-all-proxies'] == true ||
         g['include-all-providers'] == true;
     final named = (g['proxies'] as List? ?? const []).map((e) => '$e').toList();
 
-    // A group that names its membership by pattern and is read without the
-    // patterns is not a smaller mistake than a missing group — it is a larger
-    // one. On the live subscription `exclude-filter: 🇷🇺|🏳️` is the provider
-    // saying "not through a Russian exit", and a group built without it sends
-    // the user exactly where they were being steered away from. So a pattern we
-    // cannot compile drops the group rather than widening it.
     final List<RegExp>? keep, drop;
     try {
       keep = _patterns(g['filter']);
@@ -108,9 +79,6 @@ List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
       continue;
     }
     final byId = {for (final l in locations) l.id: l};
-    // Explicit names first, then what `include-all` adds, matching the engine's
-    // own order. The filter applies only to the second half: mihomo skips it for
-    // an explicit list ("compatible provider unneeded filter").
     final picked = <String>[
       for (final n in named) ?byName[n],
       if (all)
@@ -120,8 +88,6 @@ List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
     final members = <String>[];
     for (final id in picked) {
       if (members.contains(id)) continue;
-      // `exclude-filter` is applied to the whole membership however it was
-      // assembled, which is what the engine does in `GroupBase.GetProxies`.
       final label = byId[id]?.label ?? '';
       if (drop != null && drop.any((r) => r.hasMatch(label))) continue;
       if (_excludedType(g['exclude-type'], byId[id])) continue;
@@ -144,13 +110,6 @@ List<ProxyGroup> _proxyGroups(Object? node, List<Location> locations) {
   return out;
 }
 
-/// Reads `proxy-providers:` — server lists the document does not carry itself
-/// but points at.
-///
-/// Declared here, fetched by the layer that owns the network: a parser that
-/// starts making requests is a parser you cannot test without one. Only remote
-/// providers survive — `file` points at the author's own disk, and `inline`
-/// carries its payload in a document we did not receive.
 List<ProxyProvider> _proxyProviders(Object? node) {
   if (node is! Map) return const [];
   final out = <ProxyProvider>[];
@@ -163,14 +122,6 @@ List<ProxyProvider> _proxyProviders(Object? node) {
   return out;
 }
 
-/// Resolvers a Clash/mihomo-YAML subscription ships in `dns.nameserver`.
-///
-/// The only format that already speaks the target syntax, so the entries pass
-/// through as written — including a `#pin`, which here names one of the
-/// provider's own proxy groups and is judged by the renderer against the
-/// outbounds we actually define. What does not pass through is the rest of the
-/// block: our `dns:` section owns fake-ip and the bootstrap, and adopting a
-/// foreign `enhanced-mode` would strand every fake address the OS has cached.
 List<String> _dnsServers(Object? node) {
   if (node is! Map) return const [];
   final ns = node['nameserver'];
@@ -183,13 +134,6 @@ List<String> _dnsServers(Object? node) {
   return out;
 }
 
-/// Recursively converts YamlMap/YamlList into plain `Map<String,dynamic>`/List.
-///
-/// A Clash/mihomo-YAML subscription is attacker-supplied (ADR-005), and its map
-/// keys flow into the engine config we render. A key carrying a newline would
-/// break out of its block and add top-level keys (`external-controller`,
-/// `allow-lan`…), so keys that are not plainly a config key are dropped here —
-/// the drop-not-escape stance ADR-003/ADR-008 take for values, extended to keys.
 dynamic _deepConvert(dynamic node) {
   if (node is YamlMap || node is Map) {
     final out = <String, dynamic>{};
@@ -212,17 +156,6 @@ dynamic _deepConvert(dynamic node) {
   return node;
 }
 
-/// The name patterns a group's `filter` / `exclude-filter` holds.
-///
-/// mihomo splits the field on a backtick and treats each part as its own
-/// regular expression, matching if any of them does. The dialect is .NET
-/// (`regexp2`) rather than Dart's; the shapes panels actually use — alternation
-/// over flags and country emoji — are common to both, and the one construct
-/// that turns up and does not exist here is the inline `(?i)`, which is the
-/// same request as a case-insensitive match.
-///
-/// Throws [FormatException] when a part will not compile, because the caller
-/// must not carry on with a membership the provider did not describe.
 List<RegExp>? _patterns(Object? node) {
   final raw = '${node ?? ''}'.trim();
   if (raw.isEmpty) return null;
@@ -240,8 +173,6 @@ List<RegExp>? _patterns(Object? node) {
   return out.isEmpty ? null : out;
 }
 
-/// `exclude-type: vless|hysteria2` — the same statement as `exclude-filter`,
-/// made about the protocol instead of the name, and just as wrong to ignore.
 bool _excludedType(Object? node, Location? location) {
   final raw = '${node ?? ''}'.trim();
   if (raw.isEmpty || location == null) return false;

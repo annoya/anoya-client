@@ -8,12 +8,11 @@ import 'core/log.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Read the log switch before anything can log or connect: leaving it to the
-  // prefs provider's microtask meant the first connect of a session could still
-  // render a config with logging on.
+  // Must run before anything logs or connects, or the first connect can render
+  // with logging on.
   Log.enabled = (await AppPrefsStore.load()).collectLogs;
-  // After the log switch, so a failure to read it is recorded; before the first
-  // frame, because the About screen and every subscription request want it.
+  // After the log switch so a failure is logged; before runApp because
+  // screens and subscription requests read it.
   await loadAppVersion();
   runApp(const ProviderScope(child: VpnApp()));
 }

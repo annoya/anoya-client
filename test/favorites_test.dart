@@ -128,7 +128,6 @@ void main() {
     ) async {
       await open(tester, favorites: {'s5'}, onToggleFavorite: (_) {});
 
-      // Matching on the subtitle, so the query itself is not one of the titles.
       await tester.enterText(find.byType(TextField), '10.0.0.2');
       await tester.pumpAndSettle();
 
@@ -245,9 +244,6 @@ void main() {
     testWidgets('the list hosts its own ink, inside a clip', (tester) async {
       await open(tester);
 
-      // Row fills are Ink: painted on the nearest Material. Without a Material
-      // of its own inside the clip, the list drew its fills on the sheet's
-      // Material and an overscrolled row landed on top of the title.
       final clip = find.ancestor(
         of: find.byType(ListView),
         matching: find.byType(ClipRect),

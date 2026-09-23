@@ -23,8 +23,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   @override
   void initState() {
     super.initState();
-    // The menu bar item must answer while the window is closed, which is
-    // exactly when no screen is watching anything — so the shell holds it.
+    // Held here so the menu bar keeps answering while the window is closed.
     ref.read(menuBarProvider);
   }
 
@@ -33,10 +32,6 @@ class _VpnAppState extends ConsumerState<VpnApp> {
     final profiles = ref.watch(profilesControllerProvider);
     final prefs = ref.watch(appPrefsProvider);
 
-    // Removing the last configuration swaps home to the add screen, but any
-    // pushed routes (settings, the configuration itself) would stay on top of
-    // it — showing settings for something that no longer exists. Unwind to the
-    // root so the user lands on "Add a connection".
     ref.listen(profilesControllerProvider.select((s) => s.hasProfiles), (
       had,
       has,
@@ -49,9 +44,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       }
     });
 
-    // The context-free accessor follows the preference, so a sentence produced
-    // below the widget tree — an error, the menu bar — speaks the same language
-    // as the screen that shows it.
+    // Set in build so strings made outside the widget tree follow the language.
     L10n.current = lookupAppLocalizations(prefs.language.locale);
 
     return MaterialApp(
@@ -60,9 +53,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigator,
-      // Above the navigator, so it covers dialogs and sheets too — every text
-      // field in the app is inside one route or another, and the rule should
-      // not depend on which.
+      // Above the navigator so it also covers dialogs and sheets.
       builder: (context, child) => DismissKeyboardOnTapOutside(child: child!),
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),

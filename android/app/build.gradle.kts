@@ -27,22 +27,17 @@ android {
         versionName = flutter.versionName
     }
 
-    // The app talks to its tunnel process over ITunnel (src/main/aidl).
     buildFeatures { aidl = true }
 
     packaging {
-        // The engine AAR carries arm64-v8a and x86_64 only, and the build
-        // script pins Flutter to the same list — but a native-assets
-        // dependency still drops a lone 32-bit stub in, which is enough for a
-        // 32-bit phone to accept the install and then crash. No ABI claimed
-        // by the APK may be less complete than the engine's list.
+        // The engine has no 32-bit build, but a native-assets dependency still
+        // adds a 32-bit stub that lets a 32-bit phone install and then crash.
         jniLibs { excludes += "lib/armeabi-v7a/**" }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Debug keys until a release signing config exists.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -53,6 +48,5 @@ flutter {
 }
 
 dependencies {
-    // The mihomo engine, bound by gomobile — see native/mihomocore/build-aar.sh.
     implementation(files("libs/mihomocore.aar"))
 }

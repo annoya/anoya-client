@@ -12,12 +12,6 @@ import 'package:vpn_client/features/dns_screen.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// What the user can find out about their resolvers.
-///
-/// The screen exists because refusing a resolver used to be a log line: a
-/// configuration could lose the DNS its provider chose and look untouched. So
-/// the load-bearing test here is not that the screen renders — it is that the
-/// screen cannot describe a configuration the engine never received.
 void main() {
   Location server({bool udp = true}) => Location(
     id: 'l1',
@@ -81,8 +75,6 @@ void main() {
   testWidgets('a plaintext resolver says so, because that is the point', (
     tester,
   ) async {
-    // "udp://" tells the reader nothing; "anyone on this network can read it"
-    // is the fact the line exists to carry.
     await pump(tester, profile(['77.88.8.8']));
     expect(
       find.text('Plain, unencrypted · from your subscription'),
@@ -113,7 +105,6 @@ void main() {
         find.textContaining('failed the whole configuration'),
         findsOneWidget,
       );
-      // And the survivor is still in force: one bad line costs one line.
       expect(find.text('tls://9.9.9.9'), findsOneWidget);
     });
 
@@ -139,10 +130,6 @@ void main() {
 
   group('the app default', () {
     test('reaches the tunnel, not the local network', () {
-      // Unpinned it would leave on the physical interface: the network sees
-      // which resolver this device trusts, the resolver sees the queries next
-      // to the user's own address, and a network that blocks it — a plausible
-      // reason to be running a VPN — takes DNS down with it.
       final shape = engineShape(server());
       final plan = dnsPlanFor(
         dns: const [],
@@ -156,11 +143,6 @@ void main() {
     test(
       'reaching the proxy gets more than one operator, and the queries do not',
       () {
-        // The bootstrap resolves one hostname the local network already watched
-        // us dial, so a second and third operator learn nothing new and buy a way
-        // up when the first is blocked. The query list carries every domain and
-        // mihomo asks all of its entries at once, so an extra entry there is an
-        // extra company reading everything.
         final shape = engineShape(server());
         final plan = dnsPlanFor(
           dns: const [],
@@ -221,11 +203,6 @@ void main() {
   });
 
   group('a server whose settings have not been issued yet', () {
-    // Amnezia hands out a server on request (ADR-009), so its locations are
-    // real and pickable while still carrying nothing. Every screen that asks
-    // what the engine would get meets them, and each one that asked directly
-    // used to throw — the configuration screen, then the routing screen. The
-    // answer belongs here, once, rather than in a guard per caller.
     final placeholder = Location(
       id: 'amnezia_de_awg',
       label: 'Germany',
@@ -257,9 +234,6 @@ void main() {
     });
 
     test('and the resolvers it would use are describable', () {
-      // What the DNS screen shows before anything is issued: the configuration
-      // still names resolvers, and none of them can be pinned to a tunnel that
-      // does not exist.
       final plan = dnsPlanFor(
         dns: const ['tls://dns.quad9.net#PROXY'],
         outbounds: engineShape(placeholder).outbounds,
@@ -270,15 +244,11 @@ void main() {
     });
 
     test('but the renderer still refuses to run one', () {
-      // Leniency here would produce a config with nowhere to send traffic.
       expect(() => mihomoTunConfigYaml(placeholder), throwsStateError);
     });
   });
 
   test('the screen and the engine read the same decision', () {
-    // The contract that makes the screen trustworthy. Both sides are asked for
-    // the same configuration and must agree resolver for resolver — if the
-    // renderer ever starts deciding on its own again, this fails.
     const dns = [
       'https://dns.quad9.net/dns-query#PROXY',
       'h3://dns.google/dns-query',

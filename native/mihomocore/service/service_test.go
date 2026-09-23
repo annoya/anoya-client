@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-// fakeEngine records what the service asked of it and fails on command.
 type fakeEngine struct {
 	mu       sync.Mutex
 	startErr error
@@ -85,7 +84,6 @@ func TestStartPersistsThenBringsTheTunnelUp(t *testing.T) {
 	if since.(float64) != float64(at.Unix()) {
 		t.Fatalf("connected_since %v, want %d", since, at.Unix())
 	}
-	// A second start while up is not a second engine.
 	if _, err := s.Handle("start", map[string]any{"config": "tun: {}"}); err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +113,6 @@ func TestAFailedStartIsRecordedAndLeavesNothingHalfUp(t *testing.T) {
 		t.Fatal("the reason must survive in a file, not only in memory")
 	}
 
-	// The next successful start clears it.
 	eng.startErr = nil
 	if _, err := s.Handle("start", map[string]any{"config": "ok"}); err != nil {
 		t.Fatal(err)
@@ -175,16 +172,9 @@ func TestReloadKeepsTheSessionAndReportsARejectedConfig(t *testing.T) {
 	}
 }
 
-// A machine that reboots must not come back with a VPN nobody asked for.
-//
-// The saved config is written on every sync of the selection, so it exists
-// after any run of the app; what decides whether the tunnel comes up with the
-// machine is the auto-connect switch, and nothing else.
 func TestBootConnectsOnlyWhenAutoConnectIsOn(t *testing.T) {
 	s, eng, files := harness(t)
 
-	// The app mirrors the selection with the tunnel down — the ordinary case
-	// after an install, a server switch or a settings change.
 	if _, err := s.Handle("sync_config", map[string]any{"config": "tun: {}"}); err != nil {
 		t.Fatal(err)
 	}
@@ -198,8 +188,6 @@ func TestBootConnectsOnlyWhenAutoConnectIsOn(t *testing.T) {
 		t.Fatalf("status after a boot with auto-connect off: %v", s.Status())
 	}
 
-	// Connecting by hand is not the same answer: it says what the user wants
-	// now, not what they want every time the machine comes back.
 	if _, err := s.Handle("start", map[string]any{"config": "tun: {}"}); err != nil {
 		t.Fatal(err)
 	}
@@ -243,7 +231,6 @@ func TestTurningAutoConnectOffOutlivesAReboot(t *testing.T) {
 }
 
 func TestDisconnectingDoesNotAnswerTheAutoConnectQuestion(t *testing.T) {
-	// Two different questions: "not now" and "not ever again on its own".
 	s, _, files := harness(t)
 	if _, err := s.Handle("set_auto_connect", map[string]any{"enabled": true}); err != nil {
 		t.Fatal(err)
@@ -257,8 +244,6 @@ func TestDisconnectingDoesNotAnswerTheAutoConnectQuestion(t *testing.T) {
 	if !files.AutoConnect() {
 		t.Fatal("a manual disconnect switched auto-connect off")
 	}
-	// Removing the last configuration is not that answer either: what goes is
-	// the config a boot-time start would have run.
 	if _, err := s.Handle("remove_profile", nil); err != nil {
 		t.Fatal(err)
 	}
@@ -283,7 +268,6 @@ func TestStopAndRemoveProfile(t *testing.T) {
 	if since, _ := s.Handle("connected_since", nil); since.(float64) != 0 {
 		t.Fatalf("connected_since after stop: %v", since)
 	}
-	// A stop when nothing runs does not reach the engine.
 	_, _ = s.Handle("stop", nil)
 	if eng.sequence() != "start,stop" {
 		t.Fatalf("engine calls: %s", eng.sequence())
@@ -354,8 +338,6 @@ func TestUnknownMethodAndMissingConfig(t *testing.T) {
 	}
 }
 
-// --- the wire ---------------------------------------------------------------
-
 type wireClient struct {
 	nc  net.Conn
 	sc  *bufio.Scanner
@@ -394,7 +376,7 @@ func (w *wireClient) call(t *testing.T, method string, args map[string]any) map[
 	for {
 		m := w.read(t)
 		if m["event"] != nil {
-			continue // status events interleave with responses
+			continue
 		}
 		if m["id"].(float64) != float64(w.seq) {
 			t.Fatalf("response for %v while waiting for %d", m["id"], w.seq)
@@ -416,19 +398,15 @@ func TestAClientLearnsTheStatusFirstAndOnEveryChange(t *testing.T) {
 	if res["error"] != nil {
 		t.Fatalf("start over the wire: %v", res["error"])
 	}
-	// connecting and connected were pushed before the response landed; the
-	// reader skipped them, so read the state back instead.
 	res = w.call(t, "proxy_bytes", nil)
 	if res["result"] != "10:20" {
 		t.Fatalf("proxy_bytes over the wire: %v", res)
 	}
 
-	// A second client sees the live status straight away.
 	w2 := dialFake(t, s)
 	if got := w2.read(t); got["status"] != StatusConnected {
 		t.Fatalf("second client's first message: %v", got)
 	}
-	// And the push reaches it on the next change.
 	_ = w.call(t, "stop", nil)
 	if got := w2.read(t); got["status"] != StatusDisconnected {
 		t.Fatalf("second client after stop: %v", got)
@@ -438,7 +416,7 @@ func TestAClientLearnsTheStatusFirstAndOnEveryChange(t *testing.T) {
 func TestWireErrorsAreAnswersNotHangUps(t *testing.T) {
 	s, _, _ := harness(t)
 	w := dialFake(t, s)
-	_ = w.read(t) // status
+	_ = w.read(t)
 	if res := w.call(t, "nope", nil); res["error"] == nil {
 		t.Fatalf("unknown method over the wire: %v", res)
 	}
@@ -448,7 +426,6 @@ func TestWireErrorsAreAnswersNotHangUps(t *testing.T) {
 	if res := w.read(t); res["error"] != "malformed request" {
 		t.Fatalf("malformed line: %v", res)
 	}
-	// Still alive.
 	if res := w.call(t, "version", nil); res["result"] != "mihomo test" {
 		t.Fatalf("after the bad line: %v", res)
 	}

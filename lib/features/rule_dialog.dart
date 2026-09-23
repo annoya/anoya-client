@@ -8,9 +8,6 @@ import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import 'geosite_sheet.dart';
 
-/// Rule editor dialog. The value control depends on the match type: free text
-/// for domains/CIDR/process, a country picker for geoip (+ no-resolve switch),
-/// a category field with popular suggestions for geosite.
 class RuleDialog extends StatefulWidget {
   const RuleDialog({this.initial, required this.geoReady, super.key});
 
@@ -102,10 +99,8 @@ class _RuleDialogState extends State<RuleDialog> {
       context,
       title: l10n.ruleMatch,
       selected: _type,
-      // rule-list is absent by design: a list rule is only meaningful next to
-      // the definition of where that list comes from, and only a provider's
-      // policy carries those. Offering it here would let the user author a
-      // rule that can never match.
+      // No rule-list: only a provider policy defines where lists come from, so a
+      // user-authored one could never match.
       options: RoutingRule.types.where((t) => t != 'rule-list').map((t) {
         final geoLocked = (t == 'geoip' || t == 'geosite') && !widget.geoReady;
         final unsupported = t == 'process-name' && !supportsProcessRules;
@@ -174,9 +169,6 @@ class _RuleDialogState extends State<RuleDialog> {
                 onChanged: (v) => setState(() => _noResolve = v),
               ),
             ] else if (_type == 'geosite') ...[
-              // Picked, never typed: only what the local database really has
-              // can be chosen, so a typo can't produce a category the engine
-              // will fail to load.
               SelectField(
                 label: l10n.geositeCategoryLabel,
                 value: _value.text.isEmpty ? l10n.ruleChoose : _value.text,
@@ -189,10 +181,7 @@ class _RuleDialogState extends State<RuleDialog> {
                 autofocus: true,
                 autocorrect: false,
                 enableSuggestions: false,
-                // A URL keyboard: Android's text keyboard puts a space after
-                // every full stop it sees, and "vk. ru" is not a domain. The
-                // formatter is the second line of defence — a pasted value
-                // with a space in it never becomes one in the rule.
+                // URL keyboard: Android's text one inserts a space after each full stop.
                 keyboardType: TextInputType.url,
                 inputFormatters: [
                   FilteringTextInputFormatter.deny(RegExp(r'\s')),
@@ -250,7 +239,6 @@ class _RuleDialogState extends State<RuleDialog> {
     return up;
   }
 
-  /// Human-readable preview of what this rule will do.
   String? _summary() {
     if (_value.text.trim().isEmpty) return null;
     final l10n = context.l10n;
@@ -272,9 +260,6 @@ class _RuleDialogState extends State<RuleDialog> {
   }
 }
 
-/// Country picker for geoip rules: the shared sheet over the same
-/// country/alias table the flags use (ISO code in the subtitle so it is
-/// searchable by either).
 Future<String?> pickCountry(BuildContext context) => pickOption<String>(
   context,
   title: context.l10n.ruleCountry,

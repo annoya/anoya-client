@@ -18,20 +18,12 @@ import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// What "connected" leaves out.
-///
-/// The system reports an interface, not a path: an AmneziaWG peer whose
-/// handshake never completes and a VLESS server that accepts TCP and then says
-/// nothing both leave a tunnel that looks perfectly up and carries nothing.
-/// Everything here is about telling those two apart from a working one.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tmp;
 
   setUp(() {
-    // The prefs live in a file; the tests are about behaviour, not storage —
-    // and a temp dir keeps a test run from leaving one in the repository.
     tmp = Directory.systemTemp.createTempSync('vpn-connection-check');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -49,8 +41,7 @@ void main() {
     tmp.deleteSync(recursive: true);
   });
 
-  /// The controller reads its prefs from a file before it will probe, so the
-  /// trigger tests have to wait for real async work rather than a microtask.
+  // Prefs load from a file first, so this waits on real async work.
   Future<void> until(
     bool Function() done, {
     Duration timeout = const Duration(milliseconds: 500),
@@ -98,8 +89,6 @@ void main() {
     test(
       'an answer we cannot read is a failure, never a zero-millisecond pass',
       () {
-        // 0 ms and "no answer" are indistinguishable once a number is all the
-        // caller gets, which is why the engine answers in prefixed strings.
         expect(ConnectionCheck.parse('', at: DateTime.now()).passed, isFalse);
         expect(
           ConnectionCheck.parse('ms:', at: DateTime.now()).passed,
@@ -117,9 +106,6 @@ void main() {
     test(
       'a session coming up is the trigger, not the Connect button',
       () async {
-        // A tunnel raised by an on-demand rule or Android's always-on switch is
-        // the one nobody is watching, and "up but carrying nothing" matters
-        // there most.
         final core = _FakeCore(answer: 'ms:120');
         final c = boot(core);
         await Future<void>.delayed(Duration.zero);
@@ -162,8 +148,6 @@ void main() {
     test(
       'a hot switch forgets the old verdict and asks about the new server',
       () async {
-        // The session stays up across a switch, so the status stream never
-        // moves — yet the server the verdict described is gone.
         final core = _FakeCore(answers: ['ms:120', 'ms:300']);
         final profiles = _DrivenProfiles();
         final c = boot(core, profiles: profiles);
@@ -202,15 +186,12 @@ void main() {
     );
 
     test('switched off, nothing is sent to anybody', () async {
-      // The probe leaves the device for somebody else's host on every connect;
-      // refusing to send it has to actually mean that.
       final core = _FakeCore(answer: 'ms:120');
       final c = boot(core);
       await c.read(connectionCheckProvider.notifier).setEnabled(false);
 
       core.emit(VpnStatus.connected);
-      // Past the warm-up and the first retry: if it were going to probe, it
-      // would have by now.
+      // Past the warm-up and the first retry.
       await until(() => core.probes > 0, timeout: const Duration(seconds: 5));
 
       expect(core.probes, 0);
@@ -257,9 +238,6 @@ void main() {
 
   group('the check nobody had to send', () {
     test('traffic that already came back is the answer', () async {
-      // The user was browsing; the tunnel proved itself with their own bytes.
-      // Sending a HEAD to somebody else's host to learn what we already know
-      // is a request that should never leave the device.
       final core = _FakeCore(answers: ['ms:120'], bytes: '4096:65536');
       final c = boot(core);
 
@@ -281,8 +259,6 @@ void main() {
     });
 
     test('bytes only counted when something came back', () async {
-      // Upload alone is a request that may have gone nowhere: packets left,
-      // and that is exactly what a dead tunnel looks like from this side.
       final core = _FakeCore(answers: ['ms:120'], bytes: '4096:0');
       final c = boot(core);
 
@@ -297,8 +273,6 @@ void main() {
     });
 
     test('the button always asks, whatever the counters say', () async {
-      // "Test now" is a question about now. Answering it with an observation
-      // made a minute ago would be a button that does nothing.
       final core = _FakeCore(answers: ['ms:77'], bytes: '4096:65536');
       final c = boot(core);
 
@@ -310,12 +284,6 @@ void main() {
   });
 
   group('a tunnel that is still coming up', () {
-    // The bug this group exists for: on an Amnezia subscription the automatic
-    // check reported "No answer" on both AWG and VLESS, and pressing Test now
-    // straight afterwards passed. An AmneziaWG peer only begins its handshake
-    // when the first packet asks for one, and amneziawg-go retries a lost
-    // initiation after RekeyTimeout — five seconds, exactly the probe's own
-    // default timeout. The probe was losing a race, not finding a dead server.
     test('the first no is not the answer', () async {
       final core = _FakeCore(
         answers: ['err:context deadline exceeded', 'ms:180'],
@@ -351,8 +319,6 @@ void main() {
     });
 
     test('nothing is published until the sequence has a verdict', () async {
-      // An intermediate failure would raise the banner on the home screen and
-      // then take it back — a warning that flashes teaches people to ignore it.
       final core = _FakeCore(
         answers: ['err:context deadline exceeded', 'ms:180'],
       );
@@ -388,14 +354,10 @@ void main() {
 
   group('what a failure reads like', () {
     test('the dial chain becomes a sentence about the server', () {
-      // What the engine actually handed us on AWG, both attempts of one
-      // request: the addresses are somebody else's CDN and "dial" is a word
-      // from the dialer.
       const awg =
           'connect failed: dial tcp 172.253.144.94:443: context deadline exceeded\n'
           'connect failed: dial tcp [2404:6800:4003:c02::5e]:443: network is unreachable';
       expect(describeProbeFailure(awg), 'The server did not answer in time.');
-      // And on VLESS, where the server accepted the connection and dropped it.
       expect(
         describeProbeFailure(
           'Head "https://www.gstatic.com/generate_204": EOF',
@@ -413,9 +375,8 @@ void main() {
   });
 
   group('the screen', () {
-    /// The controller reads its prefs from disk. Created inside the fake async
-    /// zone a widget test runs in, that read never completes — so the provider
-    /// is built (and its file work finished) in the real zone first.
+    // Built in the real zone: the prefs file read never completes inside the
+    // widget test's fake async zone.
     Future<ProviderContainer> pump(WidgetTester tester, _FakeCore core) async {
       final container = ProviderContainer(
         overrides: [vpnCoreProvider.overrideWithValue(core)],
@@ -443,8 +404,6 @@ void main() {
     testWidgets('a probe cannot be asked for with nothing running', (
       tester,
     ) async {
-      // The probe goes through the engine, and a button that answers "the
-      // tunnel is not running" reads as a fault rather than as the obvious.
       final core = _FakeCore(answer: 'ms:120');
       await pump(tester, core);
       await tester.pump();
@@ -475,7 +434,6 @@ void main() {
     });
 
     testWidgets('a failure says where the fault is not', (tester) async {
-      // Without the second sentence people start reinstalling the app.
       final core = _FakeCore(answer: 'err:context deadline exceeded');
       core.emit(VpnStatus.connected);
       await pump(tester, core);
@@ -500,11 +458,8 @@ class _FakeCore extends VpnCore {
   _FakeCore({String? answer, List<String>? answers, this.bytes = '0:0'})
     : answers = answers ?? [answer ?? 'ms:1'];
 
-  /// What the engine's connection tracking reports, as `up:down`.
   final String bytes;
 
-  /// One answer per probe; the last one repeats, so a single-element list is a
-  /// server that behaves the same way every time.
   final List<String> answers;
   final _status = StreamController<VpnStatus>.broadcast();
   VpnStatus _current = VpnStatus.disconnected;
@@ -554,8 +509,6 @@ class _FakeCore extends VpnCore {
   }) async => false;
 }
 
-/// A profiles controller the test moves by hand: one profile with two servers,
-/// and a setter for the selection and the switching flag.
 class _DrivenProfiles extends ProfilesController {
   @override
   ProfilesState build() {

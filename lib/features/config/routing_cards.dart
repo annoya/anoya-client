@@ -14,16 +14,11 @@ import '../managed_policy_screen.dart';
 import '../../state/provider_rule_lists.dart';
 import 'provider_routing_card.dart';
 
-/// The routing section for a configuration whose rules are the device's own:
-/// an opt-in switch plus the rule set in force.
 class LocalRoutingCard extends ConsumerWidget {
   const LocalRoutingCard({super.key, required this.profile, this.overriddenBy});
 
   final Profile profile;
 
-  /// Names the policy standing in for this one, when something else is in
-  /// force. Dimming alone would say "unavailable"; the row has to say why, and
-  /// stay usable, because switching back is how the user takes it over again.
   final String? overriddenBy;
 
   @override
@@ -42,9 +37,6 @@ class LocalRoutingCard extends ConsumerWidget {
           SwitchListTile(
             secondary: const Icon(Icons.alt_route),
             title: Text(l10n.configRouting),
-            // The subtitle is the policy in force, not a description of the
-            // switch: the set itself is named in the row below, and repeating it
-            // here would say nothing new.
             subtitle: Text(
               overriddenBy != null
                   ? l10n.configReplacedBy(overriddenBy!)
@@ -54,9 +46,6 @@ class LocalRoutingCard extends ConsumerWidget {
             onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          // Kept visible while off — hiding it would make the switch look like it
-          // controls nothing, and the chosen set is remembered for when routing
-          // comes back on.
           Opacity(
             opacity: profile.routingEnabled ? 1 : 0.38,
             child: ListTile(
@@ -64,7 +53,7 @@ class LocalRoutingCard extends ConsumerWidget {
               title: Text(l10n.configRuleSet),
               subtitle: Text(ruleSet?.name ?? l10n.configRuleSetDefault),
               trailing: const Icon(Icons.expand_more),
-              // Reachable with routing off: picking a set is how it gets turned on.
+              // Tappable while dimmed: picking a set is how routing gets turned on.
               onTap: () => _pick(context, ref, sets),
             ),
           ),
@@ -107,14 +96,12 @@ class LocalRoutingCard extends ConsumerWidget {
   }
 }
 
-/// Opens the read-only view of a policy the configuration did not choose.
 void openManagedRouting(BuildContext context, Routing routing) {
   Navigator.of(
     context,
   ).push(MaterialPageRoute(builder: (_) => ManagedPolicyScreen(routing)));
 }
 
-/// The policy a device's own rule set puts in force, in one line.
 String localRoutingSummary(Profile p, RuleSet? set) {
   final l10n = L10n.current;
   if (!p.routingEnabled) return l10n.configRoutingOffSummary;
@@ -126,7 +113,6 @@ String localRoutingSummary(Profile p, RuleSet? set) {
   );
 }
 
-/// A policy the organization owns: shown, never switched.
 class ManagedRoutingCard extends StatelessWidget {
   const ManagedRoutingCard({super.key, required this.routing});
 
@@ -155,14 +141,6 @@ class ManagedRoutingCard extends StatelessWidget {
   );
 }
 
-/// The one row that stands in for everything about where traffic goes and who
-/// names the addresses.
-///
-/// Both used to sit on the configuration screen and were the largest thing on
-/// it, while being the part almost nobody opens. The subtitle carries the two
-/// facts a passer-by would have read off those sections — the policy in force
-/// and whose resolvers — so moving them costs no one an answer they used to
-/// get for free.
 class RoutingRow extends ConsumerWidget {
   const RoutingRow({super.key, required this.profile});
 
@@ -186,12 +164,7 @@ class RoutingRow extends ConsumerWidget {
               TextSpan(
                 children: [
                   TextSpan(text: '${_routing(l10n, ref)} · '),
-                  // The refusals were just taken out of a log file nobody reads.
-                  // Leaving them two taps away would put them back — in words, and in
-                  // the one place a passer-by looks.
                   if (plan.dropped.isEmpty)
-                    // "DNS app default" reads as a typo; the app is the one origin
-                    // that needs a preposition of its own.
                     TextSpan(
                       text: plan.usingFallback
                           ? l10n.configDnsByApp
@@ -217,10 +190,7 @@ class RoutingRow extends ConsumerWidget {
     );
   }
 
-  /// Whichever of the three policies is actually in force.
   String _routing(AppLocalizations l10n, WidgetRef ref) {
-    // Named rather than summarised: a row that leads to something the user
-    // cannot change should say so before it is tapped.
     if (profile.routing != null) {
       final mode = profile.routing!.mode == 'split'
           ? l10n.ruleSetModeSplit

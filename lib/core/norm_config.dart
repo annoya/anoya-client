@@ -1,7 +1,3 @@
-// Dart mirror of the management service's normalized client config
-// (shared/normconfig in Go). Core-agnostic: a Location's proxy is an open map
-// keyed by "type", which the active VpnCore knows how to translate.
-
 import '../l10n/l10n.dart';
 
 class NormConfig {
@@ -19,21 +15,12 @@ class NormConfig {
   final Account account;
   final List<Location> locations;
 
-  /// Groups a subscription offered, whose member the engine picks.
   final List<ProxyGroup> groups;
 
-  /// Split-tunneling policy. Set by the server ("managed") or filled in from
-  /// the device-local rules before the config is handed to the core.
   final Routing? routing;
 
-  /// Resolvers the config ships with (mihomo nameserver syntax). Empty means
-  /// the app default; the tunnel config carries them, so switching configs
-  /// switches DNS with no extra plumbing.
   final List<String> dns;
 
-  /// The resolver to use when [dns] is empty — the device's own setting, which
-  /// belongs to the app rather than to any of the three sources. Empty means
-  /// "whatever the renderer's own default is".
   final String defaultDns;
 
   factory NormConfig.fromJson(Map<String, dynamic> json) {
@@ -54,8 +41,6 @@ class NormConfig {
   }
 }
 
-/// Split-tunneling policy: mode + ordered rules, first match wins (the same
-/// model the management service stores — see shared/normconfig in Go).
 class Routing {
   const Routing({
     required this.mode,
@@ -63,15 +48,9 @@ class Routing {
     this.lists = const [],
   });
 
-  /// "full": everything via VPN, rules are exceptions.
-  /// "split": only matching traffic via VPN, the rest is direct.
   final String mode;
   final List<RoutingRule> rules;
 
-  /// Definitions for the `rule-list` rules above: a rule names a list, this
-  /// says where that list comes from. Only a third party's policy carries
-  /// these — the management service expresses everything as rules, and a
-  /// device-local set has no external files.
   final List<RuleList> lists;
 
   RuleList? listNamed(String name) =>
@@ -96,13 +75,6 @@ class Routing {
   };
 }
 
-/// A set of servers whose member the **engine** picks, not the user.
-///
-/// Comes from a subscription's `proxy-groups`. Only the types where the choice
-/// is the engine's are carried: `url-test` (lowest latency), `fallback` (first
-/// that answers), `load-balance` and `relay` (a chain). A `select` group means
-/// "let a human choose", which is what our own server picker already is —
-/// carrying it would put a picker inside a picker.
 class ProxyGroup {
   const ProxyGroup({
     required this.name,
@@ -114,35 +86,18 @@ class ProxyGroup {
     this.strategy = '',
   });
 
-  /// The provider's own name, shown to the user. Never interpolated into the
-  /// engine config — the renderer generates safe names for that.
   final String name;
 
-  /// `url-test` | `fallback` | `load-balance` | `relay`.
   final String type;
 
-  /// Ids of the [Location]s in this group, in the provider's order. Order is
-  /// meaning, not decoration: `fallback` takes the first that answers.
   final List<String> members;
 
-  /// What the engine fetches to measure a member. The provider's choice; a
-  /// test against a URL nobody uses measures nothing useful.
   final String testUrl;
 
-  /// How often the provider wants members re-measured.
   final int intervalSeconds;
 
-  /// Milliseconds a new leader must beat the current one by before the engine
-  /// switches. Without it two servers a few ms apart would trade the traffic
-  /// on every round.
   final int tolerance;
 
-  /// `load-balance` only: how the engine spreads traffic across members.
-  /// Empty means the engine's own default (consistent-hashing).
-  ///
-  /// Carried and validated rather than passed through: mihomo rejects an
-  /// unknown strategy, and it rejects it while applying the config — which
-  /// would take the whole tunnel down over one field a provider mistyped.
   final String strategy;
 
   static const types = ['url-test', 'fallback', 'load-balance', 'relay'];
@@ -152,8 +107,6 @@ class ProxyGroup {
     'sticky-sessions',
   ];
 
-  /// A group id is a location id in the picker's eyes, so both can share the
-  /// one selection the app already has.
   String get id => 'group:$name';
 
   static bool isGroupId(String id) => id.startsWith('group:');
@@ -161,8 +114,6 @@ class ProxyGroup {
   bool get isValid =>
       name.isNotEmpty && types.contains(type) && members.isNotEmpty;
 
-  /// What the row says the group does. The type name from someone else's YAML
-  /// tells the user nothing; this is the same fact in words they can act on.
   String describe(int memberCount) => switch (type) {
     'url-test' => L10n.current.proxyGroupUrlTest(memberCount),
     'fallback' => L10n.current.proxyGroupFallback(memberCount),
@@ -192,14 +143,6 @@ class ProxyGroup {
   };
 }
 
-/// A file of rules someone else maintains, named by a `rule-list` rule.
-///
-/// The engine can fetch these itself, and deliberately is not allowed to: its
-/// initial fetch happens inside config apply, under a wait group with a 20 s
-/// timeout per file (mihomo `hub/executor/executor.go`, `loadProvider`), which
-/// would stall a connect exactly the way the geo databases did — and a fetch
-/// that fails there is only logged, leaving a rule that silently matches
-/// nothing. The app downloads them instead and hands the engine a local file.
 class RuleList {
   const RuleList({
     required this.name,
@@ -211,20 +154,14 @@ class RuleList {
   final String name;
   final String url;
 
-  /// What the file contains: `domain`, `ipcidr` or `classical` (mixed rule
-  /// lines). Passed through to the engine, which does the parsing.
   final String behavior;
 
-  /// `yaml`, `text` or `mrs` (mihomo's binary rule-set format).
   final String format;
 
   static const behaviors = ['domain', 'ipcidr', 'classical'];
   static const formats = ['yaml', 'text', 'mrs'];
   static final _nameRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
 
-  /// A list is only usable if we can name it in YAML, fetch it over TLS and
-  /// hand the engine a behavior/format it understands. Everything here ends up
-  /// interpolated into the engine config, so nothing unvalidated may pass.
   bool get isValid {
     if (!_nameRe.hasMatch(name)) return false;
     if (!behaviors.contains(behavior) || !formats.contains(format)) {
@@ -257,14 +194,10 @@ class RoutingRule {
     this.noResolve = false,
   });
 
-  // domain-suffix|domain-keyword|domain-exact|domain-regex|ip-cidr|
-  // process-name|geoip|geosite|rule-list
   final String type;
   final String value;
-  final String action; // proxy|direct|block
+  final String action;
 
-  /// geoip only: match plain-IP connections without resolving domains first.
-  /// Client-side extension — server-managed rules never carry it.
   final bool noResolve;
 
   factory RoutingRule.fromJson(Map<String, dynamic> json) => RoutingRule(
@@ -297,26 +230,17 @@ class RoutingRule {
   static final _domainRe = RegExp(r'^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$');
   static final _cidrRe = RegExp(r'^[0-9a-fA-F:.]+/\d{1,3}$');
   static final _processRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9 ._-]*$');
-  static final _geoipRe = RegExp(r'^[A-Za-z]{2}$'); // ISO 3166-1 alpha-2
-  static final _geositeRe = RegExp(
-    r'^[a-z0-9][a-z0-9@.!-]*$',
-  ); // geosite category
+  static final _geoipRe = RegExp(r'^[A-Za-z]{2}$');
+  static final _geositeRe = RegExp(r'^[a-z0-9][a-z0-9@.!-]*$');
   static final _listRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
-  // A rule line is comma-separated and unquoted in the engine's own parser, so
-  // a pattern containing a comma cannot be expressed at all — and `#` would
-  // start a YAML comment. Both are rejected rather than escaped: there is no
-  // escaping that mihomo's splitter would honour.
+  // Commas and `#` are rejected, not escaped: mihomo's rule splitter honours
+  // no escaping, and `#` would start a YAML comment.
   static final _regexRe = RegExp(r'^[^,#\r\n]{1,256}$');
 
-  /// Whether this rule needs the local GeoIP/GeoSite databases to work.
   bool get needsGeoData => type == 'geoip' || type == 'geosite';
 
-  /// Whether this rule needs a downloaded [RuleList] to work.
   bool get needsRuleList => type == 'rule-list';
 
-  /// Mirrors the server-side validation. Rule values end up interpolated into
-  /// the core's config text, so invalid ones must never pass (also applied at
-  /// render time as defense in depth).
   bool get isValid {
     if (!actions.contains(action)) return false;
     switch (type) {
@@ -326,8 +250,6 @@ class RoutingRule {
         return _domainRe.hasMatch(value);
       case 'domain-regex':
         if (!_regexRe.hasMatch(value)) return false;
-        // A pattern the engine cannot compile is a rule that matches nothing,
-        // which reads as "not routed" instead of "broken".
         try {
           RegExp(value);
           return true;
@@ -360,12 +282,11 @@ class Account {
   });
 
   final String displayName;
-  final String status; // active | expired | limited | on_hold | deactivated
+  final String status;
   final DateTime? expiresAt;
   final int usedBytes;
   final int dataLimit; // 0 = unlimited
 
-  /// on_hold users may connect — their expiry starts on first use.
   bool get canConnect => status == 'active' || status == 'on_hold';
 
   factory Account.fromJson(Map<String, dynamic> json) {
@@ -400,28 +321,12 @@ class Location {
   final String label;
   final Map<String, dynamic> proxy;
 
-  /// What the provider says this server is for (`serverDescription`). Their
-  /// words, shown in place of the protocol — never inside [proxy], which is
-  /// rendered into the engine config key by key.
   final String description;
 
   String get proxyType => proxy['type'] as String? ?? '';
 
-  /// A place to connect through whose settings have not been issued yet.
-  ///
-  /// Only a source that hands out servers on demand produces these (ADR-009):
-  /// the location is real and pickable, but there is no engine config behind
-  /// it until [ConfigSource.resolveSelection] asks for one. Anything that
-  /// renders or describes a config has to treat it as "nothing yet" rather
-  /// than as a broken server.
   bool get isPlaceholder => proxy.isEmpty;
 
-  /// How the connection is carried, in the name the reader would look up.
-  ///
-  /// One value is not the engine's own: `httpupgrade` is stored as a websocket
-  /// with a flag, and calling it `WS` would name a transport the server is not
-  /// configured for. QUIC is not stored at all — hysteria2 has no `network`
-  /// because it has no choice — so it is supplied here rather than left blank.
   String get transport {
     if (proxyType == 'hysteria2') return 'QUIC';
     final network = '${proxy['network'] ?? ''}'.toLowerCase();
@@ -440,21 +345,14 @@ class Location {
     };
   }
 
-  /// What protects the connection, always said — including when nothing does.
-  ///
-  /// "Not stated" and "nothing there" are different facts, and for a VPN client
-  /// the difference is the whole point of the line; silence would be read as
-  /// the first.
   String get security {
     if (proxy['reality-opts'] != null || proxy['reality'] != null) {
       return 'Reality';
     }
-    // Two protocols carry TLS by construction and do not carry the flag.
     if (proxyType == 'trojan' || proxyType == 'hysteria2') return 'TLS';
     return proxy['tls'] == true ? 'TLS' : 'No TLS';
   }
 
-  /// The protocol as it is written down everywhere else.
   String get protocol => switch (proxyType) {
     'vless' => 'VLESS',
     'vmess' => 'VMess',
@@ -464,21 +362,8 @@ class Location {
     final other => other.toUpperCase(),
   };
 
-  /// The line under the server's name: protocol, transport and what protects
-  /// it, the enumeration every other client shows.
-  ///
-  /// The address used to end this line, on the argument that it was the only
-  /// thing separating two identically named entries. It is not our argument to
-  /// make: identical names are a mistake in someone else's list, and paying for
-  /// it with an endpoint on every row costs the space the facts above need.
-  ///
-  /// A provider's description replaces the whole line. That is what it is for,
-  /// and with nothing else left on the line there is no half to keep.
   String get subtitle {
     if (description.isNotEmpty) return description;
-    // Nothing is known about a server that has not been issued, and the
-    // enumeration below would answer anyway — "No TLS" about a config we have
-    // never seen is a claim, not a blank.
     if (isPlaceholder) return '';
     return [protocol, transport, security].join(' · ');
   }

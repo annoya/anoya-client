@@ -19,8 +19,6 @@ class MainActivity : FlutterActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Back from the browser with no redirect delivered: the sign-in was
-        // abandoned. A delivered redirect has already cleared the wait.
         WebAuthChannel.onHostResumed()
     }
 

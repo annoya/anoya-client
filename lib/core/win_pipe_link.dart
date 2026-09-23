@@ -8,29 +8,11 @@ import 'package:win32/win32.dart';
 
 import 'pipe_transport.dart';
 
-/// The pipe the tunnel service listens on. Part of the contract with
-/// `cmd/tunnel-service`; change them together.
+// Contract with `cmd/tunnel-service`; change them together.
 const kTunnelPipe = r'\\.\pipe\AnnoyaTest.tunnel';
 
-/// A client end of the service's named pipe, through kernel32.
-///
-/// Dart's sockets do not speak named pipes, so this is the Win32 file API on a
-/// pipe path. Reads block, and a blocked read cannot share the isolate with the
-/// UI — so they run in an isolate of their own, which posts each chunk back;
-/// writes are short and stay on the caller's side.
-///
-/// The handle is opened with `FILE_FLAG_OVERLAPPED`, and that is not optional:
-/// on a synchronous handle Windows serializes every operation on the file
-/// object, so a `WriteFile` on the UI thread waits behind the reader's pending
-/// `ReadFile` — which waits for the service, which waits for the request the
-/// UI is trying to write. The first request of a session deadlocked the app
-/// before its window ever showed. With overlapped I/O each call carries its own
-/// `OVERLAPPED` and event and the two directions no longer queue on each other;
-/// each side still waits for its own completion, so the callers see the same
-/// blocking behaviour as before.
-///
-/// Windows only: every call here is into kernel32, and the class is constructed
-/// only behind a `Platform.isWindows` check.
+// FILE_FLAG_OVERLAPPED is required: on a synchronous handle a WriteFile waits
+// behind the reader's pending ReadFile and the app deadlocks.
 class WinPipeLink implements PipeLink {
   WinPipeLink([this.path = kTunnelPipe]);
 
@@ -56,8 +38,6 @@ class WinPipeLink implements PipeLink {
         NULL,
       );
       if (_handle == INVALID_HANDLE_VALUE) {
-        // Absent (not installed, not running) or busy (an instance still being
-        // set up for another client): either way the transport knocks again.
         throw StateError('cannot open $path: error ${GetLastError()}');
       }
     } finally {
@@ -75,18 +55,8 @@ class WinPipeLink implements PipeLink {
     });
   }
 
-  /// Issues one overlapped operation and waits for it to finish. Returns the
-  /// number of bytes transferred; 0 or -1 means the operation failed (the pipe
-  /// is gone, or the handle was closed under it) and the caller stops.
-  ///
-  /// The return value of ReadFile/WriteFile is deliberately not consulted, and
-  /// neither is `GetLastError`: between the Win32 call returning and Dart
-  /// reading the thread's last error, the VM makes Win32 calls of its own and
-  /// overwrites it. Taking a pending operation for a failed one and freeing its
-  /// buffers while the kernel still owns them corrupted the heap. Waiting on
-  /// the OVERLAPPED is the one reliable source: pending or completed, the
-  /// result comes from there, and a call that failed outright never marked the
-  /// struct pending, so the wait returns at once with zero bytes.
+  // ReadFile/WriteFile return values and GetLastError are deliberately ignored:
+  // the VM overwrites the last error; the OVERLAPPED wait is the reliable source.
   static int _transfer(
     int handle,
     int Function(Pointer<OVERLAPPED> overlapped) start,
@@ -107,8 +77,6 @@ class WinPipeLink implements PipeLink {
     }
   }
 
-  /// Reads until the pipe breaks. Runs in its own isolate; a null message is
-  /// the end.
   static void _readLoop((int, SendPort) args) {
     final (handle, port) = args;
     const size = 64 * 1024;
@@ -157,8 +125,6 @@ class WinPipeLink implements PipeLink {
   @override
   void close() {
     if (_handle != INVALID_HANDLE_VALUE) {
-      // Closing the handle fails the reader's pending ReadFile, which ends its
-      // loop; the kill below is for the case where it is between reads.
       CloseHandle(_handle);
       _handle = INVALID_HANDLE_VALUE;
     }

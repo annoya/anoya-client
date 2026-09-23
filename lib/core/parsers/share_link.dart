@@ -4,15 +4,6 @@ import '../norm_config.dart';
 import 'base64_text.dart';
 import 'mihomo_proxy.dart';
 
-/// Share links: `vless://`, `vmess://`, `trojan://`, `ss://`.
-///
-/// One link describes one server and nothing else — no account, no policy, no
-/// origin to re-ask (ADR-005). The result's `proxy` map is already in **mihomo
-/// proxy format** (mihomo field names like `ws-opts`, `reality-opts`,
-/// `servername`), so the config renderer emits it almost verbatim.
-
-/// The schemes this file understands. Shared with the paste detector so a new
-/// protocol is added in one place rather than two that drift.
 const kShareLinkSchemes = {
   'vless',
   'vmess',
@@ -22,12 +13,6 @@ const kShareLinkSchemes = {
   'hy2',
 };
 
-/// What one share link turned out to be: a server we can run, or the name of
-/// what stopped us.
-///
-/// The distinction matters for the count the user sees. A `vless://` link with
-/// `type=kcp` is not "an unsupported protocol" — vless is supported — so the
-/// reason has to be the transport, which is also the thing they can look up.
 class ShareLink {
   const ShareLink.server(Location this.location)
     : unsupported = null,
@@ -43,25 +28,15 @@ class ShareLink {
       unsupported = null,
       malformed = null;
 
-  /// Null when this link is not something we can run.
   final Location? location;
 
-  /// What we could not run — a scheme (`tuic`) or a transport (`kcp`). Null
-  /// when the text was not a server at all.
   final String? unsupported;
 
-  /// A link of a scheme we know that would not parse, and why — scheme and
-  /// reason only, never the link itself, because the userinfo is the
-  /// credential. Reported by the caller, which knows how many there were and
-  /// where they came from; one line per link said neither.
   final String? malformed;
 }
 
-/// Parse one share-link URI. Null when the scheme is unknown or malformed; use
-/// [parseShareLink] when the reason matters.
 Location? parseProxyUri(String raw) => parseShareLink(raw).location;
 
-/// Parse one share-link URI, keeping the reason a link was not usable.
 ShareLink parseShareLink(String raw) {
   final s = raw.trim();
   final scheme = s.contains('://') ? s.split('://').first.toLowerCase() : '';
@@ -76,34 +51,13 @@ ShareLink parseShareLink(String raw) {
       _ => ShareLink.unsupported(scheme),
     };
   } catch (e) {
-    // A link of a scheme we know that will not parse is malformed, not
-    // unsupported — saying "vless unsupported" would be a lie.
-    //
-    // Only the reason travels, never the exception's own text: Uri.parse
-    // prints the offending string under its message, and the userinfo in it
-    // is the credential (AGENTS.md invariant 11).
+    // Only the reason, never the exception text: Uri.parse echoes the input, and
+    // its userinfo is the credential.
     final why = e is FormatException ? e.message : e.runtimeType.toString();
     return ShareLink.malformed('$scheme:// $why');
   }
 }
 
-// --- per-protocol ---
-
-/// A `vless://` or `trojan://` link whose payload is base64 rather than a URI.
-///
-/// Neither protocol has a standard base64 form, but panels and older clients
-/// emit several anyway: base64 of the whole URI body
-/// (`uuid@host:port?…#name`), base64 of only the `userinfo@host:port` half
-/// with the query and the name left in the clear beside it, and for vless the
-/// vmess-style base64 JSON.
-///
-/// What tells a wrapped payload from a plain URI is the `@`: every URI body
-/// here has one before its query, and base64 has none at all. Anything after
-/// the first `?` or `#` is not part of the payload either way — reading it as
-/// one is what used to make these links unreadable.
-///
-/// Returns the link in URI form (the JSON form is handed to [_parseJsonPayload]
-/// by the caller), or the link unchanged when it is already a URI.
 String _unwrapBase64Uri(String s, String scheme) {
   final prefix = '$scheme://';
   final (body, query, fragment) = _splitUriTail(s.substring(prefix.length));
@@ -114,19 +68,11 @@ String _unwrapBase64Uri(String s, String scheme) {
       ? decoded.substring(prefix.length)
       : decoded;
   final (inner, innerQuery, innerFragment) = _splitUriTail(unwrapped);
-  // Both halves may carry a query — the panel's own parameters inside, the
-  // ones it appended outside. Keeping both, outside last, means a repeated
-  // key resolves to the outer value, which is the one the panel wrote knowing
-  // what it had already encoded.
   final q = [innerQuery, query].where((p) => p.isNotEmpty).join('&');
-  // The name is a label, not a setting: one of them wins, and it is the one
-  // the user can see in the link they pasted.
   final f = fragment.isNotEmpty ? fragment : innerFragment;
   return '$prefix$inner${q.isEmpty ? '' : '?$q'}${f.isEmpty ? '' : '#$f'}';
 }
 
-/// Splits a URI body into what precedes the query, the query and the fragment
-/// — each without its punctuation, empty when absent.
 (String, String, String) _splitUriTail(String s) {
   final hash = s.indexOf('#');
   final head = hash < 0 ? s : s.substring(0, hash);
@@ -137,8 +83,6 @@ String _unwrapBase64Uri(String s, String scheme) {
       : (head.substring(0, mark), head.substring(mark + 1), fragment);
 }
 
-/// The vmess-style JSON object behind a base64 payload, or null when the payload
-/// is not that.
 Map<String, dynamic>? _base64Json(String s, String scheme) {
   final body = s.substring('$scheme://'.length).split('#').first;
   if (body.contains('@') || body.contains('?') || body.isEmpty) return null;
@@ -178,8 +122,6 @@ ShareLink _parseVless(String raw) {
     final r = <String, dynamic>{};
     if (q['pbk'] != null) r['public-key'] = q['pbk'];
     if (q['sid'] != null && q['sid']!.isNotEmpty) r['short-id'] = q['sid'];
-    // Post-quantum key exchange: the server advertises it, and a client that
-    // ignores the flag negotiates the classical curve instead.
     if (q['pqv'] == '1' || q['pqv'] == 'true') {
       r['support-x25519mlkem768'] = true;
     }
@@ -201,13 +143,6 @@ ShareLink _parseVless(String raw) {
   );
 }
 
-/// The uuid out of a vless userinfo.
-///
-/// Normally the userinfo *is* the uuid. The base64 form some panels emit
-/// borrows Shadowsocks' shape and puts the encryption in front of it —
-/// `none:<uuid>` — and VLESS has no encryption to negotiate, so that half is
-/// dropped rather than carried into the config as part of the credential. A
-/// uuid never contains a colon, which is what makes the split safe.
 String _vlessUuid(String userInfo) {
   final decoded = Uri.decodeComponent(userInfo);
   final colon = decoded.lastIndexOf(':');
@@ -221,9 +156,6 @@ ShareLink _parseVmess(String s) {
   return _parseJsonPayload(s, json, 'vmess');
 }
 
-/// The base64-JSON payload: vmess's native form, and the one some panels emit
-/// for vless under the same field names (`add`, `port`, `id`, `net`, `tls`,
-/// `sni`, `host`, `path`, `ps`), plus vless's own `flow`, `fp`, `pbk`, `sid`.
 ShareLink _parseJsonPayload(
   String s,
   Map<String, dynamic> json,
@@ -231,8 +163,6 @@ ShareLink _parseJsonPayload(
 ) {
   String str(String k) => json[k]?.toString() ?? '';
   final net = (str('net').isEmpty ? 'tcp' : str('net')).toLowerCase();
-  // `tls` carries the security name in this form; vmess only ever says "tls",
-  // vless payloads also say "reality" (some under `security` instead).
   final security = (str('tls').isEmpty ? str('security') : str('tls'))
       .toLowerCase();
   final tls = security == 'tls' || security == 'reality' || security == 'xtls';
@@ -260,11 +190,10 @@ ShareLink _parseJsonPayload(
   final sni = str('sni').isNotEmpty ? str('sni') : str('host');
   if (tls && sni.isNotEmpty) proxy['servername'] = sni;
   applyAlpn(proxy, str('alpn'));
-  // The payload names the same things a URI query does, under its own keys.
   final skip = applyTransport(proxy, net, {
     'path': str('path'),
     'host': str('host'),
-    'serviceName': str('path'), // grpc service name lives in `path` here
+    'serviceName': str('path'),
     'headerType': str('type'),
   }, protocol: protocol);
   if (skip != null) return ShareLink.unsupported(skip);
@@ -315,8 +244,6 @@ ShareLink _parseTrojan(String raw) {
 }
 
 ShareLink _parseShadowsocks(String s) {
-  // SIP002: ss://base64(method:password)@host:port#name
-  // legacy:  ss://base64(method:password@host:port)#name
   final hashIdx = s.indexOf('#');
   final frag = hashIdx >= 0
       ? Uri.decodeComponent(s.substring(hashIdx + 1))
@@ -326,7 +253,6 @@ ShareLink _parseShadowsocks(String s) {
   String method, password, host;
   int port;
   if (body.contains('@')) {
-    // SIP002
     final at = body.lastIndexOf('@');
     final userInfo = decodeLooseBase64(body.substring(0, at));
     final hostPort = body.substring(at + 1);
@@ -342,7 +268,6 @@ ShareLink _parseShadowsocks(String s) {
           .first,
     );
   } else {
-    // legacy: whole thing is base64
     final dec = decodeLooseBase64(body);
     final at = dec.lastIndexOf('@');
     final creds = dec.substring(0, at);
@@ -360,9 +285,6 @@ ShareLink _parseShadowsocks(String s) {
     'password': password,
     'udp': true,
   };
-  // SIP003 plugin, if any. It is not decoration: a server behind obfuscation
-  // refuses a plain connection, so a dropped plugin is a listed server that
-  // always fails — which is why an unknown one is reported instead.
   final query = body.contains('?') ? body.substring(body.indexOf('?') + 1) : '';
   final plugin = Uri.splitQueryString(query)['plugin'] ?? '';
   if (plugin.isNotEmpty) {
@@ -380,12 +302,6 @@ ShareLink _parseShadowsocks(String s) {
   );
 }
 
-/// Translates a SIP003 `plugin=` into mihomo's `plugin` / `plugin-opts`.
-///
-/// The wire format is `name;k=v;flag`, and the two plugins the engine has
-/// adapters for spell their options differently from the URI (`obfs-local`'s
-/// `obfs=http` is mihomo's `mode: http`). Returns null on success, otherwise
-/// the name to count as unsupported.
 String? _applySsPlugin(Map<String, dynamic> proxy, String spec) {
   final parts = spec.split(';');
   final name = parts.first.trim();
@@ -401,13 +317,10 @@ String? _applySsPlugin(Map<String, dynamic> proxy, String spec) {
   }
 
   switch (name) {
-    // simple-obfs, under the three names it ships as.
     case 'obfs-local':
     case 'simple-obfs':
     case 'obfs':
       final mode = opts['obfs'] ?? '';
-      // The engine accepts these two and errors on anything else, so a third
-      // value is refused here rather than at dial time.
       if (mode != 'http' && mode != 'tls') return 'ss+obfs ($mode)';
       proxy['plugin'] = 'obfs';
       proxy['plugin-opts'] = {
@@ -417,7 +330,6 @@ String? _applySsPlugin(Map<String, dynamic> proxy, String spec) {
       return null;
 
     case 'v2ray-plugin':
-      // websocket is the only mode the engine implements.
       final mode = opts['mode'] ?? 'websocket';
       if (mode != 'websocket') return 'ss+v2ray-plugin ($mode)';
       proxy['plugin'] = 'v2ray-plugin';
@@ -430,18 +342,10 @@ String? _applySsPlugin(Map<String, dynamic> proxy, String spec) {
       return null;
 
     default:
-      // shadow-tls, kcptun, restls and friends: mihomo has adapters for some,
-      // but each needs its own option mapping, and guessing produces a server
-      // that fails at connect.
       return 'ss+$name';
   }
 }
 
-/// hysteria2://password@host:port/?sni=…&alpn=h3&insecure=0#name
-///
-/// QUIC-based, so there is no transport to choose — the `type=` and `path=`
-/// parameters the other schemes carry have no meaning here. `hy2://` is the
-/// short alias panels also emit.
 ShareLink _parseHysteria2(String s) {
   final u = Uri.parse(s);
   final q = u.queryParameters;
@@ -454,7 +358,6 @@ ShareLink _parseHysteria2(String s) {
   };
   final sni = q['sni'] ?? q['peer'];
   if (sni != null && sni.isNotEmpty) proxy['sni'] = sni;
-  // A list in mihomo, comma-separated in the URI.
   final alpn = (q['alpn'] ?? '')
       .split(',')
       .map((e) => e.trim())
@@ -469,8 +372,6 @@ ShareLink _parseHysteria2(String s) {
     final pw = q['obfs-password'] ?? q['obfs_password'];
     if (pw != null && pw.isNotEmpty) proxy['obfs-password'] = pw;
   }
-  // Port hopping: a range the client rotates through. Two spellings in the
-  // wild, one field in mihomo.
   final ports = q['ports'] ?? q['mport'];
   if (ports != null && ports.isNotEmpty) proxy['ports'] = ports;
   if ((q['pinSHA256'] ?? '').isNotEmpty) proxy['fingerprint'] = q['pinSHA256'];

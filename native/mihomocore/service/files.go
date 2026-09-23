@@ -9,17 +9,7 @@ import (
 	"time"
 )
 
-// Files is the engine's working directory and what both halves keep in it.
-//
-// The same layout as the Android tunnel process (TunnelFiles.kt), for the same
-// reason: the app and the tunnel are two processes, and the one fact that
-// matters most — why the tunnel stopped — has to survive the process that
-// learned it. Plain files are the channel that still works after a crash.
-//
-// On Windows this is %ProgramData%\<app>\engine. The service runs as SYSTEM
-// and owns the directory; the installer grants Users modify on it, because the
-// app (not the service) downloads the geo databases into the same place —
-// mihomo's home dir — and asks for the path over `shared_dir`.
+// Same layout as the Android tunnel process (TunnelFiles.kt).
 type Files struct {
 	Dir string
 }
@@ -28,24 +18,16 @@ func (f Files) Config() string     { return filepath.Join(f.Dir, "last_config.ya
 func (f Files) EngineLog() string  { return filepath.Join(f.Dir, "mihomo.log") }
 func (f Files) ServiceLog() string { return filepath.Join(f.Dir, "tunnel.log") }
 
-// CrashLog is where the Go runtime writes the traceback of a panic or fatal
-// error. A service has no stderr, so without this a crash leaves nothing but
-// the SCM's "terminated unexpectedly".
 func (f Files) CrashLog() string        { return filepath.Join(f.Dir, "crash.log") }
 func (f Files) errorFile() string       { return filepath.Join(f.Dir, "disconnect_error") }
 func (f Files) logFlag() string         { return filepath.Join(f.Dir, "log_enabled") }
 func (f Files) autoConnectFlag() string { return filepath.Join(f.Dir, "auto_connect") }
 
-// Ensure creates the directory. Idempotent; the installer normally did it
-// already, with the permissions the app needs.
 func (f Files) Ensure() error { return os.MkdirAll(f.Dir, 0o755) }
 
-// SaveConfig persists the config a start nobody is watching will run from —
-// the boot-time equivalent of Android's always-on. Owner-only: it carries the
-// servers' credentials, and on Linux the directory around it is writable by
-// every local user so the app can put the geo databases there. (Windows
-// ignores the mode; its ACL comes from the installer.)
 func (f Files) SaveConfig(yaml string) error {
+	// Owner-only: it carries credentials and on Linux the directory is
+	// world-writable. Windows ignores the mode; the installer sets the ACL.
 	return writeFileAtomic(f.Config(), []byte(yaml), 0o600)
 }
 
@@ -56,13 +38,6 @@ func (f Files) LoadConfig() (string, error) {
 
 func (f Files) RemoveConfig() { _ = os.Remove(f.Config()) }
 
-// SetAutoConnect records the user's answer to "connect when Windows starts".
-//
-// It is a setting, not a memory of the last session: the saved config cannot
-// stand in for it, because the app writes that whenever it mirrors the current
-// selection — tunnel up or down — so its presence says "there is something to
-// run", never "run it". Written by the app when the switch moves, read by the
-// service at boot when there is nobody to ask.
 func (f Files) SetAutoConnect(on bool) {
 	if !on {
 		_ = os.Remove(f.autoConnectFlag())
@@ -86,8 +61,6 @@ func (f Files) LastError() string {
 	return string(b)
 }
 
-// SetLogsEnabled is written by the app and read by the service on a start
-// nobody is watching, when there is no app to ask.
 func (f Files) SetLogsEnabled(on bool) {
 	v := "1"
 	if !on {
@@ -104,16 +77,12 @@ func (f Files) LogsEnabled() bool {
 	return string(bytes.TrimSpace(b)) != "0"
 }
 
-// The most of a log the app reads at once, and the size a log may reach before
-// it is halved — the same two numbers as the other two tunnel processes.
+// Same numbers as the Android and Apple tunnel processes.
 const (
 	logTailBytes = 512 * 1024
 	logMaxBytes  = 4 * 1024 * 1024
 )
 
-// Tail returns the last [logTailBytes] of a log, cut at a line boundary, and
-// prunes it on the way when it has grown past the cap. The engine appends to
-// its log for as long as the tunnel lives; this is the only thing that trims it.
 func (f Files) Tail(path string) string {
 	RotateIfNeeded(path)
 	fh, err := os.Open(path)
@@ -141,10 +110,7 @@ func (f Files) Tail(path string) string {
 	return string(buf)
 }
 
-// RotateIfNeeded trims a log past the cap to its newest half. Half rather than
-// "down to the cap", so a rotation happens once per half-cap of writing instead
-// of on every line once the cap is reached. Safe against an appender: after the
-// truncation its next write lands at whatever the end is then.
+// Halved rather than cut to the cap, or every line past the cap would rotate.
 func RotateIfNeeded(path string) {
 	fh, err := os.OpenFile(path, os.O_RDWR, 0)
 	if err != nil {
@@ -166,7 +132,6 @@ func RotateIfNeeded(path string) {
 	_, _ = fh.WriteAt(keep, 0)
 }
 
-// Append writes one timestamped line to the service log, when logs are on.
 func (f Files) Append(line string) {
 	if !f.LogsEnabled() {
 		return
@@ -185,8 +150,6 @@ func (f Files) ClearLogs() {
 	_ = os.WriteFile(f.ServiceLog(), nil, 0o644)
 }
 
-// writeFileAtomic lands the whole file or none of it: a start that raced a
-// half-written config would run half a config.
 func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, perm); err != nil {

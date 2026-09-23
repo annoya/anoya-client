@@ -1,7 +1,5 @@
 import '../norm_config.dart';
 
-/// One place a subscription may connect through, and the protocols it offers
-/// there.
 class AmneziaCountry {
   const AmneziaCountry({
     required this.code,
@@ -10,16 +8,12 @@ class AmneziaCountry {
     required this.protocols,
   });
 
-  /// What the gateway is asked for. May carry a region suffix (`nl-ams-1`),
-  /// so it is never shown to the user and never used as a flag.
   final String code;
 
   final String name;
 
-  /// A plain ISO-3166 code for the flag, which the routing code above is not.
   final String flagCode;
 
-  /// `awg`, `vless`, or both.
   final List<String> protocols;
 
   factory AmneziaCountry.fromJson(Map<String, dynamic> j) {
@@ -28,7 +22,6 @@ class AmneziaCountry {
     return AmneziaCountry(
       code: code,
       name: '${j['server_country_name'] ?? code}',
-      // The routing code may be `nl-ams-1`; a flag needs the country half.
       flagCode: (l10n.isNotEmpty ? l10n : code.split('-').first).toUpperCase(),
       protocols: [
         for (final p
@@ -46,12 +39,6 @@ class AmneziaCountry {
   };
 }
 
-/// What the gateway says about a subscription as a whole.
-///
-/// Every field is optional because a free subscription genuinely has none of
-/// them: it answers with a description and nothing else — no locations, no
-/// device count, no end date. That is not an error to paper over, it is the
-/// shape of the product, and the screen shows only what arrived.
 class AmneziaAccount {
   const AmneziaAccount({
     this.countries = const [],
@@ -64,14 +51,11 @@ class AmneziaAccount {
   final List<AmneziaCountry> countries;
   final DateTime? endsAt;
 
-  /// 0 when the gateway did not say — which is different from "none".
   final int activeDevices;
   final int maxDevices;
 
   final String description;
 
-  /// A subscription the gateway placed no end on is not expired; only one it
-  /// dated and that date has passed.
   bool get expired =>
       endsAt != null && endsAt!.isBefore(DateTime.now().toUtc());
 
@@ -98,8 +82,6 @@ class AmneziaAccount {
   };
 }
 
-/// Everything Amnezia-specific about a configuration, in one field so that
-/// nothing else in the app has to grow a branch for it.
 class AmneziaState {
   const AmneziaState({
     required this.serviceType,
@@ -109,24 +91,15 @@ class AmneziaState {
     this.expiries = const {},
   });
 
-  /// `amnezia-premium` | `amnezia-free` | `external-premium`.
   final String serviceType;
 
-  /// What the key was issued for. A location may offer more, and the app
-  /// presents each pairing separately, so this is only the default.
   final String serviceProtocol;
 
   final String userCountryCode;
   final AmneziaAccount account;
 
-  /// When the gateway said the held config stops being accepted. A map rather
-  /// than a field because it is keyed by the selection it belongs to, and only
-  /// ever holds the one being used.
   final Map<String, DateTime> expiries;
 
-  /// Whether the gateway named anywhere to connect through. A subscription
-  /// that answered with no countries has nothing to offer yet — which is a
-  /// state to report, not one to invent a location for.
   bool get offersLocations => account.countries.isNotEmpty;
 
   AmneziaState copyWith({
@@ -173,34 +146,21 @@ class AmneziaState {
   }
 }
 
-/// The id of the location that stands for one country and one protocol.
-///
-/// Amnezia issues a config per pairing, and switching either one costs a
-/// round trip to the gateway — so the app presents them as what they are, two
-/// separate places to connect through, rather than a location with a hidden
-/// second control.
 String amneziaLocationId(String countryCode, String protocol) =>
     'amnezia_${countryCode}_$protocol';
 
-/// How a protocol is written where the user reads it.
 String amneziaProtocolLabel(String protocol) => switch (protocol) {
   'awg' => 'AmneziaWG',
   'vless' => 'VLESS',
   final other => other.toUpperCase(),
 };
 
-/// The locations a subscription offers, as the picker will show them.
-///
-/// Each carries no proxy yet: Amnezia issues the real settings only when asked
-/// for one, so these are placeholders until [AmneziaSource] resolves them.
 List<Location> amneziaLocations(AmneziaState state) {
   return [
     for (final c in state.account.countries)
       for (final p in c.protocols)
         Location(
           id: amneziaLocationId(c.code, p),
-          // The country's own name, which is also what the flag is derived
-          // from — the routing code (`nl-ams-1`) would resolve to nothing.
           label: c.name,
           proxy: const {},
           description: amneziaProtocolLabel(p),
@@ -208,8 +168,6 @@ List<Location> amneziaLocations(AmneziaState state) {
   ];
 }
 
-/// Which country and protocol a location id names. Null for anything that is
-/// not one of ours.
 ({String country, String protocol})? amneziaLocationParts(String id) {
   if (!id.startsWith('amnezia_')) return null;
   final rest = id.substring('amnezia_'.length);

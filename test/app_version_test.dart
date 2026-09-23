@@ -5,14 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/app_version.dart';
 import 'package:vpn_client/core/device_identity.dart';
 
-/// The versions the app shows, against the files that actually decide them.
-///
-/// `pubspec.yaml` decides the app's version and is read at runtime, so there is
-/// no copy to drift — what these tests check is that the read works at all: an
-/// asset that stops being declared would leave every build calling itself
-/// "unknown", to the user and to a panel, since the User-Agent is built from
-/// the same string. The engine pin and the app name are still stated in Dart,
-/// and those two are guarded the old way.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -32,8 +24,6 @@ void main() {
   test(
     'the pubspec is shipped as an asset — without it there is no version',
     () async {
-      // The one way this arrangement can break: the asset entry goes away and
-      // every build starts reporting "unknown".
       expect(appVersion, isNotEmpty);
       expect(appVersionLabel, isNot('unknown'));
     },
@@ -52,8 +42,6 @@ void main() {
   });
 
   test('the app name matches the bundle it ships as', () {
-    // The name is what a panel matches its template rules against, so a rename
-    // that misses one of the two places is a silent capability loss.
     final xcconfig = File(
       'macos/Runner/Configs/AppInfo.xcconfig',
     ).readAsStringSync();
@@ -67,8 +55,6 @@ void main() {
 
   test('the User-Agent is the name and that version', () {
     expect(DeviceIdentity.userAgent, '$kAppName/$appVersion');
-    // Headers are ASCII; whatever the version turns out to be, it cannot make
-    // this one unsendable.
     expect(DeviceIdentity.userAgent, matches(RegExp(r'^[\x21-\x7E]+$')));
   });
 

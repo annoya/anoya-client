@@ -5,8 +5,6 @@ import '../core/ext_logs.dart';
 import '../core/log.dart';
 import '../l10n/l10n.dart';
 
-/// Shows one log: the in-app log buffer (appLog) or an extension log fetched
-/// over IPC by [logKey] (e.g. "tunnel", "mihomo").
 class LogViewerScreen extends StatefulWidget {
   const LogViewerScreen({
     super.key,

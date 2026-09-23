@@ -10,9 +10,6 @@ import '../l10n/l10n.dart';
 import '../state/on_demand_controller.dart';
 import 'on_demand_values_screen.dart';
 
-/// Editor for one on-demand rule. Persists as the user edits (same convention
-/// as the routing rule-set editor — no Save button); a brand-new rule is added
-/// on the first change.
 class OnDemandRuleScreen extends ConsumerStatefulWidget {
   const OnDemandRuleScreen({super.key, required this.rule, this.isNew = false});
 
@@ -35,8 +32,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
 
   @override
   void dispose() {
-    // Flush a pending text edit instead of dropping it: leaving the screen is
-    // how editing ends, not a cancel.
+    // Flush, not drop: leaving the screen is how editing ends.
     if (_debounce?.isActive ?? false) {
       _debounce!.cancel();
       ref.read(onDemandProvider.notifier).upsertRule(_rule);
@@ -52,10 +48,8 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
     await ref.read(onDemandProvider.notifier).upsertRule(rule);
   }
 
-  /// Text fields go through here: every upsert writes disk AND pushes the
-  /// NE profile into the system (an NEVPNManager save), and per-keystroke
-  /// native saves can complete out of order — the last one to finish wins,
-  /// which may be an older snapshot. Discrete controls keep the direct path.
+  // Debounced: each upsert is a native NEVPNManager save, and per-keystroke
+  // saves can finish out of order, leaving an older snapshot.
   void _updateDebounced(OnDemandRule rule) {
     setState(() => _rule = rule);
     _debounce?.cancel();
@@ -91,9 +85,6 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
     if (picked != null) await _update(_rule.copyWith(action: picked));
   }
 
-  /// One condition list, shown as a row with a summary; the entries live on
-  /// their own screen (searchable, sorted) because a rule can easily carry a
-  /// dozen SSIDs or domains.
   Widget _conditionRow({
     required String title,
     required List<String> values,
@@ -142,7 +133,6 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
     ),
   );
 
-  /// What the selected interface mode means, in the user's terms.
   String _networkHelp(OnDemandInterface selected) => switch (selected) {
     OnDemandInterface.any => context.l10n.onDemandNetworkHelpAny,
     OnDemandInterface.wifi => context.l10n.onDemandNetworkHelpWifi,
@@ -209,8 +199,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                     ButtonSegment(value: mobile, label: Text(mobile.label)),
                   ],
                   selected: {
-                    // A rule saved on the other platform maps onto this one's
-                    // third segment so it stays visible/editable.
+                    // A rule from the other platform maps onto this one's third segment.
                     _rule.interface == OnDemandInterface.cellular ||
                             _rule.interface == OnDemandInterface.ethernet
                         ? mobile

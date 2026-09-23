@@ -16,10 +16,6 @@ import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// The hot-switch contract: a connected tunnel does NOT lock the pickers
-/// (switching is a live reload under the standing session), locks belong to
-/// the initial connect only, and the brief switch itself is announced in the
-/// status line while taps are ignored.
 void main() {
   Profile profile(String id, String name) => Profile(
     id: id,
@@ -96,7 +92,6 @@ void main() {
     await pump(tester, status: VpnStatus.connected, switching: true);
 
     expect(find.text('Switching server…'), findsOneWidget);
-    // No locks: the state is too brief for them — the rows just ignore taps.
     expect(find.byIcon(Icons.lock_outline), findsNothing);
     expect(tile(tester, 'nexus').onTap, isNull);
     expect(tile(tester, 'Germany').onTap, isNull);
@@ -111,10 +106,6 @@ void main() {
     expect(_MinimalCore().reload(config, 'x'), throwsUnsupportedError);
   });
 
-  // A leak has exactly one cause in this architecture: the NE session going
-  // down (the OS routes then fall back to the physical interface). So the
-  // leak-freedom of switching is testable as invariants: nothing on the switch
-  // path may stop or restart the session, in any outcome.
   group('leak invariants', () {
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -126,9 +117,6 @@ void main() {
         const MethodChannel('plugins.flutter.io/path_provider'),
         (call) async => tmp.path,
       );
-      // The stores behind _normConfig probe the extension channel (shared dir
-      // for geo status); in tests there is no platform side, same as a tunnel
-      // that is not running.
       messenger.setMockMethodCallHandler(
         const MethodChannel('vpn/control'),
         (call) async => throw PlatformException(code: 'no platform in tests'),
@@ -185,10 +173,6 @@ void main() {
     test('a poll reapply on a live tunnel is reload-only too', () async {
       final (core, ctrl) = harness(VpnStatus.connected);
 
-      // The 5-minute poll found a rotated key for the connected server. On a
-      // live session startTunnel would not even deliver the config (options
-      // are read at extension launch only) — the only correct path is the
-      // same hot reload a user switch takes.
       final before = profile('p1', 'nexus');
       final after = Profile(
         id: 'p1',
@@ -247,9 +231,6 @@ void main() {
     });
 
     test('the engine never forwards ICMP itself', () {
-      // mihomo's ICMP path is a DIRECT outbound: it dials the target from the
-      // physical interface, so a ping placed into the tun leaves outside it and
-      // exposes the real address. The stack must answer echo requests instead.
       final location = Location(
         id: 'a',
         label: 'DE',
@@ -262,14 +243,6 @@ void main() {
     });
 
     test('the tun section is identical across locations and routings', () {
-      // mihomo only skips re-creating the TUN listener (and thus keeps the fd
-      // and the NE session) while the tun section does not change between
-      // configs (Tun.Equal in the engine compares exactly that section,
-      // dns-hijack included). If a per-location option ever sneaks in there,
-      // hot switching silently turns into a session drop — this pins it.
-      // The dns section is NOT part of that condition: resolvers legitimately
-      // ride the config (ADR-008); only the fake-ip mode/range must stay
-      // constant, which mihomo_tun_config_test.dart pins.
       String section(String yaml, String key) {
         final lines = yaml.split('\n');
         final start = lines.indexOf('$key:');
@@ -322,11 +295,9 @@ void main() {
       for (final other in [b, c, d]) {
         expect(section(other, 'tun'), section(a, 'tun'));
       }
-      // Same-DNS configs still render byte-identical dns sections…
       for (final other in [b, c]) {
         expect(section(other, 'dns'), section(a, 'dns'));
       }
-      // …and a config-supplied resolver changes only the resolver lines.
       expect(section(d, 'dns'), isNot(section(a, 'dns')));
       expect(section(d, 'dns'), contains('fake-ip-range: 198.18.0.1/16'));
     });
@@ -375,7 +346,6 @@ class _MinimalCore extends _FixedCore {
   _MinimalCore() : super(VpnStatus.connected);
 }
 
-/// Records every call that could touch the tunnel session.
 class _RecordingCore extends _FixedCore {
   _RecordingCore(super.status);
 

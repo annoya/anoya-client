@@ -11,14 +11,6 @@ import '../../state/profiles_controller.dart';
 import '../../state/providers.dart';
 import '../dns_screen.dart';
 
-/// Which resolvers this configuration uses, and a way to see why some of them
-/// are not being used.
-///
-/// A section of its own rather than a line inside `ROUTING`: routing decides
-/// where a connection goes, this decides who is asked for the address, and the
-/// two are answered by different halves of the engine config. The subtitle
-/// names the resolver and how it is reached, because "1 resolver" answers
-/// neither of the questions a person opens this for.
 class NamesSection extends ConsumerWidget {
   const NamesSection({super.key, required this.profile});
 
@@ -47,9 +39,7 @@ class NamesSection extends ConsumerWidget {
     final more = plan.resolvers.length - 1;
 
     return Column(
-      // Without this a Column hands its children their intrinsic width and
-      // centres them — which is exactly what happened to this header while
-      // every other one on the page stayed flush left.
+      // Stretch, or this header is centred unlike every other on the page.
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(l10n.dnsTitle),
@@ -58,14 +48,10 @@ class NamesSection extends ConsumerWidget {
           child: ListTile(
             leading: const Icon(Icons.language_outlined),
             title: Text(l10n.dnsTitle),
-            // Host and routing, not a count: the first is what the user came to
-            // check, the second is the one that decides who else sees the query.
             subtitle: Text(
               l10n.configDnsSummary(_host(first.address), first.routing) +
                   (more > 0 ? l10n.configDnsMore(more) : ''),
             ),
-            // Refusals are the reason this row leads anywhere at all, so they are
-            // announced before the screen is opened.
             trailing: plan.dropped.isEmpty
                 ? const Icon(Icons.chevron_right)
                 : Row(
@@ -89,8 +75,6 @@ class NamesSection extends ConsumerWidget {
     );
   }
 
-  /// The host alone. A DoH resolver's path (`/dns-query`) is the same on every
-  /// server that has one and only costs the row the width it needs for the name.
   String _host(String address) {
     final at = address.indexOf('://');
     if (at < 0) return address;

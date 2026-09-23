@@ -11,13 +11,6 @@ import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
-/// What the rule-set editor and the managed-policy viewer share: the same rule
-/// row, the same direction card, the same download banner. A rule has to read
-/// the same whoever authored it — the only difference between the two screens
-/// is whether the controls do anything.
-
-/// The direction: full tunnel with exceptions, or split with an allow-list.
-/// Read-only when [onChanged] is null.
 class RoutingModeCard extends StatelessWidget {
   const RoutingModeCard({super.key, required this.mode, this.onChanged});
 
@@ -34,8 +27,6 @@ class RoutingModeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Full width, half and half, no leading check — the check would
-            // shrink the labels and shift them off-centre.
             SizedBox(
               width: double.infinity,
               child: SegmentedButton<RoutingMode>(
@@ -72,7 +63,6 @@ class RoutingModeCard extends StatelessWidget {
   }
 }
 
-/// What an empty rule list means under each direction.
 Widget emptyRulesNote(BuildContext context, RoutingMode mode) => Padding(
   padding: const EdgeInsets.all(kGutter),
   child: Text(
@@ -83,9 +73,6 @@ Widget emptyRulesNote(BuildContext context, RoutingMode mode) => Padding(
   ),
 );
 
-/// Offers the geo databases where rules need them. The wording is the
-/// caller's: on the simple editor the download *is* the screen, in a rule list
-/// it explains why some rows are dimmed.
 class GeoDownloadBanner extends StatelessWidget {
   const GeoDownloadBanner({
     super.key,
@@ -135,8 +122,6 @@ class GeoDownloadBanner extends StatelessWidget {
   }
 }
 
-/// Downloads the geo databases and says so when it fails. Answers whether they
-/// are on disk afterwards; null when the download failed and nothing changed.
 Future<bool?> downloadGeoDatabases(BuildContext context) async {
   try {
     await GeoStore.download();
@@ -153,12 +138,6 @@ Future<bool?> downloadGeoDatabases(BuildContext context) async {
   }
 }
 
-/// One rule as a row: action, value, and why it is inactive when it is.
-///
-/// Editable when [onTap], [onRemove] and [reorderIndex] are given — the editor
-/// passes all three, the viewer none. A rule that cannot match right now is
-/// dimmed rather than hidden: the set may have been authored on a desktop, and
-/// a row that silently disappears looks like data loss.
 class RuleTile extends StatelessWidget {
   const RuleTile({
     super.key,
@@ -173,22 +152,15 @@ class RuleTile extends StatelessWidget {
 
   final RoutingRule rule;
 
-  /// Whether the geo databases are on disk; a geo rule without them is inactive.
   final bool geoReady;
 
-  /// Names of the rule lists this device holds. A list rule is only as good as
-  /// the file behind it: hiding it would claim the policy is smaller than it
-  /// is, showing it as active would claim traffic is routed when nothing
-  /// matches.
   final Set<String> listNames;
 
-  /// The user refused the lists outright, as opposed to a download that failed.
   final bool listsOff;
 
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
 
-  /// The row's index in a ReorderableListView, which puts a drag handle on it.
   final int? reorderIndex;
 
   @override
@@ -295,7 +267,6 @@ class RuleTile extends StatelessWidget {
   }
 }
 
-/// "🇩🇪  DE" — the flag next to the code, or the code alone when there is none.
 String geoipTitle(String code) {
   final up = code.toUpperCase();
   final flag = flagEmoji(up) ?? '';

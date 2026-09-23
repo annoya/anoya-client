@@ -4,11 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/core/ui.dart';
 
-/// Getting the keyboard out of the way.
-///
-/// Every screen that takes text has content behind the keyboard, and on a phone
-/// the framework leaves that keyboard up when the user taps the content: focus
-/// is dropped for a mouse or a stylus, never for a touch.
 void main() {
   final field = FocusNode();
   const outside = Key('outside');
@@ -53,9 +48,7 @@ void main() {
   testWidgets('without it the framework keeps the keyboard up on a touch', (
     tester,
   ) async {
-    // Not a test of Flutter for its own sake: it is the reason
-    // [DismissKeyboardOnTapOutside] exists, and the day this starts failing is
-    // the day the wrapper can be deleted.
+    // Canary: when this starts failing, DismissKeyboardOnTapOutside can go.
     await tester.pumpWidget(harness(wrapped: false));
     await tester.tap(find.byType(TextField));
     await tester.pump();

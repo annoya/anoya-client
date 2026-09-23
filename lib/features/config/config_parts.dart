@@ -16,11 +16,6 @@ export 'provider_section.dart';
 export 'refresh_card.dart';
 export 'routing_cards.dart';
 
-/// Pieces every configuration screen shares. The three domains (ADR-005) differ in
-/// what a configuration *is* — an account, a feed of servers, or a single
-/// server — so they get a screen each; what they have in common lives here
-/// rather than in a chain of conditionals none of the three reads cleanly.
-
 IconData profileIcon(ProfileType t) => switch (t) {
   ProfileType.selfhosted => Icons.business_outlined,
   ProfileType.subscription => Icons.folder_outlined,
@@ -36,10 +31,6 @@ String profileKind(Profile p) {
       _servers(p),
       _groups(p),
     ),
-    // A free subscription has one config and nowhere to choose, so counting
-    // "1 server" would dress a fact up as a choice. Named no more precisely
-    // than a panel's: the key carries whoever sold it, and that name is
-    // already the title above this line.
     ProfileType.amnezia =>
       p.amnezia?.offersLocations == false
           ? l10n.configKindSubscriptionPlain
@@ -48,9 +39,6 @@ String profileKind(Profile p) {
   };
 }
 
-/// "12 servers", or "294 of 306 servers" when the source offered protocols this
-/// app cannot run. The second form exists so the number here matches what the
-/// provider's own panel shows, minus an explanation the card below supplies.
 String _servers(Profile p) {
   final offered = p.offeredServers;
   final ours = p.locations.length;
@@ -59,20 +47,12 @@ String _servers(Profile p) {
       : L10n.current.configServersOfOffered(ours, offered);
 }
 
-/// "· 3 groups", when the subscription offered sets the engine picks from.
-///
-/// Counted where the servers are counted, because a section appearing in the
-/// picker that was not there before otherwise reads as a new feature of the app
-/// rather than as something the provider sent.
 String _groups(Profile p) {
   final n = p.groups.length;
   if (n == 0) return '';
   return L10n.current.configGroupsSuffix(n);
 }
 
-/// Identity card at the top of every configuration screen. The check mark is
-/// how "set active" reports itself: the button below disappears and the mark
-/// appears here, so the result is visible without leaving the screen.
 class ProfileHeaderCard extends StatelessWidget {
   const ProfileHeaderCard({
     super.key,
@@ -101,15 +81,6 @@ class ProfileHeaderCard extends StatelessWidget {
   );
 }
 
-/// Where the configuration came from, and the one thing worth doing with it.
-///
-/// A subscription has a page meant for people — the panel even says which one
-/// (`profile-web-page-url`) — so tapping opens it. A bare link has nothing to
-/// open, so tapping copies it. The trailing icon names which of the two will
-/// happen, so one row behaves differently without surprising anyone.
-///
-/// The value is shown elided in the middle: this is a credential, and the row
-/// exists for recognition, not for reading it off the screen.
 class SourceCard extends StatelessWidget {
   const SourceCard({
     super.key,
@@ -120,13 +91,8 @@ class SourceCard extends StatelessWidget {
 
   final String value;
 
-  /// The page to open on tap. Null → the value is copied instead.
   final String? openUrl;
 
-  /// The last refresh came from the provider's backup address. The row keeps
-  /// showing the address the user added — that is what they chose and what they
-  /// would share — and says the backup carried it underneath. Swapping the line
-  /// silently would hide that their provider's main address is unreachable.
   final bool viaFallback;
 
   @override
@@ -177,12 +143,6 @@ class SourceCard extends StatelessWidget {
   }
 }
 
-/// Names the servers the source offered and this app cannot run.
-///
-/// Dropping them silently is the tempting option and the wrong one: the user
-/// counted the locations in their provider's panel, and a smaller number here
-/// with no reason given reads as the app losing them. A warning, not an error —
-/// the rest of the servers work and connecting is available right now.
 class UnsupportedServersCard extends StatelessWidget {
   const UnsupportedServersCard({super.key, required this.profile});
 
@@ -211,12 +171,6 @@ class UnsupportedServersCard extends StatelessWidget {
   }
 }
 
-/// The panel refused this device: its limit is full.
-///
-/// A warning rather than an error, and above everything else on the screen:
-/// the configuration still exists and can be repaired, but every list below it
-/// is now the provider's placeholder rather than servers, and reading them
-/// without this card would be baffling.
 class DeviceLimitCard extends StatelessWidget {
   const DeviceLimitCard({super.key});
 
@@ -236,7 +190,6 @@ class DeviceLimitCard extends StatelessWidget {
   }
 }
 
-/// Set active / remove, in that order, at the bottom of every screen.
 class ConfigActions extends ConsumerWidget {
   const ConfigActions({
     super.key,
@@ -251,9 +204,7 @@ class ConfigActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ctrl = ref.read(profilesControllerProvider.notifier);
     final l10n = context.l10n;
-    // stretch, not the default centre: a Column hands its children their
-    // intrinsic width, which made these buttons hug their labels instead of
-    // spanning the content width the way every other screen's do.
+    // Stretch, or the buttons hug their labels instead of spanning the width.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -285,12 +236,8 @@ class ConfigActions extends ConsumerWidget {
   }
 
   Future<void> _remove(BuildContext context, WidgetRef ref) async {
-    // Both captured before the removal, and used instead of `context`/`ref`
-    // after it: the moment the configuration is gone this widget is replaced by
-    // the screen's "nothing to show" placeholder, and asking a dead element to
-    // pop does nothing. That is how removing the *active* configuration left
-    // the user on a blank page — re-pointing the tunnel let a frame through
-    // first, so by the time the pop was reached there was nobody to ask.
+    // Captured before the removal: afterwards this element is replaced by a
+    // placeholder, and popping through it does nothing (blank page).
     final nav = Navigator.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     final l10n = context.l10n;
@@ -315,18 +262,15 @@ class ConfigActions extends ConsumerWidget {
     final ctrl = ref.read(profilesControllerProvider.notifier);
     if (ref.read(profilesControllerProvider).activeId == profile.id) {
       try {
-        // Through the controller, not the raw core: it records the on-demand
-        // pause first, so the home chips explain why auto-connect is off.
+        // Through the controller, not the raw core: it records the on-demand pause.
         await ctrl.disconnect();
       } catch (_) {
         /* ignore */
       }
     }
     await ctrl.removeProfile(profile.id);
-    // Only close ourselves while other configurations remain. When that was the
-    // last one, the app shell unwinds to the add screen on its own — popping
-    // here as well would race it and take the root route down too (leaving an
-    // empty navigator, i.e. a black screen).
+    // Only while others remain: after the last one the app shell unwinds, and
+    // popping here too would race it and pop the root route (black screen).
     if (container.read(profilesControllerProvider).hasProfiles && nav.mounted) {
       nav.pop();
     }

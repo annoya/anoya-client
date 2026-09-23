@@ -1,10 +1,5 @@
 import 'json_file_store.dart';
 
-/// Pinned configurations and servers. Purely a display order: favourites come
-/// first in the pickers, nothing else about them differs.
-///
-/// A location id is only unique inside its profile (two subscriptions can both
-/// call a server "de-1"), so locations are keyed by "profileId/locationId".
 class Favorites {
   const Favorites({this.profiles = const {}, this.locations = const {}});
 
@@ -14,7 +9,6 @@ class Favorites {
   static String locationKey(String profileId, String locationId) =>
       '$profileId/$locationId';
 
-  /// The favourite location ids of one profile, as the pickers want them.
   Set<String> locationsOf(String profileId) {
     final prefix = '$profileId/';
     return {
@@ -33,7 +27,6 @@ class Favorites {
     locations: {...locations}..toggle(locationKey(profileId, locationId)),
   );
 
-  /// Drop everything belonging to a removed configuration.
   Favorites forgetProfile(String profileId) => Favorites(
     profiles: {...profiles}..remove(profileId),
     locations: {

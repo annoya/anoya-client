@@ -7,11 +7,6 @@ import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import 'config_parts.dart';
 
-/// Settings of a self-hosted configuration.
-///
-/// The only domain with an account behind it (ADR-005): a management service
-/// owns identity, access and policy, so this is the one screen that can show a
-/// status, a quota and a routing policy the device does not control.
 class SelfhostedConfigScreen extends ConsumerWidget {
   const SelfhostedConfigScreen({
     super.key,

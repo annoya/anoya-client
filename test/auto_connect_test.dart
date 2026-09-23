@@ -17,13 +17,6 @@ import 'package:vpn_client/state/auto_connect_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// Bringing the tunnel up with the machine — the one thing that happens with
-/// no app running, and therefore the one thing the user has to have agreed to.
-///
-/// The bug this pins: the Windows service started the tunnel at every boot
-/// merely because a config was on disk, and the app writes that config on any
-/// sync of the selection. A person who had never pressed Connect got a VPN
-/// after rebooting, with no setting anywhere that could have said otherwise.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -81,8 +74,6 @@ void main() {
       expect(core.autoConnect, isTrue);
       first.dispose();
 
-      // A new run of the app: the answer comes back off disk and is repeated
-      // to the service, whose own copy a reinstall may have taken with it.
       core.autoConnect = false;
       final second = ProviderContainer(
         overrides: [vpnCoreProvider.overrideWithValue(core)],
@@ -119,8 +110,6 @@ void main() {
 
       expect(find.text('Auto-connect'), findsOneWidget);
       expect(find.text('Connect when the computer starts'), findsOneWidget);
-      // Apple's screen and Android's explainer answer to facilities Windows
-      // does not have; offering either here would name something imaginary.
       expect(find.text('On demand'), findsNothing);
       expect(find.text('Always-on VPN'), findsNothing);
       // Reset inside the body: testWidgets checks for a leaked debug variable

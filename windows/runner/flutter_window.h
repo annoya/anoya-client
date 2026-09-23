@@ -9,10 +9,6 @@
 #include "tray_icon.h"
 #include "win32_window.h"
 
-// A window that hosts the Flutter view and owns the tray icon. Closing the
-// window hides it into the tray rather than quitting — the tunnel lives in a
-// service and the icon is the only way to reach it once the window is gone;
-// quitting is the tray menu's Quit.
 class FlutterWindow : public Win32Window {
  public:
   // Creates a new FlutterWindow hosting a Flutter view running |project|.
@@ -33,10 +29,8 @@ class FlutterWindow : public Win32Window {
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
 
-  // The notification-area icon; created once the engine has a messenger.
   std::unique_ptr<TrayIcon> tray_;
 
-  // Set by Quit, so the close that follows is allowed to destroy the window.
   bool quitting_ = false;
 
   void ToggleWindow();

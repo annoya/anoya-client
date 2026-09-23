@@ -4,26 +4,16 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 
-/// App logger. Writes to the Dart developer console AND keeps the last N lines
-/// in memory so the in-app "App log" view can show them.
 class Log {
   Log._();
 
   static const _max = 1000;
   static final ListQueue<String> _buffer = ListQueue<String>();
 
-  /// Sum of the buffered lines' encoded sizes, kept as they are added and
-  /// removed. The Logs screen reads the total on every build, and joining a
-  /// thousand lines per frame to measure them is work with no result.
   static int _bufferBytes = 0;
 
-  /// Bumps whenever a line is added, so log views can rebuild live.
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
-  /// Mirrors the "Collect logs" preference. It governs the in-app buffer (what
-  /// the log views show and the archive carries), not the console: developing
-  /// against your own build would be impossible if the switch also muted that.
-  /// Off keeps the buffer intact too — the user stopped recording, not history.
   static bool enabled = true;
 
   static void i(String msg) => _add('INFO', msg);
@@ -33,18 +23,8 @@ class Log {
     developer.log(msg, name: 'vpn', level: 1000, error: error, stackTrace: st);
   }
 
-  /// What the lines logged right now are about — a subscription's host while
-  /// its body is being parsed. Set only through [within], for the duration of
-  /// one synchronous call, so it never outlives what it describes.
   static String _context = '';
 
-  /// Runs [body] with every line it logs prefixed by [label].
-  ///
-  /// The parsers log what they skip and why, and they are called for several
-  /// subscriptions in a row on every poll; without the label sixteen identical
-  /// "port out of range" lines could belong to any of them. The label is set
-  /// around the call rather than threaded through every parser, because the
-  /// parsers are pure functions of a body and should stay that way.
   static T within<T>(String label, T Function() body) {
     final previous = _context;
     _context = label.isEmpty ? previous : label;
@@ -72,13 +52,9 @@ class Log {
 
   static String dump() => _buffer.join('\n');
 
-  /// Size of what [dump] would produce, in bytes. Real bytes, not code units:
-  /// the number is shown next to a file size, and a log full of Cyrillic would
-  /// otherwise read as half its actual size.
   static int get sizeBytes =>
       _buffer.isEmpty ? 0 : _bufferBytes - _separatorBytes;
 
-  /// dump() joins with newlines, so the last line has no separator after it.
   static const _separatorBytes = 1;
 
   static int _encodedSize(String line) =>

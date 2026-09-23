@@ -7,15 +7,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 import java.lang.ref.WeakReference
 
-/// The Android leg of the OIDC flow, behind the same "vpn/web_auth" contract
-/// as the Apple ASWebAuthenticationSession: start({url, scheme}) answers with
-/// the redirect URL the identity provider sent the browser to.
-///
-/// Android has no system auth sheet. The login page opens in the user's
-/// browser, and the redirect to our scheme (vpnclient://auth?code=...) comes
-/// back through [WebAuthCallbackActivity], declared in the manifest for that
-/// scheme. The browser stays open behind the app afterwards; that is the
-/// platform's own behaviour for every app that signs in this way.
 object WebAuthChannel {
     private var pending: MethodChannel.Result? = null
     private var host = WeakReference<Activity>(null)
@@ -30,8 +21,6 @@ object WebAuthChannel {
             }
             val activity = host.get()
                 ?: return@setMethodCallHandler result.error("start_failed", "no activity", null)
-            // A second start while one is out replaces it: the first browser tab
-            // can no longer answer anything the app is waiting for.
             pending?.error("cancelled", "superseded", null)
             pending = result
             try {
@@ -43,16 +32,12 @@ object WebAuthChannel {
         }
     }
 
-    /// The Activity is going away with its engine: a result still owed to it
-    /// belongs to a Dart side that no longer exists, and answering it later
-    /// would land on a detached messenger.
     fun unregister(activity: Activity) {
         if (host.get() === activity) host = WeakReference(null)
         pending?.error("cancelled", "screen closed", null)
         pending = null
     }
 
-    /// The identity provider redirected to our scheme.
     fun onCallback(uri: Uri?) {
         val result = pending ?: return
         pending = null
@@ -63,8 +48,6 @@ object WebAuthChannel {
         }
     }
 
-    /// The app came back to the foreground without a redirect: the user closed
-    /// the browser or backed out of the sign-in page.
     fun onHostResumed() {
         val result = pending ?: return
         pending = null

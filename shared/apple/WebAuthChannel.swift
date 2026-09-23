@@ -5,22 +5,11 @@ import FlutterMacOS
 import Flutter
 #endif
 
-/// WebAuthChannel bridges Flutter's OIDC flow to the system auth browser.
-///   MethodChannel "vpn/web_auth": start({url, scheme}) -> callback URL string
-///
-/// ASWebAuthenticationSession is the Apple-blessed way to run an OAuth/OIDC
-/// login: it opens a secure browser sheet, shares the system login session (so
-/// a signed-in Google/Microsoft user isn't asked to re-enter credentials), and
-/// hands back the redirect to our custom scheme (vpnclient://auth?code=...).
-/// One file for macOS and iOS; only the window the sheet hangs off differs.
 enum WebAuthChannel {
-    // Held for the session's lifetime; ASWebAuthenticationSession is released
-    // once its completion handler fires.
+    // Must be held for the session's lifetime.
     private static var session: ASWebAuthenticationSession?
     private static let presenter = PresentationContextProvider()
 
-    /// [anchor] is the window the sheet is presented from: the NSWindow on
-    /// macOS, the app's UIWindow on iOS.
     static func register(messenger: FlutterBinaryMessenger, anchor: ASPresentationAnchor?) {
         presenter.anchor = anchor
         let channel = FlutterMethodChannel(name: "vpn/web_auth", binaryMessenger: messenger)
@@ -48,8 +37,7 @@ enum WebAuthChannel {
                 result(callbackURL?.absoluteString)
             }
             session.presentationContextProvider = presenter
-            // Don't share cookies only if you want a forced re-login; sharing
-            // (false) is what makes corporate SSO near-silent.
+            // Shares the system login session; ephemeral would force a re-login every time.
             session.prefersEphemeralWebBrowserSession = false
             self.session = session
             if !session.start() {

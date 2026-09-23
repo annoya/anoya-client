@@ -7,7 +7,6 @@ import 'geo_store.dart';
 import 'log.dart';
 import 'network_extension_core.dart';
 
-/// One geosite category as listed in the local GeoSite.dat.
 class GeositeCategory {
   const GeositeCategory(this.name, this.domainCount);
 
@@ -15,19 +14,6 @@ class GeositeCategory {
   final int domainCount;
 }
 
-/// Reads the category names out of the downloaded GeoSite.dat, so geosite
-/// values are picked from what actually exists instead of typed by hand — a
-/// typo'd category isn't a dead rule, it fails the engine's config load.
-///
-/// The file is the v2ray GeoSiteList protobuf:
-///   GeoSiteList { repeated GeoSite entry = 1; }
-///   GeoSite     { string country_code = 1; repeated Domain domain = 2; }
-/// Only the entry names and the domain count are needed, so this is a plain
-/// wire-format walk (varint tags, length-delimited skips) rather than a
-/// protobuf dependency. The result is cached next to the database, keyed by
-/// its size and mtime — a ~25 MB scan should happen once per download, not
-/// per open. (Size alone could accept a re-downloaded file of identical
-/// length with different categories.)
 class GeositeIndex {
   static const _cacheFile = 'geosite-index.json';
 
@@ -44,9 +30,8 @@ class GeositeIndex {
     if (cached != null) return cached;
 
     final sw = Stopwatch()..start();
-    // Read AND parse in the worker isolate. Reading here and closing over the
-    // bytes would send 25 MB through the isolate port — the copy costs as much
-    // as the scan it was meant to move off the UI thread.
+    // Read AND parse in the worker: sending 25 MB of bytes through the isolate
+    // port costs as much as the scan.
     final path = dat.path;
     final list = await Isolate.run(() => scan(File(path).readAsBytesSync()));
     Log.i(
@@ -56,9 +41,6 @@ class GeositeIndex {
     return list;
   }
 
-  /// Extracts (name, domain count) for every category. Malformed input yields
-  /// whatever was parsed up to that point — the picker being shorter beats the
-  /// editor crashing on a truncated download.
   static List<GeositeCategory> scan(Uint8List bytes) {
     final out = <GeositeCategory>[];
     final r = _Reader(bytes);
@@ -111,7 +93,7 @@ class GeositeIndex {
           GeositeCategory(e['n'] as String, e['d'] as int),
       ];
     } catch (_) {
-      return null; // unreadable cache → rescan
+      return null;
     }
   }
 
@@ -135,8 +117,6 @@ class GeositeIndex {
   }
 }
 
-/// Minimal protobuf wire reader: varints, length-delimited slices, and skips
-/// for the field types the format can legally contain.
 class _Reader {
   _Reader(this._b);
 

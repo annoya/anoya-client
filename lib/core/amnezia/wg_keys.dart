@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:cryptography/cryptography.dart';
 
-/// A WireGuard keypair, in the base64 form every WireGuard tool writes.
 class WgKeyPair {
   const WgKeyPair({required this.privateKey, required this.publicKey});
 
@@ -11,12 +10,6 @@ class WgKeyPair {
   final String publicKey;
 }
 
-/// Generates the keypair an AWG config is issued against.
-///
-/// The gateway is told only the public half; the private half never leaves the
-/// device and is substituted into the config that comes back. That is the
-/// whole reason a fresh pair is generated per request rather than kept: a key
-/// the server also knows is not a key.
 Future<WgKeyPair> generateWgKeyPair() async {
   final algorithm = X25519();
   final pair = await algorithm.newKeyPair();
@@ -28,8 +21,6 @@ Future<WgKeyPair> generateWgKeyPair() async {
   );
 }
 
-/// The identity a VLESS config is issued against — a uuid the server will
-/// accept, and the exact shape Amnezia's client sends (no braces).
 String generateVlessId() {
   final rnd = Random.secure();
   final b = List<int>.generate(16, (_) => rnd.nextInt(256));

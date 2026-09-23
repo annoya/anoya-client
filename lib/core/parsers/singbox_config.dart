@@ -6,22 +6,8 @@ import 'dns_servers.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
 
-/// sing-box JSON as a server list — the fourth template family the panels
-/// serve, and the one we used to read as nothing at all.
-///
-/// sing-box describes a server flatter than Xray does: address and credentials
-/// at the top level of the outbound, TLS in one `tls` object, transport in one
-/// `transport` object. That makes it the easiest of the three to read and the
-/// easiest to get subtly wrong, because a missing `tls.enabled` is a working
-/// config that fails at the handshake.
-
-/// Outbound types that are not servers: selectors and the built-in sinks. A
-/// panel's sing-box body always carries a `selector` listing every server, and
-/// counting it as an unsupported protocol would invent a server that is not
-/// there.
 const _notServers = {'selector', 'urltest', 'direct', 'block', 'dns'};
 
-/// mihomo's name for each sing-box protocol we can run.
 const _types = {
   'vless': 'vless',
   'vmess': 'vmess',
@@ -30,7 +16,6 @@ const _types = {
   'hysteria2': 'hysteria2',
 };
 
-/// Reads the servers out of a sing-box body. Null when this is not one.
 ParsedSubscription? parseSingboxServers(String body) {
   final Object? decoded;
   try {
@@ -39,8 +24,6 @@ ParsedSubscription? parseSingboxServers(String body) {
     return null;
   }
   if (decoded is! Map || decoded['outbounds'] is! List) return null;
-  // Both this and an Xray config have `outbounds`; a sing-box one names each
-  // entry with `type`, an Xray one with `protocol`.
   final list = decoded['outbounds'] as List;
   if (!list.any((o) => o is Map && o['type'] != null)) return null;
 
@@ -53,7 +36,6 @@ ParsedSubscription? parseSingboxServers(String body) {
     if (kind.isEmpty || _notServers.contains(kind)) continue;
     final type = _types[kind];
     if (type == null) {
-      // wireguard, tuic, ssh, anytls…
       unsupported.update(kind, (n) => n + 1, ifAbsent: () => 1);
       continue;
     }
@@ -93,24 +75,11 @@ ParsedSubscription? parseSingboxServers(String body) {
   );
 }
 
-/// The resolvers a sing-box body declares, in mihomo's spelling.
-///
-/// `detour` names the outbound the query rides, so unlike Xray there is no
-/// guessing: look the tag up among the outbounds we just read. A detour to a
-/// server is the provider asking for DNS inside the tunnel; a detour to
-/// `direct` — or no detour, which is sing-box's default — is the opposite.
-///
-/// Two schema generations are in the wild and both appear in panel templates:
-/// up to sing-box 1.11 a server is one `address` URL, from 1.12 it is a `type`
-/// with the address split across fields. Reading only one of them would look
-/// like the format being unsupported rather than half-supported.
 List<String> _dnsServers(Object? node, List outbounds) {
   if (node is! Map) return const [];
   final servers = node['servers'];
   if (servers is! List) return const [];
 
-  // Tags whose outbound does not leave the device. `block` is in here for the
-  // same reason as `direct`: neither is the tunnel, and both mean "no pin".
   final onTheDevice = <String>{
     for (final ob in outbounds)
       if (ob is Map && (ob['type'] == 'direct' || ob['type'] == 'block'))
@@ -128,13 +97,10 @@ List<String> _dnsServers(Object? node, List outbounds) {
   return out;
 }
 
-/// One server's address, whichever generation of the schema it is written in.
 String _address(Map entry) {
   final type = '${entry['type'] ?? ''}'.trim();
-  if (type.isEmpty) return '${entry['address'] ?? ''}'; // <= 1.11
+  if (type.isEmpty) return '${entry['address'] ?? ''}';
   final host = '${entry['server'] ?? ''}'.trim();
-  // `local`, `fakeip`, `hosts` and friends name a mechanism and carry no
-  // server; handing the scheme over alone is enough for it to be turned away.
   if (host.isEmpty) return '$type://';
   final port = entry['server_port'];
   final path = '${entry['path'] ?? ''}';
@@ -174,9 +140,6 @@ Map<String, dynamic> _proxyFor(String type, Map ob) {
   return proxy;
 }
 
-/// sing-box keeps TLS in one object; mihomo spreads it across the proxy. The
-/// flag matters most: `tls` absent or disabled means a plaintext dial, and
-/// assuming otherwise turns a working server into a failing one.
 String? _applyTls(Map<String, dynamic> proxy, Object? node) {
   final tls = node is Map ? node : const {};
   final enabled = tls['enabled'] == true;
@@ -213,23 +176,15 @@ String? _applyTls(Map<String, dynamic> proxy, Object? node) {
 }
 
 String? _applyTransport(Map<String, dynamic> proxy, String type, Map ob) {
-  // QUIC protocols have no transport to choose, and sing-box does not give them
-  // one.
   if (type == 'hysteria2') return null;
   final t = ob['transport'] is Map ? ob['transport'] as Map : const {};
-  // No transport object at all is plain TCP, which is also what sing-box means
-  // by omitting it.
   final kind = '${t['type'] ?? 'tcp'}'.toLowerCase();
   final headers = t['headers'] is Map ? t['headers'] as Map : const {};
   final host = '${headers['Host'] ?? headers['host'] ?? t['host'] ?? ''}';
 
-  // sing-box calls HTTP/2 "http"; mihomo's `http` is the obfuscated-TCP network
-  // and `h2` is HTTP/2, so the name has to be translated rather than passed
-  // through.
+  // sing-box "http" is HTTP/2; mihomo's `http` is obfuscated TCP.
   final network = kind == 'http' ? 'h2' : kind;
-  // Set before the shared mapping runs, exactly as the link parsers do: that
-  // helper only overrides the network where the engine's name differs
-  // (httpupgrade is a websocket, tcp with an HTTP header is `http`).
+  // Set before the shared mapping, which only overrides where names differ.
   proxy['network'] = network;
 
   return applyTransport(proxy, network, {

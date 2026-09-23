@@ -5,12 +5,6 @@ import 'package:vpn_client/core/profile.dart';
 import 'package:vpn_client/core/routing_policy.dart';
 import 'package:vpn_client/core/rule_set.dart';
 
-/// Three sources of routing, three different sets of powers.
-///
-/// The point of separating them is that the differences are not cosmetic: who
-/// may switch a policy off, and what a policy is allowed to reach for, differ
-/// per source. A single code path with flags is how those differences get
-/// quietly mixed up.
 void main() {
   const localSet = RuleSet(
     id: 'work',

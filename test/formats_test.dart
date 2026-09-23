@@ -8,17 +8,8 @@ import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/parsers/share_link.dart';
 import 'package:vpn_client/core/parsers/subscription.dart';
 
-/// The four shapes a panel can answer with, and what we say when none of them
-/// yields a server.
-///
-/// Reading one format and not another is not a missing feature the user can see
-/// — it looks like an empty subscription. That is why the format itself is part
-/// of the result, and why "we could not read this" and "we read it and can run
-/// none of it" are different sentences.
 void main() {
   group('xray json', () {
-    // The shape a live Remnawave panel serves: a JSON array of whole configs,
-    // one per server, each naming itself in `remarks`.
     const body = '''
 [
   {"remarks": "🇩🇪 Germany",
@@ -81,9 +72,6 @@ void main() {
     });
 
     test('plumbing outbounds are not counted as unsupported servers', () {
-      // freedom, blackhole and dns are how an Xray config expresses direct,
-      // reject and its resolver — inventing a shortfall out of them would
-      // accuse the panel of sending servers it never sent.
       expect(parseSubscriptionBody(body).unsupported, isEmpty);
     });
 
@@ -138,8 +126,6 @@ void main() {
     });
 
     test('tls off means tls off', () {
-      // The one mistake that produces a config which looks right and fails at
-      // the handshake.
       const plain = '''
 {"outbounds": [{"tag": "p", "type": "vmess", "server": "p.example",
   "server_port": 80, "uuid": "u", "security": "auto"}]}''';
@@ -183,8 +169,6 @@ void main() {
     });
 
     test('a plugin the engine cannot run is reported, not dropped', () {
-      // Dropping it leaves a server in the list that always fails: the server
-      // expects obfuscation the client is not doing.
       const link =
           'ss://YWVzLTI1Ni1nY206cHc@h.example:8388?plugin=shadow-tls%3Bhost%3Dx#SS';
       expect(parseShareLink(link).unsupported, 'ss+shadow-tls');
@@ -203,9 +187,6 @@ void main() {
 
   group('what the user is told when nothing came out', () {
     test('a Clash document with an empty list is Clash, not unreadable', () {
-      // A live panel answers this way for an account with nothing assigned. The
-      // format is fine; there is simply nothing in it, and the fix is with the
-      // provider rather than with the app.
       final p = parseSubscriptionBody(
         'proxies: []\nrules:\n  - MATCH,DIRECT\n',
       );
@@ -236,8 +217,6 @@ void main() {
     });
 
     test('entries that point nowhere are a message, not servers', () {
-      // A live panel's answer to a client it does not recognise: valid links to
-      // unroutable addresses whose names carry the text.
       const body =
           'vless://u@0.0.0.0:1?security=none#Приложение%20не%20поддерживается\n'
           'vless://u@127.0.0.1:1?security=none#Используйте%20Happ';
@@ -261,8 +240,6 @@ void main() {
   group('what the log says about a body', () {
     test('malformed links are one line, counted, and say whose they were', () {
       Log.clear();
-      // The second link fails inside Uri.parse, whose FormatException prints
-      // the whole offending string — uuid included — under its message.
       const uuid = 'd1f8b2c4-aaaa-bbbb-cccc-1234567890ab';
       const body =
           'vless://$uuid@:0?security=none#a\n'
@@ -321,8 +298,6 @@ proxy-providers:
     test(
       'the lists bring servers; the document keeps its DNS and groups',
       () async {
-        // Groups are resolved against the document's own proxies at parse time,
-        // so the one here spans NL; the list only adds DE.
         const body = '''
 dns:
   nameserver:
@@ -385,8 +360,6 @@ proxies:
     });
 
     test('a name that merely contains a question mark is left alone', () {
-      // "Why not?" is a legal name. Splitting every fragment at the first `?`
-      // would rename servers for everyone to serve one convention.
       const link = 'vless://u@de.example:443?security=none#Why%20not%3F';
       final loc = parseShareLink(link).location!;
       expect(loc.label, 'Why not?');
@@ -431,9 +404,6 @@ proxies:
         Location(id: 'x', label: 'X', proxy: proxy, description: description);
 
     test('protocol, transport and what protects it — in that order', () {
-      // The enumeration every other client shows. The address used to end this
-      // line; identical names are a mistake in someone else's list, and paying
-      // for it with an endpoint on every row costs the space these facts need.
       expect(
         loc({
           'type': 'vless',
@@ -455,9 +425,6 @@ proxies:
     });
 
     test('plain tcp is written, because a gap would read as "not checked"', () {
-      // It used to be dropped as a default worth no words. That was true while
-      // the address stood beside it and space was dear; in an enumeration of
-      // three, a missing element reads as unknown rather than as ordinary.
       expect(
         loc({
           'type': 'vless',
@@ -474,8 +441,6 @@ proxies:
     });
 
     test('a protocol whose transport is not a choice still names it', () {
-      // hysteria2 carries no `network` because it has no alternative; leaving
-      // the slot empty would say we did not look.
       expect(
         loc({'type': 'hysteria2', 'server': 'de.example'}).subtitle,
         'Hysteria2 · QUIC · TLS',
@@ -483,8 +448,6 @@ proxies:
     });
 
     test('nothing protecting the connection is said out loud', () {
-      // "Not stated" and "nothing there" are different facts, and for a VPN
-      // client the difference is the point of the line.
       expect(
         loc({'type': 'vless', 'server': 'de.example'}).subtitle,
         'VLESS · TCP · No TLS',

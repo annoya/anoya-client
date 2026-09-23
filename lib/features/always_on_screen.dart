@@ -5,15 +5,6 @@ import '../core/log.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
-/// Android's counterpart of on-demand — described, not controlled.
-///
-/// The Always-on switch belongs to the system: an app can neither flip it nor
-/// reliably read it while the tunnel is down, so a toggle here would be a
-/// promise this screen cannot keep. What the app *can* do is say what the
-/// switch gives (a tunnel the OS restarts by itself, plus the system kill
-/// switch that lives next to it) and take the user to the one place it can be
-/// set. The system starts whatever configuration was used last — which is why
-/// the app keeps the saved config in step with the selection.
 class AlwaysOnScreen extends StatelessWidget {
   const AlwaysOnScreen({super.key});
 

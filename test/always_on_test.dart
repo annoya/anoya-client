@@ -8,12 +8,6 @@ import 'package:vpn_client/core/theme.dart';
 import 'package:vpn_client/features/always_on_screen.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// Android's auto-connect surface: honesty about who owns the switch.
-///
-/// The screen may not claim a state it cannot know — Always-on lives in system
-/// settings and the app cannot read it while the tunnel is down. So the pinned
-/// behaviour is: no toggle anywhere, and the one action hands the user to the
-/// system.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -65,8 +59,6 @@ void main() {
   });
 
   test('the platforms split auto-connect between them, with no overlap', () {
-    // One kind each: rules Apple evaluates, a switch Android owns. A platform
-    // claiming both would put two entry points on one screen.
     for (final (platform, onDemand) in [
       (TargetPlatform.iOS, true),
       (TargetPlatform.macOS, true),

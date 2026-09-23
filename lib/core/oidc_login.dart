@@ -8,13 +8,6 @@ import 'package:http/http.dart' as http;
 import '../api/api_client.dart';
 import 'log.dart';
 
-/// Runs the OIDC Authorization Code + PKCE flow for a native app:
-/// discovery → open the system auth browser (ASWebAuthenticationSession via
-/// the `vpn/web_auth` channel) → exchange the returned code for an ID token.
-/// The management service is NOT involved in the OAuth dance; it only verifies
-/// the resulting ID token afterwards. No client secret (public client).
-///
-/// Returns the raw ID token, or throws [OidcException] on any failure.
 class OidcException implements Exception {
   OidcException(this.message);
   final String message;
@@ -75,9 +68,6 @@ Future<String> obtainOidcIdToken(AuthProvider provider) async {
     code,
     verifier,
   );
-  // Sending a nonce and not checking it is worse than not sending one — it
-  // implies a defense that isn't there. Reject a token minted for a different
-  // sign-in attempt.
   if (idTokenNonce(idToken) != nonce) {
     throw OidcException(
       'Sign-in failed: the token does not match this sign-in attempt.',
@@ -103,7 +93,6 @@ Future<Map<String, dynamic>> _discover(String issuer) async {
   }
 }
 
-/// Invokes the native auth session; returns the callback URL string.
 Future<String> _runWebAuth(String authUrl) async {
   try {
     final callback = await _webAuth.invokeMethod<String>('start', {
@@ -118,8 +107,6 @@ Future<String> _runWebAuth(String authUrl) async {
     if (e.code == 'cancelled') throw OidcException('Sign-in was cancelled.');
     throw OidcException('Sign-in failed: ${e.message ?? e.code}');
   } on MissingPluginException {
-    // Every shipped platform registers the channel; this is the message for a
-    // build that does not, so it never reads as a server-side failure.
     throw OidcException('Sign in with SSO is not available in this build.');
   }
 }
@@ -144,8 +131,8 @@ Future<String> _exchangeCode(
       )
       .timeout(kHttpTimeout);
   if (res.statusCode ~/ 100 != 2) {
-    // Status + the provider's error code only: the raw body can carry tokens
-    // or account details, and this log ships in the support archive.
+    // Status + error code only: the raw body can carry tokens and this log ships
+    // in the support archive.
     String? errCode;
     try {
       errCode =
@@ -165,9 +152,6 @@ Future<String> _exchangeCode(
   return idToken;
 }
 
-/// The `nonce` claim of an ID token, or null. The token's signature is the
-/// management server's job to verify; the nonce binds the token to THIS
-/// sign-in attempt, and only the client knows what it sent.
 String? idTokenNonce(String idToken) {
   try {
     final parts = idToken.split('.');
@@ -180,7 +164,6 @@ String? idTokenNonce(String idToken) {
   }
 }
 
-// PKCE helpers: base64url without padding, per RFC 7636.
 String _randomUrlToken(int bytes) {
   final rnd = Random.secure();
   final b = List<int>.generate(bytes, (_) => rnd.nextInt(256));

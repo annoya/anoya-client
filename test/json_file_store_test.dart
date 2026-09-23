@@ -8,10 +8,6 @@ import 'package:vpn_client/core/json_file_store.dart';
 import 'package:vpn_client/core/profile.dart';
 import 'package:vpn_client/core/profile_store.dart';
 
-/// The persistence contract every store now rides on: damage costs the user
-/// as little as possible. A corrupted file yields the fallback instead of a
-/// crash, one damaged entry never discards its siblings, and a save leaves no
-/// half-written file behind for the next load to trip over.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
@@ -65,10 +61,6 @@ void main() {
   );
 
   test('concurrent saves never corrupt the file or throw', () async {
-    // A background refresh landing while the user edits is the ordinary case,
-    // and both go through the same store. Sharing one temp file made the
-    // second rename fail with PathNotFound and could leave a file that was
-    // half of each payload.
     final store = JsonFileStore('race.json');
     final big = {'v': List.filled(20000, 'xxxxxxxxxxxxxxxxxxxx')};
     final small = {'v': 'small'};
@@ -85,8 +77,6 @@ void main() {
   });
 
   test('a save that fails does not poison the next one', () async {
-    // The write chain has to survive an error, or one bad save would wedge
-    // every later save of that store.
     final store = JsonFileStore('chain.json');
     await expectLater(
       store.save(Object()),
@@ -99,9 +89,6 @@ void main() {
   test(
     'what the panel said about device counting survives a restart',
     () async {
-      // The subscription screen reads this to decide whether to mention the
-      // device slot at all; re-asking the panel on every screen open would be
-      // both slow and, when it is unreachable, wrong.
       final p = Profile(
         id: 's',
         type: ProfileType.subscription,

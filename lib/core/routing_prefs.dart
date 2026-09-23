@@ -2,9 +2,6 @@ import 'norm_config.dart';
 import 'dns_plan.dart';
 import 'json_file_store.dart';
 
-/// Hidden rules prepended (ahead of any policy, managed included) when
-/// [RoutingPrefs.lanDirect] is on: private, link-local and multicast ranges
-/// bypass the VPN, the standard "local network access" behavior.
 const kLanDirectRules = [
   RoutingRule(type: 'ip-cidr', value: '10.0.0.0/8', action: 'direct'),
   RoutingRule(type: 'ip-cidr', value: '172.16.0.0/12', action: 'direct'),
@@ -13,11 +10,6 @@ const kLanDirectRules = [
   RoutingRule(type: 'ip-cidr', value: '224.0.0.0/4', action: 'direct'),
 ];
 
-/// Device-level routing preferences that sit outside rule sets:
-///  - [lanDirect]: LAN traffic bypasses the VPN (rendered as hidden ip-cidr →
-///    direct rules ahead of any policy, managed ones included);
-///  - GeoIP/GeoSite database source URLs, auto-update flag and last update.
-/// Persisted as routing_prefs.json in app-support.
 class RoutingPrefs {
   const RoutingPrefs({
     this.lanDirect = true,
@@ -28,7 +20,6 @@ class RoutingPrefs {
     this.defaultDns = kFallbackNameserver,
   });
 
-  // mihomo's own default release artifacts (MetaCubeX/meta-rules-dat).
   static const defaultGeoipUrl =
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb';
   static const defaultGeositeUrl =
@@ -36,10 +27,6 @@ class RoutingPrefs {
 
   final bool lanDirect;
 
-  /// The resolver used by a configuration that names none of its own — a bare
-  /// link always, some subscriptions. Not a fourth source competing with the
-  /// three that own DNS (ADR-008): a default, in the one place nobody else made
-  /// a choice, and defaults are the user's to change.
   final String defaultDns;
 
   final String geoipUrl;

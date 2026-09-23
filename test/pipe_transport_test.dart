@@ -5,9 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/pipe_transport.dart';
 
-/// The Dart end of the wire to the Windows tunnel service, against a fake pipe.
-/// The framing and the failure modes are what these pin: the service is a
-/// process the app does not own, and it can be absent or vanish mid-request.
 void main() {
   late FakeLink link;
   late PipeTransport t;
@@ -18,7 +15,7 @@ void main() {
   });
   tearDown(() => t.dispose());
 
-  /// The connection is established a microtask after the fake reports it.
+  // The connection is established a microtask after the fake reports it.
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
   test('a request is one JSON line and its answer is matched by id', () async {
@@ -105,7 +102,7 @@ void main() {
       final res = t.invoke<String>('url_test', {'url': 'https://x'});
       final first = link;
       final next = FakeLink();
-      link = next; // the factory hands out the fresh one on the next knock
+      link = next;
       await first.hangUp();
       await expectLater(
         res,

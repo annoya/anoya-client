@@ -2,10 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vpn_client/core/ext_logs.dart';
 
-/// What the app does when there is no tunnel extension to talk to. The channel
-/// throws MissingPluginException — NOT a PlatformException — when no handler is
-/// registered, which is exactly the "tunnel is down" case these calls describe;
-/// mocking it as a PlatformException (as other tests do) hides the difference.
+// No handler throws MissingPluginException, not PlatformException; mocking
+// it as the latter hides the difference.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 

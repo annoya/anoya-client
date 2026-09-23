@@ -37,9 +37,6 @@ void main() {
     });
 
     test('a message already worded for the user arrives untouched', () {
-      // The sign-in and add screens throw these for their own guard
-      // conditions; a FormatException in their place used to come out as
-      // "this doesn't look like a link".
       const worded = AppError(
         'Enter the server address first',
         detail: 'Then try again.',
@@ -55,7 +52,6 @@ void main() {
         subject: 'de1.example.com',
       );
       expect(e.detail, contains('de1.example.com'));
-      // Without a subject the sentence still reads as a sentence.
       expect(
         describeError(const SocketException('nope')).detail,
         contains('the server'),
@@ -63,9 +59,6 @@ void main() {
     });
 
     test('a missing tunnel service is named, not blamed on a VPN profile', () {
-      // Windows: the tunnel is a service the app does not own. The generic
-      // channel-error text sends the user to "system settings" for a VPN
-      // profile that does not exist there.
       final absent = describeError(
         PlatformException(code: 'service_unavailable'),
       );
@@ -93,14 +86,11 @@ void main() {
     test('account states are explained, not printed', () {
       expect(describeAccountStatus('expired').title, 'Subscription expired');
       expect(describeAccountStatus('limited').title, 'Traffic limit reached');
-      // "deactivated" is the exact string the server stores — a renamed case
-      // here silently downgrades the message to the generic fallback.
       expect(describeAccountStatus('deactivated').title, 'Access disabled');
       expect(
         describeAccountStatus('on_hold').title,
         'Subscription not started',
       );
-      // Unknown states still read as a sentence rather than an enum.
       expect(
         describeAccountStatus('some_new_state').title,
         'Account is some new state',
@@ -131,9 +121,8 @@ void main() {
 
       await tester.tap(find.text('go'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400)); // let it slide in
+      await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Couldn’t refresh the subscription'), findsOneWidget);
-      // No cross: there is nothing to close by hand about a message that leaves.
       expect(
         find.descendant(
           of: find.byType(SnackBar),
@@ -146,7 +135,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Couldn’t refresh the subscription'), findsNothing);
 
-      // And again, this time waiting it out.
       await tester.tap(find.text('go'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -198,7 +186,6 @@ void main() {
       expect(find.text('Couldn’t reach the server'), findsOneWidget);
       expect(find.textContaining('de1.example.com'), findsOneWidget);
 
-      // Ordinary dialog surface: modality marks the problem, not a red sheet.
       final scheme = buildAppTheme(Brightness.light).colorScheme;
       final material = tester.widget<Material>(
         find
@@ -211,13 +198,11 @@ void main() {
       expect(material.color, isNot(scheme.errorContainer));
       expect(material.color, isNot(scheme.error));
 
-      // The scrim swallows taps: the screen behind is out of reach.
       expect(find.byType(ModalBarrier), findsWidgets);
       await tester.tap(find.text('Connect'), warnIfMissed: false);
       await tester.pumpAndSettle();
       expect(connectTaps, 0, reason: 'the dialog blocks the UI behind it');
 
-      // Neither time nor a tap on the scrim closes it.
       await tester.pump(const Duration(seconds: 10));
       await tester.tapAt(const Offset(20, 20));
       await tester.pumpAndSettle();
@@ -233,7 +218,6 @@ void main() {
         reason: 'the caller must be able to clear its error',
       );
 
-      // And the screen works again.
       await tester.tap(find.text('Connect'));
       expect(connectTaps, 1);
     });

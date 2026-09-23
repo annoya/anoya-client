@@ -8,18 +8,12 @@ import '../core/log.dart';
 import '../l10n/l10n.dart';
 import '../core/norm_config.dart';
 
-/// Ceiling for every HTTP call the app makes. Without one, a server behind a
-/// packet-dropping firewall hangs Connect (which awaits the pre-connect
-/// refresh) indefinitely, with no feedback and no way to retry.
+// Without a ceiling, a packet-dropping firewall hangs Connect forever.
 const kHttpTimeout = Duration(seconds: 15);
 
-/// How long a download may deliver nothing before it is abandoned. Applies
-/// between chunks, not to the whole transfer: a geo database is tens of
-/// megabytes and may legitimately take minutes on a slow link, but a stalled
-/// connection must not hold the download open forever.
+// Between chunks, not for the whole transfer: geo databases can take minutes.
 const kDownloadStallTimeout = Duration(seconds: 30);
 
-/// ApiException carries the management service's error envelope.
 class ApiException implements Exception {
   ApiException(this.status, this.code, this.message);
   final int status;
@@ -35,7 +29,6 @@ class LoginResult {
   final Account account;
 }
 
-/// One SSO provider offered by the server (from /api/client/auth-config).
 class AuthProvider {
   AuthProvider({
     required this.id,
@@ -62,7 +55,6 @@ class AuthConfig {
   final List<AuthProvider> providers;
 }
 
-/// ApiClient talks to one management service's client API.
 class ApiClient {
   ApiClient(String baseUrl, {this.token}) : baseUrl = _normalize(baseUrl);
 
@@ -91,7 +83,6 @@ class ApiClient {
     Account.fromJson(data['account'] as Map<String, dynamic>? ?? {}),
   );
 
-  /// Which auth methods this server offers (pre-login, no token needed).
   Future<AuthConfig> authConfig() async {
     final data = await _send('GET', '/api/client/auth-config');
     final list = (data['providers'] as List<dynamic>? ?? [])
@@ -103,7 +94,6 @@ class ApiClient {
     );
   }
 
-  /// Exchange a verified OIDC ID token for a client session token.
   Future<LoginResult> loginOIDC(int providerId, String idToken) async {
     final data = await _send(
       'POST',
@@ -150,16 +140,13 @@ class ApiClient {
       Log.e('TLS handshake failed for $uri', e);
       throw ApiException(0, 'tls', L10n.current.errorApiTls(baseUrl));
     } catch (e, st) {
-      // The exception's own words go to the log only: this message is what
-      // the dialog shows, and a stack of Dart type names is not an answer.
       Log.e('request to $uri failed', e, st);
       throw ApiException(0, 'request', L10n.current.errorApiRequest(baseUrl));
     }
 
     Log.i('$method $path -> ${res.statusCode} (${res.body.length} bytes)');
-    // Parse leniently: an error response is often not our JSON envelope at all
-    // (a reverse proxy's 502 HTML page) and must still surface as a
-    // status-coded ApiException, not a raw FormatException.
+    // Lenient: a proxy's HTML 502 must still surface as a status-coded
+    // ApiException, not a FormatException.
     Map<String, dynamic> parsed;
     try {
       parsed = res.body.isNotEmpty

@@ -12,9 +12,6 @@ import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/l10n/l10n.dart';
 
-/// The home screen contract from the spec: the configuration is always on
-/// screen (a single one still gets its gear), the picker chevron only appears
-/// when there is a choice, and both pickers sit at the bottom edge.
 void main() {
   Profile profile(String id, String name) => Profile(
     id: id,
@@ -29,8 +26,6 @@ void main() {
     ],
   );
 
-  /// A subscription that offers what this panel offers: several servers plus
-  /// sets whose member the engine picks.
   Profile withGroups() => Profile(
     id: 'sub',
     type: ProfileType.subscription,
@@ -81,8 +76,6 @@ void main() {
     await tester.pump();
   }
 
-  // The app bar carries a gear of its own (app settings), so every icon
-  // expectation is scoped to the configuration card.
   Finder inConfigCard(IconData icon) => find.descendant(
     of: find.widgetWithText(Card, 'backup.single'),
     matching: find.byIcon(icon),
@@ -131,8 +124,6 @@ void main() {
   testWidgets('a subscription\'s groups reach the picker, above the servers', (
     tester,
   ) async {
-    // Parsing them is not the same as offering them: the whole point of a group
-    // is that the user can choose it.
     await pump(tester, [withGroups()]);
     await tester.tap(find.byIcon(Icons.chevron_right).last);
     await tester.pumpAndSettle();
@@ -145,8 +136,6 @@ void main() {
       findsOneWidget,
       reason: 'the row says what the group does, not what its type is called',
     );
-    // Twice: the sheet lists it, and the row behind the sheet still names the
-    // current selection.
     expect(
       find.text('VLESS Reality 1'),
       findsNWidgets(2),
@@ -163,8 +152,6 @@ void main() {
   testWidgets('the configuration line counts the groups it offers', (
     tester,
   ) async {
-    // A section appearing in the picker that was not there before otherwise
-    // reads as a new feature of the app rather than as what the provider sent.
     await pump(tester, [withGroups()]);
     expect(find.textContaining('3 servers · 2 groups'), findsOneWidget);
   });
@@ -172,8 +159,6 @@ void main() {
   testWidgets(
     'a refreshable configuration can be refreshed from the home screen',
     (tester) async {
-      // The button also lives on the configuration screen; this is a duplicate,
-      // because that is not where it gets pressed.
       await pump(tester, [
         Profile(
           id: 'sub',

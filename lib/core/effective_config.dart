@@ -7,16 +7,7 @@ import 'routing_policy.dart';
 import 'routing_prefs.dart';
 import 'rule_set.dart';
 
-/// Builds a NormConfig for the core from a profile: its locations + the
-/// effective routing. Precedence: server-managed policy (self-hosted), else
-/// the profile's global rule set. Device-level extras are applied on top:
-/// LAN-direct rules are prepended, and geo rules are dropped (with a log)
-/// while the databases aren't downloaded — a rule that can't match must not
-/// stall the engine into fetching 20+ MB mid-connect.
 Future<NormConfig> buildNormConfig(Profile p) async {
-  // Whose rules apply is the policy's decision, not this method's: one of
-  // three classes answers it (ADR-005), and what is left here is the
-  // device-level trimming that applies to any of them.
   final policy = routingPolicyFor(p, loadRuleSet: RuleSetStore.byId);
   Routing routing = await policy.resolve();
 
@@ -30,9 +21,6 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     );
   }
 
-  // A set authored on a desktop can travel to a phone (same account, same
-  // sets). Its process rules cannot match there, and leaving them in would
-  // turn find-process-mode on for nothing.
   if (!supportsProcessRules &&
       routing.rules.any((r) => r.type == 'process-name')) {
     Log.e(
@@ -62,10 +50,6 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     groups: p.groups,
     routing: routing,
     dns: p.dns,
-    // Only reaches the engine when the configuration named nothing; the
-    // renderer decides that, so the value travels rather than being folded in
-    // here — folded in, the DNS screen would report the app's own resolver as
-    // the subscription's choice.
     defaultDns: prefs.defaultDns,
   );
 }

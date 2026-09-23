@@ -7,13 +7,6 @@ import 'app_version.dart';
 import 'json_file_store.dart';
 import 'network_extension_core.dart';
 
-/// What this installation tells a subscription panel about itself.
-///
-/// Panels that enforce a device limit (Remnawave and the panels that copied its
-/// convention) identify a device by an `x-hwid` header, with the OS and model
-/// as optional detail. Without it such a panel answers 404, so this is not a
-/// nicety — it is the difference between a subscription that loads and one that
-/// silently stops.
 class DeviceIdentity {
   const DeviceIdentity({
     required this.hwid,
@@ -22,37 +15,17 @@ class DeviceIdentity {
     required this.model,
   });
 
-  /// Stable per-installation id. See [_newHwid] for what it is and is not.
   final String hwid;
 
-  /// "iOS" / "macOS".
   final String os;
 
-  /// e.g. "18.0".
   final String osVersion;
 
-  /// Hardware model, e.g. "iPhone16,1". Empty when the platform did not say.
   final String model;
 
-  /// What this app calls itself to a panel.
-  ///
-  /// Ours, not the Dart SDK's default, and not another client's name. Panels
-  /// pick which template to answer with by matching this string, so it is both
-  /// an identity and a dependency: an admin who wants this app to get a
-  /// particular rendering keys their rule on it. That is also why the app asks
-  /// for a rendering by name where it can — a capability must not hinge on
-  /// somebody else's rule matching our version string.
-  ///
-  /// Built from the app's own name and the version read out of `pubspec.yaml`
-  /// at startup, so there is exactly one place a bump happens. Before that read
-  /// (and if it ever fails) this is the bare name: a product token with no
-  /// version is a valid User-Agent, and `AnnoyaTest/` is not.
   static String get userAgent =>
       appVersion.isEmpty ? kAppName : '$kAppName/$appVersion';
 
-  /// The headers a subscription request carries. Only `x-hwid` is required by
-  /// the convention; the rest exist so the entry in the provider's panel is
-  /// recognisable as *this* device instead of an opaque id.
   Map<String, String> get headers => {
     'user-agent': userAgent,
     'x-hwid': hwid,
@@ -61,7 +34,6 @@ class DeviceIdentity {
     if (model.isNotEmpty) 'x-device-model': model,
   };
 
-  /// How this device reads in the app, e.g. "iPhone16,1 · iOS 18.0".
   String get label {
     final parts = [
       if (model.isNotEmpty) model,
@@ -71,13 +43,10 @@ class DeviceIdentity {
   }
 }
 
-/// Loads (creating once) the identity this installation presents to panels.
 class DeviceIdentityStore {
   static final _store = JsonFileStore('device.json');
   static DeviceIdentity? _cached;
 
-  /// Cached after the first read: it is needed on every subscription request,
-  /// and it never changes within a run.
   static Future<DeviceIdentity> load() async {
     final cached = _cached;
     if (cached != null) return cached;
@@ -101,21 +70,10 @@ class DeviceIdentityStore {
     return identity;
   }
 
-  /// Pins (or, with null, forgets) the cached identity so a test does not
-  /// depend on the host it runs on.
   @visibleForTesting
   static void debugCache(DeviceIdentity? identity) => _cached = identity;
 
-  /// A random id, not a hardware serial.
-  ///
-  /// The panel needs exactly one thing — to tell devices apart — and a random
-  /// number does that. A hardware identifier would additionally hand every
-  /// provider the same key, letting unrelated ones recognise the same device;
-  /// that is a cost with no matching benefit to anyone but them.
-  ///
-  /// Hex, because the convention allows only Latin letters, digits, `=` and `-`
-  /// (so base64url's `_` is out), and 32 characters sits comfortably inside the
-  /// 10–64 the convention requires.
+  // Hex: the x-hwid convention allows only [A-Za-z0-9=-] and 10-64 chars.
   static String _newHwid() {
     final rnd = Random.secure();
     final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
@@ -127,9 +85,6 @@ class DeviceIdentityStore {
       s.length <= 64 &&
       RegExp(r'^[A-Za-z0-9=-]+$').hasMatch(s);
 
-  /// (os, version, model). Falls back to what dart:io knows when the platform
-  /// side is unavailable — the model is optional, so a missing one costs
-  /// recognisability, not function.
   static Future<(String, String, String)> _describeDevice() async {
     final os = Platform.isIOS
         ? 'iOS'
@@ -147,7 +102,6 @@ class DeviceIdentityStore {
     return (os, _versionFromDartIo(), '');
   }
 
-  /// dart:io reports "Version 18.0 (Build 22A3354)"; keep the number.
   static String _versionFromDartIo() {
     final raw = Platform.operatingSystemVersion;
     final m = RegExp(r'(\d+(?:\.\d+)*)').firstMatch(raw);

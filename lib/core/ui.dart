@@ -3,20 +3,14 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import 'app_error.dart';
 
-/// Shared layout constants so every screen uses the same spacing.
-const double kGutter = 16; // horizontal screen gutter (card margins, headers)
-const double kMaxContentWidth =
-    560; // cap content width on wide/desktop windows
+const double kGutter = 16;
+const double kMaxContentWidth = 560;
 
-/// Standard card margin: the horizontal gutter + a small vertical gap.
 const EdgeInsets kCardMargin = EdgeInsets.symmetric(
   horizontal: kGutter,
   vertical: 4,
 );
 
-/// Centers and width-caps page content so layouts stay readable when the
-/// window is resized wide (macOS) instead of stretching edge to edge, and are
-/// consistent across screens. Wrap a Scaffold body in it.
 class PageBody extends StatelessWidget {
   const PageBody({super.key, required this.child});
   final Widget child;
@@ -30,7 +24,6 @@ class PageBody extends StatelessWidget {
   );
 }
 
-/// A settings/list section label (uppercase, muted), aligned to [kGutter].
 class SectionHeader extends StatelessWidget {
   const SectionHeader(this.text, {super.key});
   final String text;
@@ -48,8 +41,6 @@ class SectionHeader extends StatelessWidget {
   );
 }
 
-/// Explanatory text under a section, in the muted body size the settings
-/// screens use for it.
 class SectionNote extends StatelessWidget {
   const SectionNote(this.text, {super.key});
   final String text;
@@ -66,11 +57,6 @@ class SectionNote extends StatelessWidget {
   );
 }
 
-/// A choice field that looks like the text fields next to it (same fill,
-/// radius and floating label) and opens a bottom sheet instead of a native
-/// dropdown menu — a popup menu would land over the dialog title with its own
-/// surface, highlight and radii, which reads as a different design language.
-/// Use [pickOption] for the sheet.
 class SelectField extends StatelessWidget {
   const SelectField({
     super.key,
@@ -83,7 +69,6 @@ class SelectField extends StatelessWidget {
 
   final String label;
 
-  /// Rendered as-is, so callers can pass "🇷🇺  Russia (RU)".
   final String value;
   final VoidCallback onTap;
   final IconData trailingIcon;
@@ -117,7 +102,6 @@ class SelectField extends StatelessWidget {
   }
 }
 
-/// One row of a [pickOption] sheet.
 class Option<T> {
   const Option(
     this.value,
@@ -134,18 +118,9 @@ class Option<T> {
   final Widget? leading;
 }
 
-/// A toast: three seconds, dismissed by tapping it. No close button — there is
-/// nothing to close by hand about a message that leaves on its own. Use it for
-/// what is already over (a refresh that failed, a copy that succeeded); if the
-/// user has to decide something, they need [showErrorDialog] instead.
 void showToast(BuildContext context, String message) =>
     showToastWith(ScaffoldMessenger.of(context), message);
 
-/// The same toast, for a caller whose widget may already be gone.
-///
-/// A messenger taken before an await outlives the screen that took it, which
-/// is the only way to report the outcome of something that replaced that
-/// screen — adding the first configuration, for one.
 void showToastWith(ScaffoldMessengerState messenger, String message) {
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(
@@ -163,19 +138,6 @@ void showToastWith(ScaffoldMessengerState messenger, String message) {
   );
 }
 
-/// An error the user has to acknowledge: centred, with the scrim swallowing
-/// taps so Connect and the pickers stay out of reach until it is read. What
-/// happened in the title, what to do about it below, and a cross as the only
-/// way out — a tap on the scrim would wipe out the reason for the failure by
-/// accident. Nothing here occupies space in the layout, so no screen jumps.
-///
-/// Ordinary dialog surface, not the error palette: being modal is what marks
-/// this as a problem, and a red sheet the size of the dialog only fights the
-/// rest of the app. Red stays where it points at a spot — the outline of a
-/// field with bad input.
-///
-/// [onDismiss] runs after it closes, so the caller can clear the error it holds;
-/// otherwise the next rebuild would raise the dialog again.
 Future<void> showErrorDialog(
   BuildContext context,
   AppError error, {
@@ -240,20 +202,8 @@ Future<void> showErrorDialog(
   onDismiss?.call();
 }
 
-/// Closes the keyboard when a tap lands outside the field that owns it.
-///
-/// Flutter's own rule is desktop-only. `EditableTextTapOutsideIntent` is
-/// answered by dropping focus on macOS, Windows and Linux, and on Android and
-/// iOS only for a mouse or a stylus — a *touch* outside deliberately keeps the
-/// field focused (`editable_text.dart`). On a phone that leaves the keyboard
-/// standing over the half of the screen the user tapped away to look at, and
-/// the only way back is a return key the field may not have.
-///
-/// Written as an action override rather than a `GestureDetector` around the
-/// app for two reasons: the intent fires on the pointer-down that lands outside
-/// the field, so the keyboard also closes when that tap belongs to a button —
-/// and nothing new competes for gestures on the screens that have no text
-/// input at all.
+// Flutter keeps a text field focused on a touch outside it (mobile only),
+// which leaves the keyboard up; this override drops focus on any platform.
 class DismissKeyboardOnTapOutside extends StatelessWidget {
   const DismissKeyboardOnTapOutside({super.key, required this.child});
 
@@ -274,10 +224,8 @@ class DismissKeyboardOnTapOutside extends StatelessWidget {
   );
 }
 
-/// The app's single text-input dialog. Owns its TextEditingController: at the
-/// call sites that used to build one inline, `controller.dispose()` on the
-/// line after `await showDialog` raced the dialog's fade-out, whose TextField
-/// still listens to the controller for those ~150 ms.
+// Owns its controller: disposing it after `await showDialog` raced the
+// fade-out, whose TextField still listens for ~150 ms.
 Future<String?> promptText(
   BuildContext context, {
   required String title,
@@ -325,9 +273,6 @@ class _TextPromptDialog extends StatefulWidget {
   final String initial;
   final String? hint;
 
-  /// The value is a URL or another long unbreakable string: it wraps over a
-  /// few lines in a smaller size instead of scrolling sideways through a
-  /// single-line field, where only the tail would ever be visible.
   final bool longValue;
   final bool autocorrect;
   final String? resetLabel;
@@ -395,8 +340,6 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
   }
 }
 
-/// One rendering for a byte count, everywhere a size is shown — the same
-/// number must not read "42 KB" on one screen and "0.0 MB" on another.
 String formatBytes(int n) {
   const gb = 1024 * 1024 * 1024;
   const mb = 1024 * 1024;
@@ -406,46 +349,16 @@ String formatBytes(int n) {
   return '$n B';
 }
 
-/// Search only earns its place once the list is long enough to scan — the same
-/// threshold the on-demand value lists use.
 const int kSearchThreshold = 6;
 
-/// How many lines a long value (a URL) may wrap over in a prompt dialog before
-/// it scrolls. Enough to read a typical download URL whole; past that the
-/// dialog would dwarf everything else on a phone.
 const int kLongValueMaxLines = 4;
 
-/// How long a text field waits after the last keystroke before its value is
-/// persisted. Only for fields whose every save has a cost beyond writing a
-/// file — the on-demand editor pushes the whole VPN profile into the system on
-/// each one, and those native saves can land out of order. Long enough to
-/// cover typing, short enough that leaving the screen right after typing feels
-/// immediate (the editor also flushes on dispose, so nothing is lost either
-/// way).
 const kTextEditDebounce = Duration(milliseconds: 600);
 
-/// A sheet never covers the whole screen: the strip of scrim left above it is
-/// what makes it dismissable by a tap, not only by a swipe.
 const double kSheetMaxHeightFraction = 0.8;
 
-/// Status chip on the home screen: shorter than a control, because it reports a
-/// state rather than asking to be operated — but still tappable, so it keeps a
-/// comfortable target through its 8pt horizontal gaps.
 const double kStatusChipHeight = 30;
 
-/// The app's single way to choose from a list: a bottom sheet with a title,
-/// the current value marked by a filled row, and disabled rows kept visible
-/// (greyed, with their reason in the subtitle) rather than hidden.
-///
-/// The current value is filled rather than check-marked, which keeps the
-/// trailing slot free for actions: [onToggleFavorite] adds a star and splits
-/// the list into FAVORITES / ALL, [onOpenSettings] adds a gear that closes the
-/// sheet and hands the value back to the caller. Long lists also get a search
-/// field; favourites stay on top while filtering.
-///
-/// With [navigational] the rows carry a chevron instead of promising a choice:
-/// the caller treats the returned value as "open this", not "select this". The
-/// fill still marks whichever value is current.
 Future<T?> pickOption<T>(
   BuildContext context, {
   required String title,
@@ -504,9 +417,6 @@ class _PickSheet<T> extends StatefulWidget {
   final bool navigational;
   final String itemNoun;
 
-  /// Choices of a different kind, shown above everything and never counted with
-  /// the rest: they are answers to the same question, not more of the same
-  /// thing. Not favouritable — a favourite is a server you keep coming back to.
   final List<Option<T>> pinned;
   final String pinnedHeader;
 
@@ -536,8 +446,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     widget.onToggleFavorite!(value);
   }
 
-  /// The gear leaves the sheet first: its screen would otherwise open behind
-  /// the sheet, which stays up until the user picks something.
+  // Close the sheet first, or the settings screen opens behind it.
   void _openSettings(T value) {
     Navigator.of(context).pop();
     widget.onOpenSettings!(value);
@@ -571,8 +480,6 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     return Opacity(
       opacity: o.enabled ? 1 : 0.45,
       child: ListTile(
-        // Selection is a fill, so the colour is not the only carrier: the tile
-        // also reports itself as selected to assistive technology.
         selected: selected,
         selectedTileColor: cs.primaryContainer.withValues(alpha: 0.55),
         leading: o.leading == null
@@ -628,11 +535,8 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
-            // Row fills and highlights are Ink, which paints on the nearest
-            // Material — the sheet's own, outside the list — so an overscrolled
-            // row used to be drawn over the title. A transparent Material here
-            // makes the list host its own ink, and the ClipRect bounds it (a
-            // shrink-wrapping viewport clips only once its content overflows).
+            // Transparent Material so list ink stays inside the list (it otherwise
+            // painted over the title on overscroll); ClipRect bounds it.
             Flexible(
               child: ClipRect(
                 child: Material(

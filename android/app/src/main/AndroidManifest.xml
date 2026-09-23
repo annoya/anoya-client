@@ -29,8 +29,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- SSO: the identity provider redirects the browser to
-             vpnclient://auth, which lands here and is handed back to the app. -->
         <activity
             android:name=".WebAuthCallbackActivity"
             android:exported="true"
@@ -43,14 +41,6 @@
                 <data android:scheme="vpnclient" android:host="auth"/>
             </intent-filter>
         </activity>
-        <!-- The tunnel, in its own process. BIND_VPN_SERVICE gates it to the
-             system; systemExempted is the foreground type Android 14+ reserves
-             for exactly this. SUPPORTS_ALWAYS_ON opts the app into the
-             system's always-on switch — the Android counterpart of on-demand.
-             The `:tunnel` process is what makes the engine's failures the
-             engine's own: a native fault there leaves the app alive to report
-             it, and the system can reclaim the UI without dropping a tunnel
-             the user asked to keep. -->
         <service
             android:name=".MihomoVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"

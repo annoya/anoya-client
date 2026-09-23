@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
-# Pack the Linux build: a .deb, an .rpm and an Arch package through nfpm
-# (linux/packaging/nfpm.yaml), plus a portable tar.gz with install.sh for
-# everything else. The Linux counterpart of the Inno Setup step.
-#
-#   scripts/build-linux-packages.sh [amd64|arm64]
-#
-# Build first: scripts/build-tunnel-service.sh linux, then
-# `flutter build linux`. Version comes from pubspec, the one place it is
-# written. nfpm is a single Go binary; NFPM points at one, or it is fetched
-# (pinned by version and checksum) into build/.
-#
-# Output: build/linux/packages/
+# usage: scripts/build-linux-packages.sh [amd64|arm64]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -25,8 +14,7 @@ service="build/linux/service/tunnel-service"
 [ -x "$service" ] || { echo "!! no $service — run scripts/build-tunnel-service.sh linux first" >&2; exit 1; }
 
 NFPM_VERSION="2.47.0"
-# sha256 of nfpm_<version>_Linux_x86_64.tar.gz and _Darwin_arm64.tar.gz from
-# the release's checksums.txt; a different hash is a different file.
+# From the release's checksums.txt.
 declare -A NFPM_SHA256=(
   [Linux_x86_64]="0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783"
   [Darwin_arm64]="e8c9d1d9ac218eeed479375143dc46b8d51a2b8dbba8e2f9f15ecc8faa2e404b"
@@ -54,8 +42,7 @@ version="$(awk '/^version:/ {print $2}' pubspec.yaml | cut -d+ -f1)"
 out="build/linux/packages"
 rm -rf "$out"; mkdir -p "$out"
 
-# nfpm expands ${VERSION} and ${ARCH}, but a content path is read as-is, so
-# the bundle is staged where nfpm.yaml expects it.
+# nfpm does not expand variables in content paths, so stage at a fixed one.
 rm -rf build/linux/stage && mkdir -p build/linux/stage && cp -a "$bundle" build/linux/stage/bundle
 export VERSION="$version" ARCH="$ARCH"
 for fmt in deb rpm archlinux; do
@@ -63,7 +50,6 @@ for fmt in deb rpm archlinux; do
   "$nfpm" package -f linux/packaging/nfpm.yaml -p "$fmt" -t "$out"
 done
 
-# The portable archive: the same files, laid out for install.sh.
 stage="build/linux/portable/$name-$version-linux-$nfpm_arch"
 rm -rf "$stage"; mkdir -p "$stage/service" "$stage/packaging"
 cp -a "$bundle" "$stage/bundle"

@@ -8,16 +8,9 @@ import 'package:vpn_client/core/vpn_core.dart';
 import 'package:vpn_client/state/providers.dart';
 import 'package:vpn_client/state/session.dart';
 
-/// How long the tunnel has been up.
-///
-/// The app is not always present at the start: iOS raises the tunnel from its
-/// own VPN switch and from on-demand rules, and the app may be opened hours
-/// later. Stamping the moment we first looked counted from the wrong event, so
-/// a session that had been up all day read a few seconds.
 void main() {
-  /// The provisional start is set synchronously, so waiting for "not null"
-  /// would return before the system's answer replaces it. Wait for the value to
-  /// stop moving instead.
+  // The provisional start is set synchronously, so wait for the value to stop
+  // moving rather than for non-null.
   Future<SessionState> settle(ProviderContainer c) async {
     DateTime? last;
     for (var i = 0; i < 200; i++) {
@@ -51,7 +44,6 @@ void main() {
   });
 
   test('a platform with no answer keeps the app’s own sighting', () async {
-    // Better a clock that is honestly short than no clock at all.
     final c = ProviderContainer(
       overrides: [
         vpnCoreProvider.overrideWithValue(_Core(VpnStatus.connected, null)),
@@ -65,7 +57,6 @@ void main() {
   });
 
   test('the status is not held up waiting for the answer', () async {
-    // The ring turns green on the status, not on a round trip to the platform.
     final core = _Core(VpnStatus.connected, DateTime.now(), slow: true);
     final c = ProviderContainer(
       overrides: [vpnCoreProvider.overrideWithValue(core)],
@@ -77,8 +68,6 @@ void main() {
   test(
     'a session that ended before the answer arrived does not get a clock',
     () async {
-      // The reply can land after the tunnel is down; a start time on a dead
-      // session would carry into the next one.
       final core = _Core(VpnStatus.connected, DateTime.now(), slow: true);
       final c = ProviderContainer(
         overrides: [vpnCoreProvider.overrideWithValue(core)],

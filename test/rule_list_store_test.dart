@@ -6,12 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vpn_client/core/norm_config.dart';
 import 'package:vpn_client/core/rule_list_store.dart';
 
-/// The files a provider's rule lists live in.
-///
-/// What matters here is the boundary with the engine: mihomo would fetch these
-/// itself, inside config apply, and report failure by logging. Everything below
-/// exists so that the app knows what it holds before the engine is told
-/// anything.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
@@ -73,9 +67,6 @@ void main() {
   test(
     'the file lives inside the engine home dir, under its own name',
     () async {
-      // Inside the container because mihomo refuses a path outside its home
-      // (`IsSafePath`); named by a digest of the URL because two providers can
-      // publish different lists under the same name.
       final a = (await RuleListStore.pathFor(reject))!;
       final b = (await RuleListStore.pathFor(other))!;
       expect(a, startsWith('${container.path}/${RuleListStore.dirName}/'));
@@ -91,7 +82,6 @@ void main() {
   );
 
   test('the path for a URL does not move between runs', () async {
-    // A refresh has to overwrite the file the running config already names.
     expect(
       await RuleListStore.pathFor(reject),
       await RuleListStore.pathFor(reject),
@@ -125,10 +115,6 @@ void main() {
   });
 
   test('a file already held is not fetched again', () async {
-    // The download only happens for what is missing or a week stale, so
-    // switching the provider's lists back on costs nothing. Reachable without a
-    // network stub precisely because nothing goes out: a request here would
-    // fail the test rather than succeed quietly.
     await place(reject, 'payload: []\n');
     final before = await File((await RuleListStore.pathFor(reject))!).stat();
     final status = await RuleListStore.sync(const [reject]);
@@ -140,8 +126,6 @@ void main() {
   });
 
   test('a list the app cannot validate is never fetched', () async {
-    // http, not https: a rule list decides where traffic goes, so it does not
-    // arrive over a channel anyone can rewrite.
     const insecure = RuleList(
       name: 'x',
       url: 'http://lists.example/l.yaml',

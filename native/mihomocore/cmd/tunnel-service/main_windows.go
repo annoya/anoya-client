@@ -30,9 +30,6 @@ func listen() (net.Listener, error) {
 	return winio.ListenPipe(pipeName, &winio.PipeConfig{SecurityDescriptor: pipeSDDL})
 }
 
-// runService is what the Service Control Manager runs. Stop and Shutdown both
-// take the tunnel down: a service that is stopped is not a VPN the user can
-// still be relying on.
 func runService(files service.Files) error {
 	if inService, err := svc.IsWindowsService(); err != nil {
 		return err
@@ -55,9 +52,6 @@ func (h *handler) Execute(_ []string, r <-chan svc.ChangeRequest, changes chan<-
 	}
 	s := newService(h.files)
 	go func() { _ = s.Serve(ln) }()
-	// A tunnel the user left on comes back with the machine. StartSaved does
-	// nothing when no config was saved, and a start that fails is recorded
-	// where the app will read it.
 	go func() { _ = s.StartSaved() }()
 
 	const accepted = svc.AcceptStop | svc.AcceptShutdown
@@ -76,8 +70,6 @@ func (h *handler) Execute(_ []string, r <-chan svc.ChangeRequest, changes chan<-
 	return false, 0
 }
 
-// runConsole is the same service in the foreground, for development: still
-// needs an elevated prompt, because the adapter does.
 func runConsole(files service.Files) error {
 	ln, err := listen()
 	if err != nil {
@@ -119,11 +111,8 @@ func installService() error {
 		return err
 	}
 	defer s.Close()
-	// A crashed service must come back on its own: the app only knocks on the
-	// pipe, it cannot start a service, and until someone reinstalled or
-	// rebooted the tunnel was simply gone. Three restarts a day, then give up
-	// — a crash loop would otherwise hide a broken build behind a flapping
-	// service.
+	// The app cannot start a service. Capped at three restarts a day so a crash
+	// loop does not hide a broken build.
 	restart := mgr.RecoveryAction{Type: mgr.ServiceRestart, Delay: 5 * time.Second}
 	if err := s.SetRecoveryActions([]mgr.RecoveryAction{restart, restart, restart}, 24*60*60); err != nil {
 		return fmt.Errorf("set recovery actions: %w", err)
@@ -146,8 +135,8 @@ func uninstallService() error {
 		if _, err := s.Control(svc.Stop); err != nil {
 			return err
 		}
-		// Delete on a running service only marks it; wait for the stop so the
-		// installer that called us sees it gone.
+		// Delete on a running service only marks it; wait so the installer sees
+		// it gone.
 		for i := 0; i < 50; i++ {
 			if st, err := s.Query(); err != nil || st.State == svc.Stopped {
 				break

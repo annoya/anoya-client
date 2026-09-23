@@ -16,10 +16,6 @@ import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 import 'sign_in_screen.dart';
 
-/// Add-a-connection screen (first run, or pushed from the home "+").
-/// Two explicit paths:
-///  - paste a link / subscription (live-detected) or open a config file;
-///  - "Sign in to your server" → the self-hosted sign-in screen.
 class StartScreen extends ConsumerStatefulWidget {
   const StartScreen({super.key});
 
@@ -32,10 +28,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   DetectedInput? _detected;
   bool _busy = false;
 
-  /// Why the text in the field is not something we can add — shown only after
-  /// the user stops changing it. Recognition is instant; a refusal waits,
-  /// because half a pasted link and a typo look the same to the parser, and a
-  /// chip that calls every unfinished address unusable is noise, not help.
   String? _verdict;
   Timer? _verdictTimer;
   static const _verdictDelay = Duration(milliseconds: 700);
@@ -49,7 +41,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
 
   ProfilesController get _ctrl => ref.read(profilesControllerProvider.notifier);
 
-  /// What the message should name: the host the user typed, when there is one.
   String? _subject() {
     final text = _input.text.trim();
     if (!text.startsWith('http')) return null;
@@ -58,12 +49,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
         : null;
   }
 
-  /// A body the panel answered with that we could not turn into servers.
-  ///
-  /// Shown inline rather than in the error dialog, because it is not a failure
-  /// the user can fix by retyping: it needs reading, and often a visit to the
-  /// provider's page. A modal that has to be dismissed to see the field again
-  /// would hide the one action that helps.
   SubscriptionFormatException? _rejected;
 
   void _onChanged(String v) {
@@ -81,21 +66,14 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     }
   }
 
-  /// The action returns true when a configuration was actually added; false
-  /// means the user backed out (cancelled a picker) — the screen must stay,
-  /// closing it would read as a phantom success.
   Future<void> _run(Future<bool> Function() action) async {
     final container = ProviderScope.containerOf(context, listen: false);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
       final added = await action();
-      // Before the pop, and deliberately: the toast lives in the root
-      // ScaffoldMessenger, so it survives the unwind and lands on the screen
-      // the user ends up looking at.
+      // Before the pop: the toast lives in the root messenger and survives it.
       if (added) _warnIfRefused(container, messenger);
-      // First run: app.dart swaps to Home when a profile appears. Pushed from
-      // home/settings: unwind whatever is above the root.
       if (added && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } on SubscriptionFormatException catch (e) {
       Log.e('add configuration rejected', e.error.title);
@@ -110,16 +88,8 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     }
   }
 
-  /// A subscription can be added successfully and still be refused: the panel
-  /// answers with placeholders instead of servers. The add succeeds (that is
-  /// what the panel returned), and this is how the user learns why the list
-  /// reads the way it does.
-  ///
-  /// Both handles are taken before the add, because adding the *first*
-  /// configuration replaces this screen: the shell swaps in Home the moment a
-  /// profile exists, and by the time there is anything to warn about, `ref`
-  /// and `context` belong to a widget that is gone. The messenger is the root
-  /// one, so the toast still lands on whatever the user is looking at.
+  // Handles are taken before the add: the first configuration replaces this
+  // screen, so its ref and context are gone by the time there is a warning.
   void _warnIfRefused(
     ProviderContainer container,
     ScaffoldMessengerState messenger,
@@ -134,8 +104,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     final d = _detected;
     if (d == null) return;
     if (d.kind == InputKind.subscriptionUrl) {
-      // Fetch as a subscription; when it isn't one, probe whether it's a
-      // management server and hand over to sign-in instead of failing.
+      // Not a subscription? It may be a management server: hand over to sign-in.
       final container = ProviderScope.containerOf(context, listen: false);
       final messenger = ScaffoldMessenger.of(context);
       setState(() => _busy = true);
@@ -148,8 +117,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
           await _ctrl.authConfig(t);
         } catch (_) {
           if (!mounted) return;
-          // A panel that answered with something unusable gets the inline card;
-          // anything else is a plain error.
           if (fe is SubscriptionFormatException) {
             setState(() => _rejected = fe);
           } else {
@@ -173,9 +140,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       return;
     }
     if (d.kind == InputKind.amneziaKey) {
-      // The key names a subscription; the servers are the gateway's to hand
-      // out, so adding one is a network call and shows the same busy state a
-      // subscription URL does.
       await _run(() async {
         await _ctrl.addAmneziaKey(t);
         return true;
@@ -190,7 +154,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
 
   Future<void> _openFile() => _run(() async {
     final res = await FilePicker.platform.pickFiles(withData: true);
-    if (res == null) return false; // cancelled — nothing added
+    if (res == null) return false;
     final bytes = res.files.single.bytes;
     if (bytes == null) {
       throw AppErrorException(
@@ -267,7 +231,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                     ),
                   ],
                   const SizedBox(height: 14),
-                  // All three buttons take their 48pt height from the theme.
                   FilledButton(
                     onPressed: (_busy || _detected == null) ? null : _continue,
                     child: _busy
@@ -321,11 +284,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   }
 }
 
-/// What the panel answered with, when it was not servers.
-///
-/// A warning, not an error: nothing is broken on this device, and the text is
-/// often the provider's own words. The action is the provider's page — the one
-/// place where the format or the plan can actually be changed.
 class _RejectedCard extends StatelessWidget {
   const _RejectedCard({required this.failure, required this.onClose});
 
@@ -375,9 +333,6 @@ class _RejectedCard extends StatelessWidget {
   }
 }
 
-/// What the field holds, in one line: a recognised server or subscription on
-/// the primary tint, or — [refused] — why it is neither, on the warning tint.
-/// Same shape either way, so the answer changes colour rather than place.
 class _DetectChip extends StatelessWidget {
   const _DetectChip({required this.text, this.refused = false});
   final String text;

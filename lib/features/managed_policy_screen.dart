@@ -8,12 +8,6 @@ import '../l10n/l10n.dart';
 import 'policy_origin.dart';
 import 'routing_widgets.dart';
 
-/// A policy the configuration did not choose, shown read-only: a server's
-/// managed routing, or the rules a subscription's panel sent.
-///
-/// Nothing here edits anything. The one thing the user can do is download the
-/// geo databases, because a geo rule without them is inactive and the screen
-/// should say why rather than dim a row and leave it at that.
 class ManagedPolicyScreen extends StatefulWidget {
   const ManagedPolicyScreen(
     this.policy, {
@@ -24,15 +18,8 @@ class ManagedPolicyScreen extends StatefulWidget {
 
   final Routing policy;
 
-  /// Whose policy this is. A read-only screen has to answer that before
-  /// anything else: the rules are identical whoever sent them, and only the
-  /// author decides whether the user is looking at an obligation or an offer.
-  /// Null means the organization's.
   final PolicyOrigin? origin;
 
-  /// Names of the policy's rule lists this device actually holds. Null means
-  /// the user has not accepted them at all — a different thing from a download
-  /// that failed, and the row says which.
   final Set<String>? listsAvailable;
 
   @override
@@ -40,7 +27,6 @@ class ManagedPolicyScreen extends StatefulWidget {
 }
 
 class _ManagedPolicyScreenState extends State<ManagedPolicyScreen> {
-  /// Null while the store is being asked.
   bool? _geoReady;
   bool _geoBusy = false;
 

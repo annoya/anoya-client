@@ -48,6 +48,24 @@ ADR that also covers the routing question, the ICMP forwarding fix and the
 connection-redial behaviour — not four documents that have to be read together
 to make sense.
 
+## Style
+
+**Short, plain and to the point — the same standard as the code.** A record is
+read by someone about to change the subsystem; every sentence must help them
+decide. Write what was decided, the constraint that forced it, and why each
+alternative lost — then stop.
+
+- One idea per sentence, plain words. No preamble, no restating the title, no
+  "it is worth noting".
+- No history of the work: not how we got there, not the order things were tried,
+  not who noticed what. Only what a reader needs today.
+- Facts over prose. A number, a path or a test name beats a paragraph about it.
+- Leave out what the code or git already says: API details, field lists,
+  step-by-step walkthroughs of the implementation.
+- If a section has nothing real to say, drop it rather than fill it.
+- Before finishing, reread and cut: if a sentence can go without the reader
+  losing a reason, it goes.
+
 ## Format
 
 Copy the shape of an existing record in `docs/decisions/`:

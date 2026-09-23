@@ -11,12 +11,6 @@ import 'package:vpn_client/state/menu_bar_controller.dart';
 import 'package:vpn_client/state/profiles_controller.dart';
 import 'package:vpn_client/state/session.dart';
 
-/// What the menu bar says, and what it lets the user do.
-///
-/// The menu is the only view of the tunnel while the window is closed, so every
-/// line of it is a claim made with nothing else on screen to correct it. These
-/// tests are about those claims: an item offering to connect to nothing, or a
-/// status line asserting a tunnel the app does not have, is the whole risk here.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -98,7 +92,6 @@ void main() {
     });
 
     test('a hot switch is not called connecting', () {
-      // The session never dropped; saying "Connecting…" would claim it did.
       final state = menuBarStateFor(
         session(VpnStatus.connected, at: DateTime.now()),
         profiles(p: profile(), switching: true),
@@ -164,8 +157,6 @@ void main() {
     });
 
     test('a menu bar exists only where the platform has one', () {
-      // iOS has no menu bar, so every call has to be a no-op there rather than
-      // an invoke at a channel with no other end.
       expect(MenuBar.supported, Platform.isMacOS);
     });
 
@@ -173,8 +164,6 @@ void main() {
       const state = MenuBarState(status: 'Connected', detail: '00:00:01 · X');
       await menu.update(state);
       await menu.update(state);
-      // The platform asks on every menu open; without this the same payload
-      // would cross the channel on each of them.
       expect(sent.map((c) => c.method), ['update']);
 
       await menu.update(const MenuBarState(status: 'Not connected'));
