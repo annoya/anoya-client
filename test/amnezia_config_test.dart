@@ -5,9 +5,9 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
-import 'package:vpn_client/core/amnezia/secondary_config.dart';
-import 'package:vpn_client/core/amnezia/vpn_key.dart';
-import 'package:vpn_client/core/mihomo_tun_config.dart';
+import 'package:anoya/core/amnezia/secondary_config.dart';
+import 'package:anoya/core/amnezia/vpn_key.dart';
+import 'package:anoya/core/mihomo_tun_config.dart';
 
 void main() {
   String vpnKey(Map<String, dynamic> doc, {bool premiumSignature = true}) {

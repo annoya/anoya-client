@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/json_file_store.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/profile_store.dart';
+import 'package:anoya/core/json_file_store.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/profile_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

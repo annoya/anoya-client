@@ -23,7 +23,7 @@ func defaultDir() string {
 	if base == "" {
 		base = `C:\ProgramData`
 	}
-	return filepath.Join(base, "AnnoyaTest", "engine")
+	return filepath.Join(base, "Anoya", "engine")
 }
 
 func listen() (net.Listener, error) {
@@ -102,8 +102,8 @@ func installService() error {
 		return fmt.Errorf("service %s already exists", serviceName)
 	}
 	s, err := m.CreateService(serviceName, exe, mgr.Config{
-		DisplayName:  "AnnoyaTest Tunnel",
-		Description:  "Hosts the VPN tunnel for AnnoyaTest.",
+		DisplayName:  "Anoya Tunnel",
+		Description:  "Hosts the VPN tunnel for Anoya.",
 		StartType:    mgr.StartAutomatic,
 		ErrorControl: mgr.ErrorNormal,
 	})

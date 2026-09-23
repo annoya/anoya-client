@@ -194,7 +194,7 @@ issued seconds earlier.
   exported in `core.go` (Apple) and `mobile/mobile.go` (Android).
 - Transports: `shared/apple/PacketTunnelProvider.swift` (`urltest:`,
   `proxybytes`), `VPNManager.swift`, `VpnChannel.swift`;
-  `android/app/src/main/aidl/org/annoya/vpn_client/ITunnel.aidl`,
+  `android/app/src/main/aidl/org/anoya/vpn/ITunnel.aidl`,
   `MihomoVpnService.kt`, `VpnChannel.kt`; the desktop service's `url_test` in
   `native/mihomocore/service/service.go`.
 - App: `lib/core/connection_check.dart`,

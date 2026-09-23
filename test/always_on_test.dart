@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/platform_support.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/features/always_on_screen.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/core/platform_support.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/features/always_on_screen.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

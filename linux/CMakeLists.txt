@@ -5,11 +5,11 @@ project(runner LANGUAGES CXX)
 # The name of the executable created for the application. Lower case, as
 # Linux binaries are; the packaging (linux/packaging, scripts/build-linux-packages.sh)
 # reads it from here.
-set(BINARY_NAME "annoyatest")
+set(BINARY_NAME "anoya")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
 # The same id as the desktop file's name, so the shell maps the window to it.
-set(APPLICATION_ID "org.annoya.test")
+set(APPLICATION_ID "org.anoya")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

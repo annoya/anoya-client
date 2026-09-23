@@ -2027,11 +2027,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorTunnelServiceNotRunningDetail =>
-      'AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.';
+      'Anoya installs it as the “AnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.';
 
   @override
   String get errorTunnelServiceNotRunningDetailLinux =>
-      'AnnoyaTest installs it as the “annoyatest-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start annoyatest-tunnel”, then connect again.';
+      'Anoya installs it as the “anoya-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start anoya-tunnel”, then connect again.';
 
   @override
   String get errorTunnelServiceStoppedTitle => 'The tunnel service stopped';

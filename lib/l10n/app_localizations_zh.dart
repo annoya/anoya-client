@@ -1964,11 +1964,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errorTunnelServiceNotRunningDetail =>
-      'AnnoyaTest 会将其安装为名为“AnnoyaTunnel”的 Windows 服务。请重新安装应用，或在“服务”中启动该服务，然后重新连接。';
+      'Anoya 会将其安装为名为“AnoyaTunnel”的 Windows 服务。请重新安装应用，或在“服务”中启动该服务，然后重新连接。';
 
   @override
   String get errorTunnelServiceNotRunningDetailLinux =>
-      'AnnoyaTest 会将其安装为名为“annoyatest-tunnel”的 systemd 服务。请重新安装软件包，或运行“sudo systemctl start annoyatest-tunnel”，然后重新连接。';
+      'Anoya 会将其安装为名为“anoya-tunnel”的 systemd 服务。请重新安装软件包，或运行“sudo systemctl start anoya-tunnel”，然后重新连接。';
 
   @override
   String get errorTunnelServiceStoppedTitle => '隧道服务已停止';

@@ -3221,13 +3221,13 @@ abstract class AppLocalizations {
   /// No description provided for @errorTunnelServiceNotRunningDetail.
   ///
   /// In en, this message translates to:
-  /// **'AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.'**
+  /// **'Anoya installs it as the “AnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.'**
   String get errorTunnelServiceNotRunningDetail;
 
   /// The Linux counterpart of errorTunnelServiceNotRunningDetail; the service is a systemd unit.
   ///
   /// In en, this message translates to:
-  /// **'AnnoyaTest installs it as the “annoyatest-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start annoyatest-tunnel”, then connect again.'**
+  /// **'Anoya installs it as the “anoya-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start anoya-tunnel”, then connect again.'**
   String get errorTunnelServiceNotRunningDetailLinux;
 
   /// No description provided for @errorTunnelServiceStoppedTitle.

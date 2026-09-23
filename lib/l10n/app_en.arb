@@ -1593,8 +1593,8 @@
   "errorNotALinkTitle": "This doesn’t look like a link we know",
   "errorNotALinkDetail": "Expected vless://, vmess://, trojan://, ss:// or a subscription URL.",
   "errorTunnelServiceNotRunningTitle": "The tunnel service isn’t running",
-  "errorTunnelServiceNotRunningDetail": "AnnoyaTest installs it as the “AnnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.",
-  "errorTunnelServiceNotRunningDetailLinux": "AnnoyaTest installs it as the “annoyatest-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start annoyatest-tunnel”, then connect again.",
+  "errorTunnelServiceNotRunningDetail": "Anoya installs it as the “AnoyaTunnel” Windows service. Reinstall the app, or start the service in Services, then connect again.",
+  "errorTunnelServiceNotRunningDetailLinux": "Anoya installs it as the “anoya-tunnel” systemd service. Reinstall the package, or run “sudo systemctl start anoya-tunnel”, then connect again.",
   "@errorTunnelServiceNotRunningDetailLinux": {
     "description": "The Linux counterpart of errorTunnelServiceNotRunningDetail; the service is a systemd unit."
   },

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'pipe_transport.dart';
 
 // Contract with `cmd/tunnel-service` (main_linux.go); change them together.
-const kTunnelSocket = '/run/annoyatest/tunnel.sock';
+const kTunnelSocket = '/run/anoya/tunnel.sock';
 
 class UnixSocketLink implements PipeLink {
   UnixSocketLink([this.path = kTunnelSocket]);

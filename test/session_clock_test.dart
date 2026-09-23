@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/vpn_core.dart';
-import 'package:vpn_client/state/providers.dart';
-import 'package:vpn_client/state/session.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/vpn_core.dart';
+import 'package:anoya/state/providers.dart';
+import 'package:anoya/state/session.dart';
 
 void main() {
   // The provisional start is set synchronously, so wait for the value to stop

@@ -6,17 +6,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vpn_client/core/geosite_index.dart';
-import 'package:vpn_client/core/norm_config.dart';
-import 'package:vpn_client/core/profile.dart';
-import 'package:vpn_client/core/rule_set.dart';
-import 'package:vpn_client/core/service_catalog.dart';
-import 'package:vpn_client/core/theme.dart';
-import 'package:vpn_client/core/vpn_core.dart';
-import 'package:vpn_client/features/rule_set_editor_screen.dart';
-import 'package:vpn_client/state/profiles_controller.dart';
-import 'package:vpn_client/state/providers.dart';
-import 'package:vpn_client/l10n/l10n.dart';
+import 'package:anoya/core/geosite_index.dart';
+import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/rule_set.dart';
+import 'package:anoya/core/service_catalog.dart';
+import 'package:anoya/core/theme.dart';
+import 'package:anoya/core/vpn_core.dart';
+import 'package:anoya/features/rule_set_editor_screen.dart';
+import 'package:anoya/state/profiles_controller.dart';
+import 'package:anoya/state/providers.dart';
+import 'package:anoya/l10n/l10n.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

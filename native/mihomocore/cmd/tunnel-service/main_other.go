@@ -14,7 +14,7 @@ import (
 )
 
 func defaultDir() string {
-	return filepath.Join(os.TempDir(), "annoya-tunnel")
+	return filepath.Join(os.TempDir(), "anoya-tunnel")
 }
 
 func socketPath(files service.Files) string { return filepath.Join(files.Dir, "tunnel.sock") }

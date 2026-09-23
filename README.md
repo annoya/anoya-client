@@ -9,7 +9,7 @@ boundary (`lib/core/vpn_core.dart`), which tests replace with a fake tunnel.
 The implementation is **`NetworkExtensionCore`**
 (`lib/core/network_extension_core.dart`); on macOS/iOS it drives a real
 system-wide VPN via a **`NEPacketTunnelProvider`** extension, on Windows the
-`AnnoyaTunnel` service over a named pipe, on Linux the `annoyatest-tunnel`
+`AnoyaTunnel` service over a named pipe, on Linux the `anoya-tunnel`
 systemd service over a unix socket. The mihomo engine is compiled as a Go
 c-archive (`MihomoCore.xcframework`) and linked into the extension; Dart only
 renders the mihomo TUN config and sends start/stop over a MethodChannel.
@@ -76,17 +76,17 @@ from anywhere:
 ./scripts/build-tunnel-service.sh        # build/windows/service/{tunnel-service.exe,wintun.dll}
 ./native/libagw/build-dll.sh             # native/libagw/build/windows/libagw.dll
 flutter build windows                    # on Windows
-ISCC.exe windows\installer\AnnoyaTest.iss /DAppVersion=1.1.0   # the setup .exe
+ISCC.exe windows\installer\Anoya.iss /DAppVersion=1.1.0   # the setup .exe
 ```
 
 The gateway library is a DLL here rather than something linked in: a Go
 c-archive has no place in the MSVC-built runner, so CMake copies
-`libagw.dll` next to `AnnoyaTest.exe` when it has been built, and Windows
+`libagw.dll` next to `Anoya.exe` when it has been built, and Windows
 resolves it from the executable's own directory. A bundle without it runs and
 refuses Amnezia keys, the same as a build without gateway credentials.
 
-The installer registers the service (`AnnoyaTunnel`, runs as SYSTEM, starts
-at boot) and grants Users write access to `%ProgramData%\AnnoyaTest\engine`,
+The installer registers the service (`AnoyaTunnel`, runs as SYSTEM, starts
+at boot) and grants Users write access to `%ProgramData%\Anoya\engine`,
 where the app downloads the geo databases and the service writes its logs.
 Without the service installed the app runs, shows the tunnel as disconnected and
 knocks on the pipe every few seconds; `tunnel-service.exe -console` in an
@@ -95,8 +95,8 @@ elevated prompt is the same service in the foreground, for development.
 ### Linux
 
 The same service (`native/mihomocore/cmd/tunnel-service`) as a systemd unit,
-`annoyatest-tunnel`, running as root; the app talks to it over the unix socket
-`/run/annoyatest/tunnel.sock`. The device is the kernel's tun, so there is no
+`anoya-tunnel`, running as root; the app talks to it over the unix socket
+`/run/anoya/tunnel.sock`. The device is the kernel's tun, so there is no
 driver to ship. Building the app needs a Linux host with the GTK 3 and
 libsecret development headers, clang, cmake and ninja; the service
 cross-compiles from anywhere:
@@ -118,9 +118,9 @@ without it runs and refuses Amnezia keys.
 
 The packages come from one nfpm description (`linux/packaging/nfpm.yaml`), so
 Debian, Fedora and Arch users get the same install: the app under
-`/opt/annoyatest`, the unit registered and started, and
-`/var/lib/annoyatest/engine` created world-writable with the sticky bit — the app downloads the geo databases there while the service reads them,
-as `%ProgramData%\AnnoyaTest\engine` does on Windows. For any other
+`/opt/anoya`, the unit registered and started, and
+`/var/lib/anoya/engine` created world-writable with the sticky bit — the app downloads the geo databases there while the service reads them,
+as `%ProgramData%\Anoya\engine` does on Windows. For any other
 distribution with systemd, the portable tar.gz carries the same files and an
 `install.sh` that lays them out the same way (`uninstall.sh` reverses it).
 Distributions without systemd are not covered: the service is registered

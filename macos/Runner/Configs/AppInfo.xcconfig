@@ -5,13 +5,13 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = AnnoyaTest
+PRODUCT_NAME = Anoya
 
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = org.annoya.test
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 org.annoya. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 org.anoya. All rights reserved.
 
 // App Store category. Mandatory for the Mac App Store — an archive without
 // LSApplicationCategoryType is rejected on upload with error 90242. Must stay a

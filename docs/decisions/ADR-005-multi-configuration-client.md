@@ -99,7 +99,7 @@ sentences, because they have three different fixes.
 A panel chooses what to send by matching the client's User-Agent, so a
 capability like groups otherwise depends on an admin having written a rule for
 this app — measured on a live panel: our old Dart-SDK default matched one, and
-renaming ourselves to `AnnoyaTest/1.0` silently dropped us to base64, losing
+renaming ourselves to `Anoya/1.0` silently dropped us to base64, losing
 groups and provider routing with nothing in the code to show for it. Asking by
 name (a documented feature of every panel that has renderings) removes the
 dependency. It also overrides what the admin's rule intended for us, which is

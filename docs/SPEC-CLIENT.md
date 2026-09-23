@@ -4,7 +4,7 @@
 >
 > This document says what the client *is*. Why it is that way lives in
 > [`docs/decisions/`](decisions/README.md); the server product it can optionally
-> talk to is specified in [`SPEC-SERVICE.md`](https://github.com/annoya/annoya-web-panel/blob/main/docs/SPEC-SERVICE.md).
+> talk to is specified in [`SPEC-SERVICE.md`](https://github.com/anoya/anoya-web-panel/blob/main/docs/SPEC-SERVICE.md).
 
 ## 1. What this is
 
@@ -122,7 +122,7 @@ directory. Both natives speak one channel contract (`vpn/control`,
 `vpn/status`), so a single Dart core serves all three platforms.
 Rationale and constraints: ADR-001.
 
-On Windows the tunnel is a Windows service (`AnnoyaTunnel`,
+On Windows the tunnel is a Windows service (`AnoyaTunnel`,
 `native/mihomocore/cmd/tunnel-service`), started by the Service Control
 Manager and spoken to over a named pipe; the adapter is Wintun and the engine's
 home is under `ProgramData`. The tun runs with `strict-route`: Windows resolves
@@ -140,10 +140,10 @@ never "run it". Connecting and disconnecting say what the user wants now; the
 switch says what they want every time the machine comes back, and neither
 changes the other.
 
-On Linux the same service is a systemd unit (`annoyatest-tunnel`,
+On Linux the same service is a systemd unit (`anoya-tunnel`,
 `native/mihomocore/cmd/tunnel-service`, `main_linux.go`), running as root and
-spoken to over the unix socket `/run/annoyatest/tunnel.sock`; the device is
-the kernel's tun, the engine's home is `/var/lib/annoyatest/engine`. The same
+spoken to over the unix socket `/run/anoya/tunnel.sock`; the device is
+the kernel's tun, the engine's home is `/var/lib/anoya/engine`. The same
 `tun` section as Windows — `auto-route` and `strict-route`, which sing-tun
 implements there with routing rules and nftables. The auto-connect switch and
 the boot-time start are exactly the Windows ones: the service package does not
@@ -313,7 +313,7 @@ Works only while the extension runs.
 
 | | |
 |---|---|
-| Transport | Windows `\\.\pipe\AnnoyaTest.tunnel`; Linux `/run/annoyatest/tunnel.sock` |
+| Transport | Windows `\\.\pipe\Anoya.tunnel`; Linux `/run/anoya/tunnel.sock` |
 | Framing | one JSON object per line, both ways; a line up to 16 MB |
 | Request | `{"id", "method", "args"}` |
 | Response | `{"id", "result", "error"?}`, matched by `id`; answered concurrently |
@@ -431,7 +431,7 @@ fetched keep working.
   advertises a provider.
 
 Which of the four a panel serves is decided by a rule its admin wrote against
-the app's User-Agent (`AnnoyaTest/<version>` — ours, never another client's
+the app's User-Agent (`Anoya/<version>` — ours, never another client's
 name). That makes the *amount* we get depend on somebody else's rule, so where a
 panel supports it the app asks for the rendering it wants by name: after a body
 that carries no groups, it tries `<url>/mihomo` (Remnawave), `<url>/clash-meta`
@@ -799,7 +799,7 @@ sentence naming Amnezia would be a false statement about who took the money;
 
 The only contract between this client and a management service is one
 authenticated endpoint returning the normalized bundle (`normconfig.Bundle`,
-specified in [`SPEC-SERVICE.md`](https://github.com/annoya/annoya-web-panel/blob/main/docs/SPEC-SERVICE.md) §4):
+specified in [`SPEC-SERVICE.md`](https://github.com/anoya/anoya-web-panel/blob/main/docs/SPEC-SERVICE.md) §4):
 
 ```
 GET /api/client/config → { version, account, locations[], routing? }

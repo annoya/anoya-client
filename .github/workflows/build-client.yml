@@ -185,7 +185,7 @@ jobs:
           [ -x "$iscc" ] || choco install innosetup -y --no-progress
           # Git Bash rewrites arguments that start with a slash into Windows
           # paths, so "/DAppVersion=…" reached ISCC as a second script file.
-          MSYS_NO_PATHCONV=1 "$iscc" "windows\\installer\\AnnoyaTest.iss" "/DAppVersion=$version"
+          MSYS_NO_PATHCONV=1 "$iscc" "windows\\installer\\Anoya.iss" "/DAppVersion=$version"
 
       - name: Artifact names
         id: meta
