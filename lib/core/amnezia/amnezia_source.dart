@@ -4,6 +4,7 @@ import '../log.dart';
 import '../norm_config.dart';
 import '../profile.dart';
 import '../profile_store.dart';
+import 'agw_ffi.dart';
 import 'amnezia_account.dart';
 import 'amnezia_errors.dart';
 import 'gateway.dart';
@@ -29,16 +30,31 @@ final class AmneziaSource {
       _injected ??
       AmneziaGateway(installationUuid: await ProfileStore.amneziaInstallId());
 
-  Future<Profile> refresh() async {
+  Future<String> _key() async {
     final key = await ProfileStore.amneziaKey(profile.id);
-    if (key == null || key.isEmpty) {
-      throw AppErrorException(
-        AppError(
-          L10n.current.amneziaErrorLostKeyTitle,
-          detail: L10n.current.amneziaErrorLostKeyDetail,
-        ),
-      );
-    }
+    if (key != null && key.isNotEmpty) return key;
+    Log.e('amnezia: no stored key for ${profile.id}');
+    throw AppErrorException(
+      AppError(
+        L10n.current.amneziaErrorLostKeyTitle,
+        detail: L10n.current.amneziaErrorLostKeyDetail,
+      ),
+    );
+  }
+
+  AppErrorException _refused(String request, AgwResponse res) {
+    Log.e(
+      'amnezia: $request failed',
+      res.code == AgwStatus.ok
+          ? 'http ${res.httpStatus}'
+                '${res.message.isEmpty ? '' : ' "${res.message}"'}'
+          : '${AgwStatus.describe(res.code)} (agw ${res.code})',
+    );
+    return AppErrorException(describeAmneziaError(res));
+  }
+
+  Future<Profile> refresh() async {
+    final key = await _key();
     final gw = await _gateway();
     final res = await gw.accountInfo(
       apiKey: key,
@@ -46,7 +62,7 @@ final class AmneziaSource {
       userCountryCode: _state.userCountryCode,
       subscriptionStatus: _state.account.expired ? 'expired' : 'active',
     );
-    if (!res.ok) throw AppErrorException(describeAmneziaError(res));
+    if (!res.ok) throw _refused('account_info', res);
 
     final account = AmneziaAccount.fromJson(res.json);
     final next = _state.copyWith(account: account);
@@ -72,8 +88,7 @@ final class AmneziaSource {
     if (parts == null) return profile;
     if (!force && _isFresh(selectionId)) return profile;
 
-    final key = await ProfileStore.amneziaKey(profile.id);
-    if (key == null || key.isEmpty) return profile;
+    final key = await _key();
 
     final protocol = parts.protocol.isEmpty
         ? _state.serviceProtocol
@@ -91,7 +106,13 @@ final class AmneziaSource {
       serverCountryCode: parts.country,
       isConnectEvent: true,
     );
-    if (!res.ok) throw AppErrorException(describeAmneziaError(res));
+    if (!res.ok) {
+      throw _refused(
+        'config for ${parts.country.isEmpty ? 'the free service' : parts.country}'
+        ' (${amneziaProtocolLabel(protocol)})',
+        res,
+      );
+    }
 
     final label = _labelFor(selectionId);
     final parsed = parseAmneziaSecondaryConfig(
@@ -100,6 +121,7 @@ final class AmneziaSource {
       privateKey: wg?.privateKey ?? '',
     );
     if (parsed == null) {
+      Log.e('amnezia: config for ${parts.country} has no usable server');
       throw AppErrorException(kAmneziaEmptyAnswer);
     }
 

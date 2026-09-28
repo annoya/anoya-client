@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/amnezia/agw_ffi.dart';
+import 'package:anoya/core/app_error.dart';
 import 'package:anoya/core/amnezia/amnezia_account.dart';
 import 'package:anoya/core/amnezia/amnezia_errors.dart';
 import 'package:anoya/core/amnezia/amnezia_source.dart';
@@ -317,6 +318,19 @@ void main() {
         isTrue,
         reason: 'the one we are not using is a name again',
       );
+    });
+
+    test('a lost key is an error, not a silent no-op', () async {
+      await ProfileStore.deleteAmneziaKey('p-amnezia');
+      final gw = _FakeGateway(configBody: awgConfigAnswer());
+      await expectLater(
+        AmneziaSource(
+          withPlace(),
+          gateway: gw,
+        ).resolveSelection('amnezia_de_awg'),
+        throwsA(isA<AppErrorException>()),
+      );
+      expect(gw.configCalls, 0);
     });
 
     test('a selection that is not ours is left alone', () async {
