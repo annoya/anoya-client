@@ -39,7 +39,7 @@ class AmneziaEnv {
       .where((e) => e.isNotEmpty)
       .toList(growable: false);
 
-  static String get clientName => kAppName;
+  static const clientName = 'AnnoyaTest';
   static String get clientVersion => appVersion;
   static const distribution = '';
 }

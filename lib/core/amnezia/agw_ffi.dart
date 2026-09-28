@@ -133,6 +133,18 @@ class AgwStatus {
   static const network = 6;
 
   static const decrypt = 7;
+
+  static String describe(int code) => switch (code) {
+    ok => 'ok',
+    cancelled => 'cancelled',
+    invalidArgument => 'invalid argument',
+    config => 'gateway public key missing or invalid',
+    timeout => 'request timed out',
+    ssl => 'tls error',
+    network => 'gateway unreachable',
+    decrypt => 'response decryption failed',
+    _ => 'unknown error',
+  };
 }
 
 class AgwResponse {

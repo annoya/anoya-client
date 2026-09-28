@@ -213,15 +213,17 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   }
 
   Future<void> selectLocation(String id) async {
+    final before = state;
     state = state.copyWith(selectedLocationId: id);
-    await _applySelection();
+    await _applySelection(undo: before);
   }
 
-  Future<void> _applySelection() async {
+  Future<void> _applySelection({ProfilesState? undo}) async {
     final core = ref.read(vpnCoreProvider);
     var p = state.active;
     final selection = state.selectionId;
     if (p == null || selection == null) return;
+    final attempted = state.selectedLocationId;
 
     // Resolved even with the tunnel down: the system may start the stored
     // config with no app to fetch a server. Forced: the gateway may have rotated
@@ -240,6 +242,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
               L10n.current.profilesPreviousServerStillInUse,
         ),
       );
+      await _undoSelection(undo, attempted);
       return;
     }
     state = state.copyWith(switching: false);
@@ -262,7 +265,33 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
           detail: L10n.current.profilesCouldntSwitchDetail,
         ),
       );
+      await _undoSelection(undo, attempted, profile: true);
     }
+  }
+
+  Future<void> _undoSelection(
+    ProfilesState? undo,
+    String? attempted, {
+    bool profile = false,
+  }) async {
+    if (undo == null ||
+        state.selectedLocationId != attempted ||
+        state.activeId != undo.activeId) {
+      return;
+    }
+    final previous = profile ? undo.active : null;
+    state = ProfilesState(
+      profiles: [
+        for (final p in state.profiles) p.id == previous?.id ? previous! : p,
+      ],
+      activeId: state.activeId,
+      selectedLocationId: undo.selectedLocationId,
+      loading: state.loading,
+      switching: state.switching,
+      error: state.error,
+      notice: state.notice,
+    );
+    if (previous != null) await ProfileStore.save(state.profiles);
   }
 
   Future<Profile> refreshActive() async {
