@@ -218,6 +218,7 @@ void main() {
       final st = ctrl.state;
       expect(st.switching, false);
       expect(st.error, isNotNull, reason: 'the failure is told, not swallowed');
+      expect(st.selectionId, 'p1-a', reason: 'the picker stays on the old one');
     });
 
     test('switching while disconnected never starts a tunnel', () async {
