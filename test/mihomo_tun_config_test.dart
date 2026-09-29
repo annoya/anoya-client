@@ -113,6 +113,15 @@ void main() {
     expect(mihomoTunConfigYaml(vlessLoc()), contains('stack: gvisor'));
   });
 
+  test('the tun mtu defaults to 1500 and is overridable per platform', () {
+    YamlMap tun(String yaml) => (loadYaml(yaml) as YamlMap)['tun'] as YamlMap;
+    expect(tun(mihomoTunConfigYaml(vlessLoc()))['mtu'], 1500);
+    expect(
+      tun(mihomoTunConfigYaml(vlessLoc(), mtu: kAndroidTunMtu))['mtu'],
+      9000,
+    );
+  });
+
   test('no routing → full tunnel, process matching off', () {
     final yaml = mihomoTunConfigYaml(vlessLoc());
     expect(yaml, contains('find-process-mode: "off"'));
