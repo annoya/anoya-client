@@ -111,8 +111,6 @@ func installService() error {
 		return err
 	}
 	defer s.Close()
-	// The app cannot start a service. Capped at three restarts a day so a crash
-	// loop does not hide a broken build.
 	restart := mgr.RecoveryAction{Type: mgr.ServiceRestart, Delay: 5 * time.Second}
 	if err := s.SetRecoveryActions([]mgr.RecoveryAction{restart, restart, restart}, 24*60*60); err != nil {
 		return fmt.Errorf("set recovery actions: %w", err)
@@ -135,8 +133,7 @@ func uninstallService() error {
 		if _, err := s.Control(svc.Stop); err != nil {
 			return err
 		}
-		// Delete on a running service only marks it; wait so the installer sees
-		// it gone.
+		// Delete on a running service only marks it for deletion.
 		for i := 0; i < 50; i++ {
 			if st, err := s.Query(); err != nil || st.State == svc.Stopped {
 				break

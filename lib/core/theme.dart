@@ -90,8 +90,6 @@ ThemeData buildAppTheme(Brightness brightness) {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      // Leading slot centres its 48pt button at 28 from the edge, actions sit at
-      // 24; this padding makes both 28.
       leadingWidth: _kLeading,
       actionsPadding: const EdgeInsets.only(
         right: (_kLeading - _kIconButton) / 2,

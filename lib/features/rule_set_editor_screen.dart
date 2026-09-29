@@ -62,8 +62,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   Future<void> _persist() async {
-    // Notifiers before any await: ref dies if the user leaves mid-write, and
-    // the resync must still run or the saved tunnel config keeps old routing.
     final revision = ref.read(ruleSetRevisionProvider.notifier);
     final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
@@ -99,7 +97,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         (r) => _representable(r) && r.type == type && r.value == value,
       );
       if (on) {
-        // Appended: advanced rules keep precedence.
         _rules.add(
           RoutingRule(type: type, value: value, action: _expectedAction),
         );
@@ -137,7 +134,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   Future<void> _setEditor(RuleEditor editor) async {
     if (editor == _editor) return;
     setState(() => _editor = editor);
-    // A view preference: saved without resyncing the tunnel config.
     final sets = await RuleSetStore.load();
     await RuleSetStore.save([
       for (final s in sets)
@@ -180,7 +176,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       ),
     );
     if (ok != true) return;
-    // Notifiers first, as in _persist.
     final revision = ref.read(ruleSetRevisionProvider.notifier);
     final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
@@ -314,12 +309,10 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         ReorderableListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          // Own handle in each row: the default sits outside the card (macOS).
           buildDefaultDragHandles: false,
           onReorderItem: _reorder,
           children: [
             for (var i = 0; i < _rules.length; i++)
-              // ObjectKey, not index: an index key misdirects the settle animation.
               RuleTile(
                 key: ObjectKey(_rules[i]),
                 rule: _rules[i],

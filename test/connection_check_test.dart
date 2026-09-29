@@ -41,7 +41,6 @@ void main() {
     tmp.deleteSync(recursive: true);
   });
 
-  // Prefs load from a file first, so this waits on real async work.
   Future<void> until(
     bool Function() done, {
     Duration timeout = const Duration(milliseconds: 500),
@@ -191,7 +190,6 @@ void main() {
       await c.read(connectionCheckProvider.notifier).setEnabled(false);
 
       core.emit(VpnStatus.connected);
-      // Past the warm-up and the first retry.
       await until(() => core.probes > 0, timeout: const Duration(seconds: 5));
 
       expect(core.probes, 0);
@@ -375,8 +373,7 @@ void main() {
   });
 
   group('the screen', () {
-    // Built in the real zone: the prefs file read never completes inside the
-    // widget test's fake async zone.
+    // The prefs file read never completes inside the fake async zone.
     Future<ProviderContainer> pump(WidgetTester tester, _FakeCore core) async {
       final container = ProviderContainer(
         overrides: [vpnCoreProvider.overrideWithValue(core)],

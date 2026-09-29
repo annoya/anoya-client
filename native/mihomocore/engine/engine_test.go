@@ -46,7 +46,6 @@ func TestSetEngineLogLevelSilencesTheEngine(t *testing.T) {
 }
 
 func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
-	// Only unparseable input: anything parseable would start real listeners.
 	if err := Reload(5, "{"); err == nil {
 		t.Fatal("a config that does not parse must be rejected")
 	}
@@ -61,7 +60,6 @@ func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
 func TestMissingGeoDatabaseFailsFastInsteadOfDownloading(t *testing.T) {
 	constant.SetHomeDir(t.TempDir())
 
-	// DIRECT: an unknown outbound would fail before geo loading is reached.
 	const cfg = "log-level: silent\n" +
 		"geox-url:\n  geoip: ''\n  geosite: ''\n  mmdb: ''\n  asn: ''\n" +
 		"rules:\n  - GEOSITE,youtube,DIRECT\n"

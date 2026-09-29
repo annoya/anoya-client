@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// Same layout as the Android tunnel process (TunnelFiles.kt).
 type Files struct {
 	Dir string
 }
@@ -26,8 +25,6 @@ func (f Files) autoConnectFlag() string { return filepath.Join(f.Dir, "auto_conn
 func (f Files) Ensure() error { return os.MkdirAll(f.Dir, 0o755) }
 
 func (f Files) SaveConfig(yaml string) error {
-	// Owner-only: it carries credentials and on Linux the directory is
-	// world-writable. Windows ignores the mode; the installer sets the ACL.
 	return writeFileAtomic(f.Config(), []byte(yaml), 0o600)
 }
 
@@ -77,7 +74,6 @@ func (f Files) LogsEnabled() bool {
 	return string(bytes.TrimSpace(b)) != "0"
 }
 
-// Same numbers as the Android and Apple tunnel processes.
 const (
 	logTailBytes = 512 * 1024
 	logMaxBytes  = 4 * 1024 * 1024
@@ -110,7 +106,6 @@ func (f Files) Tail(path string) string {
 	return string(buf)
 }
 
-// Halved rather than cut to the cap, or every line past the cap would rotate.
 func RotateIfNeeded(path string) {
 	fh, err := os.OpenFile(path, os.O_RDWR, 0)
 	if err != nil {

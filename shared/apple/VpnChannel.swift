@@ -109,9 +109,7 @@ enum VpnChannel {
             case "device_info":
                 result(deviceInfo())
             case "gateway_abi":
-                // This reference keeps the linker from dropping the Libagw static archive,
-                // whose only other caller is Dart FFI. The -u flags in OTHER_LDFLAGS keep
-                // the remaining agw_* symbols alive through dead stripping.
+                // Keeps the linker from dropping the Libagw archive, otherwise only used via Dart FFI.
                 result(Int(agw_abi_version()))
             case "shared_dir":
                 let url = FileManager.default.containerURL(
@@ -145,7 +143,6 @@ enum VpnChannel {
     }
 }
 
-// The model comes from sysctl, not the host name: the host name often carries the user's name.
 private func deviceInfo() -> [String: String] {
     let v = ProcessInfo.processInfo.operatingSystemVersion
     var model = ""
@@ -173,16 +170,13 @@ private func deviceInfo() -> [String: String] {
     ]
 }
 
-// Flutter calls stream handlers on the main thread, but the protocol does not say so;
-// assumeIsolated traps rather than races if that ever changes.
 private final class StatusStreamHandler: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         MainActor.assumeIsolated {
             VPNManager.shared.onStatus = { status in events(status) }
             events(VPNManager.shared.currentStatus())
         }
-        // On a fresh launch the line above says "disconnected" even over a live
-        // tunnel; adopting the system profile publishes the real status.
+        // On a fresh launch the system reports "disconnected" even over a live tunnel.
         Task { @MainActor in events(await VPNManager.shared.refreshStatus()) }
         return nil
     }

@@ -17,7 +17,6 @@ final providerRuleListsProvider =
       try {
         return await RuleListStore.status(lists);
       } catch (e) {
-        // Not null: null means "not known yet" and callers treat it optimistically.
         Log.e('rule list status unavailable', '$e');
         return [for (final l in lists) RuleListStatus(list: l, error: '$e')];
       }

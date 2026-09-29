@@ -10,8 +10,7 @@ class AmneziaEnv {
     defaultValue: 'http://gw.amnezia.org:80/',
   );
 
-  // Base64, not raw PEM: Gradle mangles newlines in --dart-define, and the exact
-  // bytes are the SHA-512 key to the bypass proxy lists.
+  // Base64: Gradle mangles newlines in --dart-define.
   static const _publicKeyB64 = String.fromEnvironment('AGW_PUBLIC_KEY_B64');
 
   static String get publicKeyPem {

@@ -24,8 +24,8 @@ Future<WgKeyPair> generateWgKeyPair() async {
 String generateVlessId() {
   final rnd = Random.secure();
   final b = List<int>.generate(16, (_) => rnd.nextInt(256));
-  b[6] = (b[6] & 0x0f) | 0x40; // version 4
-  b[8] = (b[8] & 0x3f) | 0x80; // variant 1
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
   String hex(int from, int to) => b
       .sublist(from, to)
       .map((x) => x.toRadixString(16).padLeft(2, '0'))

@@ -2,7 +2,6 @@ package org.anoya.vpn
 
 import android.os.RemoteCallbackList
 
-// Only the tunnel process's copy is real; the app sees it via ITunnelCallback.
 object TunnelState {
     const val DISCONNECTED = "disconnected"
     const val CONNECTING = "connecting"

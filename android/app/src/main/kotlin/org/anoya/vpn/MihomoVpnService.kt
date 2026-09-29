@@ -26,8 +26,7 @@ class MihomoVpnService : VpnService() {
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
 
-    // A bare number, not a PFD: the engine owns and closes the fd, and a
-    // second close() from a PFD is a SIGABRT under fdsan.
+    // Not a PFD: its second close() of the engine-owned fd is a SIGABRT under fdsan.
     @Volatile private var tunFd: Int? = null
     private var logStream: FileOutputStream? = null
 
@@ -37,7 +36,6 @@ class MihomoVpnService : VpnService() {
         override fun reload(config: String): String {
             return try {
                 executor.submit<String> {
-                    // Read on the executor: a queued stop may clear the fd first.
                     val fd = tunFd ?: return@submit "tunnel is not running"
                     try {
                         Mobile.reload(fd.toLong(), config)
@@ -80,7 +78,7 @@ class MihomoVpnService : VpnService() {
         override fun unregisterCallback(cb: ITunnelCallback) = TunnelState.unregister(cb)
     }
 
-    // The system's bind must get the default binder, or always-on breaks.
+    // Always-on breaks unless the system's bind gets the default binder.
     override fun onBind(intent: Intent?): IBinder? =
         if (intent?.action == SERVICE_INTERFACE) super.onBind(intent) else binder
 
@@ -89,8 +87,6 @@ class MihomoVpnService : VpnService() {
             shutdown()
             return START_NOT_STICKY
         }
-        // Not tunFd: it is set only after establish(), so a second start
-        // while connecting would bring up a second tun.
         when (TunnelState.status) {
             TunnelState.CONNECTING, TunnelState.CONNECTED -> return START_STICKY
         }
@@ -112,9 +108,7 @@ class MihomoVpnService : VpnService() {
                 .addRoute("0.0.0.0", 0)
                 .addAddress("fdfe:dcba:9876::1", 126)
                 .addRoute("::", 0)
-                // Not a public resolver: with 1.1.1.1, automatic Private DNS
-                // switches to DoT on 853 and bypasses dns-hijack. Nothing
-                // answers here, so Android stays on plain DNS.
+                // A public resolver makes automatic Private DNS switch to DoT and bypass dns-hijack.
                 .addDnsServer("172.19.0.2")
             val pfd = builder.establish()
                 ?: throw IllegalStateException("the system refused to establish the tunnel")
@@ -146,7 +140,6 @@ class MihomoVpnService : VpnService() {
 
     fun shutdown() {
         executor.execute {
-            // Stop closes the fd too; do not close it here.
             runCatching { Mobile.stop() }
             tunFd = null
             TunnelState.set(TunnelState.DISCONNECTED)
@@ -168,14 +161,13 @@ class MihomoVpnService : VpnService() {
         super.onDestroy()
     }
 
-    // mihomo logs only to stdout, and logcat is not readable by the app.
     private fun redirectEngineOutput() {
         if (logStream != null) return
         try {
             val out = FileOutputStream(TunnelFiles.engineLog(this), true)
             Os.dup2(out.fd, 1)
             Os.dup2(out.fd, 2)
-            logStream = out // held so the fd stays open
+            logStream = out // held so GC does not close the fd
         } catch (e: Exception) {
             log("stdout redirect failed: ${e.message}")
         }

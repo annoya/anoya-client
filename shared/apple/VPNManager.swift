@@ -1,8 +1,6 @@
 import Foundation
 import NetworkExtension
 
-// @MainActor is load-bearing: onStatus feeds a Flutter EventChannel, which only
-// accepts messages on the platform thread.
 @MainActor
 final class VPNManager {
     static let shared = VPNManager()
@@ -35,8 +33,6 @@ final class VPNManager {
         return m
     }
 
-    // Saves only on a real change: saving preferences on a live session makes the
-    // system re-assert the tunnel.
     private func persist(config: String, logEnabled: Bool,
                          into m: NETunnelProviderManager) async throws {
         guard let proto = m.protocolConfiguration as? NETunnelProviderProtocol else { return }
@@ -73,7 +69,6 @@ final class VPNManager {
             self.statusObserver = nil
         }
         manager = nil
-        // Forced: the last status may already be "disconnected", and Dart must still hear it.
         publish("disconnected", force: true)
         NSLog("VPN-NATIVE: removed VPN profile from system preferences")
     }
@@ -174,7 +169,6 @@ final class VPNManager {
         let arm = enabled && !compiled.isEmpty && hasConfig
 
         let wasArmed = m.isOnDemandEnabled
-        // Save only on a real change, as in persist(): otherwise the live session flaps.
         let ruleChange = !sameRules(m.onDemandRules ?? [], compiled)
         let changed = ruleChange
             || m.isOnDemandEnabled != arm
@@ -197,8 +191,7 @@ final class VPNManager {
 
     nonisolated private static let providerMessageTimeout: TimeInterval = 10
 
-    // sendProviderMessage never calls its reply handler if the extension dies, so
-    // without the deadline the caller would hang forever.
+    // sendProviderMessage never calls its reply handler if the extension dies.
     private func ask(_ session: NETunnelProviderSession, _ message: String,
                      timeout: TimeInterval = VPNManager.providerMessageTimeout) async throws -> String {
         final class Once: @unchecked Sendable {
@@ -324,7 +317,6 @@ final class VPNManager {
             throw NSError(domain: "vpn", code: 5,
                           userInfo: [NSLocalizedDescriptionKey: "the tunnel is not running"])
         }
-        // Probe timeout plus a margin, so a late answer is not cut off by the transport.
         return try await ask(session, "urltest:\(timeoutMs):\(url)",
                              timeout: TimeInterval(timeoutMs) / 1000 + 5)
     }
@@ -347,7 +339,6 @@ final class VPNManager {
         manager?.connection.connectedDate?.timeIntervalSince1970 ?? 0
     }
 
-    // Block observers are removed only by their token, not by removeObserver(self).
     private var statusObserver: NSObjectProtocol?
 
     private func observe(_ m: NETunnelProviderManager) {
@@ -355,7 +346,6 @@ final class VPNManager {
             NotificationCenter.default.removeObserver(statusObserver)
             self.statusObserver = nil
         }
-        // queue: .main is what makes assumeIsolated below safe.
         statusObserver = NotificationCenter.default.addObserver(
             forName: .NEVPNStatusDidChange, object: m.connection, queue: .main
         ) { [weak self] _ in
@@ -379,8 +369,7 @@ final class VPNManager {
         switch s {
         case .connected: return "connected"
         case .connecting, .reasserting: return "connecting"
-        // Deliberate: "disconnected" this early makes Dart ask for a disconnect
-        // reason the system has not recorded yet.
+        // Early "disconnected" makes Dart query a disconnect reason the system has not recorded yet.
         case .disconnecting: return "connecting"
         case .disconnected, .invalid: return "disconnected"
         @unknown default: return "disconnected"

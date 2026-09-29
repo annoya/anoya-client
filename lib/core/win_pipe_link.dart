@@ -8,11 +8,9 @@ import 'package:win32/win32.dart';
 
 import 'pipe_transport.dart';
 
-// Contract with `cmd/tunnel-service`; change them together.
 const kTunnelPipe = r'\\.\pipe\Anoya.tunnel';
 
-// FILE_FLAG_OVERLAPPED is required: on a synchronous handle a WriteFile waits
-// behind the reader's pending ReadFile and the app deadlocks.
+// Without FILE_FLAG_OVERLAPPED, WriteFile waits behind the pending ReadFile and deadlocks.
 class WinPipeLink implements PipeLink {
   WinPipeLink([this.path = kTunnelPipe]);
 
@@ -55,8 +53,7 @@ class WinPipeLink implements PipeLink {
     });
   }
 
-  // ReadFile/WriteFile return values and GetLastError are deliberately ignored:
-  // the VM overwrites the last error; the OVERLAPPED wait is the reliable source.
+  // Return values and GetLastError ignored: the VM overwrites the last error.
   static int _transfer(
     int handle,
     int Function(Pointer<OVERLAPPED> overlapped) start,

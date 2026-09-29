@@ -35,8 +35,7 @@ Map<String, dynamic>? decodeAmneziaEnvelope(String text) {
   final bytes = _decodeBase64Url(body);
   if (bytes == null || bytes.length < 5) return null;
 
-  // Skip the 4-byte qCompress length prefix; premium keys overwrite it with a
-  // constant, so it is never read.
+  // Premium keys overwrite the qCompress length prefix with a constant.
   final inflated = _inflate(bytes.sublist(4));
   final text0 = inflated ?? bytes;
   try {

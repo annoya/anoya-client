@@ -181,8 +181,6 @@ ProviderRouting? parseClashRules(
       'GEOIP' => 'geoip',
       'GEOSITE' => 'geosite',
       'DOMAIN-REGEX' => 'domain-regex',
-      // Not dropped here: the renderer drops it only on platforms that cannot
-      // resolve processes.
       'PROCESS-NAME' => 'process-name',
       'RULE-SET' => 'rule-list',
       _ => null,

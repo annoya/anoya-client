@@ -73,8 +73,6 @@ class OnDemandRule {
       (i) => i.name == (j['interface'] as String? ?? 'any'),
       orElse: () => OnDemandInterface.any,
     ),
-    // whereType, not cast: cast() is lazy, so its type error would surface far
-    // from load()'s try/catch.
     ssids: (j['ssids'] as List<dynamic>? ?? []).whereType<String>().toList(),
     dnsDomains: (j['dns_domains'] as List<dynamic>? ?? [])
         .whereType<String>()

@@ -80,7 +80,6 @@ class SubscriptionInfo {
       title: _text(headers['profile-title']),
       usedBytes: (user['upload'] ?? 0) + (user['download'] ?? 0),
       totalBytes: user['total'] ?? 0,
-      // 0 is the convention's "no end date", not 1970.
       expiresAt: expire > 0
           ? DateTime.fromMillisecondsSinceEpoch(
               expire * 1000,

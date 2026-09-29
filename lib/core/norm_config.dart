@@ -233,8 +233,6 @@ class RoutingRule {
   static final _geoipRe = RegExp(r'^[A-Za-z]{2}$');
   static final _geositeRe = RegExp(r'^[a-z0-9][a-z0-9@.!-]*$');
   static final _listRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
-  // Commas and `#` are rejected, not escaped: mihomo's rule splitter honours
-  // no escaping, and `#` would start a YAML comment.
   static final _regexRe = RegExp(r'^[^,#\r\n]{1,256}$');
 
   bool get needsGeoData => type == 'geoip' || type == 'geosite';
@@ -285,7 +283,7 @@ class Account {
   final String status;
   final DateTime? expiresAt;
   final int usedBytes;
-  final int dataLimit; // 0 = unlimited
+  final int dataLimit;
 
   bool get canConnect => status == 'active' || status == 'on_hold';
 

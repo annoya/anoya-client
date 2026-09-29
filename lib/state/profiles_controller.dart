@@ -25,11 +25,8 @@ import 'ready_gate.dart';
 
 export 'profiles_state.dart';
 
-// The timer tick, not the refresh cadence (that is refreshGapFor): fast so
-// a provider asking for five minutes gets five minutes.
 const kConfigPollInterval = kMinRefreshGap;
 
-// Rate limit so a flapping source can't loop the tunnel.
 const kReapplyMinGap = Duration(minutes: 1);
 
 class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
@@ -61,7 +58,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       if (profileId == lastProfile && selectionId == lastSelection) return;
       lastProfile = profileId;
       lastSelection = selectionId;
-      // catchError: a throwing fire-and-forget future is an uncaught async error.
       unawaited(
         ProfileStore.saveSelection(
           profileId,
@@ -78,12 +74,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     final active =
         profiles.where((p) => p.id == saved.profileId).firstOrNull ??
         (profiles.isEmpty ? null : profiles.first);
-    // A selection saved for another configuration is not carried over, even if
-    // the id happens to match.
     final restored = active?.id == saved.profileId
         ? _knownSelection(active, saved.selectionId)
         : null;
-    // The container can be gone after the reads; assigning state would throw.
     if (!ref.mounted) return;
     state = ProfilesState(
       profiles: profiles,
@@ -190,8 +183,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       selectedLocationId: _firstLocation(newActive),
     );
     if (profiles.isEmpty) {
-      // The system profile takes its on-demand rules with it, so on-demand is
-      // cleared locally only: a disarm push would recreate the profile first.
       await ref.read(vpnCoreProvider).removeSystemProfile();
       await ref.read(onDemandProvider.notifier).forget();
     } else if (wasActive) {
@@ -202,8 +193,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Future<void> setActive(String id) async {
     await ready;
     final p = _byId(id);
-    // Not copyWith: it cannot null the selection, and location ids are only
-    // unique within a profile.
     state = ProfilesState(
       profiles: state.profiles,
       activeId: id,
@@ -225,9 +214,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     if (p == null || selection == null) return;
     final attempted = state.selectedLocationId;
 
-    // Resolved even with the tunnel down: the system may start the stored
-    // config with no app to fetch a server. Forced: the gateway may have rotated
-    // a previously issued server off the account.
     state = state.copyWith(switching: true);
     try {
       p = await _resolveSelection(p, selection, force: true);
@@ -306,8 +292,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     if (p == null) throw StateError('unknown profile $id');
     final updated = await configSourceFor(p).refresh();
     if (identical(updated, p)) return p;
-    // Graft onto the profile as it is now: local edits made while the request
-    // was in flight must not be reverted by the snapshot.
     final current = _byId(id) ?? p;
     final merged = current.withBundle(
       locations: updated.locations,
@@ -326,7 +310,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       rendering: updated.rendering,
       renderingProbed: updated.renderingProbed,
       refreshedAt: updated.refreshedAt ?? DateTime.now(),
-      // Issued servers are ours; only the account comes from the gateway.
       amnezia: updated.amnezia == null
           ? current.amnezia
           : (current.amnezia ?? updated.amnezia!).copyWith(
@@ -334,7 +317,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
             ),
     );
     await _replace(merged);
-    // Pruned against every profile: the list files share one directory.
     await RuleListStore.prune(_liveRuleLists());
     if (id == state.activeId) await syncTunnelConfig();
     return merged;
@@ -361,8 +343,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
         (p) => p.copyWith(providerRoutingEnabled: enabled),
       );
 
-  // Downloaded before the flag flips: the engine must never get a rule whose
-  // file it would fetch itself. Turning off keeps the files.
   Future<void> setProviderRuleListsEnabled(
     String profileId,
     bool enabled,
@@ -387,7 +367,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     return status;
   }
 
-  // Not filtered by the switch: switched-off lists stay for a free re-enable.
   Iterable<RuleList> _liveRuleLists() => state.profiles.expand(
     (p) => p.providerRouting?.lists ?? const <RuleList>[],
   );
@@ -403,8 +382,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     if (profileId == state.activeId) await _applySelection();
   }
 
-  // A second tap joins the running connect: the pre-connect refresh can take
-  // seconds while the core still reports disconnected.
   Future<void>? _connecting;
 
   Future<void> connect() =>
@@ -442,7 +419,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
         );
         return;
       }
-      // Again at connect: an issued server may have expired since selection.
       p = await _resolveSelection(p, selection);
       await core.load(await buildNormConfig(p));
       await core.connect(selection);
@@ -451,7 +427,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       await ref.read(onDemandProvider.notifier).onConnected();
     } catch (e) {
       Log.e('connect failed', '$e');
-      // By label, not address: the endpoint stays out of the interface.
       state = state.copyWith(
         error: describeError(e, subject: state.selectedLocation?.label),
       );
@@ -481,7 +456,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
         return;
       }
       final reason = await core.lastDisconnectError();
-      // The platform can answer after dispose; assigning state would throw.
       if (!ref.mounted || reason.isEmpty) return;
       Log.e('tunnel stopped on its own', reason);
       state = state.copyWith(
@@ -496,7 +470,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     final selection = state.selectionId;
     if (p == null || selection == null) return;
     try {
-      // Stored config must be runnable on its own: a system start has no app.
       p = await _resolveSelection(p, selection);
       await ref
           .read(vpnCoreProvider)
@@ -518,7 +491,6 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     final p = state.active;
     if (p == null || !p.isRefreshable) return;
     if (!isDueForRefresh(p)) return;
-    // Reapply inside the try: a Timer callback has no other catch above it.
     try {
       final after = await refreshActive();
       await maybeReapply(p, after);
@@ -556,22 +528,16 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
         jsonEncode(_proxyOf(after, locId));
     if (!routingDiff && !proxyDiff && !_reapplyPending) return;
     if (DateTime.now().difference(_lastReapply) < kReapplyMinGap) {
-      // The next poll diffs new against new: without this flag a rate-limited
-      // reapply would be dropped and the tunnel left on dead credentials.
       _reapplyPending = true;
       Log.i('poll: active config changed, reapply deferred (rate limit)');
       return;
     }
     _reapplyPending = false;
-    // Hot reload, never load+connect: a live session ignores startTunnel
-    // options and a prefs save re-asserts the tunnel (the ADR-002 leak).
     Log.i('poll: active config changed — hot-reloading to apply');
     _lastReapply = DateTime.now();
     await core.reload(await buildNormConfig(after), locId);
   }
 
-  // For a group, include every member's proxy: rotating one member's
-  // credentials must reapply.
   Object? _proxyOf(Profile p, String locId) {
     if (ProxyGroup.isGroupId(locId)) {
       for (final g in p.groups) {

@@ -8,10 +8,8 @@ import '../core/log.dart';
 import '../l10n/l10n.dart';
 import '../core/norm_config.dart';
 
-// Without a ceiling, a packet-dropping firewall hangs Connect forever.
 const kHttpTimeout = Duration(seconds: 15);
 
-// Between chunks, not for the whole transfer: geo databases can take minutes.
 const kDownloadStallTimeout = Duration(seconds: 30);
 
 class ApiException implements Exception {
@@ -145,8 +143,6 @@ class ApiClient {
     }
 
     Log.i('$method $path -> ${res.statusCode} (${res.body.length} bytes)');
-    // Lenient: a proxy's HTML 502 must still surface as a status-coded
-    // ApiException, not a FormatException.
     Map<String, dynamic> parsed;
     try {
       parsed = res.body.isNotEmpty

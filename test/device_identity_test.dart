@@ -53,7 +53,7 @@ void main() {
     'the id survives a restart, so a launch does not cost a device slot',
     () async {
       final first = (await DeviceIdentityStore.load()).hwid;
-      DeviceIdentityStore.debugCache(null); // as if the app restarted
+      DeviceIdentityStore.debugCache(null);
       expect((await DeviceIdentityStore.load()).hwid, first);
     },
   );

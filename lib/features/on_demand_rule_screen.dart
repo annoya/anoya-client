@@ -32,7 +32,6 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
 
   @override
   void dispose() {
-    // Flush, not drop: leaving the screen is how editing ends.
     if (_debounce?.isActive ?? false) {
       _debounce!.cancel();
       ref.read(onDemandProvider.notifier).upsertRule(_rule);
@@ -48,8 +47,6 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
     await ref.read(onDemandProvider.notifier).upsertRule(rule);
   }
 
-  // Debounced: each upsert is a native NEVPNManager save, and per-keystroke
-  // saves can finish out of order, leaving an older snapshot.
   void _updateDebounced(OnDemandRule rule) {
     setState(() => _rule = rule);
     _debounce?.cancel();
@@ -142,7 +139,6 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // iOS matches cellular; macOS has ethernet instead.
     final mobile = Platform.isMacOS
         ? OnDemandInterface.ethernet
         : OnDemandInterface.cellular;
@@ -199,7 +195,6 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                     ButtonSegment(value: mobile, label: Text(mobile.label)),
                   ],
                   selected: {
-                    // A rule from the other platform maps onto this one's third segment.
                     _rule.interface == OnDemandInterface.cellular ||
                             _rule.interface == OnDemandInterface.ethernet
                         ? mobile

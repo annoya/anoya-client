@@ -1,14 +1,12 @@
-// Run in the mockup page; returns the list of violations.
 (() => {
-  const S = 0.62;                       // display scale
-  const pt = px => Math.round(px / S);  // back to logical points
+  const S = 0.62;
+  const pt = px => Math.round(px / S);
   const bad = [];
   const label = el => {
     const b = el.closest('.board');
     return b?.querySelector('.cap .id')?.textContent?.trim() || '(no id)';
   };
 
-  // macOS 738 = default content area plus a 38pt title bar.
   document.querySelectorAll('.ph, .mac').forEach(f => {
     const limit = f.classList.contains('ph') ? 852 : 738;
     const over = f.scrollHeight - limit;
@@ -59,7 +57,7 @@
     if (Math.abs(h - 40) > 3) bad.push(`${label(s)}: segmented ${h}pt, expected 40`);
     const own = s.getBoundingClientRect().width;
     const parent = s.parentElement.getBoundingClientRect().width;
-    const padding = 32 * S; // 16 each side
+    const padding = 32 * S;
     if (own < parent - padding - 2) bad.push(`${label(s)}: segmented not full width`);
   });
 
@@ -78,7 +76,6 @@
       }
     }
   });
-  // .demo is a deliberately shrunk illustration, exempt from size rules.
   document.querySelectorAll('.ring:not(.demo)').forEach(r => {
     const b = r.getBoundingClientRect();
     if (Math.abs(pt(b.width) - 180) > 3) bad.push(`${label(r)}: ring ${pt(b.width)}pt, expected 180`);

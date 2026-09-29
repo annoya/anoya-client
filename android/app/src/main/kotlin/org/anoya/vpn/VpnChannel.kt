@@ -27,8 +27,6 @@ object VpnChannel {
 
     private val calls = Executors.newSingleThreadExecutor()
 
-    // Separate from calls: probes block up to their timeout and would queue
-    // stop/reload behind them.
     private val probes = Executors.newCachedThreadPool()
 
     @Volatile private var tunnel: ITunnel? = null
@@ -37,10 +35,8 @@ object VpnChannel {
 
     private val main = Handler(Looper.getMainLooper())
 
-    // Weak: this object outlives every Activity, a strong ref leaked them.
     private var host = WeakReference<Activity>(null)
 
-    // Bound once on the app context; binding per Activity leaked connections.
     private var bound = false
 
     private val callback = object : ITunnelCallback.Stub() {
@@ -164,7 +160,6 @@ object VpnChannel {
                 "shared_dir" -> result.success(TunnelFiles.engineDir(context).absolutePath)
                 "set_logging" -> {
                     val on = call.argument<Boolean>("enabled") ?: true
-                    // Same executor as the binder call below: on disk first.
                     calls.execute { TunnelFiles.setLogsEnabled(context, on) }
                     ask(result) { it.setLogging(on); null }
                 }
@@ -205,7 +200,6 @@ object VpnChannel {
         }
     }
 
-    // Same executor as binder calls so a config write and its reload stay ordered.
     private fun io(result: MethodChannel.Result, body: () -> Any?) {
         calls.execute {
             val value = runCatching(body).getOrNull()

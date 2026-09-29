@@ -15,8 +15,6 @@ import (
 	"mihomocore/service"
 )
 
-// Shared with linux/packaging and lib/core/unix_socket_link.dart; change them
-// together.
 const (
 	unitName   = "anoya-tunnel.service"
 	unitPath   = "/etc/systemd/system/" + unitName
@@ -35,8 +33,6 @@ func listen() (net.Listener, error) {
 	if err != nil {
 		return nil, err
 	}
-	// World-accessible on purpose: no socket mode expresses "the console user",
-	// and a dedicated group would need a re-login after install.
 	if err := os.Chmod(socketPath, 0o666); err != nil {
 		_ = ln.Close()
 		return nil, err
@@ -45,8 +41,6 @@ func listen() (net.Listener, error) {
 }
 
 func runService(files service.Files) error {
-	// The app writes the geo databases here; the sticky bit stops users removing
-	// each other's files.
 	if err := os.Chmod(files.Dir, 0o1777); err != nil {
 		files.Append("engine dir permissions: " + err.Error())
 	}
@@ -73,7 +67,6 @@ func runConsole(files service.Files) error {
 	return runService(files)
 }
 
-// The .deb ships the same unit from linux/packaging; keep the two in step.
 const unitText = `[Unit]
 Description=Anoya tunnel
 After=network-online.target
@@ -115,7 +108,6 @@ func uninstallService() error {
 	if _, err := os.Stat(unitPath); err != nil {
 		return fmt.Errorf("%s is not installed", unitName)
 	}
-	// Disable before removing the file, or systemd keeps a unit it cannot find.
 	err := systemctl("disable", "--now", unitName)
 	if rmErr := os.Remove(unitPath); rmErr != nil && err == nil {
 		err = rmErr
