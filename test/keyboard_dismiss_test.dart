@@ -48,7 +48,6 @@ void main() {
   testWidgets('without it the framework keeps the keyboard up on a touch', (
     tester,
   ) async {
-    // Canary: when this starts failing, DismissKeyboardOnTapOutside can go.
     await tester.pumpWidget(harness(wrapped: false));
     await tester.tap(find.byType(TextField));
     await tester.pump();

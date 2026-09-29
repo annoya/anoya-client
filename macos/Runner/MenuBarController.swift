@@ -57,7 +57,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     }
   }
 
-  // State is carried by shape: the image is a template the system tints, so colour is unavailable.
   private func applyIcon() {
     guard let button = statusItem.button else { return }
     let name: String
@@ -78,7 +77,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
       button.image = image
       if button.image != nil { return }
     }
-    // macOS 10.15 has no SF Symbols.
     button.image = MenuBarController.drawnShield(filled: fallbackFilled)
   }
 
@@ -111,7 +109,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
   }
 
   func menuNeedsUpdate(_ menu: NSMenu) {
-    // The session timer runs in Dart; without a sync the menu opens with a stale duration.
     channel.invokeMethod("sync", arguments: nil)
     rebuild(menu)
   }
@@ -129,7 +126,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
                         enabled: true))
     menu.addItem(.separator())
 
-    // Disabled rather than removed, so items below never shift under the cursor.
     menu.addItem(action("Connect", #selector(connect), enabled: canConnect))
     menu.addItem(action("Disconnect", #selector(disconnect), enabled: canDisconnect))
     menu.addItem(.separator())

@@ -20,7 +20,6 @@ class AutoConnectController extends Notifier<bool> with ReadyGate {
     );
     if (!ref.mounted) return;
     state = on;
-    // Re-sent on every start: the service's copy can be lost on reinstall.
     await ref.read(vpnCoreProvider).setAutoConnect(on);
   }
 

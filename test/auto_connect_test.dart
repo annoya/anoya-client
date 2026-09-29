@@ -112,8 +112,7 @@ void main() {
       expect(find.text('Connect when the computer starts'), findsOneWidget);
       expect(find.text('On demand'), findsNothing);
       expect(find.text('Always-on VPN'), findsNothing);
-      // Reset inside the body: testWidgets checks for a leaked debug variable
-      // before the tearDown that would otherwise clear it.
+      // testWidgets checks leaked debug variables before tearDown runs.
       debugDefaultTargetPlatformOverride = null;
     });
 

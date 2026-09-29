@@ -105,7 +105,6 @@ class _SlowRemoval extends ProfilesController {
     removed.add(id);
     final left = state.profiles.where((p) => p.id != id).toList();
     state = ProfilesState(profiles: left, activeId: left.first.id);
-    // A frame must pass before the removal finishes: that is the case that broke.
     await SchedulerBinding.instance.endOfFrame;
     await Future<void>.delayed(const Duration(milliseconds: 20));
   }

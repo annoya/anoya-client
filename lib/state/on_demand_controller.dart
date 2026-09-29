@@ -42,8 +42,6 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
 
   Future<void> onConnected() => _apply(state.copyWith(paused: false));
 
-  // Local only on purpose: pushing a disarm would recreate the VPN profile
-  // (and its approval dialog) just before it is deleted.
   Future<void> forget() async {
     state = state.copyWith(enabled: false, paused: false, systemArmed: false);
     await OnDemandStore.save(state);

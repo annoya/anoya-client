@@ -49,7 +49,6 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
       id: 'rs${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}',
       name: trimmed,
     );
-    // Read before the await: ref dies with the state if the user leaves.
     final revision = ref.read(ruleSetRevisionProvider.notifier);
     await RuleSetStore.save([..._sets, set]);
     revision.bump();

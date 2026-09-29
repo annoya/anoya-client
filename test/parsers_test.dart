@@ -40,7 +40,6 @@ void main() {
   });
 
   test('vless percent-encoded fragment (flag emoji) is decoded', () {
-    // #🇩🇪 h2.nexus  (as delivered in a real subscription line)
     final loc = parseProxyUri(
       'vless://uuid-x@1.2.3.4:443?type=tcp'
       '#%F0%9F%87%A9%F0%9F%87%AA%20h2.nexus%20',
@@ -163,7 +162,6 @@ rules:
   test(
     'a proxy with an unusable port is rejected, not emitted with port 0',
     () {
-      // {"add":"1.2.3.4","port":"bad","id":"x"}
       expect(
         parseProxyUri(
           'vmess://eyJhZGQiOiIxLjIuMy40IiwicG9ydCI6ImJhZCIsImlkIjoieCJ9',

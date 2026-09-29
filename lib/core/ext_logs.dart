@@ -5,9 +5,7 @@ import 'control_transport.dart';
 import 'log.dart';
 import 'network_extension_core.dart';
 
-// Pulled over the control transport: reading the shared App Group container
-// from the extension is TCC-gated and pops an "access data from other apps"
-// prompt.
+// Reading the App Group container from the extension pops a TCC prompt.
 ControlTransport get _control => NetworkExtensionCore.control;
 
 Future<String> fetchExtensionLog(String name) async {

@@ -44,8 +44,6 @@ class ProfilesState {
     return null;
   }
 
-  // Hand this to the core, not selectedLocation?.id: that falls back to the
-  // first server and would turn a chosen group into one of its members.
   String? get selectionId => selectedGroup?.id ?? selectedLocation?.id;
 
   List<Location> get selectedGroupMembers {
@@ -80,7 +78,7 @@ class ProfilesState {
     selectedLocationId: selectedLocationId ?? this.selectedLocationId,
     loading: loading ?? this.loading,
     switching: switching ?? this.switching,
-    error: error, // reset each transition unless passed
-    notice: notice, // reset too
+    error: error,
+    notice: notice,
   );
 }

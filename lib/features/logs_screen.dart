@@ -27,7 +27,6 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
   Future<void> _setCollecting(bool value) async {
     await ref.read(appPrefsProvider.notifier).setCollectLogs(value);
-    // Both: the live engine reads its log level only when a config is applied.
     await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
     await setExtensionLogging(value);
     if (mounted) setState(() {});
@@ -60,8 +59,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
             ShareParams(files: [XFile(archive.path)]),
           );
         case _SaveTo.file:
-          // Mobile plugin writes the file and needs the bytes; desktop refuses bytes
-          // ("not supported on macOS") and only returns the path.
+          // The mobile plugin needs the bytes; desktop refuses them and only returns the path.
           final writesItself = Platform.isIOS || Platform.isAndroid;
           final path = await FilePicker.platform.saveFile(
             dialogTitle: l10n.logsSaveDialogTitle,

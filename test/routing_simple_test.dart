@@ -87,9 +87,7 @@ void main() {
 
     Future<void> settle(WidgetTester tester) async {
       for (var i = 0; i < 12; i++) {
-        // runAsync turns the real event loop (file I/O in stores and the index
-        // scan); the timed pump advances the fake clock so route/sheet
-        // animations actually finish.
+        // Real I/O futures never complete in FakeAsync without runAsync.
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 25)),
         );
@@ -112,8 +110,6 @@ void main() {
           ),
         ),
       );
-      // testWidgets runs in FakeAsync, where real I/O futures never complete:
-      // runAsync turns the real event loop. pumpAndSettle only spins the fake clock.
       await settle(tester);
       await settle(tester);
     }
@@ -346,17 +342,14 @@ void main() {
   });
 }
 
-// GeoSiteList { repeated GeoSite entry = 1; }
-// GeoSite     { string country_code = 1; repeated Domain domain = 2; }
 Uint8List geoSiteList(Map<String, int> domainsPerCategory) {
   final out = BytesBuilder();
   domainsPerCategory.forEach((name, domains) {
     final entry = BytesBuilder();
     entry.add(_lengthDelimited(1, Uint8List.fromList(name.codeUnits)));
     for (var i = 0; i < domains; i++) {
-      // Domain { type = 1 (varint); value = 2 (string) }
       final domain = BytesBuilder();
-      domain.add([0x08, 2]); // type = 2 (Domain.RootDomain)
+      domain.add([0x08, 2]);
       domain.add(
         _lengthDelimited(2, Uint8List.fromList('d$i.example.com'.codeUnits)),
       );

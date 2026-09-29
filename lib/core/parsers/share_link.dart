@@ -51,8 +51,6 @@ ShareLink parseShareLink(String raw) {
       _ => ShareLink.unsupported(scheme),
     };
   } catch (e) {
-    // Only the reason, never the exception text: Uri.parse echoes the input, and
-    // its userinfo is the credential.
     final why = e is FormatException ? e.message : e.runtimeType.toString();
     return ShareLink.malformed('$scheme:// $why');
   }

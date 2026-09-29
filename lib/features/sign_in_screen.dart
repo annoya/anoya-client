@@ -57,8 +57,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   });
 
   Future<void> _ssoSignIn() => _run(() async {
-    // Pre-worded: describeError would read the empty URL's FormatException as
-    // "not a link".
     if (_server.text.trim().isEmpty) {
       throw AppErrorException(AppError(L10n.current.signInEnterServerFirst));
     }

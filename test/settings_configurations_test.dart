@@ -14,8 +14,6 @@ import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/l10n/l10n.dart';
 
 void main() {
-  // The version is read from the shipped pubspec at startup; without this the
-  // rows below would assert the "unknown" placeholder against itself.
   setUpAll(loadAppVersion);
 
   Profile profile(String id, String name) => Profile(
@@ -108,8 +106,7 @@ void main() {
     expect(find.text('On demand'), findsNothing);
     expect(find.text('Always-on VPN'), findsNothing);
     expect(find.text('Advanced'), findsOneWidget);
-    // Before the body ends: the binding checks foundation overrides are back
-    // to normal on exit, a tearDown is too late for it.
+    // The binding checks foundation overrides before tearDown runs.
     debugDefaultTargetPlatformOverride = null;
   });
 
@@ -131,9 +128,7 @@ void main() {
 
   testWidgets('the row opens the About screen', (tester) async {
     await pump(tester, [profile('a', 'Config')]);
-    // scrollUntilVisible stops when the row merely exists — a lazy list builds
-    // it in the cache extent while its centre is still past the edge, and a
-    // tap there hits nothing. ensureVisible finishes the job.
+    // scrollUntilVisible stops while the row is still off-screen in the cache extent.
     await tester.scrollUntilVisible(find.text('About'), 200);
     await tester.ensureVisible(find.text('About'));
     await tester.pump();

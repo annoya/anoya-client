@@ -30,8 +30,6 @@ class GeositeIndex {
     if (cached != null) return cached;
 
     final sw = Stopwatch()..start();
-    // Read AND parse in the worker: sending 25 MB of bytes through the isolate
-    // port costs as much as the scan.
     final path = dat.path;
     final list = await Isolate.run(() => scan(File(path).readAsBytesSync()));
     Log.i(

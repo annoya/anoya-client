@@ -92,7 +92,7 @@ class MenuBar {
     try {
       await _channel.invokeMethod<void>('update', state.toChannel());
     } on MissingPluginException {
-      // No platform side (an older build, or a host without the runner).
+      // No runner.
     } on PlatformException catch (e) {
       Log.e('menu bar update failed', e.message ?? e.code);
     }

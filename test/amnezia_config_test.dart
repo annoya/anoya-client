@@ -13,7 +13,6 @@ void main() {
   String vpnKey(Map<String, dynamic> doc, {bool premiumSignature = true}) {
     final body = ZLibCodec().encode(utf8.encode(jsonEncode(doc)));
     final prefix = premiumSignature
-        // Premium keys carry a constant here instead of the length.
         ? [0, 0, 0, 0xff]
         : [0, 0, 0, jsonEncode(doc).length & 0xff];
     final bytes = Uint8List.fromList([...prefix, ...body]);

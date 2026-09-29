@@ -145,8 +145,6 @@ DetectedInput? detectInput(String raw) {
   final t = raw.trim();
   if (t.isEmpty) return null;
   final scheme = t.contains('://') ? t.split('://').first.toLowerCase() : '';
-  // Before the share-link check, so unsupported vpn:// formats are refused
-  // here rather than misread later.
   if (scheme == 'vpn') {
     final key = parseAmneziaVpnKey(t);
     return key == null

@@ -6,7 +6,6 @@ import Flutter
 #endif
 
 enum WebAuthChannel {
-    // Must be held for the session's lifetime.
     private static var session: ASWebAuthenticationSession?
     private static let presenter = PresentationContextProvider()
 
@@ -37,7 +36,6 @@ enum WebAuthChannel {
                 result(callbackURL?.absoluteString)
             }
             session.presentationContextProvider = presenter
-            // Shares the system login session; ephemeral would force a re-login every time.
             session.prefersEphemeralWebBrowserSession = false
             self.session = session
             if !session.start() {

@@ -38,7 +38,6 @@ final ruleSetsProvider = FutureProvider<List<RuleSet>>((ref) async {
 });
 
 final routingStatusProvider = FutureProvider<RoutingStatus>((ref) async {
-  // select: skips the disk read on every switching/loading/error flip.
   final profile = ref.watch(profilesControllerProvider.select((s) => s.active));
   ref.watch(ruleSetRevisionProvider);
   if (profile == null) return RoutingStatus.off;
