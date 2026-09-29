@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme.dart';
 import 'core/ui.dart';
 import 'l10n/l10n.dart';
-import 'features/start_screen.dart';
 import 'features/home_screen.dart';
 import 'state/menu_bar_controller.dart';
 import 'state/profiles_controller.dart';
@@ -29,7 +28,9 @@ class _VpnAppState extends ConsumerState<VpnApp> {
 
   @override
   Widget build(BuildContext context) {
-    final profiles = ref.watch(profilesControllerProvider);
+    final loading = ref.watch(
+      profilesControllerProvider.select((s) => s.loading),
+    );
     final prefs = ref.watch(appPrefsProvider);
 
     ref.listen(profilesControllerProvider.select((s) => s.hasProfiles), (
@@ -59,9 +60,9 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       darkTheme: buildAppTheme(Brightness.dark),
       themeMode: prefs.themeMode,
       locale: prefs.language.locale,
-      home: profiles.loading
+      home: loading
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-          : (profiles.hasProfiles ? const HomeScreen() : const StartScreen()),
+          : const HomeScreen(),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/vpn_core.dart';
 import 'package:anoya/features/home_screen.dart';
+import 'package:anoya/features/start_screen.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
@@ -222,6 +223,31 @@ void main() {
       reason: 'the endpoint is not something the interface shows',
     );
   });
+
+  testWidgets('with no configurations Home stays, offering to add one', (
+    tester,
+  ) async {
+    await pump(tester, []);
+
+    expect(find.text('No configuration'), findsOneWidget);
+    expect(find.byType(Card), findsOneWidget, reason: 'no server row');
+    expect(
+      find.descendant(of: find.byType(Opacity), matching: find.text('Connect')),
+      findsOneWidget,
+      reason: 'nothing to connect: the ring is dimmed',
+    );
+    expect(find.byIcon(Icons.description_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+
+    await tester.tap(find.text('Connect'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsNothing);
+
+    await tester.tap(find.widgetWithText(Card, 'Add a connection'));
+    await tester.pumpAndSettle();
+    expect(find.byType(StartScreen), findsOneWidget);
+    expect(find.byType(BackButton), findsOneWidget);
+  });
 }
 
 class _FixedProfiles extends ProfilesController {
@@ -230,7 +256,7 @@ class _FixedProfiles extends ProfilesController {
 
   @override
   ProfilesState build() =>
-      ProfilesState(profiles: profiles, activeId: profiles.first.id);
+      ProfilesState(profiles: profiles, activeId: profiles.firstOrNull?.id);
 }
 
 class _QuietOnDemand extends OnDemandController {
