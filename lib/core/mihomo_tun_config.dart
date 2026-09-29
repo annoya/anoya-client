@@ -15,6 +15,7 @@ String mihomoTunConfigYaml(
   bool autoDetectInterface = true,
   String? device,
   String? dnsDecoy,
+  int mtu = kTunMtu,
 }) {
   final proxy = _mihomoProxy(location);
   final proxyLines = <String>[];
@@ -124,7 +125,7 @@ String mihomoTunConfigYaml(
     // Android: the interface detector needs netlink (banned since Android 11);
     // VpnService.protect() handles loop avoidance there instead.
     '  auto-detect-interface: $autoDetectInterface',
-    '  mtu: 9000',
+    '  mtu: $mtu',
     'proxies:',
     ...proxyLines,
     'proxy-groups:',
@@ -211,6 +212,10 @@ const kFakeIpRange6 = 'fc00::/18';
 const kTunInet6Address = 'fdfe:dcba:9876::1/126';
 
 const kTunInet4Address = '172.19.0.1/30';
+
+const kTunMtu = 1500;
+
+const kAndroidTunMtu = 9000;
 
 // Must agree with `addDnsServer` in MihomoVpnService.kt.
 const kAndroidDnsDecoy = '172.19.0.2';

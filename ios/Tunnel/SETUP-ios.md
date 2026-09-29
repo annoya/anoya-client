@@ -67,8 +67,8 @@ decides whether mihomo-in-NE is viable on iOS at all.
     tactics (tune mihomo GC / `GOMEMLIMIT`, trim features, or reconsider core).
 
 ## Notes / likely gotchas
-- `mtu: 9000` (from the shared config) may be too high for iOS; if
-  `setTunnelNetworkSettings` errors, we'll lower it (client-side, per platform).
+- `mtu` is 1500 on Apple, Windows and Linux (9000 only on Android). With 9000
+  the gVisor stack on iOS ran tens of times slower on the same Wi-Fi and server.
 - The client sends `stack: gvisor` (userspace) on iOS — the only stack that
   works in the NE sandbox; build the iOS xcframework slice WITH `with_gvisor`.
 - SSO (ASWebAuthenticationSession) is intentionally out of this spike.

@@ -239,7 +239,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     // old settings down first, and routes fall back to the physical interface meanwhile.
     private func applyNetworkSettings(completionHandler: @escaping (Error?) -> Void) {
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
-        settings.mtu = 9000
+        settings.mtu = 1500
 
         let ipv4 = NEIPv4Settings(addresses: ["172.19.0.1"], subnetMasks: ["255.255.255.252"])
         ipv4.includedRoutes = [NEIPv4Route.default()]
