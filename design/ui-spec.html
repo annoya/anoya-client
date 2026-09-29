@@ -533,13 +533,14 @@
 
 <!-- ============ 1 ============ -->
 <h2>1 · Добавление конфигурации</h2>
-<p class="flowdesc">Один экран, два пути: вставить ссылку/открыть файл или войти на свой сервер.</p>
+<p class="flowdesc">Один экран, два пути: вставить ссылку/открыть файл или войти на свой сервер. Открывается с главного — плюсом в аппбаре или строкой «Add a connection», когда конфигураций нет.</p>
 <div class="rail">
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">
@@ -552,13 +553,14 @@
         <div class="btn tonal" style="margin:18px 0 0"><svg class="icon s"><use href="#i-org"/></svg>Sign in to your server</div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">StartScreen</span><b>Пусто.</b> Ширина контента ограничена 420&nbsp;pt, боковой отступ 24. «Continue» задизейблена (.38).</p>
+    <p class="cap"><span class="id">StartScreen</span><b>Пусто.</b> Ширина контента ограничена 420&nbsp;pt, боковой отступ 24. «Continue» задизейблена (.38). Экран всегда открыт поверх главного, даже на первом запуске, поэтому стрелка назад есть всегда: корнем он больше не бывает (см. <code>HomeScreen · empty</code>).</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">
@@ -582,7 +584,8 @@
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">
@@ -661,6 +664,33 @@
 <h2>2 · Главный экран</h2>
 <p class="flowdesc">Кольцо 180&nbsp;pt со статусом 16&nbsp;pt над ним (отступ 28) занимает всё свободное место и центрируется в нём. Карточки конфигурации и сервера — 72&nbsp;pt, прижаты к низу экрана с отступом 16: до них дотягивается большой палец, и кольцо не прыгает, когда появляется баннер. Конфигурация показывается всегда, даже единственная: шестерёнка 40&nbsp;pt ведёт в её настройки, шеврон вниз (только когда конфигураций больше одной) — выбор активной. Под аппбаром — статус-бар из трёх чипов (авто-подключение, роутинг, логи), он описан ниже отдельно.</p>
 <div class="rail">
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:742px">
+        <div class="strip">
+          <span class="pill"><svg class="icon xs"><use href="#i-bolt"/></svg>Auto · off</span>
+          <span class="pill"><svg class="icon xs"><use href="#i-route"/></svg>Routing · off</span>
+          <span class="pill on"><svg class="icon xs"><use href="#i-doc"/></svg>Logs · on</span>
+        </div>
+        <div class="hfill"><div class="ringwrap">
+          <span class="stat muted">No configuration</span>
+          <div class="ring" style="--rc:var(--m-pri);opacity:.38"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon" style="color:var(--m-pri)"><use href="#i-plus"/></svg>
+            <div class="tx"><div class="t">Add a connection</div><div class="s">Link, subscription or config file</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">HomeScreen · empty</span><b>Конфигураций нет, но это всё равно главный экран.</b> Раньше корнем в этом случае был экран добавления, а на нём нет ни настроек, ни логов. Если ссылка не добавлялась, человек не мог ни открыть лог, ни выгрузить его, хотя именно тогда он нужнее всего. Теперь главный экран есть всегда. Строка конфигурации остаётся на своём месте и говорит, что подключаться пока не через что и как это исправить. Тап по ней открывает <code>StartScreen</code> со стрелкой назад.<br><br>Кольцо погашено (.38) и не нажимается: подключать нечего. Диалог «No configuration» в ответ на первое же касание упрекал бы человека в том, чего приложение ему не объяснило. В статусе стоит «No configuration», то же слово, что в меню строки состояния. Строки сервера нет: у несуществующей конфигурации нет и серверов.<br><br>Статус-бар на месте целиком. Логи пишутся по умолчанию, и чип «Logs · on» — самый короткий путь к ним. В это же состояние возвращает удаление последней конфигурации.</p>
+  </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
@@ -3556,7 +3586,8 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">
@@ -3608,7 +3639,8 @@ SSID, поисковый DNS-домен, адрес DNS-сервера, URL-пр
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div style="padding:40px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">

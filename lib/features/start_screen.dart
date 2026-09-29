@@ -67,14 +67,14 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   }
 
   Future<void> _run(Future<bool> Function() action) async {
-    final container = ProviderScope.containerOf(context, listen: false);
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
       final added = await action();
-      // Before the pop: the toast lives in the root messenger and survives it.
-      if (added) _warnIfRefused(container, messenger);
-      if (added && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+      if (added && mounted) {
+        // Before the pop: the toast lives in the root messenger and survives it.
+        _warnIfRefused();
+        Navigator.of(context).popUntil((r) => r.isFirst);
+      }
     } on SubscriptionFormatException catch (e) {
       Log.e('add configuration rejected', e.error.title);
       if (mounted) setState(() => _rejected = e);
@@ -88,15 +88,10 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     }
   }
 
-  // Handles are taken before the add: the first configuration replaces this
-  // screen, so its ref and context are gone by the time there is a warning.
-  void _warnIfRefused(
-    ProviderContainer container,
-    ScaffoldMessengerState messenger,
-  ) {
-    final p = container.read(profilesControllerProvider).profiles.lastOrNull;
+  void _warnIfRefused() {
+    final p = ref.read(profilesControllerProvider).profiles.lastOrNull;
     if (p == null || !p.deviceLimitReached) return;
-    showToastWith(messenger, kDeviceLimitReached.line);
+    showToast(context, kDeviceLimitReached.line);
   }
 
   Future<void> _continue() async {
@@ -105,13 +100,13 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     if (d == null) return;
     if (d.kind == InputKind.subscriptionUrl) {
       // Not a subscription? It may be a management server: hand over to sign-in.
-      final container = ProviderScope.containerOf(context, listen: false);
-      final messenger = ScaffoldMessenger.of(context);
       setState(() => _busy = true);
       try {
         await _ctrl.addSubscriptionUrl('', t);
-        _warnIfRefused(container, messenger);
-        if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+        if (mounted) {
+          _warnIfRefused();
+          Navigator.of(context).popUntil((r) => r.isFirst);
+        }
       } on FormatException catch (fe) {
         try {
           await _ctrl.authConfig(t);
@@ -173,7 +168,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: Navigator.of(context).canPop() ? AppBar() : null,
+      appBar: AppBar(),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

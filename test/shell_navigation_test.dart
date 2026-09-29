@@ -4,17 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   final navigator = GlobalKey<NavigatorState>();
 
-  Widget shell({required bool hasProfiles}) => MaterialApp(
+  Widget shell() => MaterialApp(
     navigatorKey: navigator,
-    home: hasProfiles
-        ? const Scaffold(body: Text('home'))
-        : const Scaffold(body: Text('add a connection')),
+    home: const Scaffold(body: Text('home')),
   );
 
   testWidgets(
     'unwinding to the root keeps one route, never empties the stack',
     (tester) async {
-      await tester.pumpWidget(shell(hasProfiles: true));
+      await tester.pumpWidget(shell());
       navigator.currentState!.push(
         MaterialPageRoute(
           builder: (_) => const Scaffold(body: Text('settings')),
@@ -29,13 +27,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('configuration'), findsOneWidget);
 
-      await tester.pumpWidget(shell(hasProfiles: false));
+      await tester.pumpWidget(shell());
       if (navigator.currentState!.canPop()) {
         navigator.currentState!.popUntil((r) => r.isFirst);
       }
       await tester.pumpAndSettle();
 
-      expect(find.text('add a connection'), findsOneWidget);
+      expect(find.text('home'), findsOneWidget);
       expect(find.text('configuration'), findsNothing);
       expect(find.text('settings'), findsNothing);
       expect(
@@ -49,7 +47,7 @@ void main() {
   testWidgets(
     'a screen popping itself after the unwind would empty the stack',
     (tester) async {
-      await tester.pumpWidget(shell(hasProfiles: true));
+      await tester.pumpWidget(shell());
       navigator.currentState!.push(
         MaterialPageRoute(
           builder: (_) => const Scaffold(body: Text('configuration')),
@@ -57,7 +55,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.pumpWidget(shell(hasProfiles: false));
+      await tester.pumpWidget(shell());
       navigator.currentState!.popUntil((r) => r.isFirst);
       await tester.pumpAndSettle();
 

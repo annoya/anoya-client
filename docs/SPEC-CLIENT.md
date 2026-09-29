@@ -565,12 +565,15 @@ screen says so in as many words.
 
 ## 5. Screens
 
-- **Start** — add a configuration: paste a link, open a file, or sign in. The
-  field answers as the user types: a recognised input gets a chip naming it at
-  once; text that is neither gets, 700 ms after the last change, a chip saying
-  why in one phrase (an unknown scheme, a link of ours that will not parse, a
-  transport the engine cannot run, a `vpn://` that is not a key) — never the
-  text itself, which is the credential.
+- **Start** — add a configuration: paste a link, open a file, or sign in.
+  Always pushed over Home, never the root: it is opened from Home's add button
+  or its empty-state row, so settings and logs stay one tap away even before
+  the first configuration exists. The field answers as the user types: a
+  recognised input gets a chip naming it at once; text that is neither gets,
+  700 ms after the last change, a chip saying why in one phrase (an unknown
+  scheme, a link of ours that will not parse, a transport the engine cannot
+  run, a `vpn://` that is not a key) — never the text itself, which is the
+  credential.
 - **Sign in** — password and, when the server offers it, SSO.
 - **Home** — connect ring and status, a status strip (auto-connect, routing,
   logs), the configuration and server pickers, account line. The configuration
@@ -579,7 +582,10 @@ screen says so in as many words.
   it is pressed. A server row reads `<protocol> · <transport> · <address>`, with
   the transport named only when there is one to choose (plain TCP and QUIC
   protocols say nothing) and a provider's `serverDescription` replacing that
-  whole technical half.
+  whole technical half. With no configurations Home is still the root: the
+  configuration row becomes "Add a connection", which opens Start, there is no
+  server row, the ring is disabled under "No configuration", and the status
+  strip stays — removing the last configuration lands here too.
 - **Settings** — configurations, connection (on-demand and disconnect-on-sleep
   on Apple; the Always-on VPN explainer on Android; the **Auto-connect** switch
   on Windows; **Advanced**, which holds the connection check), routing (LAN
