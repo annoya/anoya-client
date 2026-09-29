@@ -96,7 +96,6 @@ class RuleListStore {
         _lastError.remove(l.url);
         Log.i('rule list updated: ${l.name} from ${Uri.parse(l.url).host}');
       } catch (e) {
-        // Host only: a list URL can carry a subscription secret.
         _lastError[l.url] = '${Uri.parse(l.url).host}: $e';
         Log.e(
           'rule list download failed',

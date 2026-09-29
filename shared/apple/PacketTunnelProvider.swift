@@ -5,8 +5,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     static let appGroup = "group.org.annoya.test"
 
-    // Our own Caches, not the App Group container: the profile's `<TEAM>.*` wildcard
-    // does not cover the `group.` id, so the group container is TCC-gated and prompts on every connect.
+    // The profile's `<TEAM>.*` wildcard misses the `group.` id, so the App Group container prompts TCC on every connect.
     private func sharedDir() -> URL {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
@@ -20,8 +19,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     private let stateLock = NSLock()
 
-    // Raw POSIX I/O on purpose: Foundation file APIs make a TCC-gated probe that
-    // triggers the "access data from other apps" prompt on every connect.
+    // Raw POSIX I/O: Foundation file APIs trigger a TCC prompt on every connect.
     private func log(_ message: String) {
         NSLog("TUNNEL: \(message)")
         guard logEnabled else { return }
@@ -71,16 +69,14 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             self.log("got tun fd \(fd); starting mihomo")
             self.tunFd = fd
             if self.logEnabled { self.redirectStdoutToMihomoLog() }
-            // Set before start too: config parsing logs before the YAML level applies.
             self.applyEngineLogLevel(self.logEnabled)
             if let message = self.startEngine(fd: fd, config: config) {
-                // Message not logged: it can quote config lines with uuids and passwords.
                 self.log("mihomo start failed")
-                self.tunFd = -1 // nothing is running on it; refuse late reloads
+                self.tunFd = -1
                 completionHandler(self.err("mihomo start failed: \(message)"))
                 return
             }
-            // Again after: applying the config overwrites the level from the YAML.
+            // Applying the config overwrites the log level from the YAML.
             self.applyEngineLogLevel(self.logEnabled)
             self.log("mihomo started; tunnel up")
             completionHandler(nil)
@@ -89,30 +85,26 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
         log("stopTunnel: reason \(reason.rawValue)")
-        // Before MihomoStop, so an in-flight reload cannot restart on a dying fd.
         tunFd = -1
         MihomoStop()
         completionHandler()
     }
 
-    // Must match kTunnelOutbound in mihomo_tun_config.dart.
     private static let tunnelOutbound = "PROXY"
 
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
         let request = String(data: messageData, encoding: .utf8) ?? ""
         if request.hasPrefix("reload:") {
             let config = String(request.dropFirst("reload:".count))
-            // Read once: a stop between check and use would hand the engine a dead fd.
             let fd = tunFd
             guard fd > 0 else {
                 completionHandler?(Data("tunnel has no fd".utf8))
                 return
             }
             let failure = reloadEngine(fd: fd, config: config)
-            // Reload resets the log level from the YAML.
+            // Reload overwrites the log level from the YAML.
             applyEngineLogLevel(logEnabled)
             if failure != nil {
-                // Message not logged: it can quote the config.
                 log("hot reload failed")
             } else {
                 log("hot reload applied (\(config.count) bytes)")
@@ -144,7 +136,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             return
         }
         if request.hasPrefix("urltest:") {
-            // The url goes last: it is the only part that can contain a colon.
             let rest = String(request.dropFirst("urltest:".count))
             let cut = rest.firstIndex(of: ":") ?? rest.startIndex
             let timeout = Int32(rest[rest.startIndex..<cut]) ?? 5000
@@ -169,7 +160,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             let on = request.hasSuffix("1")
             logEnabled = on
             if on { redirectStdoutToMihomoLog() }
-            // The engine reads log-level only on config apply, so push it directly.
             applyEngineLogLevel(on)
             log("logging \(on ? "enabled" : "disabled") by the app")
             completionHandler?(Data())
@@ -192,13 +182,11 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         completionHandler?(Data())
     }
 
-    // The iOS extension's memory budget is tens of MB; reading an unbounded log would jetsam it.
     private static let logTailBytes = 512 * 1024
     private static let logMaxBytes = 4 * 1024 * 1024
 
     private func tailOfLog(named name: String) -> Data {
         let url = sharedDir().appendingPathComponent("\(name).log")
-        // mihomo.log is written by Go via stdout and never passes through log(); it is pruned here.
         rotateIfNeeded(url.path)
         guard let handle = try? FileHandle(forReadingFrom: url) else { return Data() }
         defer { try? handle.close() }
@@ -216,7 +204,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         return data
     }
 
-    // Keeping half avoids rotating on every line once the cap is reached.
     private static let logKeepFraction = 0.5
 
     private func rotateIfNeeded(_ path: String) {
@@ -231,12 +218,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         try? handle.write(contentsOf: keep)
     }
 
-    // mihomo's default TUN inet6 address (ULA), so interface and stack agree.
     private static let tunnelAddress6 = "fdfe:dcba:9876::1"
     private static let tunnelPrefix6: NSNumber = 126
 
-    // Installed once at start and never re-applied: setTunnelNetworkSettings tears the
-    // old settings down first, and routes fall back to the physical interface meanwhile.
+    // Never re-apply: setTunnelNetworkSettings tears routes down first, leaking traffic to the physical interface.
     private func applyNetworkSettings(completionHandler: @escaping (Error?) -> Void) {
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
         settings.mtu = 1500
@@ -283,7 +268,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         log("mihomo stdout -> \(path)")
     }
 
-    // getsockopt(fd, SYSPROTO_CONTROL = 2, UTUN_OPT_IFNAME = 2)
     private func tunnelFileDescriptor() -> Int32? {
         var buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
         for fd in (0 as Int32)..<1024 {
@@ -295,7 +279,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         return nil
     }
 
-    // Both sides use POSIX-level I/O only here, to stay clear of the Foundation TCC probe.
     private func mihomoHomeDir() -> URL {
         FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: Self.appGroup) ?? sharedDir()

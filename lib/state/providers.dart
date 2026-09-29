@@ -20,8 +20,6 @@ final vpnCoreProvider = Provider<VpnCore>((_) {
   if (Platform.isWindows) {
     return NetworkExtensionCore(transport: PipeTransport(WinPipeLink.new));
   }
-  // No transport under the test runner: its retry timer reads as a leak in
-  // widget tests, and callers already treat a missing plugin as unavailable.
   if (Platform.isLinux && !Platform.environment.containsKey('FLUTTER_TEST')) {
     return NetworkExtensionCore(transport: PipeTransport(UnixSocketLink.new));
   }
@@ -72,8 +70,6 @@ class RoutingPrefsController extends Notifier<RoutingPrefs> with ReadyGate {
     if (ref.mounted) state = prefs;
   }
 
-  // Against the file, not [state]: GeoStore stamps geoUpdatedAt into it on
-  // its own, and losing that stamp re-downloads the databases next launch.
   Future<void> update(RoutingPrefs Function(RoutingPrefs) change) async {
     await ready;
     final prefs = change(await RoutingPrefsStore.load());

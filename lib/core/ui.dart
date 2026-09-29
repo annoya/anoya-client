@@ -202,8 +202,7 @@ Future<void> showErrorDialog(
   onDismiss?.call();
 }
 
-// Flutter keeps a text field focused on a touch outside it (mobile only),
-// which leaves the keyboard up; this override drops focus on any platform.
+// Flutter keeps a text field focused on an outside touch (mobile), leaving the keyboard up.
 class DismissKeyboardOnTapOutside extends StatelessWidget {
   const DismissKeyboardOnTapOutside({super.key, required this.child});
 
@@ -224,8 +223,7 @@ class DismissKeyboardOnTapOutside extends StatelessWidget {
   );
 }
 
-// Owns its controller: disposing it after `await showDialog` raced the
-// fade-out, whose TextField still listens for ~150 ms.
+// Disposing after `await showDialog` races the fade-out, whose TextField still listens.
 Future<String?> promptText(
   BuildContext context, {
   required String title,
@@ -446,7 +444,6 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     widget.onToggleFavorite!(value);
   }
 
-  // Close the sheet first, or the settings screen opens behind it.
   void _openSettings(T value) {
     Navigator.of(context).pop();
     widget.onOpenSettings!(value);
@@ -535,8 +532,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
-            // Transparent Material so list ink stays inside the list (it otherwise
-            // painted over the title on overscroll); ClipRect bounds it.
+            // Transparent Material + ClipRect: list ink otherwise paints over the title on overscroll.
             Flexible(
               child: ClipRect(
                 child: Material(

@@ -204,7 +204,6 @@ class ConfigActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ctrl = ref.read(profilesControllerProvider.notifier);
     final l10n = context.l10n;
-    // Stretch, or the buttons hug their labels instead of spanning the width.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -236,8 +235,7 @@ class ConfigActions extends ConsumerWidget {
   }
 
   Future<void> _remove(BuildContext context, WidgetRef ref) async {
-    // Captured before the removal: afterwards this element is replaced by a
-    // placeholder, and popping through it does nothing (blank page).
+    // After the removal this element is a placeholder, and popping through it does nothing.
     final nav = Navigator.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     final l10n = context.l10n;
@@ -262,15 +260,12 @@ class ConfigActions extends ConsumerWidget {
     final ctrl = ref.read(profilesControllerProvider.notifier);
     if (ref.read(profilesControllerProvider).activeId == profile.id) {
       try {
-        // Through the controller, not the raw core: it records the on-demand pause.
         await ctrl.disconnect();
       } catch (_) {
         /* ignore */
       }
     }
     await ctrl.removeProfile(profile.id);
-    // Only while others remain: after the last one the app shell unwinds, and
-    // popping here too would race it and pop the root route (black screen).
     if (container.read(profilesControllerProvider).hasProfiles && nav.mounted) {
       nav.pop();
     }

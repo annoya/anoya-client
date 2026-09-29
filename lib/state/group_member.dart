@@ -23,7 +23,6 @@ final groupMemberProvider = StreamProvider<String>((ref) async* {
   }
 });
 
-// Slower than the engine's health check on purpose: each poll is an IPC call.
 const kGroupMemberPoll = Duration(seconds: 10);
 
 String labelForGroupMember(String engineName, List<dynamic> members) {

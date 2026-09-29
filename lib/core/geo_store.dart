@@ -46,8 +46,6 @@ class GeoStore {
     final prefs = await RoutingPrefsStore.load();
     await _fetchTo(prefs.geoipUrl, File('${dir.path}/$geoipFile'));
     await _fetchTo(prefs.geositeUrl, File('${dir.path}/$geositeFile'));
-    // Re-load before stamping: saving the pre-download snapshot would revert
-    // settings the user changed during the download.
     final fresh = await RoutingPrefsStore.load();
     await RoutingPrefsStore.save(fresh.copyWith(geoUpdatedAt: DateTime.now()));
     Log.i('geo: databases updated');
@@ -68,7 +66,6 @@ class GeoStore {
       final tmp = File('${dest.path}.tmp');
       final sink = tmp.openWrite();
       try {
-        // Idle timeout, not total: slow transfers are fine, stalled ones are not.
         await sink.addStream(res.stream.timeout(kDownloadStallTimeout));
       } finally {
         await sink.close();

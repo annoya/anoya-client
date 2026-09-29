@@ -184,7 +184,6 @@ String? _applyTransport(Map<String, dynamic> proxy, String type, Map ob) {
 
   // sing-box "http" is HTTP/2; mihomo's `http` is obfuscated TCP.
   final network = kind == 'http' ? 'h2' : kind;
-  // Set before the shared mapping, which only overrides where names differ.
   proxy['network'] = network;
 
   return applyTransport(proxy, network, {

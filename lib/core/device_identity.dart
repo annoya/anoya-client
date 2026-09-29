@@ -73,7 +73,6 @@ class DeviceIdentityStore {
   @visibleForTesting
   static void debugCache(DeviceIdentity? identity) => _cached = identity;
 
-  // Hex: the x-hwid convention allows only [A-Za-z0-9=-] and 10-64 chars.
   static String _newHwid() {
     final rnd = Random.secure();
     final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));

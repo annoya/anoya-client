@@ -98,7 +98,6 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
                     : _listSummary(profile, needLists, lists),
               ),
               value: profile.providerRuleListsEnabled,
-              // Disabled mid-download: two writers on one file leave half a list.
               onChanged: _downloading ? null : _setLists,
             ),
           ],
@@ -136,7 +135,6 @@ String providerRoutingSummary(Profile profile, List<RuleListStatus>? lists) {
 
 bool _isAvailable(Profile p, String name, List<RuleListStatus>? lists) {
   if (!p.providerRuleListsEnabled) return false;
-  // Unknown is not absent: assume available while the read is in flight.
   if (lists == null) return true;
   return lists.any((s) => s.list.name == name && s.available);
 }

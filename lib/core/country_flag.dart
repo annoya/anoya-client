@@ -26,7 +26,7 @@ String? _leadingFlag(String label) {
 bool _isRegional(int r) => r >= 0x1F1E6 && r <= 0x1F1FF;
 
 String _flagFromCode(String cc) {
-  const base = 0x1F1E6; // regional indicator symbol letter A
+  const base = 0x1F1E6;
   final up = cc.toUpperCase();
   return String.fromCharCodes([
     base + (up.codeUnitAt(0) - 65),

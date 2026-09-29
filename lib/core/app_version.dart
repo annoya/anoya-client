@@ -31,8 +31,6 @@ Future<void> loadAppVersion() async {
   }
 }
 
-// Must match native/mihomocore/go.mod (test/app_version_test.dart); the
-// engine's own constant.Version is a placeholder until release builds.
 const kEnginePin = 'v1.19.30';
 
 String get engineVersionLabel {

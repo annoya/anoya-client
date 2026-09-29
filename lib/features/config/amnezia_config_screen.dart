@@ -32,7 +32,6 @@ class AmneziaConfigScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             ProfileHeaderCard(profile: p, isActive: isActive),
             if (account?.expired == true) const _ExpiredCard(),
-            // No SourceCard: the source is the subscription key, a credential.
             RefreshCard(profile: p),
             if (account != null) ..._subscription(context.l10n, account),
             RoutingRow(profile: p),
@@ -96,7 +95,6 @@ class _ThisInstallation extends StatefulWidget {
 }
 
 class _ThisInstallationState extends State<_ThisInstallation> {
-  // Read once: a future made in build would blank the section on each rebuild.
   late final Future<(DeviceIdentity, String)> _identity = _load();
 
   Future<(DeviceIdentity, String)> _load() async =>

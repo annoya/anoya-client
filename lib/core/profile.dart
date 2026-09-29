@@ -94,8 +94,6 @@ class Profile {
 
   bool get isRefreshable => type != ProfileType.link;
 
-  // Enumerates fields on purpose rather than copying: a new source-owned field
-  // must be added here explicitly, or a refresh keeps a stale value.
   Profile withBundle({
     required List<Location> locations,
     required Account? account,
@@ -152,7 +150,6 @@ class Profile {
     bool? routingEnabled,
     List<String>? dns,
     DateTime? refreshedAt,
-    // Wrapped because null is a real value ("use the source's cadence").
     ({int? value})? refreshHours,
     AmneziaState? amnezia,
   }) => Profile(

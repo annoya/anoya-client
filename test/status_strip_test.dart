@@ -43,8 +43,6 @@ void main() {
     ],
   );
 
-  // Pinned to iOS: the Auto chip is Apple-only, and widget tests default to
-  // android.
   group('strip', () {
     Future<void> pump(
       WidgetTester tester, {
@@ -214,8 +212,6 @@ void main() {
       ),
     ];
 
-    // RoutingRule has no value equality, and rules that came back through the
-    // store are fresh instances — compare what they serialise to.
     List<Map<String, dynamic>> shape(List<RoutingRule> rules) => [
       for (final r in rules) r.toJson(),
     ];

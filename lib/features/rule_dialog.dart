@@ -99,8 +99,6 @@ class _RuleDialogState extends State<RuleDialog> {
       context,
       title: l10n.ruleMatch,
       selected: _type,
-      // No rule-list: only a provider policy defines where lists come from, so a
-      // user-authored one could never match.
       options: RoutingRule.types.where((t) => t != 'rule-list').map((t) {
         final geoLocked = (t == 'geoip' || t == 'geosite') && !widget.geoReady;
         final unsupported = t == 'process-name' && !supportsProcessRules;

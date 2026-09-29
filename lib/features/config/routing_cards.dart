@@ -53,7 +53,6 @@ class LocalRoutingCard extends ConsumerWidget {
               title: Text(l10n.configRuleSet),
               subtitle: Text(ruleSet?.name ?? l10n.configRuleSetDefault),
               trailing: const Icon(Icons.expand_more),
-              // Tappable while dimmed: picking a set is how routing gets turned on.
               onTap: () => _pick(context, ref, sets),
             ),
           ),

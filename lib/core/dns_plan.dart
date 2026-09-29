@@ -137,8 +137,6 @@ DnsPlan dnsPlanFor({
     final hash = ns.indexOf('#');
     final address = hash < 0 ? ns : ns.substring(0, hash);
     final asked = hash < 0 ? '' : ns.substring(hash + 1);
-    // An unknown pin is worse than none: mihomo reads it as a network interface
-    // and binds to a device that is not there.
     final honoured =
         asked.isEmpty || asked == kDnsRespectRules || outbounds.contains(asked);
     final pin = honoured ? asked : '';

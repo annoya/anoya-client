@@ -44,7 +44,7 @@ func Reload(fd int, configYAML string) error { return engine.Reload(fd, configYA
 
 func Stop() { engine.Stop() }
 
-// One string because gomobile cannot return two integers.
+// gomobile cannot return two integers.
 func ProxyBytes(name string) string {
 	up, down := engine.ProxyBytes(name)
 	return fmt.Sprintf("%d:%d", up, down)

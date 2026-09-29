@@ -26,8 +26,6 @@ class JsonFileStore {
     }
   }
 
-  // A scratch file per write, not a queue: a shared scratch name breaks
-  // concurrent saves, and a queue lets one stalled write block all later ones.
   int _writeSeq = 0;
 
   Future<void> save(Object json) async {

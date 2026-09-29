@@ -35,7 +35,6 @@ void main() {
 
     final insetLeft = leftCentre - bar.left;
     final insetRight = bar.right - rightCentre;
-    // 28 = half of the 56pt leading slot.
     expect(
       insetLeft,
       closeTo(28, 1),

@@ -49,21 +49,13 @@ String mihomoTunConfigYaml(
   final hasGeoRules =
       routing?.rules.any((r) => r.needsGeoData && r.isValid) ?? false;
   final lines = <String>[
-    // "silent" is the only way to stop the engine writing its log. "debug", not
-    // "info": WireGuard handshake attempts are only logged at debug.
     collectLogs ? 'log-level: debug' : 'log-level: silent',
     'mode: rule',
-    // Persist the fake-IP pool: otherwise it is rebuilt empty on every apply and
-    // a hot switch strands every fake IP the OS has cached.
     'profile:',
     '  store-fake-ip: true',
-    // Accept v6 packets (the tunnel owns the v6 default route, ADR-002) but keep
-    // dns.ipv6 off: fake v6 answers make clients prefer v6 and hang on servers
-    // without v6 egress.
     'ipv6: true',
     hasProcessRules ? 'find-process-mode: strict' : 'find-process-mode: "off"',
-    // Empty URLs on purpose: a missing database then fails the parse instantly
-    // instead of mihomo downloading it mid-startTunnel (90 s per file).
+    // Empty URLs stop mihomo downloading a missing database mid-startTunnel.
     'geox-url:',
     "  geoip: ''",
     "  geosite: ''",
@@ -72,8 +64,6 @@ String mihomoTunConfigYaml(
     if (hasGeoRules) ...['geodata-mode: false', 'geo-auto-update: false'],
     'dns:',
     '  enable: true',
-    // App constants, never per-config: a range that moves on a hot switch
-    // strands every fake address the OS has cached.
     '  enhanced-mode: fake-ip',
     '  fake-ip-range: $kFakeIpRange',
     '  fake-ip-range6: $kFakeIpRange6',
@@ -81,14 +71,10 @@ String mihomoTunConfigYaml(
       '  default-nameserver:',
       '    - 1.1.1.1',
     ],
-    // Without this mihomo resolves proxy hostnames with the main resolver, and a
-    // nameserver pinned to the tunnel deadlocks (ADR-008).
     '  proxy-server-nameserver:',
     for (final ns in plan.bootstrap) '    - ${yamlScalar(ns)}',
     '  nameserver:',
     for (final r in plan.resolvers) '    - ${yamlScalar(r.wire)}',
-    // Private DNS (DoT) on Android and Chrome's DoH bypass the hijack, so
-    // connections arrive as bare IPs; sniffing recovers the name for domain rules.
     'sniffer:',
     '  enable: true',
     '  force-dns-mapping: true',
@@ -104,26 +90,20 @@ String mihomoTunConfigYaml(
     'tun:',
     '  enable: true',
     if (device != null) '  device: ${yamlScalar(device)}',
-    // gvisor where the host owns the device: the only stack the iOS NE sandbox
-    // permits (`system` fails to bind the fake-ip gateway).
+    // The iOS NE sandbox permits only gvisor (`system` fails to bind the fake-ip gateway).
     if (device != null) '  stack: mixed' else '  stack: gvisor',
-    // Otherwise the engine forwards ICMP via its own DIRECT socket on the
-    // physical interface, leaking the real address on `ping`.
     '  disable-icmp-forwarding: true',
     '  dns-hijack:',
     '    - any:53',
-    // Pinned: part of what Tun.Equal compares, so a changed upstream default
-    // would turn the next hot switch into a listener re-creation.
+    // Pinned: Tun.Equal compares it, so an upstream default change recreates the listener.
     if (device != null) '  inet4-address:',
     if (device != null) '    - $kTunInet4Address',
     '  inet6-address:',
     '    - $kTunInet6Address',
     '  auto-route: ${device != null}',
-    // Windows Smart Multi-Homed Name Resolution also queries the ISP resolver in
-    // parallel; strict-route blocks port 53 outside the tun.
+    // Windows Smart Multi-Homed Name Resolution also queries the ISP resolver.
     if (device != null) '  strict-route: true',
-    // Android: the interface detector needs netlink (banned since Android 11);
-    // VpnService.protect() handles loop avoidance there instead.
+    // Android bans netlink since 11; VpnService.protect() avoids loops instead.
     '  auto-detect-interface: $autoDetectInterface',
     '  mtu: $mtu',
     'proxies:',
@@ -135,8 +115,7 @@ String mihomoTunConfigYaml(
     '    proxies: [$entry]',
     ...listLines,
     'rules:',
-    // Refuse the decoy immediately so Android's Private DNS probe concludes
-    // there is no DoT and stays on plain DNS, the only path the engine sees.
+    // Refusing the decoy makes Android's Private DNS probe fall back to plain DNS.
     if (dnsDecoy != null) '  - IP-CIDR,$dnsDecoy/32,REJECT,no-resolve',
     ...ruleLines,
     if (routing?.mode == 'split') '  - MATCH,DIRECT' else '  - MATCH,PROXY',
@@ -217,7 +196,6 @@ const kTunMtu = 1500;
 
 const kAndroidTunMtu = 9000;
 
-// Must agree with `addDnsServer` in MihomoVpnService.kt.
 const kAndroidDnsDecoy = '172.19.0.2';
 
 const kSupportedProxyTypes = {
@@ -243,8 +221,6 @@ Map<String, dynamic> _mihomoProxy(Location location) {
     throw StateError('unsupported proxy type: $type');
   }
   final p = location.proxy;
-  // Also check `reality-opts`: this branch discards every other field a
-  // subscription set.
   if (p['reality'] is Map && p['reality-opts'] == null) {
     final r = Map<String, dynamic>.from(p['reality'] as Map);
     final m = <String, dynamic>{
@@ -275,7 +251,7 @@ Map<String, dynamic> _mihomoProxy(Location location) {
 
 List<String> _emitProxy(Map<String, dynamic> proxy) {
   final body = _mapLines(proxy, 4);
-  body[0] = '  - ${body[0].substring(4)}'; // first key becomes the list item
+  body[0] = '  - ${body[0].substring(4)}';
   return body;
 }
 

@@ -71,7 +71,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     try {
       final added = await action();
       if (added && mounted) {
-        // Before the pop: the toast lives in the root messenger and survives it.
         _warnIfRefused();
         Navigator.of(context).popUntil((r) => r.isFirst);
       }
@@ -99,7 +98,6 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     final d = _detected;
     if (d == null) return;
     if (d.kind == InputKind.subscriptionUrl) {
-      // Not a subscription? It may be a management server: hand over to sign-in.
       setState(() => _busy = true);
       try {
         await _ctrl.addSubscriptionUrl('', t);

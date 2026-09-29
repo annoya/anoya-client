@@ -131,8 +131,6 @@ Future<String> _exchangeCode(
       )
       .timeout(kHttpTimeout);
   if (res.statusCode ~/ 100 != 2) {
-    // Status + error code only: the raw body can carry tokens and this log ships
-    // in the support archive.
     String? errCode;
     try {
       errCode =

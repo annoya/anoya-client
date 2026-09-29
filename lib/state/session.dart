@@ -47,8 +47,6 @@ class SessionController extends Notifier<SessionState> {
   Future<void> _askTheSystem() async {
     final core = ref.read(vpnCoreProvider);
     final since = await core.connectedSince();
-    // The answer can land after dispose or disconnect; a stale start would
-    // restart the next session's clock.
     if (!ref.mounted || since == null || !state.connected) return;
     final known = state.startedAt;
     if (known != null &&

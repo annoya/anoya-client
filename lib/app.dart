@@ -22,7 +22,6 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   @override
   void initState() {
     super.initState();
-    // Held here so the menu bar keeps answering while the window is closed.
     ref.read(menuBarProvider);
   }
 
@@ -45,7 +44,6 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       }
     });
 
-    // Set in build so strings made outside the widget tree follow the language.
     L10n.current = lookupAppLocalizations(prefs.language.locale);
 
     return MaterialApp(
@@ -54,7 +52,6 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigator,
-      // Above the navigator so it also covers dialogs and sheets.
       builder: (context, child) => DismissKeyboardOnTapOutside(child: child!),
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),

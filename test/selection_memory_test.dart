@@ -59,8 +59,7 @@ void main() {
     );
   });
   tearDown(() async {
-    // Un-awaited writes from the disposed containers may still be in flight;
-    // deleting the directory under them is a harness race, not an app one.
+    // Un-awaited writes from disposed containers race the directory delete.
     await Future<void>.delayed(const Duration(milliseconds: 50));
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
@@ -92,9 +91,7 @@ void main() {
     return ctrl;
   }
 
-  // The selection write is fire-and-forget, so poll until it reaches disk.
   Future<void> written(String profileId, String selectionId) async {
-    // Generous on purpose: a full suite run is slower than this file alone.
     for (var i = 0; i < 800; i++) {
       final saved = await ProfileStore.loadSelection();
       if (saved.profileId == profileId && saved.selectionId == selectionId) {

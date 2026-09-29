@@ -91,8 +91,7 @@ final class _Bindings {
   static DynamicLibrary _open() {
     final override = Platform.environment['AGW_LIBRARY'] ?? '';
     if (override.isNotEmpty) return DynamicLibrary.open(override);
-    // Linux opens by path: dlopen by name searches the caller's rpath, and the
-    // caller is the Flutter engine, not our executable.
+    // dlopen by name searches the Flutter engine's rpath, not ours.
     if (Platform.isAndroid) return DynamicLibrary.open('libagw.so');
     if (Platform.isWindows) return DynamicLibrary.open('libagw.dll');
     if (Platform.isLinux) {
@@ -105,10 +104,6 @@ final class _Bindings {
   static _Bindings? _cached;
   static _Bindings get instance => _cached ??= _Bindings(_open());
 }
-
-// Library callbacks deliberately not installed: Go frees the const char* on
-// return and calls from its own threads, so a NativeCallable.listener reads
-// freed memory and a sync callback runs on a thread with no isolate.
 
 final class AgwResult extends Struct {
   @Int32()
@@ -192,8 +187,7 @@ class AgwConfig {
 
   Map<String, dynamic> toJson() => {
     'gateway_endpoint': endpoint,
-    // Real newlines, byte for byte: this PEM is the SHA-512 input that unlocks
-    // the S3 proxy lists, so reformatting it silently disables the bypass.
+    // The exact PEM bytes are the SHA-512 key to the proxy lists; do not reformat.
     'public_key_pem': publicKeyPem,
     if (s3Primary.isNotEmpty) 's3_primary_endpoints': s3Primary,
     if (s3Fallback.isNotEmpty) 's3_fallback_endpoints': s3Fallback,
@@ -214,8 +208,7 @@ class AgwClient {
     String serviceType = '',
     String userCountryCode = '',
   }) async {
-    // Deadline armed here, not in the worker: `post` blocks that isolate's only
-    // thread, so a timer there would never run.
+    // `post` blocks the worker isolate's only thread, so a timer there never fires.
     final b = _Bindings.instance;
     final cancel = b.cancelCreate();
     final call = _AgwCall(

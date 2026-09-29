@@ -30,8 +30,7 @@ bool FlutterWindow::OnCreate() {
   tray_ = std::make_unique<TrayIcon>(GetHandle(), flutter_controller_->engine()->messenger(),
                                      L"Anoya");
   tray_->on_toggle_window = [this]() { ToggleWindow(); };
-  // Posted, not done inline: this runs inside TrackPopupMenuEx's modal loop,
-  // and tearing down there destroys the live TrayIcon and hangs engine shutdown.
+  // Closing inline inside TrackPopupMenuEx's modal loop hangs engine shutdown.
   tray_->on_quit = [this]() {
     quitting_ = true;
     PostMessageW(GetHandle(), WM_CLOSE, 0, 0);
@@ -50,7 +49,6 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
-  // Before the engine: the icon's channel holds the engine's messenger.
   tray_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
@@ -74,7 +72,6 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
-  // Before Flutter: a plugin's window-proc hook could swallow menu WM_COMMANDs.
   if (tray_ && tray_->HandleMessage(message, wparam, lparam)) {
     return 0;
   }

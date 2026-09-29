@@ -9,8 +9,6 @@ import 'package:anoya/state/providers.dart';
 import 'package:anoya/state/session.dart';
 
 void main() {
-  // The provisional start is set synchronously, so wait for the value to stop
-  // moving rather than for non-null.
   Future<SessionState> settle(ProviderContainer c) async {
     DateTime? last;
     for (var i = 0; i < 200; i++) {
@@ -73,7 +71,7 @@ void main() {
         overrides: [vpnCoreProvider.overrideWithValue(core)],
       );
       addTearDown(c.dispose);
-      c.read(sessionProvider); // build, which asks
+      c.read(sessionProvider);
       core.emit(VpnStatus.disconnected);
       await Future<void>.delayed(const Duration(milliseconds: 120));
       expect(c.read(sessionProvider).startedAt, isNull);

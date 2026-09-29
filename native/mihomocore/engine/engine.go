@@ -37,8 +37,7 @@ var engineGlobalsOnce sync.Once
 
 func configureEngineGlobals() {
 	engineGlobalsOnce.Do(func() {
-		// Without it mihomo strips the tun's IPv6 on a v4-only host network, the
-		// tun section stops comparing equal, and a reload closes the host's fd.
+		// mihomo strips the tun IPv6 on a v4-only host, so a reload closes the host fd.
 		os.Setenv("SKIP_SYSTEM_IPV6_CHECK", "1")
 	})
 }
@@ -51,8 +50,6 @@ func SetLogLevel(level string) {
 	}
 }
 
-// Probes deliberately do not take mu: they can block on a dead server and must
-// not hold up a disconnect.
 var mu sync.Mutex
 
 func Start(fd int, configYAML string) error {
@@ -103,8 +100,6 @@ func closeTrackedConnections() int {
 }
 
 func applyConfig(fd int, ownDevice bool, configYAML string) (*config.Config, error) {
-	// Also here, not only in SetHomeDir: a host that skipped SetHomeDir must not
-	// get an engine with the IPv6 check on.
 	configureEngineGlobals()
 	if !ownDevice && fd <= 0 {
 		return nil, fmt.Errorf("invalid tun fd %d", fd)
@@ -121,8 +116,7 @@ func applyConfig(fd int, ownDevice bool, configYAML string) (*config.Config, err
 		cfg.General.Tun.FileDescriptor = fd
 	}
 	executor.ApplyConfig(cfg, true)
-	// ApplyConfig only logs apply-stage failures. A failed TUN re-creation shows
-	// up solely as Enable=false in the stored conf, and it has already closed our fd.
+	// ApplyConfig only logs a failed TUN re-creation, which has already closed our fd.
 	if !listener.GetTunConf().Enable {
 		return nil, fmt.Errorf("engine applied the config but the tun listener is down")
 	}
@@ -135,7 +129,7 @@ var quotedText = regexp.MustCompile(`'[^']*'|"[^"]*"`)
 
 func sanitizeConfigError(err error) string {
 	msg := err.Error()
-	// What an empty geox-url produces for a missing database.
+	// mihomo error for a missing geo database when geox-url is empty.
 	if strings.Contains(msg, "can't download") {
 		return "the config uses geo rules, but the geo databases are not downloaded"
 	}
@@ -143,7 +137,6 @@ func sanitizeConfigError(err error) string {
 		msg = msg[:i]
 	}
 	msg = quotedText.ReplaceAllString(msg, "'<redacted>'")
-	// Cut in runes, not bytes: the result must stay valid UTF-8.
 	if r := []rune(msg); len(r) > maxErrorChars {
 		msg = string(r[:maxErrorChars]) + "…"
 	}
@@ -182,12 +175,10 @@ func Stop() {
 	mu.Lock()
 	defer mu.Unlock()
 	executor.Shutdown()
-	// Shutdown leaves LastTunConf set; with an identical tun section and a
-	// reused fd number the next start would create no listener at all.
+	// Shutdown leaves LastTunConf set, so a reused fd would get no listener.
 	listener.ReCreateTun(LC.Tun{}, nil)
 }
 
-// Per connection chain, not Manager.Total(): that includes DIRECT traffic.
 func ProxyBytes(name string) (up, down int64) {
 	statistic.DefaultManager.Range(func(t statistic.Tracker) bool {
 		for _, hop := range t.Info().Chain {
@@ -213,7 +204,6 @@ func URLTest(name, url string, timeoutMs int) (int, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMs)*time.Millisecond)
 	defer cancel()
-	// nil expected status means any 2xx/3xx.
 	delay, err := p.URLTest(ctx, url, nil)
 	if err != nil {
 		return 0, err

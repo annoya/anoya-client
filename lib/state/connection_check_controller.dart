@@ -149,8 +149,6 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState>
   Future<ConnectionCheck> _probe() async {
     final prefs = state.prefs;
     final core = ref.read(vpnCoreProvider);
-    // Before the probe: a group can move to another member while a dead one
-    // times out.
     final via = await _serverLabel();
     final answer = await core.urlTest(prefs.url, prefs.timeout);
     final result = ConnectionCheck.parse(answer, at: DateTime.now(), via: via);

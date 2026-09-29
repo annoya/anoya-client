@@ -15,7 +15,6 @@ void main() {
   });
   tearDown(() => t.dispose());
 
-  // The connection is established a microtask after the fake reports it.
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
   test('a request is one JSON line and its answer is matched by id', () async {

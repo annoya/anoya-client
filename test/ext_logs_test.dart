@@ -2,8 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/ext_logs.dart';
 
-// No handler throws MissingPluginException, not PlatformException; mocking
-// it as the latter hides the difference.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 

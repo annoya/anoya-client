@@ -43,7 +43,6 @@ class TrayIcon {
   State state_;
   HICON icon_ = nullptr;
   bool added_ = false;
-  // Explorer announces its restart with this; the icon has to be added again.
   UINT taskbar_created_ = 0;
 };
 

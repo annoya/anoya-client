@@ -10,14 +10,11 @@ import (
 	"mihomocore/service"
 )
 
-// Shared with the installer and the Dart side; change them together.
 const (
 	serviceName = "AnoyaTunnel"
 	pipeName    = `\\.\pipe\Anoya.tunnel`
 )
 
-// SYSTEM, admins and the interactive user only: whoever reaches the pipe can
-// reroute the machine's traffic.
 const pipeSDDL = "D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;IU)"
 
 func main() {

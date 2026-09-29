@@ -81,8 +81,6 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // The buttons sit at the bottom of a lazy list, so they have to be scrolled
-  // into existence before they can be measured.
   Future<void> expectFullWidthButtons(WidgetTester tester) async {
     await tester.scrollUntilVisible(find.text('Remove configuration'), 200);
     await tester.pump();

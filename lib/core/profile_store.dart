@@ -44,8 +44,6 @@ class ProfileStore {
     return fresh;
   }
 
-  // Separate file: profiles.json is a bare JSON array, and changing its shape
-  // would make every existing file unreadable.
   static final _selection = JsonFileStore('selection.json');
 
   static Future<({String? profileId, String? selectionId})> loadSelection() =>

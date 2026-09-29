@@ -108,8 +108,6 @@ Future<SubscriptionResponse> fetchSubscription(
       }
     }
   } finally {
-    // Closed once, after the routing lookup: closing earlier fails the second
-    // request, which looks exactly like a panel with no routing.
     if (client == null) c.close();
   }
 }
@@ -125,7 +123,7 @@ Future<SubscriptionResponse> _fetch(
 
   final reached =
       _flag(res.headers, 'x-hwid-max-devices-reached') ||
-      _flag(res.headers, 'x-hwid-limit'); // the older name, still sent
+      _flag(res.headers, 'x-hwid-limit');
   if (reached) {
     Log.e('subscription refused', 'device limit reached at ${uri.host}');
   }
@@ -291,7 +289,6 @@ Future<ParsedSubscription?> fetchProxyProvider(
       source: '${provider.name} @ ${uri.host}',
     );
   } catch (e) {
-    // Host only: a provider URL can carry a token of its own.
     Log.e('proxy list fetch failed', '${provider.name}: ${uri.host}: $e');
     return null;
   } finally {

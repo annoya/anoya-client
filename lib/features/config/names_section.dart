@@ -39,7 +39,6 @@ class NamesSection extends ConsumerWidget {
     final more = plan.resolvers.length - 1;
 
     return Column(
-      // Stretch, or this header is centred unlike every other on the page.
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(l10n.dnsTitle),

@@ -25,8 +25,6 @@ AmneziaSecondaryConfig? parseAmneziaSecondaryConfig(
   final wrapped = response['config'];
   if (wrapped is! String || wrapped.isEmpty) return null;
   var text = wrapped;
-  // Substituted before parsing: the placeholder is in both the .conf text and
-  // the key field.
   if (privateKey.isNotEmpty) {
     text = text.replaceAll(_privateKeyPlaceholder, privateKey);
   }
@@ -159,8 +157,6 @@ Map<String, dynamic> _amneziaOptions(Map<String, dynamic> cfg) {
   for (final i in const ['I1', 'I2', 'I3', 'I4', 'I5']) {
     text(i, i.toLowerCase());
   }
-  // J1-J3/Itime deliberately not forwarded: only the engine's legacy port
-  // accepts them. AWG 3.1 fields are copied only when present, never defaulted.
   const v3 = {
     'HeaderProtectionKey': 'header-protection-key',
     'ContentPaddingAddition': 'content-padding-addition',
@@ -175,8 +171,7 @@ Map<String, dynamic> _amneziaOptions(Map<String, dynamic> cfg) {
   for (final e in v3.entries) {
     text(e.key, e.value);
   }
-  // Always 3: the engine picks its AmneziaWG port on this number alone
-  // (`device` at 3, `device_v1` otherwise), and servers speak the current one.
+  // The engine picks its AmneziaWG port on this number alone (`device` at 3).
   out['version'] = 3;
   return out;
 }

@@ -54,7 +54,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _push(Widget screen) async {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     await _load();
-    // Pushed screens don't know about profiles: resync what the tunnel runs.
     if (mounted) {
       await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
     }

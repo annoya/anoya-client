@@ -54,8 +54,7 @@ String? applyTransport(
       if (path.isNotEmpty) ws['path'] = path;
       if (host.isNotEmpty) ws['headers'] = {'Host': host};
       if (net == 'httpupgrade') {
-        // The engine has no httpupgrade network: it is a websocket with the
-        // handshake skipped.
+        // The engine has no httpupgrade network: it is websocket without the handshake.
         proxy['network'] = 'ws';
         ws['v2ray-http-upgrade'] = true;
         ws['v2ray-http-upgrade-fast-open'] = true;

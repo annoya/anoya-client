@@ -183,8 +183,7 @@ void TrayIcon::ShowMenu() {
 
   POINT pt;
   GetCursorPos(&pt);
-  // Win32 tray quirk: the menu only closes if its owner is foreground, and the
-  // trailing WM_NULL lets the next taskbar click dismiss it.
+  // Win32 tray quirk: the menu only dismisses if its owner is foreground plus a trailing WM_NULL.
   SetForegroundWindow(owner_);
   TrackPopupMenuEx(menu, TPM_RIGHTBUTTON | TPM_BOTTOMALIGN | TPM_RIGHTALIGN, pt.x, pt.y, owner_,
                    nullptr);
@@ -192,15 +191,13 @@ void TrayIcon::ShowMenu() {
   DestroyMenu(menu);
 }
 
-// White with a dark outline: Windows does not recolour tray icons for a
-// light or dark taskbar.
 HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
   const int size = GetSystemMetrics(SM_CXSMICON) > 0 ? GetSystemMetrics(SM_CXSMICON) : 16;
 
   BITMAPV5HEADER bi = {};
   bi.bV5Size = sizeof(bi);
   bi.bV5Width = size;
-  bi.bV5Height = -size;  // top-down
+  bi.bV5Height = -size;
   bi.bV5Planes = 1;
   bi.bV5BitCount = 32;
   bi.bV5Compression = BI_BITFIELDS;
@@ -222,7 +219,6 @@ HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
   }
   HGDIOBJ old_bitmap = SelectObject(dc, color);
 
-  // Not pure black: the alpha pass below treats black as transparent.
   const COLORREF outline = RGB(40, 40, 40);
   const COLORREF fill = RGB(255, 255, 255);
   const double k = size / 16.0;
@@ -230,7 +226,6 @@ HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
 
   HPEN pen = CreatePen(PS_SOLID, std::max(1, px(1.2)), outline);
   HBRUSH white = CreateSolidBrush(fill);
-  // A black fill cuts a hole (see the alpha pass).
   HBRUSH hole = CreateSolidBrush(RGB(0, 0, 0));
   HGDIOBJ old_pen = SelectObject(dc, pen);
   HGDIOBJ old_brush = SelectObject(dc, white);
@@ -261,7 +256,7 @@ HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
   DeleteObject(hole);
   GdiFlush();
 
-  // GDI leaves alpha at zero; make every non-black pixel opaque.
+  // GDI leaves alpha at zero.
   auto* pixels = static_cast<uint32_t*>(bits);
   for (int i = 0; i < size * size; i++) {
     if (pixels[i] & 0x00FFFFFF) pixels[i] |= 0xFF000000;

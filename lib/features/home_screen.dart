@@ -37,8 +37,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   VpnStatus get _status => ref.watch(sessionProvider.select((s) => s.status));
 
-  // Not locked while connected: a switch is a hot reload under the live
-  // session. Only the initial connect and the switch itself lock.
   bool get _locked =>
       _status == VpnStatus.connecting ||
       ref.watch(profilesControllerProvider.select((s) => s.switching));
@@ -55,7 +53,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    // Select, never the whole state: a notice flipping would rebuild every card.
     final active = ref.watch(
       profilesControllerProvider.select((s) => s.active),
     );

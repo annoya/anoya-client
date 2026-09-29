@@ -17,7 +17,6 @@ class MainFlutterWindow: NSWindow {
     VpnChannel.register(messenger: flutterViewController.engine.binaryMessenger)
     WebAuthChannel.register(messenger: flutterViewController.engine.binaryMessenger, anchor: self)
 
-    // Held by the window: an NSStatusItem released early disappears from the menu bar.
     menuBar = MenuBarController(
       messenger: flutterViewController.engine.binaryMessenger, window: self)
 

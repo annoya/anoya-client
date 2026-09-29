@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-// Shared with TunnelState.kt and VpnStatus in Dart.
 const (
 	StatusDisconnected = "disconnected"
 	StatusConnecting   = "connecting"
@@ -18,7 +17,6 @@ const (
 	StatusError        = "error"
 )
 
-// Must match kTunnelOutbound in mihomo_tun_config.dart.
 const TunnelOutbound = "PROXY"
 
 type Service struct {
@@ -26,8 +24,6 @@ type Service struct {
 	files Files
 	now   func() time.Time
 
-	// The engine has its own mutex, but status transitions must be atomic with
-	// the call, or a stop mid-start would be overwritten by "connected".
 	runMu sync.Mutex
 
 	mu     sync.Mutex
@@ -294,11 +290,8 @@ type event struct {
 	Status string `json:"status"`
 }
 
-// A rendered config with a long rule list runs to megabytes.
 const maxLineBytes = 16 << 20
 
-// A client that fills its queue is not reading and is dropped, so it cannot
-// block pushes and responses to the others.
 const outboundQueue = 64
 
 type conn struct {
@@ -328,8 +321,6 @@ func (c *conn) writeLoop() {
 	}
 }
 
-// The queue is never closed: a request still in flight may answer into it
-// after the client has gone.
 func (c *conn) close() {
 	c.once.Do(func() {
 		_ = c.nc.Close()
@@ -390,7 +381,6 @@ func (s *Service) ServeConn(nc net.Conn) {
 			c.send(response{ID: 0, Error: "malformed request"})
 			continue
 		}
-		// Concurrent so a blocking probe cannot hold a stop behind it.
 		go func(req request) {
 			res, err := s.Handle(req.Method, req.Args)
 			out := response{ID: req.ID, Result: res}
