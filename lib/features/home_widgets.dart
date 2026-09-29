@@ -59,6 +59,17 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
     final style = Theme.of(
       context,
     ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
+    final empty = ref.watch(
+      profilesControllerProvider.select((s) => s.active == null),
+    );
+    if (empty && !session.busy) {
+      return Text(
+        l10n.statusNoConfiguration,
+        style: style?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
     if (ref.watch(profilesControllerProvider.select((s) => s.switching))) {
       final label = session.connected
           ? l10n.homeSwitchingServer
@@ -93,7 +104,7 @@ class ConnectButton extends StatelessWidget {
   const ConnectButton({super.key, required this.status, required this.onTap});
 
   final VpnStatus status;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -107,12 +118,14 @@ class ConnectButton extends StatelessWidget {
         ? vpn.connecting
         : Theme.of(context).colorScheme.primary;
 
-    return Semantics(
+    final enabled = !connecting && onTap != null;
+
+    final ring = Semantics(
       button: true,
-      enabled: !connecting,
+      enabled: enabled,
       label: connected ? l10n.commonDisconnect : l10n.commonConnect,
       child: GestureDetector(
-        onTap: connecting ? null : onTap,
+        onTap: enabled ? onTap : null,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
@@ -151,6 +164,7 @@ class ConnectButton extends StatelessWidget {
         ),
       ),
     );
+    return onTap == null ? Opacity(opacity: 0.38, child: ring) : ring;
   }
 }
 

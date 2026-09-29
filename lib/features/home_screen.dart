@@ -109,14 +109,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           children: [
                             const StatusLabel(),
                             const SizedBox(height: 28),
-                            ConnectButton(status: _status, onTap: _toggle),
+                            ConnectButton(
+                              status: _status,
+                              onTap:
+                                  active == null &&
+                                      !ref.watch(
+                                        sessionProvider.select((s) => s.busy),
+                                      )
+                                  ? null
+                                  : _toggle,
+                            ),
                           ],
                         ),
                       ),
                     ),
                     ?_checkBanner(),
                     ?_onDemandBanner(),
-                    if (active != null) _profileRow(active),
+                    if (active != null) _profileRow(active) else _addRow(),
                     if (active != null) _locationRow(active),
                     if (active?.account != null) ...[
                       const SizedBox(height: 12),
@@ -242,6 +251,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         leading: const Icon(Icons.bolt_outlined),
         title: Text(title),
         subtitle: Text(subtitle!),
+      ),
+    );
+  }
+
+  Widget _addRow() {
+    final l10n = context.l10n;
+    return Card(
+      margin: kCardMargin,
+      child: ListTile(
+        leading: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
+        title: Text(l10n.startAddConnection),
+        subtitle: Text(l10n.startSubtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _push(const StartScreen()),
       ),
     );
   }
