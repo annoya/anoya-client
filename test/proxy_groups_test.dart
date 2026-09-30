@@ -349,11 +349,42 @@ proxy-groups:
     test('3x-ui serves it from another path, not a suffix', () {
       final u = Uri.parse('https://panel.example/sub/abc123');
       expect(
-        renderingUrl(u, 'clash').toString(),
+        renderingUrl(u, kClashPathRendering).toString(),
         'https://panel.example/clash/abc123',
       );
-      expect(renderingUrl(u, 'mihomo'), isNull);
+      expect(
+        renderingUrl(
+          Uri.parse('https://sub.example/tok3n'),
+          kClashPathRendering,
+        ),
+        isNull,
+      );
     });
+
+    test(
+      'a /sub/ address is not always 3x-ui: Marzban and Marzneshin take a suffix',
+      () {
+        expect(
+          renderingUrl(
+            Uri.parse('https://panel.example/sub/TOKEN'),
+            'clash-meta',
+          ).toString(),
+          'https://panel.example/sub/TOKEN/clash-meta',
+        );
+        expect(
+          renderingUrl(
+            Uri.parse('https://panel.example/sub/alice/KEY'),
+            'clash-meta',
+          ).toString(),
+          'https://panel.example/sub/alice/KEY/clash-meta',
+        );
+        expect(
+          kClashRenderings.last,
+          kClashPathRendering,
+          reason: 'the path swap is the last guess, after every suffix',
+        );
+      },
+    );
 
     test('a URL that already names a rendering is left alone', () {
       final u = Uri.parse('https://sub.example/tok3n/mihomo');
