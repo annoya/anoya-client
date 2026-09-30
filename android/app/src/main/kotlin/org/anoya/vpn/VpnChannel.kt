@@ -106,11 +106,11 @@ object VpnChannel {
                     }
                     val logEnabled = call.argument<Boolean>("log_enabled") ?: true
                     calls.execute {
-                        persist(context, config, logEnabled)
                         val t = tunnel
                         val err = if (t == null) "tunnel is not running"
                                   else runCatching { t.reload(config) }
                                       .getOrElse { it.message ?: "reload failed" }
+                        if (err.isEmpty()) persist(context, config, logEnabled)
                         main.post {
                             if (err.isEmpty()) result.success(null)
                             else result.error("reload_failed", err, null)
