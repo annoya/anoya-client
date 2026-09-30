@@ -90,6 +90,21 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         completionHandler()
     }
 
+    private static let wakeSettleSeconds = 3.0
+
+    override func wake() {
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + Self.wakeSettleSeconds) { [weak self] in
+            guard let self, self.tunFd > 0 else { return }
+            let failure = "wake".withCString { reason -> String? in
+                guard let res = MihomoRecover(UnsafeMutablePointer(mutating: reason)) else { return nil }
+                defer { FreeCString(res) }
+                let message = String(cString: res)
+                return message.isEmpty ? nil : message
+            }
+            self.log(failure == nil ? "wake: engine reloaded" : "wake: engine reload failed")
+        }
+    }
+
     private static let tunnelOutbound = "PROXY"
 
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
