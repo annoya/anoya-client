@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
+import '../core/amnezia/vpn_key.dart';
 import '../core/app_error.dart';
 import '../core/config_source.dart';
 import '../core/effective_config.dart';
@@ -111,7 +112,9 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       _append(await importSubscriptionUrl(name, url));
 
   Future<void> addFromText(String text, {String? name}) async =>
-      _append(await importText(text, name: name));
+      parseAmneziaVpnKey(text) != null
+      ? addAmneziaKey(text)
+      : _append(await importText(text, name: name));
 
   Future<void> addAmneziaKey(String text) async =>
       _append(await importAmneziaKey(text));
