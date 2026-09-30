@@ -202,6 +202,53 @@ void main() {
       );
     });
 
+    test(
+      'an account the server turned off is disconnected and told why',
+      () async {
+        final (core, ctrl) = harness(VpnStatus.connected);
+        final before = profile('p1', 'nexus');
+        final after = Profile(
+          id: 'p1',
+          type: ProfileType.selfhosted,
+          name: 'nexus',
+          locations: before.locations,
+          account: Account(displayName: 'Alice', status: 'deactivated'),
+        );
+        await ctrl.maybeReapply(before, after);
+
+        expect(core.calls, ['disconnect']);
+        expect(
+          ctrl.state.error?.title,
+          L10n.current.accountDeactivatedTitle,
+          reason:
+              'a tunnel that vanishes on a poll with no word reads as a crash',
+        );
+      },
+    );
+
+    test(
+      'a server the poll no longer lists is not a reason to drop the tunnel',
+      () async {
+        final (core, ctrl) = harness(VpnStatus.connected);
+        final before = profile('p1', 'nexus');
+        final after = Profile(
+          id: 'p1',
+          type: ProfileType.subscription,
+          name: 'nexus',
+          locations: [before.locations.last],
+        );
+        await ctrl.maybeReapply(before, after);
+
+        expect(
+          core.calls,
+          isEmpty,
+          reason:
+              'management drops a worker it has not heard from in 45 s while the '
+              'worker keeps serving; disconnecting sends traffic around the tunnel',
+        );
+      },
+    );
+
     test('a failed switch leaves the running tunnel alone', () async {
       final (core, ctrl) = harness(VpnStatus.connected);
       core.failReload = true;

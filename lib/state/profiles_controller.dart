@@ -505,7 +505,10 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
 
     if (after.account != null && !after.account!.canConnect) {
       Log.i('poll: account ${after.account!.status} — disconnecting');
-      await core.disconnect();
+      await disconnect();
+      state = state.copyWith(
+        error: describeAccountStatus(after.account!.status),
+      );
       return;
     }
     final locId = state.selectionId;
@@ -514,8 +517,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
         ? after.groups.every((g) => g.id != locId)
         : after.locations.every((l) => l.id != locId);
     if (gone) {
-      Log.i('poll: connected server disappeared — disconnecting');
-      await core.disconnect();
+      Log.i('poll: connected server no longer offered — tunnel left running');
       return;
     }
 
