@@ -146,6 +146,8 @@ Rejected for now: a repeating request to a third-party host is a privacy cost
 the user did not ask for, and the failure it would catch — a tunnel that dies
 mid-session — is already visible as traffic stopping. The passive counters make
 a cheap periodic version possible later without sending anything.
+ADR-014 is that version, used to recover the tunnel rather than to report on
+it.
 
 ### Drop the tunnel when the check fails
 

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -52,18 +53,35 @@ func SetLogLevel(level string) {
 
 var mu sync.Mutex
 
+type appliedConfig struct {
+	fd        int
+	ownDevice bool
+	yaml      string
+}
+
+var running *appliedConfig
+
+var errNotRunning = errors.New("the engine is not running")
+
 func Start(fd int, configYAML string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	_, err := applyConfig(fd, false, configYAML)
-	return err
+	return start(fd, false, configYAML)
 }
 
 func StartOwnDevice(configYAML string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	_, err := applyConfig(0, true, configYAML)
-	return err
+	return start(0, true, configYAML)
+}
+
+func start(fd int, ownDevice bool, configYAML string) error {
+	if _, err := applyConfig(fd, ownDevice, configYAML); err != nil {
+		return err
+	}
+	running = &appliedConfig{fd: fd, ownDevice: ownDevice, yaml: configYAML}
+	startWatchdog()
+	return nil
 }
 
 func Reload(fd int, configYAML string) error {
@@ -78,11 +96,24 @@ func ReloadOwnDevice(configYAML string) error {
 	return reload(0, true, configYAML)
 }
 
+func Recover(reason string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	if running == nil {
+		return errNotRunning
+	}
+	log.Warnln("[recover] %s: reloading the engine on the running config", reason)
+	level := log.Level()
+	defer log.SetLevel(level)
+	return reload(running.fd, running.ownDevice, running.yaml)
+}
+
 func reload(fd int, ownDevice bool, configYAML string) error {
 	cfg, err := applyConfig(fd, ownDevice, configYAML)
 	if err != nil {
 		return err
 	}
+	running = &appliedConfig{fd: fd, ownDevice: ownDevice, yaml: configYAML}
 	log.Infoln("[hot switch] redialing %d live connection(s) through the new server",
 		closeTrackedConnections())
 	go logProxyEgress(cfg)
@@ -174,6 +205,8 @@ func proxyDialsTCP(proxy constant.Proxy) bool {
 func Stop() {
 	mu.Lock()
 	defer mu.Unlock()
+	stopWatchdog()
+	running = nil
 	executor.Shutdown()
 	// Shutdown leaves LastTunConf set, so a reused fd would get no listener.
 	listener.ReCreateTun(LC.Tun{}, nil)
