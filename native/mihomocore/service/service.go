@@ -101,6 +101,9 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		if config == "" {
 			return nil, errors.New("config required")
 		}
+		if err := checkConfig(config); err != nil {
+			return nil, err
+		}
 		s.persist(config, boolOr("log_enabled", true))
 		return nil, s.start(config)
 
@@ -117,6 +120,9 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		if config == "" {
 			return nil, errors.New("config required")
 		}
+		if err := checkConfig(config); err != nil {
+			return nil, err
+		}
 		s.persist(config, boolOr("log_enabled", true))
 		return nil, s.reload(config)
 
@@ -124,6 +130,9 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		config := str("config")
 		if config == "" {
 			return nil, errors.New("config required")
+		}
+		if err := checkConfig(config); err != nil {
+			return nil, err
 		}
 		s.persist(config, boolOr("log_enabled", true))
 		return nil, nil
@@ -241,6 +250,10 @@ func (s *Service) StartSaved() error {
 	config, err := s.files.LoadConfig()
 	if err != nil {
 		return nil
+	}
+	if err := checkConfig(config); err != nil {
+		s.files.Append("saved config refused: " + err.Error())
+		return err
 	}
 	return s.start(config)
 }

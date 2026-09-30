@@ -105,6 +105,16 @@ Android tunnel process: start, stop, reload, probes, logs, a pushed status.
   "the console user", and a dedicated group forces a re-login after install.
   Mullvad and NetBird ship their daemon sockets the same way. The Windows pipe
   is limited to the interactive user.
+- **The service runs only the shape our renderer produces.** Whoever reaches
+  the socket or pipe hands a root engine its config, so the service refuses
+  any top-level, `dns`, `tun` or `sniffer` key the renderer never emits, and
+  any rule provider that is not `type: file` — before the config is saved or
+  started, and again when a boot starts the saved one. Otherwise any local
+  user could open `listeners` or `dns.listen` on every interface, add
+  `iptables` rules, or have root download a provider to a path of their
+  choosing. A key the renderer gains must be added here too, or the desktop
+  tunnel refuses its own config (`service/config_check.go`, pinned by
+  `TestOnlyTheRenderedShapeReachesTheEngine`).
 - **Stopping the service takes the tunnel down.** A stopped service is not a
   VPN anyone can still rely on.
 
