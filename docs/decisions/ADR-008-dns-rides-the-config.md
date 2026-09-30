@@ -28,8 +28,8 @@ block says changes with the config — no NE settings involved.
 The remaining questions were where per-config DNS values can come from at all,
 and how much of a foreign `dns:` block to trust. The client has three config
 domains (ADR-005): the self-hosted bundle (JSON we define), subscriptions
-(base64 link lists or Clash/mihomo YAML — the only subscription form that can
-carry DNS), and bare share links (cannot carry DNS by format).
+(base64 link lists, which cannot carry DNS, or Clash/mihomo YAML, Xray JSON and
+sing-box JSON, which can), and bare share links (cannot carry DNS by format).
 
 ## Decision
 
@@ -62,8 +62,9 @@ every other adapter*).
 
 **The real resolvers live in the engine config and travel with it.** The
 config's DNS enters the pipeline at its source — the self-hosted bundle's
-`dns` field (`shared/normconfig`), a Clash-YAML subscription's
-`dns.nameserver` list, nothing for bare links — is persisted on the `Profile`,
+`dns` field (`anoya-web-panel/shared/normconfig`), a subscription's resolver list
+(Clash `dns.nameserver`, Xray and sing-box `dns.servers`), nothing for a link
+list or a bare link — is persisted on the `Profile`,
 carried through `NormConfig`, and rendered into the `dns:` block of the engine
 YAML. Switching configs switches DNS through the same hot reload as everything
 else. A refresh replaces the whole list, so a source that drops its DNS drops
@@ -148,9 +149,11 @@ the user visits, which is what the pin was there to prevent.
 **A scheme the engine does not know is dropped before it reaches the engine.**
 `config.Parse` answers an unknown scheme with an error for the *whole*
 document, so one `h3://` line in a subscription's DNS block would cost every
-server and every rule — the tunnel simply would not start. `h3` and `h2c` are
-translated (HTTP/3 is a transport choice, which mihomo spells `prefer-h3`);
-anything else is dropped with a log line. The list is also deduplicated and
+server and every rule — the tunnel simply would not start. From the JSON
+formats `h3` and `h2c` are rewritten to `https` and `http` — the resolver is
+kept, asked over HTTP/2, since `prefer-h3` is not set; in a Clash body, which
+passes through as written, they are dropped like any other unknown scheme.
+Anything else is dropped with a log line. The list is also deduplicated and
 capped: the engine queries every resolver at once and takes the first answer,
 so length is cost, not redundancy.
 
@@ -228,9 +231,6 @@ A user-facing override on top remains open — it would slot into the same
   pins `nameserver` to `#PROXY` and pairs it with its own
   `proxy-server-nameserver`, which we did not adopt). Hence the two additions
   to the Decision above.
-- The self-hosted service has the schema field (`Bundle.DNS`) but no admin
-  surface that sets it yet; until that exists, self-hosted users get the
-  fallback.
 - Every format that can carry resolvers now does: Clash `dns.nameserver`,
   Xray `dns.servers`, sing-box `dns.servers` (both schema generations), and
   the self-hosted `Bundle.DNS`. A link list has nowhere to put one and gets the
@@ -238,7 +238,8 @@ A user-facing override on top remains open — it would slot into the same
   and travels on `ParsedSubscription`, so the format is decided once instead of
   being guessed again from a different angle.
 - `Bundle.DNS` is still never set: the schema field exists, no admin surface
-  writes it, so self-hosted configurations get the fallback in practice.
+  writes it, so self-hosted configurations get the fallback (or the user's
+  default) in practice.
 - What does *not* survive the translation is the per-domain part of a JSON DNS
   block — Xray's `domains`/`expectIPs` filters, sing-box's `dns.rules`. mihomo
   expresses that as `nameserver-policy`, and adopting it would mean adopting a
@@ -271,7 +272,7 @@ A user-facing override on top remains open — it would slot into the same
   `lib/core/norm_config.dart`, `lib/core/config_source.dart`,
   `lib/state/profiles_controller.dart`,
   `lib/core/network_extension_core.dart`
-- Bundle schema: `shared/normconfig/normconfig.go` (`Bundle.DNS`)
+- Bundle schema: `anoya-web-panel/shared/normconfig/normconfig.go` (`Bundle.DNS`)
 - OS-level decoy: `applyNetworkSettings` in
   `shared/apple/PacketTunnelProvider.swift`; `addDnsServer` in
   `android/app/src/main/kotlin/org/anoya/vpn/MihomoVpnService.kt`,

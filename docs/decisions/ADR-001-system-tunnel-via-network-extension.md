@@ -32,13 +32,17 @@ shipped as a separate executable.
   somewhere else.
 - The extension needs `network.client` and `network.server` entitlements.
   Without them the engine's outbound dials fail with "operation not permitted".
-- The engine's TUN network stack is **gVisor**. It is fully userspace, which is
-  the only thing that works inside the extension sandbox.
+- The engine's TUN network stack is **gVisor** in the extension and on
+  Android: fully userspace, and the one stack that has worked there (see the
+  `system` alternative below). The desktop service, which creates its own
+  device, runs `mixed`.
 - `find-process-mode` stays off unless a process rule is actually present:
   resolving the owning process of a connection triggers a system TCC prompt
   about reading other applications' data.
-- Bundle identifier and App Group are read from `Bundle.main`; the provider is
-  derived as `<bundle>.tunnel` rather than hardcoded.
+- The provider is derived from `Bundle.main` as `<bundle>.tunnel` rather than
+  hardcoded. The App Group is a constant (`group.org.annoya.test`, in
+  `PacketTunnelProvider.swift` and `VpnChannel.swift`) and has to match the
+  entitlements of both targets.
 - The Swift that is identical on both platforms lives once in
   `shared/apple/` and is symlinked into `macos/` and `ios/`.
 
@@ -84,7 +88,8 @@ The remaining differences are Android's, not ours:
   gone and was never reliable; the disconnect reason and the log switch live in
   the engine directory, where they survive the process that wrote them.
 - The engine home is the app's files directory (`files/engine`); no App Group
-  exists or is needed — service and app share the process.
+  exists or is needed — the `:tunnel` process belongs to the same app and
+  shares its data directory.
 
 ### The same decision on Windows and Linux
 
@@ -137,6 +142,12 @@ ordinary stop, and when the extension was killed.
   triggers a TCC prompt about other applications' data. Logs travel over IPC.
 - Entitlements and App Group membership are part of the product, not a local
   development convenience.
+- The engine opens no listener: the rendered config carries no
+  `external-controller`, no `mixed-port` and no `listeners`, and everything the
+  app asks the engine travels over the IPC each platform already has. mihomo's
+  controller is an HTTP API with no authentication unless a secret is set,
+  reachable by every process on the device and living as long as the tunnel,
+  not the app (ADR-010 relies on this for the connection check).
 
 ## Alternatives Considered
 
@@ -161,13 +172,18 @@ to the user why a VPN client downloads an executable.
 
 ### The `system` TUN stack instead of gVisor
 
-Rejected: it cannot bind the fake-ip gateway inside the extension sandbox.
-gVisor costs some throughput in theory and is the only stack that works here.
+Rejected: in the extension it failed to bind the fake-ip gateway, and gVisor
+worked. The cause was never pinned down, and it is probably not the sandbox:
+sing-tun refuses `system` only under `includeAllNetworks`, while mihomo takes
+the tun address from `fake-ip-range` (`198.18.0.1/30`) and ignores
+`tun.inet4-address`, so the stack listens on an address the extension never
+put on the utun (`172.19.0.1`). Reopen it with that experiment if gVisor's
+throughput ever matters; until then gVisor is the stack that is known to work.
 
 ## Consequences
 
 - Two build systems are in play: Flutter for the app and a standalone Go module
-  for the engine. `MihomoCore.xcframework` is 129 MB and therefore not
+  for the engine. `MihomoCore.xcframework` is over 250 MB and therefore not
   committed — it is built on demand, and a stale one silently keeps old
   behavior. See the "Which check when" section of `AGENTS.md`.
 - Anything the app wants from inside the tunnel (logs, status, hot reload) has

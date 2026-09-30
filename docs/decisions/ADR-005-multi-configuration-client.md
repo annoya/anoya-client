@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; ADR-009 adds a fourth domain, key subscriptions
 
 ## Date
 
@@ -129,10 +129,12 @@ no account card and no server picker; a subscription shows servers but no
 account; only a self-hosted configuration can be told by its server to stop
 connecting. The app never pretends to know something the domain cannot tell it.
 
-The differences live in a sealed `ConfigSource` hierarchy rather than in `if`
-branches across the app: whether it can be refreshed, whether it must be
-refreshed before connecting, whether it has an account, whether it has more than
-one server.
+What a domain *does* lives in a sealed `ConfigSource` hierarchy rather than in
+`if` branches across the app: how it refreshes, whether it must refresh before
+connecting, how it issues a server on demand. What a domain *has* to show —
+an account, more than one server, anything to refresh — is one switch on the
+type each, as `Profile` getters (`hasAccount`, `isSingleServer`,
+`isRefreshable`).
 
 **Only self-hosted refetches before every connect.** The specification called
 that the core invariant; it makes sense against a management server that

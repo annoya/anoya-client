@@ -115,6 +115,11 @@ the user gets a dialog.
 - The `tun` section does not vary with the machine's own addresses: the
   host-IPv6 probe is disabled before the first parse. Pinned by
   `TestTunSectionDoesNotDependOnHostIPv6`.
+- `dns.fake-ip-range` is part of that condition even though it sits outside
+  the `tun` section: mihomo ignores `tun.inet4-address` and gives the tun the
+  first /30 of the fake-ip range (`parseTun` in `config/config.go`). Moving
+  `kFakeIpRange` therefore re-creates the listener on the next reload, which
+  the `GetTunConf().Enable` check reports as a failed switch.
 - A reload that reports success has a live TUN listener behind it. mihomo's
   `ApplyConfig` returns nothing and logs apply-stage failures instead — including
   a TUN re-creation that closed our fd and could not rebuild — so the wrapper

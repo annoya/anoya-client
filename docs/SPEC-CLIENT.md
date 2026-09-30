@@ -52,7 +52,7 @@ them, describing one server and nothing else. No origin to ask, no account, no
 revocation — it carries exactly what is needed to bring up a tunnel.
 
 Capability degrades along that order, deliberately and visibly (§4). The engine
-and the tunnel are identical in all three; what differs is who decides what the
+and the tunnel are identical in all four; what differs is who decides what the
 user may do. See ADR-005.
 
 ### 1.2 Guiding principles
@@ -71,7 +71,7 @@ user may do. See ADR-005.
 
 ## 2. Tech
 
-Flutter (macOS, iOS), Riverpod for state, `http`, `flutter_secure_storage` for
+Flutter (macOS, iOS, Android, Windows, Linux), Riverpod for state, `http`, `flutter_secure_storage` for
 tokens, `path_provider`, `crypto`, `yaml` (subscription parsing), `file_picker`,
 `archive` + `share_plus` (log export), `flutter_svg` (brand glyphs).
 
@@ -236,7 +236,7 @@ subscription's own answer. The one place "provider" survives is the SSO
 The DNS servers in the NE settings are a decoy: their only job is to steer the
 OS's queries into the tunnel, where the engine's `any:53` hijack answers them
 in fake-ip mode. On Android the decoy is `172.19.0.2`, the other host of the
-tunnel's own /30, and the engine refuses its port 853 ahead of every rule:
+tunnel's own /30, and the engine refuses all traffic to it ahead of every rule:
 Private DNS in its default "automatic" mode probes the resolver it is given
 for DNS-over-TLS, and a public decoy such as 1.1.1.1 passes that probe — after
 which every lookup travels on 853 past the hijack, connections arrive as bare
@@ -282,10 +282,11 @@ resolver. While a provider's routes are on, the device's card is visible but
 takes no input: dimming alone left a switch that moved and changed nothing. That section opens a read-only **DNS** screen: the
 resolvers in effect with their protocol, routing and origin, and — the reason
 the screen exists — the ones the app refused, each with its reason in words.
-Three refusals are possible: a scheme the engine would reject (which costs the
-whole configuration, not the line), a plain-UDP resolver the tunnel cannot
-carry, and a pin naming an outbound this config does not define. All three used
-to be log lines, so a configuration could lose the DNS its provider chose and
+Four refusals are possible: an entry that could not be a resolver at all, a
+scheme the engine would reject (which costs the whole configuration, not the
+line), a plain-UDP resolver the tunnel cannot carry, and entries past the cap.
+A pin naming an outbound this config does not define is not one of them: the
+pin is stripped and the resolver kept. All of these used to be log lines, so a configuration could lose the DNS its provider chose and
 look untouched. The screen and the renderer read the same computed plan, so the
 screen cannot name a resolver the engine never received. When a resolver was
 refused, the count travels back up to the configuration screen's row in words
@@ -352,7 +353,8 @@ Method names are the MethodChannel names used on Apple and Android.
 ## 4. Configurations
 
 The app holds a list of configurations, one active. Each belongs to one of the
-three domains of §1.1, and the domain determines what the app can offer:
+domains of §1.1, and the domain determines what the app can offer (key
+subscriptions have their own section, §9):
 
 | | self-hosted | subscription | link |
 |---|---|---|---|
@@ -435,10 +437,11 @@ the app's User-Agent (`Anoya/<version>` — ours, never another client's
 name). That makes the *amount* we get depend on somebody else's rule, so where a
 panel supports it the app asks for the rendering it wants by name: after a body
 that carries no groups, it tries `<url>/mihomo` (Remnawave), `<url>/clash-meta`
-(Marzban — it has no "mihomo") and, for 3x-ui, the sibling path `/clash/<id>`
-next to `/sub/<id>`. First one that answers with groups wins and is remembered
-on the profile; a panel with none is asked once, never again, and its own body
-is kept. A rendering that later dies falls back to the plain address.
+(Marzban, Marzneshin — no "mihomo"), `<url>/clash` and, last, the 3x-ui
+sibling path `/clash/<id>` next to `/sub/<id>` — a `/sub/` prefix does not say
+which panel it is. First one that answers with groups wins and is remembered
+on the profile; a panel with none keeps its own body and is asked again on the
+next refresh, since only a rendering that answered is remembered (ADR-005). A rendering that later dies falls back to the plain address.
 
 A Clash subscription may also offer **groups** whose member the engine picks:
 `url-test` (lowest latency), `fallback` (first that answers), `load-balance` and
@@ -495,19 +498,23 @@ from the backup says so under the source, because it means the provider's main
 address is unreachable from this device; the source row keeps showing the
 address the user added, since that is what they chose and would share. When both
 fail, the error names the main address: the backup is the provider's
-arrangement, and the user has never seen it. When a poll changes the active configuration's proxy or
+arrangement, and the user has never seen it.
+
+When a poll changes the active configuration's proxy or its managed routing
+policy, the tunnel re-applies it. When it reports the account can no longer
+connect, the tunnel disconnects the ordinary way and the user reads why; a
+connected server that is merely missing from the poll is left running
+(ADR-005). Re-applies are rate-limited so a flapping source cannot loop the
+tunnel.
 
 A tunnel that stops without being asked to explains itself. A packet-tunnel
 provider that refuses a config reports the reason to the system, not to the call
 that started it, so the app asks the system for it
-(`fetchLastDisconnectError`, macOS 13 / iOS 16) whenever a connecting or
-connected tunnel falls back to disconnected on its own. Before that, an engine
-that would not run a config looked exactly like a connect that hung and then
-gave up.
-its managed routing policy, the tunnel re-applies it; when it reports the
-account can no longer connect, or the connected server disappeared, the tunnel
-disconnects. Re-applies are rate-limited so a flapping source cannot loop the
-tunnel.
+(`fetchLastDisconnectError`, macOS 13 / iOS 16) whenever a tunnel that was
+coming up or running falls back to disconnected on its own — including through
+the `error` state Android and the desktop service pass on the way. Before that,
+an engine that would not run a config looked exactly like a connect that hung
+and then gave up.
 
 ### 4.4 The connection check
 
@@ -579,7 +586,7 @@ screen says so in as many words.
   logs), the configuration and server pickers, account line. The configuration
   row carries a refresh button for sources that have one — a duplicate of the
   button on the configuration screen, since that is where it lives but not where
-  it is pressed. A server row reads `<protocol> · <transport> · <address>`, with
+  it is pressed. A server row reads `<protocol> · <transport> · <security>`, with
   the transport named only when there is one to choose (plain TCP and QUIC
   protocols say nothing) and a provider's `serverDescription` replacing that
   whole technical half. With no configurations Home is still the root: the
@@ -758,9 +765,9 @@ whole failover sweep, so they run in an isolate with a deadline enforced
 through the library's cancel handle.
 
 AmneziaWG renders as a mihomo `wireguard` outbound with `amnezia-wg-option`
-carrying the obfuscation as issued — H1–H4 arrive as ranges, and `version: 3`
-is set only when the server sent v3.1 parameters, because claiming it selects a
-different implementation than the server speaks. VLESS arrives as an ordinary
+carrying the obfuscation as issued — H1–H4 arrive as ranges — and `version: 3`
+on every AmneziaWG outbound: the engine picks its AmneziaWG implementation by
+that number, and the 3.x one reads the earlier parameter sets too. VLESS arrives as an ordinary
 Xray document and goes through the reader this app already has.
 
 The gateway counts devices by `installation_uuid`, not by requests: the id is
@@ -796,8 +803,9 @@ used, 404 unknown key, 501 client too old, 422 with its sentence expired, 402
 the captcha family or not active), and where the gateway sent wording, that
 wording wins: the same problem should read the same in two clients. The captcha codes say plainly that this app cannot show one. The
 wording is provider-neutral throughout — the gateway serves resellers, and a
-sentence naming Amnezia would be a false statement about who took the money;
-`amnezia_config_test.dart` fails if one appears.
+sentence naming Amnezia would be a false statement about who took the money.
+No test pins it yet, and the import refusal "Not an Amnezia subscription key"
+still names it (ADR-009).
 
 ---
 
@@ -808,7 +816,7 @@ authenticated endpoint returning the normalized bundle (`normconfig.Bundle`,
 specified in [`SPEC-SERVICE.md`](https://github.com/anoya/anoya-web-panel/blob/main/docs/SPEC-SERVICE.md) §4):
 
 ```
-GET /api/client/config → { version, account, locations[], routing? }
+GET /api/client/config → { version, account, locations[], routing?, dns? }
 ```
 
 plus `POST /api/client/login`, `POST /api/client/login/oidc` and

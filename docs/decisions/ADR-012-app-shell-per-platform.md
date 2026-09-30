@@ -42,6 +42,12 @@ fact, and each platform gets it wrong in its own way by default.
   (`flutter_window.cpp`). A left click toggles the window, as background apps
   on Windows do.
 
+### Linux: a plain window
+
+No tray and no close-to-tray: closing the window quits the app, and the
+tunnel, a system service, stays up (ADR-001). Reopening the app is how the
+user gets the controls back.
+
 ### Desktop window size
 
 Phone-shaped but freely resizable: macOS 400×700 (min 360×480,
