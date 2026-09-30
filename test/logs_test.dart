@@ -5,6 +5,8 @@ import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:yaml/yaml.dart';
 import 'package:anoya/core/app_prefs.dart';
 import 'package:anoya/core/log.dart';
 import 'package:anoya/core/log_archive.dart';
@@ -41,6 +43,60 @@ void main() {
       null,
     );
     tmp.deleteSync(recursive: true);
+  });
+
+  group('what a shared log gives away', () {
+    test('a failed fetch names the host, never the subscription token', () {
+      Log.clear();
+      final e = http.ClientException(
+        'Connection refused',
+        Uri.parse('https://panel.example:8443/sub/SECRETTOKEN?flag=1'),
+      );
+      Log.e('profile poll failed', '$e');
+      Log.i('GET https://panel.example/api/client/config (auth)');
+      final dump = Log.dump();
+      expect(dump, isNot(contains('SECRETTOKEN')));
+      expect(dump, contains('https://panel.example:8443/…'));
+      expect(dump, contains('GET https://panel.example/…'));
+    });
+
+    test('a share link keeps its host and loses its credential', () {
+      expect(
+        Log.redact('bad link vless://d1f8b2c4-aaaa@de.example:443?pbk=K#DE'),
+        'bad link vless://de.example:443/…',
+      );
+      expect(Log.redact('key vpn://AAAAbase64payload'), 'key vpn://…');
+      expect(
+        Log.redact('at https://[2001:db8::1]/x'),
+        'at https://[2001:db8::1]/…',
+      );
+      expect(
+        Log.redact('see https://host.example'),
+        'see https://host.example',
+      );
+    });
+
+    test('a parse error keeps its reason and drops the quoted body', () {
+      Log.clear();
+      Object? error;
+      try {
+        loadYaml('proxies:\n  - uuid: SECRETUUID\n    port: [');
+      } catch (e) {
+        error = e;
+      }
+      Log.e('clash yaml parse failed', '$error');
+      try {
+        jsonDecode('{"password": "SECRETPASS", oops}');
+      } catch (e) {
+        error = e;
+      }
+      Log.e('xray json parse failed', '$error');
+      final dump = Log.dump();
+      expect(dump, contains('clash yaml parse failed: '));
+      expect(dump, contains('xray json parse failed: FormatException'));
+      expect(dump, isNot(contains('SECRETUUID')));
+      expect(dump, isNot(contains('SECRETPASS')));
+    });
   });
 
   group('collection switch', () {

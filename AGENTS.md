@@ -113,6 +113,11 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
    config bodies in app, tunnel or engine logs. This includes error text that
    quotes them: subscription URLs, share links and engine parse errors are
    reduced to a host, a scheme or a redacted message before they are logged.
+   In the app `Log` does it for every line — any URL becomes its scheme and
+   host, an error keeps only its first line — so an exception that quotes a
+   request URL or the body it failed on cannot carry either into a shared
+   log. Pinned by `test/logs_test.dart` (group *what a shared log gives
+   away*).
 
 ## Essential Commands
 
