@@ -226,7 +226,10 @@ void main() {
         label: 'Germany',
         privateKey: 'k',
       );
-      expect(parsed!.dns, ['100.64.0.1', '8.8.4.4']);
+      expect(parsed!.dns, [
+        '100.64.0.1#PROXY',
+        '8.8.4.4#PROXY',
+      ], reason: 'the gateway hands them out as the tunnel interface DNS');
       expect(parsed.expiresAt, DateTime.utc(2026, 9, 30, 12));
     });
 
@@ -241,6 +244,15 @@ void main() {
               as YamlMap;
       final proxy = (doc['proxies'] as YamlList).first as YamlMap;
       expect(proxy['type'], 'wireguard');
+      final dns = doc['dns'] as YamlMap;
+      expect(
+        dns['nameserver'],
+        ['100.64.0.1#PROXY', '8.8.4.4#PROXY'],
+        reason:
+            'a wireguard outbound resolves locally; 100.64.0.1 exists only '
+            'inside the tunnel, and on Windows a direct query got no answer',
+      );
+      expect(dns['proxy-server-nameserver'], ['100.64.0.1', '8.8.4.4']);
       expect((proxy['amnezia-wg-option'] as YamlMap)['jc'], 4);
       expect(
         (proxy['amnezia-wg-option'] as YamlMap)['h1'],
@@ -311,7 +323,7 @@ void main() {
       expect(parsed, isNotNull);
       expect(parsed!.location.proxy['type'], 'vless');
       expect(parsed.location.proxy['server'], '135.136.45.186');
-      expect(parsed.dns, ['100.64.0.1']);
+      expect(parsed.dns, ['100.64.0.1#PROXY']);
     },
   );
 

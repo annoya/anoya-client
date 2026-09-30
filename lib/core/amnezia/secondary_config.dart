@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../mihomo_tun_config.dart';
 import '../norm_config.dart';
 import '../parsers/subscription.dart';
 import 'vpn_key.dart';
@@ -43,7 +44,7 @@ AmneziaSecondaryConfig? parseAmneziaSecondaryConfig(
   final dns = <String>[
     for (final k in const ['dns1', 'dns2'])
       if (patched[k] is String && (patched[k] as String).isNotEmpty)
-        patched[k] as String,
+        '${patched[k]}#$kTunnelOutbound',
   ];
 
   for (final container in containers) {

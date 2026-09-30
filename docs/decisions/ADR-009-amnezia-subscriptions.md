@@ -72,6 +72,16 @@ is what a system-initiated start runs — always-on, or the VPN switch in the
 phone's settings — and that happens with no app in memory to fetch anything.
 The config on disk must always be one the system can run alone.
 
+**The gateway's resolvers ride the tunnel.** `dns1`/`dns2` are what Amnezia's
+own client installs as the tunnel interface's DNS, so they are rendered pinned
+(`#PROXY`). One of them is usually `100.64.0.1`, which exists only inside the
+tunnel. Unpinned, mihomo dialled both directly: a WireGuard outbound resolves
+every destination locally, so on Windows, where no direct query got an answer
+(the tun runs with `strict-route` there), an AmneziaWG location connected and
+resolved nothing
+(`dns resolve failed: couldn't find ip`) while VLESS, resolved by the server,
+worked; elsewhere the same queries left the device in plaintext.
+
 **The interface never names Amnezia.** The gateway is Amnezia's and the code is
 named after it, but the key format and the gateway serve resellers too: a key
 can arrive carrying another provider's name and `service_type:

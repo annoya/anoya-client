@@ -236,7 +236,7 @@ void main() {
       expect('${proxy['private-key']}'.contains('WIREGUARD_CLIENT'), isFalse);
       expect(gw.lastPublicKey, isNot(contains('WIREGUARD_CLIENT')));
       expect(updated.dns, [
-        '100.64.0.1',
+        '100.64.0.1#PROXY',
       ], reason: 'the resolvers the server came with, not ours');
     });
 
