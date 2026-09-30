@@ -185,13 +185,15 @@ bool _hasGroups(String body) =>
     RegExp(r'(^|\n)\s*proxy-groups\s*:').hasMatch(body) &&
     RegExp(r'(^|\n)\s*proxies\s*:').hasMatch(body);
 
-const kClashRenderings = ['mihomo', 'clash-meta', 'clash'];
+const kClashRenderings = ['mihomo', 'clash-meta', 'clash', kClashPathRendering];
+
+const kClashPathRendering = 'clash-path';
 
 Uri? renderingUrl(Uri uri, String name) {
   final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
   if (segments.isEmpty) return null;
-  if (segments.first == 'sub' && segments.length >= 2) {
-    if (name != 'clash') return null;
+  if (name == kClashPathRendering) {
+    if (segments.first != 'sub' || segments.length < 2) return null;
     return uri.replace(pathSegments: ['clash', ...segments.skip(1)]);
   }
   if (kSubscriptionRenderings.contains(segments.last.toLowerCase())) {
