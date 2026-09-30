@@ -143,6 +143,18 @@ re-read hourly (`kDefaultRefreshGap`), and nothing faster than every five
 minutes (`kMinRefreshGap`) whatever it asks — at the floor, silence meant 288
 full fetches a day of somebody else's list.
 
+**A poll takes the tunnel down only for the account, never for the server.**
+A self-hosted server that turns the account off (deactivated, expired,
+limited) is obeyed at once: the tunnel goes down through the ordinary
+disconnect, on-demand is paused as for a manual stop, and the user reads the
+same reason a connect would have given. A connected server that is simply
+missing from the poll is left running. Management leaves out any worker it
+has not heard from in 45 s, which a management restart is enough for, while
+the worker keeps serving; and a worker that is really gone carries nothing
+anyway, so disconnecting would only trade a dead tunnel for traffic outside
+it. Access is enforced on the worker, which drops a user it no longer serves,
+not by the client leaving.
+
 **What a panel asks for is bounded, never obeyed.** `subscription-request-timeout`
 is clamped to 5–15 s: a minute would hold a manual refresh open, a second fails
 on a slow link. `profile-update-interval` is in hours (the convention's unit),
