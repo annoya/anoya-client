@@ -19,9 +19,37 @@ class Log {
   static void i(String msg) => _add('INFO', msg);
 
   static void e(String msg, [Object? error, StackTrace? st]) {
-    _add('ERROR', error != null ? '$msg: $error' : msg);
+    _add('ERROR', error != null ? '$msg: ${_firstLine('$error')}' : msg);
     developer.log(msg, name: 'vpn', level: 1000, error: error, stackTrace: st);
   }
+
+  static String _firstLine(String s) {
+    final nl = s.indexOf('\n');
+    return nl < 0 ? s : s.substring(0, nl);
+  }
+
+  static final _url = RegExp(r"""[A-Za-z][A-Za-z0-9+.\-]*://[^\s"'<>]+""");
+
+  @visibleForTesting
+  static String redact(String s) => s.replaceAllMapped(_url, (m) {
+    final url = m[0]!;
+    final scheme = url.substring(0, url.indexOf('://'));
+    final uri = Uri.tryParse(url);
+    final named =
+        uri != null &&
+        (uri.host.contains('.') ||
+            uri.host.contains(':') ||
+            uri.host == 'localhost');
+    if (!named) return '$scheme://…';
+    final host = uri.host.contains(':') ? '[${uri.host}]' : uri.host;
+    final port = uri.hasPort ? ':${uri.port}' : '';
+    final more =
+        uri.userInfo.isNotEmpty ||
+        (uri.path.isNotEmpty && uri.path != '/') ||
+        uri.hasQuery ||
+        uri.hasFragment;
+    return '$scheme://$host$port${more ? '/…' : ''}';
+  });
 
   static String _context = '';
 
@@ -35,7 +63,8 @@ class Log {
     }
   }
 
-  static void _add(String level, String msg) {
+  static void _add(String level, String raw) {
+    final msg = redact(raw);
     final line = _context.isEmpty
         ? '[$level] $msg'
         : '[$level] $_context: $msg';
