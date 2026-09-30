@@ -38,6 +38,27 @@ void main() {
     expect(error!.detail, contains('GEOSITE'));
   });
 
+  test(
+    'a start the engine refused says why after passing through error',
+    () async {
+      final core = _FakeCore(reason: 'parse config: proxy 0: unsupported type');
+      final c = boot(core);
+
+      core.emit(VpnStatus.connecting);
+      core.emit(VpnStatus.error);
+      core.emit(VpnStatus.disconnected);
+      await Future<void>.delayed(Duration.zero);
+
+      final error = c.read(profilesControllerProvider).error;
+      expect(
+        error?.detail,
+        contains('unsupported type'),
+        reason:
+            'Android and the desktop service report a refused start this way',
+      );
+    },
+  );
+
   test('a stop the user asked for is not an error', () async {
     final core = _FakeCore(reason: 'whatever the system kept');
     final c = boot(core);
