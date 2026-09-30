@@ -89,6 +89,11 @@ translated and left to the renderer, so it still works on desktop.
 - Precedence is fixed: server-managed policy, else the profile's rule set if
   routing is enabled, else nothing. LAN-direct rules are prepended on top in all
   cases.
+- A managed policy that management cannot read is an error, never an absent
+  one. The client reads "no routing" as "unmanaged" and turns local rules
+  back on, so a failed lookup answering an empty policy would lift the admin's
+  policy for that connect; management answers 500 instead, and the connect
+  fails visibly (`routingForList` in `management/internal/httpapi/client_api.go`).
 - A rule that cannot work on this device never reaches the engine config, and is
   never silently removed from the user's set either.
 - `RoutingRule.isValid` mirrors the server-side validation. Values are
