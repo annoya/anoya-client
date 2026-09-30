@@ -186,7 +186,7 @@ void main() {
     });
 
     test('vpn:// that is not a subscription key', () {
-      expect(whyUnusable('vpn://nonsense'), 'Not an Amnezia subscription key');
+      expect(whyUnusable('vpn://nonsense'), 'Not a subscription key');
     });
 
     test('everything else, and nothing for an empty field', () {

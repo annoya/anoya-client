@@ -37,7 +37,6 @@ var acceptedKeys = map[string]map[string]bool{
 		"stack":                   true,
 		"disable-icmp-forwarding": true,
 		"dns-hijack":              true,
-		"inet4-address":           true,
 		"inet6-address":           true,
 		"auto-route":              true,
 		"strict-route":            true,

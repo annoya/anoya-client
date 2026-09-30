@@ -2350,8 +2350,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get importUnusableNotAmneziaKey =>
-      'No es una clave de suscripción de Amnezia';
+  String get importUnusableNotSubscriptionKey =>
+      'No es una clave de suscripción';
 
   @override
   String importUnusableNotSupported(String what) {

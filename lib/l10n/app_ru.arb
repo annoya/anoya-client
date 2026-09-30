@@ -596,7 +596,7 @@
   "importDetectedSubscriptionUrl": "URL подписки · {host}",
   "importDetectedSingleServer": "Сервер · {label}",
   "importDetectedSubscriptionText": "Подписка · {count, plural, =1{1 сервер} few{{count} сервера} many{{count} серверов} other{{count} сервера}}",
-  "importUnusableNotAmneziaKey": "Это не ключ подписки Amnezia",
+  "importUnusableNotSubscriptionKey": "Это не ключ подписки",
   "importUnusableNotSupported": "{what} не поддерживается",
   "importUnusableTransportNotSupported": "{scheme} поверх {transport} не поддерживается",
   "importUnusableLinkUnreadable": "не удалось прочитать ссылку {scheme}://",

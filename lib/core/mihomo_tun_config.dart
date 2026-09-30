@@ -90,14 +90,10 @@ String mihomoTunConfigYaml(
     'tun:',
     '  enable: true',
     if (device != null) '  device: ${yamlScalar(device)}',
-    // The iOS NE sandbox permits only gvisor (`system` fails to bind the fake-ip gateway).
     if (device != null) '  stack: mixed' else '  stack: gvisor',
     '  disable-icmp-forwarding: true',
     '  dns-hijack:',
     '    - any:53',
-    // Pinned: Tun.Equal compares it, so an upstream default change recreates the listener.
-    if (device != null) '  inet4-address:',
-    if (device != null) '    - $kTunInet4Address',
     '  inet6-address:',
     '    - $kTunInet6Address',
     '  auto-route: ${device != null}',
@@ -189,8 +185,6 @@ const kFakeIpRange = '198.18.0.1/16';
 const kFakeIpRange6 = 'fc00::/18';
 
 const kTunInet6Address = 'fdfe:dcba:9876::1/126';
-
-const kTunInet4Address = '172.19.0.1/30';
 
 const kTunMtu = 1500;
 

@@ -2237,7 +2237,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get importUnusableNotAmneziaKey => '不是 Amnezia 订阅密钥';
+  String get importUnusableNotSubscriptionKey => '不是订阅密钥';
 
   @override
   String importUnusableNotSupported(String what) {

@@ -196,7 +196,7 @@ String? whyUnusable(String raw) {
       ? first.split('://').first.toLowerCase()
       : '';
   final l10n = L10n.current;
-  if (scheme == 'vpn') return l10n.importUnusableNotAmneziaKey;
+  if (scheme == 'vpn') return l10n.importUnusableNotSubscriptionKey;
   if (kShareLinkSchemes.contains(scheme)) {
     final parsed = parseShareLink(first);
     final why = parsed.unsupported;
