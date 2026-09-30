@@ -96,7 +96,7 @@ func TestAFailedStartIsRecordedAndLeavesNothingHalfUp(t *testing.T) {
 	s, eng, files := harness(t)
 	eng.startErr = errors.New("parse config: bad")
 
-	_, err := s.Handle("start", map[string]any{"config": "nonsense"})
+	_, err := s.Handle("start", map[string]any{"config": "mode: nonsense"})
 	if err == nil || err.Error() != "parse config: bad" {
 		t.Fatalf("start error %v", err)
 	}
@@ -114,7 +114,7 @@ func TestAFailedStartIsRecordedAndLeavesNothingHalfUp(t *testing.T) {
 	}
 
 	eng.startErr = nil
-	if _, err := s.Handle("start", map[string]any{"config": "ok"}); err != nil {
+	if _, err := s.Handle("start", map[string]any{"config": "mode: ok"}); err != nil {
 		t.Fatal(err)
 	}
 	if got, _ := s.Handle("disconnect_error", nil); got != "" {
@@ -133,11 +133,11 @@ func TestProbesAreRefusedWhileNothingRuns(t *testing.T) {
 	if got, _ := s.Handle("group_member", map[string]any{"group": "PROXY"}); got != "" {
 		t.Fatalf("group_member down: %q", got)
 	}
-	if _, err := s.Handle("reload", map[string]any{"config": "c"}); err == nil {
+	if _, err := s.Handle("reload", map[string]any{"config": "mode: c"}); err == nil {
 		t.Fatal("reload with nothing running must be refused")
 	}
 
-	_, _ = s.Handle("start", map[string]any{"config": "c"})
+	_, _ = s.Handle("start", map[string]any{"config": "mode: c"})
 	if got, _ := s.Handle("url_test", map[string]any{"url": "https://x", "timeout_ms": 1000.0}); got != "ms:42" {
 		t.Fatalf("url_test up: %q", got)
 	}
@@ -151,24 +151,65 @@ func TestProbesAreRefusedWhileNothingRuns(t *testing.T) {
 
 func TestReloadKeepsTheSessionAndReportsARejectedConfig(t *testing.T) {
 	s, eng, files := harness(t)
-	_, _ = s.Handle("start", map[string]any{"config": "one"})
+	_, _ = s.Handle("start", map[string]any{"config": "mode: one"})
 	eng.reloadEr = errors.New("parse config: bad")
-	_, err := s.Handle("reload", map[string]any{"config": "two"})
+	_, err := s.Handle("reload", map[string]any{"config": "mode: two"})
 	if err == nil {
 		t.Fatal("a rejected config must come back as an error")
 	}
 	if s.Status() != StatusConnected {
 		t.Fatalf("a rejected reload must not take the tunnel down, status %q", s.Status())
 	}
-	if got, _ := files.LoadConfig(); got != "two" {
+	if got, _ := files.LoadConfig(); got != "mode: two" {
 		t.Fatalf("the saved config follows the selection even when the engine refused it, got %q", got)
 	}
 	eng.reloadEr = nil
-	if _, err := s.Handle("reload", map[string]any{"config": "three"}); err != nil {
+	if _, err := s.Handle("reload", map[string]any{"config": "mode: three"}); err != nil {
 		t.Fatal(err)
 	}
 	if eng.sequence() != "start,reload,reload" {
 		t.Fatalf("no stop anywhere on the switch path, got %s", eng.sequence())
+	}
+}
+
+func TestOnlyTheRenderedShapeReachesTheEngine(t *testing.T) {
+	refused := []string{
+		"external-controller: 0.0.0.0:9090",
+		"listeners:\n  - {name: open, type: socks, listen: 0.0.0.0, port: 1080}",
+		"dns:\n  listen: 0.0.0.0:53",
+		"tun:\n  include-uid: [1000]",
+		"iptables:\n  enable: true",
+		"tun: [1]",
+		"rule-providers:\n  ads: {type: http, url: 'https://x/y', path: ./r.yaml, behavior: domain}",
+		"rule-providers:\n  ads: {type: file, path: ./r.yaml, behavior: domain, proxy: DIRECT}",
+		"not a mapping",
+	}
+	for _, config := range refused {
+		for _, method := range []string{"start", "reload", "sync_config"} {
+			s, eng, files := harness(t)
+			if method == "reload" {
+				_, _ = s.Handle("start", map[string]any{"config": "tun: {}"})
+				_ = os.Remove(files.Config())
+			}
+			if _, err := s.Handle(method, map[string]any{"config": config}); err == nil {
+				t.Fatalf("%s accepted %q", method, config)
+			}
+			if _, err := files.LoadConfig(); err == nil {
+				t.Fatalf("%s saved the refused %q", method, config)
+			}
+			if strings.Contains(eng.sequence(), "reload") || len(eng.configs) > 1 {
+				t.Fatalf("%s handed the refused %q to the engine", method, config)
+			}
+		}
+	}
+
+	s, eng, files := harness(t)
+	if err := files.SaveConfig("external-controller: 0.0.0.0:9090"); err != nil {
+		t.Fatal(err)
+	}
+	files.SetAutoConnect(true)
+	if err := s.StartSaved(); err == nil || eng.sequence() != "" {
+		t.Fatalf("a boot ran a planted config: err=%v calls=%s", err, eng.sequence())
 	}
 }
 
@@ -260,7 +301,7 @@ func TestDisconnectingDoesNotAnswerTheAutoConnectQuestion(t *testing.T) {
 
 func TestStopAndRemoveProfile(t *testing.T) {
 	s, eng, files := harness(t)
-	_, _ = s.Handle("start", map[string]any{"config": "c"})
+	_, _ = s.Handle("start", map[string]any{"config": "mode: c"})
 	_, _ = s.Handle("stop", nil)
 	if s.Status() != StatusDisconnected {
 		t.Fatalf("status %q", s.Status())
@@ -394,7 +435,7 @@ func TestAClientLearnsTheStatusFirstAndOnEveryChange(t *testing.T) {
 		t.Fatalf("first message must be the current status, got %v", first)
 	}
 
-	res := w.call(t, "start", map[string]any{"config": "c"})
+	res := w.call(t, "start", map[string]any{"config": "mode: c"})
 	if res["error"] != nil {
 		t.Fatalf("start over the wire: %v", res["error"])
 	}
