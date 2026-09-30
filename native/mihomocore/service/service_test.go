@@ -160,12 +160,15 @@ func TestReloadKeepsTheSessionAndReportsARejectedConfig(t *testing.T) {
 	if s.Status() != StatusConnected {
 		t.Fatalf("a rejected reload must not take the tunnel down, status %q", s.Status())
 	}
-	if got, _ := files.LoadConfig(); got != "mode: two" {
-		t.Fatalf("the saved config follows the selection even when the engine refused it, got %q", got)
+	if got, _ := files.LoadConfig(); got != "mode: one" {
+		t.Fatalf("a boot must start what the engine runs, not what it refused, got %q", got)
 	}
 	eng.reloadEr = nil
 	if _, err := s.Handle("reload", map[string]any{"config": "mode: three"}); err != nil {
 		t.Fatal(err)
+	}
+	if got, _ := files.LoadConfig(); got != "mode: three" {
+		t.Fatalf("an applied switch is what a boot starts, got %q", got)
 	}
 	if eng.sequence() != "start,reload,reload" {
 		t.Fatalf("no stop anywhere on the switch path, got %s", eng.sequence())

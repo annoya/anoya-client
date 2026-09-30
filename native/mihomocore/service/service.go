@@ -123,8 +123,11 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		if err := checkConfig(config); err != nil {
 			return nil, err
 		}
+		if err := s.reload(config); err != nil {
+			return nil, err
+		}
 		s.persist(config, boolOr("log_enabled", true))
-		return nil, s.reload(config)
+		return nil, nil
 
 	case "sync_config":
 		config := str("config")

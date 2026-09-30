@@ -99,6 +99,12 @@ the user gets a dialog.
 
 - No code on the switch path calls `stop`, `start`, or
   `setTunnelNetworkSettings`, in any outcome including failure.
+- The saved config — what always-on, on-demand or a boot start runs with no
+  app in memory — changes on a switch only once the engine has applied it.
+  A refused switch leaves the previous one on disk as well as in the engine,
+  so the next system start does not bring up a config that already failed
+  and that the app no longer shows. Pinned on the desktop service by
+  `TestReloadKeepsTheSessionAndReportsARejectedConfig`.
 - `includedRoutes` is the default route for IPv4 **and** IPv6, and
   `excludedRoutes` is empty.
 - The `tun` section of the rendered config is byte-identical across locations,
