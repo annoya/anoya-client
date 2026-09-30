@@ -447,8 +447,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     final core = ref.read(vpnCoreProvider);
     var previous = core.status;
     _statusSub = core.statusStream().listen((status) async {
-      final wasComing =
-          previous == VpnStatus.connecting || previous == VpnStatus.connected;
+      final wasComing = previous != VpnStatus.disconnected;
       previous = status;
       if (status != VpnStatus.disconnected || !wasComing) return;
       if (_stopExpected) {
