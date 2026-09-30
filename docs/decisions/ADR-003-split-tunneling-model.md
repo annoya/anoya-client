@@ -86,14 +86,15 @@ translated and left to the renderer, so it still works on desktop.
 
 ## Invariants
 
-- Precedence is fixed: server-managed policy, else the profile's rule set if
+- Precedence is fixed: server-managed policy, else the subscription's own
+  routing while its switch is on (ADR-005), else the profile's rule set if
   routing is enabled, else nothing. LAN-direct rules are prepended on top in all
-  cases.
+  cases (`routingPolicyFor` in `lib/core/routing_policy.dart`).
 - A managed policy that management cannot read is an error, never an absent
   one. The client reads "no routing" as "unmanaged" and turns local rules
   back on, so a failed lookup answering an empty policy would lift the admin's
   policy for that connect; management answers 500 instead, and the connect
-  fails visibly (`routingForList` in `management/internal/httpapi/client_api.go`).
+  fails visibly (`routingForList` in `anoya-web-panel/management/internal/httpapi/client_api.go`).
 - A rule that cannot work on this device never reaches the engine config, and is
   never silently removed from the user's set either.
 - `RoutingRule.isValid` mirrors the server-side validation. Values are
@@ -136,9 +137,11 @@ disabled with the reason costs one line and answers the question.
 - A set edited *inside the editor* on a live tunnel applies from the next
   connect; only toggling routing and switching sets apply hot. Accepted for now
   — the alternative is a hot reload per keystroke-ish edit.
-- The client understands rule types (`geoip`, `geosite`, `no_resolve`) that
-  `shared/normconfig/routing.go` does not. A managed policy using them would
-  fail server-side validation. **Known divergence, not yet resolved.**
+- The client understands rule types (`domain-regex`, `geoip`, `geosite`,
+  `rule-list`), the `no_resolve` flag and rule-list providers that
+  `anoya-web-panel/shared/normconfig/routing.go` does not. A managed
+  policy cannot carry any of them: the server rejects the types and drops the
+  rest when it stores a profile. **Known divergence, not yet resolved.**
 - Geo databases are ~25 MB on disk in the shared container, and the whole simple
   editor is unusable without them.
 
@@ -146,8 +149,8 @@ disabled with the reason costs one line and answers the question.
 
 - `lib/core/rule_set.dart` — sets, storage, the built-in Default.
 - `lib/core/profile.dart` — `ruleSetId`, `routingEnabled`.
-- `lib/state/profiles_controller.dart` — `_normConfig`: precedence, geo
-  gating, platform gating, LAN rules.
+- `lib/core/effective_config.dart` — `buildNormConfig`: the policy in
+  force, geo gating, platform gating, LAN rules.
 - `lib/core/routing_prefs.dart` — device-level prefs and LAN rules.
 - `lib/core/geo_store.dart`, `geosite_index.dart` — databases.
 - `lib/core/platform_support.dart` — `supportsProcessRules`.
@@ -161,10 +164,10 @@ disabled with the reason costs one line and answers the question.
   after a refresh, where a provider may genuinely have dropped a list.
 - `lib/features/config/routing_config_screen.dart` — the page holding the
   controls for all three kinds of policy, reached by one row (`RoutingRow` in
-  `config_parts.dart`) from every configuration screen. Split off because these
+  `routing_cards.dart`) from every configuration screen. Split off because these
   controls were the largest thing on a screen that answers a different question,
   and the part fewest people open.
-- `management/internal/store/routingprofiles.go`, `shared/normconfig/routing.go`
+- `anoya-web-panel/management/internal/store/routingprofiles.go`, `anoya-web-panel/shared/normconfig/routing.go`
   — the server half.
 - Tests: `test/routing_simple_test.dart`, `test/status_strip_test.dart`
   (group `routing switch`), `test/routing_v2_test.dart`,
