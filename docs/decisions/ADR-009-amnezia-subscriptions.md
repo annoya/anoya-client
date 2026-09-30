@@ -102,9 +102,10 @@ work.
 - A configuration is replaced before its stated expiry, not after: one that
   expires while the tunnel is coming up fails in the least explicable way there
   is. Changing the selection replaces it regardless of expiry.
-- Obfuscation parameters are emitted exactly as issued. `version: 3` is claimed
-  only when the server sent v3.1 parameters, because it selects a different
-  implementation in the engine.
+- Obfuscation parameters are emitted exactly as issued. `version: 3` is set on
+  every AmneziaWG outbound, whatever generation of parameters the server sent:
+  the engine picks its AmneziaWG implementation by that number alone, and the
+  3.x one reads the earlier parameter sets too.
 - The poll treats this domain like any other source: `account_info` on the
   timer, at the app's default cadence unless the user says otherwise. The
   gateway has no header to ask in, and the poll floor is a floor, not a
@@ -114,9 +115,11 @@ work.
   would exhaust a user's subscription within a day; it is never taken from
   anything the gateway returns.
 - No user-facing string in the domain names Amnezia; the provider's own name
-  comes from the key. Pinned by a test that reads the source files, because the
-  wording is easy to reintroduce and impossible to notice while testing against
-  an Amnezia key.
+  comes from the key. The wording is easy to reintroduce and impossible to
+  notice while testing against an Amnezia key, so it wants a test that reads
+  the source files; that test does not exist yet, and the import refusal
+  (`importUnusableNotAmneziaKey`, "Not an Amnezia subscription key") still
+  names it.
 - How the library reaches the app is per platform, and so is the way it can go
   missing: Apple links the c-archive into the app binary (a *symbol* problem),
   Android ships `libagw.so` inside the APK, Windows ships `libagw.dll` beside
@@ -132,12 +135,14 @@ work.
   up only in TestFlight. Both Apple projects therefore set
   `STRIP_STYLE = non-global` and pass `-Wl,-export_dynamic` next to the
   `-Wl,-u,_agw_*` list that pulls the archive members in.
-- Gateway credentials — endpoint, RSA public key, storage endpoints and their
-  fallbacks — are build-time configuration, never committed. A build without them refuses
-  Amnezia keys with a message that says so. The client identity the gateway is
-  told about is *not* configuration: the app sends its own bundle name and its
-  own version and claims no distribution channel, so no build can present
-  itself as somebody else's client.
+- The gateway's RSA public key, storage endpoints and their fallbacks are
+  build-time configuration, never committed; a build without them refuses
+  Amnezia keys with a message that says so. The gateway endpoint is the one
+  exception: it defaults to `http://gw.amnezia.org:80/`, the base address
+  Amnezia subscriptions are served from, and a build may override it
+  (`AGW_ENDPOINT`). The client identity the gateway is told about is *not*
+  configuration either: `AmneziaEnv.clientName` is a fixed name, the version is
+  the app's own, and no distribution channel is claimed.
 
 ## Alternatives Considered
 
@@ -171,6 +176,6 @@ only one of them can ever work.
 - Two endpoints are implemented out of the fourteen their client uses. Trials,
   purchases, captchas and the services catalogue are absent; a captcha
   challenge is reported as something to resolve in Amnezia's own app.
-- VLESS has been verified end to end against a live subscription. AmneziaWG
-  renders correctly and the engine accepts it, but a handshake has not yet been
-  observed — see OPEN-QUESTIONS.
+- VLESS and AmneziaWG have both been verified end to end against a live
+  subscription; the AmneziaWG handshake was confirmed through the connection
+  check (ADR-010) on a real device.

@@ -124,11 +124,13 @@ The honest version of this feature is a firewall (pf) that permits the tunnel
 and the local network and drops the rest — and that is a different, larger
 piece of work, not a checkbox.
 
-### A single "auto-connect" switch instead of a rule editor
+### A single "auto-connect" switch instead of a rule editor (Apple)
 
-Rejected as too poor to be useful: "auto-connect always" and "auto-connect on
-untrusted Wi-Fi" are different products, and the reference clients (Happ,
-Shadowrocket) all expose rules.
+Rejected where the system can evaluate rules: "auto-connect always" and
+"auto-connect on untrusted Wi-Fi" are different products, and the reference
+clients (Happ, Shadowrocket) all expose rules. Windows and Linux do ship one
+switch, because there the only condition anything evaluates is the machine
+starting (above).
 
 ### Persist the config only when arming on-demand
 

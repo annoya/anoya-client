@@ -28,8 +28,9 @@ This mirrors how NetBird does it, which was checked before committing.
 
 **The client talks to the IdP directly** — Authorization Code with PKCE, public
 client, no client secret. It returns the ID token to management, which validates
-it against JWKS: issuer, audience, nonce, `email_verified`, and the domain
-allowlist. The browser leg returns to the custom scheme `vpnclient://auth`: on
+it against JWKS: issuer, audience, expiry, `email_verified`, and the domain
+allowlist. The nonce is the client's: it generates it and checks it in the
+token it got back; management is not told the nonce and does not check it. The browser leg returns to the custom scheme `vpnclient://auth`: on
 macOS and iOS through `ASWebAuthenticationSession`, on Android through the
 user's browser and an activity registered for that scheme
 (`WebAuthCallbackActivity`). All three answer the same `vpn/web_auth` channel.
@@ -111,10 +112,10 @@ worth doing when a customer asks, not before.
 
 ## Where It Lives
 
-- `management/internal/oidcauth/oidcauth.go` — discovery, JWKS, claim checks.
-- `management/internal/httpapi/` — `GET /api/client/auth-config`,
+- `anoya-web-panel/management/internal/oidcauth/oidcauth.go` — discovery, JWKS, claim checks.
+- `anoya-web-panel/management/internal/httpapi/` — `GET /api/client/auth-config`,
   `POST /api/client/login/oidc`, admin CRUD for providers.
-- `management/webui/src/pages/SSO.tsx` — provider configuration.
+- `anoya-web-panel/management/webui/src/pages/SSO.tsx` — provider configuration.
 - `lib/core/oidc_login.dart` — PKCE over the `vpn/web_auth` channel.
 - `shared/apple/WebAuthChannel.swift` (symlinked into both Runners) and
   `android/.../WebAuthChannel.kt` + `WebAuthCallbackActivity.kt` — the
