@@ -596,7 +596,7 @@
   "importDetectedSubscriptionUrl": "订阅 URL · {host}",
   "importDetectedSingleServer": "服务器 · {label}",
   "importDetectedSubscriptionText": "订阅 · {count, plural, =1{1 台服务器} other{{count} 台服务器}}",
-  "importUnusableNotAmneziaKey": "不是 Amnezia 订阅密钥",
+  "importUnusableNotSubscriptionKey": "不是订阅密钥",
   "importUnusableNotSupported": "不支持 {what}",
   "importUnusableTransportNotSupported": "不支持基于 {transport} 的 {scheme}",
   "importUnusableLinkUnreadable": "无法读取 {scheme}:// 链接",

@@ -803,9 +803,9 @@ used, 404 unknown key, 501 client too old, 422 with its sentence expired, 402
 the captcha family or not active), and where the gateway sent wording, that
 wording wins: the same problem should read the same in two clients. The captcha codes say plainly that this app cannot show one. The
 wording is provider-neutral throughout — the gateway serves resellers, and a
-sentence naming Amnezia would be a false statement about who took the money.
-No test pins it yet, and the import refusal "Not an Amnezia subscription key"
-still names it (ADR-009).
+sentence naming Amnezia would be a false statement about who took the money;
+`amnezia_config_test.dart` fails if one appears in the source or in any
+translation.
 
 ---
 

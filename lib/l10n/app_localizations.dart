@@ -3680,11 +3680,11 @@ abstract class AppLocalizations {
   /// **'Subscription · {count, plural, =1{1 server} other{{count} servers}}'**
   String importDetectedSubscriptionText(int count);
 
-  /// No description provided for @importUnusableNotAmneziaKey.
+  /// No description provided for @importUnusableNotSubscriptionKey.
   ///
   /// In en, this message translates to:
-  /// **'Not an Amnezia subscription key'**
-  String get importUnusableNotAmneziaKey;
+  /// **'Not a subscription key'**
+  String get importUnusableNotSubscriptionKey;
 
   /// {what} is a protocol or plugin name, e.g. 'ss+kcptun' or 'tuic://'
   ///

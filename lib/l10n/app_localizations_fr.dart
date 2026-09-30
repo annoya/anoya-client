@@ -2347,8 +2347,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get importUnusableNotAmneziaKey =>
-      'Ce n’est pas une clé d’abonnement Amnezia';
+  String get importUnusableNotSubscriptionKey =>
+      'Ce n’est pas une clé d’abonnement';
 
   @override
   String importUnusableNotSupported(String what) {

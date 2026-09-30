@@ -2384,7 +2384,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get importUnusableNotAmneziaKey => 'Это не ключ подписки Amnezia';
+  String get importUnusableNotSubscriptionKey => 'Это не ключ подписки';
 
   @override
   String importUnusableNotSupported(String what) {

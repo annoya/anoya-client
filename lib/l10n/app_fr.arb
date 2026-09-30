@@ -596,7 +596,7 @@
   "importDetectedSubscriptionUrl": "URL d’abonnement · {host}",
   "importDetectedSingleServer": "Serveur · {label}",
   "importDetectedSubscriptionText": "Abonnement · {count, plural, =1{1 serveur} other{{count} serveurs}}",
-  "importUnusableNotAmneziaKey": "Ce n’est pas une clé d’abonnement Amnezia",
+  "importUnusableNotSubscriptionKey": "Ce n’est pas une clé d’abonnement",
   "importUnusableNotSupported": "{what} n’est pas pris en charge",
   "importUnusableTransportNotSupported": "{scheme} sur {transport} n’est pas pris en charge",
   "importUnusableLinkUnreadable": "lien {scheme}:// illisible",
