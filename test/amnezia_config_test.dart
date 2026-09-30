@@ -334,6 +334,15 @@ void main() {
         }
       }
     }
+    for (final arb in Directory('lib/l10n').listSync()) {
+      if (!arb.path.endsWith('.arb')) continue;
+      final strings = jsonDecode(File(arb.path).readAsStringSync()) as Map;
+      strings.forEach((key, value) {
+        if (value is String && value.toLowerCase().contains('amnezia')) {
+          offenders.add('${arb.path}: $key');
+        }
+      });
+    }
     expect(offenders, isEmpty);
   });
 }

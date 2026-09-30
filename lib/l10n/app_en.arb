@@ -1788,7 +1788,7 @@
       }
     }
   },
-  "importUnusableNotAmneziaKey": "Not an Amnezia subscription key",
+  "importUnusableNotSubscriptionKey": "Not a subscription key",
   "importUnusableNotSupported": "{what} isn’t supported",
   "@importUnusableNotSupported": {
     "description": "{what} is a protocol or plugin name, e.g. 'ss+kcptun' or 'tuic://'",

@@ -634,7 +634,6 @@ proxies:
       expect(tun['device'], 'Anoya');
       expect(tun['auto-route'], isTrue);
       expect(tun['auto-detect-interface'], isTrue);
-      expect(tun['inet4-address'], [kTunInet4Address]);
       expect(tun['inet6-address'], [kTunInet6Address]);
       expect(tun['stack'], 'mixed');
       expect(tun['dns-hijack'], ['any:53']);

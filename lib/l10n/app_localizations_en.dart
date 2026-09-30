@@ -2326,7 +2326,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get importUnusableNotAmneziaKey => 'Not an Amnezia subscription key';
+  String get importUnusableNotSubscriptionKey => 'Not a subscription key';
 
   @override
   String importUnusableNotSupported(String what) {

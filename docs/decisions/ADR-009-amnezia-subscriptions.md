@@ -115,11 +115,9 @@ work.
   would exhaust a user's subscription within a day; it is never taken from
   anything the gateway returns.
 - No user-facing string in the domain names Amnezia; the provider's own name
-  comes from the key. The wording is easy to reintroduce and impossible to
-  notice while testing against an Amnezia key, so it wants a test that reads
-  the source files; that test does not exist yet, and the import refusal
-  (`importUnusableNotAmneziaKey`, "Not an Amnezia subscription key") still
-  names it.
+  comes from the key. Pinned by a test that reads the source files and every
+  translation, because the wording is easy to reintroduce and impossible to
+  notice while testing against an Amnezia key.
 - How the library reaches the app is per platform, and so is the way it can go
   missing: Apple links the c-archive into the app binary (a *symbol* problem),
   Android ships `libagw.so` inside the APK, Windows ships `libagw.dll` beside
