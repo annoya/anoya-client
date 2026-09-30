@@ -106,6 +106,14 @@ dependency. It also overrides what the admin's rule intended for us, which is
 the trade: we prefer a capability we can rely on over a choice made for a client
 the admin may never have heard of.
 
+The name goes where the panel expects it, and the path does not say which
+panel that is. Marzban, Marzneshin and Remnawave append it
+(`/sub/<token>/clash-meta`, `/<id>/mihomo`); 3x-ui serves the same list from
+a sibling path (`/sub/<id>` → `/clash/<id>`). A `/sub/` prefix is common to
+3x-ui and Marzban, so it decides nothing: every suffix is tried first and the
+sibling path last (`kClashPathRendering`). Reading `/sub/` as 3x-ui sent every
+Marzban subscription to a 404 and back to base64.
+
 **A subscription's groups are carried, and the engine keeps the choice.** A
 `url-test` group is not something we reimplement in Dart: mihomo measures each
 member through itself, switches only when a new leader beats the current one by
