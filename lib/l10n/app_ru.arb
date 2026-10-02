@@ -326,6 +326,8 @@
   "startSubtitle": "Ссылка, подписка или файл конфигурации",
   "startLinkLabel": "Ссылка или подписка",
   "startLinkHint": "vless://…  или  https://…/sub",
+  "startPaste": "Вставить",
+  "startClipboardEmpty": "Буфер обмена пуст",
   "startCantUseThis": "Не подходит · {reason}",
   "startOpenConfigFile": "Открыть файл конфигурации…",
   "startOr": "или",
