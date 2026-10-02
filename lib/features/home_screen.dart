@@ -354,8 +354,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _pickProfile() async {
+    final favorites = await ref.read(favoritesProvider.notifier).loaded();
+    if (!mounted) return;
     final st = ref.read(profilesControllerProvider);
-    final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
       title: context.l10n.homeConfiguration,
@@ -382,8 +383,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _pickLocation(Profile active) async {
+    final favorites = await ref.read(favoritesProvider.notifier).loaded();
+    if (!mounted) return;
     final st = ref.read(profilesControllerProvider);
-    final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
       title: context.l10n.homeServer,
