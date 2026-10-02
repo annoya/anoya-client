@@ -10,6 +10,8 @@ import 'share_link.dart';
 
 const _maxSubscriptionChars = 4 * 1024 * 1024;
 
+final _linkBoundary = RegExp(r'\s*[\r\n]\s*|\s+(?=[A-Za-z][A-Za-z0-9+.-]*://)');
+
 class ParsedSubscription {
   const ParsedSubscription({
     required this.locations,
@@ -96,7 +98,7 @@ ParsedSubscription _parseBody(String body) {
   final out = <Location>[];
   final unsupported = <String, int>{};
   final malformed = <String, int>{};
-  for (final line in text.split(RegExp(r'[\r\n\s]+'))) {
+  for (final line in text.split(_linkBoundary)) {
     if (line.isEmpty) continue;
     final parsed = parseShareLink(line);
     final loc = parsed.location;
