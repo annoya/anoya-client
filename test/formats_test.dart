@@ -359,6 +359,19 @@ proxies:
       );
     });
 
+    test('a name with raw spaces is the whole name, not its first word', () {
+      const body =
+          'vless://u@a.example:443?security=none#Auto → [🚀 Оптимальная локация]\n'
+          'vless://u@b.example:443?security=none#Albania → [🍿 YouTube] '
+          'vless://u@c.example:443?security=none#Argentina';
+      final labels = parseSubscription(body).map((l) => l.label).toList();
+      expect(labels, [
+        'Auto → [🚀 Оптимальная локация]',
+        'Albania → [🍿 YouTube]',
+        'Argentina',
+      ]);
+    });
+
     test('a name that merely contains a question mark is left alone', () {
       const link = 'vless://u@de.example:443?security=none#Why%20not%3F';
       final loc = parseShareLink(link).location!;
