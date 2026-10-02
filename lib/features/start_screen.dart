@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -51,19 +52,35 @@ class _StartScreenState extends ConsumerState<StartScreen> {
 
   SubscriptionFormatException? _rejected;
 
-  void _onChanged(String v) {
+  void _onChanged(String v, {bool complete = false}) {
     _verdictTimer?.cancel();
     setState(() {
       _detected = detectInput(v);
       _rejected = null;
-      _verdict = null;
+      _verdict = complete && _detected == null && v.trim().isNotEmpty
+          ? whyUnusable(v)
+          : null;
     });
-    if (_detected == null && v.trim().isNotEmpty) {
+    if (!complete && _detected == null && v.trim().isNotEmpty) {
       _verdictTimer = Timer(_verdictDelay, () {
         if (!mounted || _input.text != v) return;
         setState(() => _verdict = whyUnusable(v));
       });
     }
+  }
+
+  Future<void> _paste() async {
+    final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text?.trim();
+    if (!mounted) return;
+    if (text == null || text.isEmpty) {
+      showToast(context, context.l10n.startClipboardEmpty);
+      return;
+    }
+    _input.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    _onChanged(text, complete: true);
   }
 
   Future<void> _run(Future<bool> Function() action) async {
@@ -211,6 +228,11 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                     decoration: InputDecoration(
                       labelText: l10n.startLinkLabel,
                       hintText: l10n.startLinkHint,
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.content_paste_go),
+                        tooltip: l10n.startPaste,
+                        onPressed: _busy ? null : _paste,
+                      ),
                     ),
                   ),
                   if (_detected != null) ...[

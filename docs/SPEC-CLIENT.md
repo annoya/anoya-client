@@ -629,7 +629,8 @@ Connect, Disconnect and Quit, composed by the same Dart code over the same
 into the tray, and the icon is drawn at runtime — white with a dark outline, so
 it reads on a dark and a light taskbar — with the shape carrying the state:
 filled for a tunnel that is up, outlined for down, outlined with a dot while
-connecting.
+connecting. Pasting from the Windows clipboard history (Win+V) works in every
+text field, like Ctrl+V does.
 
 On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
 the system): a status line, show/hide the app, connect, disconnect, quit. It is

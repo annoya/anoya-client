@@ -1063,6 +1063,8 @@
   "startSubtitle": "Link, subscription or config file",
   "startLinkLabel": "Link or subscription",
   "startLinkHint": "vless://…  or  https://…/sub",
+  "startPaste": "Paste",
+  "startClipboardEmpty": "Clipboard is empty",
   "startCantUseThis": "Can’t use this · {reason}",
   "@startCantUseThis": {
     "description": "Chip under the link field explaining why the text cannot be added",

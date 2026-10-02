@@ -326,6 +326,8 @@
   "startSubtitle": "链接、订阅或配置文件",
   "startLinkLabel": "链接或订阅",
   "startLinkHint": "vless://…  或  https://…/sub",
+  "startPaste": "粘贴",
+  "startClipboardEmpty": "剪贴板为空",
   "startCantUseThis": "无法使用 · {reason}",
   "startOpenConfigFile": "打开配置文件…",
   "startOr": "或",

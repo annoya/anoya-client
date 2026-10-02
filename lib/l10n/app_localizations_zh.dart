@@ -1285,6 +1285,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get startLinkHint => 'vless://…  或  https://…/sub';
 
   @override
+  String get startPaste => '粘贴';
+
+  @override
+  String get startClipboardEmpty => '剪贴板为空';
+
+  @override
   String startCantUseThis(String reason) {
     return '无法使用 · $reason';
   }

@@ -1363,6 +1363,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get startLinkHint => 'vless://…  или  https://…/sub';
 
   @override
+  String get startPaste => 'Вставить';
+
+  @override
+  String get startClipboardEmpty => 'Буфер обмена пуст';
+
+  @override
   String startCantUseThis(String reason) {
     return 'Не подходит · $reason';
   }
