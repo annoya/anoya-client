@@ -15,6 +15,8 @@ class FlutterWindow : public Win32Window {
   explicit FlutterWindow(const flutter::DartProject& project);
   virtual ~FlutterWindow();
 
+  static UINT ShowWindowMessage();
+
  protected:
   // Win32Window:
   bool OnCreate() override;
@@ -34,6 +36,7 @@ class FlutterWindow : public Win32Window {
   bool quitting_ = false;
 
   void ToggleWindow();
+  void BringToFront();
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

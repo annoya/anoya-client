@@ -634,12 +634,18 @@ connecting.
 On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
 the system): a status line, show/hide the app, connect, disconnect, quit. It is
 the only view of the tunnel while the window is closed, so closing the window no
-longer quits — the app stays in the menu bar and the Dock. Show, hide and quit
+longer quits — the app stays in the menu bar and the Dock, and a click on the
+Dock icon brings the window back. Show, hide and quit
 are handled natively without a round trip to Dart; connect and disconnect are
 forwarded to the app, which owns refresh-before-connect and error reporting.
 State (including the item's icon, which carries status by shape because the
 system tints template images itself) is composed in Dart so the menu says what
 the home screen says.
+
+Only one copy of the app runs on a desktop. Launching it again — from the Dock,
+Start menu, a shortcut or a terminal — shows the window of the copy that is
+already running, even if it was closed to the menu bar or tray, and the new
+process exits.
 
 `design/ui-spec.html` draws every screen 1:1 in Flutter logical points
 and is validated by `design/check.js`; the numbers there and in

@@ -21,7 +21,9 @@ fact, and each platform gets it wrong in its own way by default.
 
 - Closing the window keeps the app running, in the menu bar **and** the Dock
   (`AppDelegate.swift`). Quitting on close cannot coexist with a status item:
-  the item would vanish with the window.
+  the item would vanish with the window. A click on the Dock icon brings the
+  closed window back (`applicationShouldHandleReopen`); a Dock icon that does
+  nothing reads as a hung app.
 - The menu is AppKit's own `NSStatusItem` + `NSMenu` (`MenuBarController.swift`).
   Show, hide and quit are handled natively with no Dart round trip, so they
   work while the Flutter isolate is busy. Connect and disconnect go to Dart,
@@ -41,6 +43,20 @@ fact, and each platform gets it wrong in its own way by default.
 - Closing the window hides it to the tray; Quit is the menu's
   (`flutter_window.cpp`). A left click toggles the window, as background apps
   on Windows do.
+
+### One running copy on every desktop
+
+A second launch hands over to the first copy and exits: two copies would race
+for the same tunnel, profiles and menu bar or tray item. The first copy shows
+its window, wherever it was hidden.
+
+- macOS: `AppDelegate` looks for another process with its bundle id before the
+  window starts the engine, posts a distributed notification the first copy
+  answers by showing its window, and exits.
+- Windows: a session-local named mutex (`main.cpp`); the second copy posts a
+  registered window message to the first copy's window and exits.
+- Linux: the `GtkApplication` is unique on D-Bus; a second launch becomes an
+  `activate` in the first copy, which presents the existing window.
 
 ### Linux: a plain window
 
