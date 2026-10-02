@@ -313,6 +313,7 @@ class Location {
     required this.label,
     required this.proxy,
     this.description = '',
+    this.countryCode = '',
   });
 
   final String id;
@@ -320,6 +321,8 @@ class Location {
   final Map<String, dynamic> proxy;
 
   final String description;
+
+  final String countryCode;
 
   String get proxyType => proxy['type'] as String? ?? '';
 
@@ -371,6 +374,7 @@ class Location {
     label: json['label'] as String? ?? '',
     proxy: Map<String, dynamic>.from(json['proxy'] as Map? ?? {}),
     description: json['description'] as String? ?? '',
+    countryCode: json['country_code'] as String? ?? '',
   );
 
   Map<String, dynamic> toJson() => {
@@ -378,5 +382,6 @@ class Location {
     'label': label,
     'proxy': proxy,
     if (description.isNotEmpty) 'description': description,
+    if (countryCode.isNotEmpty) 'country_code': countryCode,
   };
 }

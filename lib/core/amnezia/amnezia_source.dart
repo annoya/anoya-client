@@ -71,7 +71,17 @@ final class AmneziaSource {
         if (l.proxy.isNotEmpty) l.id: l,
     };
     final locations = [
-      for (final l in amneziaLocations(next)) resolved[l.id] ?? l,
+      for (final l in amneziaLocations(next))
+        if (resolved[l.id] case final r?)
+          Location(
+            id: r.id,
+            label: r.label,
+            proxy: r.proxy,
+            description: r.description,
+            countryCode: l.countryCode,
+          )
+        else
+          l,
     ];
     return profile.copyWith(
       locations: locations,
@@ -139,6 +149,7 @@ final class AmneziaSource {
               label: l.label,
               proxy: parsed.location.proxy,
               description: l.description,
+              countryCode: l.countryCode,
             )
           else if (l.isPlaceholder)
             l
@@ -148,6 +159,7 @@ final class AmneziaSource {
               label: l.label,
               proxy: const {},
               description: l.description,
+              countryCode: l.countryCode,
             ),
       ],
       dns: parsed.dns,

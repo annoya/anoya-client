@@ -269,6 +269,6 @@ class RuleTile extends StatelessWidget {
 
 String geoipTitle(String code) {
   final up = code.toUpperCase();
-  final flag = flagEmoji(up) ?? '';
+  final flag = flagForCode(up) ?? '';
   return flag.isEmpty ? up : '$flag  $up';
 }

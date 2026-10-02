@@ -164,6 +164,7 @@ List<Location> amneziaLocations(AmneziaState state) {
           label: c.name,
           proxy: const {},
           description: amneziaProtocolLabel(p),
+          countryCode: c.flagCode,
         ),
   ];
 }
