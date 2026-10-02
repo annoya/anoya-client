@@ -768,7 +768,14 @@ resolves a pool of proxies from S3 and walks it when the gateway looks blocked.
 It runs in the app process on every platform, since the engine already holds a
 Go runtime in the tunnel process and two cannot share one. Calls block for the
 whole failover sweep, so they run in an isolate with a deadline enforced
-through the library's cancel handle.
+through the library's cancel handle. The state the library hands back (the
+working proxy and the proxy lists) is kept in secure storage and restored
+before the first call of a launch, so a restart does not repeat the sweep.
+
+While a server is being issued — before the tunnel is asked to start — the
+app already reads as connecting: the button, the status line and the menu bar
+item say so, and pressing the button again cancels the attempt instead of
+being swallowed. The tunnel is never started for a cancelled attempt.
 
 AmneziaWG renders as a mihomo `wireguard` outbound with `amnezia-wg-option`
 carrying the obfuscation as issued — H1–H4 arrive as ranges — and `version: 3`

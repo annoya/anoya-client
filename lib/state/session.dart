@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/vpn_core.dart';
+import 'profiles_controller.dart';
 import 'providers.dart';
 
 class SessionState {
@@ -25,6 +26,10 @@ class SessionController extends Notifier<SessionState> {
     final core = ref.watch(vpnCoreProvider);
     _sub = core.statusStream().listen(_onStatus);
     ref.onDispose(() => _sub?.cancel());
+    ref.listen(
+      profilesControllerProvider.select((s) => s.preparing),
+      (_, _) => _onStatus(core.status),
+    );
     if (core.status == VpnStatus.connected) unawaited(_askTheSystem());
     return SessionState(
       status: core.status,
@@ -32,7 +37,12 @@ class SessionController extends Notifier<SessionState> {
     );
   }
 
-  void _onStatus(VpnStatus s) {
+  void _onStatus(VpnStatus raw) {
+    final s =
+        raw == VpnStatus.disconnected &&
+            ref.read(profilesControllerProvider).preparing
+        ? VpnStatus.connecting
+        : raw;
     if (s != VpnStatus.connected) {
       state = SessionState(status: s);
       return;

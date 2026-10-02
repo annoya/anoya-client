@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
+import '../log.dart';
+import '../profile_store.dart';
 import 'agw_ffi.dart';
 import 'amnezia_env.dart';
 
@@ -19,6 +22,42 @@ class AmneziaGateway {
       s3Fallback: AmneziaEnv.s3FallbackEndpoints,
     ),
   );
+
+  static Future<void>? _restored;
+
+  Future<AgwResponse> _post(
+    String endpoint,
+    Map<String, dynamic> payload, {
+    required String serviceType,
+    required String userCountryCode,
+  }) async {
+    await (_restored ??= _restoreState());
+    final before = _client.state;
+    final res = await _client.post(
+      endpoint,
+      payload,
+      serviceType: serviceType,
+      userCountryCode: userCountryCode,
+    );
+    final after = _client.state;
+    if (after != before) {
+      unawaited(
+        ProfileStore.saveAmneziaGatewayState(after).catchError(
+          (Object e) => Log.e('amnezia: gateway state not saved', '$e'),
+        ),
+      );
+    }
+    return res;
+  }
+
+  Future<void> _restoreState() async {
+    if (_client.state.isNotEmpty) return;
+    try {
+      _client.state = await ProfileStore.amneziaGatewayState() ?? '';
+    } catch (e) {
+      Log.e('amnezia: gateway state not restored', '$e');
+    }
+  }
 
   Map<String, dynamic> _base() => {
     'os_version': _osName,
@@ -43,7 +82,7 @@ class AmneziaGateway {
     required String userCountryCode,
     String subscriptionStatus = 'active',
   }) {
-    return _client.post(
+    return _post(
       'v1/account_info',
       {
         ..._base(),
@@ -67,7 +106,7 @@ class AmneziaGateway {
     String serverCountryCode = '',
     bool isConnectEvent = false,
   }) {
-    return _client.post(
+    return _post(
       'v1/config',
       {
         ..._base(),
