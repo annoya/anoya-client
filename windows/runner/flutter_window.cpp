@@ -57,15 +57,26 @@ void FlutterWindow::OnDestroy() {
   Win32Window::OnDestroy();
 }
 
+UINT FlutterWindow::ShowWindowMessage() {
+  static const UINT message = RegisterWindowMessageW(L"Anoya.ShowWindow");
+  return message;
+}
+
 void FlutterWindow::ToggleWindow() {
   HWND hwnd = GetHandle();
   if (!hwnd) return;
   if (IsWindowVisible(hwnd) && !IsIconic(hwnd)) {
     ShowWindow(hwnd, SW_HIDE);
   } else {
-    ShowWindow(hwnd, IsIconic(hwnd) ? SW_RESTORE : SW_SHOW);
-    SetForegroundWindow(hwnd);
+    BringToFront();
   }
+}
+
+void FlutterWindow::BringToFront() {
+  HWND hwnd = GetHandle();
+  if (!hwnd) return;
+  ShowWindow(hwnd, IsIconic(hwnd) ? SW_RESTORE : SW_SHOW);
+  SetForegroundWindow(hwnd);
 }
 
 LRESULT
@@ -73,6 +84,11 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
   if (tray_ && tray_->HandleMessage(message, wparam, lparam)) {
+    return 0;
+  }
+
+  if (message == ShowWindowMessage()) {
+    BringToFront();
     return 0;
   }
 
