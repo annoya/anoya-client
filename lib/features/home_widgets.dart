@@ -251,8 +251,10 @@ IconData groupIcon(String type) => switch (type) {
   _ => Icons.groups_outlined,
 };
 
-Widget flagOrIcon(String? label) {
-  final flag = label == null ? null : flagEmoji(label);
+Widget flagOrIcon(Location? loc) {
+  final flag = loc == null
+      ? null
+      : flagForCode(loc.countryCode) ?? flagEmoji(loc.label);
   if (flag == null) return const Icon(Icons.public);
   return Text(flag, style: const TextStyle(fontSize: 26));
 }

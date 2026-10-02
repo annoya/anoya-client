@@ -312,9 +312,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Card(
       margin: kCardMargin,
       child: ListTile(
-        leading: group != null
-            ? Icon(groupIcon(group.type))
-            : flagOrIcon(loc?.label),
+        leading: group != null ? Icon(groupIcon(group.type)) : flagOrIcon(loc),
         title: Text(
           group?.name ??
               (loc != null ? stripLeadingFlag(loc.label) : l10n.homeNoServers),
@@ -411,7 +409,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               l.id,
               stripLeadingFlag(l.label),
               subtitle: l.subtitle,
-              leading: flagOrIcon(l.label),
+              leading: flagOrIcon(l),
             ),
           )
           .toList(),

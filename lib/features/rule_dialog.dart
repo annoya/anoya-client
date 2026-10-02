@@ -232,7 +232,7 @@ class _RuleDialogState extends State<RuleDialog> {
   String _countryLabel(String code) {
     final up = code.toUpperCase();
     for (final (c, name) in geoCountries()) {
-      if (c == up) return '${flagEmoji(c) ?? ''}  $name ($c)';
+      if (c == up) return '${flagForCode(c) ?? ''}  $name ($c)';
     }
     return up;
   }
@@ -269,7 +269,7 @@ Future<String?> pickCountry(BuildContext context) => pickOption<String>(
         c.$2,
         subtitle: c.$1,
         leading: Text(
-          flagEmoji(c.$1) ?? '',
+          flagForCode(c.$1) ?? '',
           style: const TextStyle(fontSize: 22),
         ),
       ),

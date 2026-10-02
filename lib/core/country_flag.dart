@@ -1,10 +1,17 @@
 library;
 
+import 'country_names.dart';
+
 String? flagEmoji(String label) {
-  final existing = _leadingFlag(label);
+  final existing = _embeddedFlag(label);
   if (existing != null) return existing;
   final code = _countryCode(label);
   return code == null ? null : _flagFromCode(code);
+}
+
+String? flagForCode(String code) {
+  final cc = code.trim().toUpperCase();
+  return _codes.contains(cc) ? _flagFromCode(cc) : null;
 }
 
 String stripLeadingFlag(String label) {
@@ -15,10 +22,12 @@ String stripLeadingFlag(String label) {
   return label;
 }
 
-String? _leadingFlag(String label) {
+String? _embeddedFlag(String label) {
   final runes = label.runes.toList();
-  if (runes.length >= 2 && _isRegional(runes[0]) && _isRegional(runes[1])) {
-    return String.fromCharCodes([runes[0], runes[1]]);
+  for (var i = 0; i + 1 < runes.length; i++) {
+    if (_isRegional(runes[i]) && _isRegional(runes[i + 1])) {
+      return String.fromCharCodes([runes[i], runes[i + 1]]);
+    }
   }
   return null;
 }
@@ -34,133 +43,83 @@ String _flagFromCode(String cc) {
   ]);
 }
 
-String? _countryCode(String label) {
-  final lower = label.toLowerCase();
-  for (final e in _names.entries) {
-    if (_containsWord(lower, e.key)) return e.value;
-  }
-  for (final tok in label.split(RegExp(r'[^A-Za-z]+'))) {
-    if (tok.length == 2 && _codes.contains(tok.toUpperCase())) {
-      return tok.toUpperCase();
-    }
-  }
-  return null;
-}
+final _wordRe = RegExp(r'\p{L}+', unicode: true);
 
-bool _containsWord(String haystackLower, String needleLower) => RegExp(
-  '(^|[^a-z])${RegExp.escape(needleLower)}([^a-z]|\$)',
-).hasMatch(haystackLower);
+List<String> _words(String s) => [
+  for (final m in _wordRe.allMatches(s.toLowerCase().replaceAll('ё', 'е')))
+    m[0]!,
+];
 
-const Map<String, String> _names = {
-  'united states': 'US',
-  'usa': 'US',
-  'america': 'US',
-  'united kingdom': 'GB',
-  'britain': 'GB',
-  'england': 'GB',
-  'uk': 'GB',
-  'united arab emirates': 'AE',
-  'emirates': 'AE',
-  'dubai': 'AE',
-  'south korea': 'KR',
-  'korea': 'KR',
-  'hong kong': 'HK',
-  'netherlands': 'NL',
-  'holland': 'NL',
-  'amsterdam': 'NL',
-  'germany': 'DE',
-  'deutschland': 'DE',
-  'frankfurt': 'DE',
-  'france': 'FR',
-  'paris': 'FR',
-  'japan': 'JP',
-  'tokyo': 'JP',
-  'singapore': 'SG',
-  'taiwan': 'TW',
-  'canada': 'CA',
-  'australia': 'AU',
-  'sydney': 'AU',
-  'russia': 'RU',
-  'moscow': 'RU',
-  'ukraine': 'UA',
-  'sweden': 'SE',
-  'stockholm': 'SE',
-  'finland': 'FI',
-  'helsinki': 'FI',
-  'norway': 'NO',
-  'denmark': 'DK',
-  'switzerland': 'CH',
-  'zurich': 'CH',
-  'italy': 'IT',
-  'milan': 'IT',
-  'spain': 'ES',
-  'madrid': 'ES',
-  'portugal': 'PT',
-  'poland': 'PL',
-  'warsaw': 'PL',
-  'turkey': 'TR',
-  'istanbul': 'TR',
-  'turkiye': 'TR',
-  'india': 'IN',
-  'mumbai': 'IN',
-  'brazil': 'BR',
-  'argentina': 'AR',
-  'mexico': 'MX',
-  'iran': 'IR',
-  'tehran': 'IR',
-  'kazakhstan': 'KZ',
-  'armenia': 'AM',
-  'georgia': 'GE',
-  'israel': 'IL',
-  'ireland': 'IE',
-  'austria': 'AT',
-  'vienna': 'AT',
-  'belgium': 'BE',
-  'romania': 'RO',
-  'bulgaria': 'BG',
-  'czech': 'CZ',
-  'czechia': 'CZ',
-  'prague': 'CZ',
-  'hungary': 'HU',
-  'budapest': 'HU',
-  'greece': 'GR',
-  'athens': 'GR',
-  'indonesia': 'ID',
-  'jakarta': 'ID',
-  'vietnam': 'VN',
-  'thailand': 'TH',
-  'bangkok': 'TH',
-  'malaysia': 'MY',
-  'philippines': 'PH',
-  'china': 'CN',
-  'shanghai': 'CN',
-  'south africa': 'ZA',
-  'estonia': 'EE',
-  'latvia': 'LV',
-  'lithuania': 'LT',
-  'iceland': 'IS',
-  'luxembourg': 'LU',
-  'moldova': 'MD',
-  'serbia': 'RS',
-  'croatia': 'HR',
-  'cyprus': 'CY',
-  'chile': 'CL',
-  'new zealand': 'NZ',
+final Set<String> _codes = {for (final c in kCountries) c.$1};
+
+final Map<String, String> _byName = () {
+  final out = <String, String>{};
+  void add(String name, String code) {
+    final key = _words(name).join(' ');
+    if (key.isNotEmpty) out.putIfAbsent(key, () => code);
+  }
+
+  for (final (code, en, ru) in kCountries) {
+    add(en, code);
+    add(ru, code);
+  }
+  kCountryAliases.forEach(add);
+  return out;
+}();
+
+final int _longestName = _byName.keys.fold(
+  1,
+  (n, k) => k.split(' ').length > n ? k.split(' ').length : n,
+);
+
+const _ambiguousCodes = {
+  'AD',
+  'AI',
+  'AM',
+  'AS',
+  'AT',
+  'BE',
+  'BY',
+  'DO',
+  'FM',
+  'GG',
+  'ID',
+  'IN',
+  'IS',
+  'IT',
+  'LA',
+  'ME',
+  'MY',
+  'NO',
+  'PM',
+  'PS',
+  'SO',
+  'ST',
+  'TG',
+  'TO',
+  'TV',
+  'YT',
 };
 
-final Set<String> _codes = _names.values.toSet();
-
-List<(String, String)> geoCountries() {
-  final byCode = <String, String>{};
-  for (final e in _names.entries) {
-    byCode.putIfAbsent(e.value, () => _title(e.key));
+String? _countryCode(String label) {
+  final words = _words(label);
+  for (var i = 0; i < words.length; i++) {
+    final maxLen = words.length - i < _longestName
+        ? words.length - i
+        : _longestName;
+    for (var n = maxLen; n >= 1; n--) {
+      final code = _byName[words.sublist(i, i + n).join(' ')];
+      if (code != null) return code;
+    }
   }
-  final list = byCode.entries.map((e) => (e.key, e.value)).toList()
-    ..sort((a, b) => a.$2.compareTo(b.$2));
-  return list;
+  final first = _wordRe.firstMatch(label)?[0];
+  if (first == null || first.length != 2 || first != first.toUpperCase()) {
+    return null;
+  }
+  if (!_codes.contains(first) || _ambiguousCodes.contains(first)) return null;
+  return first;
 }
 
-String _title(String s) => s
-    .split(' ')
-    .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
-    .join(' ');
+List<(String, String)> geoCountries() =>
+    [for (final (code, en, _) in kCountries) (code, en)]
+      ..sort((a, b) => a.$2.compareTo(b.$2));
