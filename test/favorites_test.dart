@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:anoya/core/favorites.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/ui.dart';
 import 'package:anoya/l10n/l10n.dart';
+import 'package:anoya/state/favorites_controller.dart';
 
 void main() {
   group('model', () {
@@ -42,6 +47,38 @@ void main() {
       final back = Favorites.fromJson(f.toJson());
       expect(back.profiles, {'p1'});
       expect(back.locations, {'p1/de-1'});
+    });
+  });
+
+  group('controller', () {
+    late Directory tmp;
+    const channel = MethodChannel('plugins.flutter.io/path_provider');
+
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      tmp = Directory.systemTemp.createTempSync('vpn-favorites');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async => tmp.path);
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+      tmp.deleteSync(recursive: true);
+    });
+
+    test('the first look already sees what was saved', () async {
+      await FavoritesStore.save(const Favorites().toggleLocation('p1', 'de-1'));
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final f = await container.read(favoritesProvider.notifier).loaded();
+
+      expect(
+        f.locationsOf('p1'),
+        {'de-1'},
+        reason: 'the picker opens on this, so it must not be the empty default',
+      );
     });
   });
 

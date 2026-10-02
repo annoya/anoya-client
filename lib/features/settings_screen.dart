@@ -174,8 +174,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _openConfigurations() async {
+    final favorites = await ref.read(favoritesProvider.notifier).loaded();
+    if (!mounted) return;
     final st = ref.read(profilesControllerProvider);
-    final favorites = ref.read(favoritesProvider);
     final picked = await pickOption<String>(
       context,
       title: context.l10n.settingsConfigurations,
