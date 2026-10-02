@@ -1314,6 +1314,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startLinkHint => 'vless://…  or  https://…/sub';
 
   @override
+  String get startPaste => 'Paste';
+
+  @override
+  String get startClipboardEmpty => 'Clipboard is empty';
+
+  @override
   String startCantUseThis(String reason) {
     return 'Can’t use this · $reason';
   }

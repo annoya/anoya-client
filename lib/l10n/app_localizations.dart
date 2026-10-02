@@ -2060,6 +2060,18 @@ abstract class AppLocalizations {
   /// **'vless://…  or  https://…/sub'**
   String get startLinkHint;
 
+  /// No description provided for @startPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get startPaste;
+
+  /// No description provided for @startClipboardEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard is empty'**
+  String get startClipboardEmpty;
+
   /// Chip under the link field explaining why the text cannot be added
   ///
   /// In en, this message translates to:

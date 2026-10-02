@@ -191,6 +191,8 @@
   /* select = input + trailing chevron, laid out as a ROW (overrides .inp column) */
   .inp.sel{flex-direction:row;align-items:center;gap:8px}
   .inp.sel .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+  /* trailing icon button inside a field: 48pt target, pulled into the padding so the field stays 56 */
+  .inp .ic{width:48px;height:48px;margin:-4px -12px -4px 0;flex:none;display:flex;align-items:center;justify-content:center}
 
   /* segmented: full width, pill r19, no check */
   .segm{display:flex;width:100%;border:1px solid var(--m-line);border-radius:20px;overflow:hidden;height:40px}
@@ -360,6 +362,7 @@
   <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 3 14.9 8.9 21.4 9.8 16.7 14.4 17.8 20.9 12 17.8 6.2 20.9 7.3 14.4 2.6 9.8 9.1 8.9 12 3"/></symbol>
   <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h5"/><path d="M18 8v4a4 4 0 0 1-4 4H9"/></symbol>
+  <symbol id="i-paste" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v5"/><path d="M11 22H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="13" y1="17" x2="21" y2="17"/><polyline points="18 14 21 17 18 20"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></symbol>
   <symbol id="i-lang" viewBox="0 0 24 24"><path d="M4 5h10"/><path d="M9 3v2c0 5-2.5 8-5 9"/><path d="M6 11c0 3 3 5 7 6"/><path d="M13 21l4-10 4 10"/><path d="M14.5 17.5h5"/></symbol>
 </defs></svg>
@@ -544,7 +547,7 @@
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">
-        <div class="inp"><div class="lb">Link or subscription</div><div class="vl plc">vless://…  or  https://…/sub</div></div>
+        <div class="inp sel"><div class="tx"><div class="lb">Link or subscription</div><div class="vl plc">vless://…  or  https://…/sub</div></div><span class="ic" title="Paste"><svg class="icon muted"><use href="#i-paste"/></svg></span></div>
         <div class="btn fill dis" style="margin:14px 0 8px">Continue</div>
         <div class="btn out" style="margin:0 0 18px"><svg class="icon s"><use href="#i-file"/></svg>Open a config file…</div>
         <div style="display:flex;align-items:center;gap:10px;color:var(--m-mut);font-size:12.5px">
@@ -553,7 +556,7 @@
         <div class="btn tonal" style="margin:18px 0 0"><svg class="icon s"><use href="#i-org"/></svg>Sign in to your server</div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">StartScreen</span><b>Пусто.</b> Ширина контента ограничена 420&nbsp;pt, боковой отступ 24. «Continue» задизейблена (.38). Экран всегда открыт поверх главного, даже на первом запуске, поэтому стрелка назад есть всегда: корнем он больше не бывает (см. <code>HomeScreen · empty</code>).</p>
+    <p class="cap"><span class="id">StartScreen</span><b>Пусто.</b> Ширина контента ограничена 420&nbsp;pt, боковой отступ 24. «Continue» задизейблена (.38). Экран всегда открыт поверх главного, даже на первом запуске, поэтому стрелка назад есть всегда: корнем он больше не бывает (см. <code>HomeScreen · empty</code>).<br><br><b>Вставить — кнопкой в самом поле.</b> Значок «вставить из буфера» справа (<code>Icons.content_paste_go</code> — планшет со стрелкой внутрь: про вставку, а не про буфер вообще), касание 48&nbsp;pt, подсказка «Paste». Ссылку почти всегда приносят из буфера, а долгое нажатие на телефоне и контекстное меню на десктопе — два лишних шага, которые к тому же не все находят. Вставка <b>заменяет</b> содержимое поля, а не дописывает: в поле одна ссылка, и склейка двух — гарантированно нерабочая строка. Распознавание срабатывает сразу, без 700&nbsp;мс паузы, — вставленный текст уже целый. Пустой буфер — тост «Clipboard is empty», поле не трогаем. Значок один во всех состояниях поля и гаснет вместе с ним, пока идёт добавление; «очистить» не заводим — вставка и так заменяет.</p>
   </div>
 
   <div class="board">
@@ -564,7 +567,7 @@
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">
-        <div class="inp focus"><div class="lb">Link or subscription</div><div class="vl">https://sub.nexus…/s/a1b2c3</div></div>
+        <div class="inp sel focus"><div class="tx"><div class="lb">Link or subscription</div><div class="vl">https://sub.nexus…/s/a1b2c3</div></div><span class="ic" title="Paste"><svg class="icon muted"><use href="#i-paste"/></svg></span></div>
         <div style="display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 12px;border-radius:12px;
              background:color-mix(in srgb, var(--m-pric) 45%, transparent)">
           <svg class="icon s" style="color:var(--m-pri)"><use href="#i-check"/></svg>
@@ -589,7 +592,7 @@
       <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
       <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
       <div style="padding:0 24px">
-        <div class="inp focus"><div class="lb">Link or subscription</div><div class="vl">tuic://a1b2c3d4:pass@h.example:443?…</div></div>
+        <div class="inp sel focus"><div class="tx"><div class="lb">Link or subscription</div><div class="vl">tuic://a1b2c3d4:pass@h.example:443?…</div></div><span class="ic" title="Paste"><svg class="icon muted"><use href="#i-paste"/></svg></span></div>
         <div style="display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:10px 12px;border-radius:12px;
              background:color-mix(in srgb, var(--m-warn) 14%, transparent)">
           <svg class="icon s" style="color:var(--m-warn)"><use href="#i-alert"/></svg>

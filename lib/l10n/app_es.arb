@@ -326,6 +326,8 @@
   "startSubtitle": "Enlace, suscripción o archivo de configuración",
   "startLinkLabel": "Enlace o suscripción",
   "startLinkHint": "vless://…  o  https://…/sub",
+  "startPaste": "Pegar",
+  "startClipboardEmpty": "El portapapeles está vacío",
   "startCantUseThis": "No se puede usar · {reason}",
   "startOpenConfigFile": "Abrir un archivo de configuración…",
   "startOr": "o",

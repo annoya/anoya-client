@@ -326,6 +326,8 @@
   "startSubtitle": "Lien, abonnement ou fichier de configuration",
   "startLinkLabel": "Lien ou abonnement",
   "startLinkHint": "vless://…  ou  https://…/sub",
+  "startPaste": "Coller",
+  "startClipboardEmpty": "Le presse-papiers est vide",
   "startCantUseThis": "Inutilisable · {reason}",
   "startOpenConfigFile": "Ouvrir un fichier de configuration…",
   "startOr": "ou",
