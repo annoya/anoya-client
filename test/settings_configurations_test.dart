@@ -8,7 +8,9 @@ import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/about_screen.dart';
+import 'package:anoya/core/favorites.dart';
 import 'package:anoya/features/settings_screen.dart';
+import 'package:anoya/state/favorites_controller.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/l10n/l10n.dart';
@@ -34,6 +36,7 @@ void main() {
       ProviderScope(
         overrides: [
           onDemandProvider.overrideWith(_QuietOnDemand.new),
+          favoritesProvider.overrideWith(_NoFavorites.new),
           profilesControllerProvider.overrideWith(
             () => _FixedProfiles(profiles),
           ),
@@ -157,6 +160,11 @@ class _FixedProfiles extends ProfilesController {
   @override
   ProfilesState build() =>
       ProfilesState(profiles: profiles, activeId: profiles.first.id);
+}
+
+class _NoFavorites extends FavoritesController {
+  @override
+  Favorites build() => const Favorites();
 }
 
 class _QuietOnDemand extends OnDemandController {

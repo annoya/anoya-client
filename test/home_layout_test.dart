@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/favorites.dart';
+import 'package:anoya/state/favorites_controller.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
@@ -62,6 +64,7 @@ void main() {
         overrides: [
           vpnCoreProvider.overrideWithValue(_IdleCore()),
           onDemandProvider.overrideWith(_QuietOnDemand.new),
+          favoritesProvider.overrideWith(_NoFavorites.new),
           profilesControllerProvider.overrideWith(
             () => _FixedProfiles(profiles),
           ),
@@ -257,6 +260,11 @@ class _FixedProfiles extends ProfilesController {
   @override
   ProfilesState build() =>
       ProfilesState(profiles: profiles, activeId: profiles.firstOrNull?.id);
+}
+
+class _NoFavorites extends FavoritesController {
+  @override
+  Favorites build() => const Favorites();
 }
 
 class _QuietOnDemand extends OnDemandController {
