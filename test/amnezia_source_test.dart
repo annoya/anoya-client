@@ -120,6 +120,11 @@ void main() {
       ]);
       expect(updated.locations.first.label, 'Germany');
       expect(updated.locations.first.description, 'AmneziaWG');
+      expect(
+        updated.locations.map((l) => l.countryCode),
+        ['DE', 'DE', 'NL'],
+        reason: 'the flag comes from the code the gateway sends, not the name',
+      );
       expect(updated.amnezia!.account.maxDevices, 7);
     });
 

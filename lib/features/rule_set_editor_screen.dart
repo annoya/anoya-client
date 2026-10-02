@@ -576,7 +576,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       if (c == up) name = n;
     }
     return _removableRow(
-      Text(flagEmoji(up) ?? '🌐', style: const TextStyle(fontSize: 22)),
+      Text(flagForCode(up) ?? '🌐', style: const TextStyle(fontSize: 22)),
       name,
       () => _setOn('geoip', code, false),
     );
