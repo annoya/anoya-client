@@ -30,6 +30,8 @@ const kConfigPollInterval = kMinRefreshGap;
 
 const kReapplyMinGap = Duration(minutes: 1);
 
+const kTunnelStartGrace = Duration(seconds: 3);
+
 class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Timer? _timer;
   DateTime _lastReapply = DateTime.fromMillisecondsSinceEpoch(0);
@@ -386,14 +388,25 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   }
 
   Future<void>? _connecting;
+  int _connectRun = 0;
+  bool _tunnelRequested = false;
 
-  Future<void> connect() =>
-      _connecting ??= _connect().whenComplete(() => _connecting = null);
+  Future<void> connect() {
+    final running = _connecting;
+    if (running != null) return running;
+    late final Future<void> attempt;
+    attempt = _connect().whenComplete(() {
+      if (identical(_connecting, attempt)) _connecting = null;
+    });
+    return _connecting = attempt;
+  }
 
   Future<void> _connect() async {
+    final run = ++_connectRun;
+    _tunnelRequested = false;
+    state = state.copyWith(error: null, preparing: true);
     await ready;
     final core = ref.read(vpnCoreProvider);
-    state = state.copyWith(error: null);
     try {
       var p = state.active;
       if (p == null) {
@@ -423,17 +436,39 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
         return;
       }
       p = await _resolveSelection(p, selection);
-      await core.load(await buildNormConfig(p));
+      final config = await buildNormConfig(p);
+      if (run != _connectRun) return;
+      _tunnelRequested = true;
+      await core.load(config);
       await core.connect(selection);
+      await _tunnelTakesOver(core);
       _lastReapply = DateTime.now();
       _reapplyPending = false;
       await ref.read(onDemandProvider.notifier).onConnected();
     } catch (e) {
+      if (run != _connectRun) return;
       Log.e('connect failed', '$e');
       state = state.copyWith(
+        preparing: false,
         error: describeError(e, subject: state.selectedLocation?.label),
       );
+    } finally {
+      if (run == _connectRun && state.preparing) {
+        state = state.copyWith(
+          preparing: false,
+          error: state.error,
+          notice: state.notice,
+        );
+      }
     }
+  }
+
+  Future<void> _tunnelTakesOver(VpnCore core) async {
+    if (core.status != VpnStatus.disconnected) return;
+    await core
+        .statusStream()
+        .firstWhere((s) => s != VpnStatus.disconnected)
+        .timeout(kTunnelStartGrace, onTimeout: () => VpnStatus.disconnected);
   }
 
   void clearError() => state = state.copyWith(error: null);
@@ -441,6 +476,13 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   void clearNotice() => state = state.copyWith(notice: null);
 
   Future<void> disconnect() async {
+    if (state.preparing && !_tunnelRequested) {
+      _connectRun++;
+      _connecting = null;
+      state = state.copyWith(preparing: false, notice: state.notice);
+      Log.i('connect cancelled before the tunnel was asked to start');
+      return;
+    }
     _stopExpected = true;
     await ref.read(onDemandProvider.notifier).pause();
     await ref.read(vpnCoreProvider).disconnect();

@@ -35,6 +35,12 @@ class ProfileStore {
   static Future<void> deleteAmneziaKey(String profileId) =>
       _secure.delete(key: 'amnezia_key_$profileId');
 
+  static Future<String?> amneziaGatewayState() =>
+      _secure.read(key: 'amnezia_agw_state');
+
+  static Future<void> saveAmneziaGatewayState(String state) =>
+      _secure.write(key: 'amnezia_agw_state', value: state);
+
   static Future<String> amneziaInstallId() async {
     const key = 'amnezia_install_uuid';
     final existing = await _secure.read(key: key);

@@ -58,6 +58,13 @@ whole failover sweep, so they run in an isolate with a deadline of our own,
 enforced through the library's cancel handle — a timer inside the worker would
 never run, because the blocking call owns that isolate's only thread.
 
+**The library's state outlives the process.** What a sweep learns — the
+working proxy and the proxy lists — comes back as an opaque state blob after
+every call and is kept in secure storage, because it holds bypass endpoints.
+Without it every launch started cold: where the gateway is blocked, the first
+request of the session sat through the full direct timeout and the S3 sweep
+before a server could be issued, right when the user had just pressed Connect.
+
 **Only the selected server is held, and a switch always re-asks.** Caching
 more looks like a saving and is not: the account has a device limit, the
 gateway rotates configs off it, and a peer the server has forgotten does not
