@@ -9,6 +9,7 @@ class ProfilesState {
     this.selectedLocationId,
     this.loading = false,
     this.switching = false,
+    this.preparing = false,
     this.error,
     this.notice,
   });
@@ -19,6 +20,8 @@ class ProfilesState {
   final bool loading;
 
   final bool switching;
+
+  final bool preparing;
 
   final AppError? error;
 
@@ -70,6 +73,7 @@ class ProfilesState {
     String? selectedLocationId,
     bool? loading,
     bool? switching,
+    bool? preparing,
     AppError? error,
     AppError? notice,
   }) => ProfilesState(
@@ -78,6 +82,7 @@ class ProfilesState {
     selectedLocationId: selectedLocationId ?? this.selectedLocationId,
     loading: loading ?? this.loading,
     switching: switching ?? this.switching,
+    preparing: preparing ?? this.preparing,
     error: error,
     notice: notice,
   );
