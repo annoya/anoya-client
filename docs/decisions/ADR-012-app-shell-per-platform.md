@@ -43,6 +43,13 @@ fact, and each platform gets it wrong in its own way by default.
 - Closing the window hides it to the tray; Quit is the menu's
   (`flutter_window.cpp`). A left click toggles the window, as background apps
   on Windows do.
+- Pasting from clipboard history (Win+V) is repaired in the runner
+  (`clipboard_history_paste.cpp`). Windows 11 pastes by injecting Ctrl+V
+  without scan codes; Flutter's embedder turns that into Ctrl released before
+  V is pressed, so nothing is pasted (flutter/flutter#143997). The message
+  loop swallows a scan-code-less Ctrl+V and re-injects it with real scan
+  codes, which Flutter reads as an ordinary Ctrl+V. Other scan-code-less keys
+  pass through untouched. Drop this once the embedder is fixed.
 
 ### One running copy on every desktop
 
