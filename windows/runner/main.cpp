@@ -2,6 +2,7 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include "clipboard_history_paste.h"
 #include "flutter_window.h"
 #include "utils.h"
 
@@ -55,8 +56,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   }
   window.SetQuitOnClose(true);
 
+  ClipboardHistoryPaste clipboard_history_paste;
   ::MSG msg;
   while (::GetMessage(&msg, nullptr, 0, 0)) {
+    if (clipboard_history_paste.Intercept(msg)) {
+      continue;
+    }
     ::TranslateMessage(&msg);
     ::DispatchMessage(&msg);
   }
