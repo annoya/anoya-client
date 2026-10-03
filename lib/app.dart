@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/app_version.dart';
 import 'core/secret_store.dart';
 import 'core/theme.dart';
 import 'core/ui.dart';
@@ -62,7 +63,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
     L10n.current = lookupAppLocalizations(prefs.language.locale);
 
     return MaterialApp(
-      onGenerateTitle: (context) => context.l10n.appTitle,
+      title: kAppName,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,

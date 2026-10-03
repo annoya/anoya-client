@@ -81,8 +81,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           tooltip: l10n.homeAddConfiguration,
           onPressed: () => _push(const StartScreen()),
         ),
-        title: Text(l10n.appTitle),
-        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
