@@ -118,12 +118,16 @@ class ConnectButton extends StatelessWidget {
         ? vpn.connecting
         : Theme.of(context).colorScheme.primary;
 
-    final enabled = !connecting && onTap != null;
+    final enabled = onTap != null;
 
     final ring = Semantics(
       button: true,
       enabled: enabled,
-      label: connected ? l10n.commonDisconnect : l10n.commonConnect,
+      label: connected
+          ? l10n.commonDisconnect
+          : connecting
+          ? l10n.commonCancel
+          : l10n.commonConnect,
       child: GestureDetector(
         onTap: enabled ? onTap : null,
         child: AnimatedContainer(
@@ -138,13 +142,26 @@ class ConnectButton extends StatelessWidget {
           ),
           child: Center(
             child: connecting
-                ? SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: color,
-                    ),
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.commonCancel,
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   )
                 : Column(
                     mainAxisSize: MainAxisSize.min,

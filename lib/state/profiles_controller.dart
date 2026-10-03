@@ -404,6 +404,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Future<void> _connect() async {
     final run = ++_connectRun;
     _tunnelRequested = false;
+    _stopExpected = false;
     state = state.copyWith(error: null, preparing: true);
     await ready;
     final core = ref.read(vpnCoreProvider);
@@ -442,6 +443,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       await core.load(config);
       await core.connect(selection);
       await _tunnelTakesOver(core);
+      if (run != _connectRun) return;
       _lastReapply = DateTime.now();
       _reapplyPending = false;
       await ref.read(onDemandProvider.notifier).onConnected();
@@ -476,12 +478,15 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   void clearNotice() => state = state.copyWith(notice: null);
 
   Future<void> disconnect() async {
-    if (state.preparing && !_tunnelRequested) {
+    if (state.preparing) {
       _connectRun++;
       _connecting = null;
       state = state.copyWith(preparing: false, notice: state.notice);
-      Log.i('connect cancelled before the tunnel was asked to start');
-      return;
+      if (!_tunnelRequested) {
+        Log.i('connect cancelled before the tunnel was asked to start');
+        return;
+      }
+      Log.i('connect cancelled after the tunnel was asked to start');
     }
     _stopExpected = true;
     await ref.read(onDemandProvider.notifier).pause();
