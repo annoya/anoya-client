@@ -84,6 +84,10 @@ ThemeData buildAppTheme(Brightness brightness) {
     scaffoldBackgroundColor: scheme.surface,
     extensions: [dark ? VpnColors.dark : VpnColors.light],
 
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.padded),
+    ),
+
     appBarTheme: AppBarTheme(
       backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
