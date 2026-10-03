@@ -193,6 +193,23 @@
   .inp.sel .tx{flex:1;min-width:0;display:flex;flex-direction:column}
   /* trailing icon button inside a field: 48pt target, pulled into the padding so the field stays 56 */
   .inp .ic{width:48px;height:48px;margin:-4px -12px -4px 0;flex:none;display:flex;align-items:center;justify-content:center}
+  /* QR scanner: camera feed under a dimmed scrim with a 248pt viewfinder cut out */
+  .ph.cam{background:radial-gradient(120% 80% at 50% 40%,#3a4048 0%,#15181c 70%);color:#fff}
+  .ph.cam .sb,.ph.cam .ab{color:#fff;position:relative;z-index:2}
+  .qview{position:relative;width:248px;height:248px;margin:192px auto 0;border-radius:20px;
+    box-shadow:0 0 0 2000px rgba(0,0,0,.55)}
+  .qview i{position:absolute;width:36px;height:36px;border:4px solid #fff}
+  .qview i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-top-left-radius:20px}
+  .qview i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-top-right-radius:20px}
+  .qview i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-bottom-left-radius:20px}
+  .qview i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-bottom-right-radius:20px}
+  .qhint{position:relative;z-index:2;text-align:center;padding:24px 32px 0}
+  .qhint .h{font-size:16px;font-weight:600}
+  .qhint .m{font-size:12.5px;color:rgba(255,255,255,.72);margin-top:6px}
+  .qchip{position:relative;z-index:2;display:flex;align-items:center;gap:8px;margin:20px 24px 0;padding:10px 12px;border-radius:12px;
+    font-size:12.5px;font-weight:600;color:#fff}
+  .qbottom{position:absolute;left:24px;right:24px;bottom:40px;z-index:2}
+  .ph.cam .btn.tonal{background:rgba(255,255,255,.16);color:#fff}
 
   /* segmented: full width, pill r19, no check */
   .segm{display:flex;width:100%;border:1px solid var(--m-line);border-radius:20px;overflow:hidden;height:40px}
@@ -363,6 +380,9 @@
   <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 3 14.9 8.9 21.4 9.8 16.7 14.4 17.8 20.9 12 17.8 6.2 20.9 7.3 14.4 2.6 9.8 9.1 8.9 12 3"/></symbol>
   <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V9a4 4 0 0 1 4-4h5"/><path d="M18 8v4a4 4 0 0 1-4 4H9"/></symbol>
   <symbol id="i-paste" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v5"/><path d="M11 22H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="13" y1="17" x2="21" y2="17"/><polyline points="18 14 21 17 18 20"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M21 14v.01"/><path d="M14 21h.01"/><path d="M17 21h4v-4"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+  <symbol id="i-cam-off" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"/><path d="M7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16"/><path d="M9.5 4h5L17 7h3a2 2 0 0 1 2 2v7.5"/><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></symbol>
   <symbol id="i-lang" viewBox="0 0 24 24"><path d="M4 5h10"/><path d="M9 3v2c0 5-2.5 8-5 9"/><path d="M6 11c0 3 3 5 7 6"/><path d="M13 21l4-10 4 10"/><path d="M14.5 17.5h5"/></symbol>
 </defs></svg>
@@ -406,6 +426,7 @@
       <tr><td>Окно macOS (по умолчанию)</td><td>400 × 700, свободный ресайз</td></tr>
       <tr><td>Menu bar (macOS)</td><td>полоса 24, пункт меню 22, текст 13 — метрики AppKit, не наши</td></tr>
       <tr><td>Макс. ширина контента</td><td>560 (не срабатывает при 393)</td></tr>
+      <tr><td>Окно сканера QR (kQrViewfinder)</td><td>248, r20, уголки 36 × 4; затемнение вокруг 55%</td></tr>
     </table>
   </div>
   <div class="mt">
@@ -607,6 +628,80 @@
       </div>
     </div></div>
     <p class="cap"><span class="id">StartScreen · detectInput · refused</span><b>Не распознано.</b> Тот же чип 40&nbsp;pt, r12, но на warn-тинте (14%) и со значком предупреждения; «Continue» остаётся задизейбленной. Текст — «Can’t use this · причина», причина одной короткой фразой: <code>tuic:// isn’t supported</code> (схема, которой у нас нет), <code>vless:// link can’t be read</code> (схема наша, ссылка битая), <code>vless over kcp isn’t supported</code> (транспорт), <code>Not a subscription key</code> (vpn://, но не ключ подписки), <code>Not a link or subscription</code> (всё остальное). Сама ссылка в чипе не повторяется — она и так в поле. Чип появляется не на каждый символ: если распознать не удалось, вердикт показывается через 700&nbsp;мс после последнего изменения, чтобы не ругаться на недопечатанный адрес; успешное распознавание — сразу, как и раньше.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span></div>
+      <div style="padding:24px 24px 0;text-align:center"><svg class="icon big" style="color:var(--m-pri)"><use href="#i-shield"/></svg></div>
+      <div style="text-align:center;font-size:24px;font-weight:600;padding:14px 24px 0">Add a connection</div>
+      <div style="text-align:center;font-size:12.5px;color:var(--m-mut);padding:6px 24px 20px">Link, subscription or config file</div>
+      <div style="padding:0 24px">
+        <div class="inp sel"><div class="tx"><div class="lb">Link or subscription</div><div class="vl plc">vless://…  or  https://…/sub</div></div><span class="ic" title="Paste"><svg class="icon muted"><use href="#i-paste"/></svg></span></div>
+        <div class="btn fill dis" style="margin:14px 0 8px">Continue</div>
+        <div class="btn out" style="margin:0 0 8px"><svg class="icon s"><use href="#i-qr"/></svg>Scan a QR code</div>
+        <div class="btn out" style="margin:0 0 18px"><svg class="icon s"><use href="#i-file"/></svg>Open a config file…</div>
+        <div style="display:flex;align-items:center;gap:10px;color:var(--m-mut);font-size:12.5px">
+          <span style="flex:1;height:1px;background:var(--m-line)"></span>or<span style="flex:1;height:1px;background:var(--m-line)"></span>
+        </div>
+        <div class="btn tonal" style="margin:18px 0 0"><svg class="icon s"><use href="#i-org"/></svg>Sign in to your server</div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">StartScreen · phone</span><b>Сканировать QR — только на телефоне.</b> Кнопка встаёт сразу под «Continue», выше файла: на телефоне QR — самый частый путь, файл — самый редкий. Того же вида, что «Open a config file…» (outlined, 48&nbsp;pt, шаг 8), чтобы не спорить с основной кнопкой. На macOS, Windows и Linux кнопки нет совсем: камера ноутбука против QR в соседнем окне браузера — неудобство, а не функция; там ссылку копируют.<br><br>Найденный код не добавляется сам: он ложится в поле, как вставка, и проходит то же распознавание с тем же чипом (<code>StartScreen · detectInput</code>). Человек видит, что именно отсканировал, и сам жмёт «Continue» — QR на чужом экране мог оказаться не тем.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph cam">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Scan a QR code</span><span class="ic"><svg class="icon"><use href="#i-bolt"/></svg></span></div>
+      <div class="qview"><i></i><i></i><i></i><i></i></div>
+      <div class="qhint"><div class="h">Point the camera at a QR code</div><div class="m">A link, a subscription or a subscription key</div></div>
+      <div class="qbottom"><div class="btn tonal"><svg class="icon s"><use href="#i-image"/></svg>Choose from photos</div></div>
+    </div></div>
+    <p class="cap"><span class="id">QrScanScreen</span><b>Сканер.</b> Камера на весь экран под затемнением (55%), окно 248&nbsp;pt r20 с уголками ровно по центру экрана (там его рисует и сканер — центр кадра и центр окна совпадают) — туда смотрит и распознавание (кроп по окну, не по кадру: соседние коды на экране панели не мешают). Аппбар белый поверх камеры: слева закрыть, справа фонарик. Внизу «Choose from photos» — QR часто приходит картинкой в мессенджер на тот же телефон, и навести на него камеру нечем.<br><br>Понимаем всё, что понимает поле: <code>vless://</code>, <code>vmess://</code>, <code>trojan://</code>, <code>ss://</code>, <code>hy2://</code> — так кодируют клиента 3x-ui, Marzban, Hiddify; адрес подписки — Remnawave, Marzban, 3x-ui; ссылки-обёртки клиентов (<code>happ://add/…</code>, <code>v2raytun://import/…</code>, <code>hiddify://import/…</code>, <code>streisand://import/…</code>, <code>sing-box://import-remote-profile?url=…</code>, <code>clash://install-config?url=…</code>) — разворачиваем до адреса внутри. Ключ Amnezia — в их собственной нарезке на части (см. следующий борд).</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph cam">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Scan a QR code</span><span class="ic"><svg class="icon"><use href="#i-bolt"/></svg></span></div>
+      <div class="qview"><i></i><i></i><i></i><i></i></div>
+      <div class="qchip" style="background:rgba(255,255,255,.16)">
+        <svg viewBox="0 0 20 20" style="width:18px;height:18px;flex:none"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="38 13"/></svg>
+        <span>Subscription key · part 2 of 3 — keep the camera on the code</span>
+      </div>
+      <div class="qhint" style="padding-top:12px"><div class="m">The app shows the parts one after another</div></div>
+      <div class="qbottom"><div class="btn tonal"><svg class="icon s"><use href="#i-image"/></svg>Choose from photos</div></div>
+    </div></div>
+    <p class="cap"><span class="id">QrScanScreen · parts</span><b>Ключ Amnezia из нескольких QR.</b> Приложение Amnezia режет ключ на части по 850 байт и показывает их по очереди; даже короткий ключ — «часть 1 из 1» в той же обёртке. Части собираются в любом порядке, повтор уже собранной ничего не ломает, чип считает собранные. Сменилось число частей — значит, навели на другой ключ: начинаем заново. Собрали все — это <code>vpn://</code>-ключ, он идёт в поле, как любой другой.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph cam">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Scan a QR code</span><span class="ic"><svg class="icon"><use href="#i-bolt"/></svg></span></div>
+      <div class="qview"><i></i><i></i><i></i><i></i></div>
+      <div class="qchip" style="background:color-mix(in srgb, var(--m-warn) 30%, rgba(0,0,0,.4))">
+        <svg class="icon s" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+        <span>Can’t use this · tuic:// isn’t supported</span>
+      </div>
+      <div class="qhint" style="padding-top:12px"><div class="m">Still looking — point at another code</div></div>
+      <div class="qbottom"><div class="btn tonal"><svg class="icon s"><use href="#i-image"/></svg>Choose from photos</div></div>
+    </div></div>
+    <p class="cap"><span class="id">QrScanScreen · refused</span><b>Код прочитан, но не наш.</b> Тот же вердикт и те же слова, что у поля (<code>whyUnusable</code>), но экран не закрывается и сканирование продолжается: рядом на экране панели обычно есть и подходящий код. Чип держится до следующего прочитанного кода. Код без текста или сломанный — молчим, как будто его не было.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Scan a QR code</span></div>
+      <div style="padding:120px 32px 0;text-align:center"><svg class="icon big muted"><use href="#i-cam-off"/></svg></div>
+      <div style="text-align:center;font-size:18px;font-weight:600;padding:16px 32px 0">No access to the camera</div>
+      <div style="text-align:center;font-size:13px;color:var(--m-mut);padding:8px 32px 24px;line-height:1.4">Allow camera access in the system settings, or choose a screenshot of the QR code.</div>
+      <div style="padding:0 24px"><div class="btn tonal"><svg class="icon s"><use href="#i-image"/></svg>Choose from photos</div></div>
+    </div></div>
+    <p class="cap"><span class="id">QrScanScreen · no camera</span><b>Камеру не дали.</b> Отказ — не ошибка и не диалог: экран говорит, где это включается, и оставляет второй путь — выбрать скриншот. Кнопки «Open settings» нет: ради неё пришлось бы тянуть ещё один плагин, а путь в настройки человек знает.</p>
   </div>
 
   <div class="board">

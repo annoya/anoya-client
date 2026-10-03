@@ -2072,6 +2072,72 @@ abstract class AppLocalizations {
   /// **'Clipboard is empty'**
   String get startClipboardEmpty;
 
+  /// No description provided for @startScanQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a QR code'**
+  String get startScanQr;
+
+  /// No description provided for @qrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at a QR code'**
+  String get qrHint;
+
+  /// No description provided for @qrHintDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'A link, a subscription or a subscription key'**
+  String get qrHintDetail;
+
+  /// Progress chip while a subscription key shown as several QR codes is being collected
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription key · part {received} of {total} — keep the camera on the code'**
+  String qrParts(int received, int total);
+
+  /// No description provided for @qrPartsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The app shows the parts one after another'**
+  String get qrPartsDetail;
+
+  /// No description provided for @qrStillLooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Still looking — point at another code'**
+  String get qrStillLooking;
+
+  /// No description provided for @qrFromPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from photos'**
+  String get qrFromPhotos;
+
+  /// No description provided for @qrNoCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'No access to the camera'**
+  String get qrNoCamera;
+
+  /// No description provided for @qrNoCameraDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow camera access in the system settings, or choose a screenshot of the QR code.'**
+  String get qrNoCameraDetail;
+
+  /// No description provided for @qrNoCodeInImage.
+  ///
+  /// In en, this message translates to:
+  /// **'No QR code found in this image'**
+  String get qrNoCodeInImage;
+
+  /// No description provided for @qrTorch.
+  ///
+  /// In en, this message translates to:
+  /// **'Flashlight'**
+  String get qrTorch;
+
   /// Chip under the link field explaining why the text cannot be added
   ///
   /// In en, this message translates to:

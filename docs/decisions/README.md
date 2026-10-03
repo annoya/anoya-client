@@ -33,6 +33,7 @@ test.
 | [010](ADR-010-connection-check.md) | client | The app verifies the tunnel carries traffic, and never drops it over the answer | passive byte counters first, mihomo `URLTest` second, handshake warm-up, why not `external-controller` |
 | [012](ADR-012-app-shell-per-platform.md) | client | The window closes to the menu bar or tray; the tunnel outlives the app | macOS menu bar split, Windows tray, one running copy, window size, Android notification ask, log caps, Linux purge, APK naming |
 | [014](ADR-014-silent-tunnel-recovery.md) | client | A silent tunnel is healed by reloading the engine on its own config | `wake()`, the engine watchdog, why not stop/start or a reconnect |
+| [015](ADR-015-qr-import-on-phones.md) | client | QR codes are scanned on phones only, with zxing-cpp, into the link field | why not ML Kit, no desktop camera, key-series framing, deep-link unwrapping, no auto-add |
 
 ## Open Questions
 
