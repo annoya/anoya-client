@@ -246,10 +246,13 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                     decoration: InputDecoration(
                       labelText: l10n.startLinkLabel,
                       hintText: l10n.startLinkHint,
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.content_paste_go),
-                        tooltip: l10n.startPaste,
-                        onPressed: _busy ? null : _paste,
+                      suffixIcon: Padding(
+                        padding: const EdgeInsetsDirectional.only(end: 6),
+                        child: IconButton(
+                          icon: const Icon(Icons.content_paste_go),
+                          tooltip: l10n.startPaste,
+                          onPressed: _busy ? null : _paste,
+                        ),
                       ),
                     ),
                   ),
