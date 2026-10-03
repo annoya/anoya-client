@@ -2,7 +2,7 @@
 """Extract the user's messages from a Claude Code session transcript.
 
 Decisions live in what the user said — their corrections, rejections and
-"нет, не так". Those messages are a small fraction of a transcript that is
+"no, not like that". Those messages are a small fraction of a transcript that is
 mostly tool output, so pulling them out turns an unreadable 60 MB file into
 something a reader (or a subagent) can go through in one pass.
 

@@ -1,6 +1,6 @@
 ---
 name: ui-change
-description: The mockup-first workflow for any visible change to the vpn2 Flutter client — update design/ui-spec.html, run its geometry validator, show the user, and only then write code. Use this whenever work touches a screen, a control, a layout, an empty state, an error message or user-facing copy in the app, even when the user just says "add a button", "fix this screen" or "поменяй экран" without mentioning the mockup. Also use it when reviewing whether an existing screen matches the spec.
+description: The mockup-first workflow for any visible change to the vpn2 Flutter client — update design/ui-spec.html, run its geometry validator, show the user, and only then write code. Use this whenever work touches a screen, a control, a layout, an empty state, an error message or user-facing copy in the app, even when the user just says "add a button" or "fix this screen" (in any language) without mentioning the mockup. Also use it when reviewing whether an existing screen matches the spec.
 ---
 
 # Changing the client UI
@@ -18,7 +18,7 @@ to code reliably produces work that gets thrown away.
 2. **Run the validator — it must report zero violations.** See below.
 3. **Show the user.** Take a screenshot of the affected canvases and describe
    the decisions you made, especially the ones they might disagree with. Wait
-   for an explicit go-ahead. "делай" is the go-ahead; silence is not.
+   for an explicit go-ahead. A plain "go ahead" (in the user's language) is the go-ahead; silence is not.
 4. **Write the code**, taking every number from `lib/core/theme.dart` and
    `lib/core/ui.dart` — the same numbers the mockup uses.
 5. **Verify**: `flutter analyze` (must be clean) and `flutter test`. Add or
