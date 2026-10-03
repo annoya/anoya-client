@@ -1,11 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../core/app_error.dart';
 import '../core/country_flag.dart';
 import '../core/geo_store.dart';
 import '../core/geosite_index.dart';
+import '../core/log.dart';
 import '../core/norm_config.dart';
 import '../core/rule_set.dart';
+import '../core/rule_set_transfer.dart';
 import '../core/service_avatar.dart';
 import '../core/service_catalog.dart';
 import '../core/ui.dart';
@@ -14,6 +24,7 @@ import '../state/profiles_controller.dart';
 import '../state/routing_status.dart';
 import 'geosite_sheet.dart';
 import 'rule_dialog.dart';
+import 'rule_set_qr_screen.dart';
 import 'routing_widgets.dart';
 
 class RuleSetEditorScreen extends ConsumerStatefulWidget {
@@ -59,6 +70,94 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       _isDefault = set.isDefault;
       _loading = false;
     });
+  }
+
+  Future<void> _export() async {
+    final l10n = context.l10n;
+    final set = RuleSet(
+      id: widget.setId,
+      name: _name,
+      mode: _mode,
+      rules: _rules,
+      editor: _editor,
+    );
+    final link = encodeRuleSetLink(set);
+    final fileName = ruleSetFileName(_name);
+    final fitsQr = link.length <= kRuleSetQrMaxChars;
+    final to = await pickOption<_ExportTo>(
+      context,
+      title: l10n.ruleSetExportTitle(_name),
+      options: [
+        Option(
+          _ExportTo.share,
+          l10n.ruleSetExportShare,
+          subtitle: l10n.ruleSetExportShareSubtitle,
+          leading: const Icon(Icons.share_outlined),
+        ),
+        Option(
+          _ExportTo.file,
+          l10n.ruleSetExportSave,
+          subtitle: fileName,
+          leading: const Icon(Icons.save_alt),
+        ),
+        Option(
+          _ExportTo.copy,
+          l10n.ruleSetExportCopy,
+          subtitle: l10n.ruleSetExportCopySubtitle,
+          leading: const Icon(Icons.copy),
+        ),
+        Option(
+          _ExportTo.qr,
+          l10n.ruleSetExportQr,
+          subtitle: fitsQr
+              ? l10n.ruleSetExportQrSubtitle
+              : l10n.ruleSetExportQrTooLarge,
+          enabled: fitsQr,
+          leading: const Icon(Icons.qr_code_2),
+        ),
+      ],
+    );
+    if (to == null || !mounted) return;
+    try {
+      switch (to) {
+        case _ExportTo.share:
+          final dir = await (await getTemporaryDirectory()).create(
+            recursive: true,
+          );
+          final file = File('${dir.path}/$fileName');
+          await file.writeAsString(encodeRuleSetFile(set), flush: true);
+          await SharePlus.instance.share(
+            ShareParams(files: [XFile(file.path)]),
+          );
+        case _ExportTo.file:
+          final bytes = utf8.encode(encodeRuleSetFile(set));
+          final writesItself = Platform.isIOS || Platform.isAndroid;
+          final path = await FilePicker.platform.saveFile(
+            dialogTitle: l10n.ruleSetExportSave,
+            fileName: fileName,
+            bytes: writesItself ? bytes : null,
+          );
+          if (path == null) return;
+          if (!writesItself) await File(path).writeAsBytes(bytes, flush: true);
+          if (mounted) showToast(context, l10n.logsSavedTo(path));
+        case _ExportTo.copy:
+          await Clipboard.setData(ClipboardData(text: link));
+          if (mounted) showToast(context, l10n.commonCopied);
+        case _ExportTo.qr:
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RuleSetQrScreen(
+                name: _name,
+                ruleCount: _rules.length,
+                link: link,
+              ),
+            ),
+          );
+      }
+    } catch (e) {
+      Log.e('rule set export failed', '$e');
+      if (mounted) await showErrorDialog(context, describeError(e));
+    }
   }
 
   Future<void> _persist() async {
@@ -234,6 +333,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       appBar: AppBar(
         title: Text(_name),
         actions: [
+          if (!_loading)
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: l10n.ruleSetExport,
+              onPressed: _export,
+            ),
           if (!_isDefault && !_loading)
             IconButton(
               icon: const Icon(Icons.delete_outline),
@@ -582,3 +687,5 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     );
   }
 }
+
+enum _ExportTo { share, file, copy, qr }
