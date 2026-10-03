@@ -71,6 +71,13 @@ No tray and no close-to-tray: closing the window quits the app, and the
 tunnel, a system service, stays up (ADR-001). Reopening the app is how the
 user gets the controls back.
 
+Scrolling has no fling (`AppScrollBehavior` in `lib/core/ui.dart`). The GTK3
+embedder reports a touchpad only by its movement — a pan starts with the first
+delta and ends at the scroll-stop event when the fingers lift — and has no
+event for fingers landing again (GTK4's hold gesture). A fling Flutter started
+could therefore only be stopped by scrolling the other way. Lifting the fingers
+now stops the list where it is. Pinned by `test/scroll_behavior_test.dart`.
+
 ### Desktop window size
 
 Phone-shaped but freely resizable: macOS 400×700 (min 360×480,

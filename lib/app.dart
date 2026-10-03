@@ -69,6 +69,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigator,
       scaffoldMessengerKey: _messenger,
+      scrollBehavior: const AppScrollBehavior(),
       builder: (context, child) => DismissKeyboardOnTapOutside(child: child!),
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
