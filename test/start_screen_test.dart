@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:anoya/core/theme.dart';
+import 'package:anoya/features/qr_scan_screen.dart';
 import 'package:anoya/features/start_screen.dart';
 import 'package:anoya/l10n/l10n.dart';
 
@@ -150,6 +152,49 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).controller!.text,
         'kept',
       );
+    });
+  });
+
+  group('scanning a QR code', () {
+    tearDown(() => debugDefaultTargetPlatformOverride = null);
+
+    testWidgets('is offered on a phone', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      await pump(tester);
+      expect(find.text('Scan a QR code'), findsOneWidget);
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('is not offered on a desktop', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      await pump(tester);
+      expect(
+        find.text('Scan a QR code'),
+        findsNothing,
+        reason: 'a laptop camera against a QR in the next window is a chore',
+      );
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('without a camera, a screenshot is still a way in', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const QrScanScreen(),
+        ),
+      );
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump();
+
+      expect(find.text('No access to the camera'), findsOneWidget);
+      expect(find.text('Choose from photos'), findsOneWidget);
+      expect(find.byTooltip('Flashlight'), findsNothing);
     });
   });
 

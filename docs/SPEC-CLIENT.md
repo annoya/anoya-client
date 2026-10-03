@@ -572,7 +572,8 @@ screen says so in as many words.
 
 ## 5. Screens
 
-- **Start** — add a configuration: paste a link, open a file, or sign in.
+- **Start** — add a configuration: paste a link, scan a QR code (phones),
+  open a file, or sign in.
   Always pushed over Home, never the root: it is opened from Home's add button
   or its empty-state row, so settings and logs stay one tap away even before
   the first configuration exists. The field answers as the user types: a
@@ -580,7 +581,37 @@ screen says so in as many words.
   700 ms after the last change, a chip saying why in one phrase (an unknown
   scheme, a link of ours that will not parse, a transport the engine cannot
   run, a `vpn://` that is not a key) — never the text itself, which is the
-  credential.
+  credential. A paste button in the field replaces its content with the
+  clipboard and judges it at once, without the typing pause.
+
+  On Android and iOS the screen also offers **Scan a QR code** (not on
+  desktops: a laptop camera against a QR in the next browser window is a
+  chore, and there the link is copied). A scanned code is never added on its
+  own: it lands in the field like a paste and gets the same chip, and the
+  user presses Continue — a QR on someone else's screen may not be the one
+  they meant. The scanner reads what the field reads, plus two shapes that
+  only ever arrive as QR codes:
+  - **Client deep links** that panels and providers wrap a subscription in —
+    `happ://add/<url>`, `v2raytun://import/<url>`, `hiddify://import/<url>`,
+    `streisand://import/<url>`, and the `?url=` form of
+    `sing-box://import-remote-profile`, `clash://install-config`,
+    `v2rayng://install-config` and the like — are unwrapped to the address
+    inside. A paste goes through the same unwrapping. Schemes we read
+    ourselves are never unwrapped.
+  - **A subscription key shown as a series of QR codes**: the key's
+    provider app cuts the key (without `vpn://`) into 850-byte parts, each
+    framed as `qint16 1984 · quint8 count · quint8 index · QByteArray part`
+    and base64url-encoded, and shows them one after another — even a short
+    key is "part 1 of 1". Parts are collected in any order, repeats are
+    harmless, a change in the count starts over, and the reassembled key gets
+    its `vpn://` back.
+
+  A code that reads but cannot be used shows the field's refusal chip and
+  scanning goes on, since the panel usually shows a usable code nearby. A
+  denied camera is not an error: the screen says where access is granted and
+  offers choosing a screenshot instead, which is also always available while
+  scanning — a QR often arrives as a picture in a messenger on the same
+  phone. Decoding is zxing-cpp (`flutter_zxing`), not Google ML Kit.
 - **Sign in** — password and, when the server offers it, SSO.
 - **Home** — connect ring and status, a status strip (auto-connect, routing,
   logs), the configuration and server pickers, account line. The configuration

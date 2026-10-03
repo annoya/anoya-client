@@ -1369,6 +1369,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get startClipboardEmpty => 'Буфер обмена пуст';
 
   @override
+  String get startScanQr => 'Сканировать QR-код';
+
+  @override
+  String get qrHint => 'Наведите камеру на QR-код';
+
+  @override
+  String get qrHintDetail => 'Ссылка, подписка или ключ подписки';
+
+  @override
+  String qrParts(int received, int total) {
+    return 'Ключ подписки · часть $received из $total — держите камеру на коде';
+  }
+
+  @override
+  String get qrPartsDetail => 'Приложение показывает части по очереди';
+
+  @override
+  String get qrStillLooking => 'Ищем дальше — наведите на другой код';
+
+  @override
+  String get qrFromPhotos => 'Выбрать из фото';
+
+  @override
+  String get qrNoCamera => 'Нет доступа к камере';
+
+  @override
+  String get qrNoCameraDetail =>
+      'Разрешите доступ к камере в настройках системы или выберите скриншот с QR-кодом.';
+
+  @override
+  String get qrNoCodeInImage => 'На этом изображении нет QR-кода';
+
+  @override
+  String get qrTorch => 'Фонарик';
+
+  @override
   String startCantUseThis(String reason) {
     return 'Не подходит · $reason';
   }

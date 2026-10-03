@@ -22,6 +22,10 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera reads the QR code of a connection link, subscription or key.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>A photo is read only to find the QR code of a connection link, subscription or key.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

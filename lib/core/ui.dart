@@ -357,6 +357,10 @@ const double kSheetMaxHeightFraction = 0.8;
 
 const double kStatusChipHeight = 30;
 
+const double kQrViewfinder = 248;
+
+const double kQrScrimOpacity = 0.55;
+
 Future<T?> pickOption<T>(
   BuildContext context, {
   required String title,

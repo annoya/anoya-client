@@ -1331,6 +1331,43 @@ class AppLocalizationsFr extends AppLocalizations {
   String get startClipboardEmpty => 'Le presse-papiers est vide';
 
   @override
+  String get startScanQr => 'Scanner un code QR';
+
+  @override
+  String get qrHint => 'Pointez la caméra vers un code QR';
+
+  @override
+  String get qrHintDetail => 'Un lien, un abonnement ou une clé d’abonnement';
+
+  @override
+  String qrParts(int received, int total) {
+    return 'Clé d’abonnement · partie $received sur $total — gardez la caméra sur le code';
+  }
+
+  @override
+  String get qrPartsDetail =>
+      'L’application affiche les parties l’une après l’autre';
+
+  @override
+  String get qrStillLooking => 'Recherche en cours — visez un autre code';
+
+  @override
+  String get qrFromPhotos => 'Choisir dans les photos';
+
+  @override
+  String get qrNoCamera => 'Pas d’accès à la caméra';
+
+  @override
+  String get qrNoCameraDetail =>
+      'Autorisez l’accès à la caméra dans les réglages du système ou choisissez une capture d’écran du code QR.';
+
+  @override
+  String get qrNoCodeInImage => 'Aucun code QR trouvé dans cette image';
+
+  @override
+  String get qrTorch => 'Lampe torche';
+
+  @override
   String startCantUseThis(String reason) {
     return 'Inutilisable · $reason';
   }

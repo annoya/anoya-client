@@ -1332,6 +1332,44 @@ class AppLocalizationsEs extends AppLocalizations {
   String get startClipboardEmpty => 'El portapapeles está vacío';
 
   @override
+  String get startScanQr => 'Escanear un código QR';
+
+  @override
+  String get qrHint => 'Apunta la cámara a un código QR';
+
+  @override
+  String get qrHintDetail =>
+      'Un enlace, una suscripción o una clave de suscripción';
+
+  @override
+  String qrParts(int received, int total) {
+    return 'Clave de suscripción · parte $received de $total: mantén la cámara sobre el código';
+  }
+
+  @override
+  String get qrPartsDetail => 'La aplicación muestra las partes una tras otra';
+
+  @override
+  String get qrStillLooking => 'Seguimos buscando: apunta a otro código';
+
+  @override
+  String get qrFromPhotos => 'Elegir de las fotos';
+
+  @override
+  String get qrNoCamera => 'Sin acceso a la cámara';
+
+  @override
+  String get qrNoCameraDetail =>
+      'Permite el acceso a la cámara en los ajustes del sistema o elige una captura de pantalla del código QR.';
+
+  @override
+  String get qrNoCodeInImage =>
+      'No se encontró ningún código QR en esta imagen';
+
+  @override
+  String get qrTorch => 'Linterna';
+
+  @override
   String startCantUseThis(String reason) {
     return 'No se puede usar · $reason';
   }

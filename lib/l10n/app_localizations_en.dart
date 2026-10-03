@@ -1320,6 +1320,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startClipboardEmpty => 'Clipboard is empty';
 
   @override
+  String get startScanQr => 'Scan a QR code';
+
+  @override
+  String get qrHint => 'Point the camera at a QR code';
+
+  @override
+  String get qrHintDetail => 'A link, a subscription or a subscription key';
+
+  @override
+  String qrParts(int received, int total) {
+    return 'Subscription key · part $received of $total — keep the camera on the code';
+  }
+
+  @override
+  String get qrPartsDetail => 'The app shows the parts one after another';
+
+  @override
+  String get qrStillLooking => 'Still looking — point at another code';
+
+  @override
+  String get qrFromPhotos => 'Choose from photos';
+
+  @override
+  String get qrNoCamera => 'No access to the camera';
+
+  @override
+  String get qrNoCameraDetail =>
+      'Allow camera access in the system settings, or choose a screenshot of the QR code.';
+
+  @override
+  String get qrNoCodeInImage => 'No QR code found in this image';
+
+  @override
+  String get qrTorch => 'Flashlight';
+
+  @override
   String startCantUseThis(String reason) {
     return 'Can’t use this · $reason';
   }

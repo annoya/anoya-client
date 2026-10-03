@@ -23,6 +23,10 @@ work. See ADR-004.
 fetches them directly. Routing someone's subscription traffic through
 management would make it a middleman for data it has no business seeing.
 
+**We do not scan QR codes with a desktop camera.** On macOS, Windows and Linux
+the QR is in a browser window on the same screen; the link is copied. See
+ADR-015.
+
 **We do not fetch UI assets at runtime.** Brand glyphs are bundled. A VPN client
 asking a third party for `youtube.svg` announces what the user is about to
 route.
@@ -72,5 +76,6 @@ non-goals:
 
 - pf-based kill switch (closes the reconnect leak window — ADR-004).
 - Traffic statistics in the client (`statsStream` is currently empty).
+- Importing WireGuard/AmneziaWG `.conf` files and their QR codes (wg-easy).
 - Live Activity / Dynamic Island on iOS. It was designed and never built; the
   design was removed from the mockup rather than left as a promise.
