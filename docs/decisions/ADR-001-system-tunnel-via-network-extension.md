@@ -138,8 +138,9 @@ ordinary stop, and when the extension was killed.
 
 - The engine runs inside the extension process. Nothing downloads, extracts or
   spawns an engine binary at runtime.
-- The host app never reads the shared container directly for logs: doing so
-  triggers a TCC prompt about other applications' data. Logs travel over IPC.
+- ~~The host app never reads the shared container directly for logs.~~
+  Superseded by ADR-016: both provisioning profiles name the App Group, so
+  neither side gets a TCC prompt, and the logs live there.
 - Entitlements and App Group membership are part of the product, not a local
   development convenience.
 - The engine opens no listener: the rendered config carries no
@@ -186,7 +187,7 @@ throughput ever matters; until then gVisor is the stack that is known to work.
   for the engine. `MihomoCore.xcframework` is over 250 MB and therefore not
   committed — it is built on demand, and a stale one silently keeps old
   behavior. See the "Which check when" section of `AGENTS.md`.
-- Anything the app wants from inside the tunnel (logs, status, hot reload) has
+- Anything the app wants from inside the tunnel (status, hot reload; logs until ADR-016) has
   to travel over IPC. That constraint shapes ADR-002 and the logging design.
 - The extension is memory-constrained on iOS (~50 MB). Measured peak is under
   30 MB during 1080p playback, so the engine fits — but the margin is small and

@@ -1151,7 +1151,7 @@ abstract class AppLocalizations {
   /// No description provided for @logsClearAllContent.
   ///
   /// In en, this message translates to:
-  /// **'The app, tunnel and core logs will be deleted from this device. The tunnel and core logs can only be cleared while the VPN is connected.'**
+  /// **'The app, tunnel and core logs will be deleted from this device.'**
   String get logsClearAllContent;
 
   /// No description provided for @logsCleared.

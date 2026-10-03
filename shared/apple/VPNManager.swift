@@ -292,9 +292,39 @@ final class VPNManager {
         try? session.sendProviderMessage(Data("logging:\(enabled ? 1 : 0)".utf8)) { _ in }
     }
 
+    private static let logTailBytes = 512 * 1024
+
+    private var logDir: URL {
+        get throws {
+            guard let group = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: "group.org.annoya.test") else {
+                throw NSError(domain: "vpn", code: 5,
+                              userInfo: [NSLocalizedDescriptionKey: "no shared container"])
+            }
+            return group.appendingPathComponent("logs")
+        }
+    }
+
+    private static let logMaxBytes: UInt64 = 4 * 1024 * 1024
+
+    private static func halveIfOversized(_ file: URL) {
+        guard let size = (try? FileManager.default.attributesOfItem(atPath: file.path))?[.size] as? UInt64,
+              size > logMaxBytes,
+              let handle = try? FileHandle(forUpdating: file) else { return }
+        defer { try? handle.close() }
+        try? handle.seek(toOffset: size / 2)
+        guard let keep = try? handle.readToEnd() else { return }
+        try? handle.truncate(atOffset: 0)
+        try? handle.seek(toOffset: 0)
+        try? handle.write(contentsOf: keep)
+    }
+
     func clearLogs() async throws {
-        guard let session = await session(connected: false) else { throw tunnelNotRunning }
-        _ = try await ask(session, "clear-logs")
+        let dir = try logDir
+        for name in ["tunnel", "mihomo"] {
+            // Truncate, not unlink: the extension's stdout is freopen'd onto mihomo.log.
+            _ = dir.appendingPathComponent("\(name).log").path.withCString { truncate($0, 0) }
+        }
     }
 
     func lastDisconnectError() async -> String {
@@ -327,8 +357,18 @@ final class VPNManager {
     }
 
     func fetchLog(_ name: String) async throws -> String {
-        guard let session = await session(connected: false) else { throw tunnelNotRunning }
-        return try await ask(session, "log:\(name)")
+        let file = try logDir.appendingPathComponent("\(name.replacingOccurrences(of: "/", with: "")).log")
+        Self.halveIfOversized(file)
+        guard let handle = try? FileHandle(forReadingFrom: file) else { return "" }
+        defer { try? handle.close() }
+        let size = try handle.seekToEnd()
+        let take = UInt64(Self.logTailBytes)
+        try handle.seek(toOffset: size > take ? size - take : 0)
+        var data = try handle.readToEnd() ?? Data()
+        if size > take, let nl = data.firstIndex(of: 0x0a) {
+            data = data.suffix(from: data.index(after: nl))
+        }
+        return String(decoding: data, as: UTF8.self)
     }
 
     func currentStatus() -> String {
