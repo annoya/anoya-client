@@ -1291,6 +1291,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get startClipboardEmpty => '剪贴板为空';
 
   @override
+  String get startScanQr => '扫描二维码';
+
+  @override
+  String get qrHint => '将摄像头对准二维码';
+
+  @override
+  String get qrHintDetail => '链接、订阅或订阅密钥';
+
+  @override
+  String qrParts(int received, int total) {
+    return '订阅密钥 · 第 $received/$total 部分——请保持摄像头对准二维码';
+  }
+
+  @override
+  String get qrPartsDetail => '应用会依次显示各个部分';
+
+  @override
+  String get qrStillLooking => '继续扫描——请对准另一个二维码';
+
+  @override
+  String get qrFromPhotos => '从相册选择';
+
+  @override
+  String get qrNoCamera => '无法访问摄像头';
+
+  @override
+  String get qrNoCameraDetail => '请在系统设置中允许访问摄像头，或选择包含二维码的截图。';
+
+  @override
+  String get qrNoCodeInImage => '此图片中未找到二维码';
+
+  @override
+  String get qrTorch => '手电筒';
+
+  @override
   String startCantUseThis(String reason) {
     return '无法使用 · $reason';
   }

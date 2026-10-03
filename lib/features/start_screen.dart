@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,11 +11,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/app_error.dart';
 import '../core/log.dart';
+import '../core/parsers/qr_payload.dart';
 import '../core/parsers/subscription.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
+import 'qr_scan_screen.dart';
 import 'sign_in_screen.dart';
 
 class StartScreen extends ConsumerStatefulWidget {
@@ -76,6 +79,21 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       showToast(context, context.l10n.startClipboardEmpty);
       return;
     }
+    _fill(unwrapImportLink(text));
+  }
+
+  Future<void> _scanQr() async {
+    final text = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => const QrScanScreen()));
+    if (text != null && mounted) _fill(text);
+  }
+
+  static bool get _canScanQr =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+
+  void _fill(String text) {
     _input.value = TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
@@ -257,6 +275,14 @@ class _StartScreenState extends ConsumerState<StartScreen> {
                         : Text(l10n.commonContinue),
                   ),
                   const SizedBox(height: 8),
+                  if (_canScanQr) ...[
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _scanQr,
+                      icon: const Icon(Icons.qr_code_scanner, size: 18),
+                      label: Text(l10n.startScanQr),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _openFile,
                     icon: const Icon(Icons.folder_open, size: 18),
