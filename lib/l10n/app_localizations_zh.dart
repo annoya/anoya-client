@@ -612,7 +612,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logsClearAllQuestion => '清除全部日志？';
 
   @override
-  String get logsClearAllContent => '应用、隧道和核心日志将从本设备删除。隧道和核心日志仅在 VPN 已连接时才能清除。';
+  String get logsClearAllContent => '应用、隧道和核心日志将从本设备删除。';
 
   @override
   String get logsCleared => '日志已清除。';

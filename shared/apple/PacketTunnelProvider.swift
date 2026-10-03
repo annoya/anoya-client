@@ -5,11 +5,18 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     static let appGroup = "group.org.annoya.test"
 
-    // The profile's `<TEAM>.*` wildcard misses the `group.` id, so the App Group container prompts TCC on every connect.
-    private func sharedDir() -> URL {
+    private static func cachesDir() -> URL {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
     }
+
+    private static let logDir: URL = {
+        guard let group = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: appGroup) else { return cachesDir() }
+        let dir = group.appendingPathComponent("logs")
+        _ = dir.path.withCString { mkdir($0, 0o755) }
+        return dir
+    }()
 
     private var logEnabled: Bool {
         get { stateLock.withLock { _logEnabled } }
@@ -23,7 +30,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     private func log(_ message: String) {
         NSLog("TUNNEL: \(message)")
         guard logEnabled else { return }
-        let path = sharedDir().appendingPathComponent("tunnel.log").path
+        let path = Self.logDir.appendingPathComponent("tunnel.log").path
         let line = "[\(Date())] \(message)\n"
         guard let data = line.data(using: .utf8) else { return }
         rotateIfNeeded(path)
@@ -180,44 +187,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             completionHandler?(Data())
             return
         }
-        if request == "clear-logs" {
-            for name in ["tunnel", "mihomo"] {
-                let path = sharedDir().appendingPathComponent("\(name).log").path
-                // Truncate, not unlink: stdout is freopen'd onto mihomo.log.
-                _ = path.withCString { truncate($0, 0) }
-            }
-            completionHandler?(Data())
-            return
-        }
-        if request.hasPrefix("log:") {
-            let name = String(request.dropFirst(4)).replacingOccurrences(of: "/", with: "")
-            completionHandler?(tailOfLog(named: name))
-            return
-        }
         completionHandler?(Data())
     }
 
-    private static let logTailBytes = 512 * 1024
     private static let logMaxBytes = 4 * 1024 * 1024
-
-    private func tailOfLog(named name: String) -> Data {
-        let url = sharedDir().appendingPathComponent("\(name).log")
-        rotateIfNeeded(url.path)
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return Data() }
-        defer { try? handle.close() }
-        let size = (try? handle.seekToEnd()) ?? 0
-        let take = UInt64(Self.logTailBytes)
-        if size > take {
-            try? handle.seek(toOffset: size - take)
-        } else {
-            try? handle.seek(toOffset: 0)
-        }
-        guard var data = try? handle.readToEnd() else { return Data() }
-        if size > take, let nl = data.firstIndex(of: 0x0a) {
-            data = data.suffix(from: data.index(after: nl))
-        }
-        return data
-    }
 
     private static let logKeepFraction = 0.5
 
@@ -277,7 +250,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     private func redirectStdoutToMihomoLog() {
         guard !stdoutRedirected else { return }
         stdoutRedirected = true
-        let path = sharedDir().appendingPathComponent("mihomo.log").path
+        let path = Self.logDir.appendingPathComponent("mihomo.log").path
         freopen(path, "a", stdout)
         setvbuf(stdout, nil, _IOLBF, 0)
         log("mihomo stdout -> \(path)")
@@ -296,7 +269,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     private func mihomoHomeDir() -> URL {
         FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: Self.appGroup) ?? sharedDir()
+            forSecurityApplicationGroupIdentifier: Self.appGroup) ?? Self.cachesDir()
     }
 
     private func startEngine(fd: Int32, config: String) -> String? {

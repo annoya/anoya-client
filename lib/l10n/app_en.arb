@@ -389,7 +389,7 @@
   },
   "logsClearAll": "Clear all logs",
   "logsClearAllQuestion": "Clear all logs?",
-  "logsClearAllContent": "The app, tunnel and core logs will be deleted from this device. The tunnel and core logs can only be cleared while the VPN is connected.",
+  "logsClearAllContent": "The app, tunnel and core logs will be deleted from this device.",
   "logsCleared": "Logs cleared.",
   "logsAppLogClearedOnly": "App log cleared. The tunnel and core logs need the VPN connected.",
   "logsNoLog": "No log.",

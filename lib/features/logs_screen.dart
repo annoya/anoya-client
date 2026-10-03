@@ -24,6 +24,7 @@ class LogsScreen extends ConsumerStatefulWidget {
 
 class _LogsScreenState extends ConsumerState<LogsScreen> {
   bool _busy = false;
+  bool _clearing = false;
 
   Future<void> _setCollecting(bool value) async {
     await ref.read(appPrefsProvider.notifier).setCollectLogs(value);
@@ -97,11 +98,12 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true || !mounted) return;
+    setState(() => _busy = _clearing = true);
     Log.clear();
     final wiped = await clearExtensionLogs();
     if (!mounted) return;
-    setState(() {});
+    setState(() => _busy = _clearing = false);
     showToast(context, wiped ? l10n.logsCleared : l10n.logsAppLogClearedOnly);
   }
 
@@ -155,7 +157,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kGutter),
               child: OutlinedButton.icon(
-                icon: _busy
+                icon: _busy && !_clearing
                     ? const SizedBox(
                         height: 18,
                         width: 18,
@@ -170,7 +172,13 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kGutter),
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.delete_outline, size: 18),
+                icon: _clearing
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.delete_outline, size: 18),
                 label: Text(l10n.logsClearAll),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.error,

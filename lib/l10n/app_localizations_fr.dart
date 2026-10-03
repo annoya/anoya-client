@@ -633,7 +633,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get logsClearAllContent =>
-      'Les journaux de l’app, du tunnel et du cœur seront supprimés de cet appareil. Ceux du tunnel et du cœur ne peuvent être effacés que lorsque le VPN est connecté.';
+      'Les journaux de l’app, du tunnel et du cœur seront supprimés de cet appareil.';
 
   @override
   String get logsCleared => 'Journaux effacés.';

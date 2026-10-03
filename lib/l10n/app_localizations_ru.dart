@@ -643,7 +643,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get logsClearAllContent =>
-      'Журналы приложения, туннеля и ядра будут удалены с этого устройства. Журналы туннеля и ядра можно очистить только при подключённом VPN.';
+      'Журналы приложения, туннеля и ядра будут удалены с этого устройства.';
 
   @override
   String get logsCleared => 'Журналы очищены.';

@@ -627,7 +627,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logsClearAllContent =>
-      'The app, tunnel and core logs will be deleted from this device. The tunnel and core logs can only be cleared while the VPN is connected.';
+      'The app, tunnel and core logs will be deleted from this device.';
 
   @override
   String get logsCleared => 'Logs cleared.';

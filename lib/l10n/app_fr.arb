@@ -174,7 +174,7 @@
   "logsSavedTo": "Enregistré dans {path}",
   "logsClearAll": "Effacer tous les journaux",
   "logsClearAllQuestion": "Effacer tous les journaux ?",
-  "logsClearAllContent": "Les journaux de l’app, du tunnel et du cœur seront supprimés de cet appareil. Ceux du tunnel et du cœur ne peuvent être effacés que lorsque le VPN est connecté.",
+  "logsClearAllContent": "Les journaux de l’app, du tunnel et du cœur seront supprimés de cet appareil.",
   "logsCleared": "Journaux effacés.",
   "logsAppLogClearedOnly": "Journal de l’app effacé. Ceux du tunnel et du cœur nécessitent que le VPN soit connecté.",
   "logsNoLog": "Aucun journal.",
