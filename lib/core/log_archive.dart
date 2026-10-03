@@ -23,7 +23,7 @@ Future<File> buildLogArchive({required DateTime now}) async {
   final stamp =
       '${now.year}${_two(now.month)}${_two(now.day)}'
       '-${_two(now.hour)}${_two(now.minute)}${_two(now.second)}';
-  final dir = await getTemporaryDirectory();
+  final dir = await (await getTemporaryDirectory()).create(recursive: true);
   final file = File('${dir.path}/vpn-logs-$stamp.zip');
   await file.writeAsBytes(ZipEncoder().encode(archive), flush: true);
   Log.i('log archive written: ${file.path}');

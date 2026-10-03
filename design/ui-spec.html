@@ -2468,7 +2468,38 @@ time="13:29:05" level=info msg="[TCP] 10.0.0.4:52320 --> api.telegram.org:443 ma
           <div class="tx"><div class="t">Share…</div><div class="s">Send the archive somewhere</div></div></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">LogsScreen · clear</span><b>Подтверждение очистки.</b> Обычный диалог с двумя кнопками — сбор логов при этом уже выключен, поэтому свитчер в положении off. Текст честно предупреждает: журналы туннеля и ядра лежат в контейнере расширения, и стереть их можно только при поднятом туннеле.</p>
+    <p class="cap"><span class="id">LogsScreen · clear</span><b>Подтверждение очистки.</b> Обычный диалог с двумя кнопками — сбор логов при этом уже выключен, поэтому свитчер в положении off. Подключённый VPN не нужен: журналы туннеля и ядра лежат в общем контейнере App Group, и приложение стирает их само — так же, как читает их и после того, как туннель упал.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Logs</span></div>
+      <div class="sh">COLLECTION</div>
+      <div class="card"><div class="row">
+        <svg class="icon muted"><use href="#i-doc"/></svg>
+        <div class="tx"><div class="t">Collect logs</div><div class="s multi">Off: the app, the tunnel and the core stop writing. Existing files stay readable.</div></div>
+        <span class="sw"><i></i></span>
+      </div></div>
+      <div class="sh">TUNNEL</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Tunnel</div><div class="s">Network Extension events</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Core (mihomo)</div><div class="s">Engine log: dials, DNS, routing</div></div>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="sh">APP</div>
+      <div class="card"><div class="row">
+        <div class="tx"><div class="t">Application</div><div class="s">Client-side events</div></div>
+        <span style="font-size:12.5px;color:var(--m-mut)">42 KB</span>
+        <svg class="icon muted"><use href="#i-chev"/></svg>
+      </div></div>
+      <div class="btn out dis" style="margin-top:20px"><svg class="icon s"><use href="#i-copy"/></svg>Save all logs (.zip)</div>
+      <div class="btn err dis"><svg viewBox="0 0 20 20" style="width:18px;height:18px"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="38 13"/></svg>Clear all logs</div>
+    </div></div>
+    <p class="cap"><span class="id">LogsScreen · clearing</span><b>Очистка идёт.</b> После подтверждения обе кнопки гаснут, а у «Clear all logs» вместо корзины крутится спиннер — тот же приём, что у сохранения архива. Строки журналов остаются доступны. Ответ — тост, когда всё стёрто.</p>
   </div>
 </div>
 

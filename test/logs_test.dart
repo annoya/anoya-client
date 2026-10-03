@@ -150,6 +150,19 @@ void main() {
   });
 
   group('archive', () {
+    test('is written even after the system emptied the caches', () async {
+      final gone = '${tmp.path}/Caches/org.annoya.test';
+      messenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        (call) async => gone,
+      );
+
+      final file = await buildLogArchive(now: DateTime(2026, 10, 3, 12, 31, 6));
+
+      expect(file.existsSync(), isTrue, reason: 'macOS purges Caches at will');
+      expect(file.parent.path, gone);
+    });
+
     test(
       'holds every log, and says why the extension ones are missing',
       () async {

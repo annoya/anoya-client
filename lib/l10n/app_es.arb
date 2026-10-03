@@ -174,7 +174,7 @@
   "logsSavedTo": "Guardado en {path}",
   "logsClearAll": "Borrar todos los registros",
   "logsClearAllQuestion": "¿Borrar todos los registros?",
-  "logsClearAllContent": "Los registros de la app, el túnel y el núcleo se eliminarán de este dispositivo. Los del túnel y el núcleo solo pueden borrarse con la VPN conectada.",
+  "logsClearAllContent": "Los registros de la app, el túnel y el núcleo se eliminarán de este dispositivo.",
   "logsCleared": "Registros borrados.",
   "logsAppLogClearedOnly": "Registro de la app borrado. Los del túnel y el núcleo requieren la VPN conectada.",
   "logsNoLog": "Sin registro.",

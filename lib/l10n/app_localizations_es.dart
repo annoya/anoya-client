@@ -634,7 +634,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get logsClearAllContent =>
-      'Los registros de la app, el túnel y el núcleo se eliminarán de este dispositivo. Los del túnel y el núcleo solo pueden borrarse con la VPN conectada.';
+      'Los registros de la app, el túnel y el núcleo se eliminarán de este dispositivo.';
 
   @override
   String get logsCleared => 'Registros borrados.';

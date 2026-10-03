@@ -5,7 +5,6 @@ import 'control_transport.dart';
 import 'log.dart';
 import 'network_extension_core.dart';
 
-// Reading the App Group container from the extension pops a TCC prompt.
 ControlTransport get _control => NetworkExtensionCore.control;
 
 Future<String> fetchExtensionLog(String name) async {

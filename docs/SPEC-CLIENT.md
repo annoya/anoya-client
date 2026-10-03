@@ -302,8 +302,6 @@ string, the reply UTF-8 bytes. Unknown requests get an empty reply.
 |---|---|
 | `reload:<yaml>` | empty on success, else the error; the engine keeps the old config |
 | `logging:<0\|1>` | empty; switches log writing and engine level live |
-| `clear-logs` | empty; truncates `tunnel.log`, `mihomo.log` |
-| `log:<name>` | last 512 KB of `<name>.log` |
 | `group:<name>` | member the group currently uses, or empty |
 | `proxybytes` | `<up>:<down>` through the tunnel outbound |
 | `urltest:<ms>:<url>` | `ms:<n>` or `err:<why>` |
@@ -757,8 +755,15 @@ rule editor and the home "Auto" chip do not exist on Android
 ## 8. Diagnostics
 
 One switch controls collection for the app, tunnel and engine journals; console
-output continues regardless. Extension logs travel over IPC rather than through
-the shared container, and all three can be exported as a zip.
+output continues regardless. All three can be exported as a zip.
+
+The tunnel and engine journals are readable whether or not the tunnel runs —
+a tunnel that just dropped is when they matter most. On Apple the extension
+writes `tunnel.log` and `mihomo.log` into `<App Group>/logs/` and the app
+reads their last 512 KB and truncates them itself, with no IPC; a journal over
+4 MB is halved on read. On Android both sides share the app's files directory.
+While clearing runs, the clear button shows a spinner and both buttons are
+disabled.
 `scripts/leak-check.sh` verifies on a live tunnel that nothing escapes
 the physical interface.
 

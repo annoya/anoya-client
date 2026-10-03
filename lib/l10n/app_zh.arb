@@ -174,7 +174,7 @@
   "logsSavedTo": "已保存到 {path}",
   "logsClearAll": "清除全部日志",
   "logsClearAllQuestion": "清除全部日志？",
-  "logsClearAllContent": "应用、隧道和核心日志将从本设备删除。隧道和核心日志仅在 VPN 已连接时才能清除。",
+  "logsClearAllContent": "应用、隧道和核心日志将从本设备删除。",
   "logsCleared": "日志已清除。",
   "logsAppLogClearedOnly": "应用日志已清除。清除隧道和核心日志需要先连接 VPN。",
   "logsNoLog": "没有日志。",
