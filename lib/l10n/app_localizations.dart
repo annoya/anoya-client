@@ -104,12 +104,6 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
-  /// No description provided for @appTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'VPN'**
-  String get appTitle;
-
   /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:

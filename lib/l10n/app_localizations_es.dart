@@ -9,9 +9,6 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get appTitle => 'VPN';
-
-  @override
   String get commonCancel => 'Cancelar';
 
   @override

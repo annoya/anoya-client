@@ -9,9 +9,6 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'VPN';
-
-  @override
   String get commonCancel => '取消';
 
   @override
