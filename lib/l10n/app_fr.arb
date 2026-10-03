@@ -328,6 +328,7 @@
   "startLinkHint": "vless://…  ou  https://…/sub",
   "startPaste": "Coller",
   "startClipboardEmpty": "Le presse-papiers est vide",
+  "secretsInFileNotice": "Aucun trousseau sur ce système — les données de connexion sont conservées dans un fichier lisible uniquement par votre compte.",
   "startScanQr": "Scanner un code QR",
   "qrHint": "Pointez la caméra vers un code QR",
   "qrHintDetail": "Un lien, un abonnement ou une clé d’abonnement",

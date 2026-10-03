@@ -1291,6 +1291,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get startClipboardEmpty => '剪贴板为空';
 
   @override
+  String get secretsInFileNotice => '此系统没有密钥环——登录数据保存在只有您的账户可读取的文件中。';
+
+  @override
   String get startScanQr => '扫描二维码';
 
   @override

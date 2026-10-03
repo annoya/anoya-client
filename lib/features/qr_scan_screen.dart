@@ -144,9 +144,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   borderWidth: 4,
                   borderRadius: 20,
                   borderLength: 36,
-                  overlayColor: Colors.black.withValues(
-                    alpha: kQrScrimOpacity,
-                  ),
+                  overlayColor: Colors.black.withValues(alpha: kQrScrimOpacity),
                 ),
               ),
             ),

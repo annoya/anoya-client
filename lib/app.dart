@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/secret_store.dart';
 import 'core/theme.dart';
 import 'core/ui.dart';
 import 'l10n/l10n.dart';
@@ -18,11 +19,25 @@ class VpnApp extends ConsumerStatefulWidget {
 
 class _VpnAppState extends ConsumerState<VpnApp> {
   final _navigator = GlobalKey<NavigatorState>();
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
     ref.read(menuBarProvider);
+    SecretStore.instance.usingFile.addListener(_secretsInFile);
+  }
+
+  @override
+  void dispose() {
+    SecretStore.instance.usingFile.removeListener(_secretsInFile);
+    super.dispose();
+  }
+
+  void _secretsInFile() {
+    final messenger = _messenger.currentState;
+    if (!SecretStore.instance.usingFile.value || messenger == null) return;
+    showToastWith(messenger, L10n.current.secretsInFileNotice);
   }
 
   @override
@@ -52,6 +67,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigator,
+      scaffoldMessengerKey: _messenger,
       builder: (context, child) => DismissKeyboardOnTapOutside(child: child!),
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),

@@ -35,6 +35,7 @@ test.
 | [014](ADR-014-silent-tunnel-recovery.md) | client | A silent tunnel is healed by reloading the engine on its own config | `wake()`, the engine watchdog, why not stop/start or a reconnect |
 | [015](ADR-015-qr-import-on-phones.md) | client | QR codes are scanned on phones only, with zxing-cpp, into the link field | why not ML Kit, no desktop camera, key-series framing, deep-link unwrapping, no auto-add |
 | [016](ADR-016-extension-logs-in-the-app-group.md) | client | The tunnel's logs live in the App Group, readable with the tunnel down | supersedes ADR-001's logging invariant, profiles naming the group, truncate-not-unlink, rotation on read |
+| [017](ADR-017-linux-secrets-fallback.md) | client | On Linux without a keyring, secrets fall back to a 0600 file | why not systemd-creds or the root service, serialized writes, keyring takes over again |
 
 ## Open Questions
 

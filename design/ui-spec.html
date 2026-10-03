@@ -2855,6 +2855,36 @@ text stays in the logs, not in the UI.</p>
         <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
       <div class="hbody" style="height:742px">
         <div class="hfill"><div class="ringwrap">
+          <span class="stat" style="color:var(--m-ok)">Connected · 00:12:34</span>
+          <div class="ring" style="--rc:var(--m-ok)"><svg class="icon big"><use href="#i-power"/></svg><span>Disconnect</span></div>
+        </div></div>
+        <div class="hbot">
+          <div class="card"><div class="row">
+            <svg class="icon muted"><use href="#i-folder"/></svg>
+            <div class="tx"><div class="t">Nexus Proxy</div><div class="s">Subscription · 14 servers · 2 groups</div></div>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-refresh"/></svg></span>
+            <span class="iconbtn"><svg class="icon s muted"><use href="#i-gear"/></svg></span>
+            <svg class="icon muted"><use href="#i-exp"/></svg>
+          </div></div>
+          <div class="card"><div class="row">
+            <span class="flag">🇩🇪</span>
+            <div class="tx"><div class="t">h2.nexus</div><div class="s">VLESS · TCP · Reality</div></div>
+            <svg class="icon muted"><use href="#i-chev"/></svg>
+          </div></div>
+        </div>
+      </div>
+      <div class="toast"><div class="tt">No keyring on this system — sign-in data is kept in a file only your account can read.</div></div>
+    </div></div>
+    <p class="cap"><span class="id">Toast · secrets in a file (Linux)</span><b>No Secret Service, still signed in.</b> On a Linux desktop without GNOME Keyring or KWallet (bare i3, sway, a server) saving a token or a <code>vpn://</code> key used to fail with an error nobody could act on. Now it goes to <code>secrets.json</code> in the app’s data directory, readable by this account only (file 0600, directory 0700), and the app says so once per launch, the first time it happens. The wording is about who can read it, not about encryption: against other processes of the same user a keyring protects no better; what the file lacks is encryption at rest, which full-disk encryption covers. When a keyring appears later, new values go there and their file copies are removed.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon muted"><use href="#i-plus"/></svg></span>
+        <span class="ttl c">VPN</span><span class="ic"><svg class="icon muted"><use href="#i-gear"/></svg></span></div>
+      <div class="hbody" style="height:742px">
+        <div class="hfill"><div class="ringwrap">
           <span class="stat" style="color:var(--m-err)">Error</span>
           <div class="ring" style="--rc:var(--m-pri)"><svg class="icon big"><use href="#i-power"/></svg><span>Connect</span></div>
         </div></div>

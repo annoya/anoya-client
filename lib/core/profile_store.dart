@@ -1,11 +1,10 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import 'amnezia/wg_keys.dart';
 import 'json_file_store.dart';
 import 'profile.dart';
+import 'secret_store.dart';
 
 class ProfileStore {
-  static const _secure = FlutterSecureStorage();
+  static SecretStore get _secure => SecretStore.instance;
 
   static final _store = JsonFileStore('profiles.json');
 
@@ -18,35 +17,35 @@ class ProfileStore {
       _store.save(profiles.map((p) => p.toJson()).toList());
 
   static Future<String?> token(String profileId) =>
-      _secure.read(key: 'token_$profileId');
+      _secure.read('token_$profileId');
 
   static Future<void> saveToken(String profileId, String token) =>
-      _secure.write(key: 'token_$profileId', value: token);
+      _secure.write('token_$profileId', token);
 
   static Future<void> deleteToken(String profileId) =>
-      _secure.delete(key: 'token_$profileId');
+      _secure.delete('token_$profileId');
 
   static Future<String?> amneziaKey(String profileId) =>
-      _secure.read(key: 'amnezia_key_$profileId');
+      _secure.read('amnezia_key_$profileId');
 
   static Future<void> saveAmneziaKey(String profileId, String key) =>
-      _secure.write(key: 'amnezia_key_$profileId', value: key);
+      _secure.write('amnezia_key_$profileId', key);
 
   static Future<void> deleteAmneziaKey(String profileId) =>
-      _secure.delete(key: 'amnezia_key_$profileId');
+      _secure.delete('amnezia_key_$profileId');
 
   static Future<String?> amneziaGatewayState() =>
-      _secure.read(key: 'amnezia_agw_state');
+      _secure.read('amnezia_agw_state');
 
   static Future<void> saveAmneziaGatewayState(String state) =>
-      _secure.write(key: 'amnezia_agw_state', value: state);
+      _secure.write('amnezia_agw_state', state);
 
   static Future<String> amneziaInstallId() async {
     const key = 'amnezia_install_uuid';
-    final existing = await _secure.read(key: key);
+    final existing = await _secure.read(key);
     if (existing != null && existing.length >= 32) return existing;
     final fresh = generateVlessId();
-    await _secure.write(key: key, value: fresh);
+    await _secure.write(key, fresh);
     return fresh;
   }
 

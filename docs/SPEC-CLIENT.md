@@ -895,6 +895,14 @@ understands, so a server adding a protocol does not require a client change.
 
 - Tokens are stored in the Keychain, one per self-hosted configuration, and
   removed with the configuration.
+- Secrets (tokens, `vpn://` keys, the gateway's installation id and state) go
+  through `SecretStore` (`lib/core/secret_store.dart`): the Keychain on Apple,
+  the Android Keystore, a DPAPI-encrypted file on Windows, and the Secret
+  Service (GNOME Keyring, KWallet) on Linux. A Linux desktop without a Secret
+  Service — or with a locked one — falls back to `secrets.json` in the app's
+  data directory, mode 0600 in a 0700 directory, and the app says so once per
+  launch. Once a keyring is reachable again, new values go there and their file
+  copies are removed. See ADR-017.
 - No client secret ships in the app; SSO uses Authorization Code with PKCE.
 - Logs never contain tokens, passwords or full config bodies.
 - The client trusts no domain to be honest about its own capabilities: absence
