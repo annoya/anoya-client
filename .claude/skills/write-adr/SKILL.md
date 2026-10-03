@@ -1,6 +1,6 @@
 ---
 name: write-adr
-description: Record an architecture decision for the vpn2 repository in docs/decisions/ once a feature is finished and work is moving to the next task. Use this at the moment a feature lands — the user says "готово", "двигаемся дальше", "переходим к следующей задаче", or asks to commit finished work — and also whenever they ask to document why something is built the way it is, to record a rejected approach, or to update an existing ADR after changing a subsystem it governs.
+description: Record an architecture decision for the vpn2 repository in docs/decisions/ once a feature is finished and work is moving to the next task. Use this at the moment a feature lands — the user says "done", "let's move on", "next task" (in any language), or asks to commit finished work — and also whenever they ask to document why something is built the way it is, to record a rejected approach, or to update an existing ADR after changing a subsystem it governs.
 ---
 
 # Recording a decision

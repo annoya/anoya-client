@@ -1,12 +1,15 @@
-# UI-спека клиента
+# Client UI spec
 
-`ui-spec.html` — все экраны приложения, нарисованные 1:1 в логических точках Flutter
-(телефон 402×874, окно macOS 700×630, контент ограничен 560). Открывается в браузере как
-обычный файл; переключатель темы в шапке меняет тему макета, а не системную.
+`ui-spec.html` — every screen of the app, drawn 1:1 in Flutter logical points
+(phone 402×874, macOS window 700×630, content capped at 560). It opens in a
+browser as a plain file; the theme switch in the header changes the mockup's
+theme, not the system's.
 
-Числа в макете и в коде — одни и те же: раздел «Метрики» соответствует
-`lib/core/theme.dart` и `lib/core/ui.dart`. Меняя одно, правьте второе.
+The numbers in the mockup and in the code are the same numbers: the "Metrics"
+section matches `lib/core/theme.dart` and `lib/core/ui.dart`. Change one, update
+the other.
 
-`check.js` — валидатор геометрии: сверяет высоты строк, кнопок, аппбаров, вылеты за рамку
-телефона и коллизии имён классов. Запускается в консоли браузера на открытой странице и
-возвращает список нарушений — перед сдачей правок в макете он должен быть пустым.
+`check.js` — the geometry validator: it checks the heights of rows, buttons and
+app bars, anything sticking out of the phone frame, and class-name collisions.
+Run it in the browser console on the open page; it returns the list of
+violations, which must be empty before mockup changes are handed in.
