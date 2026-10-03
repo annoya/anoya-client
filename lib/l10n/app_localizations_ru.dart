@@ -1369,6 +1369,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get startClipboardEmpty => 'Буфер обмена пуст';
 
   @override
+  String get secretsInFileNotice =>
+      'В системе нет хранилища ключей — данные для входа сохранены в файле, доступном только вашей учётной записи.';
+
+  @override
   String get startScanQr => 'Сканировать QR-код';
 
   @override

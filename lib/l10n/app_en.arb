@@ -1065,6 +1065,7 @@
   "startLinkHint": "vless://…  or  https://…/sub",
   "startPaste": "Paste",
   "startClipboardEmpty": "Clipboard is empty",
+  "secretsInFileNotice": "No keyring on this system — sign-in data is kept in a file only your account can read.",
   "startScanQr": "Scan a QR code",
   "qrHint": "Point the camera at a QR code",
   "qrHintDetail": "A link, a subscription or a subscription key",

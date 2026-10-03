@@ -328,6 +328,7 @@
   "startLinkHint": "vless://…  o  https://…/sub",
   "startPaste": "Pegar",
   "startClipboardEmpty": "El portapapeles está vacío",
+  "secretsInFileNotice": "No hay llavero en este sistema: los datos de acceso se guardan en un archivo que solo tu cuenta puede leer.",
   "startScanQr": "Escanear un código QR",
   "qrHint": "Apunta la cámara a un código QR",
   "qrHintDetail": "Un enlace, una suscripción o una clave de suscripción",

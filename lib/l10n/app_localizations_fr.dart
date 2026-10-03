@@ -1331,6 +1331,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get startClipboardEmpty => 'Le presse-papiers est vide';
 
   @override
+  String get secretsInFileNotice =>
+      'Aucun trousseau sur ce système — les données de connexion sont conservées dans un fichier lisible uniquement par votre compte.';
+
+  @override
   String get startScanQr => 'Scanner un code QR';
 
   @override
