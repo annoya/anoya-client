@@ -1294,6 +1294,166 @@ class AppLocalizationsZh extends AppLocalizations {
   String get secretsInFileNotice => '此系统没有密钥环——登录数据保存在只有您的账户可读取的文件中。';
 
   @override
+  String get ruleSetImport => '导入规则集';
+
+  @override
+  String get ruleSetImportFromFile => '从文件…';
+
+  @override
+  String get ruleSetImportFromFileSubtitle =>
+      'Anoya、Clash / mihomo、Shadowrocket、Surge、Happ';
+
+  @override
+  String get ruleSetImportFromClipboard => '从剪贴板粘贴';
+
+  @override
+  String get ruleSetImportFromClipboardSubtitle => '规则集或 happ://routing 链接';
+
+  @override
+  String get ruleSetImportScanSubtitle => '来自其他设备';
+
+  @override
+  String get ruleSetImportScanHint => 'Anoya 规则集或 Happ 路由配置';
+
+  @override
+  String get ruleSetImportNotARuleSet => '不是规则集';
+
+  @override
+  String get ruleSetImportUnreadable =>
+      '无法读取规则集。Anoya 支持自身文件、Clash / mihomo 与 Shadowrocket / Surge 规则以及 Happ 路由配置。';
+
+  @override
+  String get ruleSetImportTitle => '导入规则集';
+
+  @override
+  String get ruleSetImportSourceAnoya => 'Anoya 规则集';
+
+  @override
+  String get ruleSetImportSourceClash => 'Clash / mihomo 规则';
+
+  @override
+  String get ruleSetImportSourceSurge => 'Shadowrocket / Surge 规则';
+
+  @override
+  String get ruleSetImportSourceHapp => 'Happ 路由配置';
+
+  @override
+  String get ruleSetImportAsIs => '无需转换';
+
+  @override
+  String get ruleSetImportMigrated => '已迁移为 Anoya 规则集';
+
+  @override
+  String ruleSetImportRules(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条规则',
+      zero: '没有规则',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleSetImportDirect(int count) {
+    return '$count 条直连';
+  }
+
+  @override
+  String ruleSetImportProxy(int count) {
+    return '$count 条经 VPN';
+  }
+
+  @override
+  String ruleSetImportBlock(int count) {
+    return '$count 条拦截';
+  }
+
+  @override
+  String get ruleSetImportSkipped => '未迁移';
+
+  @override
+  String get ruleSetImportSkipDns => 'DNS 服务器';
+
+  @override
+  String get ruleSetImportSkipDnsDetail => '在 Anoya 中按配置分别设置';
+
+  @override
+  String get ruleSetImportSkipGeo => 'Geo 数据库链接';
+
+  @override
+  String get ruleSetImportSkipGeoDetail => 'Anoya 使用自己的，在设置中';
+
+  @override
+  String ruleSetImportSkipLists(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条带链接列表的规则',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportSkipListsDetail => '链接列表不属于你自己的规则集';
+
+  @override
+  String ruleSetImportSkipOther(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条 Anoya 无法执行的规则',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportAdd => '添加规则集';
+
+  @override
+  String ruleSetImportAdded(String name) {
+    return '已添加规则集“$name”';
+  }
+
+  @override
+  String get ruleSetImportDefaultName => '导入的规则集';
+
+  @override
+  String get ruleSetExport => '导出';
+
+  @override
+  String ruleSetExportTitle(String name) {
+    return '导出“$name”';
+  }
+
+  @override
+  String get ruleSetExportShare => '分享…';
+
+  @override
+  String get ruleSetExportShareSubtitle => '将文件发送到其他应用或设备';
+
+  @override
+  String get ruleSetExportSave => '保存到文件…';
+
+  @override
+  String get ruleSetExportCopy => '复制到剪贴板';
+
+  @override
+  String get ruleSetExportCopySubtitle => '作为 anoya://ruleset 链接';
+
+  @override
+  String get ruleSetExportQr => '显示二维码';
+
+  @override
+  String get ruleSetExportQrSubtitle => '在另一台设备上的 Anoya 中扫描';
+
+  @override
+  String get ruleSetExportQrTooLarge => '内容过大，无法生成二维码——请以文件形式分享';
+
+  @override
+  String get ruleSetQrHint => '在另一台设备上的 Anoya 中：规则集 → 导入 → 扫描二维码。';
+
+  @override
   String get startScanQr => '扫描二维码';
 
   @override

@@ -1324,6 +1324,175 @@ class AppLocalizationsEn extends AppLocalizations {
       'No keyring on this system — sign-in data is kept in a file only your account can read.';
 
   @override
+  String get ruleSetImport => 'Import a rule set';
+
+  @override
+  String get ruleSetImportFromFile => 'From a file…';
+
+  @override
+  String get ruleSetImportFromFileSubtitle =>
+      'Anoya, Clash / mihomo, Shadowrocket, Surge, Happ';
+
+  @override
+  String get ruleSetImportFromClipboard => 'Paste from clipboard';
+
+  @override
+  String get ruleSetImportFromClipboardSubtitle =>
+      'A rule set or a happ://routing link';
+
+  @override
+  String get ruleSetImportScanSubtitle => 'From another device';
+
+  @override
+  String get ruleSetImportScanHint =>
+      'A rule set from Anoya or a Happ routing profile';
+
+  @override
+  String get ruleSetImportNotARuleSet => 'not a rule set';
+
+  @override
+  String get ruleSetImportUnreadable =>
+      'Couldn’t read a rule set. Anoya reads its own files, Clash / mihomo and Shadowrocket / Surge rules, and Happ routing profiles.';
+
+  @override
+  String get ruleSetImportTitle => 'Import rule set';
+
+  @override
+  String get ruleSetImportSourceAnoya => 'Anoya rule set';
+
+  @override
+  String get ruleSetImportSourceClash => 'Clash / mihomo rules';
+
+  @override
+  String get ruleSetImportSourceSurge => 'Shadowrocket / Surge rules';
+
+  @override
+  String get ruleSetImportSourceHapp => 'Happ routing profile';
+
+  @override
+  String get ruleSetImportAsIs => 'Nothing to convert';
+
+  @override
+  String get ruleSetImportMigrated => 'Migrated to an Anoya rule set';
+
+  @override
+  String ruleSetImportRules(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules',
+      one: '1 rule',
+      zero: 'No rules',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleSetImportDirect(int count) {
+    return '$count direct';
+  }
+
+  @override
+  String ruleSetImportProxy(int count) {
+    return '$count via VPN';
+  }
+
+  @override
+  String ruleSetImportBlock(int count) {
+    return '$count blocked';
+  }
+
+  @override
+  String get ruleSetImportSkipped => 'NOT CARRIED OVER';
+
+  @override
+  String get ruleSetImportSkipDns => 'DNS servers';
+
+  @override
+  String get ruleSetImportSkipDnsDetail => 'Set per configuration in Anoya';
+
+  @override
+  String get ruleSetImportSkipGeo => 'Geo database links';
+
+  @override
+  String get ruleSetImportSkipGeoDetail => 'Anoya uses its own, in Settings';
+
+  @override
+  String ruleSetImportSkipLists(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules with lists by link',
+      one: '1 rule with a list by link',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportSkipListsDetail =>
+      'Lists by link aren’t part of your own rule sets';
+
+  @override
+  String ruleSetImportSkipOther(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules Anoya can’t run',
+      one: '1 rule Anoya can’t run',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportAdd => 'Add rule set';
+
+  @override
+  String ruleSetImportAdded(String name) {
+    return 'Rule set “$name” added';
+  }
+
+  @override
+  String get ruleSetImportDefaultName => 'Imported rule set';
+
+  @override
+  String get ruleSetExport => 'Export';
+
+  @override
+  String ruleSetExportTitle(String name) {
+    return 'Export “$name”';
+  }
+
+  @override
+  String get ruleSetExportShare => 'Share…';
+
+  @override
+  String get ruleSetExportShareSubtitle =>
+      'Send the file to another app or device';
+
+  @override
+  String get ruleSetExportSave => 'Save to file…';
+
+  @override
+  String get ruleSetExportCopy => 'Copy to clipboard';
+
+  @override
+  String get ruleSetExportCopySubtitle => 'As an anoya://ruleset link';
+
+  @override
+  String get ruleSetExportQr => 'Show a QR code';
+
+  @override
+  String get ruleSetExportQrSubtitle => 'Scan it in Anoya on another device';
+
+  @override
+  String get ruleSetExportQrTooLarge =>
+      'Too large for a QR code — share it as a file';
+
+  @override
+  String get ruleSetQrHint =>
+      'In Anoya on the other device: Rule sets → Import → Scan a QR code.';
+
+  @override
   String get startScanQr => 'Scan a QR code';
 
   @override

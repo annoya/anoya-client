@@ -642,6 +642,19 @@ screen says so in as many words.
   policy, where local sets do not apply.
 - **Rule sets** and **Routing editor** — simple (service catalog) and advanced
   (ordered rules) views over the same rules.
+  A rule set exports only in Anoya's own format — JSON with a format version
+  (`anoya_ruleset: 1`), or the same JSON gzipped as
+  `anoya://ruleset/add/<base64url>` for the clipboard and a QR code (one code,
+  when it fits; otherwise the QR option is disabled and says to share a file).
+  Import reads that format and migrates three others into it: Clash / mihomo
+  rules (YAML `rules:` or bare lines), the `[Rule]` section of a Shadowrocket /
+  Surge config, and Happ routing profiles (`happ://routing/add|onadd/…` or the
+  JSON). Import always shows a preview — source, direction, rule count by
+  action, and what was not carried over with where its equivalent lives — and
+  adds a new set; it never merges into an existing one. The rule count opens
+  the imported rules read-only, in run order, dimmed where they would not run
+  on this device. A name already in use is pre-filled with the next free
+  number ("Default 2"). See ADR-018.
 - **Geo databases**, **On-demand** (rules, values), **Logs** and **Log viewer**.
 
 Settings ends with an **About** row — the version in its subtitle, the rest on

@@ -11,7 +11,20 @@ import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class QrScanScreen extends StatefulWidget {
-  const QrScanScreen({super.key});
+  const QrScanScreen({
+    super.key,
+    this.refuse = refuseUnlessConnection,
+    this.hint,
+  });
+
+  final String? Function(String text) refuse;
+
+  final String? hint;
+
+  static String? refuseUnlessConnection(String text) =>
+      detectInput(text) != null
+      ? null
+      : whyUnusable(text) ?? L10n.current.importUnusableNotALink;
 
   @override
   State<QrScanScreen> createState() => _QrScanScreenState();
@@ -36,14 +49,15 @@ class _QrScanScreenState extends State<QrScanScreen> {
           _refusal = null;
         });
       case QrText(:final text):
-        if (detectInput(text) != null) {
+        final refusal = widget.refuse(text);
+        if (refusal == null) {
           _done = true;
           Navigator.of(context).pop(text);
           return;
         }
         setState(() {
           _parts = null;
-          _refusal = whyUnusable(text) ?? L10n.current.importUnusableNotALink;
+          _refusal = refusal;
         });
     }
   }
@@ -178,7 +192,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
                     ),
                     _Hint(detail: l10n.qrStillLooking),
                   ] else
-                    _Hint(title: l10n.qrHint, detail: l10n.qrHintDetail),
+                    _Hint(
+                      title: l10n.qrHint,
+                      detail: widget.hint ?? l10n.qrHintDetail,
+                    ),
                 ],
               ),
             ),

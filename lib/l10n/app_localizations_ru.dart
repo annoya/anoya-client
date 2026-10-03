@@ -1373,6 +1373,181 @@ class AppLocalizationsRu extends AppLocalizations {
       'В системе нет хранилища ключей — данные для входа сохранены в файле, доступном только вашей учётной записи.';
 
   @override
+  String get ruleSetImport => 'Импорт набора правил';
+
+  @override
+  String get ruleSetImportFromFile => 'Из файла…';
+
+  @override
+  String get ruleSetImportFromFileSubtitle =>
+      'Anoya, Clash / mihomo, Shadowrocket, Surge, Happ';
+
+  @override
+  String get ruleSetImportFromClipboard => 'Вставить из буфера';
+
+  @override
+  String get ruleSetImportFromClipboardSubtitle =>
+      'Набор правил или ссылка happ://routing';
+
+  @override
+  String get ruleSetImportScanSubtitle => 'С другого устройства';
+
+  @override
+  String get ruleSetImportScanHint =>
+      'Набор правил из Anoya или профиль маршрутизации Happ';
+
+  @override
+  String get ruleSetImportNotARuleSet => 'это не набор правил';
+
+  @override
+  String get ruleSetImportUnreadable =>
+      'Не удалось прочитать набор правил. Anoya читает свои файлы, правила Clash / mihomo и Shadowrocket / Surge, а также профили маршрутизации Happ.';
+
+  @override
+  String get ruleSetImportTitle => 'Импорт набора правил';
+
+  @override
+  String get ruleSetImportSourceAnoya => 'Набор правил Anoya';
+
+  @override
+  String get ruleSetImportSourceClash => 'Правила Clash / mihomo';
+
+  @override
+  String get ruleSetImportSourceSurge => 'Правила Shadowrocket / Surge';
+
+  @override
+  String get ruleSetImportSourceHapp => 'Профиль маршрутизации Happ';
+
+  @override
+  String get ruleSetImportAsIs => 'Конвертировать нечего';
+
+  @override
+  String get ruleSetImportMigrated => 'Перенесено в набор правил Anoya';
+
+  @override
+  String ruleSetImportRules(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count правил',
+      few: '$count правила',
+      one: '$count правило',
+      zero: 'Нет правил',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleSetImportDirect(int count) {
+    return '$count напрямую';
+  }
+
+  @override
+  String ruleSetImportProxy(int count) {
+    return '$count через VPN';
+  }
+
+  @override
+  String ruleSetImportBlock(int count) {
+    return '$count заблокировано';
+  }
+
+  @override
+  String get ruleSetImportSkipped => 'НЕ ПЕРЕНЕСЕНО';
+
+  @override
+  String get ruleSetImportSkipDns => 'DNS-серверы';
+
+  @override
+  String get ruleSetImportSkipDnsDetail =>
+      'В Anoya задаются для каждой конфигурации';
+
+  @override
+  String get ruleSetImportSkipGeo => 'Ссылки на geo-базы';
+
+  @override
+  String get ruleSetImportSkipGeoDetail =>
+      'Anoya использует свои, в настройках';
+
+  @override
+  String ruleSetImportSkipLists(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count правил со списками по ссылке',
+      few: '$count правила со списками по ссылке',
+      one: '$count правило со списком по ссылке',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportSkipListsDetail =>
+      'Списки по ссылке не входят в собственные наборы правил';
+
+  @override
+  String ruleSetImportSkipOther(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count правил, которые Anoya не выполняет',
+      few: '$count правила, которые Anoya не выполняет',
+      one: '$count правило, которое Anoya не выполняет',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportAdd => 'Добавить набор';
+
+  @override
+  String ruleSetImportAdded(String name) {
+    return 'Набор «$name» добавлен';
+  }
+
+  @override
+  String get ruleSetImportDefaultName => 'Импортированный набор';
+
+  @override
+  String get ruleSetExport => 'Экспорт';
+
+  @override
+  String ruleSetExportTitle(String name) {
+    return 'Экспорт «$name»';
+  }
+
+  @override
+  String get ruleSetExportShare => 'Поделиться…';
+
+  @override
+  String get ruleSetExportShareSubtitle =>
+      'Отправить файл в другое приложение или на устройство';
+
+  @override
+  String get ruleSetExportSave => 'Сохранить в файл…';
+
+  @override
+  String get ruleSetExportCopy => 'Скопировать в буфер';
+
+  @override
+  String get ruleSetExportCopySubtitle => 'Как ссылку anoya://ruleset';
+
+  @override
+  String get ruleSetExportQr => 'Показать QR-код';
+
+  @override
+  String get ruleSetExportQrSubtitle =>
+      'Отсканируйте его в Anoya на другом устройстве';
+
+  @override
+  String get ruleSetExportQrTooLarge =>
+      'Слишком большой для QR-кода — поделитесь файлом';
+
+  @override
+  String get ruleSetQrHint =>
+      'В Anoya на другом устройстве: Наборы правил → Импорт → Сканировать QR-код.';
+
+  @override
   String get startScanQr => 'Сканировать QR-код';
 
   @override

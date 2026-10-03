@@ -1335,6 +1335,178 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun trousseau sur ce système — les données de connexion sont conservées dans un fichier lisible uniquement par votre compte.';
 
   @override
+  String get ruleSetImport => 'Importer un jeu de règles';
+
+  @override
+  String get ruleSetImportFromFile => 'Depuis un fichier…';
+
+  @override
+  String get ruleSetImportFromFileSubtitle =>
+      'Anoya, Clash / mihomo, Shadowrocket, Surge, Happ';
+
+  @override
+  String get ruleSetImportFromClipboard => 'Coller depuis le presse-papiers';
+
+  @override
+  String get ruleSetImportFromClipboardSubtitle =>
+      'Un jeu de règles ou un lien happ://routing';
+
+  @override
+  String get ruleSetImportScanSubtitle => 'Depuis un autre appareil';
+
+  @override
+  String get ruleSetImportScanHint =>
+      'Un jeu de règles d’Anoya ou un profil de routage Happ';
+
+  @override
+  String get ruleSetImportNotARuleSet => 'ce n’est pas un jeu de règles';
+
+  @override
+  String get ruleSetImportUnreadable =>
+      'Impossible de lire un jeu de règles. Anoya lit ses propres fichiers, les règles Clash / mihomo et Shadowrocket / Surge, et les profils de routage Happ.';
+
+  @override
+  String get ruleSetImportTitle => 'Importer un jeu de règles';
+
+  @override
+  String get ruleSetImportSourceAnoya => 'Jeu de règles Anoya';
+
+  @override
+  String get ruleSetImportSourceClash => 'Règles Clash / mihomo';
+
+  @override
+  String get ruleSetImportSourceSurge => 'Règles Shadowrocket / Surge';
+
+  @override
+  String get ruleSetImportSourceHapp => 'Profil de routage Happ';
+
+  @override
+  String get ruleSetImportAsIs => 'Rien à convertir';
+
+  @override
+  String get ruleSetImportMigrated => 'Migré vers un jeu de règles Anoya';
+
+  @override
+  String ruleSetImportRules(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count règles',
+      one: '1 règle',
+      zero: 'Aucune règle',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleSetImportDirect(int count) {
+    return '$count en direct';
+  }
+
+  @override
+  String ruleSetImportProxy(int count) {
+    return '$count via le VPN';
+  }
+
+  @override
+  String ruleSetImportBlock(int count) {
+    return '$count bloquées';
+  }
+
+  @override
+  String get ruleSetImportSkipped => 'NON REPRIS';
+
+  @override
+  String get ruleSetImportSkipDns => 'Serveurs DNS';
+
+  @override
+  String get ruleSetImportSkipDnsDetail =>
+      'Définis par configuration dans Anoya';
+
+  @override
+  String get ruleSetImportSkipGeo => 'Liens des bases géo';
+
+  @override
+  String get ruleSetImportSkipGeoDetail =>
+      'Anoya utilise les siennes, dans les Réglages';
+
+  @override
+  String ruleSetImportSkipLists(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count règles avec des listes par lien',
+      one: '1 règle avec une liste par lien',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportSkipListsDetail =>
+      'Les listes par lien ne font pas partie de vos propres jeux';
+
+  @override
+  String ruleSetImportSkipOther(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count règles qu’Anoya ne peut pas exécuter',
+      one: '1 règle qu’Anoya ne peut pas exécuter',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ruleSetImportAdd => 'Ajouter le jeu';
+
+  @override
+  String ruleSetImportAdded(String name) {
+    return 'Jeu « $name » ajouté';
+  }
+
+  @override
+  String get ruleSetImportDefaultName => 'Jeu importé';
+
+  @override
+  String get ruleSetExport => 'Exporter';
+
+  @override
+  String ruleSetExportTitle(String name) {
+    return 'Exporter « $name »';
+  }
+
+  @override
+  String get ruleSetExportShare => 'Partager…';
+
+  @override
+  String get ruleSetExportShareSubtitle =>
+      'Envoyer le fichier vers une autre app ou un autre appareil';
+
+  @override
+  String get ruleSetExportSave => 'Enregistrer dans un fichier…';
+
+  @override
+  String get ruleSetExportCopy => 'Copier dans le presse-papiers';
+
+  @override
+  String get ruleSetExportCopySubtitle => 'Sous forme de lien anoya://ruleset';
+
+  @override
+  String get ruleSetExportQr => 'Afficher un code QR';
+
+  @override
+  String get ruleSetExportQrSubtitle =>
+      'Scannez-le dans Anoya sur un autre appareil';
+
+  @override
+  String get ruleSetExportQrTooLarge =>
+      'Trop grand pour un code QR — partagez-le en fichier';
+
+  @override
+  String get ruleSetQrHint =>
+      'Dans Anoya sur l’autre appareil : Jeux de règles → Importer → Scanner un code QR.';
+
+  @override
   String get startScanQr => 'Scanner un code QR';
 
   @override
