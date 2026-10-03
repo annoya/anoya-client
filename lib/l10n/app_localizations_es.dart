@@ -1332,6 +1332,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get startClipboardEmpty => 'El portapapeles está vacío';
 
   @override
+  String get secretsInFileNotice =>
+      'No hay llavero en este sistema: los datos de acceso se guardan en un archivo que solo tu cuenta puede leer.';
+
+  @override
   String get startScanQr => 'Escanear un código QR';
 
   @override

@@ -2072,6 +2072,12 @@ abstract class AppLocalizations {
   /// **'Clipboard is empty'**
   String get startClipboardEmpty;
 
+  /// No description provided for @secretsInFileNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'No keyring on this system — sign-in data is kept in a file only your account can read.'**
+  String get secretsInFileNotice;
+
   /// No description provided for @startScanQr.
   ///
   /// In en, this message translates to:

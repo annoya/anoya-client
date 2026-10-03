@@ -1320,6 +1320,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startClipboardEmpty => 'Clipboard is empty';
 
   @override
+  String get secretsInFileNotice =>
+      'No keyring on this system — sign-in data is kept in a file only your account can read.';
+
+  @override
   String get startScanQr => 'Scan a QR code';
 
   @override
