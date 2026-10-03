@@ -823,6 +823,12 @@ app already reads as connecting: the button, the status line and the menu bar
 item say so, and pressing the button again cancels the attempt instead of
 being swallowed. The tunnel is never started for a cancelled attempt.
 
+The connect ring stays pressable for the whole of connecting and reads
+**Cancel** under its spinner, so a hung connect can always be stopped. Before
+the tunnel is asked to start, cancelling drops the attempt; after, it stops
+the tunnel exactly like Disconnect, pauses on-demand, and the cancelled
+attempt neither reports an error nor re-arms on-demand when it unwinds.
+
 AmneziaWG renders as a mihomo `wireguard` outbound with `amnezia-wg-option`
 carrying the obfuscation as issued — H1–H4 arrive as ranges — and `version: 3`
 on every AmneziaWG outbound: the engine picks its AmneziaWG implementation by

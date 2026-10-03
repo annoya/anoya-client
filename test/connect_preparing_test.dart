@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,7 +11,10 @@ import 'package:anoya/core/amnezia/amnezia_account.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/vpn_core.dart';
+import 'package:anoya/features/home_widgets.dart';
+import 'package:anoya/l10n/l10n.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
@@ -31,6 +35,7 @@ void main() {
   setUp(() {
     tmp = Directory.systemTemp.createTempSync('vpn-connect');
     key = Completer<String?>();
+    _QuietOnDemand.connectedCalls = 0;
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       (call) async => tmp.path,
@@ -128,6 +133,65 @@ void main() {
     expect(core.disconnects, 0, reason: 'there was no tunnel to stop');
   });
 
+  test('cancelling once the tunnel is asked for stops it for good', () async {
+    seed(
+      Profile(
+        id: 'p-link',
+        type: ProfileType.link,
+        name: 'link',
+        locations: [
+          Location(
+            id: 'l1',
+            label: 'Germany',
+            proxy: const {'type': 'vless', 'server': '1.1.1.1', 'port': 443},
+          ),
+        ],
+      ),
+    );
+    final core = _FakeCore();
+    final c = await boot(core);
+    final ctrl = c.read(profilesControllerProvider.notifier);
+
+    final attempt = ctrl.connect();
+    while (core.connects == 0) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    await ctrl.disconnect();
+    await attempt;
+
+    expect(core.disconnects, 1, reason: 'a requested tunnel has to be stopped');
+    expect(
+      _QuietOnDemand.connectedCalls,
+      0,
+      reason: 'a cancelled attempt must not re-arm on-demand behind the user',
+    );
+    expect(c.read(profilesControllerProvider).preparing, isFalse);
+    expect(c.read(profilesControllerProvider).error, isNull);
+  });
+
+  testWidgets('the ring stays a button while connecting, and says Cancel', (
+    tester,
+  ) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: ConnectButton(
+            status: VpnStatus.connecting,
+            onTap: () => taps++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Cancel'), findsOneWidget);
+    await tester.tap(find.byType(ConnectButton));
+    expect(taps, 1, reason: 'a hung connect has to be stoppable');
+  });
+
   test('the hand-off to the tunnel does not blink back to idle', () async {
     seed(
       Profile(
@@ -213,6 +277,11 @@ class _FakeCore extends VpnCore {
 }
 
 class _QuietOnDemand extends OnDemandController {
+  static int connectedCalls = 0;
+
   @override
   OnDemandPrefs build() => const OnDemandPrefs();
+
+  @override
+  Future<void> onConnected() async => connectedCalls++;
 }
