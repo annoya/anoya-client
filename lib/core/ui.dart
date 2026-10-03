@@ -599,3 +599,27 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     );
   }
 }
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      getPlatform(context) == TargetPlatform.linux
+      ? const _NoFlingScrollPhysics()
+      : super.getScrollPhysics(context);
+}
+
+class _NoFlingScrollPhysics extends ClampingScrollPhysics {
+  const _NoFlingScrollPhysics({super.parent});
+
+  @override
+  _NoFlingScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      _NoFlingScrollPhysics(parent: buildParent(ancestor));
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) => super.createBallisticSimulation(position, 0);
+}
