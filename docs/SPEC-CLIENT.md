@@ -621,7 +621,10 @@ screen says so in as many words.
   whole technical half. With no configurations Home is still the root: the
   configuration row becomes "Add a connection", which opens Start, there is no
   server row, the ring is disabled under "No configuration", and the status
-  strip stays — removing the last configuration lands here too.
+  strip stays — removing the last configuration lands here too. Each strip chip
+  names a state, not a screen; the routing chip is only `on` or `off` (whether
+  rules apply, not which mode) and opens the active configuration's routing
+  page, or the rule sets when there is no configuration.
 - **Settings** — configurations, connection (on-demand and disconnect-on-sleep
   on Apple; the Always-on VPN explainer on Android; the **Auto-connect** switch
   on Windows; **Advanced**, which holds the connection check), routing (LAN
@@ -631,6 +634,12 @@ screen says so in as many words.
   last answer.
 - **Configuration** — source, refresh, account and quota, routing switch and
   rule set, set active, remove.
+- **Routing** (per configuration) — the device routing switch and rule set,
+  the subscription's or organization's routes where they exist, DNS, and a
+  **Rule sets** row that opens the shared rule set editor. That row sits in its
+  own card and stays active when device routing is off or replaced, since the
+  sets are shared by every configuration; it is absent under an organization
+  policy, where local sets do not apply.
 - **Rule sets** and **Routing editor** — simple (service catalog) and advanced
   (ordered rules) views over the same rules.
 - **Geo databases**, **On-demand** (rules, values), **Logs** and **Log viewer**.

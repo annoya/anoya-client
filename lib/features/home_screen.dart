@@ -19,6 +19,7 @@ import '../state/providers.dart';
 import '../state/routing_status.dart';
 import '../state/session.dart';
 import 'config/config_screen.dart';
+import 'config/routing_config_screen.dart';
 import 'home_widgets.dart';
 import 'logs_screen.dart';
 import 'on_demand_screen.dart';
@@ -182,14 +183,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           StatusChip(
             icon: Icons.alt_route,
-            label: l10n.homeChipRouting(routing?.label ?? '…'),
+            label: l10n.homeChipRouting(switch (routing) {
+              null => '…',
+              RoutingStatus.off => l10n.homeStateOff,
+              _ => l10n.homeStateOn,
+            }),
             tone: routing == null || routing == RoutingStatus.off
                 ? ChipTone.off
                 : ChipTone.on,
             onTap: () => _push(
               active == null
                   ? const RuleSetsScreen()
-                  : ConfigScreen(profileId: active.id),
+                  : RoutingConfigScreen(profileId: active.id),
             ),
           ),
           StatusChip(

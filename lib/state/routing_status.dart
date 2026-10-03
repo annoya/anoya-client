@@ -11,12 +11,6 @@ enum RoutingStatus {
 
   split;
 
-  String get label => switch (this) {
-    RoutingStatus.off => 'off',
-    RoutingStatus.full => 'full',
-    RoutingStatus.split => 'split',
-  };
-
   static RoutingStatus ofMode(String mode) =>
       mode == 'split' ? RoutingStatus.split : RoutingStatus.full;
 }
