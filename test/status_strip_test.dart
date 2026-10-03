@@ -12,10 +12,11 @@ import 'package:anoya/core/routing_prefs.dart';
 import 'package:anoya/core/rule_set.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/vpn_core.dart';
-import 'package:anoya/features/config/config_screen.dart';
+import 'package:anoya/features/config/routing_config_screen.dart';
 import 'package:anoya/features/home_screen.dart';
 import 'package:anoya/features/logs_screen.dart';
 import 'package:anoya/features/on_demand_screen.dart';
+import 'package:anoya/features/rule_sets_screen.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
@@ -89,8 +90,27 @@ void main() {
         );
 
         expect(find.text('Auto · on'), findsOneWidget);
-        expect(find.text('Routing · split'), findsOneWidget);
+        expect(
+          find.text('Routing · on'),
+          findsOneWidget,
+          reason: 'the chip says whether rules apply, not which mode they use',
+        );
         expect(find.text('Logs · on'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'a full-tunnel rule set is still routing on',
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+      (tester) async {
+        await pump(
+          tester,
+          onDemand: const OnDemandPrefs(),
+          routing: RoutingStatus.full,
+          collectLogs: false,
+        );
+
+        expect(find.text('Routing · on'), findsOneWidget);
       },
     );
 
@@ -156,9 +176,51 @@ void main() {
 
         await tester.tap(find.text('Routing · off'));
         await tester.pumpAndSettle();
-        expect(find.byType(ConfigScreen), findsOneWidget);
+        expect(
+          find.byType(RoutingConfigScreen),
+          findsOneWidget,
+          reason: 'routing is one row of the configuration screen; go to it',
+        );
       },
     );
+  });
+
+  testWidgets('the routing page leads to the rule sets', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          vpnCoreProvider.overrideWithValue(_FixedCore()),
+          profilesControllerProvider.overrideWith(
+            () => _FixedProfiles([profile()]),
+          ),
+          ruleSetsProvider.overrideWith(
+            (_) async => const [
+              RuleSet(id: RuleSet.defaultId, name: 'Default'),
+              RuleSet(id: 'work', name: 'Work'),
+            ],
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const RoutingConfigScreen(profileId: 'p1'),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final row = find.widgetWithText(ListTile, 'Rule sets');
+    expect(row, findsOneWidget);
+    expect(
+      find.descendant(of: row, matching: find.text('2 sets')),
+      findsOneWidget,
+    );
+
+    await tester.tap(row);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(RuleSetsScreen), findsOneWidget);
   });
 
   group('routing switch', () {

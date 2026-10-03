@@ -7,6 +7,8 @@ import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/provider_rule_lists.dart';
+import '../../state/routing_status.dart';
+import '../rule_sets_screen.dart';
 import 'config_parts.dart';
 
 class RoutingConfigScreen extends ConsumerWidget {
@@ -70,13 +72,37 @@ class RoutingConfigScreen extends ConsumerWidget {
             ),
           ),
         ),
+        const RuleSetsCard(),
         SectionNote(l10n.configSubscriptionRoutingNote),
       ];
     }
     return [
       SectionHeader(l10n.configSectionDeviceRouting),
       LocalRoutingCard(profile: p),
+      const RuleSetsCard(),
       SectionNote(l10n.configDeviceRoutingNote),
     ];
+  }
+}
+
+class RuleSetsCard extends ConsumerWidget {
+  const RuleSetsCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final count = ref.watch(ruleSetsProvider).value?.length;
+    return Card(
+      margin: kCardMargin,
+      child: ListTile(
+        leading: const Icon(Icons.edit_outlined),
+        title: Text(l10n.ruleSetsTitle),
+        subtitle: count == null ? null : Text(l10n.settingsRuleSetCount(count)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const RuleSetsScreen())),
+      ),
+    );
   }
 }
