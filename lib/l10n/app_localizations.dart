@@ -2078,6 +2078,258 @@ abstract class AppLocalizations {
   /// **'No keyring on this system — sign-in data is kept in a file only your account can read.'**
   String get secretsInFileNotice;
 
+  /// No description provided for @ruleSetImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a rule set'**
+  String get ruleSetImport;
+
+  /// No description provided for @ruleSetImportFromFile.
+  ///
+  /// In en, this message translates to:
+  /// **'From a file…'**
+  String get ruleSetImportFromFile;
+
+  /// No description provided for @ruleSetImportFromFileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Anoya, Clash / mihomo, Shadowrocket, Surge, Happ'**
+  String get ruleSetImportFromFileSubtitle;
+
+  /// No description provided for @ruleSetImportFromClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste from clipboard'**
+  String get ruleSetImportFromClipboard;
+
+  /// No description provided for @ruleSetImportFromClipboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A rule set or a happ://routing link'**
+  String get ruleSetImportFromClipboardSubtitle;
+
+  /// No description provided for @ruleSetImportScanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'From another device'**
+  String get ruleSetImportScanSubtitle;
+
+  /// No description provided for @ruleSetImportScanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A rule set from Anoya or a Happ routing profile'**
+  String get ruleSetImportScanHint;
+
+  /// No description provided for @ruleSetImportNotARuleSet.
+  ///
+  /// In en, this message translates to:
+  /// **'not a rule set'**
+  String get ruleSetImportNotARuleSet;
+
+  /// No description provided for @ruleSetImportUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read a rule set. Anoya reads its own files, Clash / mihomo and Shadowrocket / Surge rules, and Happ routing profiles.'**
+  String get ruleSetImportUnreadable;
+
+  /// No description provided for @ruleSetImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import rule set'**
+  String get ruleSetImportTitle;
+
+  /// No description provided for @ruleSetImportSourceAnoya.
+  ///
+  /// In en, this message translates to:
+  /// **'Anoya rule set'**
+  String get ruleSetImportSourceAnoya;
+
+  /// No description provided for @ruleSetImportSourceClash.
+  ///
+  /// In en, this message translates to:
+  /// **'Clash / mihomo rules'**
+  String get ruleSetImportSourceClash;
+
+  /// No description provided for @ruleSetImportSourceSurge.
+  ///
+  /// In en, this message translates to:
+  /// **'Shadowrocket / Surge rules'**
+  String get ruleSetImportSourceSurge;
+
+  /// No description provided for @ruleSetImportSourceHapp.
+  ///
+  /// In en, this message translates to:
+  /// **'Happ routing profile'**
+  String get ruleSetImportSourceHapp;
+
+  /// No description provided for @ruleSetImportAsIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to convert'**
+  String get ruleSetImportAsIs;
+
+  /// No description provided for @ruleSetImportMigrated.
+  ///
+  /// In en, this message translates to:
+  /// **'Migrated to an Anoya rule set'**
+  String get ruleSetImportMigrated;
+
+  /// Rule count on the import preview
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No rules} =1{1 rule} other{{count} rules}}'**
+  String ruleSetImportRules(int count);
+
+  /// Rules sent direct, on the import preview
+  ///
+  /// In en, this message translates to:
+  /// **'{count} direct'**
+  String ruleSetImportDirect(int count);
+
+  /// Rules sent through the VPN, on the import preview
+  ///
+  /// In en, this message translates to:
+  /// **'{count} via VPN'**
+  String ruleSetImportProxy(int count);
+
+  /// Blocked rules, on the import preview
+  ///
+  /// In en, this message translates to:
+  /// **'{count} blocked'**
+  String ruleSetImportBlock(int count);
+
+  /// No description provided for @ruleSetImportSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'NOT CARRIED OVER'**
+  String get ruleSetImportSkipped;
+
+  /// No description provided for @ruleSetImportSkipDns.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS servers'**
+  String get ruleSetImportSkipDns;
+
+  /// No description provided for @ruleSetImportSkipDnsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Set per configuration in Anoya'**
+  String get ruleSetImportSkipDnsDetail;
+
+  /// No description provided for @ruleSetImportSkipGeo.
+  ///
+  /// In en, this message translates to:
+  /// **'Geo database links'**
+  String get ruleSetImportSkipGeo;
+
+  /// No description provided for @ruleSetImportSkipGeoDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Anoya uses its own, in Settings'**
+  String get ruleSetImportSkipGeoDetail;
+
+  /// Rules referencing a list by URL that were not imported
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 rule with a list by link} other{{count} rules with lists by link}}'**
+  String ruleSetImportSkipLists(int count);
+
+  /// No description provided for @ruleSetImportSkipListsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists by link aren’t part of your own rule sets'**
+  String get ruleSetImportSkipListsDetail;
+
+  /// Rules of a type Anoya does not run that were not imported
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 rule Anoya can’t run} other{{count} rules Anoya can’t run}}'**
+  String ruleSetImportSkipOther(int count);
+
+  /// No description provided for @ruleSetImportAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule set'**
+  String get ruleSetImportAdd;
+
+  /// No description provided for @ruleSetImportAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule set “{name}” added'**
+  String ruleSetImportAdded(String name);
+
+  /// No description provided for @ruleSetImportDefaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported rule set'**
+  String get ruleSetImportDefaultName;
+
+  /// No description provided for @ruleSetExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get ruleSetExport;
+
+  /// No description provided for @ruleSetExportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export “{name}”'**
+  String ruleSetExportTitle(String name);
+
+  /// No description provided for @ruleSetExportShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share…'**
+  String get ruleSetExportShare;
+
+  /// No description provided for @ruleSetExportShareSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the file to another app or device'**
+  String get ruleSetExportShareSubtitle;
+
+  /// No description provided for @ruleSetExportSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to file…'**
+  String get ruleSetExportSave;
+
+  /// No description provided for @ruleSetExportCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to clipboard'**
+  String get ruleSetExportCopy;
+
+  /// No description provided for @ruleSetExportCopySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'As an anoya://ruleset link'**
+  String get ruleSetExportCopySubtitle;
+
+  /// No description provided for @ruleSetExportQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a QR code'**
+  String get ruleSetExportQr;
+
+  /// No description provided for @ruleSetExportQrSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan it in Anoya on another device'**
+  String get ruleSetExportQrSubtitle;
+
+  /// No description provided for @ruleSetExportQrTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Too large for a QR code — share it as a file'**
+  String get ruleSetExportQrTooLarge;
+
+  /// No description provided for @ruleSetQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'In Anoya on the other device: Rule sets → Import → Scan a QR code.'**
+  String get ruleSetQrHint;
+
   /// No description provided for @startScanQr.
   ///
   /// In en, this message translates to:
