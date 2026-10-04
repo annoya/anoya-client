@@ -160,7 +160,11 @@ void main() {
       final routing = Routing(
         mode: 'split',
         rules: [
-          RoutingRule(type: 'domain-suffix', value: 'vk.ru', action: 'block'),
+          RoutingRule(
+            type: 'domain-suffix',
+            values: ['vk.ru'],
+            action: 'block',
+          ),
         ],
       );
       final rules =
@@ -189,11 +193,15 @@ void main() {
       rules: [
         RoutingRule(
           type: 'domain-suffix',
-          value: 'corp.example.com',
+          values: ['corp.example.com'],
           action: 'proxy',
         ),
-        RoutingRule(type: 'ip-cidr', value: '10.0.0.0/8', action: 'proxy'),
-        RoutingRule(type: 'domain-keyword', value: 'tracker', action: 'block'),
+        RoutingRule(type: 'ip-cidr', values: ['10.0.0.0/8'], action: 'proxy'),
+        RoutingRule(
+          type: 'domain-keyword',
+          values: ['tracker'],
+          action: 'block',
+        ),
       ],
     );
     final rules =
@@ -214,7 +222,7 @@ void main() {
       rules: [
         RoutingRule(
           type: 'domain-suffix',
-          value: 'bank.local',
+          values: ['bank.local'],
           action: 'direct',
         ),
       ],
@@ -224,6 +232,87 @@ void main() {
                 as YamlMap)['rules']
             as YamlList;
     expect(rules, ['DOMAIN-SUFFIX,bank.local,DIRECT', 'MATCH,PROXY']);
+  });
+
+  group('a rule with many values', () {
+    const routing = Routing(
+      mode: 'full',
+      rules: [
+        RoutingRule(
+          type: 'domain-suffix',
+          values: ['youtube.com', 'ytimg.com'],
+          action: 'proxy',
+        ),
+        RoutingRule(
+          type: 'ip-cidr',
+          values: ['142.250.0.0/15', '2001:4860::/32'],
+          action: 'proxy',
+        ),
+        RoutingRule(
+          type: 'domain-exact',
+          values: ['a.example', 'b.example'],
+          action: 'block',
+        ),
+        RoutingRule(
+          type: 'geoip',
+          values: ['ru', 'by'],
+          action: 'direct',
+          noResolve: true,
+        ),
+        RoutingRule(
+          type: 'domain-suffix',
+          values: ['bank.local'],
+          action: 'direct',
+        ),
+      ],
+    );
+    final doc =
+        loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing)) as YamlMap;
+    final providers = doc['rule-providers'] as YamlMap;
+
+    test('domains and subnets become one inline list, in place', () {
+      expect((doc['rules'] as YamlList).map((e) => '$e'), [
+        'RULE-SET,_inline_0,PROXY',
+        'RULE-SET,_inline_1,PROXY,no-resolve',
+        'RULE-SET,_inline_2,REJECT',
+        'GEOIP,RU,DIRECT,no-resolve',
+        'GEOIP,BY,DIRECT,no-resolve',
+        'DOMAIN-SUFFIX,bank.local,DIRECT',
+        'MATCH,PROXY',
+      ], reason: 'a single value stays a plain line; geo has no indexed form');
+    });
+
+    test('the lists are inline, so nothing is fetched at apply time', () {
+      final suffix = providers['_inline_0'] as YamlMap;
+      expect(suffix['type'], 'inline');
+      expect(suffix['behavior'], 'domain');
+      expect(suffix['payload'], ['+.youtube.com', '+.ytimg.com']);
+
+      final cidr = providers['_inline_1'] as YamlMap;
+      expect(cidr['behavior'], 'ipcidr');
+      expect(cidr['payload'], ['142.250.0.0/15', '2001:4860::/32']);
+
+      expect((providers['_inline_2'] as YamlMap)['payload'], [
+        'a.example',
+        'b.example',
+      ], reason: 'an exact domain has no +. prefix');
+    });
+
+    test('one bad value drops the whole rule, never a part of it', () {
+      const r = Routing(
+        mode: 'full',
+        rules: [
+          RoutingRule(
+            type: 'domain-suffix',
+            values: ['ok.example', 'x,MATCH,DIRECT'],
+            action: 'proxy',
+          ),
+        ],
+      );
+      final yaml = mihomoTunConfigYaml(vlessLoc(), routing: r);
+      expect(yaml, isNot(contains('ok.example')));
+      expect(yaml, isNot(contains('x,MATCH')));
+    });
   });
 
   test('renders a parsed vmess (ws+tls) proxy', () {
@@ -270,7 +359,7 @@ void main() {
     const routing = Routing(
       mode: 'full',
       rules: [
-        RoutingRule(type: 'process-name', value: 'Slack', action: 'direct'),
+        RoutingRule(type: 'process-name', values: ['Slack'], action: 'direct'),
       ],
     );
     final yaml = mihomoTunConfigYaml(vlessLoc(), routing: routing);
@@ -284,18 +373,22 @@ void main() {
       rules: [
         RoutingRule(
           type: 'domain-suffix',
-          value: 'ok.example.com',
+          values: ['ok.example.com'],
           action: 'proxy',
         ),
         RoutingRule(
           type: 'domain-suffix',
-          value: 'evil,MATCH',
+          values: ['evil,MATCH'],
           action: 'proxy',
         ),
-        RoutingRule(type: 'domain-suffix', value: 'x\nrules:', action: 'proxy'),
-        RoutingRule(type: 'ip-cidr', value: '10.0.0.1', action: 'proxy'),
-        RoutingRule(type: 'geo-ip', value: 'ru', action: 'proxy'),
-        RoutingRule(type: 'domain-suffix', value: 'y.com', action: 'allow'),
+        RoutingRule(
+          type: 'domain-suffix',
+          values: ['x\nrules:'],
+          action: 'proxy',
+        ),
+        RoutingRule(type: 'ip-cidr', values: ['10.0.0.1'], action: 'proxy'),
+        RoutingRule(type: 'geo-ip', values: ['ru'], action: 'proxy'),
+        RoutingRule(type: 'domain-suffix', values: ['y.com'], action: 'allow'),
       ],
     );
     final yaml = mihomoTunConfigYaml(vlessLoc(), routing: routing);
@@ -517,8 +610,8 @@ proxies:
     const routing = Routing(
       mode: 'split',
       rules: [
-        RoutingRule(type: 'rule-list', value: 'reject', action: 'block'),
-        RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
+        RoutingRule(type: 'rule-list', values: ['reject'], action: 'block'),
+        RoutingRule(type: 'domain-suffix', values: ['ip.me'], action: 'proxy'),
       ],
       lists: [list],
     );
@@ -568,7 +661,7 @@ proxies:
         rules: [
           RoutingRule(
             type: 'domain-regex',
-            value: r'^.*[.]ads[.]example$',
+            values: [r'^.*[.]ads[.]example$'],
             action: 'block',
           ),
         ],
@@ -584,7 +677,9 @@ proxies:
     test('a list name that is not YAML-safe never reaches the config', () {
       const bad = Routing(
         mode: 'full',
-        rules: [RoutingRule(type: 'rule-list', value: 'a: b', action: 'block')],
+        rules: [
+          RoutingRule(type: 'rule-list', values: ['a: b'], action: 'block'),
+        ],
         lists: [
           RuleList(
             name: 'a: b',

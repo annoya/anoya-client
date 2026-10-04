@@ -175,8 +175,14 @@ class RuleTile extends StatelessWidget {
     final unsupported = rule.type == 'process-name' && !supportsProcessRules;
     final noList = rule.needsRuleList && !listNames.contains(rule.value);
     final inactive = noDatabase || unsupported || noList;
-    final title = rule.type == 'geoip' ? geoipTitle(rule.value) : rule.value;
-    final kind = rule.type == 'rule-list' ? l10n.ruleKindRuleList : rule.type;
+    final title = rule.values
+        .take(8)
+        .map((v) => rule.type == 'geoip' ? geoipTitle(v) : v)
+        .join(', ');
+    final type = rule.type == 'rule-list' ? l10n.ruleKindRuleList : rule.type;
+    final kind = rule.values.length > 1
+        ? '$type · ${ruleValueCount(l10n, rule.type, rule.values.length)}'
+        : type;
     final subtitle = noDatabase
         ? l10n.ruleInactiveNoDatabase(kind)
         : unsupported
@@ -272,3 +278,14 @@ String geoipTitle(String code) {
   final flag = flagForCode(up) ?? '';
   return flag.isEmpty ? up : '$flag  $up';
 }
+
+String ruleValueCount(AppLocalizations l10n, String type, int count) =>
+    switch (type) {
+      'domain-keyword' => l10n.ruleCountKeywords(count),
+      'domain-regex' => l10n.ruleCountPatterns(count),
+      'ip-cidr' => l10n.ruleCountSubnets(count),
+      'process-name' => l10n.ruleCountProcesses(count),
+      'geoip' => l10n.ruleCountCountries(count),
+      'geosite' => l10n.ruleCountCategories(count),
+      _ => l10n.ruleCountDomains(count),
+    };

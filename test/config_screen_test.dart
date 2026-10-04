@@ -683,10 +683,10 @@ extension on Profile {
       rules: [
         RoutingRule(
           type: 'domain-suffix',
-          value: 'ads.example',
+          values: ['ads.example'],
           action: 'block',
         ),
-        RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
+        RoutingRule(type: 'domain-suffix', values: ['ip.me'], action: 'proxy'),
       ],
     ),
     providerRoutingSkipped: 1,
@@ -715,8 +715,8 @@ extension on Profile {
     providerRouting: const Routing(
       mode: 'split',
       rules: [
-        RoutingRule(type: 'rule-list', value: 'reject', action: 'block'),
-        RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
+        RoutingRule(type: 'rule-list', values: ['reject'], action: 'block'),
+        RoutingRule(type: 'domain-suffix', values: ['ip.me'], action: 'proxy'),
       ],
       lists: [
         RuleList(

@@ -187,12 +187,12 @@ void main() {
             rules: [
               RoutingRule(
                 type: 'domain-suffix',
-                value: 'corp.example.com',
+                values: ['corp.example.com'],
                 action: 'proxy',
               ),
               RoutingRule(
                 type: 'ip-cidr',
-                value: '10.0.0.0/8',
+                values: ['10.0.0.0/8'],
                 action: 'direct',
               ),
             ],
@@ -208,6 +208,43 @@ void main() {
       expect(find.text('corp.example.com'), findsOneWidget);
 
       expect((await storedDefault(tester)).rules, hasLength(2));
+    });
+
+    testWidgets('a list of countries is not shown as one of them', (
+      tester,
+    ) async {
+      await writeGeo();
+      await tester.runAsync(
+        () => RuleSetStore.save([
+          const RuleSet(
+            id: RuleSet.defaultId,
+            name: 'Default',
+            rules: [
+              RoutingRule(
+                type: 'geoip',
+                values: ['ru', 'by'],
+                action: 'direct',
+              ),
+              RoutingRule(
+                type: 'geosite',
+                values: ['youtube', 'netflix'],
+                action: 'direct',
+              ),
+            ],
+          ),
+        ]),
+      );
+      await pump(tester);
+
+      expect(find.text('Advanced rules · 2'), findsOneWidget);
+      expect(find.text('Russia'), findsNothing);
+
+      await scrollBy(tester, -400);
+      expect(
+        tester.widget<Switch>(switchOf('YouTube')).value,
+        isFalse,
+        reason: 'turning it off would have to edit a list Simple cannot show',
+      );
     });
 
     testWidgets('catalog entries missing from the database are hidden', (
@@ -308,12 +345,12 @@ void main() {
 
     const processRule = RoutingRule(
       type: 'process-name',
-      value: 'Slack',
+      values: ['Slack'],
       action: 'direct',
     );
     const domainRule = RoutingRule(
       type: 'domain-suffix',
-      value: 'corp.example.com',
+      values: ['corp.example.com'],
       action: 'proxy',
     );
 

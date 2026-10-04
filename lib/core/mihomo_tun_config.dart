@@ -283,13 +283,23 @@ const _ruleTypeMap = {
 
 const _actionMap = {'proxy': 'PROXY', 'direct': 'DIRECT', 'block': 'REJECT'};
 
+const _inlineBehavior = {
+  'domain-suffix': 'domain',
+  'domain-exact': 'domain',
+  'ip-cidr': 'ipcidr',
+};
+
+bool _inlined(RoutingRule r) =>
+    r.values.length > 1 && _inlineBehavior.containsKey(r.type);
+
+String _inlineName(int index) => '_inline_$index';
+
 List<String> _ruleProviderLines(Routing? routing, Map<String, String> paths) {
   if (routing == null) return const [];
   final used = routing.rules
       .where((r) => r.needsRuleList && r.isValid && paths.containsKey(r.value))
       .map((r) => r.value)
       .toSet();
-  if (used.isEmpty) return const [];
   final out = <String>['rule-providers:'];
   for (final name in used) {
     final list = routing.listNamed(name);
@@ -302,6 +312,17 @@ List<String> _ruleProviderLines(Routing? routing, Map<String, String> paths) {
       '    format: ${list.format}',
     ]);
   }
+  for (final (i, r) in routing.rules.indexed) {
+    if (!_inlined(r) || !r.isValid || _actionMap[r.action] == null) continue;
+    out.addAll([
+      '  ${_inlineName(i)}:',
+      '    type: inline',
+      '    behavior: ${_inlineBehavior[r.type]}',
+      '    payload:',
+      for (final v in r.values)
+        '      - ${yamlScalar(r.type == 'domain-suffix' ? '+.$v' : v)}',
+    ]);
+  }
   return out.length == 1 ? const [] : out;
 }
 
@@ -311,7 +332,7 @@ List<String> _routingRuleLines(
 ]) {
   if (routing == null) return const [];
   final out = <String>[];
-  for (final r in routing.rules) {
+  for (final (i, r) in routing.rules.indexed) {
     final type = _ruleTypeMap[r.type];
     final action = _actionMap[r.action];
     if (r.needsRuleList && !paths.containsKey(r.value)) {
@@ -321,7 +342,7 @@ List<String> _routingRuleLines(
     if (type == null || action == null || !r.isValid) {
       Log.e(
         'routing: skipping invalid rule',
-        '${r.type},${r.value},${r.action}',
+        '${r.type},${r.values.join(' ')},${r.action}',
       );
       continue;
     }
@@ -330,8 +351,14 @@ List<String> _routingRuleLines(
             ((r.type == 'geoip' || r.type == 'rule-list') && r.noResolve))
         ? ',no-resolve'
         : '';
-    final value = r.type == 'geoip' ? r.value.toUpperCase() : r.value;
-    out.add('  - $type,$value,$action$suffix');
+    if (_inlined(r)) {
+      out.add('  - RULE-SET,${_inlineName(i)},$action$suffix');
+      continue;
+    }
+    for (final v in r.values) {
+      final value = r.type == 'geoip' ? v.toUpperCase() : v;
+      out.add('  - $type,$value,$action$suffix');
+    }
   }
   return out;
 }

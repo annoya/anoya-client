@@ -641,7 +641,12 @@ screen says so in as many words.
   sets are shared by every configuration; it is absent under an organization
   policy, where local sets do not apply.
 - **Rule sets** and **Routing editor** — simple (service catalog) and advanced
-  (ordered rules) views over the same rules.
+  (ordered rules) views over the same rules. A rule holds a list of values,
+  edited on its own page: text types take a pasted list or a file (one per
+  line, or comma/space separated; tidied, de-duplicated, unrecognised lines
+  listed), with addresses in a domain list saved as an `ip-cidr` rule right
+  after it and vice versa; countries and categories are multi-select. See
+  ADR-019.
   A rule set exports only in Anoya's own format — JSON with a format version
   (`anoya_ruleset: 1`), or the same JSON gzipped as
   `anoya://ruleset/add/<base64url>` for the clipboard and a QR code (one code,
@@ -731,7 +736,10 @@ controls what it returns, not where this device's traffic goes (ADR-005).
 
 Rule types are the client's own superset of the shared schema (like `geoip` and
 `geosite` before them): `domain-regex` maps to the engine's `DOMAIN-REGEX`, and
-`rule-list` names a file a provider hosts. Only a provider's policy can carry
+`rule-list` names a file a provider hosts. A rule carries a list of values
+(`values`; a single `value` is still read). Several domains or subnets reach
+the engine as one `RULE-SET` over an inline provider, looked up by index;
+other types are written one line per value (ADR-019). Only a provider's policy can carry
 `rule-list`, and only with the configuration's **rule lists** switch on — off by
 default, because applying someone's rules and storing someone's files are
 different decisions. The app downloads those files itself into the App Group

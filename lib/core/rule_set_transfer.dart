@@ -232,7 +232,7 @@ RuleSetImport _fromHapp(Map<String, dynamic> doc, String fallbackName) {
     source: RuleSetSource.happ,
     name: _nameOr(doc['Name'], fallbackName),
     mode: doc['GlobalProxy'] == false ? RoutingMode.split : RoutingMode.full,
-    rules: rules,
+    rules: mergeAdjacentRules(rules),
     skipped: [
       if (_happDnsKeys.any(present)) const SkippedPart(SkipReason.dns),
       if (present('Geoipurl') || present('Geositeurl'))
@@ -262,7 +262,7 @@ RoutingRule? _happSite(String entry, String action) {
   if (type == null) return null;
   final rule = RoutingRule(
     type: type,
-    value: type == 'geosite' ? value.toLowerCase() : value,
+    values: [type == 'geosite' ? value.toLowerCase() : value],
     action: action,
   );
   return rule.isValid ? rule : null;
@@ -272,7 +272,7 @@ RoutingRule? _happIp(String entry, String action) {
   if (entry.toLowerCase().startsWith('geoip:')) {
     final rule = RoutingRule(
       type: 'geoip',
-      value: entry.substring(6).toUpperCase(),
+      values: [entry.substring(6).toUpperCase()],
       action: action,
     );
     return rule.isValid ? rule : null;
@@ -280,7 +280,7 @@ RoutingRule? _happIp(String entry, String action) {
   final cidr = entry.contains('/')
       ? entry
       : '$entry/${entry.contains(':') ? 128 : 32}';
-  final rule = RoutingRule(type: 'ip-cidr', value: cidr, action: action);
+  final rule = RoutingRule(type: 'ip-cidr', values: [cidr], action: action);
   return rule.isValid ? rule : null;
 }
 
@@ -391,7 +391,7 @@ RuleSetImport? _fromLines(
     };
     final rule = RoutingRule(
       type: type,
-      value: value,
+      values: [value],
       action: _action(parts[2]),
       noResolve:
           type == 'ip-cidr' &&
@@ -410,7 +410,7 @@ RuleSetImport? _fromLines(
     source: source,
     name: _nameOr(null, fallbackName),
     mode: mode,
-    rules: rules,
+    rules: mergeAdjacentRules(rules),
     skipped: [
       if (lists > 0) SkippedPart(SkipReason.ruleLists, count: lists),
       if (dropped > 0)
@@ -421,6 +421,23 @@ RuleSetImport? _fromLines(
         ),
     ],
   );
+}
+
+List<RoutingRule> mergeAdjacentRules(List<RoutingRule> rules) {
+  final out = <RoutingRule>[];
+  for (final r in rules) {
+    final last = out.lastOrNull;
+    if (last != null &&
+        last.type == r.type &&
+        last.action == r.action &&
+        last.noResolve == r.noResolve &&
+        !r.needsRuleList) {
+      out.last = last.copyWith(values: {...last.values, ...r.values}.toList());
+    } else {
+      out.add(r);
+    }
+  }
+  return out;
 }
 
 String _nameOr(Object? name, String fallback) {

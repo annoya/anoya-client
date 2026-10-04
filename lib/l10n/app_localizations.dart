@@ -4087,6 +4087,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chain of {count}'**
   String proxyGroupRelay(int count);
+
+  /// No description provided for @uiDoneCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Done · {count}'**
+  String uiDoneCount(int count);
+
+  /// No description provided for @ruleValuesDomains.
+  ///
+  /// In en, this message translates to:
+  /// **'Domains'**
+  String get ruleValuesDomains;
+
+  /// No description provided for @ruleValuesKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Keywords'**
+  String get ruleValuesKeywords;
+
+  /// No description provided for @ruleValuesPatterns.
+  ///
+  /// In en, this message translates to:
+  /// **'Patterns'**
+  String get ruleValuesPatterns;
+
+  /// No description provided for @ruleValuesSubnets.
+  ///
+  /// In en, this message translates to:
+  /// **'Subnets'**
+  String get ruleValuesSubnets;
+
+  /// No description provided for @ruleValuesProcesses.
+  ///
+  /// In en, this message translates to:
+  /// **'Processes'**
+  String get ruleValuesProcesses;
+
+  /// No description provided for @ruleValuesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One per line — or separated by commas or spaces'**
+  String get ruleValuesHint;
+
+  /// No description provided for @ruleValuesHintLines.
+  ///
+  /// In en, this message translates to:
+  /// **'One per line'**
+  String get ruleValuesHintLines;
+
+  /// No description provided for @ruleValuesPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get ruleValuesPaste;
+
+  /// No description provided for @ruleValuesFromFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Add from a file…'**
+  String get ruleValuesFromFile;
+
+  /// No description provided for @ruleValuesCompanion.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as a separate {type} rule right after this one'**
+  String ruleValuesCompanion(String type);
+
+  /// No description provided for @ruleValuesDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 duplicate removed} other{{count} duplicates removed}}'**
+  String ruleValuesDuplicates(int count);
+
+  /// No description provided for @ruleValuesUnrecognized.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line not recognized} other{{count} lines not recognized}}'**
+  String ruleValuesUnrecognized(int count);
+
+  /// No description provided for @ruleValuesBadLine.
+  ///
+  /// In en, this message translates to:
+  /// **'line {line} · {reason}'**
+  String ruleValuesBadLine(int line, String reason);
+
+  /// No description provided for @ruleValuesNotDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'not a domain'**
+  String get ruleValuesNotDomain;
+
+  /// No description provided for @ruleValuesNotAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'not an address'**
+  String get ruleValuesNotAddress;
+
+  /// No description provided for @ruleValuesNotValid.
+  ///
+  /// In en, this message translates to:
+  /// **'not valid for {type}'**
+  String ruleValuesNotValid(String type);
+
+  /// No description provided for @ruleCountries.
+  ///
+  /// In en, this message translates to:
+  /// **'Countries'**
+  String get ruleCountries;
+
+  /// No description provided for @ruleCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get ruleCategories;
+
+  /// No description provided for @ruleSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String ruleSelectedCount(int count);
+
+  /// No description provided for @ruleCountDomains.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 domain} other{{count} domains}}'**
+  String ruleCountDomains(int count);
+
+  /// No description provided for @ruleCountKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 keyword} other{{count} keywords}}'**
+  String ruleCountKeywords(int count);
+
+  /// No description provided for @ruleCountPatterns.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 pattern} other{{count} patterns}}'**
+  String ruleCountPatterns(int count);
+
+  /// No description provided for @ruleCountSubnets.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 subnet} other{{count} subnets}}'**
+  String ruleCountSubnets(int count);
+
+  /// No description provided for @ruleCountProcesses.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 process} other{{count} processes}}'**
+  String ruleCountProcesses(int count);
+
+  /// No description provided for @ruleCountCountries.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 country} other{{count} countries}}'**
+  String ruleCountCountries(int count);
+
+  /// No description provided for @ruleCountCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 category} other{{count} categories}}'**
+  String ruleCountCategories(int count);
 }
 
 class _AppLocalizationsDelegate

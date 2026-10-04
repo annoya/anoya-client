@@ -15,17 +15,23 @@ void main() {
     rules: [
       RoutingRule(
         type: 'domain-suffix',
-        value: 'corp.example',
+        values: ['corp.example'],
         action: 'proxy',
       ),
       RoutingRule(
         type: 'ip-cidr',
-        value: '10.20.0.0/16',
+        values: ['10.20.0.0/16'],
         action: 'proxy',
         noResolve: true,
       ),
-      RoutingRule(type: 'process-name', value: 'Slack', action: 'direct'),
-      RoutingRule(type: 'domain-regex', value: r'^ads\.', action: 'block'),
+      RoutingRule(type: 'process-name', values: ['Slack'], action: 'direct'),
+      RoutingRule(type: 'domain-regex', values: [r'^ads\.'], action: 'block'),
+      RoutingRule(
+        type: 'geoip',
+        values: ['ru', 'by'],
+        action: 'direct',
+        noResolve: true,
+      ),
     ],
   );
 
@@ -56,6 +62,21 @@ void main() {
 
       expect(back.name, 'Work');
       expect(shape(back.rules), shape(work.rules));
+    });
+
+    test('a rule with one value, as the server sends it, is read', () {
+      final back = parseRuleSetImport(
+        jsonEncode({
+          'anoya_ruleset': 1,
+          'name': 'Old',
+          'rules': [
+            {'type': 'domain-suffix', 'value': 'a.com', 'action': 'proxy'},
+          ],
+        }),
+      )!;
+
+      expect(back.rules.single.values, ['a.com']);
+      expect(back.rules.single.isValid, isTrue);
     });
 
     test('a file from a newer app is refused, not half-read', () {
@@ -92,16 +113,32 @@ rules:
       expect(r.source, RuleSetSource.clash);
       expect(r.name, 'clash');
       expect(shape(r.rules), [
-        {'type': 'domain-suffix', 'value': 'google.com', 'action': 'proxy'},
-        {'type': 'domain-exact', 'value': 'ads.example.com', 'action': 'block'},
+        {
+          'type': 'domain-suffix',
+          'values': ['google.com'],
+          'action': 'proxy',
+        },
+        {
+          'type': 'domain-exact',
+          'values': ['ads.example.com'],
+          'action': 'block',
+        },
         {
           'type': 'ip-cidr',
-          'value': '192.168.0.0/16',
+          'values': ['192.168.0.0/16'],
           'action': 'direct',
           'no_resolve': true,
         },
-        {'type': 'geoip', 'value': 'RU', 'action': 'direct'},
-        {'type': 'geosite', 'value': 'category-ads-all', 'action': 'block'},
+        {
+          'type': 'geoip',
+          'values': ['RU'],
+          'action': 'direct',
+        },
+        {
+          'type': 'geosite',
+          'values': ['category-ads-all'],
+          'action': 'block',
+        },
       ]);
     });
 
@@ -124,6 +161,30 @@ rules:
       expect(other.count, 1);
       expect(other.kinds, ['USER-AGENT']);
     });
+  });
+
+  test('only neighbours of one type, action and no-resolve are joined', () {
+    final r = parseRuleSetImport(
+      'DOMAIN-SUFFIX,a.com,DIRECT\n'
+      'DOMAIN-SUFFIX,b.com,DIRECT\n'
+      'DOMAIN-SUFFIX,c.com,PROXY\n'
+      'DOMAIN-SUFFIX,d.com,DIRECT\n'
+      'IP-CIDR,10.0.0.0/8,DIRECT,no-resolve\n'
+      'IP-CIDR,11.0.0.0/8,DIRECT\n'
+      'MATCH,PROXY',
+    )!;
+
+    expect(
+      [for (final x in r.rules) x.values],
+      [
+        ['a.com', 'b.com'],
+        ['c.com'],
+        ['d.com'],
+        ['10.0.0.0/8'],
+        ['11.0.0.0/8'],
+      ],
+      reason: 'joining across a different rule would change which one wins',
+    );
   });
 
   group('Shadowrocket / Surge', () {
@@ -181,17 +242,48 @@ localhost = 127.0.0.1
       expect(r.source, RuleSetSource.happ);
       expect(r.name, 'Russia direct');
       expect(r.mode, RoutingMode.full);
-      expect(shape(r.rules), [
-        {'type': 'geosite', 'value': 'category-ads-all', 'action': 'block'},
-        {'type': 'domain-exact', 'value': 'www.youtube.com', 'action': 'proxy'},
-        {'type': 'domain-keyword', 'value': 'openai', 'action': 'proxy'},
-        {'type': 'geosite', 'value': 'ru', 'action': 'direct'},
-        {'type': 'domain-suffix', 'value': 'yandex.ru', 'action': 'direct'},
-        {'type': 'domain-suffix', 'value': 'vk.com', 'action': 'direct'},
-        {'type': 'geoip', 'value': 'RU', 'action': 'direct'},
-        {'type': 'ip-cidr', 'value': '77.88.8.8/32', 'action': 'direct'},
-        {'type': 'ip-cidr', 'value': '10.0.0.0/8', 'action': 'direct'},
-      ], reason: 'a proxy exception inside a direct country must still win');
+      expect(
+        shape(r.rules),
+        [
+          {
+            'type': 'geosite',
+            'values': ['category-ads-all'],
+            'action': 'block',
+          },
+          {
+            'type': 'domain-exact',
+            'values': ['www.youtube.com'],
+            'action': 'proxy',
+          },
+          {
+            'type': 'domain-keyword',
+            'values': ['openai'],
+            'action': 'proxy',
+          },
+          {
+            'type': 'geosite',
+            'values': ['ru'],
+            'action': 'direct',
+          },
+          {
+            'type': 'domain-suffix',
+            'values': ['yandex.ru', 'vk.com'],
+            'action': 'direct',
+          },
+          {
+            'type': 'geoip',
+            'values': ['RU'],
+            'action': 'direct',
+          },
+          {
+            'type': 'ip-cidr',
+            'values': ['77.88.8.8/32', '10.0.0.0/8'],
+            'action': 'direct',
+          },
+        ],
+        reason:
+            'a proxy exception inside a direct country must still win; neighbours of one kind become one list',
+      );
     });
 
     test('DNS and geo links are reported, not silently dropped', () {

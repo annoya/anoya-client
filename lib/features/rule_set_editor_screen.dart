@@ -23,7 +23,7 @@ import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 import '../state/routing_status.dart';
 import 'geosite_sheet.dart';
-import 'rule_dialog.dart';
+import 'rule_screen.dart';
 import 'rule_set_qr_screen.dart';
 import 'routing_widgets.dart';
 
@@ -182,7 +182,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   String get _expectedAction => _mode == RoutingMode.split ? 'proxy' : 'direct';
 
   bool _representable(RoutingRule r) =>
-      (r.type == 'geosite' || r.type == 'geoip') && r.action == _expectedAction;
+      (r.type == 'geosite' || r.type == 'geoip') &&
+      r.values.length == 1 &&
+      r.action == _expectedAction;
 
   int get _advancedCount => _rules.where((r) => !_representable(r)).length;
 
@@ -197,7 +199,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       );
       if (on) {
         _rules.add(
-          RoutingRule(type: type, value: value, action: _expectedAction),
+          RoutingRule(type: type, values: [value], action: _expectedAction),
         );
       }
     });
@@ -212,13 +214,10 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       _mode = mode;
       _rules = [
         for (final r in _rules)
-          (r.type == 'geosite' || r.type == 'geoip') && r.action == old
-              ? RoutingRule(
-                  type: r.type,
-                  value: r.value,
-                  action: now,
-                  noResolve: r.noResolve,
-                )
+          (r.type == 'geosite' || r.type == 'geoip') &&
+                  r.values.length == 1 &&
+                  r.action == old
+              ? r.copyWith(action: now)
               : r,
       ];
     });
@@ -295,19 +294,21 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   Future<void> _editRule([int? index]) async {
-    final rule = await showDialog<RoutingRule>(
-      context: context,
-      builder: (_) => RuleDialog(
-        initial: index != null ? _rules[index] : null,
-        geoReady: _geoReady,
+    final rules = await Navigator.of(context).push<List<RoutingRule>>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => RuleScreen(
+          initial: index != null ? _rules[index] : null,
+          geoReady: _geoReady,
+        ),
       ),
     );
-    if (rule == null) return;
+    if (rules == null || rules.isEmpty) return;
     setState(() {
       if (index != null) {
-        _rules[index] = rule;
+        _rules.replaceRange(index, index + 1, rules);
       } else {
-        _rules.add(rule);
+        _rules.addAll(rules);
       }
     });
     await _persist();

@@ -192,7 +192,7 @@ ProviderRouting? parseClashRules(
     }
     final rule = RoutingRule(
       type: ourType,
-      value: parts[1],
+      values: [parts[1]],
       action: action,
       noResolve: parts.contains('no-resolve'),
     );
@@ -241,7 +241,7 @@ RoutingRule? _domainRule(String raw, String action) {
   final v = raw.trim();
   if (v.isEmpty) return null;
   RoutingRule? make(String type, String value) {
-    final r = RoutingRule(type: type, value: value, action: action);
+    final r = RoutingRule(type: type, values: [value], action: action);
     return r.isValid ? r : null;
   }
 
@@ -258,7 +258,7 @@ RoutingRule? _ipRule(String raw, String action) {
   final v = raw.trim();
   if (v.isEmpty) return null;
   RoutingRule? make(String type, String value) {
-    final r = RoutingRule(type: type, value: value, action: action);
+    final r = RoutingRule(type: type, values: [value], action: action);
     return r.isValid ? r : null;
   }
 

@@ -169,6 +169,56 @@ void main() {
     expect(find.text('Import rule set'), findsNothing);
   });
 
+  testWidgets('addresses pasted into a domain rule land right after it', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => RuleSetStore.save([
+        const RuleSet(id: RuleSet.defaultId, name: 'Default'),
+        const RuleSet(
+          id: 'work',
+          name: 'Work',
+          editor: RuleEditor.advanced,
+          rules: [
+            RoutingRule(
+              type: 'domain-suffix',
+              values: ['corp.example'],
+              action: 'proxy',
+            ),
+            RoutingRule(
+              type: 'domain-keyword',
+              values: ['tracker'],
+              action: 'block',
+            ),
+          ],
+        ),
+      ]),
+    );
+    await pump(tester, const RuleSetEditorScreen('work'));
+
+    await tester.tap(find.text('corp.example'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField),
+      'corp.example\nwiki.corp.example\n10.20.0.0/16',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Save'));
+    await settle(tester);
+
+    final set = (await tester.runAsync(() => RuleSetStore.byId('work')))!;
+    expect(
+      [for (final r in set.rules) '${r.type} ${r.values.join(' ')}'],
+      [
+        'domain-suffix corp.example wiki.corp.example',
+        'ip-cidr 10.20.0.0/16',
+        'domain-keyword tracker',
+      ],
+      reason: 'the order is the meaning: the subnets keep the rule\'s place',
+    );
+    expect(find.text('domain-suffix · 2 domains'), findsOneWidget);
+  });
+
   testWidgets('export copies an anoya link that imports back whole', (
     tester,
   ) async {
@@ -182,7 +232,7 @@ void main() {
           rules: [
             RoutingRule(
               type: 'domain-suffix',
-              value: 'corp.example',
+              values: ['corp.example'],
               action: 'proxy',
             ),
           ],
@@ -212,8 +262,9 @@ void main() {
             for (var i = 0; i < 400; i++)
               RoutingRule(
                 type: 'domain-suffix',
-                value:
-                    '${(i * 2654435761 % 4294967296).toRadixString(36)}.example',
+                values: [
+                  '${(i * 2654435761 % 4294967296).toRadixString(36)}.example',
+                ],
                 action: 'direct',
               ),
           ],

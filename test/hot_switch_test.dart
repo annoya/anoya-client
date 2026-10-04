@@ -326,10 +326,10 @@ void main() {
         rules: [
           RoutingRule(
             type: 'domain-suffix',
-            value: 'corp.example.com',
+            values: ['corp.example.com'],
             action: 'proxy',
           ),
-          RoutingRule(type: 'geoip', value: 'ru', action: 'direct'),
+          RoutingRule(type: 'geoip', values: ['ru'], action: 'direct'),
         ],
       );
 

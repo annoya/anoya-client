@@ -7,7 +7,9 @@ import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class GeositeSheet extends StatefulWidget {
-  const GeositeSheet({super.key});
+  const GeositeSheet({super.key, this.selected});
+
+  final Set<String>? selected;
 
   @override
   State<GeositeSheet> createState() => _GeositeSheetState();
@@ -16,6 +18,29 @@ class GeositeSheet extends StatefulWidget {
 class _GeositeSheetState extends State<GeositeSheet> {
   List<GeositeCategory>? _index;
   String _query = '';
+  late final Set<String>? _picked = widget.selected == null
+      ? null
+      : {...widget.selected!};
+
+  void _choose(String category) {
+    final picked = _picked;
+    if (picked == null) {
+      Navigator.of(context).pop(category);
+      return;
+    }
+    setState(
+      () => picked.contains(category)
+          ? picked.remove(category)
+          : picked.add(category),
+    );
+  }
+
+  Widget? _check(String category) => _picked == null
+      ? null
+      : Checkbox(
+          value: _picked.contains(category),
+          onChanged: (_) => _choose(category),
+        );
 
   @override
   void initState() {
@@ -101,7 +126,8 @@ class _GeositeSheetState extends State<GeositeSheet> {
                           leading: ServiceAvatar(s.name, category: s.category),
                           title: Text(s.name),
                           subtitle: Text('${s.category} · ${subtitle(c)}'),
-                          onTap: () => Navigator.of(context).pop(s.category),
+                          trailing: _check(s.category),
+                          onTap: () => _choose(s.category),
                         );
                       }),
                       SectionHeader(
@@ -116,10 +142,22 @@ class _GeositeSheetState extends State<GeositeSheet> {
                         (c) => ListTile(
                           title: Text(c.name),
                           subtitle: Text(subtitle(c)),
-                          onTap: () => Navigator.of(context).pop(c.name),
+                          trailing: _check(c.name),
+                          onTap: () => _choose(c.name),
                         ),
                       ),
                     ],
+                  ),
+                ),
+              if (_picked != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(context).pop(_picked),
+                      child: Text(l10n.uiDoneCount(_picked.length)),
+                    ),
                   ),
                 ),
             ],
