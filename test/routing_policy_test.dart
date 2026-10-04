@@ -13,7 +13,7 @@ void main() {
     rules: [
       RoutingRule(
         type: 'domain-suffix',
-        value: 'corp.example',
+        values: ['corp.example'],
         action: 'proxy',
       ),
     ],
@@ -42,8 +42,8 @@ void main() {
   const providerRouting = Routing(
     mode: 'split',
     rules: [
-      RoutingRule(type: 'rule-list', value: 'reject', action: 'block'),
-      RoutingRule(type: 'domain-suffix', value: 'ip.me', action: 'proxy'),
+      RoutingRule(type: 'rule-list', values: ['reject'], action: 'block'),
+      RoutingRule(type: 'domain-suffix', values: ['ip.me'], action: 'proxy'),
     ],
     lists: [
       RuleList(

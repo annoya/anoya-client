@@ -37,6 +37,7 @@ test.
 | [016](ADR-016-extension-logs-in-the-app-group.md) | client | The tunnel's logs live in the App Group, readable with the tunnel down | supersedes ADR-001's logging invariant, profiles naming the group, truncate-not-unlink, rotation on read |
 | [017](ADR-017-linux-secrets-fallback.md) | client | On Linux without a keyring, secrets fall back to a 0600 file | why not systemd-creds or the root service, serialized writes, keyring takes over again |
 | [018](ADR-018-rule-set-import-export.md) | client | Rule sets export in our format only; Clash, Shadowrocket/Surge and Happ are migrated in | file and anoya:// link, preview with what was dropped, always a new set, one QR or none |
+| [019](ADR-019-rules-hold-lists-of-values.md) | client | A rule holds a list of values; long lists reach the engine as inline rule sets | pasted lists and how they are tidied, domain/address companions, multi-select geo, why not bulk-add |
 
 ## Open Questions
 

@@ -67,8 +67,9 @@ panel, a `file` provider (the publisher's own disk), an `http://` URL and a name
 the body never defined are dropped and counted, like `ext:` (ADR-005).
 
 **Simple mode is a view over the same rules, not a second format.** A rule
-shows there only if it is `geosite`/`geoip` with the action the direction
-implies (split → proxy, full → direct); everything else sits under the
+shows there only if it is `geosite`/`geoip` with a single value and the action
+the direction implies (split → proxy, full → direct; lists of values,
+ADR-019); everything else sits under the
 "Advanced rules" row, never hidden or dropped. Flipping the direction in Simple
 re-tags those catalog rules, since the user changed what "selected" means, not
 what is selected. In Advanced it changes only the direction: each rule carries

@@ -2615,4 +2615,168 @@ class AppLocalizationsFr extends AppLocalizations {
   String proxyGroupRelay(int count) {
     return 'Chaîne de $count';
   }
+
+  @override
+  String uiDoneCount(int count) {
+    return 'Terminé · $count';
+  }
+
+  @override
+  String get ruleValuesDomains => 'Domaines';
+
+  @override
+  String get ruleValuesKeywords => 'Mots-clés';
+
+  @override
+  String get ruleValuesPatterns => 'Motifs';
+
+  @override
+  String get ruleValuesSubnets => 'Sous-réseaux';
+
+  @override
+  String get ruleValuesProcesses => 'Processus';
+
+  @override
+  String get ruleValuesHint =>
+      'Un par ligne, ou séparés par des virgules ou des espaces';
+
+  @override
+  String get ruleValuesHintLines => 'Un par ligne';
+
+  @override
+  String get ruleValuesPaste => 'Coller';
+
+  @override
+  String get ruleValuesFromFile => 'Ajouter depuis un fichier…';
+
+  @override
+  String ruleValuesCompanion(String type) {
+    return 'Enregistré comme règle $type distincte, juste après celle-ci';
+  }
+
+  @override
+  String ruleValuesDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count doublons supprimés',
+      one: '1 doublon supprimé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleValuesUnrecognized(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lignes non reconnues',
+      one: '1 ligne non reconnue',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleValuesBadLine(int line, String reason) {
+    return 'ligne $line · $reason';
+  }
+
+  @override
+  String get ruleValuesNotDomain => 'pas un domaine';
+
+  @override
+  String get ruleValuesNotAddress => 'pas une adresse';
+
+  @override
+  String ruleValuesNotValid(String type) {
+    return 'non valide pour $type';
+  }
+
+  @override
+  String get ruleCountries => 'Pays';
+
+  @override
+  String get ruleCategories => 'Catégories';
+
+  @override
+  String ruleSelectedCount(int count) {
+    return '$count sélectionné(s)';
+  }
+
+  @override
+  String ruleCountDomains(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count domaines',
+      one: '1 domaine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountKeywords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mots-clés',
+      one: '1 mot-clé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountPatterns(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count motifs',
+      one: '1 motif',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountSubnets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sous-réseaux',
+      one: '1 sous-réseau',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountProcesses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count processus',
+      one: '1 processus',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountCountries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pays',
+      one: '1 pays',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountCategories(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count catégories',
+      one: '1 catégorie',
+    );
+    return '$_temp0';
+  }
 }

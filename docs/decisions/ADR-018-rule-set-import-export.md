@@ -33,6 +33,8 @@ store them.
     `DirectSites/DirectIp` — proxy before direct, so an exception inside a
     country sent direct still wins. Xray prefixes become our types; a bare
     domain becomes a suffix rule. `GlobalProxy` picks the direction.
+- **Neighbours of one kind are joined** into one rule with a list of values
+  (ADR-019).
 - **Every import shows a preview** with what was not carried over: DNS
   servers, geo database links, `RULE-SET` lines with a URL, rule types we do
   not run. Text that is none of the four formats is refused with a toast

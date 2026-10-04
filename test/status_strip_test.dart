@@ -269,7 +269,7 @@ void main() {
     const workRules = [
       RoutingRule(
         type: 'domain-suffix',
-        value: 'corp.example.com',
+        values: ['corp.example.com'],
         action: 'proxy',
       ),
     ];

@@ -2489,4 +2489,158 @@ class AppLocalizationsZh extends AppLocalizations {
   String proxyGroupRelay(int count) {
     return '$count 台链式代理';
   }
+
+  @override
+  String uiDoneCount(int count) {
+    return '完成 · $count';
+  }
+
+  @override
+  String get ruleValuesDomains => '域名';
+
+  @override
+  String get ruleValuesKeywords => '关键词';
+
+  @override
+  String get ruleValuesPatterns => '模式';
+
+  @override
+  String get ruleValuesSubnets => '子网';
+
+  @override
+  String get ruleValuesProcesses => '进程';
+
+  @override
+  String get ruleValuesHint => '每行一个，或用逗号、空格分隔';
+
+  @override
+  String get ruleValuesHintLines => '每行一个';
+
+  @override
+  String get ruleValuesPaste => '粘贴';
+
+  @override
+  String get ruleValuesFromFile => '从文件添加…';
+
+  @override
+  String ruleValuesCompanion(String type) {
+    return '将作为单独的 $type 规则保存在此规则之后';
+  }
+
+  @override
+  String ruleValuesDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已删除 $count 个重复项',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleValuesUnrecognized(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 行无法识别',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleValuesBadLine(int line, String reason) {
+    return '第 $line 行 · $reason';
+  }
+
+  @override
+  String get ruleValuesNotDomain => '不是域名';
+
+  @override
+  String get ruleValuesNotAddress => '不是地址';
+
+  @override
+  String ruleValuesNotValid(String type) {
+    return '不适用于 $type';
+  }
+
+  @override
+  String get ruleCountries => '国家/地区';
+
+  @override
+  String get ruleCategories => '分类';
+
+  @override
+  String ruleSelectedCount(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String ruleCountDomains(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个域名',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountKeywords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个关键词',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountPatterns(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个模式',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountSubnets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个子网',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountProcesses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个进程',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountCountries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个国家/地区',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountCategories(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个分类',
+    );
+    return '$_temp0';
+  }
 }

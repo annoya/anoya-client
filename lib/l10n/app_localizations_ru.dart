@@ -2653,4 +2653,177 @@ class AppLocalizationsRu extends AppLocalizations {
   String proxyGroupRelay(int count) {
     return 'Цепочка из $count';
   }
+
+  @override
+  String uiDoneCount(int count) {
+    return 'Готово · $count';
+  }
+
+  @override
+  String get ruleValuesDomains => 'Домены';
+
+  @override
+  String get ruleValuesKeywords => 'Ключевые слова';
+
+  @override
+  String get ruleValuesPatterns => 'Шаблоны';
+
+  @override
+  String get ruleValuesSubnets => 'Подсети';
+
+  @override
+  String get ruleValuesProcesses => 'Процессы';
+
+  @override
+  String get ruleValuesHint =>
+      'По одному в строке — или через запятую или пробел';
+
+  @override
+  String get ruleValuesHintLines => 'По одному в строке';
+
+  @override
+  String get ruleValuesPaste => 'Вставить';
+
+  @override
+  String get ruleValuesFromFile => 'Добавить из файла…';
+
+  @override
+  String ruleValuesCompanion(String type) {
+    return 'Сохранятся отдельным правилом $type сразу после этого';
+  }
+
+  @override
+  String ruleValuesDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Удалено $count дубликатов',
+      few: 'Удалено $count дубликата',
+      one: 'Удалён $count дубликат',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleValuesUnrecognized(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count строк не распознано',
+      few: '$count строки не распознаны',
+      one: '$count строка не распознана',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleValuesBadLine(int line, String reason) {
+    return 'строка $line · $reason';
+  }
+
+  @override
+  String get ruleValuesNotDomain => 'не домен';
+
+  @override
+  String get ruleValuesNotAddress => 'не адрес';
+
+  @override
+  String ruleValuesNotValid(String type) {
+    return 'не подходит для $type';
+  }
+
+  @override
+  String get ruleCountries => 'Страны';
+
+  @override
+  String get ruleCategories => 'Категории';
+
+  @override
+  String ruleSelectedCount(int count) {
+    return 'Выбрано: $count';
+  }
+
+  @override
+  String ruleCountDomains(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count доменов',
+      few: '$count домена',
+      one: '$count домен',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountKeywords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ключевых слов',
+      few: '$count ключевых слова',
+      one: '$count ключевое слово',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountPatterns(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count шаблонов',
+      few: '$count шаблона',
+      one: '$count шаблон',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountSubnets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count подсетей',
+      few: '$count подсети',
+      one: '$count подсеть',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountProcesses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count процессов',
+      few: '$count процесса',
+      one: '$count процесс',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountCountries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count стран',
+      few: '$count страны',
+      one: '$count страна',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ruleCountCategories(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count категорий',
+      few: '$count категории',
+      one: '$count категория',
+    );
+    return '$_temp0';
+  }
 }

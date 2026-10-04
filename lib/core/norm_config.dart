@@ -189,30 +189,47 @@ class RuleList {
 class RoutingRule {
   const RoutingRule({
     required this.type,
-    required this.value,
+    required this.values,
     required this.action,
     this.noResolve = false,
   });
 
   final String type;
-  final String value;
+  final List<String> values;
   final String action;
 
   final bool noResolve;
 
+  String get value => values.isEmpty ? '' : values.first;
+
   factory RoutingRule.fromJson(Map<String, dynamic> json) => RoutingRule(
     type: json['type'] as String? ?? '',
-    value: json['value'] as String? ?? '',
+    values: [
+      for (final v in json['values'] as List<dynamic>? ?? const [])
+        if (v is String) v,
+      if (json['value'] case final String v) v,
+    ],
     action: json['action'] as String? ?? '',
     noResolve: json['no_resolve'] as bool? ?? false,
   );
 
   Map<String, dynamic> toJson() => {
     'type': type,
-    'value': value,
+    'values': values,
     'action': action,
     if (noResolve) 'no_resolve': true,
   };
+
+  RoutingRule copyWith({
+    List<String>? values,
+    String? action,
+    bool? noResolve,
+  }) => RoutingRule(
+    type: type,
+    values: values ?? this.values,
+    action: action ?? this.action,
+    noResolve: noResolve ?? this.noResolve,
+  );
 
   static const types = [
     'domain-suffix',
@@ -240,7 +257,12 @@ class RoutingRule {
   bool get needsRuleList => type == 'rule-list';
 
   bool get isValid {
-    if (!actions.contains(action)) return false;
+    if (!actions.contains(action) || values.isEmpty) return false;
+    if (type == 'rule-list' && values.length > 1) return false;
+    return values.every((v) => isValidValue(type, v));
+  }
+
+  static bool isValidValue(String type, String value) {
     switch (type) {
       case 'domain-suffix':
       case 'domain-keyword':

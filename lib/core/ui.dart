@@ -600,6 +600,129 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
   }
 }
 
+Future<Set<T>?> pickOptions<T>(
+  BuildContext context, {
+  required String title,
+  required List<Option<T>> options,
+  Set<T> selected = const {},
+}) {
+  return showModalBottomSheet<Set<T>>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
+    ),
+    builder: (context) =>
+        _MultiPickSheet<T>(title: title, options: options, selected: selected),
+  );
+}
+
+class _MultiPickSheet<T> extends StatefulWidget {
+  const _MultiPickSheet({
+    required this.title,
+    required this.options,
+    required this.selected,
+  });
+
+  final String title;
+  final List<Option<T>> options;
+  final Set<T> selected;
+
+  @override
+  State<_MultiPickSheet<T>> createState() => _MultiPickSheetState<T>();
+}
+
+class _MultiPickSheetState<T> extends State<_MultiPickSheet<T>> {
+  late final Set<T> _picked = {...widget.selected};
+  String _query = '';
+
+  bool _matches(Option<T> o) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return o.title.toLowerCase().contains(q) ||
+        (o.subtitle?.toLowerCase().contains(q) ?? false);
+  }
+
+  void _toggle(T value) => setState(
+    () => _picked.contains(value) ? _picked.remove(value) : _picked.add(value),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final shown = widget.options.where(_matches).toList();
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                widget.title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            if (widget.options.length >= kSearchThreshold)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                child: TextField(
+                  autocorrect: false,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: l10n.commonSearch,
+                  ),
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+              ),
+            Flexible(
+              child: ClipRect(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final o in shown)
+                        Opacity(
+                          opacity: o.enabled ? 1 : 0.45,
+                          child: CheckboxListTile(
+                            secondary: o.leading,
+                            title: Text(o.title),
+                            subtitle: o.subtitle != null
+                                ? Text(o.subtitle!)
+                                : null,
+                            value: _picked.contains(o.value),
+                            onChanged: o.enabled
+                                ? (_) => _toggle(o.value)
+                                : null,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(_picked),
+                  child: Text(l10n.uiDoneCount(_picked.length)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class AppScrollBehavior extends MaterialScrollBehavior {
   const AppScrollBehavior();
 

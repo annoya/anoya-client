@@ -280,6 +280,10 @@
   .chip{font-size:13px;font-weight:500;color:var(--m-ink);border:1px solid var(--m-line);
     border-radius:8px;padding:6px 12px}
   .chip.on{color:var(--m-onpric);background:var(--m-pric);border-color:transparent}
+  .cbx{width:18px;height:18px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--m-mut);flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;margin-right:3px}
+  .cbx.on{background:var(--m-pri);color:var(--m-onpri);box-shadow:none}
+  .cbx .icon{stroke-width:3}
   /* home status strip: what the tunnel does beyond "everything through the VPN,
      nothing recorded" — one tap from each chip into the screen that owns it.
      Chip 30 pt, r8, icon 16; tonal = the feature is doing something. */
@@ -1985,6 +1989,52 @@
       <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
         <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
       <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
+      <div class="card" style="margin-top:12px"><div style="padding:16px">
+        <div class="segm"><div class="on">Full tunnel</div><div>Split</div></div>
+        <div style="font-size:12.5px;color:var(--m-mut);padding-top:12px">All traffic goes through the VPN; rules define exceptions.</div>
+      </div></div>
+      <div class="sh">RULES — FIRST MATCH WINS</div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-err)">BLOCK</span>
+        <div class="tx"><div class="t">category-ads-all</div><div class="s">geosite</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-ok)">PROXY</span>
+        <div class="tx"><div class="t">youtube.com, googlevideo.com, ytimg.com, youtu.be</div><div class="s">domain-suffix · 1 180 domains</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-ok)">PROXY</span>
+        <div class="tx"><div class="t">142.250.0.0/15, 172.217.0.0/16, 216.58.192.0/19</div><div class="s">ip-cidr · 64 subnets</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">🇷🇺&nbsp; RU, 🇧🇾&nbsp; BY, 🇰🇿&nbsp; KZ</div><div class="s">geoip · 3 countries · no-resolve</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="card"><div class="rule">
+        <span class="tag" style="color:var(--m-dir)">DIRECT</span>
+        <div class="tx"><div class="t">corp.example.com</div><div class="s">domain-suffix</div></div>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-trash"/></svg></span>
+        <span class="iconbtn"><svg class="icon s muted"><use href="#i-drag"/></svg></span>
+      </div></div>
+      <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+    </div></div>
+    <p class="cap"><span class="id">RuleSetEditorScreen · lists</span><b>A list is one row.</b> The same 64&nbsp;pt row: the title runs the first values together until it is cut, the subtitle gives the type and the count in words (domains, subnets, keywords, patterns, processes, countries, categories). A rule with one value looks exactly as before. The row opens the rule page with the whole list; trash removes the whole rule, drag moves it — the list keeps its place in “first match wins”.<br><br>Simple shows only rules it can express — one service or one country per rule; a rule with several countries or categories goes to the “Advanced rules” link row there, like domains do. Import from Happ, Clash and Shadowrocket joins neighbouring rules of one type and action into one, so a migrated set reads as a few lists rather than hundreds of lines.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span>
+        <span class="ic"><svg class="icon muted"><use href="#i-trash"/></svg></span></div>
+      <div style="padding:0 16px;margin-top:8px"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div></div>
       <div class="card warn" style="margin-top:12px">
         <div class="row"><svg class="icon" style="color:var(--m-warn)"><use href="#i-globe-off"/></svg>
           <div class="tx"><div class="t">Geo databases not downloaded</div><div class="s multi">geoip / geosite rules are inactive until then (~25 MB)</div></div></div>
@@ -2211,124 +2261,137 @@
   </div>
 </div>
 
-<h2>5 · Rule dialog</h2>
+<h2>5 · Rule editor</h2>
+<p class="flowdesc">A rule is <b>one match type, one action and any number of values</b>. A thousand exceptions are one rule with a thousand domains, not a thousand rows to scroll, drag and delete one by one. The rule opens as a full page instead of a dialog: a list pasted from a site needs room, and a page keeps the keyboard from covering the field. Text values are entered as a list — one per line, or separated by commas, spaces or semicolons — so the plain-text and comma exports of <code>iplist.opencck.org</code> and similar sites paste in as they are; nothing is fetched by the app. Countries and GeoSite categories are picked with checkboxes. For the engine, several domains or subnets become one <code>RULE-SET</code> with an inline list — mihomo looks those up in an index instead of testing a thousand lines in turn; a single value stays an ordinary rule line. Keywords, patterns, processes, countries and categories are written out one line per value: they are few, and mihomo has no indexed form for them.</p>
 <div class="rail">
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
-      <div class="dim"></div>
-      <div class="dlg">
-        <h4>Add rule</h4>
-        <div class="body">
-          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">domain-suffix</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="inp focus" style="margin-top:8px"><div class="lb">Value</div><div class="vl">corp.example.com</div></div>
-          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">proxy</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="hint">→ Traffic matching corp.example.com goes through the VPN.</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Add rule</span><span class="ic"><svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg></span></div>
+      <div style="padding:8px 16px 0">
+        <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">domain-suffix</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">proxy</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="inp focus" style="margin-top:8px;min-height:200px;justify-content:flex-start;padding:10px 56px 8px 16px;position:relative">
+          <div class="lb">Domains</div>
+          <div class="vl multi plc">corp.example.com<br>One per line — or separated by commas or spaces</div>
+          <span class="ic" title="Paste" style="position:absolute;top:4px;right:6px"><svg class="icon muted"><use href="#i-paste"/></svg></span>
         </div>
-        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+        <div style="font-size:12px;color:var(--m-mut);padding:6px 16px 0">Each domain matches itself and every subdomain.</div>
+        <div class="btn out" style="margin-top:16px"><svg class="icon s"><use href="#i-file"/></svg>Add from a file…</div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">_RuleDialog · domain</span><b>Domain.</b> Fields 56&nbsp;pt with step 8; summary 12.5&nbsp;pt. The value field opens the URL keyboard, not the text one: the text keyboard on Android inserts a space after every dot on its own, and “vk. ru” is not a domain. Spaces are not accepted in the field at all, including pasted ones.</p>
+    <p class="cap wide"><span class="id">RuleScreen · new</span><b>A page, not a dialog.</b> Close on the left, Save as a check icon on the right of the app bar — it stays reachable above the keyboard. The two selects come first and the list last, so a long list grows downwards without pushing the action off screen. The field is multi-line from the start, with the hint in the placeholder; it still opens the URL keyboard (Android’s text keyboard puts a space after every dot), and a line break now separates values instead of being refused.<br><br><b>Paste and file, as on the start screen.</b> Paste is an icon inside the field, in its top-right corner — the same <code>content_paste_go</code>, 48&nbsp;pt target, 6 from the edge — but here it <b>appends</b> the clipboard on a new line: the field holds a list, and a second paste adds to it. The type’s description is helper text under the field. “Add from a file…” is a full-width outlined button below, like “Open a config file…”, and appends a <code>.txt</code> / <code>.lst</code> / <code>.csv</code> — the formats list sites offer for download. Once something is typed, the parse summary takes the helper’s place and the button moves under it. The label follows the type: Domains, Keywords, Patterns, Subnets, Processes. Patterns and processes are split by line breaks only — a process name may hold a space, and a pattern is read as written.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
-      <div class="dim"></div>
-      <div class="dlg">
-        <h4>Add rule</h4>
-        <div class="body">
-          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">geoip</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Country</div><div class="vl">🇷🇺&nbsp; Russia (RU)</div></div><svg class="icon muted"><use href="#i-chev"/></svg></div>
-          <div style="display:flex;align-items:center;gap:16px;padding:12px 0 4px">
-            <div style="flex:1"><div style="font-size:15px">no-resolve</div>
-              <div style="font-size:12.5px;color:var(--m-mut)">Match only plain-IP connections, don’t resolve domains</div></div>
-            <span class="sw"><i></i></span>
-          </div>
-          <div class="inp sel"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="hint">→ Traffic to IPs in 🇷🇺 Russia (RU) connects directly, bypassing the VPN.</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Add rule</span><span class="ic"><svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg></span></div>
+      <div style="padding:8px 16px 0">
+        <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">domain-suffix</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">proxy</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="inp focus" style="margin-top:8px;min-height:180px;max-height:180px;overflow:hidden;justify-content:flex-start;padding:10px 56px 8px 16px;position:relative">
+          <div class="lb">Domains</div>
+          <div class="vl multi" style="font:13px/1.45 ui-monospace,Menlo,monospace">youtube.com<br>googlevideo.com<br>ytimg.com<br>youtu.be<br>ggpht.com<br>youtube-nocookie.com<br>…</div>
+          <span class="ic" title="Paste" style="position:absolute;top:4px;right:6px"><svg class="icon muted"><use href="#i-paste"/></svg></span>
         </div>
-        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
       </div>
+      <div class="card" style="margin-top:4px">
+        <div class="row one"><svg class="icon" style="color:var(--m-ok)"><use href="#i-check"/></svg>
+          <div class="tx"><div class="t">1 180 domains</div></div></div>
+        <div class="sep"></div>
+        <div class="row"><svg class="icon muted"><use href="#i-route"/></svg>
+          <div class="tx"><div class="t">64 subnets</div><div class="s">Saved as a separate ip-cidr rule right after this one</div></div></div>
+        <div class="sep"></div>
+        <div class="row one"><svg class="icon muted"><use href="#i-layers"/></svg>
+          <div class="tx"><div class="t">12 duplicates removed</div></div></div>
+        <div class="sep"></div>
+        <div class="row one"><svg class="icon" style="color:var(--m-warn)"><use href="#i-alert"/></svg>
+          <div class="tx"><div class="t">3 lines not recognized</div></div>
+          <svg class="icon muted"><use href="#i-chev"/></svg></div>
+      </div>
+      <div style="padding:12px 16px 0"><div class="btn out"><svg class="icon s"><use href="#i-file"/></svg>Add from a file…</div></div>
     </div></div>
-    <p class="cap"><span class="id">_RuleDialog · geoip</span><b>GeoIP.</b> Country from the picker, switch 52×32, summary at the bottom.</p>
+    <p class="cap wide"><span class="id">RuleScreen · pasted</span><b>The list is read as you go, and the count says what will be saved.</b> Each line is tidied before it is judged: a pasted link keeps only its host (<code>https://www.youtube.com/watch?v=…</code> → <code>youtube.com</code> for a suffix rule), <code>*.</code>, <code>+.</code> and a leading dot are dropped, case is lowered, a bare IP gets <code>/32</code> or <code>/128</code>, lines starting with <code>#</code> are comments.<br><br><b>Domains and addresses are often one list.</b> Lists “for YouTube” or “for Discord” mix both; instead of refusing the IPs, a domain rule takes them along as an <code>ip-cidr</code> rule with the same action, saved right after it — and an ip-cidr rule takes domains along the same way. The row says so before Save, not after.<br><br><b>Bad lines do not block the rest.</b> Duplicates are dropped silently but counted; lines that are not a value of this type are counted, open in a sheet (next board), and are not saved. Save is disabled only when nothing valid is left.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Add rule</span><span class="ic"><svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg></span></div>
       <div class="dim"></div>
-      <div class="sheet" style="height:524px">
+      <div class="sheet" style="height:380px">
         <div class="grab"></div>
-        <div style="padding:8px 16px 4px"><div class="inp focus"><div class="lb">Country</div><div class="vl">russ</div></div></div>
-        <div class="row"><span class="flag">🇷🇺</span><div class="tx"><div class="t">Russia</div><div class="s">RU</div></div></div>
-        <div class="row"><span class="flag">🇷🇸</span><div class="tx"><div class="t">Serbia</div><div class="s">RS</div></div></div>
-        <div class="row"><span class="flag">🇷🇴</span><div class="tx"><div class="t">Romania</div><div class="s">RO</div></div></div>
-        <div class="row"><span class="flag">🇷🇼</span><div class="tx"><div class="t">Rwanda</div><div class="s">RW</div></div></div>
+        <div class="stitle">3 lines not recognized</div>
+        <div class="row"><div class="tx"><div class="t" style="font-family:ui-monospace,Menlo,monospace;font-size:14px">youtube .com</div><div class="s">line 214 · not a domain</div></div></div>
+        <div class="row"><div class="tx"><div class="t" style="font-family:ui-monospace,Menlo,monospace;font-size:14px">300.12.4.0/24</div><div class="s">line 1 052 · not an address</div></div></div>
+        <div class="row"><div class="tx"><div class="t" style="font-family:ui-monospace,Menlo,monospace;font-size:14px">regexp:^yt[0-9]+\.</div><div class="s">line 1 260 · not a domain</div></div></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">_CountrySheet</span><b>Country picker.</b> Height 60% of the screen, search at the top, rows 72&nbsp;pt.</p>
+    <p class="cap"><span class="id">RuleScreen · _UnrecognizedSheet</span><b>Which lines, and where.</b> Value in monospace exactly as pasted, with its line number — enough to find and fix it in the field behind. Read-only: the lines are simply not saved, so there is nothing to confirm.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
-      <div class="dim"></div>
-      <div class="dlg">
-        <h4>Add rule</h4>
-        <div class="body">
-          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">geosite</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Category</div><div class="vl">netflix · 5 210 domains</div></div><svg class="icon muted"><use href="#i-chev"/></svg></div>
-          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="hint">→ “netflix” domains (GeoSite list) connect directly, bypassing the VPN.</div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Edit rule</span><span class="ic"><svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg></span></div>
+      <div style="padding:8px 16px 0">
+        <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">geoip</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
+        <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Countries</div><div class="vl">3 selected</div></div><svg class="icon muted"><use href="#i-chev"/></svg></div>
+        <div class="chips">
+          <span class="chip" style="display:flex;align-items:center;gap:6px">🇷🇺 RU<svg class="icon xs muted"><use href="#i-close"/></svg></span>
+          <span class="chip" style="display:flex;align-items:center;gap:6px">🇧🇾 BY<svg class="icon xs muted"><use href="#i-close"/></svg></span>
+          <span class="chip" style="display:flex;align-items:center;gap:6px">🇰🇿 KZ<svg class="icon xs muted"><use href="#i-close"/></svg></span>
         </div>
-        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+        <div style="display:flex;align-items:center;gap:16px;padding:12px 0 4px">
+          <div style="flex:1"><div style="font-size:15px">no-resolve</div>
+            <div style="font-size:12.5px;color:var(--m-mut)">Match only plain-IP connections, don’t resolve domains</div></div>
+          <span class="sw"><i></i></span>
+        </div>
+        <div class="hint">→ Traffic to IPs in Russia, Belarus and Kazakhstan connects directly, bypassing the VPN.</div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">_RuleDialog · geosite</span><b>GeoSite.</b> The same form as geoip: the category is chosen from a picker, not typed by hand — only what exists in the downloaded database can be selected, and the class of errors “a typo in a category breaks rule loading” disappears. The free-text field and suggestion chips are gone.</p>
+    <p class="cap"><span class="id">RuleScreen · geoip</span><b>Several countries, one rule.</b> The field opens the picker with checkboxes (next board); what is picked shows as chips under it, each removable on its own without reopening the picker. GeoSite is the same: “Categories”, chips with the category names, the same multi-select picker with domain counts.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Edit rule</span><span class="ic"><svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg></span></div>
       <div class="dim"></div>
       <div class="sheet" style="height:560px">
         <div class="grab"></div>
-        <div style="padding:8px 16px 4px"><div class="inp focus"><div class="lb">Category</div><div class="vl">you</div></div></div>
-        <div class="sh">POPULAR</div>
-        <div class="row"><span class="avat">Y</span><div class="tx"><div class="t">youtube</div><div class="s">5 431 domains</div></div></div>
-        <div class="sh">ALL · 14 OF 1 520 MATCH</div>
-        <div class="row"><div class="tx"><div class="t">youku</div><div class="s">312 domains</div></div></div>
-        <div class="row"><div class="tx"><div class="t">yandex</div><div class="s">1 044 domains</div></div></div>
-        <div class="row"><div class="tx"><div class="t">category-youtube-music</div><div class="s">27 domains</div></div></div>
+        <div style="padding:8px 16px 4px"><div class="inp focus"><div class="lb">Country</div><div class="vl">r</div></div></div>
+        <div class="row"><span class="flag">🇷🇺</span><div class="tx"><div class="t">Russia</div><div class="s">RU</div></div><span class="cbx on"><svg class="icon xs"><use href="#i-check"/></svg></span></div>
+        <div class="row"><span class="flag">🇷🇸</span><div class="tx"><div class="t">Serbia</div><div class="s">RS</div></div><span class="cbx"></span></div>
+        <div class="row"><span class="flag">🇷🇴</span><div class="tx"><div class="t">Romania</div><div class="s">RO</div></div><span class="cbx"></span></div>
+        <div class="row"><span class="flag">🇷🇪</span><div class="tx"><div class="t">Réunion</div><div class="s">RE</div></div><span class="cbx"></span></div>
+        <div style="position:absolute;left:16px;right:16px;bottom:24px"><div class="btn fill">Done · 3</div></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">_GeositeSheet</span><b>Category picker.</b> All categories from the downloaded GeoSite.dat (~1 500), with the domain count in the subtitle — you can see whether you are picking a service or three domains. At the top is POPULAR — the same ~34 items as in the Simple catalog, with the same avatars; the rest are alphabetical, and search filters both groups. Without a downloaded database a geosite rule cannot be created: the “Category” field leads to the download banner — the same gate as in Simple.</p>
+    <p class="cap"><span class="id">pickOptions · countries</span><b>Checkboxes, and one button to finish.</b> Tapping a row toggles it and keeps the sheet open, so search → tick → search → tick does not reopen anything. Search does not clear the selection: Belarus and Kazakhstan stay picked while “r” filters them out of view. “Done” carries the count; swiping the sheet away discards the changes, like Close on a page.</p>
   </div>
 
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Work</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-close"/></svg></span><span class="ttl back">Add rule</span><span class="ic"><svg class="icon" style="color:var(--m-pri)"><use href="#i-check"/></svg></span></div>
       <div class="dim"></div>
-      <div class="dlg">
-        <h4>Add rule</h4>
-        <div class="body">
-          <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">ip-cidr</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="inp err" style="margin-top:8px"><div class="lb" style="color:var(--m-err)">Value</div><div class="vl">10.0.0.1</div></div>
-          <div class="inp sel" style="margin-top:8px"><div class="tx"><div class="lb">Action</div><div class="vl">direct</div></div><svg class="icon muted"><use href="#i-exp"/></svg></div>
-          <div class="errtext">Invalid value for ip-cidr.</div>
-        </div>
-        <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Save</span></div>
+      <div class="sheet" style="height:620px">
+        <div class="grab"></div>
+        <div style="padding:8px 16px 4px"><div class="inp focus"><div class="lb">Category</div><div class="vl">you</div></div></div>
+        <div class="sh">POPULAR</div>
+        <div class="row"><span class="avat">Y</span><div class="tx"><div class="t">youtube</div><div class="s">5 431 domains</div></div><span class="cbx on"><svg class="icon xs"><use href="#i-check"/></svg></span></div>
+        <div class="sh">ALL · 14 OF 1 520 MATCH</div>
+        <div class="row"><div class="tx"><div class="t">youku</div><div class="s">312 domains</div></div><span class="cbx"></span></div>
+        <div class="row"><div class="tx"><div class="t">yandex</div><div class="s">1 044 domains</div></div><span class="cbx"></span></div>
+        <div class="row"><div class="tx"><div class="t">category-youtube-music</div><div class="s">27 domains</div></div><span class="cbx on"><svg class="icon xs"><use href="#i-check"/></svg></span></div>
+        <div style="position:absolute;left:16px;right:16px;bottom:24px"><div class="btn fill">Done · 2</div></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">_RuleDialog · invalid</span><b>Error.</b> Field border in error, text 13&nbsp;pt; the dialog does not close.</p>
+    <p class="cap"><span class="id">GeositeSheet · multi</span><b>Category picker, several at once.</b> All categories from the downloaded GeoSite.dat (~1 500), with the domain count in the subtitle — you can see whether you are picking a service or three domains. At the top is POPULAR — the same ~34 items as in the Simple catalog, with the same avatars; the rest are alphabetical, and search filters both groups. Checkboxes and “Done” as in the country picker. Without a downloaded database a geosite rule cannot be created: the “Categories” field leads to the download banner — the same gate as in Simple. Simple’s own “Add category” keeps the single-pick sheet: there each pick is its own row.</p>
   </div>
 </div>
 

@@ -31,7 +31,7 @@ void main() {
         rules: [
           RoutingRule(
             type: 'geoip',
-            value: 'ru',
+            values: ['ru'],
             action: 'direct',
             noResolve: true,
           ),
@@ -49,7 +49,7 @@ void main() {
       routing: const Routing(
         mode: 'full',
         rules: [
-          RoutingRule(type: 'geosite', value: 'netflix', action: 'direct'),
+          RoutingRule(type: 'geosite', values: ['netflix'], action: 'direct'),
         ],
       ),
     );
@@ -60,7 +60,11 @@ void main() {
       routing: const Routing(
         mode: 'full',
         rules: [
-          RoutingRule(type: 'domain-suffix', value: 'a.com', action: 'proxy'),
+          RoutingRule(
+            type: 'domain-suffix',
+            values: ['a.com'],
+            action: 'proxy',
+          ),
         ],
       ),
     );
@@ -73,8 +77,8 @@ void main() {
       routing: const Routing(
         mode: 'full',
         rules: [
-          RoutingRule(type: 'geoip', value: 'rus', action: 'direct'),
-          RoutingRule(type: 'geosite', value: 'Net flix', action: 'direct'),
+          RoutingRule(type: 'geoip', values: ['rus'], action: 'direct'),
+          RoutingRule(type: 'geosite', values: ['Net flix'], action: 'direct'),
         ],
       ),
     );
@@ -103,13 +107,13 @@ void main() {
       rules: [
         RoutingRule(
           type: 'geoip',
-          value: 'ru',
+          values: ['ru'],
           action: 'direct',
           noResolve: true,
         ),
         RoutingRule(
           type: 'domain-suffix',
-          value: 'corp.example.com',
+          values: ['corp.example.com'],
           action: 'proxy',
         ),
       ],
