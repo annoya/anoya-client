@@ -20,7 +20,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final store = <String, String>{};
+  late Directory supportDir;
   setUpAll(() {
+    supportDir = Directory.systemTemp.createTempSync('vpn-amnezia');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (call) async => supportDir.path,
+        );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
@@ -34,6 +41,7 @@ void main() {
           },
         );
   });
+  tearDownAll(() => supportDir.deleteSync(recursive: true));
 
   String envelope(Map<String, dynamic> doc) {
     final body = ZLibCodec().encode(utf8.encode(jsonEncode(doc)));
