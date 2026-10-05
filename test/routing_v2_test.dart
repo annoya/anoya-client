@@ -86,6 +86,26 @@ void main() {
     expect(yaml, isNot(contains('GEOSITE')));
   });
 
+  test('a service tag renders as GEOIP, unlike any other word', () {
+    final yaml = mihomoTunConfigYaml(
+      _loc(),
+      routing: const Routing(
+        mode: 'split',
+        rules: [
+          RoutingRule(
+            type: 'geoip',
+            values: ['telegram'],
+            action: 'proxy',
+            noResolve: true,
+          ),
+          RoutingRule(type: 'geoip', values: ['youtube'], action: 'proxy'),
+        ],
+      ),
+    );
+    expect(yaml, contains('  - GEOIP,TELEGRAM,PROXY,no-resolve'));
+    expect(yaml, isNot(contains('YOUTUBE')));
+  });
+
   test('LAN direct rules render as IP-CIDR direct with no-resolve', () {
     final yaml = mihomoTunConfigYaml(
       _loc(),

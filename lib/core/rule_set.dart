@@ -1,6 +1,7 @@
 import '../l10n/l10n.dart';
 import 'norm_config.dart';
 import 'json_file_store.dart';
+import 'service_catalog.dart';
 
 enum RoutingMode {
   full,
@@ -47,6 +48,38 @@ class RuleSet {
 
   Routing toRouting() => Routing(mode: mode.wire, rules: rules);
 
+  RuleSet withServiceAddresses() {
+    if (editor != RuleEditor.simple) return this;
+    final action = mode == RoutingMode.split ? 'proxy' : 'direct';
+    final out = <RoutingRule>[];
+    for (final r in rules) {
+      out.add(r);
+      if (r.type != 'geosite' || r.values.length != 1 || r.action != action) {
+        continue;
+      }
+      final tag = catalogServiceFor(r.value)?.geoip;
+      if (tag == null) continue;
+      final present = [...rules, ...out].any(
+        (x) =>
+            x.type == 'geoip' &&
+            x.values.length == 1 &&
+            x.value == tag &&
+            x.action == action,
+      );
+      if (!present) {
+        out.add(
+          RoutingRule(
+            type: 'geoip',
+            values: [tag],
+            action: action,
+            noResolve: true,
+          ),
+        );
+      }
+    }
+    return out.length == rules.length ? this : copyWith(rules: out);
+  }
+
   RuleSet copyWith({
     String? name,
     RoutingMode? mode,
@@ -86,10 +119,13 @@ class RuleSetStore {
   static const _defaultSet = RuleSet(id: RuleSet.defaultId, name: 'Default');
 
   static Future<List<RuleSet>> load() async {
-    final sets = await _store.load(
-      (j) => decodeListLenient(j, 'rule sets', RuleSet.fromJson),
-      <RuleSet>[],
-    );
+    final sets = [
+      for (final s in await _store.load(
+        (j) => decodeListLenient(j, 'rule sets', RuleSet.fromJson),
+        <RuleSet>[],
+      ))
+        s.withServiceAddresses(),
+    ];
     if (!sets.any((s) => s.isDefault)) {
       sets.insert(0, _defaultSet);
     } else {

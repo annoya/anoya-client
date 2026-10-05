@@ -75,6 +75,20 @@ re-tags those catalog rules, since the user changed what "selected" means, not
 what is selected. In Advanced it changes only the direction: each rule carries
 its own action and is read as written.
 
+**A catalog service routes its addresses as well as its domains, where the
+database has them.** Telegram's clients dial bare IPs over a protocol no
+sniffer reads, and calls in WhatsApp go to bare IPs too, so a `geosite` rule
+alone misses that traffic. A service whose operator has a tag in
+`geoip.metadb` (telegram, netflix, twitter, google, and facebook for all of
+Meta) names it in the catalog, and its Simple toggle writes and removes both
+rules together; services sharing a tag keep it while any of them is on. The
+address rule is `no-resolve`: with fake-ip a connection made by name never
+carries a real address, so the rule reaches only connections made to a bare
+IP and never costs a DNS lookup. A Simple set saved before a tag was added
+gains the address rule when it is loaded. `geoip` accepts the database's
+tags by name alongside country codes, so a misspelt code is still dropped
+rather than rendered as a rule that matches nothing.
+
 **Service icons are bundled, never fetched.** A request for a brand glyph would
 tell the network which services the user is about to route.
 
