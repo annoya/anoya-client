@@ -302,6 +302,152 @@ void main() {
       expect(sw.onChanged, isNull);
     });
 
+    testWidgets('a service reached by address brings its addresses along', (
+      tester,
+    ) async {
+      await writeGeo();
+      await pump(tester);
+
+      await tester.scrollUntilVisible(
+        switchOf('Telegram'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(switchOf('Telegram'));
+      await settle(tester);
+
+      final rules = (await storedDefault(tester)).rules;
+      expect(
+        [for (final r in rules) (r.type, r.value, r.action)],
+        [('geosite', 'telegram', 'direct'), ('geoip', 'telegram', 'direct')],
+      );
+      expect(rules.last.noResolve, isTrue);
+      final count = find.textContaining(' selected · ');
+      await tester.scrollUntilVisible(
+        count,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        tester.widget<Text>(count).data,
+        startsWith('1 selected'),
+        reason: 'one toggle is one service, however many rules it takes',
+      );
+      expect(find.text('TELEGRAM'), findsNothing);
+
+      await tester.scrollUntilVisible(
+        switchOf('Telegram'),
+        -300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(switchOf('Telegram'));
+      await tester.pump();
+      await tester.tap(switchOf('Telegram'));
+      await settle(tester);
+      expect((await storedDefault(tester)).rules, isEmpty);
+    });
+
+    testWidgets('addresses two services share stay while either is on', (
+      tester,
+    ) async {
+      await writeGeo();
+      await pump(tester);
+
+      Future<void> toggle(String name) async {
+        await tester.scrollUntilVisible(
+          switchOf(name),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.ensureVisible(switchOf(name));
+        await tester.pump();
+        await tester.tap(switchOf(name));
+        await settle(tester);
+      }
+
+      Future<List<String>> geoip() async => [
+        for (final r in (await storedDefault(tester)).rules)
+          if (r.type == 'geoip') r.value,
+      ];
+
+      await toggle('WhatsApp');
+      await toggle('Instagram');
+      expect(await geoip(), ['facebook']);
+
+      await toggle('Instagram');
+      expect(await geoip(), [
+        'facebook',
+      ], reason: 'WhatsApp still needs the addresses Instagram shared');
+
+      await tester.scrollUntilVisible(
+        switchOf('WhatsApp'),
+        -300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await toggle('WhatsApp');
+      expect((await storedDefault(tester)).rules, isEmpty);
+    });
+
+    test('every address tag in the catalog reaches the engine', () {
+      for (final s in kServiceCatalog) {
+        if (s.geoip case final tag?) {
+          expect(
+            RoutingRule.isValidValue('geoip', tag),
+            isTrue,
+            reason: '${s.name} names $tag',
+          );
+        }
+      }
+    });
+
+    testWidgets('a set saved before the addresses existed gains them', (
+      tester,
+    ) async {
+      await tester.runAsync(
+        () => RuleSetStore.save([
+          const RuleSet(
+            id: RuleSet.defaultId,
+            name: 'Default',
+            mode: RoutingMode.split,
+            rules: [
+              RoutingRule(
+                type: 'geosite',
+                values: ['telegram'],
+                action: 'proxy',
+              ),
+            ],
+          ),
+          const RuleSet(
+            id: 'hand-written',
+            name: 'Hand-written',
+            mode: RoutingMode.split,
+            editor: RuleEditor.advanced,
+            rules: [
+              RoutingRule(
+                type: 'geosite',
+                values: ['telegram'],
+                action: 'proxy',
+              ),
+            ],
+          ),
+        ]),
+      );
+
+      final simple = await storedDefault(tester);
+      expect(simple.rules.last.type, 'geoip');
+      expect(simple.rules.last.value, 'telegram');
+      expect(simple.rules.last.action, 'proxy');
+
+      final advanced = (await tester.runAsync(
+        () => RuleSetStore.byId('hand-written'),
+      ))!;
+      expect(
+        advanced.rules,
+        hasLength(1),
+        reason: 'the advanced editor shows rules as written',
+      );
+    });
+
     testWidgets('the editor choice is remembered on the set', (tester) async {
       await writeGeo();
       await pump(tester);

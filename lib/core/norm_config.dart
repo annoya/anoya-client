@@ -244,6 +244,18 @@ class RoutingRule {
   ];
   static const actions = ['proxy', 'direct', 'block'];
 
+  static const geoipServiceTags = {
+    'cloudflare',
+    'cloudfront',
+    'facebook',
+    'fastly',
+    'google',
+    'netflix',
+    'telegram',
+    'tor',
+    'twitter',
+  };
+
   static final _domainRe = RegExp(r'^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$');
   static final _cidrRe = RegExp(r'^[0-9a-fA-F:.]+/\d{1,3}$');
   static final _processRe = RegExp(r'^[A-Za-z0-9][A-Za-z0-9 ._-]*$');
@@ -283,7 +295,7 @@ class RoutingRule {
       case 'process-name':
         return _processRe.hasMatch(value);
       case 'geoip':
-        return _geoipRe.hasMatch(value);
+        return _geoipRe.hasMatch(value) || geoipServiceTags.contains(value);
       case 'geosite':
         return _geositeRe.hasMatch(value);
       default:

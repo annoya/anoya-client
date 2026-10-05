@@ -22,6 +22,7 @@ class CatalogService {
     this.category,
     this.group, {
     this.glyph = true,
+    this.geoip,
   });
 
   final String name;
@@ -32,6 +33,8 @@ class CatalogService {
 
   final bool glyph;
 
+  final String? geoip;
+
   String get glyphAsset =>
       'assets/brands/${_slugOverrides[category] ?? category}.svg';
 
@@ -40,7 +43,12 @@ class CatalogService {
 
 const kServiceCatalog = [
   CatalogService('YouTube', 'youtube', ServiceGroup.streaming),
-  CatalogService('Netflix', 'netflix', ServiceGroup.streaming),
+  CatalogService(
+    'Netflix',
+    'netflix',
+    ServiceGroup.streaming,
+    geoip: 'netflix',
+  ),
   CatalogService('Twitch', 'twitch', ServiceGroup.streaming),
   CatalogService('Disney+', 'disney', ServiceGroup.streaming, glyph: false),
   CatalogService('HBO Max', 'hbo', ServiceGroup.streaming),
@@ -50,8 +58,18 @@ const kServiceCatalog = [
   CatalogService('SoundCloud', 'soundcloud', ServiceGroup.streaming),
   CatalogService('TikTok', 'tiktok', ServiceGroup.streaming),
   CatalogService('Vimeo', 'vimeo', ServiceGroup.streaming),
-  CatalogService('Telegram', 'telegram', ServiceGroup.messengers),
-  CatalogService('WhatsApp', 'whatsapp', ServiceGroup.messengers),
+  CatalogService(
+    'Telegram',
+    'telegram',
+    ServiceGroup.messengers,
+    geoip: 'telegram',
+  ),
+  CatalogService(
+    'WhatsApp',
+    'whatsapp',
+    ServiceGroup.messengers,
+    geoip: 'facebook',
+  ),
   CatalogService('Signal', 'signal', ServiceGroup.messengers),
   CatalogService('Discord', 'discord', ServiceGroup.messengers),
   CatalogService('Viber', 'viber', ServiceGroup.messengers),
@@ -59,16 +77,31 @@ const kServiceCatalog = [
   CatalogService('Slack', 'slack', ServiceGroup.messengers),
   CatalogService('Zoom', 'zoom', ServiceGroup.messengers),
   CatalogService('LINE', 'line', ServiceGroup.messengers),
-  CatalogService('Instagram', 'instagram', ServiceGroup.social),
-  CatalogService('Facebook', 'facebook', ServiceGroup.social),
-  CatalogService('X (Twitter)', 'twitter', ServiceGroup.social),
+  CatalogService(
+    'Instagram',
+    'instagram',
+    ServiceGroup.social,
+    geoip: 'facebook',
+  ),
+  CatalogService(
+    'Facebook',
+    'facebook',
+    ServiceGroup.social,
+    geoip: 'facebook',
+  ),
+  CatalogService(
+    'X (Twitter)',
+    'twitter',
+    ServiceGroup.social,
+    geoip: 'twitter',
+  ),
   CatalogService('Reddit', 'reddit', ServiceGroup.social),
   CatalogService('VK', 'vk', ServiceGroup.social),
   CatalogService('LinkedIn', 'linkedin', ServiceGroup.social),
   CatalogService('Pinterest', 'pinterest', ServiceGroup.social),
   CatalogService('Snapchat', 'snapchat', ServiceGroup.social),
   CatalogService('Tumblr', 'tumblr', ServiceGroup.social),
-  CatalogService('Google', 'google', ServiceGroup.other),
+  CatalogService('Google', 'google', ServiceGroup.other, geoip: 'google'),
   CatalogService('ChatGPT', 'openai', ServiceGroup.other),
   CatalogService('GitHub', 'github', ServiceGroup.other),
   CatalogService('Wikipedia', 'wikipedia', ServiceGroup.other),

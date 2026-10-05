@@ -206,6 +206,52 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     await _persist();
   }
 
+  bool _isServiceAddress(RoutingRule r) =>
+      r.type == 'geoip' &&
+      kServiceCatalog.any(
+        (s) => s.geoip == r.value && _isOn('geosite', s.category),
+      );
+
+  Future<void> _setService(CatalogService s, bool on) async {
+    setState(() {
+      _rules.removeWhere(
+        (r) =>
+            _representable(r) && r.type == 'geosite' && r.value == s.category,
+      );
+      final tag = s.geoip;
+      if (tag != null) {
+        final shared = kServiceCatalog.any(
+          (o) => o != s && o.geoip == tag && _isOn('geosite', o.category),
+        );
+        if (!shared) {
+          _rules.removeWhere(
+            (r) => _representable(r) && r.type == 'geoip' && r.value == tag,
+          );
+        }
+      }
+      if (on) {
+        _rules.add(
+          RoutingRule(
+            type: 'geosite',
+            values: [s.category],
+            action: _expectedAction,
+          ),
+        );
+        if (tag != null && !_isOn('geoip', tag)) {
+          _rules.add(
+            RoutingRule(
+              type: 'geoip',
+              values: [tag],
+              action: _expectedAction,
+              noResolve: true,
+            ),
+          );
+        }
+      }
+    });
+    await _persist();
+  }
+
   Future<void> _setSimpleMode(RoutingMode mode) async {
     if (mode == _mode) return;
     final old = _expectedAction;
@@ -246,7 +292,13 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       isScrollControlled: true,
       builder: (_) => const GeositeSheet(),
     );
-    if (cat != null) await _setOn('geosite', cat, true);
+    if (cat == null) return;
+    final service = catalogServiceFor(cat);
+    if (service != null) {
+      await _setService(service, true);
+    } else {
+      await _setOn('geosite', cat, true);
+    }
   }
 
   Future<void> _addCountry() async {
@@ -452,9 +504,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     final q = _query.trim().toLowerCase();
     final countries = [
       for (final r in _rules)
-        if (_representable(r) && r.type == 'geoip') r.value,
+        if (_representable(r) && r.type == 'geoip' && !_isServiceAddress(r))
+          r.value,
     ];
-    final selected = _rules.where(_representable).length;
+    final selected = _rules
+        .where((r) => _representable(r) && !_isServiceAddress(r))
+        .length;
 
     return [
       _simpleModeCard(context),
@@ -608,9 +663,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
                   secondary: ServiceAvatar(s.name, category: s.category),
                   title: Text(s.name),
                   value: _isOn('geosite', s.category),
-                  onChanged: interactive
-                      ? (v) => _setOn('geosite', s.category, v)
-                      : null,
+                  onChanged: interactive ? (v) => _setService(s, v) : null,
                 ),
               ],
             ],
