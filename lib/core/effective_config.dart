@@ -34,6 +34,8 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     );
   }
 
+  Log.i('routing: ${await _describe(policy, routing)}');
+
   final prefs = await RoutingPrefsStore.load();
   if (prefs.lanDirect) {
     routing = Routing(
@@ -52,4 +54,24 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     dns: p.dns,
     defaultDns: prefs.defaultDns,
   );
+}
+
+Future<String> _describe(RoutingPolicy policy, Routing routing) async {
+  final source = switch (policy) {
+    ManagedRoutingPolicy() => 'organization policy',
+    ProviderRoutingPolicy() => 'subscription routing',
+    LocalRoutingPolicy(:final enabled) when !enabled => 'off',
+    LocalRoutingPolicy(:final profile) =>
+      'rule set "${(await RuleSetStore.byId(profile.ruleSetId)).name}"',
+  };
+  if (source == 'off') return 'off for this configuration';
+  final kinds = <String, int>{};
+  for (final r in routing.rules) {
+    final key = '${r.type}→${r.action}';
+    kinds[key] = (kinds[key] ?? 0) + r.values.length;
+  }
+  final rules = kinds.isEmpty
+      ? 'no rules'
+      : kinds.entries.map((e) => '${e.key} ×${e.value}').join(', ');
+  return '$source, ${routing.mode}: $rules';
 }

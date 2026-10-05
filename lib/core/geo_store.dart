@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:http/http.dart' as http;
 
 import '../api/api_client.dart';
@@ -21,6 +22,9 @@ class GeoStore {
   static const geositeFile = 'GeoSite.dat';
 
   static const autoUpdateAge = Duration(days: 7);
+
+  @visibleForTesting
+  static Duration stallTimeout = kDownloadStallTimeout;
 
   static Future<Directory?> _dir() async {
     final path = await NetworkExtensionCore.sharedDir();
@@ -66,7 +70,9 @@ class GeoStore {
       final tmp = File('${dest.path}.tmp');
       final sink = tmp.openWrite();
       try {
-        await sink.addStream(res.stream.timeout(kDownloadStallTimeout));
+        await for (final chunk in res.stream.timeout(stallTimeout)) {
+          sink.add(chunk);
+        }
       } finally {
         await sink.close();
       }

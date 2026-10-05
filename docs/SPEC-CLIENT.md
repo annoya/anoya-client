@@ -785,7 +785,11 @@ rule editor and the home "Auto" chip do not exist on Android
 ## 8. Diagnostics
 
 One switch controls collection for the app, tunnel and engine journals; console
-output continues regardless. All three can be exported as a zip.
+output continues regardless. All three can be exported as a zip; the app
+journal in it opens with the app version and build, the OS and the engine
+version. Every connect logs where its routing came from — off, a named rule
+set, the subscription's or the organization's — and the rules that reached the
+engine by type and action, never their values.
 
 The tunnel and engine journals are readable whether or not the tunnel runs —
 a tunnel that just dropped is when they matter most. On Apple the extension

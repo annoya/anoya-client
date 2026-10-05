@@ -83,7 +83,10 @@ which local application owns a connection; only desktop can answer. On iOS and
 Android the type is offered but disabled with a reason, and such rules arriving
 from a desktop are shown inactive and dropped before rendering rather than
 deleted from the set. The same holds for a panel's routing: `PROCESS-NAME` is
-translated and left to the renderer, so it still works on desktop.
+translated and left to the renderer, so it still works on desktop. mihomo
+compares the whole file name, which on Windows ends in `.exe`; a set is shared
+across platforms, so the stored name stays as typed and the Windows render adds
+the `.exe` twin of any name without one.
 
 ## Invariants
 
