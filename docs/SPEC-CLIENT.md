@@ -571,7 +571,9 @@ screen says so in as many words.
 ## 5. Screens
 
 - **Start** — add a configuration: paste a link, scan a QR code (phones),
-  open a file, or sign in.
+  open a file, or sign in. An added configuration becomes the active one only
+  with the VPN off; while the tunnel is up or coming up it is added to the list
+  and Home keeps naming the configuration the tunnel runs.
   Always pushed over Home, never the root: it is opened from Home's add button
   or its empty-state row, so settings and logs stay one tap away even before
   the first configuration exists. The field answers as the user types: a

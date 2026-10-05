@@ -125,6 +125,17 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     await ready;
     final profiles = [...state.profiles, p];
     await ProfileStore.save(profiles);
+    final status = ref.read(vpnCoreProvider).status;
+    final tunnelInUse =
+        state.active != null &&
+        (status == VpnStatus.connected ||
+            status == VpnStatus.connecting ||
+            state.preparing ||
+            state.switching);
+    if (tunnelInUse) {
+      state = state.copyWith(profiles: profiles);
+      return;
+    }
     state = ProfilesState(
       profiles: profiles,
       activeId: p.id,
