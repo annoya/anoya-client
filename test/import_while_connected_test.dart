@@ -52,7 +52,8 @@ void main() {
     );
   });
 
-  tearDown(() {
+  tearDown(() async {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       null,

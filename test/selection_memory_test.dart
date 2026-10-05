@@ -92,14 +92,18 @@ void main() {
   }
 
   Future<void> written(String profileId, String selectionId) async {
-    for (var i = 0; i < 800; i++) {
-      final saved = await ProfileStore.loadSelection();
-      if (saved.profileId == profileId && saved.selectionId == selectionId) {
-        return;
-      }
+    var quiet = 0;
+    for (var i = 0; i < 800 && quiet < 10; i++) {
+      final pending = tmp.listSync().any((f) => f.path.endsWith('.tmp'));
+      quiet = pending ? 0 : quiet + 1;
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
-    fail('the selection never reached disk');
+    final saved = await ProfileStore.loadSelection();
+    expect(
+      (saved.profileId, saved.selectionId),
+      (profileId, selectionId),
+      reason: 'the selection never reached disk',
+    );
   }
 
   test('the configuration and the server come back', () async {
