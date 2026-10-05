@@ -78,6 +78,9 @@ void main() {
       expect(id.headers['x-device-model'], 'iPhone16,1');
       expect(id.label, 'iPhone16,1 · iOS 18.0');
     },
+    skip: Platform.isLinux || Platform.isWindows
+        ? 'desktop builds describe the device without the platform channel'
+        : false,
   );
 
   test('an unknown device still yields a usable identity', () async {

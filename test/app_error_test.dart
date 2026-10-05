@@ -63,7 +63,10 @@ void main() {
         PlatformException(code: 'service_unavailable'),
       );
       expect(absent.title, 'The tunnel service isn’t running');
-      expect(absent.detail, contains('AnoyaTunnel'));
+      expect(
+        absent.detail,
+        contains(Platform.isLinux ? 'anoya-tunnel' : 'AnoyaTunnel'),
+      );
       expect(absent.detail, isNot(contains('profile')));
       final gone = describeError(
         PlatformException(code: 'service_disconnected'),
