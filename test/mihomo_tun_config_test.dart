@@ -367,6 +367,45 @@ void main() {
     expect(yaml, contains('PROCESS-NAME,Slack,DIRECT'));
   });
 
+  test('on Windows a process name also matches its .exe', () {
+    const routing = Routing(
+      mode: 'split',
+      rules: [
+        RoutingRule(
+          type: 'process-name',
+          values: ['Telegram', 'chrome.EXE'],
+          action: 'proxy',
+        ),
+      ],
+    );
+    final rules =
+        (loadYaml(
+                  mihomoTunConfigYaml(
+                    vlessLoc(),
+                    routing: routing,
+                    processNamesNeedExe: true,
+                  ),
+                )
+                as YamlMap)['rules']
+            as YamlList;
+    expect(
+      rules,
+      [
+        'PROCESS-NAME,Telegram,PROXY',
+        'PROCESS-NAME,Telegram.exe,PROXY',
+        'PROCESS-NAME,chrome.EXE,PROXY',
+        'MATCH,DIRECT',
+      ],
+      reason:
+          'mihomo compares the whole file name; "Telegram" alone never matched',
+    );
+    expect(
+      mihomoTunConfigYaml(vlessLoc(), routing: routing),
+      isNot(contains('Telegram.exe')),
+      reason: 'macOS and Linux name processes without an extension',
+    );
+  });
+
   test('invalid or malicious rules are skipped, never interpolated', () {
     const routing = Routing(
       mode: 'split',

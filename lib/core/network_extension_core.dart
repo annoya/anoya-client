@@ -189,6 +189,7 @@ class NetworkExtensionCore implements VpnCore {
           listPaths: listPaths,
           collectLogs: Log.enabled,
           autoDetectInterface: !Platform.isAndroid,
+          processNamesNeedExe: Platform.isWindows,
           device: Platform.isWindows || Platform.isLinux ? kAppName : null,
           dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null,
           mtu: Platform.isAndroid ? kAndroidTunMtu : kTunMtu,

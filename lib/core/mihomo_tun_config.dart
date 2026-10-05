@@ -13,6 +13,7 @@ String mihomoTunConfigYaml(
   Map<String, String> listPaths = const {},
   bool collectLogs = true,
   bool autoDetectInterface = true,
+  bool processNamesNeedExe = false,
   String? device,
   String? dnsDecoy,
   int mtu = kTunMtu,
@@ -42,7 +43,7 @@ String mihomoTunConfigYaml(
     carriesUdp: shape.carriesUdp,
     fallback: defaultDns,
   );
-  final ruleLines = _routingRuleLines(routing, listPaths);
+  final ruleLines = _routingRuleLines(routing, listPaths, processNamesNeedExe);
   final listLines = _ruleProviderLines(routing, listPaths);
   final hasProcessRules =
       routing?.rules.any((r) => r.type == 'process-name' && r.isValid) ?? false;
@@ -329,6 +330,7 @@ List<String> _ruleProviderLines(Routing? routing, Map<String, String> paths) {
 List<String> _routingRuleLines(
   Routing? routing, [
   Map<String, String> paths = const {},
+  bool processNamesNeedExe = false,
 ]) {
   if (routing == null) return const [];
   final out = <String>[];
@@ -358,6 +360,11 @@ List<String> _routingRuleLines(
     for (final v in r.values) {
       final value = r.type == 'geoip' ? v.toUpperCase() : v;
       out.add('  - $type,$value,$action$suffix');
+      if (r.type == 'process-name' &&
+          processNamesNeedExe &&
+          !v.toLowerCase().endsWith('.exe')) {
+        out.add('  - $type,$value.exe,$action$suffix');
+      }
     }
   }
   return out;
