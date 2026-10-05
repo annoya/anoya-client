@@ -307,3 +307,41 @@ jobs:
           name: ${{ steps.meta.outputs.prefix }}-linux-x64-portable
           path: build/linux/packages/*.tar.gz
           if-no-files-found: error
+
+  release:
+    name: GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, android, windows, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Release assets
+        run: |
+          mkdir -p dist
+          for dir in artifacts/*/; do
+            name="$(basename "$dir")"
+            files=("$dir"*)
+            if [ "${#files[@]}" -eq 1 ] && [ -f "${files[0]}" ]; then
+              cp "${files[0]}" dist/
+            else
+              (cd "$dir" && zip -qr "$GITHUB_WORKSPACE/dist/$name.zip" .)
+            fi
+          done
+          ls -l dist
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" \
+              --title "$TAG" --generate-notes --verify-tag
+          fi
