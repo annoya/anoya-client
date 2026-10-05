@@ -17,7 +17,7 @@ final vpnCoreProvider = Provider<VpnCore>((_) {
   if (Platform.isMacOS || Platform.isIOS || Platform.isAndroid) {
     return NetworkExtensionCore();
   }
-  if (Platform.isWindows) {
+  if (Platform.isWindows && !Platform.environment.containsKey('FLUTTER_TEST')) {
     return NetworkExtensionCore(transport: PipeTransport(WinPipeLink.new));
   }
   if (Platform.isLinux && !Platform.environment.containsKey('FLUTTER_TEST')) {

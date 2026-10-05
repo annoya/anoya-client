@@ -157,7 +157,7 @@ void main() {
     });
 
     test('a menu bar exists only where the platform has one', () {
-      expect(MenuBar.supported, Platform.isMacOS);
+      expect(MenuBar.supported, Platform.isMacOS || Platform.isWindows);
     });
 
     test('state that did not change is not pushed twice', () async {

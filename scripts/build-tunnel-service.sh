@@ -33,7 +33,8 @@ echo ">> tunnel-service.exe ($ARCH)"
 echo ">> wintun.dll ($WINTUN_VERSION, $ARCH)"
 zip="build/windows/wintun-$WINTUN_VERSION.zip"
 if [ ! -f "$zip" ]; then
-  curl -fsSL -o "$zip" "https://www.wintun.net/builds/wintun-$WINTUN_VERSION.zip"
+  curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
+    -o "$zip" "https://www.wintun.net/builds/wintun-$WINTUN_VERSION.zip"
 fi
 if command -v sha256sum >/dev/null; then
   echo "$WINTUN_SHA256  $zip" | sha256sum -c - >/dev/null
