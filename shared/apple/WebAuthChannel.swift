@@ -48,6 +48,14 @@ enum WebAuthChannel {
 private final class PresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
     weak var anchor: ASPresentationAnchor?
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        #if os(iOS)
+        if anchor == nil, let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow) {
+            return window
+        }
+        #endif
         return anchor ?? ASPresentationAnchor()
     }
 }
