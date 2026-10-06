@@ -109,6 +109,8 @@ func Recover(reason string) error {
 }
 
 func reload(fd int, ownDevice bool, configYAML string) error {
+	previous := tunnel.Proxies()
+	defer func() { closeReplacedProxies(previous, tunnel.Proxies()) }()
 	cfg, err := applyConfig(fd, ownDevice, configYAML)
 	if err != nil {
 		return err
@@ -128,6 +130,14 @@ func closeTrackedConnections() int {
 		return true
 	})
 	return closed
+}
+
+func closeReplacedProxies(previous, current map[string]constant.Proxy) {
+	for name, p := range previous {
+		if current[name] != p {
+			_ = p.Close()
+		}
+	}
 }
 
 func applyConfig(fd int, ownDevice bool, configYAML string) (*config.Config, error) {

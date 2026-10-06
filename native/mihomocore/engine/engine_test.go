@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
@@ -55,6 +56,40 @@ func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
 	}
 	if err := Reload(0, "log-level: info"); err == nil {
 		t.Fatal("a missing fd must be rejected")
+	}
+}
+
+type closeRecorder struct {
+	constant.ProxyAdapter
+	closed bool
+}
+
+func (c *closeRecorder) Close() error {
+	c.closed = true
+	return nil
+}
+
+func TestReloadClosesTheOutboundsItReplaced(t *testing.T) {
+	kept, replaced, dropped, successor := &closeRecorder{}, &closeRecorder{}, &closeRecorder{}, &closeRecorder{}
+	keptProxy := adapter.NewProxy(kept)
+	previous := map[string]constant.Proxy{
+		"DIRECT": keptProxy,
+		"proxy":  adapter.NewProxy(replaced),
+		"p1":     adapter.NewProxy(dropped),
+	}
+	current := map[string]constant.Proxy{
+		"DIRECT": keptProxy,
+		"proxy":  adapter.NewProxy(successor),
+	}
+
+	closeReplacedProxies(previous, current)
+
+	if !replaced.closed || !dropped.closed {
+		t.Fatal("an outbound the new config replaced or dropped must be closed, " +
+			"or a WireGuard device keeps handshaking next to its successor")
+	}
+	if kept.closed || successor.closed {
+		t.Fatal("an outbound still in use must stay open")
 	}
 }
 

@@ -73,10 +73,13 @@ class NetworkExtensionCore implements VpnCore {
     final rendered = await _render(config, locationId);
     if (rendered == null) throw StateError('unknown location $locationId');
     Log.i('NE hot reload: location=$locationId');
-    await _control.invoke<void>('reload', {
+    final unsaved = await _control.invoke<String>('reload', {
       ...rendered,
       'log_enabled': Log.enabled,
     });
+    if (unsaved != null) {
+      Log.e('NE hot reload applied but not saved', unsaved);
+    }
   }
 
   @override
