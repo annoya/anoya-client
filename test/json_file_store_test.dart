@@ -76,6 +76,19 @@ void main() {
     );
   });
 
+  test('the save called last is the one that sticks', () async {
+    final store = JsonFileStore('order.json');
+    final big = {'v': List.filled(20000, 'xxxxxxxxxxxxxxxxxxxx')};
+    for (var i = 0; i < 10; i++) {
+      await Future.wait([store.save(big), store.save({'v': i})]);
+      expect(
+        await store.load((j) => (j as Map)['v'], null),
+        i,
+        reason: 'round $i: a slower earlier save overwrote a later one',
+      );
+    }
+  });
+
   test('a save that fails does not poison the next one', () async {
     final store = JsonFileStore('chain.json');
     await expectLater(
