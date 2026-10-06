@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:anoya/core/geosite_index.dart';
+import 'package:anoya/core/json_file_store.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/rule_set.dart';
@@ -25,6 +26,7 @@ void main() {
   late Directory tmp;
 
   setUp(() async {
+    JsonFileStore.pending = 0;
     tmp = Directory.systemTemp.createTempSync('vpn-simple-routing');
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
@@ -86,7 +88,7 @@ void main() {
     }
 
     Future<void> settle(WidgetTester tester) async {
-      for (var i = 0; i < 12; i++) {
+      for (var i = 0; i < 12 || (JsonFileStore.pending > 0 && i < 200); i++) {
         // Real I/O futures never complete in FakeAsync without runAsync.
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 25)),
