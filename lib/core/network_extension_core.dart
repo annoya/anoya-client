@@ -188,7 +188,7 @@ class NetworkExtensionCore implements VpnCore {
               : config.defaultDns,
           listPaths: listPaths,
           collectLogs: Log.enabled,
-          autoDetectInterface: !Platform.isAndroid,
+          autoDetectInterface: Platform.isWindows || Platform.isLinux,
           processNamesNeedExe: Platform.isWindows,
           device: Platform.isWindows || Platform.isLinux ? kAppName : null,
           dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null,
