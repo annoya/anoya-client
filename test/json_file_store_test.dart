@@ -80,7 +80,10 @@ void main() {
     final store = JsonFileStore('order.json');
     final big = {'v': List.filled(20000, 'xxxxxxxxxxxxxxxxxxxx')};
     for (var i = 0; i < 10; i++) {
-      await Future.wait([store.save(big), store.save({'v': i})]);
+      await Future.wait([
+        store.save(big),
+        store.save({'v': i}),
+      ]);
       expect(
         await store.load((j) => (j as Map)['v'], null),
         i,
