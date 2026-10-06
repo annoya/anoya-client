@@ -273,7 +273,7 @@ final class VPNManager {
         return rule
     }
 
-    func reload(config: String, logEnabled: Bool) async throws {
+    func reload(config: String, logEnabled: Bool) async throws -> String? {
         guard let m = await adopt(),
               let session = m.connection as? NETunnelProviderSession,
               session.status == .connected else { throw tunnelNotRunning }
@@ -282,8 +282,14 @@ final class VPNManager {
             throw NSError(domain: "vpn", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: failure])
         }
-        try await persist(config: config, logEnabled: logEnabled, into: m)
         NSLog("VPN-NATIVE: hot-reloaded tunnel config (\(config.count) bytes)")
+        do {
+            try await persist(config: config, logEnabled: logEnabled, into: m)
+            return nil
+        } catch {
+            NSLog("VPN-NATIVE: reload applied but not persisted: \(error.localizedDescription)")
+            return error.localizedDescription
+        }
     }
 
     func setLogging(_ enabled: Bool) async {

@@ -55,9 +55,9 @@ enum VpnChannel {
                 }
                 Task { @MainActor in
                     do {
-                        try await VPNManager.shared.reload(
+                        let unsaved = try await VPNManager.shared.reload(
                             config: config, logEnabled: args["log_enabled"] as? Bool ?? true)
-                        result(nil)
+                        result(unsaved)
                     } catch {
                         result(FlutterError(code: "reload_failed",
                                             message: error.localizedDescription, details: nil))

@@ -96,6 +96,12 @@ Applying a config only changes where *new* connections go; browsers and system
 services hold connections open for minutes, so without this the switch appears
 to do nothing.
 
+**A reload closes the outbounds it replaced.** mihomo leaves them to a GC
+finalizer, which in practice does not run for minutes: a replaced WireGuard
+device keeps sending keepalives and rekeying next to its successor, and after a
+reload onto the same server (watchdog, wake) two devices with one key take the
+session from each other.
+
 **The fake-IP pool survives a reload** (`profile.store-fake-ip: true`, persisted
 to `cache.db` in the engine home). Every apply rebuilds the pool, and without
 this it comes back empty: the OS and browsers keep the `198.18.x.y` they were
@@ -119,7 +125,11 @@ the user gets a dialog.
   app in memory — changes on a switch only once the engine has applied it.
   A refused switch leaves the previous one on disk as well as in the engine,
   so the next system start does not bring up a config that already failed
-  and that the app no longer shows. Pinned on the desktop service by
+  and that the app no longer shows. The converse holds as well: a switch the
+  engine applied is a success even if saving it fails (on Apple
+  `saveToPreferences` can answer "IPC failed" after the extension has already
+  switched). The app keeps showing the server the traffic goes through, logs
+  the failure, and the saved config catches up on the next save. Pinned on the desktop service by
   `TestReloadKeepsTheSessionAndReportsARejectedConfig`.
 - `includedRoutes` is the default route for IPv4 **and** IPv6, and
   `excludedRoutes` is empty.
