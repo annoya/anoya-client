@@ -2,18 +2,19 @@ import Flutter
 import UIKit
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-
-    if let controller = window?.rootViewController as? FlutterViewController {
-      VpnChannel.register(messenger: controller.binaryMessenger)
-      WebAuthChannel.register(messenger: controller.binaryMessenger, anchor: window)
-    }
-
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+
+    let messenger = engineBridge.applicationRegistrar.messenger()
+    VpnChannel.register(messenger: messenger)
+    WebAuthChannel.register(messenger: messenger, anchor: nil)
   }
 }
