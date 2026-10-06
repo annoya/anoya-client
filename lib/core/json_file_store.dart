@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path_provider/path_provider.dart';
 
 import 'log.dart';
@@ -10,12 +11,16 @@ class JsonFileStore {
 
   final String filename;
 
+  @visibleForTesting
+  static int pending = 0;
+
   Future<File> _file() async {
     final dir = await getApplicationSupportDirectory();
     return File('${dir.path}/$filename');
   }
 
   Future<T> load<T>(T Function(dynamic json) decode, T fallback) async {
+    pending++;
     try {
       final f = await _file();
       if (!await f.exists()) return fallback;
@@ -23,6 +28,8 @@ class JsonFileStore {
     } catch (e) {
       Log.e('$filename: could not load', '$e');
       return fallback;
+    } finally {
+      pending--;
     }
   }
 
@@ -31,6 +38,15 @@ class JsonFileStore {
 
   Future<void> save(Object json) async {
     final seq = _writeSeq++;
+    pending++;
+    try {
+      await _write(seq, json);
+    } finally {
+      pending--;
+    }
+  }
+
+  Future<void> _write(int seq, Object json) async {
     final f = await _file();
     final tmp = File('${f.path}.$seq.tmp');
     try {
