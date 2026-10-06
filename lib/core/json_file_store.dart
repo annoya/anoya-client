@@ -27,13 +27,20 @@ class JsonFileStore {
   }
 
   int _writeSeq = 0;
+  int _committedSeq = -1;
 
   Future<void> save(Object json) async {
+    final seq = _writeSeq++;
     final f = await _file();
-    final tmp = File('${f.path}.${_writeSeq++}.tmp');
+    final tmp = File('${f.path}.$seq.tmp');
     try {
       await tmp.writeAsString(jsonEncode(json), flush: true);
-      await tmp.rename(f.path);
+      if (seq < _committedSeq) {
+        await tmp.delete();
+        return;
+      }
+      tmp.renameSync(f.path);
+      _committedSeq = seq;
     } catch (e) {
       if (await tmp.exists()) await tmp.delete();
       rethrow;
