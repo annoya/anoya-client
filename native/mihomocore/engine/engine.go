@@ -145,6 +145,7 @@ func applyConfig(fd int, ownDevice bool, configYAML string) (*config.Config, err
 	cfg.General.Tun.Enable = true
 	if !ownDevice {
 		cfg.General.Tun.FileDescriptor = fd
+		leaveDialsUnbound(cfg)
 	}
 	executor.ApplyConfig(cfg, true)
 	// ApplyConfig only logs a failed TUN re-creation, which has already closed our fd.

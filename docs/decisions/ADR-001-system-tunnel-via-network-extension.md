@@ -70,8 +70,8 @@ The remaining differences are Android's, not ours:
   listener dies on the first start. The tag is mihomo's own "running inside an
   Android app" switch, maintained for ClashMetaForAndroid.
 - **`VpnService.protect()` instead of interface binding.** The engine's dials
-  must leave outside its own tunnel. On Apple that is
-  `auto-detect-interface` + per-dial binding; on Android the detector cannot
+  must leave outside its own tunnel. On Apple the system does that for the
+  provider's own sockets (ADR-002); on Android it does not, mihomo's detector cannot
   even start (its route monitor needs a netlink socket, banned for apps since
   Android 11), and the sanctioned mechanism is `protect()`. It is installed as
   mihomo's `dialer.DefaultSocketHook`; a dial whose protect failed is refused,

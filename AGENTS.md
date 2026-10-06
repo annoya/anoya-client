@@ -41,8 +41,9 @@ pinned by a test; if the test fails, revisit the ADR rather than the test.
 2. **Nothing is excluded from the tunnel, and both address families are
    claimed and carried.** `includedRoutes = [default]` for IPv4 *and* IPv6, no
    `excludedRoutes`, ever, and the engine handles both families rather than
-   blackholing one. The engine's own dial leaves through `IP_BOUND_IF`
-   (`IPV6_BOUND_IF` for v6). An excluded route is a system-wide hole for every
+   blackholing one. The engine's own dial leaves outside the tunnel without
+   an exclusion: the system exempts the provider's sockets on Apple,
+   `protect()` on Android, interface binding on Windows and Linux. An excluded route is a system-wide hole for every
    process, not just ours; an unclaimed family is the same hole for everything
    that resolves to it. See ADR-002.
 3. **The `tun` section of the rendered engine config is identical across

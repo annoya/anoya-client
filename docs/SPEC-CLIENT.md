@@ -181,8 +181,9 @@ core implementation and is unit-tested
 Changing server or configuration is a hot reload of the engine under the
 standing session: the NE session, the packet flow and the tunnel fd are never
 touched, so the OS routing table never changes and there is no window for
-traffic to escape. Nothing is excluded from the tunnel — the engine's own dial
-leaves through `IP_BOUND_IF`. Full decision, rejected alternatives and
+traffic to escape. Nothing is excluded from the tunnel — the system routes the
+provider's own sockets outside it, so the engine's dials stay unbound and the
+kernel picks the primary interface. Full decision, rejected alternatives and
 measurements: ADR-002.
 
 IPv4 and IPv6 both have their default route claimed by the tunnel, and both are

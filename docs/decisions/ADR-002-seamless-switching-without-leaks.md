@@ -66,10 +66,26 @@ the wrong question.
 
 **Nothing is excluded from the tunnel.** `includedRoutes = [default]` and no
 `excludedRoutes` at all — not for the current server, not for any other. The
-engine reaches its server because mihomo binds each outbound socket to the
-physical interface (`IP_BOUND_IF`, via its own `auto-detect-interface`). A bound
-socket uses that interface's scoped routing table, so the default route into
-the utun is simply not consulted.
+engine still reaches its server outside the tunnel, by whatever the platform
+provides for that:
+
+- **Apple:** the system routes a packet tunnel provider's own sockets outside
+  the tunnel it provides. The engine's dials are left unbound and the kernel
+  picks the primary interface per connection, following Wi-Fi ↔ cellular
+  changes by itself. The wrapper forces `auto-detect-interface` off, so a saved
+  config from an older build cannot turn mihomo's binding back on.
+- **Android:** `VpnService.protect()`, see ADR-001.
+- **Windows, Linux:** the engine owns the device and its routes, nothing is
+  exempted by the OS, so mihomo binds each dial to the physical interface
+  (`auto-detect-interface`).
+
+Apple used to bind too (`IP_BOUND_IF` via `auto-detect-interface`). mihomo's
+detector walks the routing table and takes the first default route it meets,
+scoped ones included; iOS keeps a scoped default route on cellular (`pdp_ip0`)
+while Wi-Fi is up, and the detector picked it — every tunnelled byte went out
+over mobile data while the device sat on Wi-Fi. The binding was never what kept
+those dials out of the tunnel (see Evidence), so it was removed rather than
+fixed.
 
 **A config is parsed before it is applied.** Invalid YAML is rejected and the
 engine stays on the previous config; a failed switch therefore cannot take the
@@ -132,7 +148,9 @@ the user gets a dialog.
   outbound is always named "proxy"*). Proxies that dial UDP (WireGuard,
   Hysteria, TUIC) are skipped: the TCP dial is refused by design and reads as
   a network fault.
-- If the interface binding ever fails, the tunnel goes silent rather than
+- If the engine's dials ever stop leaving outside the tunnel (the system
+  exemption on Apple, `protect()` on Android, the binding on Windows and
+  Linux), they loop into the tunnel and the tunnel goes silent rather than
   leaking. Fail-closed is the intended direction.
 
 ## Alternatives Considered
@@ -164,18 +182,16 @@ machine.
 
 ### `createTCPConnection(through:)` from `NEPacketTunnelProvider`
 
-Rejected. It is the same endpoint bypass that `IP_BOUND_IF` already provides,
-but it cannot hand Go a file descriptor: it would need a Swift↔Go bridge
+Rejected. It buys nothing — the provider's ordinary sockets already leave
+outside the tunnel — and it cannot hand Go a file descriptor: it would need a Swift↔Go bridge
 implementing `net.Conn` over callbacks, twice (TCP and UDP), on a deprecated
 API.
 
 ### Pin the physical interface name into the config
 
-Rejected as both unnecessary and harmful. Unnecessary: mihomo's interface
-detector lives in the TUN listener, which a reload does not re-create, so it
-survives the swap. Harmful: an explicit `interface-name` outranks that detector
-and goes stale the moment the machine changes network — routine on iOS, where
-Wi-Fi (`en0`) and cellular (`pdp_ip0`) alternate.
+Rejected as harmful: an explicit `interface-name` goes stale the moment the
+machine changes network — routine on iOS, where Wi-Fi (`en0`) and cellular
+(`pdp_ip0`) alternate.
 
 ### Solve the switch window with a kill switch
 
@@ -196,7 +212,13 @@ never gave it to the tunnel" can be told apart from "it went out both ways".
 - Egress proof, logged by the engine after each reload:
   `[egress] finland.nexus…:443 reachable after reload, from 10.0.0.75:57441` —
   the socket's local address belongs to `en0` while the default route points
-  into `utun`. That is the binding working.
+  into `utun`. This was read as the binding working, but on a Mac with `en0`
+  as its only interface it cannot tell binding from the system's exemption.
+- iOS, 2026-10: an unbound probe socket opened inside the extension toward
+  `10.255.255.255` — covered by the tunnel's default route — got `en0`'s
+  address, not the utun's. The system exempts the provider's sockets with no
+  binding at all; the bound build meanwhile logged
+  `default interface changed by monitor, => pdp_ip0` on Wi-Fi.
 - ICMP forwarding, before it was disabled: 249 packets on `en0` while 496 also
   entered the utun. The same packets on both paths is the signature of the
   engine forwarding them itself, as opposed to the OS bypassing the tunnel —
@@ -209,9 +231,10 @@ never gave it to the tunnel" can be told apart from "it went out both ways".
 - Switching interrupts every connection the engine was proxying. This is
   deliberate; they live inside the tunnel, so nothing escapes while clients
   redial, and the alternative is a switch that appears not to work.
-- The whole mechanism rests on one thing: mihomo binding its dials to the
-  physical interface. If that ever breaks, dials loop back into the tunnel and
-  die by timeout — the tunnel goes silent, which is the safe failure.
+- The whole mechanism rests on one thing: the engine's dials leaving outside
+  the tunnel without a route exclusion. If that ever breaks, dials loop back
+  into the tunnel and die by timeout — the tunnel goes silent, which is the
+  safe failure.
 - A reload re-parses a config on every switch. Cheap in practice (~850 bytes,
   0 ms reported by the engine) but not free if the geo databases are large.
 - **Known gap:** an ordinary reconnect (stop → start) still removes the routes,
@@ -225,7 +248,8 @@ never gave it to the tunnel" can be told apart from "it went out both ways".
 ## Where It Lives
 
 - `native/mihomocore/engine/engine.go` — `Reload`, connection closing, the
-  `[egress]` probe (`logProxyEgress`).
+  `[egress]` probe (`logProxyEgress`); `engine/netext_darwin.go` — unbound
+  dials on Apple.
 - `shared/apple/PacketTunnelProvider.swift` — `applyNetworkSettings`
   (start only) and the `reload:` handler.
 - `lib/state/profiles_controller.dart` — `_applySelection`, and

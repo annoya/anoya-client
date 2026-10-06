@@ -23,7 +23,7 @@ test.
 | # | Product | Decision | Covers |
 |---|---|---|---|
 | [001](ADR-001-system-tunnel-via-network-extension.md) | client | Tunnel as a Network Extension, engine linked in | why not a local proxy, App Group, entitlements, gVisor, TCC |
-| [002](ADR-002-seamless-switching-without-leaks.md) | client | Switching by engine reload; nothing excluded from the tunnel | reload-only path, `IP_BOUND_IF` instead of excluded routes, ICMP forwarding, connection redial, leak evidence |
+| [002](ADR-002-seamless-switching-without-leaks.md) | client | Switching by engine reload; nothing excluded from the tunnel | reload-only path, engine dials outside the tunnel without excluded routes, ICMP forwarding, connection redial, leak evidence |
 | [003](ADR-003-split-tunneling-model.md) | both | Split tunneling as rule sets, opt-in per configuration | managed vs local policy, LAN switch, geo databases, platform-gated rule types |
 | [004](ADR-004-on-demand-and-the-kill-switch.md) | client | On-demand auto-connect; no kill switch | intent/paused/systemArmed, persisted config, why `includeAllNetworks` was rejected |
 | [005](ADR-005-multi-configuration-client.md) | client | Three domains of authority: self-hosted, subscription, link | why not one backend, capability degradation, `ConfigSource`, refetch policy |
