@@ -41,7 +41,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     _load();
-    ref.read(cloudSyncProvider.notifier).refreshAvailability();
+    ref.read(cloudSyncProvider.notifier).checkNow();
   }
 
   Future<void> _load() async {
@@ -207,13 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return SwitchListTile(
       secondary: const Icon(Icons.cloud_outlined),
       title: Text(l10n.settingsCloudSync),
-      subtitle: Text(
-        !cloud.available
-            ? l10n.settingsCloudSyncUnavailable
-            : cloud.enabled && cloud.waitingForKey
-            ? l10n.settingsCloudSyncWaitingForKey
-            : l10n.settingsCloudSyncSubtitle,
-      ),
+      subtitle: Text(cloudSyncStatus(l10n, cloud)),
       value: cloud.enabled,
       onChanged: usable
           ? (v) => ref.read(cloudSyncProvider.notifier).setEnabled(v)
@@ -417,4 +411,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
+}
+
+String cloudSyncStatus(AppLocalizations l10n, CloudSyncState cloud) {
+  final at = cloud.lastSyncedAt;
+  if (!cloud.available) return l10n.settingsCloudSyncUnavailable;
+  if (!cloud.enabled) return l10n.commonOff;
+  if (cloud.waitingForKey) return l10n.settingsCloudSyncWaitingForKey;
+  if (cloud.syncing || (at == null && !cloud.failed)) {
+    return l10n.settingsCloudSyncing;
+  }
+  if (cloud.failed) {
+    return at == null
+        ? l10n.settingsCloudSyncFailedNever
+        : l10n.settingsCloudSyncFailed(agoLabel(l10n, at));
+  }
+  return l10n.settingsCloudSynced(agoLabel(l10n, at!));
 }

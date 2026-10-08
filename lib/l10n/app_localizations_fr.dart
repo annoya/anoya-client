@@ -105,7 +105,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsCloudSync => 'Synchronisation iCloud';
 
   @override
-  String get settingsCloudSyncSubtitle => 'Chiffré de bout en bout';
+  String get settingsCloudSyncing => 'Synchronisation…';
+
+  @override
+  String settingsCloudSynced(String ago) {
+    return 'Synchronisé $ago';
+  }
+
+  @override
+  String settingsCloudSyncFailed(String ago) {
+    return 'Échec · dernière synchro $ago';
+  }
+
+  @override
+  String get settingsCloudSyncFailedNever => 'Échec de la synchronisation';
 
   @override
   String get settingsCloudSyncUnavailable =>

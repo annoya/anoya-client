@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +12,8 @@ import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/vpn_core.dart';
+import 'package:anoya/features/settings_screen.dart';
+import 'package:anoya/l10n/l10n.dart';
 import 'package:anoya/state/cloud_sync_controller.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
@@ -33,6 +35,7 @@ void main() {
   late Map<String, String> iCloudKeychain;
   late Map<Directory, Map<String, String>> keychains;
   late List<String> kvsCalls;
+  late bool cloudBroken;
 
   setUp(() {
     deviceA = Directory.systemTemp.createTempSync('vpn-sync-a');
@@ -42,6 +45,7 @@ void main() {
     iCloudKeychain = {};
     keychains = {deviceA: {}, deviceB: {}};
     kvsCalls = [];
+    cloudBroken = false;
     messenger.setMockMethodCallHandler(
       pathProvider,
       (call) async => current.path,
@@ -71,6 +75,7 @@ void main() {
         case 'available':
           return true;
         case 'snapshot':
+          if (cloudBroken) throw PlatformException(code: 'kvs');
           return Map.of(cloud);
         case 'set':
           cloud[args['key'] as String] = args['value'] as String;
@@ -323,6 +328,58 @@ void main() {
     });
   });
 
+  group('status', () {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    final at = DateTime.now().subtract(const Duration(minutes: 2));
+
+    test('the row says what sync is doing, not what it is', () {
+      String status(CloudSyncState s) => cloudSyncStatus(l10n, s);
+      const on = CloudSyncState(supported: true, enabled: true);
+      expect(status(const CloudSyncState(supported: true)), 'Off');
+      expect(status(on), 'Syncing…');
+      expect(status(on.copyWith(lastSyncedAt: at, syncing: true)), 'Syncing…');
+      expect(status(on.copyWith(lastSyncedAt: at)), 'Synced 2 min ago');
+      expect(
+        status(on.copyWith(lastSyncedAt: at, failed: true)),
+        'Didn’t sync · last synced 2 min ago',
+      );
+      expect(status(on.copyWith(failed: true)), 'Didn’t sync');
+      expect(
+        status(on.copyWith(waitingForKey: true)),
+        'Waiting for the key from iCloud Keychain',
+      );
+      expect(
+        status(on.copyWith(available: false)),
+        'Sign in to iCloud on this device first',
+      );
+    });
+
+    test('a sync records when it happened, and a failure keeps it', () async {
+      seed(deviceA, [link('pa', 'a.example')]);
+      final a = await enable(deviceA);
+      final synced = a.read(cloudSyncProvider).lastSyncedAt;
+      expect(synced, isNotNull);
+      expect(a.read(cloudSyncProvider).syncing, isFalse);
+
+      cloudBroken = true;
+      await a.read(cloudSyncProvider.notifier).syncNow();
+      expect(a.read(cloudSyncProvider).failed, isTrue);
+      expect(a.read(cloudSyncProvider).lastSyncedAt, synced);
+      expect(a.read(cloudSyncProvider).syncing, isFalse);
+      a.dispose();
+
+      cloudBroken = false;
+      final again = await open(deviceA);
+      await again.read(cloudSyncProvider.notifier).checkNow();
+      expect(again.read(cloudSyncProvider).failed, isFalse);
+      expect(
+        again.read(cloudSyncProvider).lastSyncedAt!.isAfter(synced!),
+        isTrue,
+      );
+      await close(again);
+    });
+  });
+
   test('two devices end up with both sets, sealed in iCloud', () async {
     seed(deviceA, [link('pa', 'a.example')], theme: 'dark');
     seed(deviceB, [link('pb', 'b.example')]);
@@ -373,6 +430,70 @@ void main() {
       'pa',
     ]);
     await close(b);
+  });
+
+  test('what identifies this device never reaches iCloud', () async {
+    seed(deviceA, [
+      Profile(
+        id: 'am',
+        type: ProfileType.amnezia,
+        name: 'Premium',
+        locations: [
+          Location(
+            id: 'de/awg',
+            label: 'Germany',
+            proxy: const {
+              'type': 'wireguard',
+              'server': 'issued.example',
+              'private-key': 'issued-private-key',
+            },
+          ),
+        ],
+        amnezia: AmneziaState(
+          serviceType: 'amnezia-premium',
+          serviceProtocol: 'awg',
+          userCountryCode: 'de',
+          expiries: {'de/awg': DateTime.utc(2027)},
+        ),
+      ),
+    ]);
+    File(
+      '${deviceA.path}/device.json',
+    ).writeAsStringSync(jsonEncode({'hwid': 'hwid-of-device-a'}));
+    keychains[deviceA]!.addAll({
+      'amnezia_key_am': 'vpn-key-secret',
+      'amnezia_install_uuid': 'install-uuid-of-device-a',
+      'amnezia_agw_state': 'gateway-state-of-device-a',
+    });
+
+    await close(await enable(deviceA));
+
+    final key = (await SyncKey.load())!;
+    final plain = [
+      for (final e in cloud.entries)
+        if (SyncItem.isItem(e.key)) await key.open(e.key, e.value),
+    ].join();
+    expect(plain, contains('vpn-key-secret'));
+    for (final local in [
+      'hwid-of-device-a',
+      'install-uuid-of-device-a',
+      'gateway-state-of-device-a',
+      'issued.example',
+      'issued-private-key',
+      '2027',
+    ]) {
+      expect(plain, isNot(contains(local)), reason: local);
+    }
+
+    final b = await enable(deviceB);
+    await close(b);
+    expect(keychains[deviceB]!['amnezia_key_am'], 'vpn-key-secret');
+    expect(
+      keychains[deviceB]!['amnezia_install_uuid'],
+      isNot('install-uuid-of-device-a'),
+    );
+    expect(keychains[deviceB]!.containsKey('amnezia_agw_state'), isFalse);
+    expect(File('${deviceB.path}/device.json').existsSync(), isFalse);
   });
 
   test('turning sync off removes nothing, here or in iCloud', () async {

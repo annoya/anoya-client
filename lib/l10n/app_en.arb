@@ -32,7 +32,24 @@
   "themeDark": "Dark",
   "settingsLanguage": "Language",
   "settingsCloudSync": "iCloud sync",
-  "settingsCloudSyncSubtitle": "Encrypted end to end",
+  "settingsCloudSyncing": "Syncing…",
+  "settingsCloudSynced": "Synced {ago}",
+  "@settingsCloudSynced": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCloudSyncFailed": "Didn’t sync · last synced {ago}",
+  "@settingsCloudSyncFailed": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCloudSyncFailedNever": "Didn’t sync",
   "settingsCloudSyncUnavailable": "Sign in to iCloud on this device first",
   "settingsCloudSyncWaitingForKey": "Waiting for the key from iCloud Keychain",
   "commonClear": "Clear",

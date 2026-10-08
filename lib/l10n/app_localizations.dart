@@ -296,11 +296,29 @@ abstract class AppLocalizations {
   /// **'iCloud sync'**
   String get settingsCloudSync;
 
-  /// No description provided for @settingsCloudSyncSubtitle.
+  /// No description provided for @settingsCloudSyncing.
   ///
   /// In en, this message translates to:
-  /// **'Encrypted end to end'**
-  String get settingsCloudSyncSubtitle;
+  /// **'Syncing…'**
+  String get settingsCloudSyncing;
+
+  /// No description provided for @settingsCloudSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {ago}'**
+  String settingsCloudSynced(String ago);
+
+  /// No description provided for @settingsCloudSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn’t sync · last synced {ago}'**
+  String settingsCloudSyncFailed(String ago);
+
+  /// No description provided for @settingsCloudSyncFailedNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn’t sync'**
+  String get settingsCloudSyncFailedNever;
 
   /// No description provided for @settingsCloudSyncUnavailable.
   ///

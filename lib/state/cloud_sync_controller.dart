@@ -27,22 +27,34 @@ class CloudSyncState {
     this.enabled = false,
     this.available = true,
     this.waitingForKey = false,
+    this.syncing = false,
+    this.failed = false,
+    this.lastSyncedAt,
   });
 
   final bool supported;
   final bool enabled;
   final bool available;
   final bool waitingForKey;
+  final bool syncing;
+  final bool failed;
+  final DateTime? lastSyncedAt;
 
   CloudSyncState copyWith({
     bool? enabled,
     bool? available,
     bool? waitingForKey,
+    bool? syncing,
+    bool? failed,
+    DateTime? lastSyncedAt,
   }) => CloudSyncState(
     supported: supported,
     enabled: enabled ?? this.enabled,
     available: available ?? this.available,
     waitingForKey: waitingForKey ?? this.waitingForKey,
+    syncing: syncing ?? this.syncing,
+    failed: failed ?? this.failed,
+    lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
   );
 }
 
@@ -94,15 +106,20 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
         '${e.key}': '${e.value}',
     };
     final enabled = saved['enabled'] == true;
+    final lastSyncedAt = DateTime.tryParse('${saved['synced_at']}');
     if (!ref.mounted) return;
-    state = state.copyWith(enabled: enabled);
+    state = state.copyWith(enabled: enabled, lastSyncedAt: lastSyncedAt);
     if (enabled) _start();
   }
 
   Future<void> setEnabled(bool enabled) async {
     await ready;
     if (!state.supported || enabled == state.enabled) return;
-    state = state.copyWith(enabled: enabled, waitingForKey: false);
+    state = state.copyWith(
+      enabled: enabled,
+      waitingForKey: false,
+      failed: false,
+    );
     if (enabled) {
       _seen = {};
       await _persist();
@@ -113,7 +130,9 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
     }
   }
 
-  Future<void> refreshAvailability() async {
+  Future<void> checkNow() async {
+    await ready;
+    if (state.enabled) return syncNow();
     if (!state.supported) return;
     try {
       final available = await CloudStore.available();
@@ -175,13 +194,16 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
   Future<void> _runUntilSettled() async {
     do {
       _rerun = false;
-      if (!ref.mounted || !state.enabled) return;
+      if (!ref.mounted || !state.enabled) break;
+      state = state.copyWith(syncing: true);
       try {
         await _syncOnce();
       } catch (e) {
         Log.e('icloud: sync failed', '$e');
+        if (ref.mounted) state = state.copyWith(failed: true);
       }
-    } while (_rerun);
+    } while (_rerun && ref.mounted);
+    if (ref.mounted) state = state.copyWith(syncing: false);
   }
 
   Future<void> _syncOnce() async {
@@ -248,6 +270,7 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
       await CloudStore.remove(k);
     }
     _seen = plan.seen;
+    state = state.copyWith(failed: false, lastSyncedAt: DateTime.now());
     await _persist();
     final changed =
         plan.apply.length +
@@ -342,6 +365,7 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
   Future<void> _persist() => _store.save({
     'enabled': state.enabled,
     'fingerprint': ?_fingerprint,
+    'synced_at': ?state.lastSyncedAt?.toIso8601String(),
     'seen': _seen,
   });
 }
