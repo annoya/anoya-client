@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/app_logo.dart';
 import '../core/app_prefs.dart';
 import '../core/app_version.dart';
 import '../core/geo_store.dart';
@@ -400,7 +401,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Card(
               margin: kCardMargin,
               child: ListTile(
-                leading: const Icon(Icons.shield_outlined),
+                leading: const SizedBox.square(
+                  dimension: 24,
+                  child: Center(child: AppLogo(size: 20)),
+                ),
                 title: Text(l10n.aboutTitle),
                 subtitle: Text('$kAppName $appVersionLabel'),
                 trailing: const Icon(Icons.chevron_right),
