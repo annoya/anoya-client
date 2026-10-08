@@ -3,6 +3,12 @@ import FlutterMacOS
 
 final class MenuBarController: NSObject, NSMenuDelegate {
   private static let channelName = "vpn/tray"
+  private static let winkInterval: TimeInterval = 1
+
+  private let closedIcon = NSImage(named: "TrayClosed")
+  private let openIcon = NSImage(named: "TrayOpen")
+  private let winkLeftIcon = NSImage(named: "TrayWinkL")
+  private let winkRightIcon = NSImage(named: "TrayWinkR")
 
   private let statusItem: NSStatusItem
   private let channel: FlutterMethodChannel
@@ -14,6 +20,9 @@ final class MenuBarController: NSObject, NSMenuDelegate {
   private var canDisconnect = false
   private var tunnelUp = false
   private var connecting = false
+  private var winkTimer: Timer?
+  private var winking = false
+  private var winkRight = false
 
   private var appName: String {
     Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "VPN"
@@ -58,54 +67,38 @@ final class MenuBarController: NSObject, NSMenuDelegate {
   }
 
   private func applyIcon() {
+    if connecting && !winking { startWink() }
+    if !connecting && winking { stopWink() }
     guard let button = statusItem.button else { return }
-    let name: String
-    let fallbackFilled: Bool
     if connecting {
-      name = "arrow.triangle.2.circlepath"
-      fallbackFilled = false
-    } else if tunnelUp {
-      name = "lock.shield.fill"
-      fallbackFilled = true
+      button.image = winkRight ? winkRightIcon : winkLeftIcon
     } else {
-      name = "lock.shield"
-      fallbackFilled = false
+      button.image = tunnelUp ? openIcon : closedIcon
     }
-    if #available(macOS 11.0, *) {
-      let image = NSImage(systemSymbolName: name, accessibilityDescription: statusLine)
-      image?.isTemplate = true
-      button.image = image
-      if button.image != nil { return }
-    }
-    button.image = MenuBarController.drawnShield(filled: fallbackFilled)
+    button.setAccessibilityLabel(statusLine)
   }
 
-  private static func drawnShield(filled: Bool) -> NSImage {
-    let size = NSSize(width: 16, height: 16)
-    let image = NSImage(size: size)
-    image.lockFocus()
-    let path = NSBezierPath()
-    path.move(to: NSPoint(x: 8, y: 15))
-    path.line(to: NSPoint(x: 14, y: 12))
-    path.line(to: NSPoint(x: 14, y: 7))
-    path.curve(to: NSPoint(x: 8, y: 1),
-               controlPoint1: NSPoint(x: 14, y: 4),
-               controlPoint2: NSPoint(x: 11, y: 2))
-    path.curve(to: NSPoint(x: 2, y: 7),
-               controlPoint1: NSPoint(x: 5, y: 2),
-               controlPoint2: NSPoint(x: 2, y: 4))
-    path.line(to: NSPoint(x: 2, y: 12))
-    path.close()
-    NSColor.black.set()
-    if filled {
-      path.fill()
-    } else {
-      path.lineWidth = 1.5
-      path.stroke()
+  private func startWink() {
+    winking = true
+    winkRight = false
+    if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion { return }
+    let timer = Timer(timeInterval: MenuBarController.winkInterval, repeats: true) { [weak self] _ in
+      self?.wink()
     }
-    image.unlockFocus()
-    image.isTemplate = true
-    return image
+    RunLoop.main.add(timer, forMode: .common)
+    winkTimer = timer
+  }
+
+  private func stopWink() {
+    winkTimer?.invalidate()
+    winkTimer = nil
+    winking = false
+    winkRight = false
+  }
+
+  private func wink() {
+    winkRight.toggle()
+    applyIcon()
   }
 
   func menuNeedsUpdate(_ menu: NSMenu) {

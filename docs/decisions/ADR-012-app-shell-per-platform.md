@@ -51,6 +51,24 @@ fact, and each platform gets it wrong in its own way by default.
   codes, which Flutter reads as an ordinary Ctrl+V. Other scan-code-less keys
   pass through untouched. Drop this once the embedder is fixed.
 
+### The menu bar and tray icon
+
+- The icon is the Anoya cat, shipped as pre-rendered pixel frames: template
+  PNGs at 18 and 36 px in the macOS asset catalog, `.ico` files with 16, 24 and
+  32 px in the Windows resources (`scripts/build-desktop-icons.sh`). Pixel art
+  scaled with interpolation turns to mush, and drawing it in code would
+  duplicate the designer's frames. On macOS the cat's 10×10 grid is drawn at
+  3 px per cell at 2x and 2-1-2-1-2 px per cell at 1x, so it is 15–16 pt tall,
+  as big as the system glyphs beside it; at 1 px per cell it looked a size
+  smaller.
+- State is shape: eyes open — up, closed — down, winking — connecting or
+  switching. Color cannot carry it: macOS tints template images itself.
+- The wink alternates every second for as long as the tunnel is connecting or
+  switching, so a hung connect stays visible from the menu bar. Reduce Motion
+  (macOS) and disabled animation effects (Windows) skip the animation.
+- The macOS timer runs in the common run-loop mode, so the icon keeps winking
+  while the menu is open.
+
 ### One running copy on every desktop
 
 A second launch hands over to the first copy and exits: two copies would race
