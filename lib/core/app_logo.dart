@@ -37,7 +37,9 @@ class _LogoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cell = size.width / _kLogoGrid.length;
+    final side = size.shortestSide;
+    final cell = side / _kLogoGrid.length;
+    final origin = Offset((size.width - side) / 2, (size.height - side) / 2);
     final path = Path();
     for (var y = 0; y < _kLogoGrid.length; y++) {
       final row = _kLogoGrid[y];
@@ -52,7 +54,12 @@ class _LogoPainter extends CustomPainter {
           x++;
         }
         path.addRect(
-          Rect.fromLTWH(start * cell, y * cell, (x - start) * cell, cell),
+          Rect.fromLTWH(
+            start * cell,
+            y * cell,
+            (x - start) * cell,
+            cell,
+          ).shift(origin),
         );
       }
     }
