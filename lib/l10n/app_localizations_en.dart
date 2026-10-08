@@ -539,6 +539,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get geoUpdateNow => 'Update now';
 
   @override
+  String get geoUpdating => 'Updating…';
+
+  @override
+  String get geoDownloading => 'Downloading…';
+
+  @override
   String get geoDownload => 'Download (~25 MB)';
 
   @override
@@ -1873,6 +1879,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ruleSetNameHint => 'Work';
+
+  @override
+  String ruleSetNameTaken(String name) {
+    return 'There is already a set named “$name”';
+  }
 
   @override
   String get ruleSetCreate => 'Create';

@@ -323,6 +323,8 @@
   "geoAutoUpdate": "Auto-update",
   "geoAutoUpdateSubtitle": "Weekly, when already downloaded",
   "geoUpdateNow": "Update now",
+  "geoUpdating": "Updating…",
+  "geoDownloading": "Downloading…",
   "geoDownload": "Download (~25 MB)",
   "geoDatabaseHostSubject": "the database host",
   "@geoDatabaseHostSubject": {
@@ -1411,6 +1413,14 @@
   "ruleSetAllExceptSelectedDescription": "Everything goes through the VPN. The services you pick connect directly.",
   "ruleSetNew": "New rule set",
   "ruleSetNameHint": "Work",
+  "ruleSetNameTaken": "There is already a set named “{name}”",
+  "@ruleSetNameTaken": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "@ruleSetNameHint": {
     "description": "Example name in the new-rule-set prompt"
   },

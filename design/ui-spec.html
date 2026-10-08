@@ -2144,6 +2144,21 @@
     </div></div>
     <p class="cap"><span class="id">RuleSetsScreen · _create</span><b>New set.</b> The editor opens after creation.</p>
   </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">Rule sets</span></div>
+      <div class="dim"></div>
+      <div class="dlg">
+        <h4>New rule set</h4>
+        <div class="body"><div class="inp focus err"><div class="lb">Name</div><div class="vl">China</div></div>
+          <div class="hint" style="color:var(--m-err)">There is already a set named “china”</div></div>
+        <div class="acts"><span class="act txt">Cancel</span><span class="act fill" style="opacity:.38">Create</span></div>
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">RuleSetsScreen · _create · name taken</span><b>A name picks one set.</b> Sets are chosen by name — in the configuration's set picker, in the settings list — and two sets called the same are two rows nobody can tell apart. So a name already in use is refused while it is typed: the field turns red, the line under it names the set it collides with as that set is spelled, and Create is disabled. Case and surrounding spaces do not make a name new. The import screen's name field does the same. Sets that already share a name are left as they are — nothing renames the user's data behind their back.</p>
+  </div>
 </div>
 
 <!-- ============ 5 ============ -->
@@ -2517,10 +2532,10 @@
       </div>
       <div class="btn tonal dis" style="margin-top:16px">
         <svg viewBox="0 0 20 20" style="width:16px;height:16px"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="38 13"/></svg>
-        Download (~25 MB)
+        Downloading…
       </div>
     </div></div>
-    <p class="cap"><span class="id">GeoScreen · downloading</span><b>Downloading.</b> A 16&nbsp;pt spinner replaces the icon inside the same button, and the label does not change — so the width does not jump and it is clear which action is running. Database rows are dimmed: there is nothing to edit in the source mid-download. The auto-update toggle stays active; it does not affect anything right now. There is intentionally no percentage progress — the source does not provide it, and a fake bar is worse than an honest spinner.</p>
+    <p class="cap"><span class="id">GeoScreen · downloading</span><b>Downloading.</b> A 16&nbsp;pt spinner replaces the icon inside the same button, and the label says what is happening: “Downloading…” here, “Updating…” when the databases are already on disk. The button spans the screen, so a new label cannot make it jump; a spinner beside an unchanged “Update now” read as a button that had not been pressed yet. Database rows are dimmed: there is nothing to edit in the source mid-download. The auto-update toggle stays active; it does not affect anything right now. There is intentionally no percentage progress — the source does not provide it, and a fake bar is worse than an honest spinner.</p>
   </div>
 
   <div class="board">
@@ -2557,6 +2572,45 @@
       <div class="btn tonal" style="margin-top:16px"><svg class="icon s"><use href="#i-refresh"/></svg>Update now</div>
     </div></div>
     <p class="cap"><span class="id">GeoScreen · ready</span><b>Downloaded.</b> Size instead of status, “Update now” button.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><span class="island"></span><span class="side r">🛜 🔋</span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#i-back"/></svg></span><span class="ttl back">GeoIP &amp; GeoSite</span></div>
+      <div class="sh">DATABASES</div>
+      <div class="card" style="opacity:.38"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoIP</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">8.3 MB</span>
+          </div>
+          <div class="s">github.com/…/geoip.metadb</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="card" style="opacity:.38"><div class="row">
+        <div class="tx">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span class="t" style="flex:1">GeoSite</span>
+            <span style="font-size:12.5px;color:var(--m-mut)">4.0 MB</span>
+          </div>
+          <div class="s">github.com/…/geosite.dat</div>
+        </div>
+        <svg class="icon s muted"><use href="#i-edit"/></svg>
+      </div></div>
+      <div class="sh">UPDATES</div>
+      <div class="card">
+        <div class="row"><div class="tx"><div class="t">Last updated</div><div class="s">6 days ago</div></div></div>
+        <div class="sep"></div>
+        <div class="row"><div class="tx"><div class="t">Auto-update</div><div class="s">Weekly, when already downloaded</div></div><span class="sw"><i></i></span></div>
+      </div>
+      <div class="btn tonal dis" style="margin-top:16px">
+        <svg viewBox="0 0 20 20" style="width:16px;height:16px"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="38 13"/></svg>
+        Updating…
+      </div>
+    </div></div>
+    <p class="cap"><span class="id">GeoScreen · updating</span><b>Updating.</b> The same button as downloading, with the word for this action. “Last updated” keeps the old time until the new files are on disk: the update has not happened yet.</p>
   </div>
 
   <div class="board">
@@ -3750,9 +3804,10 @@ what the user reads. Nothing from the left column reaches the UI.</p>
 <p class="flowdesc"><b>Turning it off doesn't delete the files.</b> At first it did — and that looked consistent (“refused to keep third-party data — we don't keep it”), until the cost became clear: a live subscription has thirteen lists, and changing your mind cost a full re-download. The toggle is called “apply their rules”, not “delete their files”; it makes no promise about the disk, and the files themselves go stale after a week and get cleaned up on their own. Cleanup stayed where it's about garbage: after a subscription update, where the provider may have removed a list from the policy and the file would be left orphaned.</p>
 <p class="flowdesc">The toggle lives <b>in the configuration, not in global settings</b>: trusting lists means trusting a specific provider, and you may trust one but not another. It must promise exactly what it does: it never enables Xray-style <code>ext:</code> — that's a file on the panel server's disk, it has no address, there's nothing to download.</p>
 
-<h2>11 · Menu bar menu (macOS) and tray (Windows)</h2>
+<h2>11 · Menu bar menu (macOS) and tray (Windows, Linux)</h2>
 <p class="flowdesc">The menu bar icon and its menu are the only way to control the tunnel without bringing up the window. Four actions: show/hide the window, connect to the active configuration, disconnect, quit. The surface is system-owned: <code>NSStatusItem</code> plus <code>NSMenu</code>, AppKit metrics (24&nbsp;pt bar, 22&nbsp;pt item, 13&nbsp;pt text), and we can't style them and don't try — this isn't our screen, it's the system's.</p>
 <p class="flowdesc">This leads to a constraint that defined the icon design: a template image in the menu bar <b>is recolored by the system</b> to black or white, and state can't be conveyed by color at all. Not “undesirable”, as in our screens, but impossible. So the state is carried by <b>shape</b>: the Anoya cat with its eyes open — tunnel up, eyes closed — down, winking — connecting. Words about the state live in the first menu row, where there is room for them.</p>
+<p class="flowdesc"><b>Linux</b> gets the Windows menu item for item, as a StatusNotifierItem: the panel draws it — KDE, XFCE, Cinnamon, Ubuntu's GNOME — and its theme decides fonts and metrics, so it is not drawn here. Where nothing draws it (GNOME without the AppIndicator extension, or no AppIndicator library), there is no icon and closing the window quits the app, as before; a window that closes to an icon nobody can see would be a lost window. The panel opens the menu without telling the app, so the session clock in the second row is pushed once a second instead of on open.</p>
 <div class="rail">
 
   <div class="board">

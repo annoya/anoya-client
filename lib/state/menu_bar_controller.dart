@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/menu_bar.dart';
@@ -23,6 +25,12 @@ final menuBarProvider = Provider<MenuBar>((ref) {
     fireImmediately: true,
   );
   ref.listen(profilesControllerProvider, (_, _) => _push(ref, menu));
+  if (MenuBar.opensWithoutNotice) {
+    final clock = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (ref.read(sessionProvider).startedAt != null) _push(ref, menu);
+    });
+    ref.onDispose(clock.cancel);
+  }
   ref.onDispose(menu.dispose);
   return menu;
 });

@@ -60,7 +60,10 @@ class MenuBar {
 
   final MethodChannel _channel;
 
-  static bool get supported => Platform.isMacOS || Platform.isWindows;
+  static bool get supported =>
+      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
+  static bool get opensWithoutNotice => Platform.isLinux;
 
   MenuBarState? _last;
 

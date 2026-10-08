@@ -998,6 +998,18 @@ abstract class AppLocalizations {
   /// **'Update now'**
   String get geoUpdateNow;
 
+  /// No description provided for @geoUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get geoUpdating;
+
+  /// No description provided for @geoDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading…'**
+  String get geoDownloading;
+
   /// No description provided for @geoDownload.
   ///
   /// In en, this message translates to:
@@ -2977,6 +2989,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Work'**
   String get ruleSetNameHint;
+
+  /// No description provided for @ruleSetNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'There is already a set named “{name}”'**
+  String ruleSetNameTaken(String name);
 
   /// No description provided for @ruleSetCreate.
   ///

@@ -83,11 +83,21 @@ its window, wherever it was hidden.
 - Linux: the `GtkApplication` is unique on D-Bus; a second launch becomes an
   `activate` in the first copy, which presents the existing window.
 
-### Linux: a plain window
+### Linux: tray icon where the desktop shows one
 
-No tray and no close-to-tray: closing the window quits the app, and the
-tunnel, a system service, stays up (ADR-001). Reopening the app is how the
-user gets the controls back.
+- A StatusNotifierItem through libayatana-appindicator (`tray_icon.cc`), with
+  the Windows menu item for item and the same cat frames (32 px). The library
+  is opened with `dlopen`, not linked: the deb, rpm and Arch packages depend
+  on it, and the portable tarball, which no package manager installs, runs
+  without it as before.
+- Closing the window hides it only while a tray host has taken the icon
+  (`connection-changed`); otherwise closing quits, and the tunnel, a system
+  service, stays up (ADR-001). GNOME without the AppIndicator extension is the
+  common case with no host. A hidden window comes back from the menu or by
+  launching the app again (one running copy, below).
+- An indicator's menu is rendered by the panel over D-Bus, so the app never
+  learns it is being opened and there is no `sync`. Dart pushes the menu once a
+  second while a session clock runs; unchanged state is not sent.
 
 Scrolling has no fling (`AppScrollBehavior` in `lib/core/ui.dart`). The GTK3
 embedder reports a touchpad only by its movement — a pan starts with the first
@@ -136,6 +146,27 @@ pacman have no purge and keep it (`linux/packaging/scripts`).
 
 ## Alternatives Considered
 
+### No tray on Linux
+
+What the app did. Rejected: the tunnel outlives the window, and on desktops
+that have a tray, a VPN with no icon reads as no VPN.
+
+### Linking libayatana-appindicator
+
+Rejected: the portable tarball has no package manager behind it, and a missing
+library would stop the app from starting there.
+
+### Recommending the library instead of depending on it
+
+Rejected: nfpm has no recommends for Arch, and a recommends that a minimal
+install skips leaves a tray-capable desktop without the tray for no reason.
+The cost of depending is one small library on a GNOME without the extension.
+
+### Bundling the library in the package
+
+Rejected: it is built against the distribution's GTK, GLib and libdbusmenu,
+and a copy of our own drifts from them until the app fails to start.
+
 ### Quit on window close (macOS)
 
 Rejected: incompatible with a menu bar item, and it leaves a running VPN with
@@ -163,14 +194,19 @@ is for.
 
 - Quitting the app is not disconnecting. The menu says so while it matters.
 - Menu state is only as fresh as Dart's last push; `sync` on open covers the
-  clock.
+  clock on macOS and Windows, the once-a-second push on Linux.
+- On Linux the menu labels are English, as on Windows; status and detail come
+  localized from Dart.
+- The Linux tray has not been run on a live desktop by the author; KDE, XFCE
+  and Ubuntu's GNOME are where it is expected to show.
 
 ## Where It Lives
 
 - `macos/Runner/AppDelegate.swift`, `MenuBarController.swift`,
   `MainFlutterWindow.swift`
 - `windows/runner/tray_icon.cpp`, `flutter_window.cpp`, `main.cpp`;
-  `linux/runner/my_application.cc`
+  `linux/runner/my_application.cc`, `tray_icon.cc`; `linux/CMakeLists.txt`
+  (the frames), `linux/packaging/nfpm.yaml`
 - `android/app/src/main/kotlin/org/anoya/vpn/VpnChannel.kt`,
   `WebAuthChannel.kt`, `TunnelFiles.kt`
 - `shared/apple/PacketTunnelProvider.swift`,
