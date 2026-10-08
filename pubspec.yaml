@@ -10,7 +10,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # and the tunnel target), Gradle as flutter.versionName / flutter.versionCode,
 # and the app itself reads this file — it ships as an asset — at startup. So a
 # bump is this line and nothing else. See lib/core/app_version.dart.
-version: 1.1.0+17
+version: 1.1.0+18
 
 environment:
   sdk: ^3.10.8
