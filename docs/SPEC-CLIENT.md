@@ -515,6 +515,18 @@ the `error` state Android and the desktop service pass on the way. Before that,
 an engine that would not run a config looked exactly like a connect that hung
 and then gave up.
 
+### 4.3.1 Across devices: iCloud
+
+On iOS and macOS a switch in Settings → General, off by default and per device,
+syncs configurations and settings through iCloud key-value storage. A
+configuration travels as what another device cannot fetch for itself — its
+source, credentials and routing choices — and that device fetches the servers.
+Rule sets, on-demand rules, favorites, appearance, language, log collection, the
+routing and DNS defaults and the connection check travel whole. The active
+configuration and server, auto-connect, on-demand arming, issued Amnezia
+servers, device identity, geo databases and logs stay on the device. Every
+value is sealed with a key that lives in iCloud Keychain. See ADR-020.
+
 ### 4.4 The connection check
 
 "Connected" is a claim about an interface, not about a path. An AmneziaWG peer
@@ -631,7 +643,8 @@ screen says so in as many words.
 - **Settings** — configurations, connection (on-demand and disconnect-on-sleep
   on Apple; the Always-on VPN explainer on Android; the **Auto-connect** switch
   on Windows; **Advanced**, which holds the connection check), routing (LAN
-  direct, rule sets, geo databases), appearance and language, logs.
+  direct, rule sets, geo databases), appearance, language and iCloud sync
+  (Apple only), logs.
 - **Advanced connection** — the connection check: whether to run it after
   connecting, the URL it fetches, how long it waits, a "Test now" button and the
   last answer.
@@ -931,6 +944,9 @@ understands, so a server adding a protocol does not require a client change.
   data directory, mode 0600 in a 0700 directory, and the app says so once per
   launch. Once a keyring is reachable again, new values go there and their file
   copies are removed. See ADR-017.
+- With iCloud sync on, tokens and keys leave the device only sealed with
+  AES-256-GCM under a key kept in iCloud Keychain; iCloud key-value storage
+  never holds them in the clear (ADR-020).
 - No client secret ships in the app; SSO uses Authorization Code with PKCE.
 - Logs never contain tokens, passwords or full config bodies.
 - The client trusts no domain to be honest about its own capabilities: absence

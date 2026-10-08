@@ -11,6 +11,7 @@
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		5F9CE7FB4ABB49126380487E /* VpnChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74FCC0BE584170E11C16A8F2 /* VpnChannel.swift */; };
+24992D5451E8738D651E2A76 /* CloudSyncChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EE3797096B31C5048024E28 /* CloudSyncChannel.swift */; };
 		6E1CF7D530088D72009BE363 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E1CF7BD30088D52009BE363 /* NetworkExtension.framework */; };
 		6E1CF7DD30088D72009BE363 /* Tunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6E1CF7D430088D72009BE363 /* Tunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		710876905DDDEF5505A7BA51 /* MihomoCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27BAF2BCC69D45BB6020E901 /* MihomoCore.xcframework */; };
@@ -87,6 +88,7 @@
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		74FCC0BE584170E11C16A8F2 /* VpnChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VpnChannel.swift; sourceTree = "<group>"; };
+9EE3797096B31C5048024E28 /* CloudSyncChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudSyncChannel.swift; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9112306661ACE8FA7DA5D409 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 			children = (
 				B16396960913B0A37EF883E0 /* VPNManager.swift */,
 				74FCC0BE584170E11C16A8F2 /* VpnChannel.swift */,
+				9EE3797096B31C5048024E28 /* CloudSyncChannel.swift */,
 			);
 			name = VPN;
 			path = VPN;
@@ -502,6 +505,7 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				C03E7F4E664138EA498A71C0 /* VPNManager.swift in Sources */,
 				5F9CE7FB4ABB49126380487E /* VpnChannel.swift in Sources */,
+				24992D5451E8738D651E2A76 /* CloudSyncChannel.swift in Sources */,
 				99797FD5735E9477D73A29DD /* WebAuthChannel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

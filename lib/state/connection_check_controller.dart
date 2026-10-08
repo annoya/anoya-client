@@ -81,6 +81,8 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState>
   Future<void> setTimeout(int seconds) =>
       _save(state.prefs.copyWith(timeoutSeconds: seconds));
 
+  Future<void> replacePrefs(ConnectionCheckPrefs prefs) => _save(prefs);
+
   Future<void> _save(ConnectionCheckPrefs next) async {
     await ready;
     state = state.copyWith(prefs: next);

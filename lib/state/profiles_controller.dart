@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_client.dart';
 import '../core/amnezia/vpn_key.dart';
 import '../core/app_error.dart';
+import '../core/cloud_sync.dart';
 import '../core/config_source.dart';
 import '../core/effective_config.dart';
 import '../core/geo_store.dart';
@@ -203,6 +204,48 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       await ref.read(onDemandProvider.notifier).forget();
     } else if (wasActive) {
       await syncTunnelConfig();
+    }
+  }
+
+  Future<void> applyFromCloud(Map<String, dynamic> recipe) async {
+    await ready;
+    final id = recipe['id'] as String;
+    if (recipe['token'] case final String token) {
+      await ProfileStore.saveToken(id, token);
+    }
+    if (recipe['amnezia_key'] case final String key) {
+      await ProfileStore.saveAmneziaKey(id, key);
+    }
+    final local = _byId(id);
+    final next = profileFromRecipe(recipe, local);
+    if (local == null) {
+      state = state.copyWith(profiles: [...state.profiles, next]);
+      await ProfileStore.save(state.profiles);
+    } else {
+      await _replace(next);
+    }
+    final sourceMoved =
+        local == null ||
+        local.serverUrl != next.serverUrl ||
+        local.subscriptionUrl != next.subscriptionUrl;
+    if (next.isRefreshable && sourceMoved) {
+      unawaited(
+        refreshProfile(id).then(
+          (_) {},
+          onError: (Object e) =>
+              Log.e('synced configuration not refreshed', '$e'),
+        ),
+      );
+      return;
+    }
+    if (local == null || id != state.active?.id) return;
+    if (next.providerRuleListsEnabled && !local.providerRuleListsEnabled) {
+      await syncRuleLists(id);
+    } else if (next.ruleSetId != local.ruleSetId ||
+        next.routingEnabled != local.routingEnabled ||
+        next.providerRoutingEnabled != local.providerRoutingEnabled ||
+        next.providerRuleListsEnabled != local.providerRuleListsEnabled) {
+      await _applySelection();
     }
   }
 

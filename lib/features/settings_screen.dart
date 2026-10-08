@@ -10,6 +10,7 @@ import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/favorites_controller.dart';
 import '../state/auto_connect_controller.dart';
+import '../state/cloud_sync_controller.dart';
 import '../state/connection_check_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
@@ -39,6 +40,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     _load();
+    ref.read(cloudSyncProvider.notifier).refreshAvailability();
   }
 
   Future<void> _load() async {
@@ -198,6 +200,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (picked != null && mounted) await _push(ConfigScreen(profileId: picked));
   }
 
+  Widget _cloudSyncRow(CloudSyncState cloud) {
+    final l10n = context.l10n;
+    final usable = cloud.available || cloud.enabled;
+    return SwitchListTile(
+      secondary: const Icon(Icons.cloud_outlined),
+      title: Text(l10n.settingsCloudSync),
+      subtitle: Text(
+        !cloud.available
+            ? l10n.settingsCloudSyncUnavailable
+            : cloud.enabled && cloud.waitingForKey
+            ? l10n.settingsCloudSyncWaitingForKey
+            : l10n.settingsCloudSyncSubtitle,
+      ),
+      value: cloud.enabled,
+      onChanged: usable
+          ? (v) => ref.read(cloudSyncProvider.notifier).setEnabled(v)
+          : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final st = ref.watch(profilesControllerProvider);
@@ -206,6 +228,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final onDemand = ref.watch(onDemandProvider);
     final check = ref.watch(connectionCheckProvider).prefs;
     final autoConnect = ref.watch(autoConnectProvider);
+    final cloud = ref.watch(cloudSyncProvider);
     final l10n = context.l10n;
 
     return Scaffold(
@@ -355,6 +378,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     trailing: const Icon(Icons.expand_more),
                     onTap: _pickLanguage,
                   ),
+                  if (cloud.supported) ...[
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    _cloudSyncRow(cloud),
+                  ],
                 ],
               ),
             ),

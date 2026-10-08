@@ -7,6 +7,7 @@ import 'core/theme.dart';
 import 'core/ui.dart';
 import 'l10n/l10n.dart';
 import 'features/home_screen.dart';
+import 'state/cloud_sync_controller.dart';
 import 'state/menu_bar_controller.dart';
 import 'state/profiles_controller.dart';
 import 'state/providers.dart';
@@ -26,6 +27,7 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   void initState() {
     super.initState();
     ref.read(menuBarProvider);
+    ref.read(cloudSyncProvider);
     SecretStore.instance.usingFile.addListener(_secretsInFile);
   }
 

@@ -15,6 +15,7 @@ class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     VpnChannel.register(messenger: flutterViewController.engine.binaryMessenger)
+    CloudSyncChannel.register(messenger: flutterViewController.engine.binaryMessenger)
     WebAuthChannel.register(messenger: flutterViewController.engine.binaryMessenger, anchor: self)
 
     menuBar = MenuBarController(

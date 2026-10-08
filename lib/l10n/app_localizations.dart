@@ -290,6 +290,30 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get settingsLanguage;
 
+  /// No description provided for @settingsCloudSync.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud sync'**
+  String get settingsCloudSync;
+
+  /// No description provided for @settingsCloudSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted end to end'**
+  String get settingsCloudSyncSubtitle;
+
+  /// No description provided for @settingsCloudSyncUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to iCloud on this device first'**
+  String get settingsCloudSyncUnavailable;
+
+  /// No description provided for @settingsCloudSyncWaitingForKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the key from iCloud Keychain'**
+  String get settingsCloudSyncWaitingForKey;
+
   /// No description provided for @commonClear.
   ///
   /// In en, this message translates to:
