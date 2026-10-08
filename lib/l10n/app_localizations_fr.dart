@@ -102,6 +102,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsLanguage => 'Langue';
 
   @override
+  String get settingsCloudSync => 'Synchronisation iCloud';
+
+  @override
+  String get settingsCloudSyncSubtitle => 'Chiffré de bout en bout';
+
+  @override
+  String get settingsCloudSyncUnavailable =>
+      'Connectez-vous d’abord à iCloud sur cet appareil';
+
+  @override
+  String get settingsCloudSyncWaitingForKey =>
+      'En attente de la clé du trousseau iCloud';
+
+  @override
   String get commonClear => 'Effacer';
 
   @override

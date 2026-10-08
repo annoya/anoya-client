@@ -67,6 +67,13 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
     );
   }
 
+  Future<void> replaceRules(List<OnDemandRule> rules) async {
+    await ready;
+    await _apply(
+      state.copyWith(rules: rules, enabled: state.enabled && rules.isNotEmpty),
+    );
+  }
+
   Future<void> reorderRules(int oldIndex, int newIndex) async {
     final rules = [...state.rules];
     rules.insert(newIndex, rules.removeAt(oldIndex));

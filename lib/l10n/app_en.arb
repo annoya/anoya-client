@@ -31,6 +31,10 @@
   "themeLight": "Light",
   "themeDark": "Dark",
   "settingsLanguage": "Language",
+  "settingsCloudSync": "iCloud sync",
+  "settingsCloudSyncSubtitle": "Encrypted end to end",
+  "settingsCloudSyncUnavailable": "Sign in to iCloud on this device first",
+  "settingsCloudSyncWaitingForKey": "Waiting for the key from iCloud Keychain",
   "commonClear": "Clear",
   "commonJustNow": "just now",
   "@commonJustNow": {

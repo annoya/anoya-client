@@ -38,6 +38,7 @@ test.
 | [017](ADR-017-linux-secrets-fallback.md) | client | On Linux without a keyring, secrets fall back to a 0600 file | why not systemd-creds or the root service, serialized writes, keyring takes over again |
 | [018](ADR-018-rule-set-import-export.md) | client | Rule sets export in our format only; Clash, Shadowrocket/Surge and Happ are migrated in | file and anoya:// link, preview with what was dropped, always a new set, one QR or none |
 | [019](ADR-019-rules-hold-lists-of-values.md) | client | A rule holds a list of values; long lists reach the engine as inline rule sets | pasted lists and how they are tidied, domain/address companions, multi-select geo, why not bulk-add |
+| [020](ADR-020-icloud-sync.md) | client | Configurations and settings sync through iCloud, sealed with a key from iCloud Keychain | opt-in per device, key-value store, recipes instead of profiles, what stays per device, three-way merge, why not CloudKit |
 
 ## Open Questions
 

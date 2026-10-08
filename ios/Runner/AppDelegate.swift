@@ -15,6 +15,7 @@ import UIKit
 
     let messenger = engineBridge.applicationRegistrar.messenger()
     VpnChannel.register(messenger: messenger)
+    CloudSyncChannel.register(messenger: messenger)
     WebAuthChannel.register(messenger: messenger, anchor: nil)
   }
 }

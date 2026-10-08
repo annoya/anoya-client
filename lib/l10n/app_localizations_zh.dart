@@ -102,6 +102,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLanguage => '语言';
 
   @override
+  String get settingsCloudSync => 'iCloud 同步';
+
+  @override
+  String get settingsCloudSyncSubtitle => '端到端加密';
+
+  @override
+  String get settingsCloudSyncUnavailable => '请先在此设备上登录 iCloud';
+
+  @override
+  String get settingsCloudSyncWaitingForKey => '正在等待来自 iCloud 钥匙串的密钥';
+
+  @override
   String get commonClear => '清除';
 
   @override

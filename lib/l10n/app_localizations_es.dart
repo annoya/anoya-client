@@ -102,6 +102,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsLanguage => 'Idioma';
 
   @override
+  String get settingsCloudSync => 'Sincronización con iCloud';
+
+  @override
+  String get settingsCloudSyncSubtitle => 'Cifrado de extremo a extremo';
+
+  @override
+  String get settingsCloudSyncUnavailable =>
+      'Inicia sesión en iCloud en este dispositivo primero';
+
+  @override
+  String get settingsCloudSyncWaitingForKey =>
+      'Esperando la clave del Llavero de iCloud';
+
+  @override
   String get commonClear => 'Borrar';
 
   @override

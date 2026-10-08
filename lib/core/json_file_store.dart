@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,6 +14,10 @@ class JsonFileStore {
 
   @visibleForTesting
   static int pending = 0;
+
+  static final _saved = StreamController<String>.broadcast(sync: true);
+
+  static Stream<String> get saved => _saved.stream;
 
   Future<File> _file() async {
     final dir = await getApplicationSupportDirectory();
@@ -57,6 +62,7 @@ class JsonFileStore {
       }
       tmp.renameSync(f.path);
       _committedSeq = seq;
+      _saved.add(filename);
     } catch (e) {
       if (await tmp.exists()) await tmp.delete();
       rethrow;

@@ -33,6 +33,7 @@
 		6E0B63A22FF2CF9A00464F13 /* Tunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6E0B63982FF2CF9A00464F13 /* Tunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		9227CCD9FFF6D305C6440BBB /* VpnChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1441E21D385E0FFDC7055046 /* VpnChannel.swift */; };
+14E499017C40CC59981AA6C9 /* CloudSyncChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7924B47D3F11795F42B82CE /* CloudSyncChannel.swift */; };
 		99797FD5735E9477D73A29DD /* WebAuthChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC6C5EE46FF78FE87AD5D9D /* WebAuthChannel.swift */; };
 		A1B2C3D40002MENUBAR00002 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40001MENUBAR00001 /* MenuBarController.swift */; };
 		A6A61AGW0000000000000002 /* Libagw.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A61AGW0000000000000001 /* Libagw.xcframework */; };
@@ -90,6 +91,7 @@
 
 /* Begin PBXFileReference section */
 		1441E21D385E0FFDC7055046 /* VpnChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VpnChannel.swift; sourceTree = "<group>"; };
+F7924B47D3F11795F42B82CE /* CloudSyncChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudSyncChannel.swift; sourceTree = "<group>"; };
 		218C4BD64141A24AB0952AEA /* MihomoCore.xcframework */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = wrapper.xcframework; name = MihomoCore.xcframework; path = ../native/mihomocore/MihomoCore.xcframework; sourceTree = "<group>"; };
 		331C80D5294CF71000263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		331C80D7294CF71000263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
@@ -268,6 +270,7 @@
 			children = (
 				B06C81186E2A4CE3A01E0844 /* VPNManager.swift */,
 				1441E21D385E0FFDC7055046 /* VpnChannel.swift */,
+				F7924B47D3F11795F42B82CE /* CloudSyncChannel.swift */,
 			);
 			path = VPN;
 			sourceTree = "<group>";
@@ -572,6 +575,7 @@
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
 				631070EFAFE18AF4046AD2EB /* VPNManager.swift in Sources */,
 				9227CCD9FFF6D305C6440BBB /* VpnChannel.swift in Sources */,
+				14E499017C40CC59981AA6C9 /* CloudSyncChannel.swift in Sources */,
 				99797FD5735E9477D73A29DD /* WebAuthChannel.swift in Sources */,
 				A1B2C3D40002MENUBAR00002 /* MenuBarController.swift in Sources */,
 			);

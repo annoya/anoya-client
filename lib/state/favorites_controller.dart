@@ -26,6 +26,8 @@ class FavoritesController extends Notifier<Favorites> with ReadyGate {
   Future<void> forgetProfile(String profileId) =>
       _save((f) => f.forgetProfile(profileId));
 
+  Future<void> replace(Favorites favorites) => _save((_) => favorites);
+
   Future<void> _save(Favorites Function(Favorites) change) async {
     await ready;
     final favorites = change(state);
