@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/app_logo.dart';
 import '../core/app_version.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
@@ -22,7 +23,7 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(kGutter, 28, kGutter, 20),
               child: Column(
                 children: [
-                  Icon(Icons.shield_outlined, size: 56, color: cs.primary),
+                  AppLogo(size: 56, color: cs.primary),
                   const SizedBox(height: 12),
                   Text(
                     kAppName,

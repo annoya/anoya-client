@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/app_error.dart';
+import '../core/app_logo.dart';
 import '../core/log.dart';
 import '../core/parsers/qr_payload.dart';
 import '../core/parsers/subscription.dart';
@@ -211,7 +212,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.shield_outlined, size: 56, color: cs.primary),
+                  AppLogo(size: 56, color: cs.primary),
                   const SizedBox(height: 14),
                   Text(
                     l10n.startAddConnection,
