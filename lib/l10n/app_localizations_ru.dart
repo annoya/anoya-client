@@ -105,7 +105,20 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsCloudSync => 'Синхронизация iCloud';
 
   @override
-  String get settingsCloudSyncSubtitle => 'Сквозное шифрование';
+  String get settingsCloudSyncing => 'Синхронизация…';
+
+  @override
+  String settingsCloudSynced(String ago) {
+    return 'Синхронизировано $ago';
+  }
+
+  @override
+  String settingsCloudSyncFailed(String ago) {
+    return 'Не синхронизировано · было $ago';
+  }
+
+  @override
+  String get settingsCloudSyncFailedNever => 'Не синхронизировано';
 
   @override
   String get settingsCloudSyncUnavailable =>

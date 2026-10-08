@@ -75,15 +75,7 @@ String refreshedAtLabel(Profile p) {
   final at = p.refreshedAt;
   final every = _cadence(l10n, p);
   if (at == null) return l10n.configRefreshNever(every);
-  final d = DateTime.now().difference(at);
-  final ago = d.inDays > 0
-      ? l10n.commonDaysAgo(d.inDays)
-      : d.inHours > 0
-      ? l10n.commonHoursAgo(d.inHours)
-      : d.inMinutes > 0
-      ? l10n.commonMinutesAgo(d.inMinutes)
-      : l10n.commonJustNow;
-  return l10n.configRefreshAgo(ago, every);
+  return l10n.configRefreshAgo(agoLabel(l10n, at), every);
 }
 
 String _cadence(AppLocalizations l10n, Profile p) {

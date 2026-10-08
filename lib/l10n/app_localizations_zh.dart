@@ -105,7 +105,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsCloudSync => 'iCloud 同步';
 
   @override
-  String get settingsCloudSyncSubtitle => '端到端加密';
+  String get settingsCloudSyncing => '正在同步…';
+
+  @override
+  String settingsCloudSynced(String ago) {
+    return '已同步 · $ago';
+  }
+
+  @override
+  String settingsCloudSyncFailed(String ago) {
+    return '同步失败 · 上次同步于$ago';
+  }
+
+  @override
+  String get settingsCloudSyncFailedNever => '同步失败';
 
   @override
   String get settingsCloudSyncUnavailable => '请先在此设备上登录 iCloud';
