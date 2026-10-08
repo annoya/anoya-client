@@ -35,13 +35,21 @@ class TrayIcon {
   void AddIcon();
   void UpdateIcon();
   void ShowMenu();
-  HICON DrawIcon(bool filled, bool dot) const;
+  void StartWink();
+  void StopWink();
+  void Wink();
+  HICON CurrentIcon() const;
 
   HWND owner_;
   std::wstring app_name_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_;
   State state_;
-  HICON icon_ = nullptr;
+  HICON closed_icon_ = nullptr;
+  HICON open_icon_ = nullptr;
+  HICON wink_left_icon_ = nullptr;
+  HICON wink_right_icon_ = nullptr;
+  bool winking_ = false;
+  bool wink_right_ = false;
   bool added_ = false;
   UINT taskbar_created_ = 0;
 };

@@ -698,10 +698,10 @@ On Windows the same menu lives behind a **tray icon** (`windows/runner/tray_icon
 `Shell_NotifyIcon` and a Win32 popup menu): the same two status lines, Show/Hide,
 Connect, Disconnect and Quit, composed by the same Dart code over the same
 `vpn/tray` channel. A left click toggles the window, the close button hides it
-into the tray, and the icon is drawn at runtime — white with a dark outline, so
+into the tray, and the icon is the Anoya cat — white with a dark outline, so
 it reads on a dark and a light taskbar — with the shape carrying the state:
-filled for a tunnel that is up, outlined for down, outlined with a dot while
-connecting. Pasting from the Windows clipboard history (Win+V) works in every
+eyes open for a tunnel that is up, closed for down, winking while connecting
+or switching. Pasting from the Windows clipboard history (Win+V) works in every
 text field, like Ctrl+V does.
 
 On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
@@ -711,9 +711,11 @@ longer quits — the app stays in the menu bar and the Dock, and a click on the
 Dock icon brings the window back. Show, hide and quit
 are handled natively without a round trip to Dart; connect and disconnect are
 forwarded to the app, which owns refresh-before-connect and error reporting.
-State (including the item's icon, which carries status by shape because the
-system tints template images itself) is composed in Dart so the menu says what
-the home screen says.
+State is composed in Dart so the menu says what the home screen says. The
+item's icon is the same cat as a template image, which carries status by shape
+because the system tints template images itself. While connecting it winks
+left, then right, a second each, until the state changes; with Reduce Motion
+(Windows: animation effects off) it does not animate.
 
 Only one copy of the app runs on a desktop. Launching it again — from the Dock,
 Start menu, a shortcut or a terminal — shows the window of the copy that is

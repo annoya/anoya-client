@@ -3,13 +3,14 @@
 #include <flutter/standard_method_codec.h>
 #include <shellapi.h>
 
-#include <algorithm>
-#include <cstdint>
+#include "resource.h"
 
 namespace {
 
 constexpr UINT kTrayMessage = WM_APP + 1;
 constexpr UINT kIconId = 1;
+constexpr UINT_PTR kWinkTimerId = 1;
+constexpr UINT kWinkIntervalMs = 1000;
 
 constexpr UINT kCmdToggleWindow = 1001;
 constexpr UINT kCmdConnect = 1002;
@@ -30,6 +31,18 @@ const std::string* GetString(const flutter::EncodableMap& map, const char* key) 
   return it == map.end() ? nullptr : std::get_if<std::string>(&it->second);
 }
 
+HICON LoadTrayIcon(int id) {
+  const int size = GetSystemMetrics(SM_CXSMICON) > 0 ? GetSystemMetrics(SM_CXSMICON) : 16;
+  return static_cast<HICON>(LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(id), IMAGE_ICON,
+                                       size, size, LR_DEFAULTCOLOR));
+}
+
+bool AnimationsEnabled() {
+  BOOL enabled = TRUE;
+  SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &enabled, 0);
+  return enabled != FALSE;
+}
+
 bool GetBool(const flutter::EncodableMap& map, const char* key) {
   auto it = map.find(flutter::EncodableValue(key));
   if (it == map.end()) return false;
@@ -42,6 +55,10 @@ bool GetBool(const flutter::EncodableMap& map, const char* key) {
 TrayIcon::TrayIcon(HWND owner, flutter::BinaryMessenger* messenger, std::wstring app_name)
     : owner_(owner), app_name_(std::move(app_name)) {
   taskbar_created_ = RegisterWindowMessageW(L"TaskbarCreated");
+  closed_icon_ = LoadTrayIcon(IDI_TRAY_CLOSED);
+  open_icon_ = LoadTrayIcon(IDI_TRAY_OPEN);
+  wink_left_icon_ = LoadTrayIcon(IDI_TRAY_WINK_L);
+  wink_right_icon_ = LoadTrayIcon(IDI_TRAY_WINK_R);
 
   channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       messenger, "vpn/tray", &flutter::StandardMethodCodec::GetInstance());
@@ -63,6 +80,7 @@ TrayIcon::TrayIcon(HWND owner, flutter::BinaryMessenger* messenger, std::wstring
 }
 
 TrayIcon::~TrayIcon() {
+  KillTimer(owner_, kWinkTimerId);
   if (added_) {
     NOTIFYICONDATAW nid = {};
     nid.cbSize = sizeof(nid);
@@ -70,21 +88,20 @@ TrayIcon::~TrayIcon() {
     nid.uID = kIconId;
     Shell_NotifyIconW(NIM_DELETE, &nid);
   }
-  if (icon_) DestroyIcon(icon_);
+  for (HICON icon : {closed_icon_, open_icon_, wink_left_icon_, wink_right_icon_}) {
+    if (icon) DestroyIcon(icon);
+  }
   if (channel_) channel_->SetMethodCallHandler(nullptr);
 }
 
 void TrayIcon::AddIcon() {
-  if (icon_) DestroyIcon(icon_);
-  icon_ = DrawIcon(state_.tunnel_up, state_.connecting);
-
   NOTIFYICONDATAW nid = {};
   nid.cbSize = sizeof(nid);
   nid.hWnd = owner_;
   nid.uID = kIconId;
   nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
   nid.uCallbackMessage = kTrayMessage;
-  nid.hIcon = icon_;
+  nid.hIcon = CurrentIcon();
   wcsncpy_s(nid.szTip, state_.status.c_str(), _TRUNCATE);
   added_ = Shell_NotifyIconW(NIM_ADD, &nid) != FALSE;
   nid.uVersion = NOTIFYICON_VERSION_4;
@@ -93,17 +110,36 @@ void TrayIcon::AddIcon() {
 
 void TrayIcon::UpdateIcon() {
   if (!added_) return;
-  HICON fresh = DrawIcon(state_.tunnel_up, state_.connecting);
   NOTIFYICONDATAW nid = {};
   nid.cbSize = sizeof(nid);
   nid.hWnd = owner_;
   nid.uID = kIconId;
   nid.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP;
-  nid.hIcon = fresh;
+  nid.hIcon = CurrentIcon();
   wcsncpy_s(nid.szTip, state_.status.c_str(), _TRUNCATE);
   Shell_NotifyIconW(NIM_MODIFY, &nid);
-  if (icon_) DestroyIcon(icon_);
-  icon_ = fresh;
+}
+
+HICON TrayIcon::CurrentIcon() const {
+  if (state_.connecting) return wink_right_ ? wink_right_icon_ : wink_left_icon_;
+  return state_.tunnel_up ? open_icon_ : closed_icon_;
+}
+
+void TrayIcon::StartWink() {
+  winking_ = true;
+  wink_right_ = false;
+  if (AnimationsEnabled()) SetTimer(owner_, kWinkTimerId, kWinkIntervalMs, nullptr);
+}
+
+void TrayIcon::StopWink() {
+  KillTimer(owner_, kWinkTimerId);
+  winking_ = false;
+  wink_right_ = false;
+}
+
+void TrayIcon::Wink() {
+  wink_right_ = !wink_right_;
+  UpdateIcon();
 }
 
 void TrayIcon::Apply(const flutter::EncodableMap& args) {
@@ -113,10 +149,16 @@ void TrayIcon::Apply(const flutter::EncodableMap& args) {
   state_.can_disconnect = GetBool(args, "can_disconnect");
   state_.tunnel_up = GetBool(args, "tunnel_up");
   state_.connecting = GetBool(args, "connecting");
+  if (state_.connecting && !winking_) StartWink();
+  if (!state_.connecting && winking_) StopWink();
   UpdateIcon();
 }
 
 bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
+  if (message == WM_TIMER && wparam == kWinkTimerId) {
+    Wink();
+    return true;
+  }
   if (message == kTrayMessage) {
     switch (LOWORD(lparam)) {
       case WM_CONTEXTMENU:
@@ -189,89 +231,4 @@ void TrayIcon::ShowMenu() {
                    nullptr);
   PostMessageW(owner_, WM_NULL, 0, 0);
   DestroyMenu(menu);
-}
-
-HICON TrayIcon::DrawIcon(bool filled, bool dot) const {
-  const int size = GetSystemMetrics(SM_CXSMICON) > 0 ? GetSystemMetrics(SM_CXSMICON) : 16;
-
-  BITMAPV5HEADER bi = {};
-  bi.bV5Size = sizeof(bi);
-  bi.bV5Width = size;
-  bi.bV5Height = -size;
-  bi.bV5Planes = 1;
-  bi.bV5BitCount = 32;
-  bi.bV5Compression = BI_BITFIELDS;
-  bi.bV5RedMask = 0x00FF0000;
-  bi.bV5GreenMask = 0x0000FF00;
-  bi.bV5BlueMask = 0x000000FF;
-  bi.bV5AlphaMask = 0xFF000000;
-
-  HDC screen = GetDC(nullptr);
-  void* bits = nullptr;
-  HBITMAP color = CreateDIBSection(screen, reinterpret_cast<BITMAPINFO*>(&bi), DIB_RGB_COLORS,
-                                   &bits, nullptr, 0);
-  HDC dc = CreateCompatibleDC(screen);
-  ReleaseDC(nullptr, screen);
-  if (!color || !dc || !bits) {
-    if (color) DeleteObject(color);
-    if (dc) DeleteDC(dc);
-    return nullptr;
-  }
-  HGDIOBJ old_bitmap = SelectObject(dc, color);
-
-  const COLORREF outline = RGB(40, 40, 40);
-  const COLORREF fill = RGB(255, 255, 255);
-  const double k = size / 16.0;
-  auto px = [k](double v) { return static_cast<int>(v * k + 0.5); };
-
-  HPEN pen = CreatePen(PS_SOLID, std::max(1, px(1.2)), outline);
-  HBRUSH white = CreateSolidBrush(fill);
-  HBRUSH hole = CreateSolidBrush(RGB(0, 0, 0));
-  HGDIOBJ old_pen = SelectObject(dc, pen);
-  HGDIOBJ old_brush = SelectObject(dc, white);
-
-  POINT shield[] = {
-      {px(8), px(1)},  {px(14), px(3.5)}, {px(14), px(8)},  {px(13), px(11)},
-      {px(11), px(13.5)}, {px(8), px(15)},  {px(5), px(13.5)}, {px(3), px(11)},
-      {px(2), px(8)},  {px(2), px(3.5)},
-  };
-  Polygon(dc, shield, static_cast<int>(sizeof(shield) / sizeof(shield[0])));
-  if (!filled) {
-    SelectObject(dc, hole);
-    POINT inner[] = {
-        {px(8), px(3.6)},  {px(12), px(5.2)}, {px(12), px(8)}, {px(11.2), px(10.2)},
-        {px(9.8), px(11.9)}, {px(8), px(12.8)}, {px(6.2), px(11.9)}, {px(4.8), px(10.2)},
-        {px(4), px(8)}, {px(4), px(5.2)},
-    };
-    Polygon(dc, inner, static_cast<int>(sizeof(inner) / sizeof(inner[0])));
-    if (dot) {
-      SelectObject(dc, white);
-      Ellipse(dc, px(6), px(6), px(10.5), px(10.5));
-    }
-  }
-  SelectObject(dc, old_brush);
-  SelectObject(dc, old_pen);
-  DeleteObject(pen);
-  DeleteObject(white);
-  DeleteObject(hole);
-  GdiFlush();
-
-  // GDI leaves alpha at zero.
-  auto* pixels = static_cast<uint32_t*>(bits);
-  for (int i = 0; i < size * size; i++) {
-    if (pixels[i] & 0x00FFFFFF) pixels[i] |= 0xFF000000;
-  }
-
-  SelectObject(dc, old_bitmap);
-  DeleteDC(dc);
-
-  HBITMAP mask = CreateBitmap(size, size, 1, 1, nullptr);
-  ICONINFO ii = {};
-  ii.fIcon = TRUE;
-  ii.hbmColor = color;
-  ii.hbmMask = mask;
-  HICON icon = CreateIconIndirect(&ii);
-  DeleteObject(mask);
-  DeleteObject(color);
-  return icon;
 }
