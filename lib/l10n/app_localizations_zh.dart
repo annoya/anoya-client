@@ -525,6 +525,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get geoUpdateNow => '立即更新';
 
   @override
+  String get geoUpdating => '正在更新…';
+
+  @override
+  String get geoDownloading => '正在下载…';
+
+  @override
   String get geoDownload => '下载（约 25 MB）';
 
   @override
@@ -1818,6 +1824,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ruleSetNameHint => '工作';
+
+  @override
+  String ruleSetNameTaken(String name) {
+    return '已有名为“$name”的规则集';
+  }
 
   @override
   String get ruleSetCreate => '创建';

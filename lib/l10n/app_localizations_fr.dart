@@ -545,6 +545,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get geoUpdateNow => 'Mettre à jour maintenant';
 
   @override
+  String get geoUpdating => 'Mise à jour…';
+
+  @override
+  String get geoDownloading => 'Téléchargement…';
+
+  @override
   String get geoDownload => 'Télécharger (~25 Mo)';
 
   @override
@@ -1890,6 +1896,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ruleSetNameHint => 'Travail';
+
+  @override
+  String ruleSetNameTaken(String name) {
+    return 'Un ensemble nommé « $name » existe déjà';
+  }
 
   @override
   String get ruleSetCreate => 'Créer';

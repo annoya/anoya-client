@@ -113,6 +113,15 @@ class RuleSet {
   };
 }
 
+String? takenRuleSetName(Iterable<String> names, String name) {
+  final wanted = name.trim().toLowerCase();
+  if (wanted.isEmpty) return null;
+  for (final n in names) {
+    if (n.trim().toLowerCase() == wanted) return n.trim();
+  }
+  return null;
+}
+
 class RuleSetStore {
   static final _store = JsonFileStore('rule_sets.json');
 

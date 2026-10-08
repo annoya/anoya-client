@@ -151,6 +151,34 @@ void main() {
       },
     );
 
+    for (final mode in RoutingMode.values) {
+      testWidgets(
+        'saved selections show when the editor opens again (${mode.name})',
+        (tester) async {
+          await writeGeo();
+          await tester.runAsync(
+            () => RuleSetStore.save([
+              RuleSet(
+                id: RuleSet.defaultId,
+                name: 'Default',
+                mode: mode,
+                rules: [
+                  RoutingRule(
+                    type: 'geosite',
+                    values: ['youtube'],
+                    action: mode == RoutingMode.split ? 'proxy' : 'direct',
+                  ),
+                ],
+              ),
+            ]),
+          );
+          await pump(tester);
+          await scrollBy(tester, -400);
+          expect(tester.widget<Switch>(switchOf('YouTube')).value, true);
+        },
+      );
+    }
+
     testWidgets('flipping the direction re-tags the selections', (
       tester,
     ) async {

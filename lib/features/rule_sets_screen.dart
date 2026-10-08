@@ -51,6 +51,11 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
       label: l10n.commonName,
       hint: l10n.ruleSetNameHint,
       confirmLabel: l10n.ruleSetCreate,
+      errorOf: (value) =>
+          switch (takenRuleSetName(_sets.map((s) => s.name), value)) {
+            final taken? => l10n.ruleSetNameTaken(taken),
+            null => null,
+          },
     );
     final trimmed = name?.trim() ?? '';
     if (trimmed.isEmpty) return;

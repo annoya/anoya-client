@@ -235,6 +235,7 @@ Future<String?> promptText(
   bool autocorrect = true,
   String? resetLabel,
   String? resetValue,
+  String? Function(String value)? errorOf,
 }) {
   return showDialog<String>(
     context: context,
@@ -248,6 +249,7 @@ Future<String?> promptText(
       autocorrect: autocorrect,
       resetLabel: resetLabel,
       resetValue: resetValue,
+      errorOf: errorOf,
     ),
   );
 }
@@ -263,6 +265,7 @@ class _TextPromptDialog extends StatefulWidget {
     required this.autocorrect,
     required this.resetLabel,
     required this.resetValue,
+    required this.errorOf,
   });
 
   final String title;
@@ -275,6 +278,7 @@ class _TextPromptDialog extends StatefulWidget {
   final bool autocorrect;
   final String? resetLabel;
   final String? resetValue;
+  final String? Function(String value)? errorOf;
 
   @override
   State<_TextPromptDialog> createState() => _TextPromptDialogState();
@@ -283,7 +287,9 @@ class _TextPromptDialog extends StatefulWidget {
 class _TextPromptDialogState extends State<_TextPromptDialog> {
   late final TextEditingController _controller = TextEditingController(
     text: widget.initial,
-  );
+  )..addListener(() => setState(() {}));
+
+  String? get _error => widget.errorOf?.call(_controller.text);
 
   @override
   void dispose() {
@@ -310,8 +316,11 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
             decoration: InputDecoration(
               labelText: widget.label,
               hintText: widget.hint,
+              errorText: _error,
             ),
-            onSubmitted: (v) => Navigator.of(context).pop(v),
+            onSubmitted: (v) {
+              if (_error == null) Navigator.of(context).pop(v);
+            },
           ),
           if (widget.resetLabel != null)
             Align(
@@ -330,7 +339,9 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
           child: Text(context.l10n.commonCancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(_controller.text),
+          onPressed: _error == null
+              ? () => Navigator.of(context).pop(_controller.text)
+              : null,
           child: Text(widget.confirmLabel),
         ),
       ],

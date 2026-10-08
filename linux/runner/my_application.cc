@@ -6,10 +6,12 @@
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
+#include "tray_icon.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
+  TrayIcon* tray;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
@@ -17,6 +19,19 @@ G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+}
+
+static gboolean window_delete_cb(GtkWidget* window, GdkEvent* event,
+                                 gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (!tray_icon_is_shown(self->tray)) return FALSE;
+  gtk_widget_hide(window);
+  return TRUE;
+}
+
+static void window_destroy_cb(GtkWidget* window, gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  g_clear_pointer(&self->tray, tray_icon_free);
 }
 
 // Implements GApplication::activate.
@@ -80,6 +95,15 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_realize(GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
+
+  g_autoptr(FlPluginRegistrar) tray_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(FL_PLUGIN_REGISTRY(view),
+                                                  "AnoyaTray");
+  self->tray =
+      tray_icon_new(application, window,
+                    fl_plugin_registrar_get_messenger(tray_registrar));
+  g_signal_connect(window, "delete-event", G_CALLBACK(window_delete_cb), self);
+  g_signal_connect(window, "destroy", G_CALLBACK(window_destroy_cb), self);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }

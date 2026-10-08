@@ -552,6 +552,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get geoUpdateNow => 'Обновить сейчас';
 
   @override
+  String get geoUpdating => 'Обновление…';
+
+  @override
+  String get geoDownloading => 'Загрузка…';
+
+  @override
   String get geoDownload => 'Загрузить (~25 МБ)';
 
   @override
@@ -1927,6 +1933,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ruleSetNameHint => 'Работа';
+
+  @override
+  String ruleSetNameTaken(String name) {
+    return 'Набор «$name» уже есть';
+  }
 
   @override
   String get ruleSetCreate => 'Создать';

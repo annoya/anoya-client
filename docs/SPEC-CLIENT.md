@@ -704,6 +704,12 @@ eyes open for a tunnel that is up, closed for down, winking while connecting
 or switching. Pasting from the Windows clipboard history (Win+V) works in every
 text field, like Ctrl+V does.
 
+On Linux the same menu and cat sit behind a **StatusNotifierItem**
+(`linux/runner/tray_icon.cc`, libayatana-appindicator opened at run time) on
+desktops whose panel shows one. There the close button hides the window into
+the tray; where no panel takes the icon — or the library is not installed —
+there is no icon and closing quits, the tunnel staying up either way.
+
 On macOS there is also a **menu bar item** (`NSStatusItem` + `NSMenu`, drawn by
 the system): a status line, show/hide the app, connect, disconnect, quit. It is
 the only view of the tunnel while the window is closed, so closing the window no

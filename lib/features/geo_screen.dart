@@ -193,8 +193,8 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
                           : const Icon(Icons.refresh, size: 18),
                       label: Text(
                         _status.downloaded
-                            ? l10n.geoUpdateNow
-                            : l10n.geoDownload,
+                            ? (_busy ? l10n.geoUpdating : l10n.geoUpdateNow)
+                            : (_busy ? l10n.geoDownloading : l10n.geoDownload),
                       ),
                     ),
                   ),

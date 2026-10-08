@@ -42,10 +42,14 @@ class _RuleSetImportScreenState extends ConsumerState<RuleSetImportScreen> {
     super.dispose();
   }
 
+  String get _effectiveName => _name.text.trim().isEmpty
+      ? L10n.current.ruleSetImportDefaultName
+      : _name.text.trim();
+
+  String? get _taken => takenRuleSetName(widget.takenNames, _effectiveName);
+
   Future<void> _add() async {
-    final name = _name.text.trim().isEmpty
-        ? context.l10n.ruleSetImportDefaultName
-        : _name.text.trim();
+    final name = _effectiveName;
     setState(() => _busy = true);
     final imported = widget.import;
     final set = RuleSet(
@@ -83,7 +87,7 @@ class _RuleSetImportScreenState extends ConsumerState<RuleSetImportScreen> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 16),
           child: FilledButton(
-            onPressed: _busy ? null : _add,
+            onPressed: _busy || _taken != null ? null : _add,
             child: Text(l10n.ruleSetImportAdd),
           ),
         ),
@@ -96,7 +100,14 @@ class _RuleSetImportScreenState extends ConsumerState<RuleSetImportScreen> {
               child: TextField(
                 controller: _name,
                 enabled: !_busy,
-                decoration: InputDecoration(labelText: l10n.commonName),
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  labelText: l10n.commonName,
+                  errorText: switch (_taken) {
+                    final taken? => l10n.ruleSetNameTaken(taken),
+                    null => null,
+                  },
+                ),
               ),
             ),
             Card(
