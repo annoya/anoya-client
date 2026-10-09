@@ -147,9 +147,11 @@ void main() {
       final tile = tester.widget<ListTile>(
         find.widgetWithText(ListTile, title),
       );
-      expect(tile.onTap, isNull, reason: '$title has nowhere to go yet');
+      expect(tile.onTap, isNotNull, reason: '$title opens the published page');
     }
-    expect(find.text('Not published yet'), findsNWidgets(2));
+    expect(find.text('Not published yet'), findsNothing);
+    expect(kTermsUrl, 'https://anoya.io/terms');
+    expect(kPrivacyUrl, 'https://anoya.io/privacy');
   });
 }
 
