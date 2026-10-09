@@ -53,7 +53,7 @@ license in its own repository. The Windows service adds these directly:
 ## libagw
 
 - Source: https://github.com/amnezia-vpn/libagw
-- License: not stated in the repository at the pinned commit (`2f0215b`)
+- License: not stated in the repository at the pinned tag (`v1.0.4`)
 - License Text: —
 
 ---
