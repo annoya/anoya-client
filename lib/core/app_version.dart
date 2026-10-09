@@ -44,5 +44,5 @@ String get engineVersionLabel {
 String get appVersionLabel =>
     _version.isEmpty ? 'unknown' : '$_version ($_build)';
 
-const kTermsUrl = '';
-const kPrivacyUrl = '';
+const kTermsUrl = 'https://anoya.io/terms';
+const kPrivacyUrl = 'https://anoya.io/privacy';

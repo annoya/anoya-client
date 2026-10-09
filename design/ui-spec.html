@@ -1634,14 +1634,16 @@
         <span class="iconbtn"><svg class="icon xs muted"><use href="#i-copy"/></svg></span>
       </div></div>
       <div class="card">
-        <div class="row" style="opacity:.38"><svg class="icon muted"><use href="#i-doc"/></svg>
-          <div class="tx"><div class="t">Terms of Service</div><div class="s">Not published yet</div></div></div>
+        <div class="row one"><svg class="icon muted"><use href="#i-doc"/></svg>
+          <div class="tx"><div class="t">Terms of Service</div></div>
+          <svg class="icon xs muted"><use href="#i-link"/></svg></div>
         <div class="sep"></div>
-        <div class="row" style="opacity:.38"><svg class="icon muted"><use href="#i-lock"/></svg>
-          <div class="tx"><div class="t">Privacy Policy</div><div class="s">Not published yet</div></div></div>
+        <div class="row one"><svg class="icon muted"><use href="#i-lock"/></svg>
+          <div class="tx"><div class="t">Privacy Policy</div></div>
+          <svg class="icon xs muted"><use href="#i-link"/></svg></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">AboutScreen</span><b>A screen with one job — to identify itself.</b> A header with the app icon, name and version: the same thing any “About” shows, and the same thing support asks you to attach to a request. There are no action rows here at all, except copying the version — which is why the header isn't a card either: a card would promise that it can be tapped.<br><br><b>The core version is ours, not what the core reports.</b> In mihomo's sources <code>constant.Version = "1.10.0"</code>: the real string is injected at release build time, and the module keeps a placeholder. Asking the engine would mean showing “1.10.0” instead of the real pin <code>v1.19.28-0.20260626090957-24b6de71fc1c</code>. We take the pin from <code>go.mod</code>; the row shows the version and commit hash, and the button copies the full pin together with the app version. Side benefit: the row is present even when the tunnel is down, no IPC needed.<br><br><b>ToS and Privacy Policy are greyed out with the words “Not published yet”.</b> The documents don't exist yet. A row that looks functional and does nothing reads as broken; a hidden one gives no hint that the item will exist at all. Greyed out with a reason says both — and it will light up by itself once the addresses appear in the constants.</p>
+    <p class="cap"><span class="id">AboutScreen</span><b>A screen with one job — to identify itself.</b> A header with the app icon, name and version: the same thing any “About” shows, and the same thing support asks you to attach to a request. There are no action rows here at all, except copying the version — which is why the header isn't a card either: a card would promise that it can be tapped.<br><br><b>The core version is ours, not what the core reports.</b> In mihomo's sources <code>constant.Version = "1.10.0"</code>: the real string is injected at release build time, and the module keeps a placeholder. Asking the engine would mean showing “1.10.0” instead of the real pin <code>v1.19.28-0.20260626090957-24b6de71fc1c</code>. We take the pin from <code>go.mod</code>; the row shows the version and commit hash, and the button copies the full pin together with the app version. Side benefit: the row is present even when the tunnel is down, no IPC needed.<br><br><b>ToS and Privacy Policy open in the browser</b> — anoya.io/terms and anoya.io/privacy, with the external-link mark on the right because they leave the app. Without an address in the constants a row greys out with “Not published yet”: a row that looks functional and does nothing reads as broken.</p>
   </div>
 
   <div class="board">
