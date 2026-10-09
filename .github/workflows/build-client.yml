@@ -347,7 +347,13 @@ jobs:
             name="$(basename "$dir")"
             files=("$dir"*)
             if [ "${#files[@]}" -eq 1 ] && [ -f "${files[0]}" ]; then
-              cp "${files[0]}" dist/
+              file="$(basename "${files[0]}")"
+              case "$file" in
+                *.pkg.tar.zst) ext=.pkg.tar.zst ;;
+                *.tar.gz) ext=.tar.gz ;;
+                *) ext=".${file##*.}" ;;
+              esac
+              cp "${files[0]}" "dist/$name$ext"
             else
               (cd "$dir" && zip -qr "$GITHUB_WORKSPACE/dist/$name.zip" .)
             fi
