@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/amnezia/amnezia_account.dart';
+import 'package:anoya/core/app_prefs.dart';
 import 'package:anoya/core/cloud_sync.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
@@ -124,7 +125,7 @@ void main() {
     if (theme != null) {
       File(
         '${dir.path}/app_prefs.json',
-      ).writeAsStringSync(jsonEncode({'theme_mode': theme}));
+      ).writeAsStringSync(jsonEncode({'theme_mode': theme, 'language': 'ru'}));
     }
   }
 
@@ -392,7 +393,12 @@ void main() {
       b.read(profilesControllerProvider).profiles.map((p) => p.id),
       unorderedEquals(['pa', 'pb']),
     );
-    expect(b.read(appPrefsProvider).themeMode, ThemeMode.dark);
+    expect(b.read(appPrefsProvider).language, AppLanguage.ru);
+    expect(
+      b.read(appPrefsProvider).themeMode,
+      ThemeMode.system,
+      reason: 'the appearance belongs to each device',
+    );
     await close(b);
 
     final a = await open(deviceA);

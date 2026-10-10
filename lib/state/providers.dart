@@ -46,9 +46,9 @@ class AppPrefsController extends Notifier<AppPrefs> with ReadyGate {
     return _save((p) => p.copyWith(collectLogs: value));
   }
 
-  Future<void> replace(AppPrefs prefs) {
-    Log.enabled = prefs.collectLogs;
-    return _save((_) => prefs);
+  Future<void> adoptSynced(AppPrefs synced) {
+    Log.enabled = synced.collectLogs;
+    return _save((p) => synced.copyWith(themeMode: p.themeMode));
   }
 
   Future<void> _save(AppPrefs Function(AppPrefs) change) async {

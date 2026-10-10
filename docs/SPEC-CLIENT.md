@@ -521,9 +521,9 @@ On iOS and macOS a switch in Settings → General, off by default and per device
 syncs configurations and settings through iCloud key-value storage. A
 configuration travels as what another device cannot fetch for itself — its
 source, credentials and routing choices — and that device fetches the servers.
-Rule sets, on-demand rules, favorites, appearance, language, log collection, the
-routing and DNS defaults and the connection check travel whole. The active
-configuration and server, auto-connect, on-demand arming, issued Amnezia
+Rule sets, on-demand rules, favorites, language, log collection, the routing
+and DNS defaults and the connection check travel whole. The appearance, the
+active configuration and server, auto-connect, on-demand arming, issued Amnezia
 servers, device identity, geo databases and logs stay on the device. Every
 value is sealed with a key that lives in iCloud Keychain. See ADR-020.
 

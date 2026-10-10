@@ -119,7 +119,7 @@ abstract final class SyncItem {
 Future<Map<String, Object>> localSyncItems() async {
   final onDemand = await OnDemandStore.load();
   return {
-    SyncItem.app: (await AppPrefsStore.load()).toJson(),
+    SyncItem.app: (await AppPrefsStore.load()).toJson()..remove('theme_mode'),
     SyncItem.routing: (await RoutingPrefsStore.load()).toJson()
       ..remove('geo_updated_at'),
     SyncItem.check: (await ConnectionCheckStore.load()).toJson(),

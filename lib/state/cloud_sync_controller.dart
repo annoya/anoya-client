@@ -296,7 +296,7 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
         case SyncItem.app:
           await ref
               .read(appPrefsProvider.notifier)
-              .replace(AppPrefs.fromJson(json));
+              .adoptSynced(AppPrefs.fromJson(json));
         case SyncItem.routing:
           await ref
               .read(routingPrefsProvider.notifier)
