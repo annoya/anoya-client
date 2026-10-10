@@ -24,6 +24,27 @@ void main() {
     expect((p['reality-opts'] as Map)['short-id'], 'abcd');
   });
 
+  test('raw is the newer Xray name for tcp, and runs as tcp', () {
+    final loc = parseProxyUri(
+      'vless://11111111-2222-3333-4444-555555555555@1.2.3.4:443'
+      '?encryption=none&type=raw&security=reality&sni=example.cz&fp=chrome'
+      '&pbk=PUBKEY&sid=abcd#Raw',
+    );
+    expect(loc, isNotNull, reason: 'a raw link is a working tcp link');
+    expect(loc!.proxy['network'], 'tcp');
+    expect((loc.proxy['reality-opts'] as Map)['public-key'], 'PUBKEY');
+
+    final xray = parseSubscriptionBody(
+      '''
+[{"remarks": "Raw", "outbounds": [{"tag": "proxy", "protocol": "vless",
+  "settings": {"vnext": [{"address": "de.example", "port": 443,
+    "users": [{"id": "uuid-1", "encryption": "none"}]}]},
+  "streamSettings": {"network": "raw", "security": "reality",
+    "realitySettings": {"publicKey": "PK", "shortId": "s1", "serverName": "www.example"}}}]}]''',
+    );
+    expect(xray.locations.single.proxy['network'], 'tcp');
+  });
+
   test('vless ws+tls link', () {
     final loc = parseProxyUri(
       'vless://uuid-x@example.com:443?security=tls&type=ws&path=/vpn&host=cdn.example.com&sni=cdn.example.com',

@@ -403,11 +403,11 @@ fetched keep working.
   containing several. A `vless://` or `trojan://` whose payload is base64 is
   read too, in both forms panels emit: the URI body encoded (`uuid@host:port?…`,
   the name inside or after the `#`) and, for vless, the vmess-style JSON
-  object. Transports: plain tcp, tcp with an HTTP header, ws,
-  httpupgrade, grpc, h2 and xhttp — each mapped to how the engine expresses it,
-  which for two of them differs from the URI (an HTTP header makes it the
-  engine's `http` network; httpupgrade is a websocket with the handshake
-  skipped).
+  object. Transports: plain tcp (also under Xray's newer name, raw), tcp with
+  an HTTP header, ws, httpupgrade, grpc, h2 and xhttp — each mapped to how the
+  engine expresses it, which for three of them differs from the URI (raw is
+  the engine's `tcp`; an HTTP header makes it the engine's `http` network;
+  httpupgrade is a websocket with the handshake skipped).
 
   A server the engine cannot run is **counted and named**, never quietly
   dropped or degraded to plain tcp: the source's own count is what the user saw
