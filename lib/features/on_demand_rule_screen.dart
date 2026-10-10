@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -28,31 +27,18 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
   late final TextEditingController _probe = TextEditingController(
     text: widget.rule.probeUrl,
   );
-  Timer? _debounce;
-
   @override
   void dispose() {
-    if (_debounce?.isActive ?? false) {
-      _debounce!.cancel();
-      ref.read(onDemandProvider.notifier).upsertRule(_rule);
-    }
     _name.dispose();
     _probe.dispose();
     super.dispose();
   }
 
-  Future<void> _update(OnDemandRule rule) async {
-    _debounce?.cancel();
-    setState(() => _rule = rule);
-    await ref.read(onDemandProvider.notifier).upsertRule(rule);
-  }
+  void _update(OnDemandRule rule) => setState(() => _rule = rule);
 
-  void _updateDebounced(OnDemandRule rule) {
-    setState(() => _rule = rule);
-    _debounce?.cancel();
-    _debounce = Timer(kTextEditDebounce, () {
-      ref.read(onDemandProvider.notifier).upsertRule(_rule);
-    });
+  Future<void> _save() async {
+    await ref.read(onDemandProvider.notifier).upsertRule(_rule);
+    if (mounted) Navigator.of(context).pop();
   }
 
   Future<void> _pickAction() async {
@@ -79,7 +65,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
         ),
       ],
     );
-    if (picked != null) await _update(_rule.copyWith(action: picked));
+    if (picked != null) _update(_rule.copyWith(action: picked));
   }
 
   Widget _conditionRow({
@@ -146,7 +132,15 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const CloseButton(),
         title: Text(widget.isNew ? l10n.onDemandNewRule : l10n.ruleEdit),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            tooltip: l10n.commonSave,
+            onPressed: _save,
+          ),
+        ],
       ),
       body: PageBody(
         child: ListView(
@@ -162,8 +156,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                   labelText: l10n.onDemandNameOptional,
                   hintText: l10n.onDemandNameHint,
                 ),
-                onChanged: (v) =>
-                    _updateDebounced(_rule.copyWith(name: v.trim())),
+                onChanged: (v) => _update(_rule.copyWith(name: v.trim())),
               ),
             ),
             const SizedBox(height: 8),
@@ -248,8 +241,7 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
                   labelText: l10n.onDemandUrlOptional,
                   hintText: 'https://intranet.example.com/ping',
                 ),
-                onChanged: (v) =>
-                    _updateDebounced(_rule.copyWith(probeUrl: v.trim())),
+                onChanged: (v) => _update(_rule.copyWith(probeUrl: v.trim())),
               ),
             ),
             _hint(l10n.onDemandUrlProbeHelp),
