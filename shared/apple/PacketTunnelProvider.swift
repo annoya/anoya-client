@@ -85,31 +85,65 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             }
             // Applying the config overwrites the log level from the YAML.
             self.applyEngineLogLevel(self.logEnabled)
-            self.log("mihomo started; tunnel up")
+            self.log("mihomo started; tunnel up · \(Self.memoryFootprint())")
+            self.startMemoryLog()
             completionHandler(nil)
         }
     }
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
-        log("stopTunnel: reason \(reason.rawValue)")
+        log("stopTunnel: \(Self.stopReasonName(reason)) (\(reason.rawValue)) · \(Self.memoryFootprint())")
+        memoryTimer?.cancel()
+        memoryTimer = nil
         tunFd = -1
         MihomoStop()
         completionHandler()
     }
 
-    private static let wakeSettleSeconds = 3.0
+    override func sleep(completionHandler: @escaping () -> Void) {
+        log("sleep · \(Self.memoryFootprint())")
+        completionHandler()
+    }
 
     override func wake() {
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + Self.wakeSettleSeconds) { [weak self] in
-            guard let self, self.tunFd > 0 else { return }
-            let failure = "wake".withCString { reason -> String? in
-                guard let res = MihomoRecover(UnsafeMutablePointer(mutating: reason)) else { return nil }
-                defer { FreeCString(res) }
-                let message = String(cString: res)
-                return message.isEmpty ? nil : message
+        log("wake · \(Self.memoryFootprint())")
+    }
+
+    private static let memoryLogInterval = DispatchTimeInterval.seconds(600)
+
+    private var memoryTimer: DispatchSourceTimer?
+
+    private func startMemoryLog() {
+        memoryTimer?.cancel()
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        timer.schedule(deadline: .now() + Self.memoryLogInterval, repeating: Self.memoryLogInterval)
+        timer.setEventHandler { [weak self] in self?.log("memory: \(Self.memoryFootprint())") }
+        timer.resume()
+        memoryTimer = timer
+    }
+
+    private static func memoryFootprint() -> String {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let status = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
             }
-            self.log(failure == nil ? "wake: engine reloaded" : "wake: engine reload failed")
         }
+        guard status == KERN_SUCCESS else { return "memory unknown" }
+        return String(format: "%.1f MB", Double(info.phys_footprint) / 1_048_576)
+    }
+
+    private static let stopReasonNames = [
+        "none", "userInitiated", "providerFailed", "noNetworkAvailable", "unrecoverableNetworkChange",
+        "providerDisabled", "authenticationCanceled", "configurationFailed", "idleTimeout",
+        "configurationDisabled", "configurationRemoved", "superceded", "userLogout", "userSwitch",
+        "connectionFailed", "sleep", "appUpdate", "internalError",
+    ]
+
+    private static func stopReasonName(_ reason: NEProviderStopReason) -> String {
+        let raw = reason.rawValue
+        return raw >= 0 && raw < stopReasonNames.count ? stopReasonNames[raw] : "unknown"
     }
 
     private static let tunnelOutbound = "PROXY"
