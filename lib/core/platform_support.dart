@@ -17,6 +17,8 @@ bool get supportsBootAutoConnect => switch (defaultTargetPlatform) {
   _ => false,
 };
 
+bool get canShareFiles => defaultTargetPlatform != TargetPlatform.linux;
+
 bool get hasAutoConnect => switch (defaultTargetPlatform) {
   TargetPlatform.macOS ||
   TargetPlatform.iOS ||

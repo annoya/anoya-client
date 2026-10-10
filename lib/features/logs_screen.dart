@@ -9,6 +9,7 @@ import '../core/app_error.dart';
 import '../core/ext_logs.dart';
 import '../core/log.dart';
 import '../core/log_archive.dart';
+import '../core/platform_support.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
@@ -35,18 +36,24 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
   Future<void> _save() async {
     final l10n = context.l10n;
-    final where = await pickOption<_SaveTo>(
-      context,
-      title: l10n.logsSaveAll,
-      options: [
-        Option(
-          _SaveTo.file,
-          l10n.logsSaveToFile,
-          subtitle: l10n.logsSaveToFileSubtitle,
-        ),
-        Option(_SaveTo.share, l10n.logsShare, subtitle: l10n.logsShareSubtitle),
-      ],
-    );
+    final where = canShareFiles
+        ? await pickOption<_SaveTo>(
+            context,
+            title: l10n.logsSaveAll,
+            options: [
+              Option(
+                _SaveTo.file,
+                l10n.logsSaveToFile,
+                subtitle: l10n.logsSaveToFileSubtitle,
+              ),
+              Option(
+                _SaveTo.share,
+                l10n.logsShare,
+                subtitle: l10n.logsShareSubtitle,
+              ),
+            ],
+          )
+        : _SaveTo.file;
     if (where == null || !mounted) return;
 
     setState(() => _busy = true);

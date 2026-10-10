@@ -14,6 +14,7 @@ import '../core/geo_store.dart';
 import '../core/geosite_index.dart';
 import '../core/log.dart';
 import '../core/norm_config.dart';
+import '../core/platform_support.dart';
 import '../core/rule_set.dart';
 import '../core/rule_set_transfer.dart';
 import '../core/service_avatar.dart';
@@ -88,12 +89,13 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       context,
       title: l10n.ruleSetExportTitle(_name),
       options: [
-        Option(
-          _ExportTo.share,
-          l10n.ruleSetExportShare,
-          subtitle: l10n.ruleSetExportShareSubtitle,
-          leading: const Icon(Icons.share_outlined),
-        ),
+        if (canShareFiles)
+          Option(
+            _ExportTo.share,
+            l10n.ruleSetExportShare,
+            subtitle: l10n.ruleSetExportShareSubtitle,
+            leading: const Icon(Icons.share_outlined),
+          ),
         Option(
           _ExportTo.file,
           l10n.ruleSetExportSave,
