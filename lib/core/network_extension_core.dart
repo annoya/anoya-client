@@ -85,7 +85,8 @@ class NetworkExtensionCore implements VpnCore {
   @override
   Future<void> disconnect() async {
     try {
-      await _control.invoke<void>('stop');
+      final failure = await _control.invoke<String>('stop');
+      if (failure != null && failure.isNotEmpty) Log.e('NE stop', failure);
     } on PlatformException catch (e) {
       Log.e('NE stop failed', e.message ?? e.code);
     } on MissingPluginException {

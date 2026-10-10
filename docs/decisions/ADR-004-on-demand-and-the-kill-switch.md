@@ -38,6 +38,18 @@ The state model has three distinct facts, deliberately kept apart:
   only accepts on-demand once there is a tunnel configuration to start from,
   which is why the state "enabled but not yet armed" exists and is shown.
 
+**The VPN profile is written one change at a time, from what the system
+holds.** Starting, syncing the config, hot reloads, arming, disarming for a
+manual stop and removal all go through one queue in `VPNManager`, and each
+reloads the profile from the system before changing it. Two writes at once
+fail with `IPC failed`; and a write that failed used to leave the in-memory
+profile saying what was never saved — on-demand "off" while the system still
+had it on — so the next manual stop saw nothing to disarm, stopped the tunnel,
+and the rules brought it straight back, over and over. A failed write now
+reloads the profile, and a manual stop retries the disarm once before giving
+up and says so in the app log. The app sends its on-demand changes in the
+order they were made, so the last one is what the system ends up with.
+
 **The rendered engine config is persisted into `providerConfiguration`,** not
 only passed in start options. An on-demand start comes from the OS with no
 options at all; without the persisted copy the extension would have nothing to
@@ -105,6 +117,8 @@ app does not have (ADR-005), with nowhere to decline it.
   "paused", "armed but not accepted by the system" and "working" are four
   different states and the UI names all four.
 - A manual disconnect always wins over on-demand until the user connects again.
+- On-demand changes reach the system one at a time and in order; the last one
+  sticks (`test/on_demand_order_test.dart`).
 - The persisted config is updated whenever the effective config changes
   (configuration added or switched, location changed, subscription refreshed,
   routing changed) — an on-demand restart must not resurrect a stale config.
@@ -161,7 +175,7 @@ affects it, and a second write path is one more thing to keep in step.
 - `lib/state/session.dart` — status and the session start time.
 - `lib/features/on_demand_screen.dart` and the rule/value screens.
 - `shared/apple/VPNManager.swift` — `setOnDemand`, rule compilation,
-  `persist` into `providerConfiguration`.
+  `persist` into `providerConfiguration`, `exclusively` (the write queue).
 - `lib/features/home_screen.dart` — the `Auto` chip and the explanatory
   banner.
 - `lib/state/auto_connect_controller.dart` and the switch in
