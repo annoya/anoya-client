@@ -1965,7 +1965,7 @@
           <div class="tx"><div class="t">Show a QR code</div><div class="s">Scan it in Anoya on another device</div></div></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">RuleSetEditorScreen · export</span><b>Export is ours only.</b> A share icon in the editor’s app bar, before delete, opens one sheet. Every option carries the same thing — the Anoya rule set: name, direction, rules in order, every rule type including processes and lists. We do not write other apps’ formats: each would lose something silently, and a set exported to be imported back must come back whole. The file is JSON with a format version (<code>anoya_ruleset: 1</code>); the clipboard and QR carry it compressed as <code>anoya://ruleset/add/…</code>, which the import above reads from any of its sources. The default set exports too — it is the one most worth copying to a new device.</p>
+    <p class="cap"><span class="id">RuleSetEditorScreen · export</span><b>Export is ours only.</b> A share icon in the editor’s app bar, before delete, opens one sheet. Every option carries the same thing — the Anoya rule set: name, direction, rules in order, every rule type including processes and lists. We do not write other apps’ formats: each would lose something silently, and a set exported to be imported back must come back whole. The file is JSON with a format version (<code>anoya_ruleset: 1</code>); the clipboard and QR carry it compressed as <code>anoya://ruleset/add/…</code>, which the import above reads from any of its sources. The default set exports too — it is the one most worth copying to a new device. On Linux the “Share” row is absent: there is no system share sheet for files there.</p>
   </div>
 
   <div class="board">
@@ -2724,7 +2724,7 @@ time="13:29:05" level=info msg="[TCP] 10.0.0.4:52320 --> api.telegram.org:443 ma
         <div class="acts"><span class="act txt">Cancel</span><span class="act fill">Clear</span></div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">LogsScreen · destination</span><b>Where to save.</b> The button does not decide for the user: a regular choice sheet with two items. “Save to file…” opens the system save dialog (on macOS — the “Save As” window, on iOS — “Files”), “Share…” hands the archive to the system share sheet. The order is: a file is what was asked for, “share” is what is convenient for sending to support.</p>
+    <p class="cap"><span class="id">LogsScreen · destination</span><b>Where to save.</b> The button does not decide for the user: a regular choice sheet with two items. “Save to file…” opens the system save dialog (on macOS — the “Save As” window, on iOS — “Files”), “Share…” hands the archive to the system share sheet. The order is: a file is what was asked for, “share” is what is convenient for sending to support.<br><br><b>Linux has no share sheet for files</b>, so there the sheet is skipped and the button opens the save dialog straight away: a sheet with one item is a step that decides nothing.</p>
   </div>
 
   <div class="board">
