@@ -20,10 +20,12 @@ const kTransportsByProtocol = {
 
 String? applyTransport(
   Map<String, dynamic> proxy,
-  String net,
+  String requested,
   Map<String, String> q, {
   required String protocol,
 }) {
+  final net = requested == 'raw' ? 'tcp' : requested;
+  if (net != requested) proxy['network'] = net;
   final allowed = kTransportsByProtocol[protocol];
   if (allowed != null && !allowed.contains(net)) {
     return net.isEmpty ? 'tcp' : net;
