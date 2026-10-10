@@ -35,12 +35,10 @@ closes the tracked connections — exactly what a location switch does. No
 `stop`/`start`, no `setTunnelNetworkSettings`. The log level is restored
 afterwards, because applying a config overwrites it from the YAML.
 
-**Two triggers.**
-
-- `wake()` in the packet-tunnel provider, three seconds after the system
-  resumes, so the physical interface has settled.
-- A watchdog inside the engine, for everything `wake()` does not see — the
-  failure above began during a dark wake, with the lid still closed.
+**One trigger: a watchdog inside the engine.** It sees the failure above
+whenever it happens — the failure began during a dark wake, with the lid still
+closed — and it reloads only a tunnel that has actually stopped answering. The
+provider's `sleep()` and `wake()` only write a line to the tunnel log.
 
 **The watchdog judges only connections through `PROXY`, and only by bytes that
 came back** (ADR-010). Once a second it samples the trackers whose chain holds
@@ -65,8 +63,8 @@ gets a reload every ten minutes and a line in the log each time, not a loop.
 - Upload alone never counts as an answer. Pinned by the detector tests in
   `engine/watchdog_test.go`.
 - `Recover` refuses when nothing is running
-  (*TestRecoverWithoutARunningEngineRefuses*), so a wake after a stop cannot
-  start anything.
+  (*TestRecoverWithoutARunningEngineRefuses*), so a watchdog tick after a stop
+  cannot start anything.
 
 ## Alternatives Considered
 
@@ -88,6 +86,17 @@ automatically, possibly every few minutes.
 Rejected as not enough on the evidence: every connection in the failed window
 was new, and every one of them died. What cured it was rebuilding the engine's
 state, so that is what recovery does.
+
+### Reload on every `wake()`
+
+What the provider did, three seconds after each wake. Rejected after an iPhone
+log: iOS wakes the extension all the time — 6–9 times an hour by day, 40–69 by
+night, 471 reloads in a day — and every reload closed every proxied connection
+and rebuilt the WireGuard device, so calls, downloads and messengers' long
+connections dropped about once a minute overnight. The watchdog, which reloads
+only on evidence, never fired in the same log. Other clients leave the engine
+alone on wake: ClashMetaForAndroid's screen-off/screen-on hook is empty on
+purpose, and sing-box for Apple only pauses and resumes its service.
 
 ### Trigger on `NWPathMonitor` as well
 
@@ -131,6 +140,6 @@ line after `[recover]` in a real log is what confirms that a reload is enough.
 
 - `native/mihomocore/engine/watchdog.go` — the detector and its loop.
 - `native/mihomocore/engine/engine.go` — `Recover`, the remembered config.
-- `native/mihomocore/core.go` — `MihomoRecover`.
-- `shared/apple/PacketTunnelProvider.swift` — `wake()`.
+- `shared/apple/PacketTunnelProvider.swift` — `sleep()` and `wake()`, logging
+  only.
 - Tests: `native/mihomocore/engine/watchdog_test.go`.

@@ -45,14 +45,6 @@ func MihomoReload(fd C.int, configJSON *C.char) *C.char {
 	return C.CString("")
 }
 
-//export MihomoRecover
-func MihomoRecover(reason *C.char) *C.char {
-	if err := engine.Recover(C.GoString(reason)); err != nil {
-		return C.CString(err.Error())
-	}
-	return C.CString("")
-}
-
 //export MihomoStop
 func MihomoStop() {
 	engine.Stop()

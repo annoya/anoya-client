@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_version.dart';
+import 'core/log.dart';
 import 'core/secret_store.dart';
 import 'core/theme.dart';
 import 'core/ui.dart';
@@ -22,6 +23,8 @@ class VpnApp extends ConsumerStatefulWidget {
 class _VpnAppState extends ConsumerState<VpnApp> {
   final _navigator = GlobalKey<NavigatorState>();
   final _messenger = GlobalKey<ScaffoldMessengerState>();
+  late final AppLifecycleListener _lifecycle;
+  String _lastDisconnect = '';
 
   @override
   void initState() {
@@ -29,12 +32,22 @@ class _VpnAppState extends ConsumerState<VpnApp> {
     ref.read(menuBarProvider);
     ref.read(cloudSyncProvider);
     SecretStore.instance.usingFile.addListener(_secretsInFile);
+    _lifecycle = AppLifecycleListener(onResume: _logLastDisconnect);
+    _logLastDisconnect();
   }
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     SecretStore.instance.usingFile.removeListener(_secretsInFile);
     super.dispose();
+  }
+
+  Future<void> _logLastDisconnect() async {
+    final reason = await ref.read(vpnCoreProvider).lastDisconnectError();
+    if (!mounted || reason.isEmpty || reason == _lastDisconnect) return;
+    _lastDisconnect = reason;
+    Log.i('the system reports the last disconnect as: $reason');
   }
 
   void _secretsInFile() {
