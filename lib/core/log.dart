@@ -65,9 +65,11 @@ class Log {
 
   static void _add(String level, String raw) {
     final msg = redact(raw);
+    final stamp = DateTime.now().toUtc().toIso8601String();
+    final at = '${stamp.substring(0, 23)}Z';
     final line = _context.isEmpty
-        ? '[$level] $msg'
-        : '[$level] $_context: $msg';
+        ? '$at [$level] $msg'
+        : '$at [$level] $_context: $msg';
     developer.log(msg, name: 'vpn');
     if (kDebugMode) debugPrint('vpn $line');
     if (!enabled) return;

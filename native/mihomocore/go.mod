@@ -58,7 +58,7 @@ require (
 	github.com/metacubex/amneziawg-go v0.0.0-20260816073447-736a78668832 // indirect
 	github.com/metacubex/ascon v0.1.0 // indirect
 	github.com/metacubex/bart v0.29.0 // indirect
-	github.com/metacubex/bbolt v0.0.0-20260706163408-d4ec34ad7c48 // indirect
+	github.com/metacubex/bbolt v0.0.0-20260706163408-d4ec34ad7c48
 	github.com/metacubex/blake3 v0.1.0 // indirect
 	github.com/metacubex/chacha v0.1.5 // indirect
 	github.com/metacubex/chi v0.1.1 // indirect

@@ -14,6 +14,17 @@ import 'package:anoya/core/mihomo_tun_config.dart';
 import 'package:anoya/core/norm_config.dart';
 
 void main() {
+  test('every line says when it happened, in UTC like the tunnel log', () {
+    Log.i('stamped');
+    final line = Log.dump().split('\n').lastWhere((l) => l.contains('stamped'));
+    expect(
+      line,
+      matches(
+        RegExp(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z \[INFO\] stamped$'),
+      ),
+    );
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
