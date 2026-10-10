@@ -80,10 +80,19 @@ class OnDemandController extends Notifier<OnDemandPrefs> with ReadyGate {
     await _apply(state.copyWith(rules: rules));
   }
 
+  Future<void> _systemTail = Future.value();
+
   Future<void> _apply(OnDemandPrefs prefs) async {
     await ready;
     state = prefs;
     await OnDemandStore.save(prefs);
+    final turn = _systemTail.then((_) => _applyToSystem());
+    _systemTail = turn.then((_) {}, onError: (_) {});
+    await turn;
+  }
+
+  Future<void> _applyToSystem() async {
+    final prefs = state;
     bool armed = false;
     try {
       final profiles = ref.read(profilesControllerProvider);

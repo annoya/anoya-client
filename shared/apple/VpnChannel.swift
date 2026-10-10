@@ -27,8 +27,7 @@ enum VpnChannel {
                 }
             case "stop":
                 Task { @MainActor in
-                    await VPNManager.shared.stop()
-                    result(nil)
+                    result(await VPNManager.shared.stop())
                 }
             case "set_on_demand":
                 let args = call.arguments as? [String: Any] ?? [:]
