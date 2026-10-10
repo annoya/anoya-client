@@ -195,22 +195,56 @@ class AgwConfig {
 }
 
 class AgwClient {
-  AgwClient(this.config, {this.timeout = const Duration(seconds: 45)});
+  AgwClient(this.config);
 
   final AgwConfig config;
-  final Duration timeout;
 
   String state = '';
+
+  Future<void> _tail = Future.value();
+  int _generation = 0;
+  int? _running;
+
+  void cancelAll() {
+    _generation++;
+    final running = _running;
+    if (running != null) _Bindings.instance.cancelCancel(running);
+  }
 
   Future<AgwResponse> post(
     String endpoint,
     Map<String, dynamic> payload, {
     String serviceType = '',
     String userCountryCode = '',
+  }) {
+    final generation = _generation;
+    final turn = _tail.then(
+      (_) => _post(
+        endpoint,
+        payload,
+        serviceType: serviceType,
+        userCountryCode: userCountryCode,
+        generation: generation,
+      ),
+    );
+    _tail = turn.then((_) {}, onError: (_) {});
+    return turn;
+  }
+
+  Future<AgwResponse> _post(
+    String endpoint,
+    Map<String, dynamic> payload, {
+    required String serviceType,
+    required String userCountryCode,
+    required int generation,
   }) async {
-    // `post` blocks the worker isolate's only thread, so a timer there never fires.
+    if (generation != _generation) {
+      return const AgwResponse(AgwStatus.cancelled, '');
+    }
+    // `post` blocks the worker isolate's only thread, so only this isolate can cancel it.
     final b = _Bindings.instance;
     final cancel = b.cancelCreate();
+    _running = cancel;
     final call = _AgwCall(
       configJson: jsonEncode(config.toJson()),
       state: state,
@@ -222,13 +256,12 @@ class AgwClient {
       }),
       cancel: cancel,
     );
-    final watchdog = Timer(timeout, () => b.cancelCancel(cancel));
     try {
       final result = await Isolate.run(() => _postSync(call));
       if (result.state.isNotEmpty) state = result.state;
       return AgwResponse(result.code, result.body);
     } finally {
-      watchdog.cancel();
+      _running = null;
       b.cancelDestroy(cancel);
     }
   }

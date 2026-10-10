@@ -25,6 +25,8 @@ class AmneziaGateway {
 
   static Future<void>? _restored;
 
+  static void cancelRunning() => _shared.cancelAll();
+
   Future<AgwResponse> _post(
     String endpoint,
     Map<String, dynamic> payload, {

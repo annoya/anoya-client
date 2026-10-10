@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
 import '../core/amnezia/vpn_key.dart';
+import '../core/amnezia/gateway.dart';
 import '../core/app_error.dart';
 import '../core/cloud_sync.dart';
 import '../core/config_source.dart';
@@ -535,6 +536,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     if (state.preparing) {
       _connectRun++;
       _connecting = null;
+      AmneziaGateway.cancelRunning();
       state = state.copyWith(preparing: false, notice: state.notice);
       if (!_tunnelRequested) {
         Log.i('connect cancelled before the tunnel was asked to start');

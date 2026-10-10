@@ -54,9 +54,23 @@ would fail exactly where a user needs it most.
 already holds a Go runtime in the tunnel process and two cannot share one. On
 Apple it is a static archive in an xcframework, referenced once from Swift so
 the linker keeps it; on Android a plain `.so` in `jniLibs`. Calls block for the
-whole failover sweep, so they run in an isolate with a deadline of our own,
-enforced through the library's cancel handle — a timer inside the worker would
-never run, because the blocking call owns that isolate's only thread.
+whole failover sweep, so they run in a worker isolate.
+
+**A sweep runs until it finds a working proxy or runs out of them — no
+deadline of ours.** Each step carries the library's own timeout (12 s a
+request, 3 s a storage, 1 s a health check), so a sweep always ends; its length
+is set by how many storages and proxies there are, and where they are all
+blocked that is minutes. A deadline cut it before it reached the proxies, so
+nothing was learned and the next call started the same sweep again — while
+AmneziaVPN, with no deadline, got through. What stops a sweep is the user:
+cancelling a connect cancels the call in flight through the library's cancel
+handle, from the main isolate, because the blocking call owns the worker's only
+thread.
+
+**Calls take turns.** One runs at a time and starts from the state the previous
+one left, so a config request right after an account request goes straight to
+the proxy the first one found instead of sweeping in parallel. Calls queued
+behind a cancelled connect are dropped without starting.
 
 **The library's state outlives the process.** What a sweep learns — the
 working proxy and the proxy lists — comes back as an opaque state blob after
@@ -168,6 +182,14 @@ afternoon. The failover is not: it resolves an encrypted proxy list from S3,
 health-checks a pool and replays the request through each candidate, with
 heuristics for what "blocked" looks like. A second implementation of that would
 diverge from theirs and fail in the one situation it exists for.
+
+### A deadline on gateway calls
+
+What the app had (45 s). Rejected: with seven storage hosts — fourteen list
+objects for a premium key — and every one blocked, the storage step alone
+takes 42 s, so the deadline fired before a single proxy
+was tried, and the cached proxy list was never reached. AmneziaVPN's
+controller has none.
 
 ### Merge libagw into the engine's Go module
 
