@@ -31,7 +31,7 @@ store.
   synced. Without an iCloud account the row is dimmed and says so.
 - **Transport: `NSUbiquitousKeyValueStore`.** One key per item, so concurrent
   edits of different things on two devices do not overwrite each other:
-  `app` (appearance, language, log collection), `routing` (LAN direct, DNS
+  `app` (language, log collection), `routing` (LAN direct, DNS
   default, geo database URLs and auto-update), `check` (connection check),
   `on_demand` (the rules), `favorites`, `rule_set.<id>`, `profile.<id>`. Within
   one key the last write wins.
@@ -57,8 +57,9 @@ store.
   provider-routing switches, refresh interval) — and the servers themselves
   only for a pasted link or pasted subscription, which have no source to
   re-read. The receiving device fetches everything else as a refresh.
-- **Per device, never sent:** the active configuration and server,
-  auto-connect, whether on-demand is armed or paused, disconnect-on-sleep, the
+- **Per device, never sent:** the appearance — a phone in dark mode and a
+  Mac in light are a choice per screen, not a setting to carry —, the active
+  configuration and server, auto-connect, whether on-demand is armed or paused, disconnect-on-sleep, the
   device's hardware id, the gateway installation id and state, servers the
   Amnezia gateway issued, geo databases and their download time, logs.
 - **Turning it on merges.** Configurations and rule sets from both sides end

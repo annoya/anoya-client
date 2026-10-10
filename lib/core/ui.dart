@@ -126,12 +126,15 @@ void showToastWith(ScaffoldMessengerState messenger, String message) {
   messenger.showSnackBar(
     SnackBar(
       duration: const Duration(seconds: 3),
-      content: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: messenger.hideCurrentSnackBar,
-        child: SizedBox(
-          width: double.infinity,
-          child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+      content: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: messenger.hideCurrentSnackBar,
+          child: SizedBox(
+            width: double.infinity,
+            child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+          ),
         ),
       ),
     ),
@@ -367,6 +370,10 @@ const kTextEditDebounce = Duration(milliseconds: 600);
 const double kSheetMaxHeightFraction = 0.8;
 
 const double kStatusChipHeight = 30;
+
+const double kRingFocusGap = 4;
+
+const double kRingFocusWidth = 2;
 
 const double kQrViewfinder = 248;
 

@@ -100,14 +100,23 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
   }
 }
 
-class ConnectButton extends StatelessWidget {
+class ConnectButton extends StatefulWidget {
   const ConnectButton({super.key, required this.status, required this.onTap});
 
   final VpnStatus status;
   final VoidCallback? onTap;
 
   @override
+  State<ConnectButton> createState() => _ConnectButtonState();
+}
+
+class _ConnectButtonState extends State<ConnectButton> {
+  bool _focusShown = false;
+
+  @override
   Widget build(BuildContext context) {
+    final status = widget.status;
+    final onTap = widget.onTap;
     final l10n = context.l10n;
     final connected = status == VpnStatus.connected;
     final connecting = status == VpnStatus.connecting;
@@ -128,55 +137,92 @@ class ConnectButton extends StatelessWidget {
           : connecting
           ? l10n.commonCancel
           : l10n.commonConnect,
-      child: GestureDetector(
-        onTap: enabled ? onTap : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-          width: 180,
-          height: 180,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: 0.12),
-            border: Border.all(color: color, width: 3),
+      child: FocusableActionDetector(
+        enabled: enabled,
+        mouseCursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+        onShowFocusHighlight: (shown) => setState(() => _focusShown = shown),
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              onTap?.call();
+              return null;
+            },
           ),
-          child: Center(
-            child: connecting
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 3,
-                          color: color,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.commonCancel,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.power_settings_new, size: 56, color: color),
-                      const SizedBox(height: 8),
-                      Text(
-                        connected ? l10n.commonDisconnect : l10n.commonConnect,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+        },
+        child: GestureDetector(
+          onTap: enabled ? onTap : null,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              if (_focusShown)
+                Positioned.fill(
+                  left: -kRingFocusGap,
+                  top: -kRingFocusGap,
+                  right: -kRingFocusGap,
+                  bottom: -kRingFocusGap,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: color, width: kRingFocusWidth),
+                    ),
                   ),
+                ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color.withValues(alpha: 0.12),
+                  border: Border.all(color: color, width: 3),
+                ),
+                child: Center(
+                  child: connecting
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: color,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.commonCancel,
+                              style: TextStyle(
+                                color: color,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.power_settings_new,
+                              size: 56,
+                              color: color,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              connected
+                                  ? l10n.commonDisconnect
+                                  : l10n.commonConnect,
+                              style: TextStyle(
+                                color: color,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
