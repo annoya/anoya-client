@@ -148,6 +148,7 @@ func applyConfig(fd int, ownDevice bool, configYAML string) (*config.Config, err
 	if configYAML == "" {
 		return nil, fmt.Errorf("empty config")
 	}
+	openCacheFile()
 	cfg, err := executor.ParseWithBytes([]byte(configYAML))
 	if err != nil {
 		return nil, fmt.Errorf("parse config: %s", sanitizeConfigError(err))
@@ -219,6 +220,7 @@ func Stop() {
 	stopWatchdog()
 	running = nil
 	executor.Shutdown()
+	closeCacheFile()
 	// Shutdown leaves LastTunConf set, so a reused fd would get no listener.
 	listener.ReCreateTun(LC.Tun{}, nil)
 }

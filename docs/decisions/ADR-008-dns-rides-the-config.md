@@ -95,6 +95,18 @@ ours to do.
 the OS caches the fake addresses the engine handed out, so a range that moved
 with the config would strand every cached answer on a hot switch.
 
+**The fake-address map outlives the engine, and a new engine waits for it.**
+`store-fake-ip` keeps the map in `cache.db` in the engine's home, so apps
+holding cached fake addresses keep working across a restart. The file is a
+bbolt database under a file lock, and mihomo gives up on it after one second
+and then runs the whole session with a store that neither records nor finds
+anything: every connection by fake address is dialled as a literal
+`198.18.x.x` and times out, and only traffic whose SNI the sniffer reads gets
+through. On iOS that happens when the system stops the tunnel and on-demand
+starts a new extension process before the old one has let go of the file. So
+the engine closes the file when it stops, and before applying a config it
+reopens a file mihomo could not open, waiting up to ten seconds.
+
 **Unusable entries are dropped, never escaped.** Nameserver strings from a
 subscription are attacker-supplied text headed into an engine config we
 assemble as text. Anything that could not be a nameserver — whitespace,
@@ -182,6 +194,9 @@ so length is cost, not redundancy.
 - A source that says "through the proxy" comes out pinned, and one that says
   "issued here" comes out unpinned — in every format that can say either.
   Pinned by `test/dns_sources_test.dart`.
+- Stopping the engine releases `cache.db`, and a start waits for a file
+  another engine still holds instead of running without the fake-address map.
+  Pinned by `native/mihomocore/engine/cachefile_test.go`.
 
 ## Alternatives Considered
 
@@ -273,6 +288,8 @@ A user-facing override on top remains open — it would slot into the same
   `lib/state/profiles_controller.dart`,
   `lib/core/network_extension_core.dart`
 - Bundle schema: `anoya-web-panel/shared/normconfig/normconfig.go` (`Bundle.DNS`)
+- The fake-address file across restarts:
+  `native/mihomocore/engine/cachefile.go`
 - OS-level decoy: `applyNetworkSettings` in
   `shared/apple/PacketTunnelProvider.swift`; `addDnsServer` in
   `android/app/src/main/kotlin/org/anoya/vpn/MihomoVpnService.kt`,
