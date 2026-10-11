@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,10 +54,31 @@ void main() {
     expect(ctrl.saved, isEmpty, reason: 'typing alone saves nothing');
 
     await tester.tap(find.byTooltip('Save'));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(ctrl.saved.map((r) => r.name), ['Office HQ']);
-    expect(find.text('open'), findsOneWidget, reason: 'Save closes the editor');
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(
+      find.byType(OnDemandRuleScreen),
+      findsOneWidget,
+      reason: 'the editor stays while the system takes the rule',
+    );
+
+    ctrl.finish();
+    await tester.pumpAndSettle();
+    expect(find.text('open'), findsOneWidget, reason: 'then it closes');
+  });
+
+  testWidgets('Close still leaves while a save is slow', (tester) async {
+    final ctrl = await open(tester);
+
+    await tester.tap(find.byTooltip('Save'));
+    await tester.pump();
+    await tester.tap(find.byType(CloseButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('open'), findsOneWidget);
+    expect(ctrl.saved, hasLength(1), reason: 'the save goes on behind');
   });
 
   testWidgets('Close leaves without saving, a new rule included', (
@@ -78,6 +101,13 @@ class _RecordingOnDemand extends OnDemandController {
   @override
   OnDemandPrefs build() => const OnDemandPrefs();
 
+  final _done = Completer<void>();
+
+  void finish() => _done.complete();
+
   @override
-  Future<void> upsertRule(OnDemandRule rule) async => saved.add(rule);
+  Future<void> upsertRule(OnDemandRule rule) {
+    saved.add(rule);
+    return _done.future;
+  }
 }

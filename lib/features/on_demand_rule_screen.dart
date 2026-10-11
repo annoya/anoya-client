@@ -36,7 +36,10 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
 
   void _update(OnDemandRule rule) => setState(() => _rule = rule);
 
+  bool _saving = false;
+
   Future<void> _save() async {
+    setState(() => _saving = true);
     await ref.read(onDemandProvider.notifier).upsertRule(_rule);
     if (mounted) Navigator.of(context).pop();
   }
@@ -136,116 +139,124 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
         title: Text(widget.isNew ? l10n.onDemandNewRule : l10n.ruleEdit),
         actions: [
           IconButton(
-            icon: const Icon(Icons.check),
+            icon: _saving
+                ? const SizedBox.square(
+                    dimension: kAppBarSpinnerSize,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check),
             tooltip: l10n.commonSave,
-            onPressed: _save,
+            onPressed: _saving ? null : _save,
           ),
         ],
       ),
       body: PageBody(
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 24),
-          children: [
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: TextField(
-                controller: _name,
-                autocorrect: false,
-                decoration: InputDecoration(
-                  labelText: l10n.onDemandNameOptional,
-                  hintText: l10n.onDemandNameHint,
-                ),
-                onChanged: (v) => _update(_rule.copyWith(name: v.trim())),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: SelectField(
-                label: l10n.ruleAction,
-                value: _rule.action.label,
-                onTap: _pickAction,
-              ),
-            ),
-
-            SectionHeader(l10n.onDemandNetworkHeader),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<OnDemandInterface>(
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(
-                      value: OnDemandInterface.any,
-                      label: Text(l10n.onDemandAny),
-                    ),
-                    ButtonSegment(
-                      value: OnDemandInterface.wifi,
-                      label: Text(l10n.onDemandInterfaceWifi),
-                    ),
-                    ButtonSegment(value: mobile, label: Text(mobile.label)),
-                  ],
-                  selected: {
-                    _rule.interface == OnDemandInterface.cellular ||
-                            _rule.interface == OnDemandInterface.ethernet
-                        ? mobile
-                        : _rule.interface,
-                  },
-                  onSelectionChanged: (s) =>
-                      _update(_rule.copyWith(interface: s.first)),
+        child: AbsorbPointer(
+          absorbing: _saving,
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 24),
+            children: [
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                child: TextField(
+                  controller: _name,
+                  autocorrect: false,
+                  decoration: InputDecoration(
+                    labelText: l10n.onDemandNameOptional,
+                    hintText: l10n.onDemandNameHint,
+                  ),
+                  onChanged: (v) => _update(_rule.copyWith(name: v.trim())),
                 ),
               ),
-            ),
-            _hint(_networkHelp(_rule.interface)),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                child: SelectField(
+                  label: l10n.ruleAction,
+                  value: _rule.action.label,
+                  onTap: _pickAction,
+                ),
+              ),
 
-            SectionHeader(l10n.onDemandConditionsHeader),
-            if (_rule.ssidsApply)
+              SectionHeader(l10n.onDemandNetworkHeader),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<OnDemandInterface>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(
+                        value: OnDemandInterface.any,
+                        label: Text(l10n.onDemandAny),
+                      ),
+                      ButtonSegment(
+                        value: OnDemandInterface.wifi,
+                        label: Text(l10n.onDemandInterfaceWifi),
+                      ),
+                      ButtonSegment(value: mobile, label: Text(mobile.label)),
+                    ],
+                    selected: {
+                      _rule.interface == OnDemandInterface.cellular ||
+                              _rule.interface == OnDemandInterface.ethernet
+                          ? mobile
+                          : _rule.interface,
+                    },
+                    onSelectionChanged: (s) =>
+                        _update(_rule.copyWith(interface: s.first)),
+                  ),
+                ),
+              ),
+              _hint(_networkHelp(_rule.interface)),
+
+              SectionHeader(l10n.onDemandConditionsHeader),
+              if (_rule.ssidsApply)
+                _conditionRow(
+                  title: l10n.onDemandWifiNetworks,
+                  values: _rule.ssids,
+                  unit: l10n.onDemandNetworksUnit,
+                  addTitle: l10n.onDemandWifiNetwork,
+                  addHint: 'home-5G',
+                  help: l10n.onDemandWifiNetworksHelp,
+                  apply: (v) => _update(_rule.copyWith(ssids: v)),
+                ),
               _conditionRow(
-                title: l10n.onDemandWifiNetworks,
-                values: _rule.ssids,
-                unit: l10n.onDemandNetworksUnit,
-                addTitle: l10n.onDemandWifiNetwork,
-                addHint: 'home-5G',
-                help: l10n.onDemandWifiNetworksHelp,
-                apply: (v) => _update(_rule.copyWith(ssids: v)),
+                title: l10n.onDemandDnsDomains,
+                values: _rule.dnsDomains,
+                unit: l10n.onDemandDomainsUnit,
+                addTitle: l10n.onDemandDnsDomain,
+                addHint: 'corp.example.com',
+                help: l10n.onDemandDnsDomainsHelp,
+                apply: (v) => _update(_rule.copyWith(dnsDomains: v)),
               ),
-            _conditionRow(
-              title: l10n.onDemandDnsDomains,
-              values: _rule.dnsDomains,
-              unit: l10n.onDemandDomainsUnit,
-              addTitle: l10n.onDemandDnsDomain,
-              addHint: 'corp.example.com',
-              help: l10n.onDemandDnsDomainsHelp,
-              apply: (v) => _update(_rule.copyWith(dnsDomains: v)),
-            ),
-            _conditionRow(
-              title: l10n.onDemandDnsServers,
-              values: _rule.dnsServers,
-              unit: l10n.onDemandServersUnit,
-              addTitle: l10n.onDemandDnsServer,
-              addHint: '10.0.*',
-              help: l10n.onDemandDnsServersHelp,
-              apply: (v) => _update(_rule.copyWith(dnsServers: v)),
-            ),
+              _conditionRow(
+                title: l10n.onDemandDnsServers,
+                values: _rule.dnsServers,
+                unit: l10n.onDemandServersUnit,
+                addTitle: l10n.onDemandDnsServer,
+                addHint: '10.0.*',
+                help: l10n.onDemandDnsServersHelp,
+                apply: (v) => _update(_rule.copyWith(dnsServers: v)),
+              ),
 
-            SectionHeader(l10n.onDemandUrlProbeHeader),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: TextField(
-                controller: _probe,
-                autocorrect: false,
-                keyboardType: TextInputType.url,
-                decoration: InputDecoration(
-                  labelText: l10n.onDemandUrlOptional,
-                  hintText: 'https://intranet.example.com/ping',
+              SectionHeader(l10n.onDemandUrlProbeHeader),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kGutter),
+                child: TextField(
+                  controller: _probe,
+                  autocorrect: false,
+                  keyboardType: TextInputType.url,
+                  decoration: InputDecoration(
+                    labelText: l10n.onDemandUrlOptional,
+                    hintText: 'https://intranet.example.com/ping',
+                  ),
+                  onChanged: (v) => _update(_rule.copyWith(probeUrl: v.trim())),
                 ),
-                onChanged: (v) => _update(_rule.copyWith(probeUrl: v.trim())),
               ),
-            ),
-            _hint(l10n.onDemandUrlProbeHelp),
-          ],
+              _hint(l10n.onDemandUrlProbeHelp),
+            ],
+          ),
         ),
       ),
     );

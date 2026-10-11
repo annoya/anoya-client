@@ -373,6 +373,8 @@ const double kStatusChipHeight = 30;
 
 const double kRingFocusGap = 4;
 
+const double kAppBarSpinnerSize = 20;
+
 const double kRingFocusWidth = 2;
 
 const double kQrViewfinder = 248;
