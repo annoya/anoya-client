@@ -471,6 +471,7 @@
       <tr><td>FAB</td><td>56, r16</td></tr>
       <tr><td>Connection ring</td><td>180, stroke 3</td></tr>
       <tr><td>Ring keyboard focus</td><td>outline 2, 4 outside the ring</td></tr>
+      <tr><td>App bar action spinner</td><td>20, stroke 2, in place of the icon</td></tr>
       <tr><td>Status bar chip</td><td>30, r8, icon 16</td></tr>
       <tr><td>Service avatar (simple routing)</td><td>26, circle, letter 13/w700</td></tr>
     </table>
@@ -2937,7 +2938,7 @@ on connection drop; the last two boards are the Android variant of the section a
         <div class="hint">The rule matches only if this URL returns 200 without redirects.</div>
       </div>
     </div></div>
-    <p class="cap"><span class="id">OnDemandRuleScreen</span><b>Rule editor.</b> Under the network segment is an explanation of what the selected mode means (it changes along with it). Condition lists are collapsed into rows with a summary (“Any” if empty) and open on a separate screen: chips offered neither ordering nor search and sprawled once there were a dozen values.<br><br><b>Saved with the check, like a routing rule.</b> Close on the left leaves without saving, Save as a check on the right — the same app bar as <code>RuleScreen</code>. Every change used to be saved as it was made, and with no Save anywhere the screen read as one that loses the edit. Saving once also writes the system’s on-demand configuration once, instead of once per toggle and per pause in typing. Leaving with the system back gesture discards the edit too, as on <code>RuleScreen</code>; a new rule left that way is not created.</p>
+    <p class="cap"><span class="id">OnDemandRuleScreen</span><b>Rule editor.</b> Under the network segment is an explanation of what the selected mode means (it changes along with it). Condition lists are collapsed into rows with a summary (“Any” if empty) and open on a separate screen: chips offered neither ordering nor search and sprawled once there were a dozen values.<br><br><b>Saved with the check, like a routing rule.</b> Close on the left leaves without saving, Save as a check on the right — the same app bar as <code>RuleScreen</code>. Every change used to be saved as it was made, and with no Save anywhere the screen read as one that loses the edit. Saving once also writes the system’s on-demand configuration once, instead of once per toggle and per pause in typing. Leaving with the system back gesture discards the edit too, as on <code>RuleScreen</code>; a new rule left that way is not created.<br><br><b>Saving takes a moment, and the screen shows it.</b> The rule is written into the system’s VPN profile — after the config is rebuilt, which for an Amnezia key can mean a gateway request — so the check turns into a 20&nbsp;pt spinner in the same place and the fields stop taking taps; the screen closes when the system has the rule. Close stays live: if the system takes long, the person can still leave, and the save finishes behind them.</p>
   </div>
 
   <div class="board">
