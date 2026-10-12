@@ -49,6 +49,9 @@ class AmneziaGateway {
         ),
       );
     }
+    if (res.trace.isNotEmpty && (!res.ok || res.usedFailover)) {
+      Log.i('amnezia: $endpoint trace\n${res.trace}');
+    }
     return res;
   }
 

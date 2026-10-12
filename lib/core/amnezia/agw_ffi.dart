@@ -111,6 +111,9 @@ final class AgwResult extends Struct {
   external Pointer<Uint8> body;
   @Size()
   external int bodyLen;
+  external Pointer<Uint8> trace;
+  @Size()
+  external int traceLen;
 }
 
 class AgwStatus {
@@ -143,12 +146,15 @@ class AgwStatus {
 }
 
 class AgwResponse {
-  const AgwResponse(this.code, this.body);
+  const AgwResponse(this.code, this.body, [this.trace = '']);
 
   final int code;
   final String body;
+  final String trace;
 
   bool get ok => code == AgwStatus.ok && httpStatus < 300;
+
+  bool get usedFailover => trace.contains('suspicious');
 
   int get httpStatus {
     final v = json['http_status'];
@@ -259,7 +265,7 @@ class AgwClient {
     try {
       final result = await Isolate.run(() => _postSync(call));
       if (result.state.isNotEmpty) state = result.state;
-      return AgwResponse(result.code, result.body);
+      return AgwResponse(result.code, result.body, result.trace);
     } finally {
       _running = null;
       b.cancelDestroy(cancel);
@@ -287,9 +293,10 @@ class _AgwCall {
 }
 
 class _AgwOutcome {
-  const _AgwOutcome(this.code, this.body, this.state);
+  const _AgwOutcome(this.code, this.body, this.trace, this.state);
   final int code;
   final String body;
+  final String trace;
   final String state;
 }
 
@@ -299,7 +306,7 @@ _AgwOutcome _postSync(_AgwCall call) {
   final client = b.clientCreate(configPtr, nullptr);
   calloc.free(configPtr);
   if (client == 0) {
-    return const _AgwOutcome(AgwStatus.config, '', '');
+    return const _AgwOutcome(AgwStatus.config, '', '', '');
   }
 
   final endpointPtr = call.endpoint.toNativeUtf8();
@@ -323,6 +330,9 @@ _AgwOutcome _postSync(_AgwCall call) {
     final body = r.body == nullptr
         ? ''
         : utf8.decode(r.body.asTypedList(r.bodyLen), allowMalformed: true);
+    final trace = r.trace == nullptr
+        ? ''
+        : utf8.decode(r.trace.asTypedList(r.traceLen), allowMalformed: true);
     final code = r.code;
     b.resultFree(holder);
 
@@ -332,7 +342,7 @@ _AgwOutcome _postSync(_AgwCall call) {
       exported = statePtr.toDartString();
       b.stringFree(statePtr);
     }
-    return _AgwOutcome(code, body, exported);
+    return _AgwOutcome(code, body, trace, exported);
   } finally {
     calloc.free(holder);
     calloc.free(endpointPtr);
