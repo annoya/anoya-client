@@ -45,12 +45,17 @@ void main() {
       addTearDown(gateway.close);
       final client = clientFor(gateway);
 
-      await Future.wait([
+      final results = await Future.wait([
         client.post('v1/account_info', {}),
         client.post('v1/config', {}),
       ]);
 
       expect(most, 1);
+      for (final res in results) {
+        expect(res.usedFailover, isTrue, reason: res.trace);
+        expect(res.trace, startsWith('request '));
+        expect(res.trace, isNot(contains('${gateway.port}')));
+      }
     },
     skip: _needsLibrary,
   );
