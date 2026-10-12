@@ -185,7 +185,7 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 	case "set_logging":
 		on := boolOr("enabled", true)
 		s.files.SetLogsEnabled(on)
-		s.eng.SetLogLevel(logLevel(on))
+		s.applyLogging()
 		return nil, nil
 
 	case "clear_logs":
@@ -202,6 +202,16 @@ func (s *Service) Handle(method string, args map[string]any) (any, error) {
 		return s.files.Dir, nil
 	}
 	return nil, fmt.Errorf("unknown method %q", method)
+}
+
+func (s *Service) applyLogging() {
+	on := s.files.LogsEnabled()
+	s.eng.SetLogLevel(logLevel(on))
+	if on {
+		s.eng.SetJournal(s.files.ServiceLog())
+	} else {
+		s.eng.SetJournal("")
+	}
 }
 
 func logLevel(on bool) string {
@@ -227,7 +237,7 @@ func (s *Service) start(config string) error {
 	}
 	s.setStatus(StatusConnecting)
 	s.eng.SetHomeDir(s.files.Dir)
-	s.eng.SetLogLevel(logLevel(s.files.LogsEnabled()))
+	s.applyLogging()
 	s.files.Append("starting engine")
 	if err := s.eng.Start(config); err != nil {
 		s.files.Append("start failed: " + err.Error())
@@ -258,6 +268,7 @@ func (s *Service) StartSaved() error {
 		s.files.Append("saved config refused: " + err.Error())
 		return err
 	}
+	s.files.Append("auto-connect: starting the saved config")
 	return s.start(config)
 }
 
@@ -269,10 +280,14 @@ func (s *Service) stop() {
 	}
 	s.eng.Stop()
 	s.mu.Lock()
+	up := s.now().Sub(s.since)
+	if s.since.IsZero() {
+		up = 0
+	}
 	s.since = time.Time{}
 	s.mu.Unlock()
 	s.setStatus(StatusDisconnected)
-	s.files.Append("tunnel down")
+	s.files.Append(fmt.Sprintf("tunnel down after %s", up.Round(time.Second)))
 }
 
 func (s *Service) reload(config string) error {

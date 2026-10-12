@@ -1,3 +1,4 @@
+import Network
 import NetworkExtension
 import MihomoCore
 
@@ -26,12 +27,21 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     private let stateLock = NSLock()
 
+    private static let logPath = logDir.appendingPathComponent("tunnel.log").path
+
+    private static let stamp: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        f.timeZone = TimeZone(identifier: "UTC")
+        return f
+    }()
+
     // Raw POSIX I/O: Foundation file APIs trigger a TCC prompt on every connect.
     private func log(_ message: String) {
         NSLog("TUNNEL: \(message)")
         guard logEnabled else { return }
-        let path = Self.logDir.appendingPathComponent("tunnel.log").path
-        let line = "[\(Date())] \(message)\n"
+        let path = Self.logPath
+        let line = "\(Self.stamp.string(from: Date())) \(message)\n"
         guard let data = line.data(using: .utf8) else { return }
         rotateIfNeeded(path)
         let fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0o644)
@@ -47,7 +57,9 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         logEnabled = (options?["LogEnabled"] as? NSNumber)?.boolValue
             ?? (persisted?["LogEnabled"] as? Bool)
             ?? true
-        log("startTunnel: begin")
+        applyJournal(logEnabled)
+        log("startTunnel: begin · pid \(getpid())")
+        checkPreviousRun()
         let config = (options?["Config"] as? String)
             ?? (persisted?["Config"] as? String)
             ?? ""
@@ -56,7 +68,11 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             completionHandler(err("missing tunnel config"))
             return
         }
-        if options?["Config"] == nil { log("startTunnel: on-demand start, using persisted config") }
+        if options?["Config"] == nil {
+            log("startTunnel: started without the app (on-demand or system settings), using persisted config")
+        }
+        startNetworkLog()
+        startMemoryPressureLog()
 
         applyNetworkSettings { [weak self] error in
             guard let self else { return }
@@ -76,6 +92,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             self.log("got tun fd \(fd); starting mihomo")
             self.tunFd = fd
             if self.logEnabled { self.redirectStdoutToMihomoLog() }
+            self.applyCrashLog(self.logEnabled)
             self.applyEngineLogLevel(self.logEnabled)
             if let message = self.startEngine(fd: fd, config: config) {
                 self.log("mihomo start failed")
@@ -86,15 +103,22 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             // Applying the config overwrites the log level from the YAML.
             self.applyEngineLogLevel(self.logEnabled)
             self.log("mihomo started; tunnel up · \(Self.memoryFootprint())")
+            self.startedAt = Date()
             self.startMemoryLog()
             completionHandler(nil)
         }
     }
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
-        log("stopTunnel: \(Self.stopReasonName(reason)) (\(reason.rawValue)) · \(Self.memoryFootprint())")
+        let uptime = startedAt.map { " after \(Self.duration(Date().timeIntervalSince($0)))" } ?? ""
+        log("stopTunnel: \(Self.stopReasonName(reason)) (\(reason.rawValue))\(uptime) · \(Self.memoryFootprint()) · last network: \(lastPath ?? "unknown")")
         memoryTimer?.cancel()
         memoryTimer = nil
+        pressureSource?.cancel()
+        pressureSource = nil
+        pathMonitor?.cancel()
+        pathMonitor = nil
+        unlink(Self.runningMarker)
         tunFd = -1
         MihomoStop()
         completionHandler()
@@ -106,7 +130,113 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func wake() {
-        log("wake · \(Self.memoryFootprint())")
+        log("wake · \(Self.memoryFootprint()) · network: \(lastPath ?? "unknown")")
+    }
+
+    private var startedAt: Date? {
+        get { stateLock.withLock { _startedAt } }
+        set { stateLock.withLock { _startedAt = newValue } }
+    }
+    private var _startedAt: Date?
+
+    private var pathMonitor: NWPathMonitor?
+
+    private var lastPath: String? {
+        get { stateLock.withLock { _lastPath } }
+        set { stateLock.withLock { _lastPath = newValue } }
+    }
+    private var _lastPath: String?
+
+    private func startNetworkLog() {
+        pathMonitor?.cancel()
+        let monitor = NWPathMonitor()
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            let text = Self.describe(path)
+            guard text != self.lastPath else { return }
+            self.lastPath = text
+            self.log("network: \(text)")
+        }
+        monitor.start(queue: DispatchQueue(label: "org.annoya.tunnel.path"))
+        pathMonitor = monitor
+    }
+
+    private static func describe(_ path: Network.NWPath) -> String {
+        var parts: [String]
+        switch path.status {
+        case .satisfied: parts = ["satisfied"]
+        case .requiresConnection: parts = ["requires connection"]
+        default: parts = ["unsatisfied (\(describe(path.unsatisfiedReason)))"]
+        }
+        let interfaces = path.availableInterfaces
+            .filter { $0.type != .other && $0.type != .loopback }
+            .map { "\($0.name) \(describe($0.type))" }
+        parts.append(interfaces.isEmpty ? "no interfaces" : interfaces.joined(separator: ", "))
+        return parts.joined(separator: " · ")
+    }
+
+    private static func describe(_ type: NWInterface.InterfaceType) -> String {
+        switch type {
+        case .wifi: return "wifi"
+        case .cellular: return "cellular"
+        case .wiredEthernet: return "ethernet"
+        case .loopback: return "loopback"
+        case .other: return "other"
+        @unknown default: return "unknown"
+        }
+    }
+
+    private static func describe(_ reason: Network.NWPath.UnsatisfiedReason) -> String {
+        switch reason {
+        case .notAvailable: return "no reason given"
+        case .cellularDenied: return "cellular denied"
+        case .wifiDenied: return "wifi denied"
+        case .localNetworkDenied: return "local network denied"
+        @unknown default: return "unknown reason"
+        }
+    }
+
+    private var pressureSource: DispatchSourceMemoryPressure?
+
+    private func startMemoryPressureLog() {
+        pressureSource?.cancel()
+        let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical],
+                                                             queue: .global(qos: .utility))
+        source.setEventHandler { [weak self] in
+            guard let self else { return }
+            let level = source.data.contains(.critical) ? "critical" : "warning"
+            self.log("memory pressure: \(level) · \(Self.memoryFootprint())")
+        }
+        source.resume()
+        pressureSource = source
+    }
+
+    private static let runningMarker = logDir.appendingPathComponent(".tunnel-running").path
+
+    private func checkPreviousRun() {
+        if let previous = try? String(contentsOfFile: Self.runningMarker, encoding: .utf8) {
+            log("previous extension process (\(previous)) ended without stopTunnel: killed by the system, crashed, or the device restarted")
+        }
+        let mark = "pid \(getpid()), started \(Self.stamp.string(from: Date()))"
+        try? mark.write(toFile: Self.runningMarker, atomically: true, encoding: .utf8)
+    }
+
+    private func applyCrashLog(_ enabled: Bool) {
+        let path = enabled ? Self.logDir.appendingPathComponent("mihomo.log").path : ""
+        path.withCString { MihomoSetCrashLog(UnsafeMutablePointer(mutating: $0)) }
+    }
+
+    private func applyJournal(_ enabled: Bool) {
+        let path = enabled ? Self.logPath : ""
+        path.withCString { MihomoSetJournal(UnsafeMutablePointer(mutating: $0)) }
+    }
+
+    private static func duration(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds)
+        let h = total / 3600, m = total / 60 % 60, s = total % 60
+        if h > 0 { return "\(h)h\(m)m\(s)s" }
+        if m > 0 { return "\(m)m\(s)s" }
+        return "\(s)s"
     }
 
     private static let memoryLogInterval = DispatchTimeInterval.seconds(600)
@@ -217,6 +347,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             logEnabled = on
             if on { redirectStdoutToMihomoLog() }
             applyEngineLogLevel(on)
+            applyJournal(on)
+            applyCrashLog(on)
             log("logging \(on ? "enabled" : "disabled") by the app")
             completionHandler?(Data())
             return

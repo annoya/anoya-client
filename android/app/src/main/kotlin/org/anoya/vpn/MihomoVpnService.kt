@@ -4,12 +4,23 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.VpnService
+import android.os.Build
 import android.os.IBinder
 import android.system.Os
 import java.io.FileOutputStream
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import mobile.Mobile
@@ -22,6 +33,9 @@ class MihomoVpnService : VpnService() {
         const val ACTION_STOP = "org.anoya.vpn.STOP"
 
         const val kTunnelOutbound = "PROXY"
+
+        private val stamp: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC)
     }
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -72,6 +86,7 @@ class MihomoVpnService : VpnService() {
         override fun setLogging(enabled: Boolean) {
             TunnelFiles.setLogsEnabled(this@MihomoVpnService, enabled)
             runCatching { Mobile.setLogLevel(if (enabled) "debug" else "silent") }
+            applyJournal()
         }
 
         override fun registerCallback(cb: ITunnelCallback) = TunnelState.register(cb)
@@ -84,12 +99,22 @@ class MihomoVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
+            log("stop requested by the app")
             shutdown()
             return START_NOT_STICKY
+        }
+        val by = when (intent?.action) {
+            null -> "the system (service restarted)"
+            ACTION_START -> "the app"
+            SERVICE_INTERFACE -> "always-on VPN"
+            else -> "unknown action"
         }
         when (TunnelState.status) {
             TunnelState.CONNECTING, TunnelState.CONNECTED -> return START_STICKY
         }
+        applyJournal()
+        log("start requested by $by · pid ${android.os.Process.myPid()}")
+        checkPreviousRun()
         startForeground(1, buildNotification())
         TunnelState.set(TunnelState.CONNECTING)
         executor.execute { bringUp() }
@@ -114,6 +139,7 @@ class MihomoVpnService : VpnService() {
                 ?: throw IllegalStateException("the system refused to establish the tunnel")
             val fd = pfd.detachFd()
             tunFd = fd
+            startNetworkLog()
 
             Mobile.setSocketProtector(object : SocketProtector {
                 override fun protect(sock: Long): Boolean {
@@ -129,7 +155,7 @@ class MihomoVpnService : VpnService() {
             Mobile.start(fd.toLong(), config)
             TunnelFiles.clearError(this)
             TunnelState.set(TunnelState.CONNECTED)
-            log("tunnel up")
+            log("tunnel up · ${memory()}")
         } catch (e: Exception) {
             log("start failed: ${e.message}")
             TunnelFiles.recordError(this, e.message ?: "start failed")
@@ -140,25 +166,171 @@ class MihomoVpnService : VpnService() {
 
     fun shutdown() {
         executor.execute {
+            val since = TunnelState.connectedSince
+            stopNetworkLog()
+            TunnelFiles.runningMarker(this).delete()
             runCatching { Mobile.stop() }
             tunFd = null
             TunnelState.set(TunnelState.DISCONNECTED)
-            log("tunnel down")
+            val uptime = if (since > 0) " after ${duration(System.currentTimeMillis() / 1000.0 - since)}" else ""
+            log("tunnel down$uptime")
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
     }
 
     override fun onRevoke() {
-        log("revoked by the system")
+        log("revoked by the system (another VPN app, or turned off in settings)")
         TunnelFiles.recordError(this,
             "the system revoked the VPN (another VPN app, or turned off in settings)")
         shutdown()
     }
 
     override fun onDestroy() {
+        log("service destroyed")
+        stopNetworkLog()
         executor.shutdown()
         super.onDestroy()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        @Suppress("DEPRECATION")
+        val name = when (level) {
+            ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> "running critical"
+            ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> "complete"
+            else -> return
+        }
+        log("memory pressure: $name · ${memory()}")
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        log("low memory · ${memory()}")
+    }
+
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+
+    private val networks = ConcurrentHashMap<Network, String>()
+
+    private fun startNetworkLog() {
+        stopNetworkLog()
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            .build()
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) =
+                report(network, describe(caps, cm.getLinkProperties(network)))
+
+            override fun onLinkPropertiesChanged(network: Network, link: LinkProperties) =
+                report(network, describe(cm.getNetworkCapabilities(network), link))
+
+            override fun onLost(network: Network) {
+                val last = networks.remove(network) ?: "unknown"
+                log("network lost: $last")
+            }
+
+            override fun onUnavailable() = log("network: none available")
+        }
+        runCatching { cm.registerNetworkCallback(request, callback) }
+            .onSuccess { networkCallback = callback }
+            .onFailure { log("network monitor unavailable: ${it.message}") }
+    }
+
+    private fun stopNetworkLog() {
+        val callback = networkCallback ?: return
+        networkCallback = null
+        networks.clear()
+        runCatching { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(callback) }
+    }
+
+    private fun report(network: Network, text: String) {
+        val previous = networks.put(network, text)
+        if (previous == text) return
+        log(if (previous == null) "network available: $text" else "network changed: $text")
+    }
+
+    private fun describe(caps: NetworkCapabilities?, link: LinkProperties?): String {
+        val parts = mutableListOf<String>()
+        parts += link?.interfaceName ?: "?"
+        if (caps != null) {
+            parts += when {
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
+                else -> "other"
+            }
+            parts += if (caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) "validated"
+                else "not validated"
+        }
+        return parts.joinToString(" · ")
+    }
+
+    private fun applyJournal() {
+        val on = TunnelFiles.logsEnabled(this)
+        runCatching { Mobile.setJournal(if (on) TunnelFiles.serviceLog(this).absolutePath else "") }
+    }
+
+    private fun checkPreviousRun() {
+        val marker = TunnelFiles.runningMarker(this)
+        val previous = runCatching { marker.readText() }.getOrNull()
+        if (previous != null) {
+            val pid = Regex("pid (\\d+)").find(previous)?.groupValues?.get(1)?.toIntOrNull()
+            log("previous tunnel process ($previous) ended without a stop: ${previousExit(pid)}")
+        }
+        runCatching {
+            marker.writeText("pid ${android.os.Process.myPid()}, started ${stamp.format(Instant.now())}")
+        }
+    }
+
+    private fun previousExit(pid: Int?): String {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return "killed by the system or crashed"
+        val am = getSystemService(android.app.ActivityManager::class.java)
+        val exit = runCatching { am.getHistoricalProcessExitReasons(packageName, 0, 10) }
+            .getOrDefault(emptyList())
+            .firstOrNull { it.processName.endsWith(":tunnel") && it.pid == pid }
+            ?: return "no exit record from the system"
+        val reason = when (exit.reason) {
+            android.app.ApplicationExitInfo.REASON_LOW_MEMORY -> "killed for low memory"
+            android.app.ApplicationExitInfo.REASON_CRASH -> "crashed (java)"
+            android.app.ApplicationExitInfo.REASON_CRASH_NATIVE -> "crashed (native)"
+            android.app.ApplicationExitInfo.REASON_ANR -> "not responding (ANR)"
+            android.app.ApplicationExitInfo.REASON_SIGNALED -> "killed by signal ${exit.status}"
+            android.app.ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "killed for excessive resource usage"
+            android.app.ApplicationExitInfo.REASON_USER_REQUESTED -> "stopped by the user (force stop or app update)"
+            android.app.ApplicationExitInfo.REASON_USER_STOPPED -> "stopped by the user"
+            android.app.ApplicationExitInfo.REASON_PERMISSION_CHANGE -> "killed after a permission change"
+            android.app.ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "a dependency died"
+            android.app.ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "failed to initialize"
+            android.app.ApplicationExitInfo.REASON_EXIT_SELF -> "exited by itself (code ${exit.status})"
+            android.app.ApplicationExitInfo.REASON_FREEZER -> "killed while frozen"
+            android.app.ApplicationExitInfo.REASON_OTHER -> "killed by the system"
+            else -> "exit reason ${exit.reason}"
+        }
+        val pss = if (exit.pss > 0) " · pss %.1f MB".format(exit.pss / 1024.0) else ""
+        val note = exit.description?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: ""
+        return "$reason at ${stamp.format(Instant.ofEpochMilli(exit.timestamp))}$pss$note"
+    }
+
+    private fun memory(): String {
+        val rt = Runtime.getRuntime()
+        val info = android.os.Debug.MemoryInfo().also { android.os.Debug.getMemoryInfo(it) }
+        return "pss %.1f MB, java heap %.1f MB".format(
+            info.totalPss / 1024.0, (rt.totalMemory() - rt.freeMemory()) / 1048576.0)
+    }
+
+    private fun duration(seconds: Double): String {
+        val total = seconds.toLong()
+        val h = total / 3600
+        val m = total / 60 % 60
+        val s = total % 60
+        return when {
+            h > 0 -> "${h}h${m}m${s}s"
+            m > 0 -> "${m}m${s}s"
+            else -> "${s}s"
+        }
     }
 
     private fun redirectEngineOutput() {
@@ -178,7 +350,7 @@ class MihomoVpnService : VpnService() {
         runCatching {
             val file = TunnelFiles.serviceLog(this)
             TunnelFiles.rotateIfNeeded(file)
-            file.appendText("${java.time.LocalDateTime.now()} $line\n")
+            file.appendText("${stamp.format(Instant.now())} $line\n")
         }
     }
 

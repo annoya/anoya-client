@@ -29,6 +29,16 @@ func MihomoSetLogLevel(level *C.char) {
 	engine.SetLogLevel(C.GoString(level))
 }
 
+//export MihomoSetJournal
+func MihomoSetJournal(path *C.char) {
+	engine.SetJournal(C.GoString(path))
+}
+
+//export MihomoSetCrashLog
+func MihomoSetCrashLog(path *C.char) {
+	engine.SetCrashLog(C.GoString(path))
+}
+
 //export MihomoStart
 func MihomoStart(fd C.int, configJSON *C.char) *C.char {
 	if err := engine.Start(int(fd), C.GoString(configJSON)); err != nil {

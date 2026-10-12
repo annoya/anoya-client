@@ -38,12 +38,35 @@ home.
   `mihomo.log` in append mode.
 - The `log:<name>` and `clear-logs` provider messages are gone.
 
+**The tunnel log answers one question: why the tunnel went down or came back
+up.** It records, on every platform, with UTC millisecond stamps in the app
+log's format:
+
+- who started the tunnel (the app, on-demand or system settings, always-on,
+  a service restart) and how long it ran when it stopped, with the system's
+  stop reason where there is one;
+- whether the previous extension or service process ended without a stop. A
+  marker written at start and removed by the stop tells; on Android 11+ the
+  system's exit record for the `:tunnel` process adds the reason (low memory,
+  crash, signal);
+- changes of the physical network (interface, type, validated or not) and
+  memory pressure;
+- from the engine itself (`engine.SetJournal`): a failed start or reload and
+  every watchdog recovery (ADR-014). The engine's Go crash output goes to
+  `mihomo.log` on Apple; Android and the desktop service already capture it.
+
+It records nothing per request — no URL tests, polling or timings — and no
+addresses or config text: engine errors are the sanitized ones it already
+returns, and a dial error is cut to its cause (`i/o timeout`).
+
 ## Invariants
 
 - The extension never unlinks a log; the app never unlinks one either.
 - Reading logs never waits on the extension.
 - Both provisioning profiles of each platform list `group.org.annoya.test`. A
   profile without it brings the TCC prompt back on macOS.
+- The tunnel log carries no addresses and no per-request lines. Pinned by
+  *TestBriefErrorKeepsTheCauseWithoutTheAddress*.
 
 ## Alternatives Considered
 
@@ -70,7 +93,11 @@ logs unreadable while disconnected.
 ## Where It Lives
 
 - `shared/apple/PacketTunnelProvider.swift` — `logDir`, `log`,
-  `redirectStdoutToMihomoLog`
+  `redirectStdoutToMihomoLog`, `checkPreviousRun`, `startNetworkLog`,
+  `startMemoryPressureLog`
+- `android/app/src/main/kotlin/org/anoya/vpn/MihomoVpnService.kt` —
+  `checkPreviousRun`, `previousExit`, `startNetworkLog`, `onTrimMemory`
+- `native/mihomocore/engine/journal.go` — `SetJournal`, `SetCrashLog`
 - `shared/apple/VPNManager.swift` — `fetchLog`, `clearLogs`,
   `halveIfOversized`
 - `macos/Tunnel/Tunnel.entitlements`, `ios/Tunnel/Tunnel.entitlements`
