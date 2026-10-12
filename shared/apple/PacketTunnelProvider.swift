@@ -192,7 +192,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         case .cellularDenied: return "cellular denied"
         case .wifiDenied: return "wifi denied"
         case .localNetworkDenied: return "local network denied"
-        @unknown default: return "unknown reason"
+        default: return String(describing: reason)
         }
     }
 
