@@ -12,6 +12,7 @@ type Engine interface {
 	Version() string
 	SetHomeDir(dir string)
 	SetLogLevel(level string)
+	SetJournal(path string)
 	Start(configYAML string) error
 	Reload(configYAML string) error
 	Stop()
@@ -25,6 +26,7 @@ type RealEngine struct{}
 func (RealEngine) Version() string                       { return engine.Version() }
 func (RealEngine) SetHomeDir(dir string)                 { engine.SetHomeDir(dir) }
 func (RealEngine) SetLogLevel(level string)              { engine.SetLogLevel(level) }
+func (RealEngine) SetJournal(path string)                { engine.SetJournal(path) }
 func (RealEngine) Start(configYAML string) error         { return engine.StartOwnDevice(configYAML) }
 func (RealEngine) Reload(configYAML string) error        { return engine.ReloadOwnDevice(configYAML) }
 func (RealEngine) Stop()                                 { engine.Stop() }

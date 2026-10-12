@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"mihomocore/engine"
 )
 
 type Files struct {
@@ -74,13 +76,10 @@ func (f Files) LogsEnabled() bool {
 	return string(bytes.TrimSpace(b)) != "0"
 }
 
-const (
-	logTailBytes = 512 * 1024
-	logMaxBytes  = 4 * 1024 * 1024
-)
+const logTailBytes = 512 * 1024
 
 func (f Files) Tail(path string) string {
-	RotateIfNeeded(path)
+	engine.RotateLog(path)
 	fh, err := os.Open(path)
 	if err != nil {
 		return ""
@@ -106,38 +105,17 @@ func (f Files) Tail(path string) string {
 	return string(buf)
 }
 
-func RotateIfNeeded(path string) {
-	fh, err := os.OpenFile(path, os.O_RDWR, 0)
-	if err != nil {
-		return
-	}
-	defer fh.Close()
-	st, err := fh.Stat()
-	if err != nil || st.Size() <= logMaxBytes {
-		return
-	}
-	size := st.Size()
-	keep := make([]byte, size-size/2)
-	if _, err := fh.ReadAt(keep, size/2); err != nil {
-		return
-	}
-	if err := fh.Truncate(0); err != nil {
-		return
-	}
-	_, _ = fh.WriteAt(keep, 0)
-}
-
 func (f Files) Append(line string) {
 	if !f.LogsEnabled() {
 		return
 	}
-	RotateIfNeeded(f.ServiceLog())
+	engine.RotateLog(f.ServiceLog())
 	fh, err := os.OpenFile(f.ServiceLog(), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return
 	}
 	defer fh.Close()
-	_, _ = fh.WriteString(time.Now().Format("2006-01-02 15:04:05 ") + line + "\n")
+	_, _ = fh.WriteString(engine.JournalLine(time.Now(), line))
 }
 
 func (f Files) ClearLogs() {

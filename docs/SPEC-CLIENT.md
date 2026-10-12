@@ -820,6 +820,10 @@ a tunnel that just dropped is when they matter most. On Apple the extension
 writes `tunnel.log` and `mihomo.log` into `<App Group>/logs/` and the app
 reads their last 512 KB and truncates them itself, with no IPC; a journal over
 4 MB is halved on read. On Android both sides share the app's files directory.
+The tunnel journal records only what explains a drop or a restart: who started
+the tunnel, the stop reason and uptime, a previous process that died without a
+stop (with the system's exit reason on Android 11+), network changes, memory
+pressure, engine start and reload failures and watchdog recoveries (ADR-016).
 While clearing runs, the clear button shows a spinner and both buttons are
 disabled.
 `scripts/leak-check.sh` verifies on a live tunnel that nothing escapes

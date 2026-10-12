@@ -77,6 +77,7 @@ func StartOwnDevice(configYAML string) error {
 
 func start(fd int, ownDevice bool, configYAML string) error {
 	if _, err := applyConfig(fd, ownDevice, configYAML); err != nil {
+		journal("engine start failed: %s", err)
 		return err
 	}
 	running = &appliedConfig{fd: fd, ownDevice: ownDevice, yaml: configYAML}
@@ -113,6 +114,7 @@ func reload(fd int, ownDevice bool, configYAML string) error {
 	defer func() { closeReplacedProxies(previous, tunnel.Proxies()) }()
 	cfg, err := applyConfig(fd, ownDevice, configYAML)
 	if err != nil {
+		journal("engine reload failed: %s", err)
 		return err
 	}
 	running = &appliedConfig{fd: fd, ownDevice: ownDevice, yaml: configYAML}

@@ -11,6 +11,7 @@ object TunnelFiles {
     fun config(context: Context): File = File(engineDir(context), "last_config.yaml")
     fun engineLog(context: Context): File = File(engineDir(context), "mihomo.log")
     fun serviceLog(context: Context): File = File(engineDir(context), "tunnel.log")
+    fun runningMarker(context: Context): File = File(engineDir(context), "tunnel_running")
 
     private fun errorFile(context: Context) = File(engineDir(context), "disconnect_error")
     private fun logFlagFile(context: Context) = File(engineDir(context), "log_enabled")

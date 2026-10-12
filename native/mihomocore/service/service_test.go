@@ -7,10 +7,13 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"mihomocore/engine"
 )
 
 type fakeEngine struct {
@@ -20,6 +23,7 @@ type fakeEngine struct {
 	calls    []string
 	configs  []string
 	level    string
+	journal  string
 	home     string
 }
 
@@ -31,6 +35,7 @@ func (f *fakeEngine) record(c string) {
 func (f *fakeEngine) Version() string          { return "mihomo test" }
 func (f *fakeEngine) SetHomeDir(dir string)    { f.home = dir }
 func (f *fakeEngine) SetLogLevel(level string) { f.level = level }
+func (f *fakeEngine) SetJournal(path string)   { f.journal = path }
 func (f *fakeEngine) Start(c string) error {
 	f.record("start")
 	f.configs = append(f.configs, c)
@@ -328,11 +333,11 @@ func TestStopAndRemoveProfile(t *testing.T) {
 func TestLoggingSwitchAndLogs(t *testing.T) {
 	s, eng, files := harness(t)
 	_, _ = s.Handle("set_logging", map[string]any{"enabled": false})
-	if files.LogsEnabled() || eng.level != "silent" {
-		t.Fatal("set_logging must reach both the flag and the engine")
+	if files.LogsEnabled() || eng.level != "silent" || eng.journal != "" {
+		t.Fatal("set_logging must reach the flag, the engine and its journal")
 	}
 	_, _ = s.Handle("set_logging", map[string]any{"enabled": true})
-	if !files.LogsEnabled() || eng.level != "debug" {
+	if !files.LogsEnabled() || eng.level != "debug" || eng.journal != files.ServiceLog() {
 		t.Fatal("and back")
 	}
 	_ = os.WriteFile(files.EngineLog(), []byte("engine line\n"), 0o644)
@@ -354,7 +359,7 @@ func TestTailCutsAtALineAndRotationKeepsTheNewestHalf(t *testing.T) {
 	path := filepath.Join(dir, "big.log")
 	line := strings.Repeat("x", 99) + "\n"
 	var b strings.Builder
-	for b.Len() < logMaxBytes+100*1024 {
+	for b.Len() < engine.LogMaxBytes+100*1024 {
 		b.WriteString(line)
 	}
 	_ = os.WriteFile(path, []byte(b.String()), 0o644)
@@ -364,11 +369,20 @@ func TestTailCutsAtALineAndRotationKeepsTheNewestHalf(t *testing.T) {
 		t.Fatalf("tail is %d bytes, starts %q", len(got), got[:1])
 	}
 	st, _ := os.Stat(path)
-	if st.Size() > logMaxBytes {
+	if st.Size() > engine.LogMaxBytes {
 		t.Fatalf("log past the cap was not rotated: %d", st.Size())
 	}
-	if st.Size() < logMaxBytes/2 {
+	if st.Size() < engine.LogMaxBytes/2 {
 		t.Fatalf("rotation threw away too much: %d", st.Size())
+	}
+}
+
+func TestServiceLinesShareTheEngineJournalStamp(t *testing.T) {
+	_, _, files := harness(t)
+	files.Append("tunnel up")
+	b, _ := os.ReadFile(files.ServiceLog())
+	if !regexp.MustCompile(`^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z tunnel up\n$`).Match(b) {
+		t.Fatalf("service line %q", b)
 	}
 }
 

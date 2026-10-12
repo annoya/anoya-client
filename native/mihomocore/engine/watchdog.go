@@ -124,6 +124,8 @@ func runWatchdog(stop <-chan struct{}) {
 			}
 			log.Warnln("[watchdog] nothing came back through %s for %s, %d connection(s) unanswered",
 				watchedGroup, now.Sub(detector.lastAnswer).Round(time.Second), unanswered)
+			journal("watchdog: nothing came back through %s for %s, %d connection(s) unanswered; reloading the engine",
+				watchedGroup, now.Sub(detector.lastAnswer).Round(time.Second), unanswered)
 			select {
 			case <-stop:
 				return
@@ -131,6 +133,7 @@ func runWatchdog(stop <-chan struct{}) {
 			}
 			if err := Recover("watchdog"); err != nil {
 				log.Warnln("[watchdog] reload failed: %v", err)
+				journal("watchdog: reload failed: %s", briefError(err))
 			}
 			notBefore = now.Add(backoff)
 			backoff = min(backoff*2, maxRecoverBackoff)
