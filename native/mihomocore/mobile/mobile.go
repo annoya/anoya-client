@@ -40,6 +40,8 @@ func SetLogLevel(level string) { engine.SetLogLevel(level) }
 
 func SetJournal(path string) { engine.SetJournal(path) }
 
+func SetEngineLog(path string) { engine.SetEngineLog(path) }
+
 func Start(fd int, configYAML string) error { return engine.Start(fd, configYAML) }
 
 func Reload(fd int, configYAML string) error { return engine.Reload(fd, configYAML) }

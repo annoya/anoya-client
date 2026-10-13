@@ -237,6 +237,7 @@ func (s *Service) start(config string) error {
 	}
 	s.setStatus(StatusConnecting)
 	s.eng.SetHomeDir(s.files.Dir)
+	s.eng.SetEngineLog(s.files.EngineLog())
 	s.applyLogging()
 	s.files.Append("starting engine")
 	if err := s.eng.Start(config); err != nil {

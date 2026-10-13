@@ -9,12 +9,31 @@ import (
 	"time"
 )
 
-const LogMaxBytes = 4 << 20
+const (
+	LogMaxBytes       = 4 << 20
+	logRotateInterval = time.Minute
+)
 
 var (
-	journalMu   sync.Mutex
-	journalPath string
+	journalMu     sync.Mutex
+	journalPath   string
+	engineLogPath string
 )
+
+func SetEngineLog(path string) {
+	journalMu.Lock()
+	defer journalMu.Unlock()
+	engineLogPath = path
+}
+
+func rotateEngineLog() {
+	journalMu.Lock()
+	path := engineLogPath
+	journalMu.Unlock()
+	if path != "" {
+		RotateLog(path)
+	}
+}
 
 func SetJournal(path string) {
 	journalMu.Lock()

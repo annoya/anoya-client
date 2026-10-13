@@ -36,6 +36,7 @@ func (f *fakeEngine) Version() string          { return "mihomo test" }
 func (f *fakeEngine) SetHomeDir(dir string)    { f.home = dir }
 func (f *fakeEngine) SetLogLevel(level string) { f.level = level }
 func (f *fakeEngine) SetJournal(path string)   { f.journal = path }
+func (f *fakeEngine) SetEngineLog(string)      {}
 func (f *fakeEngine) Start(c string) error {
 	f.record("start")
 	f.configs = append(f.configs, c)
