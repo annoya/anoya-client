@@ -821,6 +821,10 @@ writes `tunnel.log` and `mihomo.log` into `<App Group>/logs/` and the app
 reads their last 512 KB and truncates them itself, with no IPC; a journal over
 4 MB is halved on read, and the running engine checks its own log once a
 minute and halves it past 4 MB. On Android both sides share the app's files directory.
+The app journal is kept in `<Application Support>/logs/app.log` as well as in
+memory and is read back at start, so an export after the app was killed or
+restarted still holds the lines before it; the file is cut to its newest
+256 KB once it passes 512 KB, and clearing the logs empties it.
 The tunnel journal records only what explains a drop or a restart: who started
 the tunnel, the stop reason and uptime, a previous process that died without a
 stop (with the system's exit reason on Android 11+), network changes, memory
