@@ -56,6 +56,58 @@ void main() {
     tmp.deleteSync(recursive: true);
   });
 
+  group('the app log outlives the app', () {
+    tearDown(Log.forgetForTesting);
+
+    test('lines written before a restart are there after it', () {
+      final file = File('${tmp.path}/logs/app.log');
+      Log.persistTo(file);
+      Log.i('before the restart');
+
+      Log.forgetForTesting();
+      Log.persistTo(file);
+      Log.i('after the restart');
+
+      final dump = Log.dump();
+      expect(dump, contains('before the restart'));
+      expect(
+        dump.indexOf('before the restart'),
+        lessThan(dump.indexOf('after the restart')),
+      );
+    });
+
+    test('the file stays bounded however long the app runs', () {
+      final file = File('${tmp.path}/logs/app.log');
+      Log.persistTo(file);
+      final filler = 'x' * 900;
+      for (var i = 0; i < 2000; i++) {
+        Log.i('$i $filler');
+      }
+      expect(file.lengthSync(), lessThanOrEqualTo(Log.maxFileBytes));
+      expect(file.readAsStringSync(), contains('1999 $filler'));
+    });
+
+    test('clearing the log clears the file too', () {
+      final file = File('${tmp.path}/logs/app.log');
+      Log.persistTo(file);
+      Log.i('to be cleared');
+      Log.clear();
+
+      Log.forgetForTesting();
+      Log.persistTo(file);
+      expect(Log.dump(), isNot(contains('to be cleared')));
+    });
+
+    test('nothing reaches the file while collection is off', () {
+      final file = File('${tmp.path}/logs/app.log');
+      Log.persistTo(file);
+      Log.enabled = false;
+      Log.i('unrecorded');
+      Log.enabled = true;
+      expect(file.readAsStringSync(), isNot(contains('unrecorded')));
+    });
+  });
+
   group('what a shared log gives away', () {
     test('a failed fetch names the host, never the subscription token', () {
       Log.clear();

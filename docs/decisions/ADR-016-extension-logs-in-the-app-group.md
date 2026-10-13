@@ -40,6 +40,14 @@ home.
   `mihomo.log` in append mode.
 - The `log:<name>` and `clear-logs` provider messages are gone.
 
+**The app's journal is a file too.** It lived only in memory, and iOS kills a
+backgrounded app freely: an export taken after a night of on-demand restarts
+held the header and nothing else, so the on-demand decisions and the
+disconnect reasons the app saw were gone. `Log` now appends every line to
+`<Application Support>/logs/app.log`, reads it back at start, cuts it to its
+newest 256 KB past 512 KB, and empties it on clear. It stays in the app's own
+container: nothing outside the app reads it.
+
 **The tunnel log answers one question: why the tunnel went down or came back
 up.** It records, on every platform, with UTC millisecond stamps in the app
 log's format:
@@ -99,6 +107,7 @@ logs unreadable while disconnected.
   `startMemoryPressureLog`
 - `android/app/src/main/kotlin/org/anoya/vpn/MihomoVpnService.kt` —
   `checkPreviousRun`, `previousExit`, `startNetworkLog`, `onTrimMemory`
+- `lib/core/log.dart` — `persistTo`; `lib/main.dart` attaches it
 - `native/mihomocore/engine/journal.go` — `SetJournal`, `SetEngineLog`,
   `SetCrashLog`
 - `shared/apple/VPNManager.swift` — `fetchLog`, `clearLogs`,
