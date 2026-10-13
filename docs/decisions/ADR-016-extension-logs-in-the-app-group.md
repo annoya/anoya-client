@@ -32,8 +32,10 @@ home.
   before). Its caches directory is only a fallback if the container is missing.
 - The app reads the last 512 KB of each log and truncates them itself, in
   `VPNManager`, with no IPC and no dependence on the tunnel's state.
-- A log over 4 MB is halved when read — the engine's stdout has no other
-  rotation point.
+- A log over 4 MB is halved when read, and the running engine checks
+  `mihomo.log` once a minute and halves it the same way (`engine.SetEngineLog`): at debug level a
+  night of sleep and dark wakes wrote 13 MB into it, and a log nobody opens
+  was never read, so it grew without bound.
 - Clearing truncates, never unlinks: the extension's stdout is `freopen`'d onto
   `mihomo.log` in append mode.
 - The `log:<name>` and `clear-logs` provider messages are gone.
@@ -97,7 +99,8 @@ logs unreadable while disconnected.
   `startMemoryPressureLog`
 - `android/app/src/main/kotlin/org/anoya/vpn/MihomoVpnService.kt` —
   `checkPreviousRun`, `previousExit`, `startNetworkLog`, `onTrimMemory`
-- `native/mihomocore/engine/journal.go` — `SetJournal`, `SetCrashLog`
+- `native/mihomocore/engine/journal.go` — `SetJournal`, `SetEngineLog`,
+  `SetCrashLog`
 - `shared/apple/VPNManager.swift` — `fetchLog`, `clearLogs`,
   `halveIfOversized`
 - `macos/Tunnel/Tunnel.entitlements`, `ios/Tunnel/Tunnel.entitlements`

@@ -107,6 +107,7 @@ func runWatchdog(stop <-chan struct{}) {
 	ticker := time.NewTicker(sampleInterval)
 	defer ticker.Stop()
 	detector := newStallDetector(time.Now())
+	lastRotate := time.Now()
 	backoff := minRecoverBackoff
 	var notBefore time.Time
 	for {
@@ -114,6 +115,10 @@ func runWatchdog(stop <-chan struct{}) {
 		case <-stop:
 			return
 		case now := <-ticker.C:
+			if now.Sub(lastRotate) >= logRotateInterval {
+				rotateEngineLog()
+				lastRotate = now
+			}
 			answeredBefore := detector.lastAnswer
 			stalled, unanswered := detector.observe(now, watchedSamples())
 			if detector.lastAnswer.After(answeredBefore) {

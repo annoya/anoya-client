@@ -168,9 +168,11 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         case .requiresConnection: parts = ["requires connection"]
         default: parts = ["unsatisfied (\(describe(path.unsatisfiedReason)))"]
         }
-        let interfaces = path.availableInterfaces
-            .filter { $0.type != .other && $0.type != .loopback }
-            .map { "\($0.name) \(describe($0.type))" }
+        var interfaces: [String] = []
+        for interface in path.availableInterfaces where interface.type != .other && interface.type != .loopback {
+            let text = "\(interface.name) \(describe(interface.type))"
+            if !interfaces.contains(text) { interfaces.append(text) }
+        }
         parts.append(interfaces.isEmpty ? "no interfaces" : interfaces.joined(separator: ", "))
         return parts.joined(separator: " · ")
     }
@@ -441,6 +443,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     private func startEngine(fd: Int32, config: String) -> String? {
         let home = mihomoHomeDir().path
         home.withCString { MihomoSetHomeDir(UnsafeMutablePointer(mutating: $0)) }
+        Self.logDir.appendingPathComponent("mihomo.log").path
+            .withCString { MihomoSetEngineLog(UnsafeMutablePointer(mutating: $0)) }
         log("mihomo home dir: \(home)")
         return config.withCString { cfgPtr -> String? in
             guard let res = MihomoStart(fd, UnsafeMutablePointer(mutating: cfgPtr)) else {

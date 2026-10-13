@@ -819,7 +819,8 @@ The tunnel and engine journals are readable whether or not the tunnel runs —
 a tunnel that just dropped is when they matter most. On Apple the extension
 writes `tunnel.log` and `mihomo.log` into `<App Group>/logs/` and the app
 reads their last 512 KB and truncates them itself, with no IPC; a journal over
-4 MB is halved on read. On Android both sides share the app's files directory.
+4 MB is halved on read, and the running engine checks its own log once a
+minute and halves it past 4 MB. On Android both sides share the app's files directory.
 The tunnel journal records only what explains a drop or a restart: who started
 the tunnel, the stop reason and uptime, a previous process that died without a
 stop (with the system's exit reason on Android 11+), network changes, memory

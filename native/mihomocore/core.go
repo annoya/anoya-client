@@ -34,6 +34,11 @@ func MihomoSetJournal(path *C.char) {
 	engine.SetJournal(C.GoString(path))
 }
 
+//export MihomoSetEngineLog
+func MihomoSetEngineLog(path *C.char) {
+	engine.SetEngineLog(C.GoString(path))
+}
+
 //export MihomoSetCrashLog
 func MihomoSetCrashLog(path *C.char) {
 	engine.SetCrashLog(C.GoString(path))

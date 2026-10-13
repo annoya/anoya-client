@@ -149,6 +149,7 @@ class MihomoVpnService : VpnService() {
                 }
             })
             Mobile.setHomeDir(TunnelFiles.engineDir(this).absolutePath)
+            Mobile.setEngineLog(TunnelFiles.engineLog(this).absolutePath)
             redirectEngineOutput()
             Mobile.setLogLevel(if (TunnelFiles.logsEnabled(this)) "debug" else "silent")
             log("starting engine on fd $fd")

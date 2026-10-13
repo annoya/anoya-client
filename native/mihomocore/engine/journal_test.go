@@ -54,3 +54,25 @@ func TestCrashLogCanBeSwitchedOnAndOff(t *testing.T) {
 		t.Fatalf("crash log was not opened: %v", err)
 	}
 }
+
+func TestEngineLogIsHalvedOnceItPassesTheCap(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "mihomo.log")
+	t.Cleanup(func() { SetEngineLog("") })
+	line := strings.Repeat("x", 99) + "\n"
+	big := strings.Repeat(line, LogMaxBytes/len(line)+1024)
+	if err := os.WriteFile(path, []byte(big), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	rotateEngineLog()
+	if st, _ := os.Stat(path); st.Size() != int64(len(big)) {
+		t.Fatal("rotated a log nobody pointed the engine at")
+	}
+
+	SetEngineLog(path)
+	rotateEngineLog()
+	st, _ := os.Stat(path)
+	if st.Size() > LogMaxBytes || st.Size() < LogMaxBytes/2 {
+		t.Fatalf("log is %d bytes after rotation, want the newest half", st.Size())
+	}
+}
