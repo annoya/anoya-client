@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/connection_check.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
@@ -405,8 +406,8 @@ void main() {
       await pump(tester, core);
       await tester.pump();
 
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Test now'),
+      final button = tester.widget<DsButton>(
+        find.widgetWithText(DsButton, 'Test now'),
       );
       expect(button.onPressed, isNull);
       expect(find.textContaining('the tunnel has to be up'), findsOneWidget);
@@ -421,13 +422,13 @@ void main() {
       await tester.pump();
 
       await tester.runAsync(() async {
-        await tester.tap(find.widgetWithText(FilledButton, 'Test now'));
+        await tester.tap(find.widgetWithText(DsButton, 'Test now'));
         await Future<void>.delayed(const Duration(milliseconds: 100));
       });
       await tester.pump();
 
       expect(find.text('Answered in 143 ms'), findsOneWidget);
-      expect(find.text('LAST CHECK'), findsOneWidget);
+      expect(find.text('Last check'), findsOneWidget);
     });
 
     testWidgets('a failure says where the fault is not', (tester) async {
@@ -437,7 +438,7 @@ void main() {
       await tester.pump();
 
       await tester.runAsync(() async {
-        await tester.tap(find.widgetWithText(FilledButton, 'Test now'));
+        await tester.tap(find.widgetWithText(DsButton, 'Test now'));
         await Future<void>.delayed(const Duration(milliseconds: 100));
       });
       await tester.pump();

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/routing_widgets.dart';
 import 'package:anoya/features/rule_screen.dart';
 import 'package:anoya/l10n/l10n.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -75,7 +78,7 @@ void main() {
     expect(field.textInputAction, TextInputAction.newline);
     expect(field.maxLines, greaterThan(1));
     expect(find.byTooltip('Paste'), findsOneWidget, reason: 'in the field');
-    expect(find.widgetWithText(OutlinedButton, 'Add from a file…'), findsOne);
+    expect(find.widgetWithText(DsButton, 'Add from a file…'), findsOne);
     expect(find.text('domain and subdomains'), findsOneWidget);
   });
 
@@ -126,6 +129,8 @@ void main() {
     await tester.enterText(find.byType(TextField), 'a.com\nb_c\n300.1.1.0/24');
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('2 lines not recognized'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('2 lines not recognized'));
     await tester.pumpAndSettle();
 
@@ -137,12 +142,14 @@ void main() {
   testWidgets('Save waits for at least one value', (tester) async {
     await open(tester);
 
-    final button = find.widgetWithIcon(IconButton, Icons.check);
-    expect(tester.widget<IconButton>(button).onPressed, isNull);
+    final button = find.byWidgetPredicate(
+      (w) => w is DsNavButton && w.glyph == Glyph.check,
+    );
+    expect(tester.widget<DsNavButton>(button).onPressed, isNull);
 
     await tester.enterText(find.byType(TextField), 'not_a_domain');
     await tester.pumpAndSettle();
-    expect(tester.widget<IconButton>(button).onPressed, isNull);
+    expect(tester.widget<DsNavButton>(button).onPressed, isNull);
   });
 
   testWidgets('an existing list opens one value per line', (tester) async {
@@ -189,8 +196,8 @@ void main() {
     expect(find.text('3 selected'), findsOneWidget);
     await tester.tap(
       find.descendant(
-        of: find.widgetWithText(InputChip, '🇧🇾 BY'),
-        matching: find.byTooltip('Remove'),
+        of: find.widgetWithText(DsValueChip, '🇧🇾 BY'),
+        matching: findGlyph(Glyph.x),
       ),
     );
     await tester.pumpAndSettle();

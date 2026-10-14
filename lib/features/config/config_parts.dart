@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/app_error.dart';
+import '../../core/ds.dart';
 import '../../core/profile.dart';
+import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
@@ -16,11 +18,11 @@ export 'provider_section.dart';
 export 'refresh_card.dart';
 export 'routing_cards.dart';
 
-IconData profileIcon(ProfileType t) => switch (t) {
-  ProfileType.selfhosted => Icons.business_outlined,
-  ProfileType.subscription => Icons.folder_outlined,
-  ProfileType.amnezia => Icons.shield_outlined,
-  ProfileType.link => Icons.link,
+Glyph profileIcon(ProfileType t) => switch (t) {
+  ProfileType.selfhosted => Glyph.building2,
+  ProfileType.subscription => Glyph.folder,
+  ProfileType.amnezia => Glyph.shield,
+  ProfileType.link => Glyph.link,
 };
 
 String profileKind(Profile p) {
@@ -53,8 +55,8 @@ String _groups(Profile p) {
   return L10n.current.configGroupsSuffix(n);
 }
 
-class ProfileHeaderCard extends StatelessWidget {
-  const ProfileHeaderCard({
+class ProfileHeaderRow extends StatelessWidget {
+  const ProfileHeaderRow({
     super.key,
     required this.profile,
     required this.isActive,
@@ -64,66 +66,39 @@ class ProfileHeaderCard extends StatelessWidget {
   final bool isActive;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: kCardMargin,
-    child: ListTile(
-      leading: Icon(profileIcon(profile.type)),
-      title: Text(profile.name),
-      subtitle: Text(profileKind(profile)),
-      trailing: isActive
-          ? Icon(
-              Icons.check_circle,
-              color: Theme.of(context).colorScheme.primary,
-              size: 20,
-            )
-          : null,
-    ),
+  Widget build(BuildContext context) => DsRow(
+    glyph: profileIcon(profile.type),
+    title: profile.name,
+    subtitle: profileKind(profile),
+    trailing: [
+      if (isActive) DsAction(glyph: Glyph.check, color: context.ds.accent),
+    ],
   );
 }
 
-class SourceCard extends StatelessWidget {
-  const SourceCard({
-    super.key,
-    required this.value,
-    this.openUrl,
-    this.viaFallback = false,
-  });
+class SourceRow extends StatelessWidget {
+  const SourceRow({super.key, required this.value, this.openUrl});
 
   final String value;
 
   final String? openUrl;
 
-  final bool viaFallback;
-
   @override
   Widget build(BuildContext context) {
     final opens = (openUrl ?? '').isNotEmpty;
-    final l10n = context.l10n;
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        leading: const Icon(Icons.link),
-        title: Text(l10n.configSource),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
-            if (viaFallback)
-              Text(
-                l10n.configSourceViaFallback,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-          ],
+    void act() => opens ? _open(context, openUrl!) : _copy(context);
+    return DsRow(
+      glyph: Glyph.link,
+      title: context.l10n.configSource,
+      subtitle: value,
+      subtitleMaxLines: 1,
+      trailing: [
+        DsAction(
+          glyph: opens ? Glyph.externalLink : Glyph.copy,
+          onPressed: act,
         ),
-        isThreeLine: viaFallback,
-        trailing: Icon(
-          opens ? Icons.open_in_new : Icons.copy_all_outlined,
-          size: 18,
-        ),
-        onTap: () => opens ? _open(context, openUrl!) : _copy(context),
-      ),
+      ],
+      onTap: act,
     );
   }
 
@@ -143,51 +118,59 @@ class SourceCard extends StatelessWidget {
   }
 }
 
-class UnsupportedServersCard extends StatelessWidget {
-  const UnsupportedServersCard({super.key, required this.profile});
+class FallbackSourceNote extends StatelessWidget {
+  const FallbackSourceNote({super.key});
+
+  @override
+  Widget build(BuildContext context) => DsNotification(
+    title: context.l10n.configSourceViaFallback,
+    glyph: Glyph.info,
+    small: true,
+    boldTitle: true,
+  );
+}
+
+class ConfigAlert extends StatelessWidget {
+  const ConfigAlert({super.key, required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) => DsNotification(
+    title: title,
+    body: body,
+    glyph: Glyph.alertTriangle,
+    tone: DsTone.warning,
+    boldTitle: true,
+  );
+}
+
+class UnsupportedServersAlert extends StatelessWidget {
+  const UnsupportedServersAlert({super.key, required this.profile});
 
   final Profile profile;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final skipped = profile.offeredServers - profile.locations.length;
     final kinds = (profile.unsupportedServers.keys.toList()..sort()).join(', ');
     final l10n = context.l10n;
-    return Card(
-      margin: kCardMargin,
-      color: cs.tertiaryContainer.withValues(alpha: 0.35),
-      child: ListTile(
-        leading: Icon(Icons.info_outline, color: cs.onSurfaceVariant),
-        title: Text(
-          l10n.configUnsupportedTitle(skipped, profile.offeredServers),
-        ),
-        subtitle: Text(
-          l10n.configUnsupportedDetail(kinds, profile.locations.length),
-        ),
-        isThreeLine: true,
-      ),
+    return ConfigAlert(
+      title: l10n.configUnsupportedTitle(skipped, profile.offeredServers),
+      body: l10n.configUnsupportedDetail(kinds, profile.locations.length),
     );
   }
 }
 
-class DeviceLimitCard extends StatelessWidget {
-  const DeviceLimitCard({super.key});
+class DeviceLimitAlert extends StatelessWidget {
+  const DeviceLimitAlert({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Card(
-      margin: kCardMargin,
-      color: cs.errorContainer.withValues(alpha: 0.35),
-      child: ListTile(
-        leading: Icon(Icons.warning_amber_outlined, color: cs.error),
-        title: Text(kDeviceLimitReached.title),
-        subtitle: Text(kDeviceLimitReached.detail!),
-        isThreeLine: true,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => ConfigAlert(
+    title: kDeviceLimitReached.title,
+    body: kDeviceLimitReached.detail!,
+  );
 }
 
 class ConfigActions extends ConsumerWidget {
@@ -204,32 +187,19 @@ class ConfigActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ctrl = ref.read(profilesControllerProvider.notifier);
     final l10n = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return DsStack(
       children: [
-        const SizedBox(height: 20),
         if (!isActive)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: kGutter),
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.check, size: 18),
-              label: Text(l10n.configSetActive),
-              onPressed: () => ctrl.setActive(profile.id),
-            ),
+          DsButton.tonal(
+            label: l10n.configSetActive,
+            glyph: Glyph.check,
+            onPressed: () => ctrl.setActive(profile.id),
           ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: kGutter),
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.delete_outline),
-            label: Text(l10n.configRemoveConfiguration),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () => _remove(context, ref),
-          ),
+        DsButton.destructive(
+          label: l10n.configRemoveConfiguration,
+          glyph: Glyph.trash,
+          onPressed: () => _remove(context, ref),
         ),
-        const SizedBox(height: 24),
       ],
     );
   }
@@ -239,24 +209,13 @@ class ConfigActions extends ConsumerWidget {
     final nav = Navigator.of(context);
     final container = ProviderScope.containerOf(context, listen: false);
     final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(l10n.configRemoveTitle(profile.name)),
-        content: Text(l10n.configRemoveDetail),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.commonRemove),
-          ),
-        ],
-      ),
+    final ok = await confirmAction(
+      context,
+      title: l10n.configRemoveTitle(profile.name),
+      body: l10n.configRemoveDetail,
+      confirmLabel: l10n.commonRemove,
     );
-    if (ok != true) return;
+    if (!ok) return;
     final ctrl = ref.read(profilesControllerProvider.notifier);
     if (ref.read(profilesControllerProvider).activeId == profile.id) {
       try {

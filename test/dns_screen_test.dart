@@ -12,6 +12,8 @@ import 'package:anoya/features/dns_screen.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/l10n/l10n.dart';
 
+import 'support/ds_finders.dart';
+
 void main() {
   Location server({bool udp = true}) => Location(
     id: 'l1',
@@ -64,7 +66,7 @@ void main() {
     tester,
   ) async {
     await pump(tester, profile(['https://dns.quad9.net/dns-query#PROXY']));
-    expect(find.text('https://dns.quad9.net/dns-query'), findsOneWidget);
+    expect(findRow('https://dns.quad9.net/dns-query'), findsOneWidget);
     expect(find.text('through the tunnel'), findsOneWidget);
     expect(
       find.text('DNS over HTTPS · from your subscription'),
@@ -99,13 +101,13 @@ void main() {
         tester,
         profile(['h3://dns.google/dns-query', 'tls://9.9.9.9']),
       );
-      expect(find.text('DROPPED'), findsOneWidget);
+      expect(find.text('Dropped'), findsOneWidget);
       expect(find.text('h3://dns.google/dns-query'), findsOneWidget);
       expect(
         find.textContaining('failed the whole configuration'),
         findsOneWidget,
       );
-      expect(find.text('tls://9.9.9.9'), findsOneWidget);
+      expect(findRow('tls://9.9.9.9'), findsOneWidget);
     });
 
     testWidgets(
@@ -123,7 +125,7 @@ void main() {
       'nothing refused means no section — an empty one teaches people not to look',
       (tester) async {
         await pump(tester, profile(['tls://9.9.9.9']));
-        expect(find.text('DROPPED'), findsNothing);
+        expect(find.text('Dropped'), findsNothing);
       },
     );
   });

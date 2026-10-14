@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/country_flag.dart';
-import '../core/norm_config.dart';
+import '../core/ds.dart';
 import '../core/on_demand.dart';
 import '../core/platform_support.dart';
 import '../core/profile.dart';
@@ -74,20 +74,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(profilesControllerProvider.notifier).clearNotice();
     });
 
+    final busy = ref.watch(sessionProvider.select((s) => s.busy));
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.add),
-          tooltip: l10n.homeAddConfiguration,
-          onPressed: () => _push(const StartScreen()),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.commonSettings,
-            onPressed: () => _push(const SettingsScreen()),
+        automaticallyImplyLeading: false,
+        titleSpacing: 0,
+        title: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              DsAction(
+                glyph: Glyph.plus,
+                tooltip: l10n.homeAddConfiguration,
+                onPressed: () => _push(const StartScreen()),
+              ),
+              DsAction(
+                glyph: Glyph.settings,
+                tooltip: l10n.commonSettings,
+                onPressed: () => _push(const SettingsScreen()),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
       body: PageBody(
         child: LayoutBuilder(
@@ -100,34 +109,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _statusStrip(active),
                     Expanded(
                       child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
+                        child: HomeHero(
+                          status: _status,
+                          onTap: active == null && !busy ? null : _toggle,
+                        ),
+                      ),
+                    ),
+                    SafeArea(
+                      top: false,
+                      minimum: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          kGutter,
+                          8,
+                          kGutter,
+                          0,
+                        ),
+                        child: DsStack(
+                          gap: 8,
                           children: [
-                            const StatusLabel(),
-                            const SizedBox(height: 28),
-                            ConnectButton(
-                              status: _status,
-                              onTap:
-                                  active == null &&
-                                      !ref.watch(
-                                        sessionProvider.select((s) => s.busy),
-                                      )
-                                  ? null
-                                  : _toggle,
-                            ),
+                            ?_checkBanner(),
+                            ?_onDemandBanner(),
+                            ?_expiryCard(active),
+                            if (active != null)
+                              _profileRow(active)
+                            else
+                              _addRow(),
+                            if (active != null) _locationRow(active),
                           ],
                         ),
                       ),
                     ),
-                    ?_checkBanner(),
-                    ?_onDemandBanner(),
-                    if (active != null) _profileRow(active) else _addRow(),
-                    if (active != null) _locationRow(active),
-                    if (active?.account != null) ...[
-                      const SizedBox(height: 12),
-                      _accountRow(active!.account!),
-                    ],
-                    const SizedBox(height: kGutter),
                   ],
                 ),
               ),
@@ -149,24 +161,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     final routing = ref.watch(routingStatusProvider).value;
 
-    final (autoLabel, autoTone) = switch (onDemand) {
-      OnDemandPrefs(enabled: false) => (l10n.homeStateOff, ChipTone.off),
-      OnDemandPrefs(paused: true) => (l10n.homeAutoPaused, ChipTone.pending),
-      OnDemandPrefs(rules: []) => (l10n.ruleSetNoRules, ChipTone.pending),
-      OnDemandPrefs(systemArmed: false) => (
-        l10n.homeAutoNotArmed,
-        ChipTone.pending,
-      ),
-      _ => (l10n.homeStateOn, ChipTone.on),
+    final (autoLabel, autoOn) = switch (onDemand) {
+      OnDemandPrefs(enabled: false) => (l10n.homeStateOff, false),
+      OnDemandPrefs(paused: true) => (l10n.homeAutoPaused, false),
+      OnDemandPrefs(rules: []) => (l10n.ruleSetNoRules, false),
+      OnDemandPrefs(systemArmed: false) => (l10n.homeAutoNotArmed, false),
+      _ => (l10n.homeStateOn, true),
     };
 
     return Padding(
-      padding: const EdgeInsets.only(
-        left: kGutter,
-        right: kGutter,
-        top: 8,
-        bottom: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: kGutter, vertical: 8),
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: 8,
@@ -174,21 +178,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           if (supportsOnDemand)
             StatusChip(
-              icon: Icons.bolt_outlined,
               label: l10n.homeChipAuto(autoLabel),
-              tone: autoTone,
+              on: autoOn,
               onTap: () => _push(const OnDemandScreen()),
             ),
           StatusChip(
-            icon: Icons.alt_route,
             label: l10n.homeChipRouting(switch (routing) {
               null => '…',
               RoutingStatus.off => l10n.homeStateOff,
               _ => l10n.homeStateOn,
             }),
-            tone: routing == null || routing == RoutingStatus.off
-                ? ChipTone.off
-                : ChipTone.on,
+            on: routing != null && routing != RoutingStatus.off,
             onTap: () => _push(
               active == null
                   ? const RuleSetsScreen()
@@ -196,11 +196,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           StatusChip(
-            icon: Icons.description_outlined,
             label: l10n.homeChipLogs(
               collectLogs ? l10n.homeStateOn : l10n.homeStateOff,
             ),
-            tone: collectLogs ? ChipTone.on : ChipTone.off,
+            on: collectLogs,
             onTap: () => _push(const LogsScreen()),
           ),
         ],
@@ -212,16 +211,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final check = ref.watch(connectionCheckProvider.select((s) => s.last));
     if (check == null || check.passed) return null;
     final l10n = context.l10n;
-    final warn = context.vpnColors.connecting;
-    return Card(
-      margin: kCardMargin,
-      color: warn.withValues(alpha: 0.12),
-      child: ListTile(
-        leading: Icon(Icons.warning_amber_outlined, color: warn),
-        title: Text(l10n.homeCheckFailedTitle),
-        subtitle: Text(l10n.homeCheckFailedDetail),
-        isThreeLine: true,
-      ),
+    return DsNotification(
+      glyph: Glyph.alertTriangle,
+      tone: DsTone.warning,
+      title: l10n.homeCheckFailedTitle,
+      body: l10n.homeCheckFailedDetail,
     );
   }
 
@@ -242,30 +236,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _ => (null, null),
     };
     if (title == null) return null;
-    return Card(
-      margin: kCardMargin,
-      color: Theme.of(
-        context,
-      ).colorScheme.primaryContainer.withValues(alpha: 0.35),
-      child: ListTile(
-        leading: const Icon(Icons.bolt_outlined),
-        title: Text(title),
-        subtitle: Text(subtitle!),
-      ),
+    return DsStickyAlert(title: title, body: subtitle);
+  }
+
+  // Subscription ending: three days before the date or at 90% of the traffic.
+  Widget? _expiryCard(Profile? active) {
+    final account = active?.account;
+    if (account == null) return null;
+    final l10n = context.l10n;
+    final until = account.expiresAt?.toLocal();
+    final daysLeft = until == null
+        ? null
+        : until.difference(DateTime.now()).inHours / 24;
+    final usedShare = account.dataLimit > 0
+        ? account.usedBytes / account.dataLimit
+        : 0.0;
+    final ending =
+        daysLeft != null && daysLeft >= 0 && daysLeft <= kExpiryWarnDays;
+    final drained = usedShare >= kExpiryWarnTraffic;
+    if (!ending && !drained) return null;
+    return DsCard(
+      children: [
+        DsRow(
+          compact: true,
+          glyph: Glyph.clock,
+          title: ending
+              ? l10n.homeExpiryEndsIn(daysLeft.ceil())
+              : l10n.homeExpiryTraffic((usedShare * 100).floor()),
+          subtitle: until == null
+              ? null
+              : l10n.homeExpiryValidUntil(
+                  MaterialLocalizations.of(context).formatMediumDate(until),
+                ),
+          trailing: const [_SmallChevron()],
+          onTap: () => _push(ConfigScreen(profileId: active!.id)),
+        ),
+      ],
     );
   }
 
   Widget _addRow() {
     final l10n = context.l10n;
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        leading: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
-        title: Text(l10n.startAddConnection),
-        subtitle: Text(l10n.startSubtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => _push(const StartScreen()),
-      ),
+    return DsCard(
+      children: [
+        DsRow(
+          compact: true,
+          glyph: Glyph.plus,
+          title: l10n.startAddConnection,
+          subtitle: l10n.startSubtitle,
+          trailing: const [DsChevron()],
+          onTap: () => _push(const StartScreen()),
+        ),
+      ],
     );
   }
 
@@ -273,30 +295,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final pickable = ref.watch(
       profilesControllerProvider.select((s) => s.profiles.length > 1),
     );
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        leading: Icon(profileIcon(active.type)),
-        title: Text(active.name),
-        subtitle: Text(profileKind(active)),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (active.isRefreshable)
-              RefreshButton(profile: active, iconSize: 20, spinnerPadding: 14),
-            IconButton(
-              icon: const Icon(Icons.settings_outlined, size: 20),
+    final connecting = _status == VpnStatus.connecting;
+    return DsCard(
+      children: [
+        DsRow(
+          compact: true,
+          glyph: profileIcon(active.type),
+          title: active.name,
+          subtitle: profileKind(active),
+          subtitleMaxLines: 1,
+          trailing: [
+            if (active.isRefreshable) RefreshButton(profile: active),
+            DsAction(
+              glyph: Glyph.settings,
               tooltip: context.l10n.homeConfigurationSettings,
               onPressed: () => _push(ConfigScreen(profileId: active.id)),
             ),
-            if (pickable)
-              _status == VpnStatus.connecting
-                  ? const Icon(Icons.lock_outline, size: 18)
-                  : const Icon(Icons.expand_more),
+            if (pickable) _SmallChevron(down: true, locked: connecting),
           ],
+          onTap: (!pickable || _locked) ? null : _pickProfile,
         ),
-        onTap: (!pickable || _locked) ? null : _pickProfile,
-      ),
+      ],
     );
   }
 
@@ -312,48 +331,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         !active.isSingleServer &&
         (active.locations.length > 1 || active.groups.isNotEmpty);
     final picked = group == null ? null : ref.watch(groupMemberProvider).value;
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        leading: group != null ? Icon(groupIcon(group.type)) : flagOrIcon(loc),
-        title: Text(
-          group?.name ??
+    final connecting = _status == VpnStatus.connecting;
+    final card = DsCard(
+      children: [
+        DsRow(
+          compact: true,
+          leading: group != null
+              ? GlyphIcon(groupIcon(group.type))
+              : flagOrIcon(loc),
+          title:
+              group?.name ??
               (loc != null ? stripLeadingFlag(loc.label) : l10n.homeNoServers),
-        ),
-        subtitle: group != null
-            ? Text(
-                picked == null || picked.isEmpty
+          subtitle: group != null
+              ? (picked == null || picked.isEmpty
                     ? l10n.homeGroupAuto
-                    : l10n.homeGroupAutoPicked(picked),
-              )
-            : loc != null && loc.subtitle.isNotEmpty
-            ? Text(loc.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis)
-            : null,
-        trailing: !pickable
-            ? null
-            : _status == VpnStatus.connecting
-            ? const Icon(Icons.lock_outline, size: 18)
-            : const Icon(Icons.chevron_right),
-        onTap: (!pickable || _locked) ? null : () => _pickLocation(active),
-      ),
+                    : l10n.homeGroupAutoPicked(picked))
+              : loc?.subtitle,
+          subtitleMaxLines: 1,
+          trailing: [
+            if (pickable)
+              _SmallChevron(down: group != null, locked: connecting),
+          ],
+          onTap: (!pickable || _locked) ? null : () => _pickLocation(active),
+        ),
+      ],
     );
-  }
-
-  Widget _accountRow(Account account) {
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: kGutter),
-      child: Text(
-        account.expiresAt != null
-            ? context.l10n.homeAccountUntil(
-                account.status,
-                account.expiresAt!.toLocal().toString().split('.').first,
-              )
-            : account.status,
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
-      ),
-    );
+    return connecting && pickable
+        ? Opacity(opacity: kLockedCardOpacity, child: card)
+        : card;
   }
 
   Future<void> _pickProfile() async {
@@ -375,7 +380,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               p.id,
               p.name,
               subtitle: profileKind(p),
-              leading: Icon(profileIcon(p.type)),
+              leading: GlyphIcon(profileIcon(p.type)),
             ),
           )
           .toList(),
@@ -401,7 +406,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               g.id,
               g.name,
               subtitle: describeGroup(g, st.locations),
-              leading: Icon(groupIcon(g.type)),
+              leading: GlyphIcon(groupIcon(g.type)),
             ),
           )
           .toList(),
@@ -423,4 +428,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(profilesControllerProvider.notifier).selectLocation(picked);
     }
   }
+}
+
+// Chevron 20 of the home cards (24×20 slot, 4 to the edge); a lock while connecting.
+class _SmallChevron extends StatelessWidget {
+  const _SmallChevron({this.down = false, this.locked = false});
+
+  final bool down;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 2, right: 4),
+    child: GlyphIcon(
+      locked
+          ? Glyph.lock
+          : down
+          ? Glyph.chevronDown
+          : Glyph.chevronRight,
+      size: kSmallChevron,
+    ),
+  );
 }

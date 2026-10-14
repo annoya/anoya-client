@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/favorites.dart';
 import 'package:anoya/state/favorites_controller.dart';
 import 'package:anoya/core/norm_config.dart';
@@ -14,6 +15,8 @@ import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
 import 'package:anoya/l10n/l10n.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   Profile profile(String id, String name) => Profile(
@@ -59,6 +62,9 @@ void main() {
   );
 
   Future<void> pump(WidgetTester tester, List<Profile> profiles) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -80,9 +86,9 @@ void main() {
     await tester.pump();
   }
 
-  Finder inConfigCard(IconData icon) => find.descendant(
-    of: find.widgetWithText(Card, 'backup.single'),
-    matching: find.byIcon(icon),
+  Finder inConfigCard(Glyph glyph) => find.descendant(
+    of: find.widgetWithText(DsCard, 'backup.single'),
+    matching: findGlyph(glyph),
   );
 
   testWidgets(
@@ -91,9 +97,9 @@ void main() {
       await pump(tester, [profile('p1', 'backup.single')]);
 
       expect(find.text('backup.single'), findsOneWidget);
-      expect(inConfigCard(Icons.settings_outlined), findsOneWidget);
+      expect(inConfigCard(Glyph.settings), findsOneWidget);
       expect(
-        inConfigCard(Icons.expand_more),
+        inConfigCard(Glyph.chevronDown),
         findsNothing,
         reason: 'nothing to pick between',
       );
@@ -103,21 +109,21 @@ void main() {
   testWidgets('a second configuration adds the picker chevron', (tester) async {
     await pump(tester, [profile('p1', 'backup.single'), profile('p2', 'work')]);
 
-    expect(inConfigCard(Icons.settings_outlined), findsOneWidget);
-    expect(inConfigCard(Icons.expand_more), findsOneWidget);
+    expect(inConfigCard(Glyph.settings), findsOneWidget);
+    expect(inConfigCard(Glyph.chevronDown), findsOneWidget);
   });
 
-  testWidgets('the pickers sit at the bottom, the ring above them', (
+  testWidgets('the pickers sit at the bottom, the cat above them', (
     tester,
   ) async {
     await pump(tester, [profile('p1', 'backup.single')]);
 
     final screen = tester.getSize(find.byType(MaterialApp));
-    final serverRow = tester.getRect(find.widgetWithText(Card, 'Germany'));
+    final serverRow = tester.getRect(find.widgetWithText(DsCard, 'Germany'));
     expect(
       screen.height - serverRow.bottom,
-      lessThan(28),
-      reason: 'the last card hugs the bottom edge (16 padding + card margin)',
+      lessThan(12),
+      reason: 'the last card hugs the bottom edge (8 under the card stack)',
     );
 
     expect(
@@ -129,10 +135,10 @@ void main() {
     tester,
   ) async {
     await pump(tester, [withGroups()]);
-    await tester.tap(find.byIcon(Icons.chevron_right).last);
+    await tester.tap(findGlyph(Glyph.chevronRight).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('CHOSEN BY THE ENGINE'), findsOneWidget);
+    expect(find.text('Chosen by the engine'), findsOneWidget);
     expect(find.text('⚡️ Fastest'), findsOneWidget);
     expect(find.text('🛟 Failover'), findsOneWidget);
     expect(
@@ -146,7 +152,7 @@ void main() {
       reason: 'the servers are still there, below',
     );
 
-    final header = tester.getTopLeft(find.text('CHOSEN BY THE ENGINE')).dy;
+    final header = tester.getTopLeft(find.text('Chosen by the engine')).dy;
     expect(
       header,
       lessThan(tester.getTopLeft(find.text('VLESS Reality 1').last).dy),
@@ -178,15 +184,15 @@ void main() {
           ],
         ),
       ]);
-      final card = find.widgetWithText(Card, 'Remnawave');
+      final card = find.widgetWithText(DsCard, 'Remnawave');
       expect(
-        find.descendant(of: card, matching: find.byIcon(Icons.refresh)),
+        find.descendant(of: card, matching: findGlyph(Glyph.refreshCw)),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: card,
-          matching: find.byIcon(Icons.settings_outlined),
+          matching: findGlyph(Glyph.settings),
         ),
         findsOneWidget,
         reason: 'refresh sits beside the gear, it does not replace it',
@@ -198,7 +204,7 @@ void main() {
     tester,
   ) async {
     await pump(tester, [profile('a', 'Config')]);
-    expect(find.byIcon(Icons.refresh), findsNothing);
+    expect(findGlyph(Glyph.refreshCw), findsNothing);
   });
 
   testWidgets('the server row names the transport, not just the protocol', (
@@ -233,23 +239,23 @@ void main() {
     await pump(tester, []);
 
     expect(find.text('No configuration'), findsOneWidget);
-    expect(find.byType(Card), findsOneWidget, reason: 'no server row');
+    expect(find.byType(DsCard), findsOneWidget, reason: 'no server row');
     expect(
       find.descendant(of: find.byType(Opacity), matching: find.text('Connect')),
       findsOneWidget,
-      reason: 'nothing to connect: the ring is dimmed',
+      reason: 'nothing to connect: the button is dimmed',
     );
-    expect(find.byIcon(Icons.description_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+    expect(find.textContaining('Logs ·'), findsOneWidget);
+    expect(findGlyph(Glyph.settings), findsOneWidget);
 
     await tester.tap(find.text('Connect'), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.byType(Dialog), findsNothing);
 
-    await tester.tap(find.widgetWithText(Card, 'Add a connection'));
+    await tester.tap(find.widgetWithText(DsCard, 'Add a connection'));
     await tester.pumpAndSettle();
     expect(find.byType(StartScreen), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
+    expect(find.byTooltip('Back'), findsOneWidget);
   });
 }
 

@@ -4,123 +4,105 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/app_logo.dart';
 import '../core/app_version.dart';
+import '../core/ds.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
+  Future<void> _copyVersion(BuildContext context) async {
+    await Clipboard.setData(
+      ClipboardData(text: '$kAppName $appVersionLabel · mihomo $kEnginePin'),
+    );
+    if (context.mounted) showToast(context, context.l10n.aboutVersionCopied);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final ds = context.ds;
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.aboutTitle)),
-      body: PageBody(
-        child: ListView(
+    return DsPage(
+      title: l10n.aboutTitle,
+      children: [
+        Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(kGutter, 28, kGutter, 20),
-              child: Column(
-                children: [
-                  AppLogo(size: 56, color: cs.primary),
-                  const SizedBox(height: 12),
-                  Text(
-                    kAppName,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.aboutVersion(appVersionLabel),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                ],
-              ),
+            AppLogo(size: 56, color: ds.accent),
+            const SizedBox(height: 12),
+            Text(kAppName, style: DsType.h2.copyWith(color: ds.text1)),
+            const SizedBox(height: 4),
+            Text(
+              l10n.aboutVersion(appVersionLabel),
+              style: DsType.small.copyWith(color: ds.text3),
             ),
-            Card(
-              margin: kCardMargin,
-              child: ListTile(
-                leading: const Icon(Icons.bolt_outlined),
-                title: Text(l10n.aboutEngine),
-                subtitle: Text(engineVersionLabel),
-                trailing: IconButton(
-                  icon: const Icon(Icons.copy_all_outlined, size: 18),
-                  tooltip: l10n.commonCopy,
-                  onPressed: () async {
-                    await Clipboard.setData(
-                      ClipboardData(
-                        text: '$kAppName $appVersionLabel · mihomo $kEnginePin',
-                      ),
-                    );
-                    if (context.mounted) {
-                      showToast(context, l10n.aboutVersionCopied);
-                    }
-                  },
-                ),
-              ),
-            ),
-            Card(
-              margin: kCardMargin,
-              child: Column(
-                children: [
-                  _LegalRow(
-                    icon: Icons.description_outlined,
-                    title: l10n.aboutTermsOfService,
-                    url: kTermsUrl,
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  _LegalRow(
-                    icon: Icons.lock_outline,
-                    title: l10n.aboutPrivacyPolicy,
-                    url: kPrivacyUrl,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
-      ),
+        DsCard(
+          children: [
+            DsRow(
+              glyph: Glyph.zap,
+              title: l10n.aboutEngine,
+              subtitle: engineVersionLabel,
+              onTap: () => _copyVersion(context),
+              trailing: [
+                DsAction(
+                  glyph: Glyph.copy,
+                  tooltip: l10n.commonCopy,
+                  onPressed: () => _copyVersion(context),
+                ),
+              ],
+            ),
+          ],
+        ),
+        DsCard(
+          children: [
+            _LegalRow(
+              glyph: Glyph.fileText,
+              title: l10n.aboutTermsOfService,
+              url: kTermsUrl,
+            ),
+            _LegalRow(
+              glyph: Glyph.lock,
+              title: l10n.aboutPrivacyPolicy,
+              url: kPrivacyUrl,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
 class _LegalRow extends StatelessWidget {
-  const _LegalRow({required this.icon, required this.title, required this.url});
+  const _LegalRow({
+    required this.glyph,
+    required this.title,
+    required this.url,
+  });
 
-  final IconData icon;
+  final Glyph glyph;
   final String title;
   final String url;
 
   @override
   Widget build(BuildContext context) {
     final published = url.isNotEmpty;
-    return Opacity(
-      opacity: published ? 1 : 0.38,
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: published ? null : Text(context.l10n.aboutNotPublishedYet),
-        trailing: published ? const Icon(Icons.open_in_new, size: 18) : null,
-        onTap: !published
-            ? null
-            : () async {
-                final uri = Uri.tryParse(url);
-                if (uri == null ||
-                    !await launchUrl(
-                      uri,
-                      mode: LaunchMode.externalApplication,
-                    )) {
-                  if (context.mounted) {
-                    showToast(context, context.l10n.uiCouldNotOpenPage);
-                  }
-                }
-              },
-      ),
+    return DsRow(
+      glyph: glyph,
+      title: title,
+      subtitle: published ? null : context.l10n.aboutNotPublishedYet,
+      enabled: published,
+      trailing: [if (published) const DsAction(glyph: Glyph.externalLink)],
+      onTap: () async {
+        final uri = Uri.tryParse(url);
+        if (uri == null ||
+            !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+          if (context.mounted) {
+            showToast(context, context.l10n.uiCouldNotOpenPage);
+          }
+        }
+      },
     );
   }
 }

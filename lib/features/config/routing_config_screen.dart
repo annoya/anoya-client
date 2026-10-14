@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ds.dart';
 import '../../core/profile.dart';
 import '../../core/rule_list_store.dart';
-import '../../core/ui.dart';
+import '../../core/theme.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/provider_rule_lists.dart';
-import '../../state/routing_status.dart';
-import '../rule_sets_screen.dart';
 import 'config_parts.dart';
 
 class RoutingConfigScreen extends ConsumerWidget {
@@ -23,30 +22,38 @@ class RoutingConfigScreen extends ConsumerWidget {
     for (final p in st.profiles) {
       if (p.id == profileId) profile = p;
     }
-    if (profile == null) {
-      return Scaffold(appBar: AppBar(), body: const SizedBox.shrink());
-    }
+    if (profile == null) return const DsPage();
     final p = profile;
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.configRouting)),
-      body: PageBody(
-        child: ListView(
+    final note = p.routing != null
+        ? l10n.configOrganizationRoutingNote
+        : p.providerRouting != null
+        ? l10n.configSubscriptionRoutingNote
+        : null;
+    return DsPage(
+      title: l10n.configRouting,
+      children: [
+        ..._routing(context, ref, p),
+        DsStack(
+          gap: kNoteGap,
           children: [
-            ..._routing(l10n, ref, p),
             NamesSection(profile: p),
+            if (note != null) DsNote(note),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  List<Widget> _routing(AppLocalizations l10n, WidgetRef ref, Profile p) {
+  List<Widget> _routing(BuildContext context, WidgetRef ref, Profile p) {
+    final l10n = context.l10n;
     if (p.routing != null) {
       return [
-        SectionHeader(l10n.configSectionOrganizationRouting),
-        ManagedRoutingCard(routing: p.routing!),
-        SectionNote(l10n.configOrganizationRoutingNote),
+        DsGroup(
+          caption: l10n.configSectionOrganizationRouting,
+          color: context.ds.accentSubtle,
+          children: [ManagedRoutingRow(routing: p.routing!)],
+        ),
       ];
     }
     if (p.providerRouting != null) {
@@ -56,14 +63,15 @@ class RoutingConfigScreen extends ConsumerWidget {
                 .toList()
           : const <RuleListStatus>[];
       return [
-        SectionHeader(l10n.configSectionSubscriptionRouting),
-        ProviderRoutingCard(profile: p),
+        DsGroup(
+          caption: l10n.configSectionSubscriptionRouting,
+          child: ProviderRoutingCard(profile: p),
+        ),
         if (failed.isNotEmpty) RuleListFailureCard(profile: p, failed: failed),
-        SectionHeader(l10n.configSectionDeviceRouting),
-        IgnorePointer(
-          ignoring: p.providerRoutingEnabled,
-          child: Opacity(
-            opacity: p.providerRoutingEnabled ? 0.38 : 1,
+        DsGroup(
+          caption: l10n.configSectionDeviceRouting,
+          child: IgnorePointer(
+            ignoring: p.providerRoutingEnabled,
             child: LocalRoutingCard(
               profile: p,
               overriddenBy: p.providerRoutingEnabled
@@ -72,37 +80,14 @@ class RoutingConfigScreen extends ConsumerWidget {
             ),
           ),
         ),
-        const RuleSetsCard(),
-        SectionNote(l10n.configSubscriptionRoutingNote),
       ];
     }
     return [
-      SectionHeader(l10n.configSectionDeviceRouting),
-      LocalRoutingCard(profile: p),
-      const RuleSetsCard(),
-      SectionNote(l10n.configDeviceRoutingNote),
-    ];
-  }
-}
-
-class RuleSetsCard extends ConsumerWidget {
-  const RuleSetsCard({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final count = ref.watch(ruleSetsProvider).value?.length;
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        leading: const Icon(Icons.edit_outlined),
-        title: Text(l10n.ruleSetsTitle),
-        subtitle: count == null ? null : Text(l10n.settingsRuleSetCount(count)),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const RuleSetsScreen())),
+      DsGroup(
+        caption: l10n.configSectionDeviceRouting,
+        note: l10n.configDeviceRoutingNote,
+        child: LocalRoutingCard(profile: p),
       ),
-    );
+    ];
   }
 }

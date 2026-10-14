@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ds.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../refresh_button.dart';
 
-class RefreshCard extends StatelessWidget {
-  const RefreshCard({super.key, required this.profile});
+class RefreshRow extends StatelessWidget {
+  const RefreshRow({super.key, required this.profile});
 
   final Profile profile;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: kCardMargin,
-    child: ListTile(
-      title: Text(context.l10n.configLastRefreshed),
-      subtitle: Text(refreshedAtLabel(profile)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _RefreshEveryButton(profile: profile),
-          RefreshButton(profile: profile),
-        ],
-      ),
-    ),
+  Widget build(BuildContext context) => DsRow(
+    glyph: Glyph.clock,
+    title: context.l10n.configLastRefreshed,
+    subtitle: refreshedAtLabel(profile),
+    trailing: [
+      _RefreshEveryButton(profile: profile),
+      RefreshButton(profile: profile),
+    ],
   );
 }
 
@@ -35,8 +31,8 @@ class _RefreshEveryButton extends ConsumerWidget {
   final Profile profile;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => IconButton(
-    icon: const Icon(Icons.settings_outlined, size: 20),
+  Widget build(BuildContext context, WidgetRef ref) => DsAction(
+    glyph: Glyph.settings,
     tooltip: context.l10n.configRefreshEvery,
     onPressed: () => _edit(context, ref),
   );

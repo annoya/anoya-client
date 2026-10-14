@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ds.dart';
 import '../../core/profile.dart';
-import '../../core/ui.dart';
+import '../../core/theme.dart';
 import 'config_parts.dart';
 
 class SubscriptionConfigScreen extends ConsumerWidget {
@@ -18,32 +19,41 @@ class SubscriptionConfigScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = profile;
-    return Scaffold(
-      appBar: AppBar(title: Text(p.name)),
-      body: PageBody(
-        child: ListView(
+    return DsPage(
+      title: p.name,
+      children: [
+        DsStack(
+          gap: kNoteGap,
           children: [
-            const SizedBox(height: 8),
-            ProfileHeaderCard(profile: p, isActive: isActive),
-            if (p.deviceLimitReached) const DeviceLimitCard(),
-            if (p.unsupportedServers.isNotEmpty)
-              UnsupportedServersCard(profile: p),
-            if (p.subscriptionUrl != null)
-              SourceCard(
-                value: p.subscriptionUrl!,
-                openUrl: p.providerInfo?.webPageUrl.isNotEmpty == true
-                    ? p.providerInfo!.webPageUrl
-                    : p.subscriptionUrl,
-                viaFallback: p.usedFallback,
-              ),
-            RefreshCard(profile: p),
-            RoutingRow(profile: p),
-            if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),
+            DsCard(
+              children: [
+                ProfileHeaderRow(profile: p, isActive: isActive),
+                if (p.subscriptionUrl != null)
+                  SourceRow(
+                    value: p.subscriptionUrl!,
+                    openUrl: p.providerInfo?.webPageUrl.isNotEmpty == true
+                        ? p.providerInfo!.webPageUrl
+                        : p.subscriptionUrl,
+                  ),
+                RefreshRow(profile: p),
+              ],
+            ),
+            if (p.usedFallback) const FallbackSourceNote(),
+          ],
+        ),
+        if (p.deviceLimitReached) const DeviceLimitAlert(),
+        if (p.unsupportedServers.isNotEmpty)
+          UnsupportedServersAlert(profile: p),
+        RoutingRow(profile: p),
+        if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),
+        DsStack(
+          gap: 0,
+          children: [
             if (p.deviceLimitActive) const ThisDeviceSection(),
             ConfigActions(profile: p, isActive: isActive),
           ],
         ),
-      ),
+      ],
     );
   }
 }

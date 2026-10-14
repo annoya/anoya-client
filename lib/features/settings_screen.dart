@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/app_logo.dart';
 import '../core/app_prefs.dart';
 import '../core/app_version.dart';
 import '../core/geo_store.dart';
 import '../core/dns_plan.dart';
+import '../core/on_demand.dart';
 import '../core/rule_set.dart';
+import '../core/ds.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/favorites_controller.dart';
@@ -157,21 +158,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _configurationsRow(ProfilesState st) {
     if (st.profiles.length == 1) {
       final only = st.profiles.single;
-      return ListTile(
-        leading: Icon(profileIcon(only.type)),
-        title: Text(only.name),
-        subtitle: Text(profileKind(only)),
-        trailing: const Icon(Icons.chevron_right),
+      return DsRow(
+        glyph: profileIcon(only.type),
+        title: only.name,
+        subtitle: profileKind(only),
+        trailing: const [DsChevron()],
         onTap: () => _push(ConfigScreen(profileId: only.id)),
       );
     }
-    return ListTile(
-      leading: const Icon(Icons.folder_copy_outlined),
-      title: Text(context.l10n.settingsConfigurations),
-      subtitle: Text(
-        context.l10n.settingsConfigurationsCount(st.profiles.length),
-      ),
-      trailing: const Icon(Icons.expand_more),
+    return DsRow(
+      glyph: Glyph.folder,
+      title: context.l10n.settingsConfigurations,
+      subtitle: context.l10n.settingsConfigurationsCount(st.profiles.length),
+      trailing: const [DsChevron(down: true)],
       onTap: _openConfigurations,
     );
   }
@@ -193,7 +192,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               p.id,
               p.name,
               subtitle: profileKind(p),
-              leading: Icon(profileIcon(p.type)),
+              leading: GlyphIcon(profileIcon(p.type)),
             ),
           )
           .toList(),
@@ -204,15 +203,86 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _cloudSyncRow(CloudSyncState cloud) {
     final l10n = context.l10n;
     final usable = cloud.available || cloud.enabled;
-    return SwitchListTile(
-      secondary: const Icon(Icons.cloud_outlined),
-      title: Text(l10n.settingsCloudSync),
-      subtitle: Text(cloudSyncStatus(l10n, cloud)),
-      value: cloud.enabled,
-      onChanged: usable
-          ? (v) => ref.read(cloudSyncProvider.notifier).setEnabled(v)
-          : null,
+    void set(bool v) => ref.read(cloudSyncProvider.notifier).setEnabled(v);
+    return DsRow(
+      glyph: Glyph.cloud,
+      title: l10n.settingsCloudSync,
+      subtitle: cloudSyncStatus(l10n, cloud),
+      enabled: usable,
+      onTap: usable ? () => set(!cloud.enabled) : null,
+      trailing: [DsToggle(value: cloud.enabled, onChanged: usable ? set : null)],
     );
+  }
+
+  List<Widget> _connectionRows({
+    required bool autoConnect,
+    required OnDemandPrefs onDemand,
+    required bool checkEnabled,
+  }) {
+    final l10n = context.l10n;
+    return [
+      if (hasAutoConnect)
+        if (supportsBootAutoConnect)
+          DsRow(
+            glyph: Glyph.zap,
+            title: l10n.settingsAutoConnect,
+            subtitle: l10n.settingsAutoConnectSubtitle,
+            onTap: () => ref.read(autoConnectProvider.notifier).set(!autoConnect),
+            trailing: [
+              DsToggle(
+                value: autoConnect,
+                onChanged: (v) => ref.read(autoConnectProvider.notifier).set(v),
+              ),
+            ],
+          )
+        else if (supportsOnDemand) ...[
+          DsRow(
+            glyph: Glyph.zap,
+            title: l10n.onDemandTitle,
+            subtitle: onDemand.statusLabel,
+            trailing: const [DsChevron()],
+            onTap: () => _push(const OnDemandScreen()),
+          ),
+          DsRow(
+            glyph: Glyph.moon,
+            title: l10n.settingsDisconnectOnSleep,
+            subtitle: l10n.settingsDisconnectOnSleepSubtitle,
+            onTap: () => ref
+                .read(onDemandProvider.notifier)
+                .setDisconnectOnSleep(!onDemand.disconnectOnSleep),
+            trailing: [
+              DsToggle(
+                value: onDemand.disconnectOnSleep,
+                onChanged: (v) =>
+                    ref.read(onDemandProvider.notifier).setDisconnectOnSleep(v),
+              ),
+            ],
+          ),
+        ] else
+          DsRow(
+            glyph: Glyph.zap,
+            title: l10n.alwaysOnTitle,
+            subtitle: l10n.settingsAlwaysOnSubtitle,
+            trailing: const [DsChevron()],
+            onTap: () => _push(const AlwaysOnScreen()),
+          ),
+      DsRow(
+        glyph: Glyph.settings,
+        title: l10n.settingsAdvanced,
+        subtitle: checkEnabled
+            ? l10n.settingsConnectionCheckOn
+            : l10n.settingsConnectionCheckOff,
+        trailing: const [DsChevron()],
+        onTap: () => _push(const AdvancedConnectionScreen()),
+      ),
+    ];
+  }
+
+  Future<void> _setLanDirect(bool v) async {
+    await ref
+        .read(routingPrefsProvider.notifier)
+        .update((p) => p.copyWith(lanDirect: v));
+    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
   }
 
   @override
@@ -226,189 +296,107 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final cloud = ref.watch(cloudSyncProvider);
     final l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.commonSettings)),
-      body: PageBody(
-        child: ListView(
+    return DsPage(
+      title: l10n.commonSettings,
+      children: [
+        if (st.profiles.isNotEmpty)
+          DsGroup(
+            caption: l10n.settingsSectionConfigurations,
+            children: [_configurationsRow(st)],
+          ),
+        DsGroup(
+          caption: l10n.settingsSectionConnection,
+          children: _connectionRows(
+            autoConnect: autoConnect,
+            onDemand: onDemand,
+            checkEnabled: check.enabled,
+          ),
+        ),
+        DsGroup(
+          caption: l10n.settingsSectionRouting,
           children: [
-            if (st.profiles.isNotEmpty) ...[
-              SectionHeader(l10n.settingsSectionConfigurations),
-              Card(margin: kCardMargin, child: _configurationsRow(st)),
-            ],
-
-            SectionHeader(l10n.settingsSectionConnection),
-            if (hasAutoConnect)
-              Card(
-                margin: kCardMargin,
-                child: supportsBootAutoConnect
-                    ? SwitchListTile(
-                        secondary: const Icon(Icons.bolt_outlined),
-                        title: Text(l10n.settingsAutoConnect),
-                        subtitle: Text(l10n.settingsAutoConnectSubtitle),
-                        value: autoConnect,
-                        onChanged: (v) =>
-                            ref.read(autoConnectProvider.notifier).set(v),
-                      )
-                    : supportsOnDemand
-                    ? Column(
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.bolt_outlined),
-                            title: Text(l10n.onDemandTitle),
-                            subtitle: Text(onDemand.statusLabel),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () => _push(const OnDemandScreen()),
-                          ),
-                          const Divider(height: 1, indent: 16, endIndent: 16),
-                          SwitchListTile(
-                            secondary: const Icon(Icons.bedtime_outlined),
-                            title: Text(l10n.settingsDisconnectOnSleep),
-                            subtitle: Text(
-                              l10n.settingsDisconnectOnSleepSubtitle,
-                            ),
-                            value: onDemand.disconnectOnSleep,
-                            onChanged: (v) => ref
-                                .read(onDemandProvider.notifier)
-                                .setDisconnectOnSleep(v),
-                          ),
-                        ],
-                      )
-                    : ListTile(
-                        leading: const Icon(Icons.bolt_outlined),
-                        title: Text(l10n.alwaysOnTitle),
-                        subtitle: Text(l10n.settingsAlwaysOnSubtitle),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _push(const AlwaysOnScreen()),
-                      ),
-              ),
-            Card(
-              margin: kCardMargin,
-              child: ListTile(
-                leading: const Icon(Icons.tune),
-                title: Text(l10n.settingsAdvanced),
-                subtitle: Text(
-                  check.enabled
-                      ? l10n.settingsConnectionCheckOn
-                      : l10n.settingsConnectionCheckOff,
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _push(const AdvancedConnectionScreen()),
-              ),
+            DsRow(
+              glyph: Glyph.wifi,
+              title: l10n.settingsLanDirect,
+              subtitle: l10n.settingsLanDirectSubtitle,
+              onTap: () => _setLanDirect(!prefs.lanDirect),
+              trailing: [
+                DsToggle(value: prefs.lanDirect, onChanged: _setLanDirect),
+              ],
             ),
-
-            SectionHeader(l10n.settingsSectionRouting),
-            Card(
-              margin: kCardMargin,
-              child: Column(
-                children: [
-                  SwitchListTile(
-                    secondary: const Icon(Icons.wifi),
-                    title: Text(l10n.settingsLanDirect),
-                    subtitle: Text(l10n.settingsLanDirectSubtitle),
-                    value: prefs.lanDirect,
-                    onChanged: (v) async {
-                      await ref
-                          .read(routingPrefsProvider.notifier)
-                          .update((p) => p.copyWith(lanDirect: v));
-                      await ref
-                          .read(profilesControllerProvider.notifier)
-                          .syncTunnelConfig();
-                    },
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.layers_outlined),
-                    title: Text(l10n.ruleSetsTitle),
-                    subtitle: Text(l10n.settingsRuleSetCount(_setCount)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _push(const RuleSetsScreen()),
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.language_outlined),
-                    title: Text(l10n.settingsDefaultDns),
-                    subtitle: Text(
-                      l10n.settingsDefaultDnsSubtitle(
-                        dnsPresetName(prefs.defaultDns),
-                      ),
-                    ),
-                    trailing: const Icon(Icons.expand_more),
-                    onTap: _pickDefaultDns,
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.public),
-                    title: Text(l10n.geoTitle),
-                    subtitle: Text(
-                      _geo.downloaded
-                          ? l10n.settingsGeoDownloaded(
-                              formatBytes(_geo.geoipBytes + _geo.geositeBytes),
-                            )
-                          : l10n.geoNotDownloaded,
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _push(const GeoScreen()),
-                  ),
-                ],
-              ),
+            DsRow(
+              glyph: Glyph.layers,
+              title: l10n.ruleSetsTitle,
+              subtitle: l10n.settingsRuleSetCount(_setCount),
+              trailing: const [DsChevron()],
+              onTap: () => _push(const RuleSetsScreen()),
             ),
-
-            SectionHeader(l10n.settingsSectionGeneral),
-            Card(
-              margin: kCardMargin,
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.brightness_6_outlined),
-                    title: Text(l10n.settingsAppearance),
-                    subtitle: Text(_themeLabel(appPrefs.themeMode)),
-                    trailing: const Icon(Icons.expand_more),
-                    onTap: _pickTheme,
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.translate),
-                    title: Text(l10n.settingsLanguage),
-                    subtitle: Text(appPrefs.language.label),
-                    trailing: const Icon(Icons.expand_more),
-                    onTap: _pickLanguage,
-                  ),
-                  if (cloud.supported) ...[
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                    _cloudSyncRow(cloud),
-                  ],
-                ],
+            DsRow(
+              glyph: Glyph.globe,
+              title: l10n.settingsDefaultDns,
+              subtitle: l10n.settingsDefaultDnsSubtitle(
+                dnsPresetName(prefs.defaultDns),
               ),
+              trailing: const [DsChevron(down: true)],
+              onTap: _pickDefaultDns,
             ),
-
-            SectionHeader(l10n.settingsSectionDiagnostics),
-            Card(
-              margin: kCardMargin,
-              child: ListTile(
-                leading: const Icon(Icons.article_outlined),
-                title: Text(l10n.logsTitle),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _push(const LogsScreen()),
-              ),
+            DsRow(
+              glyph: Glyph.globe,
+              title: l10n.geoTitle,
+              subtitle: _geo.downloaded
+                  ? l10n.settingsGeoDownloaded(
+                      formatBytes(_geo.geoipBytes + _geo.geositeBytes),
+                    )
+                  : l10n.geoNotDownloaded,
+              trailing: const [DsChevron()],
+              onTap: () => _push(const GeoScreen()),
             ),
-            SectionHeader(l10n.settingsSectionAbout),
-            Card(
-              margin: kCardMargin,
-              child: ListTile(
-                leading: const SizedBox.square(
-                  dimension: 24,
-                  child: Center(child: AppLogo(size: 20)),
-                ),
-                title: Text(l10n.aboutTitle),
-                subtitle: Text('$kAppName $appVersionLabel'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _push(const AboutScreen()),
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
-      ),
+        DsGroup(
+          caption: l10n.settingsSectionGeneral,
+          children: [
+            DsRow(
+              glyph: Glyph.sunMoon,
+              title: l10n.settingsAppearance,
+              subtitle: _themeLabel(appPrefs.themeMode),
+              trailing: const [DsChevron(down: true)],
+              onTap: _pickTheme,
+            ),
+            DsRow(
+              glyph: Glyph.languages,
+              title: l10n.settingsLanguage,
+              subtitle: appPrefs.language.label,
+              trailing: const [DsChevron(down: true)],
+              onTap: _pickLanguage,
+            ),
+            if (cloud.supported) _cloudSyncRow(cloud),
+          ],
+        ),
+        DsGroup(
+          caption: l10n.settingsSectionDiagnostics,
+          children: [
+            DsRow(
+              glyph: Glyph.fileText,
+              title: l10n.logsTitle,
+              trailing: const [DsChevron()],
+              onTap: () => _push(const LogsScreen()),
+            ),
+          ],
+        ),
+        DsGroup(
+          caption: l10n.settingsSectionAbout,
+          children: [
+            DsRow(
+              glyph: Glyph.shield,
+              title: l10n.aboutTitle,
+              subtitle: '$kAppName $appVersionLabel',
+              trailing: const [DsChevron()],
+              onTap: () => _push(const AboutScreen()),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

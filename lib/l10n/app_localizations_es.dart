@@ -84,10 +84,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commonName => 'Nombre';
 
   @override
-  String get commonAll => 'TODOS';
+  String get commonAll => 'Todos';
 
   @override
-  String get commonFavorites => 'FAVORITOS';
+  String get commonFavorites => 'Favoritos';
 
   @override
   String get themeSystem => 'Sistema';
@@ -135,22 +135,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commonJustNow => 'ahora mismo';
 
   @override
-  String get settingsSectionConfigurations => 'CONFIGURACIONES';
+  String get settingsSectionConfigurations => 'Configuraciones';
 
   @override
-  String get settingsSectionConnection => 'CONEXIÓN';
+  String get settingsSectionConnection => 'Conexión';
 
   @override
-  String get settingsSectionRouting => 'ENRUTAMIENTO';
+  String get settingsSectionRouting => 'Enrutamiento';
 
   @override
-  String get settingsSectionGeneral => 'GENERAL';
+  String get settingsSectionGeneral => 'General';
 
   @override
-  String get settingsSectionDiagnostics => 'DIAGNÓSTICO';
+  String get settingsSectionDiagnostics => 'Diagnóstico';
 
   @override
-  String get settingsSectionAbout => 'ACERCA DE';
+  String get settingsSectionAbout => 'Acerca de';
 
   @override
   String get settingsConfigurations => 'Configuraciones';
@@ -279,10 +279,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get uiCouldNotOpenPage => 'No se pudo abrir la página.';
 
   @override
-  String get advancedSectionConnectionCheck => 'COMPROBACIÓN DE CONEXIÓN';
+  String get advancedSectionConnectionCheck => 'Comprobación de conexión';
 
   @override
-  String get advancedSectionLastCheck => 'ÚLTIMA COMPROBACIÓN';
+  String get advancedSectionLastCheck => 'Última comprobación';
 
   @override
   String get advancedCheckAfterConnecting => 'Comprobar tras conectar';
@@ -389,10 +389,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dnsTitle => 'DNS';
 
   @override
-  String get dnsSectionInEffect => 'EN USO';
+  String get dnsSectionInEffect => 'En uso';
 
   @override
-  String get dnsSectionDropped => 'DESCARTADOS';
+  String get dnsSectionDropped => 'Descartados';
 
   @override
   String get dnsParallelNote =>
@@ -487,10 +487,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get geoTitle => 'GeoIP y GeoSite';
 
   @override
-  String get geoSectionDatabases => 'BASES DE DATOS';
+  String get geoSectionDatabases => 'Bases de datos';
 
   @override
-  String get geoSectionUpdates => 'ACTUALIZACIONES';
+  String get geoSectionUpdates => 'Actualizaciones';
 
   @override
   String get geoGeoipSource => 'Origen de GeoIP';
@@ -580,29 +580,29 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get geositeSectionPopular => 'POPULARES';
+  String get geositeSectionPopular => 'Populares';
 
   @override
   String geositeSectionAll(int count) {
-    return 'TODAS · $count';
+    return 'Todas · $count';
   }
 
   @override
   String geositeSectionAllMatch(int count, int total) {
-    return 'TODAS · $count DE $total COINCIDEN';
+    return 'Todas · $count de $total coinciden';
   }
 
   @override
   String get logsTitle => 'Registros';
 
   @override
-  String get logsSectionCollection => 'RECOPILACIÓN';
+  String get logsSectionCollection => 'Recopilación';
 
   @override
-  String get logsSectionTunnel => 'TÚNEL';
+  String get logsSectionTunnel => 'Túnel';
 
   @override
-  String get logsSectionApp => 'APP';
+  String get logsSectionApp => 'App';
 
   @override
   String get logsCollect => 'Recopilar registros';
@@ -777,7 +777,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta configuración se quitará de este dispositivo.';
 
   @override
-  String get configSectionSubscription => 'SUSCRIPCIÓN';
+  String get configSectionSubscription => 'Suscripción';
 
   @override
   String get configRanUntil => 'Válida hasta';
@@ -834,7 +834,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Renueva la suscripción y luego actualiza esta configuración.';
 
   @override
-  String get configSectionThisDevice => 'ESTE DISPOSITIVO';
+  String get configSectionThisDevice => 'Este dispositivo';
 
   @override
   String get configDeviceIdentifiedSubtitle =>
@@ -1045,14 +1045,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get configSectionOrganizationRouting =>
-      'ENRUTAMIENTO DE LA ORGANIZACIÓN';
+      'Enrutamiento de la organización';
 
   @override
   String get configSectionSubscriptionRouting =>
-      'ENRUTAMIENTO DE LA SUSCRIPCIÓN';
+      'Enrutamiento de la suscripción';
 
   @override
-  String get configSectionDeviceRouting => 'ENRUTAMIENTO DEL DISPOSITIVO';
+  String get configSectionDeviceRouting => 'Enrutamiento del dispositivo';
 
   @override
   String get configOrganizationRoutingNote =>
@@ -1070,7 +1070,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los conjuntos de reglas se comparten entre todas las configuraciones; el interruptor es por configuración, así que una suscripción de trabajo y una personal pueden usar el mismo conjunto de forma distinta.';
 
   @override
-  String get configSectionDetails => 'DETALLES';
+  String get configSectionDetails => 'Detalles';
 
   @override
   String get configGetSupport => 'Obtener ayuda';
@@ -1087,6 +1087,14 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String configTrafficOf(String used, String total) {
     return 'Tráfico: $used de $total';
+  }
+
+  @override
+  String get configTraffic => 'Tráfico';
+
+  @override
+  String configTrafficUsedOf(String used, String total) {
+    return '$used de $total';
   }
 
   @override
@@ -1221,7 +1229,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'las reglas geoip / geosite están inactivas hasta entonces (~25 MB)';
 
   @override
-  String get ruleSetRulesHeader => 'REGLAS — GANA LA PRIMERA COINCIDENCIA';
+  String get ruleSetRulesHeader => 'Reglas — gana la primera coincidencia';
 
   @override
   String get homeAddConfiguration => 'Añadir configuración';
@@ -1290,18 +1298,35 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String homeAccountUntil(String status, String until) {
-    return '$status · hasta el $until';
+  String get homeConfiguration => 'Configuración';
+
+  @override
+  String homeExpiryEndsIn(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'La suscripción termina en $days días',
+      one: 'La suscripción termina en 1 día',
+      zero: 'La suscripción termina hoy',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get homeConfiguration => 'Configuración';
+  String homeExpiryTraffic(int percent) {
+    return '$percent % del tráfico usado';
+  }
+
+  @override
+  String homeExpiryValidUntil(String date) {
+    return 'Válida hasta el $date';
+  }
 
   @override
   String get homeServer => 'Servidor';
 
   @override
-  String get homeChosenByEngine => 'ELEGIDO POR EL MOTOR';
+  String get homeChosenByEngine => 'Elegido por el motor';
 
   @override
   String get homeSwitchingServer => 'Cambiando de servidor…';
@@ -1446,7 +1471,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get ruleSetImportSkipped => 'NO TRANSFERIDO';
+  String get ruleSetImportSkipped => 'No transferido';
 
   @override
   String get ruleSetImportSkipDns => 'Servidores DNS';
@@ -1645,11 +1670,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get uiAddToFavorites => 'Añadir a favoritos';
 
   @override
-  String get uiAllNothingMatches => 'TODOS · SIN COINCIDENCIAS';
+  String get uiAllNothingMatches => 'Todos · sin coincidencias';
 
   @override
   String uiAllMatchCount(int shown, int total) {
-    return 'TODOS · $shown DE $total COINCIDEN';
+    return 'Todos · $shown de $total coinciden';
   }
 
   @override
@@ -1850,19 +1875,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ruleSetSearchServices => 'Buscar servicios';
 
   @override
-  String get ruleSetCountriesHeader => 'PAÍSES';
+  String get ruleSetCountriesHeader => 'Países';
 
   @override
   String get ruleSetAddCountry => 'Añadir país';
 
   @override
-  String get ruleSetServicesHeader => 'SERVICIOS';
+  String get ruleSetServicesHeader => 'Servicios';
 
   @override
   String get ruleSetAddCategory => 'Añadir categoría';
 
   @override
-  String get ruleSetOtherCategoriesHeader => 'OTRAS CATEGORÍAS';
+  String get ruleSetOtherCategoriesHeader => 'Otras categorías';
 
   @override
   String get ruleSetNothingSelectedSplit =>
@@ -1987,7 +2012,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onDemandNameHint => 'Oficina';
 
   @override
-  String get onDemandNetworkHeader => 'RED';
+  String get onDemandNetworkHeader => 'Red';
 
   @override
   String get onDemandNetworkHelpAny =>
@@ -2006,7 +2031,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Cuando el dispositivo está en una red por cable, el sistema comprueba las condiciones de abajo y aplica la regla.';
 
   @override
-  String get onDemandConditionsHeader => 'CONDICIONES';
+  String get onDemandConditionsHeader => 'Condiciones';
 
   @override
   String get onDemandWifiNetworks => 'Redes Wi-Fi';
@@ -2015,7 +2040,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onDemandWifiNetwork => 'Red Wi-Fi';
 
   @override
-  String get onDemandNetworksUnit => 'REDES';
+  String get onDemandNetworksUnit => 'redes';
 
   @override
   String get onDemandWifiNetworksHelp =>
@@ -2028,7 +2053,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onDemandDnsDomain => 'Dominio de búsqueda DNS';
 
   @override
-  String get onDemandDomainsUnit => 'DOMINIOS';
+  String get onDemandDomainsUnit => 'dominios';
 
   @override
   String get onDemandDnsDomainsHelp =>
@@ -2041,14 +2066,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onDemandDnsServer => 'Servidor DNS';
 
   @override
-  String get onDemandServersUnit => 'SERVIDORES';
+  String get onDemandServersUnit => 'servidores';
 
   @override
   String get onDemandDnsServersHelp =>
       'Coincide con los servidores DNS de la red; se permite un único comodín «*».';
 
   @override
-  String get onDemandUrlProbeHeader => 'SONDA DE URL';
+  String get onDemandUrlProbeHeader => 'Sonda de URL';
 
   @override
   String get onDemandUrlOptional => 'URL (opcional)';
@@ -2058,11 +2083,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'La regla solo coincide si esta URL devuelve 200 sin redirecciones.';
 
   @override
-  String get onDemandNoEntries => 'SIN ENTRADAS';
+  String get onDemandNoEntries => 'Sin entradas';
 
   @override
   String onDemandEntriesHeader(int count, String unit) {
-    return '$count $unit · BASTA CON QUE COINCIDA UNO';
+    return '$count $unit · basta con que coincida uno';
   }
 
   @override
@@ -2627,16 +2652,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importUnusableNotALink => 'No es un enlace ni una suscripción';
 
   @override
-  String get catalogGroupStreaming => 'STREAMING';
+  String get catalogGroupStreaming => 'Streaming';
 
   @override
-  String get catalogGroupMessengers => 'MENSAJERÍA';
+  String get catalogGroupMessengers => 'Mensajería';
 
   @override
-  String get catalogGroupSocial => 'REDES SOCIALES';
+  String get catalogGroupSocial => 'Redes sociales';
 
   @override
-  String get catalogGroupOther => 'OTROS';
+  String get catalogGroupOther => 'Otros';
 
   @override
   String proxyGroupUrlTest(int count) {

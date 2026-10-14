@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/norm_config.dart';
 import '../../core/profile.dart';
+import '../../core/ds.dart';
 import '../../core/rule_set.dart';
+import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
@@ -11,6 +13,7 @@ import '../../state/routing_status.dart';
 import '../dns_screen.dart';
 import 'routing_config_screen.dart';
 import '../managed_policy_screen.dart';
+import '../rule_sets_screen.dart';
 import '../../state/provider_rule_lists.dart';
 import 'provider_routing_card.dart';
 
@@ -29,35 +32,47 @@ class LocalRoutingCard extends ConsumerWidget {
         .firstOrNull;
     final ctrl = ref.read(profilesControllerProvider.notifier);
     final l10n = context.l10n;
+    final on = profile.routingEnabled;
 
-    return Card(
-      margin: kCardMargin,
-      child: Column(
+    if (overriddenBy != null) {
+      return DsCard(
         children: [
-          SwitchListTile(
-            secondary: const Icon(Icons.alt_route),
-            title: Text(l10n.configRouting),
-            subtitle: Text(
-              overriddenBy != null
-                  ? l10n.configReplacedBy(overriddenBy!)
-                  : localRoutingSummary(profile, ruleSet),
-            ),
-            value: profile.routingEnabled,
-            onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
-          ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          Opacity(
-            opacity: profile.routingEnabled ? 1 : 0.38,
-            child: ListTile(
-              leading: const Icon(Icons.layers_outlined),
-              title: Text(l10n.configRuleSet),
-              subtitle: Text(ruleSet?.name ?? l10n.configRuleSetDefault),
-              trailing: const Icon(Icons.expand_more),
-              onTap: () => _pick(context, ref, sets),
-            ),
+          DsRow(
+            glyph: Glyph.layers,
+            title: l10n.configRuleSet,
+            subtitle: l10n.configReplacedBy(overriddenBy!),
+            trailing: const [DsChevron(down: true)],
+            enabled: false,
           ),
         ],
-      ),
+      );
+    }
+    return DsCard(
+      children: [
+        DsRow(
+          glyph: Glyph.split,
+          title: l10n.configRouting,
+          subtitle: localRoutingSummary(profile, ruleSet),
+          onTap: () => ctrl.setRoutingEnabled(profile.id, !on),
+          trailing: [
+            DsToggle(
+              value: on,
+              onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
+            ),
+          ],
+        ),
+        Opacity(
+          opacity: on ? 1 : kDisabledOpacity,
+          child: DsRow(
+            glyph: Glyph.layers,
+            title: l10n.configRuleSet,
+            subtitle: ruleSet?.name ?? l10n.configRuleSetDefault,
+            trailing: const [DsChevron(down: true)],
+            onTap: () => _pick(context, ref, sets),
+          ),
+        ),
+        const RuleSetsRow(),
+      ],
     );
   }
 
@@ -82,7 +97,7 @@ class LocalRoutingCard extends ConsumerWidget {
                     ? l10n.ruleSetNoRules
                     : l10n.configRulesCount(s.rules.length),
               ),
-              leading: const Icon(Icons.layers_outlined),
+              leading: const GlyphIcon(Glyph.layers),
             ),
           )
           .toList(),
@@ -112,32 +127,43 @@ String localRoutingSummary(Profile p, RuleSet? set) {
   );
 }
 
-class ManagedRoutingCard extends StatelessWidget {
-  const ManagedRoutingCard({super.key, required this.routing});
+class ManagedRoutingRow extends StatelessWidget {
+  const ManagedRoutingRow({super.key, required this.routing});
 
   final Routing routing;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: kCardMargin,
-    color: Theme.of(
-      context,
-    ).colorScheme.primaryContainer.withValues(alpha: 0.35),
-    child: ListTile(
-      leading: const Icon(Icons.business_outlined),
-      title: Text(context.l10n.configManagedByOrganization),
-      subtitle: Text(
-        context.l10n.configManagedSummary(
-          routing.mode == 'split'
-              ? context.l10n.ruleSetModeSplit
-              : context.l10n.ruleSetModeFull,
-          routing.rules.length,
-        ),
-      ),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => openManagedRouting(context, routing),
+  Widget build(BuildContext context) => DsRow(
+    glyph: Glyph.building2,
+    title: context.l10n.configManagedByOrganization,
+    subtitle: context.l10n.configManagedSummary(
+      routing.mode == 'split'
+          ? context.l10n.ruleSetModeSplit
+          : context.l10n.ruleSetModeFull,
+      routing.rules.length,
     ),
+    trailing: const [DsChevron()],
+    onTap: () => openManagedRouting(context, routing),
   );
+}
+
+class RuleSetsRow extends ConsumerWidget {
+  const RuleSetsRow({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final count = ref.watch(ruleSetsProvider).value?.length;
+    return DsRow(
+      glyph: Glyph.layers,
+      title: l10n.ruleSetsTitle,
+      subtitle: count == null ? null : l10n.settingsRuleSetCount(count),
+      trailing: const [DsChevron()],
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const RuleSetsScreen())),
+    );
+  }
 }
 
 class RoutingRow extends ConsumerWidget {
@@ -147,41 +173,24 @@ class RoutingRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
     final plan = dnsPlanForProfile(ref, profile);
     final l10n = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final dns = plan.dropped.isNotEmpty
+        ? l10n.configDnsRefused(plan.dropped.length)
+        : plan.usingFallback
+        ? l10n.configDnsByApp
+        : l10n.configDnsOrigin(dnsOriginLabel(profile, plan));
+    return DsGroup(
+      caption: l10n.settingsSectionRouting,
       children: [
-        SectionHeader(l10n.settingsSectionRouting),
-        Card(
-          margin: kCardMargin,
-          child: ListTile(
-            leading: const Icon(Icons.alt_route),
-            title: Text(l10n.configRouting),
-            subtitle: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(text: '${_routing(l10n, ref)} · '),
-                  if (plan.dropped.isEmpty)
-                    TextSpan(
-                      text: plan.usingFallback
-                          ? l10n.configDnsByApp
-                          : l10n.configDnsOrigin(dnsOriginLabel(profile, plan)),
-                    )
-                  else
-                    TextSpan(
-                      text: l10n.configDnsRefused(plan.dropped.length),
-                      style: TextStyle(color: cs.error),
-                    ),
-                ],
-              ),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => RoutingConfigScreen(profileId: profile.id),
-              ),
+        DsRow(
+          glyph: Glyph.split,
+          title: l10n.configRouting,
+          subtitle: '${_routing(l10n, ref)} · $dns',
+          trailing: const [DsChevron()],
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RoutingConfigScreen(profileId: profile.id),
             ),
           ),
         ),

@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/ds.dart';
+import 'package:anoya/core/ui.dart';
+
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/logs_screen.dart';
 import 'package:anoya/l10n/l10n.dart';
@@ -40,27 +43,28 @@ void main() {
     );
     await tester.pump();
 
-    final clear = find.widgetWithText(OutlinedButton, 'Clear all logs');
-    await tester.ensureVisible(clear);
+    final clear = find.widgetWithText(DsButton, 'Clear all logs');
+    await tester.scrollUntilVisible(
+      clear,
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(clear);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await tester.tap(find.widgetWithText(DsDialogAction, 'Clear'));
     await tester.pump();
 
     expect(
-      find.descendant(
-        of: clear,
-        matching: find.byType(CircularProgressIndicator),
-      ),
+      find.descendant(of: clear, matching: find.byType(DsSpinner)),
       findsOneWidget,
       reason: 'a silent button read as nothing happening',
     );
-    expect(tester.widget<OutlinedButton>(clear).onPressed, isNull);
+    expect(tester.widget<DsButton>(clear).onPressed, isNull);
     expect(
       tester
-          .widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Save all logs (.zip)'),
+          .widget<DsButton>(
+            find.widgetWithText(DsButton, 'Save all logs (.zip)'),
           )
           .onPressed,
       isNull,
@@ -72,10 +76,7 @@ void main() {
 
     expect(find.text('Logs cleared.'), findsOneWidget);
     expect(
-      find.descendant(
-        of: clear,
-        matching: find.byType(CircularProgressIndicator),
-      ),
+      find.descendant(of: clear, matching: find.byType(DsSpinner)),
       findsNothing,
     );
   });

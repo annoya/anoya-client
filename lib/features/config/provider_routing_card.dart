@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ds.dart';
 import '../../core/profile.dart';
 import '../../core/rule_list_store.dart';
 import '../../core/theme.dart';
-import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../policy_origin.dart';
@@ -39,70 +39,65 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
   @override
   Widget build(BuildContext context) {
     final profile = widget.profile;
-    final cs = Theme.of(context).colorScheme;
     final routing = profile.providerRouting!;
     final on = profile.providerRoutingEnabled;
     final ctrl = ref.read(profilesControllerProvider.notifier);
     final lists = ref.watch(providerRuleListsProvider(profile.id)).value;
     final needLists = routing.rules.where((r) => r.needsRuleList).length;
     final l10n = context.l10n;
-    return Card(
-      margin: kCardMargin,
-      color: cs.primaryContainer.withValues(alpha: 0.35),
-      child: Column(
-        children: [
-          SwitchListTile(
-            secondary: const Icon(Icons.alt_route),
-            title: Text(l10n.configRouting),
-            subtitle: Text(providerRoutingSummary(profile, lists)),
-            value: on,
-            onChanged: (v) => ctrl.setProviderRoutingEnabled(profile.id, v),
-          ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          ListTile(
-            leading: const Icon(Icons.layers_outlined),
-            title: Text(l10n.configRuleSet),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ManagedPolicyScreen(
-                  routing,
-                  origin: PolicyOrigin.provider(
-                    profile.name,
-                    skipped: profile.providerRoutingSkipped,
-                  ),
-                  listsAvailable: profile.providerRuleListsEnabled
-                      ? (lists ?? const [])
-                            .where((s) => s.available)
-                            .map((s) => s.list.name)
-                            .toSet()
-                      : null,
+    void setOn(bool v) => ctrl.setProviderRoutingEnabled(profile.id, v);
+    return DsCard(
+      color: context.ds.accentSubtle,
+      children: [
+        DsRow(
+          glyph: Glyph.split,
+          title: l10n.configRouting,
+          subtitle: providerRoutingSummary(profile, lists),
+          onTap: () => setOn(!on),
+          trailing: [DsToggle(value: on, onChanged: setOn)],
+        ),
+        DsRow(
+          glyph: Glyph.layers,
+          title: l10n.configRuleSet,
+          trailing: const [DsChevron()],
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ManagedPolicyScreen(
+                routing,
+                origin: PolicyOrigin.provider(
+                  profile.name,
+                  skipped: profile.providerRoutingSkipped,
                 ),
+                listsAvailable: profile.providerRuleListsEnabled
+                    ? (lists ?? const [])
+                          .where((s) => s.available)
+                          .map((s) => s.list.name)
+                          .toSet()
+                    : null,
               ),
             ),
           ),
-          if (needLists > 0) ...[
-            const Divider(height: 1, indent: 16, endIndent: 16),
-            SwitchListTile(
-              secondary: _downloading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    )
-                  : const Icon(Icons.description_outlined),
-              title: Text(l10n.configRuleLists),
-              subtitle: Text(
-                _downloading
-                    ? l10n.configDownloadingLists(needLists)
-                    : _listSummary(profile, needLists, lists),
+        ),
+        if (needLists > 0)
+          DsRow(
+            leading: _downloading
+                ? const DsSpinner()
+                : const GlyphIcon(Glyph.database),
+            title: l10n.configRuleLists,
+            subtitle: _downloading
+                ? l10n.configDownloadingLists(needLists)
+                : _listSummary(profile, needLists, lists),
+            onTap: _downloading
+                ? null
+                : () => _setLists(!profile.providerRuleListsEnabled),
+            trailing: [
+              DsToggle(
+                value: profile.providerRuleListsEnabled,
+                onChanged: _downloading ? null : _setLists,
               ),
-              value: profile.providerRuleListsEnabled,
-              onChanged: _downloading ? null : _setLists,
-            ),
-          ],
-        ],
-      ),
+            ],
+          ),
+      ],
     );
   }
 }
@@ -184,7 +179,6 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
 
   @override
   Widget build(BuildContext context) {
-    final warn = context.vpnColors.connecting;
     final n = widget.failed.length;
     final names = widget.failed.map((s) => '«${s.list.name}»').join(', ');
     final hosts = widget.failed
@@ -192,34 +186,15 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
         .toSet()
         .join(', ');
     final l10n = context.l10n;
-    return Card(
-      margin: kCardMargin,
-      color: warn.withValues(alpha: 0.12),
-      child: Column(
-        children: [
-          ListTile(
-            leading: Icon(Icons.warning_amber_outlined, color: warn),
-            title: Text(l10n.configListsFailedTitle(n)),
-            subtitle: Text(l10n.configListsFailedDetail(n, names, hosts)),
-            isThreeLine: true,
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
-              child: FilledButton.tonal(
-                onPressed: _busy ? null : _retry,
-                child: _busy
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(l10n.commonTryAgain),
-              ),
-            ),
-          ),
-        ],
+    return DsNotification(
+      title: l10n.configListsFailedTitle(n),
+      body: l10n.configListsFailedDetail(n, names, hosts),
+      glyph: Glyph.alertTriangle,
+      tone: DsTone.warning,
+      action: DsButton.tonal(
+        label: l10n.commonTryAgain,
+        busy: _busy,
+        onPressed: _retry,
       ),
     );
   }

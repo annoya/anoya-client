@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/ds.dart';
 import '../core/log.dart';
-import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class AlwaysOnScreen extends StatelessWidget {
@@ -21,41 +21,30 @@ class AlwaysOnScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.alwaysOnTitle)),
-      body: PageBody(
-        child: ListView(
+    return DsPage(
+      title: l10n.alwaysOnTitle,
+      children: [
+        DsGroup(
+          note: l10n.alwaysOnNote,
           children: [
-            Card(
-              margin: kCardMargin,
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.bolt_outlined),
-                    title: Text(l10n.alwaysOnStartedBySystem),
-                    subtitle: Text(l10n.alwaysOnStartedBySystemSubtitle),
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.lock_outline),
-                    title: Text(l10n.alwaysOnBlockWithoutVpn),
-                    subtitle: Text(l10n.alwaysOnBlockWithoutVpnSubtitle),
-                  ),
-                ],
-              ),
+            DsRow(
+              glyph: Glyph.zap,
+              title: l10n.alwaysOnStartedBySystem,
+              subtitle: l10n.alwaysOnStartedBySystemSubtitle,
             ),
-            SectionNote(l10n.alwaysOnNote),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(kGutter, 16, kGutter, 0),
-              child: FilledButton.tonalIcon(
-                icon: const Icon(Icons.settings_outlined, size: 18),
-                label: Text(l10n.alwaysOnOpenSystemSettings),
-                onPressed: _openSettings,
-              ),
+            DsRow(
+              glyph: Glyph.lock,
+              title: l10n.alwaysOnBlockWithoutVpn,
+              subtitle: l10n.alwaysOnBlockWithoutVpnSubtitle,
             ),
           ],
         ),
-      ),
+        DsButton(
+          label: l10n.alwaysOnOpenSystemSettings,
+          glyph: Glyph.settings,
+          onPressed: _openSettings,
+        ),
+      ],
     );
   }
 }

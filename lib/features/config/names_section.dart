@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/dns_plan.dart';
+import '../../core/ds.dart';
 import '../../core/mihomo_tun_config.dart';
 import '../../core/norm_config.dart';
 import '../../core/profile.dart';
-import '../../core/ui.dart';
+import '../../core/theme.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/providers.dart';
@@ -38,36 +39,25 @@ class NamesSection extends ConsumerWidget {
     final l10n = context.l10n;
     final more = plan.resolvers.length - 1;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return DsGroup(
+      caption: l10n.dnsTitle,
       children: [
-        SectionHeader(l10n.dnsTitle),
-        Card(
-          margin: kCardMargin,
-          child: ListTile(
-            leading: const Icon(Icons.language_outlined),
-            title: Text(l10n.dnsTitle),
-            subtitle: Text(
+        DsRow(
+          glyph: Glyph.globe,
+          title: l10n.dnsTitle,
+          subtitle:
               l10n.configDnsSummary(_host(first.address), first.routing) +
-                  (more > 0 ? l10n.configDnsMore(more) : ''),
-            ),
-            trailing: plan.dropped.isEmpty
-                ? const Icon(Icons.chevron_right)
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        l10n.configDnsDropped(plan.dropped.length),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right),
-                    ],
-                  ),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => DnsScreen(profile: profile)),
-            ),
+              (more > 0 ? l10n.configDnsMore(more) : ''),
+          trailing: [
+            if (plan.dropped.isNotEmpty)
+              Text(
+                l10n.configDnsDropped(plan.dropped.length),
+                style: DsType.small.copyWith(color: context.ds.destructive),
+              ),
+            const DsChevron(),
+          ],
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => DnsScreen(profile: profile)),
           ),
         ),
       ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/qr_scan_screen.dart';
 import 'package:anoya/features/start_screen.dart';
@@ -52,7 +53,7 @@ void main() {
     expect(chip('Can’t use this · tuic:// isn’t supported'), findsOneWidget);
     expect(
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'))
+          .widget<DsButton>(find.widgetWithText(DsButton, 'Continue'))
           .onPressed,
       isNull,
     );

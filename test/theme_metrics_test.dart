@@ -1,103 +1,125 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/theme.dart';
 
 Widget _app(Widget home, {Brightness brightness = Brightness.dark}) =>
-    MaterialApp(theme: buildAppTheme(brightness), home: home);
+    MaterialApp(
+      theme: buildAppTheme(brightness),
+      home: Scaffold(body: home),
+    );
 
 void main() {
-  testWidgets('app-bar leading and action icons are inset equally', (
+  testWidgets('every kind of button is one 48 pt height', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        Column(
+          children: [
+            DsButton(key: const Key('p'), label: 'Sign in', onPressed: () {}),
+            DsButton.tonal(
+              key: const Key('t'),
+              label: 'Sign in with SSO',
+              glyph: Glyph.briefcase,
+              onPressed: () {},
+            ),
+            DsButton.destructive(
+              key: const Key('d'),
+              label: 'Remove configuration',
+              glyph: Glyph.trash,
+              onPressed: () {},
+            ),
+            const DsButton(key: Key('m'), label: 'Continue'),
+          ],
+        ),
+      ),
+    );
+    for (final k in ['p', 't', 'd', 'm']) {
+      expect(
+        tester.getSize(find.byKey(Key(k))).height,
+        kButtonHeight,
+        reason: 'stacked buttons must not differ in height ($k)',
+      );
+    }
+  });
+
+  testWidgets('list rows are 72 with one line or two', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        DsCard(
+          children: [
+            DsRow(
+              key: const Key('one'),
+              glyph: Glyph.fileText,
+              title: 'Logs',
+              trailing: const [DsChevron()],
+              onTap: () {},
+            ),
+            DsRow(
+              key: const Key('two'),
+              glyph: Glyph.layers,
+              title: 'Rule sets',
+              subtitle: '3 sets',
+              trailing: [DsToggle(value: true, onChanged: (_) {})],
+              onTap: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+    expect(tester.getSize(find.byKey(const Key('one'))).height, kRowMinHeight);
+    expect(tester.getSize(find.byKey(const Key('two'))).height, kRowMinHeight);
+  });
+
+  testWidgets('text fields are 64, with the label above the value', (
     tester,
   ) async {
     await tester.pumpWidget(
       _app(
-        Scaffold(
-          appBar: AppBar(
-            leading: IconButton(icon: const Icon(Icons.add), onPressed: () {}),
-            title: const Text('VPN'),
-            centerTitle: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: () {},
-              ),
-            ],
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: TextField(
+            decoration: InputDecoration(labelText: 'Server address'),
           ),
         ),
       ),
     );
-
-    final bar = tester.getRect(find.byType(AppBar));
-    final leftCentre = tester.getCenter(find.byIcon(Icons.add)).dx;
-    final rightCentre = tester
-        .getCenter(find.byIcon(Icons.settings_outlined))
-        .dx;
-
-    final insetLeft = leftCentre - bar.left;
-    final insetRight = bar.right - rightCentre;
     expect(
-      insetLeft,
-      closeTo(28, 1),
-      reason: 'leading icon should sit 28pt from the edge',
-    );
-    expect(
-      insetRight,
-      closeTo(insetLeft, 1),
-      reason:
-          'action icon inset ($insetRight) must match the leading one ($insetLeft)',
+      tester.getSize(find.byType(TextField)).height,
+      closeTo(kTextFieldHeight, 1),
     );
   });
 
-  testWidgets('filled and outlined buttons share one height', (tester) async {
-    await tester.pumpWidget(
-      _app(
-        Scaffold(
-          body: Column(
-            children: [
-              FilledButton(onPressed: () {}, child: const Text('Sign in')),
-              OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.login, size: 18),
-                label: const Text('Sign in with SSO'),
-              ),
-              FilledButton.tonal(
-                onPressed: () {},
-                child: const Text('Download'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    final filled = tester.getSize(find.byType(FilledButton).first).height;
-    final outlined = tester.getSize(find.byType(OutlinedButton).first).height;
-    expect(filled, 48);
-    expect(
-      outlined,
-      filled,
-      reason: 'stacked buttons must not differ in height',
-    );
-  });
-
-  testWidgets('list rows use the spec paddings and a rounded hover shape', (
+  testWidgets('a toggle is 50 × 30 and a segmented control 48 tall', (
     tester,
   ) async {
     await tester.pumpWidget(
       _app(
-        const Scaffold(
-          body: Card(
-            child: ListTile(title: Text('Rule sets'), subtitle: Text('3 sets')),
-          ),
+        Column(
+          children: [
+            DsToggle(value: false, onChanged: (_) {}),
+            DsSegmented<int>(
+              segments: const [(0, 'Simple'), (1, 'Advanced')],
+              value: 0,
+              onChanged: (_) {},
+            ),
+          ],
         ),
       ),
     );
-
-    final theme = Theme.of(tester.element(find.byType(ListTile)));
     expect(
-      theme.listTileTheme.contentPadding,
-      const EdgeInsets.symmetric(horizontal: 16),
+      tester.getSize(find.byType(AnimatedContainer)),
+      const Size(kToggleWidth, kToggleHeight),
     );
-    expect(theme.listTileTheme.shape, isA<RoundedRectangleBorder>());
+    expect(tester.getSize(find.byType(DsSegmented<int>)).height, kSegmentedHeight);
+  });
+
+  testWidgets('both themes carry the DS tokens', (tester) async {
+    for (final b in Brightness.values) {
+      final theme = buildAppTheme(b);
+      final ds = theme.extension<DsColors>()!;
+      expect(ds, b == Brightness.dark ? DsColors.dark : DsColors.light);
+      expect(theme.scaffoldBackgroundColor, ds.base);
+      expect(theme.colorScheme.primary, ds.accent);
+    }
   });
 }

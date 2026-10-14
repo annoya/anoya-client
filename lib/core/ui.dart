@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import 'app_error.dart';
+import 'ds.dart';
+import 'theme.dart';
 
 const double kGutter = 16;
 const double kMaxContentWidth = 560;
@@ -30,14 +32,13 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(kGutter, 20, kGutter, 8),
-    child: Text(
-      text,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-        letterSpacing: 0.8,
-      ),
+    padding: const EdgeInsets.fromLTRB(
+      kGutter,
+      kGroupGap,
+      kGutter,
+      kCaptionGap,
     ),
+    child: DsCaption(text),
   );
 }
 
@@ -47,23 +48,19 @@ class SectionNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 0),
-    child: Text(
-      text,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-    ),
+    padding: const EdgeInsets.fromLTRB(kGutter, kNoteGap, kGutter, 0),
+    child: DsNote(text),
   );
 }
 
+// A text-field-shaped chooser: label 12/14 over the value 16/24, a 40 action on the right.
 class SelectField extends StatelessWidget {
   const SelectField({
     super.key,
     required this.label,
     required this.value,
     required this.onTap,
-    this.trailingIcon = Icons.expand_more,
+    this.trailing = Glyph.chevronDown,
     this.enabled = true,
   });
 
@@ -71,31 +68,53 @@ class SelectField extends StatelessWidget {
 
   final String value;
   final VoidCallback onTap;
-  final IconData trailingIcon;
+  final Glyph trailing;
   final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(12),
-      child: InputDecorator(
-        decoration: InputDecoration(labelText: label, enabled: enabled),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                value,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: enabled ? cs.onSurface : cs.onSurfaceVariant,
-                ),
+    final ds = context.ds;
+    return Opacity(
+      opacity: enabled ? 1 : kDisabledOpacity,
+      child: Material(
+        color: ds.surfaceAlt,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(kRadius),
+          side: BorderSide(color: ds.borderSoft),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          child: SizedBox(
+            height: kTextFieldHeight,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: DsType.caption.copyWith(color: ds.text3),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DsType.text.copyWith(color: ds.text1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DsAction(glyph: trailing, size: kFieldActionButton),
+                ],
               ),
             ),
-            Icon(trailingIcon, size: 20, color: cs.onSurfaceVariant),
-          ],
+          ),
         ),
       ),
     );
@@ -141,65 +160,181 @@ void showToastWith(ScaffoldMessengerState messenger, String message) {
   );
 }
 
+// AlertDialog of the DS: 16 from the screen edges, r12, title 18/24, body 14/18, actions as halves of a 48 row.
+class DsDialog extends StatelessWidget {
+  const DsDialog({
+    super.key,
+    required this.title,
+    this.body,
+    this.content,
+    this.actions = const [],
+    this.glyph,
+    this.onDismiss,
+    this.dismissTooltip,
+  });
+
+  final String title;
+  final String? body;
+  final Widget? content;
+  final List<Widget> actions;
+  final Glyph? glyph;
+  final VoidCallback? onDismiss;
+  final String? dismissTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = context.ds;
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                0,
+                onDismiss == null ? 16 : 10,
+                actions.isEmpty ? 16 : 0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (glyph != null) ...[
+                        GlyphIcon(glyph!),
+                        const SizedBox(width: kRowGap),
+                      ],
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: DsType.h3.copyWith(color: ds.text1),
+                        ),
+                      ),
+                      if (onDismiss != null)
+                        Transform.translate(
+                          offset: const Offset(0, -6),
+                          child: DsAction(
+                            glyph: Glyph.x,
+                            size: kNavButton,
+                            iconSize: kNavIcon,
+                            tooltip: dismissTooltip,
+                            onPressed: onDismiss,
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (body != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      body!,
+                      style: DsType.small.copyWith(
+                        color: glyph != null ? ds.text2 : ds.text3,
+                      ),
+                    ),
+                  ],
+                  if (content != null) ...[
+                    const SizedBox(height: 16),
+                    content!,
+                  ],
+                ],
+              ),
+            ),
+            if (actions.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: SizedBox(
+                  height: kButtonHeight,
+                  child: Row(
+                    children: [for (final a in actions) Expanded(child: a)],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// A text action of a DsDialog: accent, or destructive; the default one is semibold.
+class DsDialogAction extends StatelessWidget {
+  const DsDialogAction({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.destructive = false,
+    this.strong = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool destructive;
+  final bool strong;
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = context.ds;
+    final color = destructive ? ds.destructive : ds.textAccent;
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: color,
+        textStyle: strong ? DsType.button : DsType.text,
+      ),
+      child: Text(label),
+    );
+  }
+}
+
+Future<bool> confirmAction(
+  BuildContext context, {
+  required String title,
+  String? body,
+  required String confirmLabel,
+  bool destructive = true,
+}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => DsDialog(
+      title: title,
+      body: body,
+      actions: [
+        DsDialogAction(
+          label: context.l10n.commonCancel,
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        DsDialogAction(
+          label: confirmLabel,
+          destructive: destructive,
+          strong: !destructive,
+          onPressed: () => Navigator.pop(context, true),
+        ),
+      ],
+    ),
+  );
+  return ok ?? false;
+}
+
 Future<void> showErrorDialog(
   BuildContext context,
   AppError error, {
   VoidCallback? onDismiss,
 }) async {
-  final cs = Theme.of(context).colorScheme;
   await showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (context) => Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 12, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.error_outline, color: cs.onSurfaceVariant),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    error.title,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: cs.onSurface,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 20),
-                  color: cs.onSurfaceVariant,
-                  tooltip: context.l10n.commonDismiss,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
-          if (error.detail != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-              child: SizedBox(
-                width: double.infinity,
-                child: Text(
-                  error.detail!,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.45,
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            )
-          else
-            const SizedBox(height: 20),
-        ],
-      ),
+    builder: (context) => DsDialog(
+      glyph: Glyph.alertTriangle,
+      title: error.title,
+      body: error.detail,
+      dismissTooltip: context.l10n.commonDismiss,
+      onDismiss: () => Navigator.of(context).pop(),
     ),
   );
   onDismiss?.call();
@@ -302,10 +437,11 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
+    return DsDialog(
+      title: widget.title,
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
             controller: _controller,
@@ -313,39 +449,47 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
             autocorrect: widget.autocorrect,
             maxLines: widget.longValue ? kLongValueMaxLines : 1,
             minLines: 1,
-            style: widget.longValue
-                ? Theme.of(context).textTheme.bodySmall
-                : null,
             decoration: InputDecoration(
               labelText: widget.label,
               hintText: widget.hint,
               errorText: _error,
+              suffixIcon: _controller.text.isEmpty
+                  ? null
+                  : DsAction(
+                      glyph: Glyph.x,
+                      size: kFieldActionButton,
+                      iconSize: kNavIcon,
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).deleteButtonTooltip,
+                      onPressed: _controller.clear,
+                    ),
             ),
             onSubmitted: (v) {
               if (_error == null) Navigator.of(context).pop(v);
             },
           ),
-          if (widget.resetLabel != null)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                icon: const Icon(Icons.restart_alt, size: 18),
-                label: Text(widget.resetLabel!),
-                onPressed: () => _controller.text = widget.resetValue ?? '',
-              ),
+          if (widget.resetLabel != null) ...[
+            const SizedBox(height: 4),
+            DsButton.text(
+              label: widget.resetLabel!,
+              glyph: Glyph.rotateCcw,
+              onPressed: () => _controller.text = widget.resetValue ?? '',
             ),
+          ],
         ],
       ),
       actions: [
-        TextButton(
+        DsDialogAction(
+          label: context.l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(context.l10n.commonCancel),
         ),
-        FilledButton(
+        DsDialogAction(
+          label: widget.confirmLabel,
+          strong: true,
           onPressed: _error == null
               ? () => Navigator.of(context).pop(_controller.text)
               : null,
-          child: Text(widget.confirmLabel),
         ),
       ],
     );
@@ -369,19 +513,87 @@ const kTextEditDebounce = Duration(milliseconds: 600);
 
 const double kSheetMaxHeightFraction = 0.8;
 
-const double kStatusChipHeight = 30;
-
-const double kRingFocusGap = 4;
-
-const double kAppBarSpinnerSize = 20;
-
-const double kRingFocusWidth = 2;
-
 const double kQrViewfinder = 248;
 
 const double kQrExportSize = 232;
 
 const double kQrScrimOpacity = 0.55;
+
+Future<T?> showDsSheet<T>(BuildContext context, WidgetBuilder builder) =>
+    showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
+      ),
+      builder: builder,
+    );
+
+// Sheet body: title 24/36 on the left, scrollable content padded 16, an optional pinned footer.
+class DsSheet extends StatelessWidget {
+  const DsSheet({
+    super.key,
+    this.title,
+    this.header,
+    required this.children,
+    this.footer,
+    this.gap = 16,
+  });
+
+  final String? title;
+  final Widget? header;
+  final List<Widget> children;
+  final Widget? footer;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (title != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text(
+                  title!,
+                  style: DsType.h2.copyWith(color: context.ds.text1),
+                ),
+              ),
+            if (header != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: header!,
+              ),
+            // Transparent Material + ClipRect: list ink otherwise paints over the title on overscroll.
+            Flexible(
+              child: ClipRect(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: gapped(children, gap),
+                  ),
+                ),
+              ),
+            ),
+            if (footer != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: footer!,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 Future<T?> pickOption<T>(
   BuildContext context, {
@@ -396,14 +608,9 @@ Future<T?> pickOption<T>(
   List<Option<T>> pinned = const [],
   String pinnedHeader = '',
 }) {
-  return showModalBottomSheet<T>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
-    ),
-    builder: (context) => _PickSheet<T>(
+  return showDsSheet<T>(
+    context,
+    (context) => _PickSheet<T>(
       title: title,
       options: options,
       selected: selected,
@@ -454,6 +661,10 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
 
   bool get _grouped => widget.onToggleFavorite != null || _favorites.isNotEmpty;
 
+  // Plain choices (theme, language, DNS) carry a radio; rich ones (servers, configurations) their own icon.
+  bool get _radio =>
+      widget.options.every((o) => o.leading == null) && !widget.navigational;
+
   bool _matches(Option<T> o) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return true;
@@ -477,147 +688,110 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
 
   Widget _row(Option<T> o, {bool favouritable = true}) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
+    final ds = context.ds;
     final favorite = _favorites.contains(o.value);
     final selected = o.value == widget.selected;
-    final actions = <Widget>[
-      if (widget.onToggleFavorite != null && favouritable)
-        IconButton(
-          icon: Icon(favorite ? Icons.star : Icons.star_border, size: 20),
-          color: favorite ? cs.primary : cs.onSurfaceVariant,
-          tooltip: favorite
-              ? l10n.uiRemoveFromFavorites
-              : l10n.uiAddToFavorites,
-          onPressed: () => _toggle(o.value),
-        ),
-      if (widget.onOpenSettings != null)
-        IconButton(
-          icon: const Icon(Icons.settings_outlined, size: 20),
-          color: cs.onSurfaceVariant,
-          tooltip: l10n.commonSettings,
-          onPressed: () => _openSettings(o.value),
-        ),
-      if (widget.navigational)
-        Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-    ];
-    return Opacity(
-      opacity: o.enabled ? 1 : 0.45,
-      child: ListTile(
-        selected: selected,
-        selectedTileColor: cs.primaryContainer.withValues(alpha: 0.55),
-        leading: o.leading == null
-            ? null
-            : IconTheme.merge(
-                data: IconThemeData(color: selected ? cs.primary : null),
-                child: o.leading!,
-              ),
-        title: Text(o.title),
-        subtitle: o.subtitle != null ? Text(o.subtitle!) : null,
-        trailing: actions.isEmpty
-            ? null
-            : Row(mainAxisSize: MainAxisSize.min, children: actions),
-        onTap: o.enabled ? () => Navigator.of(context).pop(o.value) : null,
-      ),
+    return DsRow(
+      leading: _radio ? DsRadio(selected: selected) : o.leading,
+      title: o.title,
+      subtitle: o.subtitle,
+      selected: selected,
+      enabled: o.enabled,
+      onTap: () => Navigator.of(context).pop(o.value),
+      trailing: [
+        if (widget.onToggleFavorite != null && favouritable)
+          DsAction(
+            glyph: Glyph.star,
+            color: favorite ? ds.textAccent : null,
+            tooltip: favorite
+                ? l10n.uiRemoveFromFavorites
+                : l10n.uiAddToFavorites,
+            onPressed: () => _toggle(o.value),
+          ),
+        if (widget.onOpenSettings != null)
+          DsAction(
+            glyph: Glyph.settings,
+            tooltip: l10n.commonSettings,
+            onPressed: () => _openSettings(o.value),
+          ),
+        if (widget.navigational) const DsChevron(),
+      ],
     );
   }
+
+  Widget _group(String? caption, Iterable<Widget> rows) => DsGroup(
+    caption: caption,
+    strongCaption: true,
+    color: _radio ? null : Colors.transparent,
+    children: rows.toList(),
+  );
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
     final shown = widget.options.where(_matches).toList();
     final pinnedShown = widget.pinned.where(_matches).toList();
     final favorites = shown.where((o) => _favorites.contains(o.value)).toList();
     final rest = shown.where((o) => !_favorites.contains(o.value)).toList();
     final searching = _query.trim().isNotEmpty;
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                widget.title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            if (widget.options.length >= kSearchThreshold)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                child: TextField(
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: l10n.commonSearch,
-                  ),
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-              ),
-            // Transparent Material + ClipRect: list ink otherwise paints over the title on overscroll.
-            Flexible(
-              child: ClipRect(
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      if (pinnedShown.isNotEmpty) ...[
-                        SectionHeader(widget.pinnedHeader),
-                        ...pinnedShown.map((o) => _row(o, favouritable: false)),
-                      ],
-                      if (!_grouped)
-                        ...shown.map(_row)
-                      else ...[
-                        if (favorites.isNotEmpty) ...[
-                          SectionHeader(l10n.commonFavorites),
-                          ...favorites.map(_row),
-                        ],
-                        SectionHeader(
-                          !searching
-                              ? l10n.commonAll
-                              : rest.isEmpty
-                              ? l10n.uiAllNothingMatches
-                              : l10n.uiAllMatchCount(
-                                  rest.length,
-                                  widget.options.length,
-                                ),
-                        ),
-                        if (rest.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              kGutter,
-                              0,
-                              kGutter,
-                              8,
-                            ),
-                            child: Text(
-                              l10n.uiNoMatches(
-                                widget.itemNoun,
-                                _query.trim(),
-                                widget.options.length,
-                              ),
-                              style: TextStyle(color: cs.onSurfaceVariant),
-                            ),
-                          )
-                        else
-                          ...rest.map(_row),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+    return DsSheet(
+      title: widget.title,
+      header: widget.options.length >= kSearchThreshold
+          ? DsSearchField(
+              hint: l10n.commonSearch,
+              onChanged: (v) => setState(() => _query = v),
+            )
+          : null,
+      gap: kGroupGap,
+      children: [
+        if (pinnedShown.isNotEmpty)
+          _group(
+            widget.pinnedHeader,
+            pinnedShown.map((o) => _row(o, favouritable: false)),
+          ),
+        if (!_grouped)
+          if (shown.isEmpty) _nothing(l10n) else _group(null, shown.map(_row))
+        else if (searching)
+          if (shown.isEmpty)
+            _nothing(l10n)
+          else
+            _group(
+              l10n.uiAllMatchCount(shown.length, widget.options.length),
+              shown.map(_row),
+            )
+        else ...[
+          if (favorites.isNotEmpty)
+            _group(l10n.commonFavorites, favorites.map(_row)),
+          if (rest.isNotEmpty) _group(l10n.commonAll, rest.map(_row)),
+        ],
+      ],
     );
   }
+
+  Widget _nothing(AppLocalizations l10n) => _NothingMatches(
+    text: l10n.uiNoMatches(
+      widget.itemNoun,
+      _query.trim(),
+      widget.options.length,
+    ),
+  );
+}
+
+class _NothingMatches extends StatelessWidget {
+  const _NothingMatches({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 24),
+    child: Text(
+      text,
+      textAlign: TextAlign.center,
+      style: DsType.small.copyWith(color: context.ds.text2),
+    ),
+  );
 }
 
 Future<Set<T>?> pickOptions<T>(
@@ -626,14 +800,9 @@ Future<Set<T>?> pickOptions<T>(
   required List<Option<T>> options,
   Set<T> selected = const {},
 }) {
-  return showModalBottomSheet<Set<T>>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
-    ),
-    builder: (context) =>
+  return showDsSheet<Set<T>>(
+    context,
+    (context) =>
         _MultiPickSheet<T>(title: title, options: options, selected: selected),
   );
 }
@@ -672,73 +841,43 @@ class _MultiPickSheetState<T> extends State<_MultiPickSheet<T>> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final shown = widget.options.where(_matches).toList();
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                widget.title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            if (widget.options.length >= kSearchThreshold)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                child: TextField(
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: l10n.commonSearch,
-                  ),
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-              ),
-            Flexible(
-              child: ClipRect(
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      for (final o in shown)
-                        Opacity(
-                          opacity: o.enabled ? 1 : 0.45,
-                          child: CheckboxListTile(
-                            secondary: o.leading,
-                            title: Text(o.title),
-                            subtitle: o.subtitle != null
-                                ? Text(o.subtitle!)
-                                : null,
-                            value: _picked.contains(o.value),
-                            onChanged: o.enabled
-                                ? (_) => _toggle(o.value)
-                                : null,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(_picked),
-                  child: Text(l10n.uiDoneCount(_picked.length)),
-                ),
-              ),
-            ),
-          ],
-        ),
+    return DsSheet(
+      title: widget.title,
+      header: widget.options.length >= kSearchThreshold
+          ? DsSearchField(
+              hint: l10n.commonSearch,
+              onChanged: (v) => setState(() => _query = v),
+            )
+          : null,
+      footer: DsButton(
+        label: l10n.uiDoneCount(_picked.length),
+        onPressed: () => Navigator.of(context).pop(_picked),
       ),
+      children: [
+        if (shown.isEmpty)
+          _NothingMatches(
+            text: l10n.uiNoMatches(
+              l10n.uiNounItem,
+              _query.trim(),
+              widget.options.length,
+            ),
+          )
+        else
+          DsCard(
+            color: Colors.transparent,
+            children: [
+              for (final o in shown)
+                DsRow(
+                  leading: o.leading,
+                  title: o.title,
+                  subtitle: o.subtitle,
+                  enabled: o.enabled,
+                  onTap: () => _toggle(o.value),
+                  trailing: [DsCheck(checked: _picked.contains(o.value))],
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

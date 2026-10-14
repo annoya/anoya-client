@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../core/ds.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class OnDemandValuesScreen extends StatefulWidget {
   const OnDemandValuesScreen({
     super.key,
+    required this.glyph,
     required this.title,
     required this.values,
     required this.unit,
@@ -13,6 +16,8 @@ class OnDemandValuesScreen extends StatefulWidget {
     required this.addHint,
     required this.help,
   });
+
+  final Glyph glyph;
 
   final String title;
 
@@ -49,9 +54,25 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
     setState(() => _values = _sorted([..._values, v]));
   }
 
+  Widget _valueCard(String v) => DsCard(
+    children: [
+      DsRow(
+        glyph: widget.glyph,
+        title: v,
+        trailing: [
+          DsAction(
+            glyph: Glyph.trash,
+            tooltip: context.l10n.commonRemove,
+            onPressed: () =>
+                setState(() => _values = _values.where((x) => x != v).toList()),
+          ),
+        ],
+      ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final q = _query.trim().toLowerCase();
     final shown = q.isEmpty
@@ -63,78 +84,38 @@ class _OnDemandValuesScreenState extends State<OnDemandValuesScreen> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) Navigator.of(context).pop(_values);
       },
-      child: Scaffold(
-        appBar: AppBar(title: Text(widget.title)),
-        floatingActionButton: FloatingActionButton(
+      child: DsPage(
+        title: widget.title,
+        fab: FloatingActionButton(
           tooltip: l10n.commonAdd,
           onPressed: _add,
-          child: const Icon(Icons.add),
+          child: const GlyphIcon(Glyph.plus),
         ),
-        body: PageBody(
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: 88),
-            children: [
-              if (_values.length >= kSearchThreshold)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
-                  child: TextField(
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search),
-                      hintText: l10n.commonSearch,
-                    ),
-                    onChanged: (v) => setState(() => _query = v),
-                  ),
-                ),
-              SectionHeader(
-                _values.isEmpty
-                    ? l10n.onDemandNoEntries
-                    : l10n.onDemandEntriesHeader(_values.length, widget.unit),
+        children: [
+          if (_values.length >= kSearchThreshold)
+            DsSearchField(
+              hint: l10n.commonSearch,
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          if (_values.isEmpty)
+            DsEmptyState(
+              heading: l10n.onDemandNoEntries,
+              title: l10n.onDemandConditionIgnored,
+              hint: widget.help,
+            )
+          else if (shown.isEmpty)
+            DsEmptyState(title: l10n.uiNothingMatches(_query))
+          else
+            DsGroup(
+              caption: l10n.onDemandEntriesHeader(_values.length, widget.unit),
+              note: widget.help,
+              child: DsStack(
+                gap: kNoteGap,
+                children: shown.map(_valueCard).toList(),
               ),
-              if (_values.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                  child: Text(
-                    l10n.onDemandConditionIgnored,
-                    style: TextStyle(color: cs.onSurfaceVariant),
-                  ),
-                )
-              else if (shown.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                  child: Text(
-                    l10n.uiNothingMatches(_query),
-                    style: TextStyle(color: cs.onSurfaceVariant),
-                  ),
-                )
-              else
-                ...shown.map(
-                  (v) => Card(
-                    margin: kCardMargin,
-                    child: ListTile(
-                      title: Text(v),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 20),
-                        tooltip: l10n.commonRemove,
-                        onPressed: () => setState(
-                          () => _values = _values.where((x) => x != v).toList(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 0),
-                child: Text(
-                  widget.help,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          const SizedBox(height: kFabSize),
+        ],
       ),
     );
   }

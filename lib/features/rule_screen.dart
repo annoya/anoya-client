@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/country_flag.dart';
+import '../core/ds.dart';
 import '../core/norm_config.dart';
 import '../core/platform_support.dart';
 import '../core/rule_values.dart';
@@ -124,11 +125,9 @@ class _RuleScreenState extends State<RuleScreen> {
   }
 
   Future<void> _pickCategories() async {
-    final picked = await showModalBottomSheet<Set<String>>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (_) => GeositeSheet(selected: _picked.toSet()),
+    final picked = await showDsSheet<Set<String>>(
+      context,
+      (_) => GeositeSheet(selected: _picked.toSet()),
     );
     if (picked != null) setState(() => _picked = picked.toList());
   }
@@ -181,58 +180,45 @@ class _RuleScreenState extends State<RuleScreen> {
     if (picked != null) setState(() => _action = picked);
   }
 
-  void _showBad() => showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
-    ),
-    builder: (context) => _UnrecognizedSheet(type: _type, bad: _parsed.bad),
+  void _showBad() => showDsSheet<void>(
+    context,
+    (context) => _UnrecognizedSheet(type: _type, bad: _parsed.bad),
   );
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final result = _result;
-    final text = takesTextValues(_type);
-    return Scaffold(
-      appBar: AppBar(
-        leading: const CloseButton(),
-        title: Text(widget.initial == null ? l10n.ruleAdd : l10n.ruleEdit),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            tooltip: l10n.commonSave,
-            onPressed: result == null
-                ? null
-                : () => Navigator.of(context).pop(result),
-          ),
-        ],
-      ),
-      body: PageBody(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 24),
-          children: [
-            SelectField(label: l10n.ruleMatch, value: _type, onTap: _pickType),
-            const SizedBox(height: 8),
-            SelectField(
-              label: l10n.ruleAction,
-              value: _action,
-              onTap: _pickAction,
-            ),
-            const SizedBox(height: 8),
-            if (text) ..._textInput(context) else ..._geoInput(context),
-          ],
+    return DsPage(
+      leading: DsLeading.close,
+      title: widget.initial == null ? l10n.ruleAdd : l10n.ruleEdit,
+      actions: [
+        DsNavButton(
+          glyph: Glyph.check,
+          tooltip: l10n.commonSave,
+          onPressed: result == null
+              ? null
+              : () => Navigator.of(context).pop(result),
         ),
-      ),
+      ],
+      gap: kNoteGap,
+      children: [
+        SelectField(label: l10n.ruleMatch, value: _type, onTap: _pickType),
+        SelectField(label: l10n.ruleAction, value: _action, onTap: _pickAction),
+        if (takesTextValues(_type))
+          ..._textInput(context)
+        else
+          ..._geoInput(context),
+      ],
     );
   }
 
   List<Widget> _textInput(BuildContext context) {
     final l10n = context.l10n;
+    final ds = context.ds;
     final lineOnly = _type == 'domain-regex' || _type == 'process-name';
     return [
+      DsNote(_valuesLabel(l10n, _type)),
       Stack(
         children: [
           TextField(
@@ -245,86 +231,77 @@ class _RuleScreenState extends State<RuleScreen> {
                 ? TextInputType.multiline
                 : TextInputType.url,
             textInputAction: TextInputAction.newline,
-            minLines: 6,
-            maxLines: 12,
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+            minLines: _valueLines,
+            maxLines: _valueLines,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 14,
+              height: 18 / 14,
+              color: ds.text1,
+            ),
             decoration: InputDecoration(
-              labelText: _valuesLabel(l10n, _type),
-              alignLabelWithHint: true,
               hintText:
                   '${_hints[_type] ?? ''}\n'
                   '${lineOnly ? l10n.ruleValuesHintLines : l10n.ruleValuesHint}',
-              helperText: _text.text.trim().isEmpty
-                  ? _typeDescription(_type)
-                  : null,
-              suffixIcon: const SizedBox(width: 54),
+              hintMaxLines: _valueLines,
+              contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 60),
             ),
             onChanged: (_) => _reparse(),
           ),
           PositionedDirectional(
-            top: 4,
-            end: 6,
-            child: IconButton(
-              icon: const Icon(Icons.content_paste_go),
+            start: 12,
+            bottom: 8,
+            child: DsAction(
+              glyph: Glyph.clipboard,
+              size: kFieldActionButton,
               tooltip: l10n.ruleValuesPaste,
               onPressed: _paste,
             ),
           ),
         ],
       ),
-      if (_text.text.trim().isNotEmpty) _parseCard(context),
-      Padding(
-        padding: const EdgeInsets.only(top: 16),
-        child: OutlinedButton.icon(
-          onPressed: _fromFile,
-          icon: const Icon(Icons.description_outlined),
-          label: Text(l10n.ruleValuesFromFile),
-        ),
+      if (_text.text.trim().isNotEmpty)
+        _parseCard(context)
+      else if (_typeDescription(_type) case final d?)
+        DsNote(d),
+      DsButton.tonal(
+        label: l10n.ruleValuesFromFile,
+        glyph: Glyph.file,
+        onPressed: _fromFile,
       ),
     ];
   }
 
   Widget _parseCard(BuildContext context) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
+    final ds = context.ds;
     final p = _parsed;
-    final rows = <Widget>[
-      if (p.values.isNotEmpty)
-        ListTile(
-          leading: Icon(Icons.check, color: context.vpnColors.connected),
-          title: Text(ruleValueCount(l10n, _type, p.values.length)),
-        ),
-      if (p.companion.isNotEmpty)
-        ListTile(
-          leading: const Icon(Icons.alt_route),
-          title: Text(
-            ruleValueCount(l10n, p.companionType!, p.companion.length),
+    return DsCard(
+      children: [
+        if (p.values.isNotEmpty)
+          DsRow(
+            leading: GlyphIcon(Glyph.check, color: ds.badgeSuccess),
+            title: ruleValueCount(l10n, _type, p.values.length),
           ),
-          subtitle: Text(l10n.ruleValuesCompanion(p.companionType!)),
-        ),
-      if (p.duplicates > 0)
-        ListTile(
-          leading: const Icon(Icons.layers_outlined),
-          title: Text(l10n.ruleValuesDuplicates(p.duplicates)),
-        ),
-      if (p.bad.isNotEmpty)
-        ListTile(
-          leading: Icon(Icons.warning_amber_rounded, color: cs.error),
-          title: Text(l10n.ruleValuesUnrecognized(p.bad.length)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: _showBad,
-        ),
-    ];
-    return Card(
-      margin: const EdgeInsets.only(top: 4),
-      child: Column(
-        children: [
-          for (final (i, row) in rows.indexed) ...[
-            if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-            row,
-          ],
-        ],
-      ),
+        if (p.companion.isNotEmpty)
+          DsRow(
+            glyph: Glyph.split,
+            title: ruleValueCount(l10n, p.companionType!, p.companion.length),
+            subtitle: l10n.ruleValuesCompanion(p.companionType!),
+          ),
+        if (p.duplicates > 0)
+          DsRow(
+            leading: GlyphIcon(Glyph.layers, color: ds.badgeSuccess),
+            title: l10n.ruleValuesDuplicates(p.duplicates),
+          ),
+        if (p.bad.isNotEmpty)
+          DsRow(
+            leading: GlyphIcon(Glyph.alertTriangle, color: ds.badgeDestructive),
+            title: l10n.ruleValuesUnrecognized(p.bad.length),
+            trailing: const [DsChevron()],
+            onTap: _showBad,
+          ),
+      ],
     );
   }
 
@@ -337,46 +314,41 @@ class _RuleScreenState extends State<RuleScreen> {
         value: _picked.isEmpty
             ? l10n.ruleChoose
             : l10n.ruleSelectedCount(_picked.length),
-        trailingIcon: Icons.chevron_right,
+        trailing: Glyph.chevronRight,
         onTap: geoip ? _pickCountries : _pickCategories,
       ),
       if (_picked.isNotEmpty)
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final v in _picked)
-                InputChip(
-                  label: Text(geoip ? _countryChip(v) : v),
-                  onDeleted: () => setState(() => _picked.remove(v)),
-                  deleteButtonTooltipMessage: l10n.commonRemove,
-                ),
-            ],
-          ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final v in _picked)
+              DsValueChip(
+                label: geoip ? _countryChip(v) : v,
+                removeTooltip: l10n.commonRemove,
+                onRemove: () => setState(() => _picked.remove(v)),
+              ),
+          ],
         ),
       if (geoip)
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('no-resolve'),
-          subtitle: Text(l10n.ruleNoResolveDescription),
-          value: _noResolve,
-          onChanged: (v) => setState(() => _noResolve = v),
+        DsCard(
+          children: [
+            DsRow(
+              title: 'no-resolve',
+              subtitle: l10n.ruleNoResolveDescription,
+              onTap: () => setState(() => _noResolve = !_noResolve),
+              trailing: [
+                DsToggle(
+                  value: _noResolve,
+                  onChanged: (v) => setState(() => _noResolve = v),
+                ),
+              ],
+            ),
+          ],
         ),
-      if (_summary() case final s?) _hint(context, s),
+      if (_summary() case final s?) DsNote(s),
     ];
   }
-
-  Widget _hint(BuildContext context, String text) => Padding(
-    padding: const EdgeInsets.only(top: 10),
-    child: Text(
-      text,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-    ),
-  );
 
   String _countryChip(String code) {
     final up = code.toUpperCase();
@@ -402,6 +374,8 @@ class _RuleScreenState extends State<RuleScreen> {
   }
 }
 
+const int _valueLines = 6;
+
 class _UnrecognizedSheet extends StatelessWidget {
   const _UnrecognizedSheet({required this.type, required this.bad});
 
@@ -411,41 +385,28 @@ class _UnrecognizedSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              l10n.ruleValuesUnrecognized(bad.length),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                for (final b in bad)
-                  ListTile(
-                    title: Text(
-                      b.text,
-                      style: const TextStyle(fontFamily: 'monospace'),
-                    ),
-                    subtitle: Text(
-                      l10n.ruleValuesBadLine(b.line, switch (b.kind) {
-                        BadValueKind.domain => l10n.ruleValuesNotDomain,
-                        BadValueKind.address => l10n.ruleValuesNotAddress,
-                        BadValueKind.other => l10n.ruleValuesNotValid(type),
-                      }),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
+    final mono = DsType.h3.copyWith(
+      fontFamily: 'monospace',
+      color: context.ds.text1,
+    );
+    return DsSheet(
+      title: l10n.ruleValuesUnrecognized(bad.length),
+      children: [
+        DsCard(
+          children: [
+            for (final b in bad)
+              DsRow(
+                title: b.text,
+                titleStyle: mono,
+                subtitle: l10n.ruleValuesBadLine(b.line, switch (b.kind) {
+                  BadValueKind.domain => l10n.ruleValuesNotDomain,
+                  BadValueKind.address => l10n.ruleValuesNotAddress,
+                  BadValueKind.other => l10n.ruleValuesNotValid(type),
+                }),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

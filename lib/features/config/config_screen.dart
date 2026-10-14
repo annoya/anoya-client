@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ds.dart';
 import '../../core/profile.dart';
 import '../../state/profiles_controller.dart';
 import 'amnezia_config_screen.dart';
@@ -23,7 +24,7 @@ class ConfigScreen extends ConsumerWidget {
       if (p.id == profileId) profile = p;
     }
     if (profile == null) {
-      return Scaffold(appBar: AppBar(), body: const SizedBox.shrink());
+      return const DsPage();
     }
     final isActive = st.activeId == profile.id;
     return switch (profile.type) {

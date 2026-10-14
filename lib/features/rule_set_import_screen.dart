@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/ds.dart';
 import '../core/geo_store.dart';
 import '../core/rule_set.dart';
 import '../core/rule_set_transfer.dart';
-import '../core/ui.dart';
+import '../core/theme.dart';
 import '../l10n/l10n.dart';
 import '../state/routing_status.dart';
 import 'routing_widgets.dart';
@@ -78,135 +79,108 @@ class _RuleSetImportScreenState extends ConsumerState<RuleSetImportScreen> {
         l10n.ruleSetImportBlock(imported.countOf('block')),
     ];
     final full = imported.mode == RoutingMode.full;
-    return Scaffold(
-      appBar: AppBar(
-        leading: const CloseButton(),
-        title: Text(l10n.ruleSetImportTitle),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 16),
-          child: FilledButton(
-            onPressed: _busy || _taken != null ? null : _add,
-            child: Text(l10n.ruleSetImportAdd),
-          ),
+    return DsPage(
+      leading: DsLeading.close,
+      title: l10n.ruleSetImportTitle,
+      dock: [
+        DsButton(
+          label: l10n.ruleSetImportAdd,
+          busy: _busy,
+          onPressed: _taken != null ? null : _add,
         ),
-      ),
-      body: PageBody(
-        child: ListView(
+      ],
+      children: [
+        DsStack(
+          gap: kNoteGap,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 4),
-              child: TextField(
-                controller: _name,
-                enabled: !_busy,
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  labelText: l10n.commonName,
-                  errorText: switch (_taken) {
-                    final taken? => l10n.ruleSetNameTaken(taken),
-                    null => null,
-                  },
-                ),
+            TextField(
+              controller: _name,
+              enabled: !_busy,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: l10n.commonName,
+                errorText: switch (_taken) {
+                  final taken? => l10n.ruleSetNameTaken(taken),
+                  null => null,
+                },
               ),
             ),
-            Card(
-              margin: kCardMargin,
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.description_outlined),
-                    title: Text(_sourceLabel(l10n, imported.source)),
-                    subtitle: Text(
-                      imported.source == RuleSetSource.anoya
-                          ? l10n.ruleSetImportAsIs
-                          : l10n.ruleSetImportMigrated,
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.alt_route),
-                    title: Text(
-                      full ? l10n.ruleSetModeFull : l10n.ruleSetModeSplit,
-                    ),
-                    subtitle: Text(
-                      full
-                          ? l10n.ruleSetModeFullDescription
-                          : l10n.ruleSetModeSplitDescription,
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.layers_outlined),
-                    title: Text(l10n.ruleSetImportRules(imported.rules.length)),
-                    subtitle: counts.isEmpty ? null : Text(counts.join(' · ')),
-                    trailing: imported.rules.isEmpty
-                        ? null
-                        : const Icon(Icons.chevron_right),
-                    onTap: imported.rules.isEmpty
-                        ? null
-                        : () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => _ImportedRulesScreen(
-                                title: l10n.ruleSetImportRules(
-                                  imported.rules.length,
-                                ),
-                                import: imported,
+            DsCard(
+              children: [
+                DsRow(
+                  glyph: Glyph.file,
+                  title: _sourceLabel(l10n, imported.source),
+                  subtitle: imported.source == RuleSetSource.anoya
+                      ? l10n.ruleSetImportAsIs
+                      : l10n.ruleSetImportMigrated,
+                ),
+                DsRow(
+                  glyph: Glyph.split,
+                  title: full ? l10n.ruleSetModeFull : l10n.ruleSetModeSplit,
+                  subtitle: full
+                      ? l10n.ruleSetModeFullDescription
+                      : l10n.ruleSetModeSplitDescription,
+                ),
+                DsRow(
+                  glyph: Glyph.list,
+                  title: l10n.ruleSetImportRules(imported.rules.length),
+                  subtitle: counts.isEmpty ? null : counts.join(' · '),
+                  trailing: [if (imported.rules.isNotEmpty) const DsChevron()],
+                  onTap: imported.rules.isEmpty
+                      ? null
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => _ImportedRulesScreen(
+                              title: l10n.ruleSetImportRules(
+                                imported.rules.length,
                               ),
+                              import: imported,
                             ),
                           ),
-                  ),
+                        ),
+                ),
+              ],
+            ),
+            if (imported.skipped.isNotEmpty)
+              DsGroup(
+                caption: l10n.ruleSetImportSkipped,
+                children: [
+                  for (final part in imported.skipped) _skippedRow(l10n, part),
                 ],
               ),
-            ),
-            if (imported.skipped.isNotEmpty) ...[
-              SectionHeader(l10n.ruleSetImportSkipped),
-              Card(
-                margin: kCardMargin,
-                child: Column(
-                  children: [
-                    for (final (i, part) in imported.skipped.indexed) ...[
-                      if (i > 0)
-                        const Divider(height: 1, indent: 16, endIndent: 16),
-                      _skippedTile(l10n, part),
-                    ],
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _skippedTile(AppLocalizations l10n, SkippedPart part) {
-    final (icon, title, detail) = switch (part.reason) {
+  Widget _skippedRow(AppLocalizations l10n, SkippedPart part) {
+    final (glyph, title, detail) = switch (part.reason) {
       SkipReason.dns => (
-        Icons.language_outlined,
+        Glyph.globe,
         l10n.ruleSetImportSkipDns,
         l10n.ruleSetImportSkipDnsDetail,
       ),
       SkipReason.geoUrls => (
-        Icons.public,
+        Glyph.globe,
         l10n.ruleSetImportSkipGeo,
         l10n.ruleSetImportSkipGeoDetail,
       ),
       SkipReason.ruleLists => (
-        Icons.link,
+        Glyph.link,
         l10n.ruleSetImportSkipLists(part.count),
         l10n.ruleSetImportSkipListsDetail,
       ),
       SkipReason.unsupported => (
-        Icons.do_not_disturb_alt_outlined,
+        Glyph.x,
         l10n.ruleSetImportSkipOther(part.count),
         part.kinds.join(', '),
       ),
     };
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: detail.isEmpty ? null : Text(detail),
+    return DsRow(
+      glyph: glyph,
+      title: title,
+      subtitle: detail.isEmpty ? null : detail,
     );
   }
 }
@@ -241,17 +215,16 @@ class _ImportedRulesScreenState extends State<_ImportedRulesScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(widget.title)),
-    body: PageBody(
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+  Widget build(BuildContext context) => DsPage(
+    title: widget.title,
+    children: [
+      DsGroup(
+        caption: context.l10n.ruleSetRulesHeader,
         children: [
-          SectionHeader(context.l10n.ruleSetRulesHeader),
           for (final rule in widget.import.rules)
             RuleTile(rule: rule, geoReady: _geoReady),
         ],
       ),
-    ),
+    ],
   );
 }

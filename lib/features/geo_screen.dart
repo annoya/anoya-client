@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_error.dart';
+import '../core/ds.dart';
 import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/routing_prefs.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/providers.dart';
@@ -90,30 +92,30 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
     required String url,
     required int bytes,
     required VoidCallback onEdit,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        title: Row(
-          children: [
-            Expanded(child: Text(name)),
-            Text(
-              _bytes(bytes),
-              style: TextStyle(fontSize: 12.5, color: cs.onSurfaceVariant),
+  }) => DsCard(
+    children: [
+      DsRow(
+        glyph: _busy ? null : Glyph.database,
+        title: name,
+        subtitle: _shortUrl(url),
+        subtitleMaxLines: 1,
+        enabled: !_busy,
+        onTap: onEdit,
+        trailing: [
+          Text(
+            _bytes(bytes),
+            style: DsType.small.copyWith(color: context.ds.text3),
+          ),
+          if (!_busy)
+            DsAction(
+              glyph: Glyph.pencil,
+              tooltip: context.l10n.commonEdit,
+              onPressed: onEdit,
             ),
-          ],
-        ),
-        subtitle: Text(
-          _shortUrl(url),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.edit_outlined, size: 18),
-        onTap: _busy ? null : onEdit,
+        ],
       ),
-    );
-  }
+    ],
+  );
 
   String _shortUrl(String url) {
     final u = Uri.tryParse(url);
@@ -139,69 +141,65 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
   Widget build(BuildContext context) {
     final prefs = ref.watch(routingPrefsProvider);
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.geoTitle)),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : PageBody(
-              child: ListView(
-                children: [
-                  SectionHeader(l10n.geoSectionDatabases),
-                  _dbCard(
-                    name: 'GeoIP',
-                    url: prefs.geoipUrl,
-                    bytes: _status.geoipBytes,
-                    onEdit: () => _editUrl(geoip: true),
-                  ),
-                  _dbCard(
-                    name: 'GeoSite',
-                    url: prefs.geositeUrl,
-                    bytes: _status.geositeBytes,
-                    onEdit: () => _editUrl(geoip: false),
-                  ),
-                  SectionHeader(l10n.geoSectionUpdates),
-                  Card(
-                    margin: kCardMargin,
-                    child: Column(
-                      children: [
-                        ListTile(
-                          title: Text(l10n.geoLastUpdated),
-                          subtitle: Text(_updatedAt(prefs)),
-                        ),
-                        SwitchListTile(
-                          title: Text(l10n.geoAutoUpdate),
-                          subtitle: Text(l10n.geoAutoUpdateSubtitle),
-                          value: prefs.geoAutoUpdate,
-                          onChanged: (v) => ref
-                              .read(routingPrefsProvider.notifier)
-                              .update((p) => p.copyWith(geoAutoUpdate: v)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: kGutter),
-                    child: FilledButton.tonalIcon(
-                      onPressed: _busy ? null : _update,
-                      icon: _busy
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh, size: 18),
-                      label: Text(
-                        _status.downloaded
-                            ? (_busy ? l10n.geoUpdating : l10n.geoUpdateNow)
-                            : (_busy ? l10n.geoDownloading : l10n.geoDownload),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+    void setAuto(bool v) => ref
+        .read(routingPrefsProvider.notifier)
+        .update((p) => p.copyWith(geoAutoUpdate: v));
+    return DsPage(
+      title: l10n.geoTitle,
+      children: [
+        if (_loading)
+          const Center(child: DsSpinner())
+        else ...[
+          DsGroup(
+            caption: l10n.geoSectionDatabases,
+            child: DsStack(
+              gap: kNoteGap,
+              children: [
+                _dbCard(
+                  name: 'GeoIP',
+                  url: prefs.geoipUrl,
+                  bytes: _status.geoipBytes,
+                  onEdit: () => _editUrl(geoip: true),
+                ),
+                _dbCard(
+                  name: 'GeoSite',
+                  url: prefs.geositeUrl,
+                  bytes: _status.geositeBytes,
+                  onEdit: () => _editUrl(geoip: false),
+                ),
+              ],
+            ),
+          ),
+          DsGroup(
+            caption: l10n.geoSectionUpdates,
+            children: [
+              DsRow(
+                glyph: Glyph.history,
+                title: l10n.geoLastUpdated,
+                subtitle: _updatedAt(prefs),
+              ),
+              DsRow(
+                glyph: Glyph.refreshCw,
+                title: l10n.geoAutoUpdate,
+                subtitle: l10n.geoAutoUpdateSubtitle,
+                onTap: () => setAuto(!prefs.geoAutoUpdate),
+                trailing: [
+                  DsToggle(value: prefs.geoAutoUpdate, onChanged: setAuto),
                 ],
               ),
-            ),
+            ],
+          ),
+          DsButton(
+            label: _status.downloaded ? l10n.geoUpdateNow : l10n.geoDownload,
+            glyph: Glyph.refreshCw,
+            busy: _busy,
+            busyLabel: _status.downloaded
+                ? l10n.geoUpdating
+                : l10n.geoDownloading,
+            onPressed: _update,
+          ),
+        ],
+      ],
     );
   }
 }
