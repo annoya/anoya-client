@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/app_error.dart';
-import '../core/app_logo.dart';
+import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/parsers/qr_payload.dart';
 import '../core/parsers/subscription.dart';
@@ -200,224 +200,135 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppLogo(size: 56, color: cs.primary),
-                  const SizedBox(height: 14),
-                  Text(
-                    l10n.startAddConnection,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.startSubtitle,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 20),
-                  if (_rejected != null) ...[
-                    _RejectedCard(
-                      failure: _rejected!,
-                      onClose: () => setState(() => _rejected = null),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-                  TextField(
-                    controller: _input,
-                    minLines: 1,
-                    maxLines: 3,
-                    autocorrect: false,
-                    enabled: !_busy,
-                    onChanged: _onChanged,
-                    decoration: InputDecoration(
-                      labelText: l10n.startLinkLabel,
-                      hintText: l10n.startLinkHint,
-                      suffixIcon: Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 6),
-                        child: IconButton(
-                          icon: const Icon(Icons.content_paste_go),
-                          tooltip: l10n.startPaste,
-                          onPressed: _busy ? null : _paste,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_detected != null) ...[
-                    const SizedBox(height: 10),
-                    _DetectChip(text: _detected!.label),
-                  ] else if (_verdict != null) ...[
-                    const SizedBox(height: 10),
-                    _DetectChip(
-                      text: l10n.startCantUseThis(_verdict!),
-                      refused: true,
-                    ),
-                  ],
-                  const SizedBox(height: 14),
-                  FilledButton(
-                    onPressed: (_busy || _detected == null) ? null : _continue,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.commonContinue),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_canScanQr) ...[
-                    OutlinedButton.icon(
-                      onPressed: _busy ? null : _scanQr,
-                      icon: const Icon(Icons.qr_code_scanner, size: 18),
-                      label: Text(l10n.startScanQr),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : _openFile,
-                    icon: const Icon(Icons.folder_open, size: 18),
-                    label: Text(l10n.startOpenConfigFile),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      const Expanded(child: Divider()),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          l10n.startOr,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                      ),
-                      const Expanded(child: Divider()),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  FilledButton.tonalIcon(
-                    onPressed: _busy
-                        ? null
-                        : () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SignInScreen(),
-                            ),
-                          ),
-                    icon: const Icon(Icons.business_outlined, size: 18),
-                    label: Text(l10n.startSignInToServer),
-                  ),
-                ],
-              ),
+    final ds = context.ds;
+    final rejected = _rejected;
+    final helper =
+        _detected?.label ??
+        (_verdict == null ? null : l10n.startCantUseThis(_verdict!));
+    return DsPage(
+      title: l10n.startAddConnection,
+      subtitle: l10n.startSubtitle,
+      children: [
+        if (rejected != null) _Rejected(failure: rejected),
+        if (rejected?.openUrl != null)
+          DsButton.tonal(
+            label: l10n.startOpenSubscriptionPage,
+            glyph: Glyph.link,
+            onPressed: () => launchUrl(
+              Uri.parse(rejected!.openUrl!),
+              mode: LaunchMode.externalApplication,
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RejectedCard extends StatelessWidget {
-  const _RejectedCard({required this.failure, required this.onClose});
-
-  final SubscriptionFormatException failure;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final warn = context.vpnColors.connecting;
-    final url = failure.openUrl;
-    return Card(
-      margin: EdgeInsets.zero,
-      color: warn.withValues(alpha: 0.12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            leading: Icon(Icons.warning_amber_outlined, color: warn),
-            title: Text(failure.error.title),
-            subtitle: failure.error.detail == null
-                ? null
-                : Text(failure.error.detail!),
-            isThreeLine: failure.error.detail != null,
-            trailing: IconButton(
-              icon: const Icon(Icons.close, size: 20),
-              tooltip: context.l10n.commonDismiss,
-              color: cs.onSurfaceVariant,
-              onPressed: onClose,
-            ),
-          ),
-          if (url != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.link, size: 18),
-                label: Text(context.l10n.startOpenSubscriptionPage),
-                onPressed: () => launchUrl(
-                  Uri.parse(url),
-                  mode: LaunchMode.externalApplication,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _input,
+              minLines: 1,
+              maxLines: 3,
+              autocorrect: false,
+              enabled: !_busy,
+              onChanged: _onChanged,
+              decoration: InputDecoration(
+                labelText: l10n.startLinkLabel,
+                hintText: l10n.startLinkHint,
+                suffixIcon: Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 16),
+                  child: DsAction(
+                    glyph: Glyph.clipboard,
+                    size: kFieldActionButton,
+                    tooltip: l10n.startPaste,
+                    color: _busy
+                        ? ds.icon1.withValues(alpha: kDisabledOpacity)
+                        : null,
+                    onPressed: _busy ? null : _paste,
+                  ),
                 ),
               ),
             ),
-        ],
-      ),
+            if (helper != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  helper,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: DsType.small.copyWith(
+                    color: _detected == null ? ds.destructive : ds.text3,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        DsStack(
+          children: [
+            DsButton(
+              label: l10n.commonContinue,
+              busy: _busy,
+              onPressed: _detected == null ? null : _continue,
+            ),
+            if (_canScanQr)
+              DsButton.tonal(
+                label: l10n.startScanQr,
+                glyph: Glyph.scan,
+                onPressed: _busy ? null : _scanQr,
+              ),
+            DsButton.tonal(
+              label: l10n.startOpenConfigFile,
+              glyph: Glyph.folder,
+              onPressed: _busy ? null : _openFile,
+            ),
+            _OrDivider(l10n.startOr),
+            DsButton.tonal(
+              label: l10n.startSignInToServer,
+              glyph: Glyph.briefcase,
+              onPressed: _busy
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SignInScreen()),
+                    ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
-class _DetectChip extends StatelessWidget {
-  const _DetectChip({required this.text, this.refused = false});
-  final String text;
-  final bool refused;
+class _Rejected extends StatelessWidget {
+  const _Rejected({required this.failure});
+
+  final SubscriptionFormatException failure;
+
+  @override
+  Widget build(BuildContext context) => DsNotification(
+    glyph: Glyph.alertTriangle,
+    tone: DsTone.warning,
+    boldTitle: true,
+    title: failure.error.title,
+    body: failure.error.detail,
+  );
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider(this.label);
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final warn = context.vpnColors.connecting;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: refused
-            ? warn.withValues(alpha: 0.14)
-            : cs.primaryContainer.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: (refused ? warn : cs.primary).withValues(alpha: 0.4),
-        ),
-      ),
+    final ds = context.ds;
+    final line = Expanded(child: Container(height: 1, color: ds.borderFaint));
+    return SizedBox(
+      height: 16,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            refused ? Icons.error_outline : Icons.check_circle_outline,
-            size: 16,
-            color: refused ? warn : cs.primary,
+          line,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(label, style: DsType.caption.copyWith(color: ds.text3)),
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              text,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: refused ? cs.onSurface : cs.onPrimaryContainer,
-              ),
-            ),
-          ),
+          line,
         ],
       ),
     );

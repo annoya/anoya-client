@@ -7,6 +7,7 @@ import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/theme.dart';
+import 'package:anoya/core/ui.dart';
 import 'package:anoya/features/config/config_screen.dart';
 import 'package:anoya/l10n/l10n.dart';
 import 'package:anoya/state/on_demand_controller.dart';
@@ -63,9 +64,11 @@ void main() {
 
   Future<void> remove(WidgetTester tester) async {
     await tester.scrollUntilVisible(find.text('Remove configuration'), 200);
+    await tester.ensureVisible(find.text('Remove configuration'));
+    await tester.pump();
     await tester.tap(find.text('Remove configuration'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+    await tester.tap(find.widgetWithText(DsDialogAction, 'Remove'));
     await tester.pumpAndSettle();
   }
 

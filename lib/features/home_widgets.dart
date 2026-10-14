@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/cat_sprite.dart';
 import '../core/country_flag.dart';
+import '../core/ds.dart';
 import '../core/mihomo_tun_config.dart';
 import '../core/norm_config.dart';
 import '../core/theme.dart';
-import '../core/ui.dart';
 import '../core/vpn_core.dart';
 import '../l10n/l10n.dart';
 import '../state/on_demand_controller.dart';
@@ -54,27 +55,22 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final vpn = context.vpnColors;
+    final ds = context.ds;
     final session = ref.watch(sessionProvider);
-    final style = Theme.of(
-      context,
-    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
+    final style = DsType.text;
     final empty = ref.watch(
       profilesControllerProvider.select((s) => s.active == null),
     );
     if (empty && !session.busy) {
       return Text(
         l10n.statusNoConfiguration,
-        style: style?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        style: style.copyWith(color: ds.text2),
       );
     }
     if (ref.watch(profilesControllerProvider.select((s) => s.switching))) {
-      final label = session.connected
-          ? l10n.homeSwitchingServer
-          : l10n.homeGettingServer;
-      return Text(label, style: style?.copyWith(color: vpn.connecting));
+      return session.connected
+          ? Text(l10n.homeSwitchingServer, style: style.copyWith(color: ds.text1))
+          : Text(l10n.homeGettingServer, style: style.copyWith(color: ds.text2));
     }
     final auto = ref.watch(onDemandProvider.select((p) => p.systemArmed));
     final clock = sessionClock(session.startedAt);
@@ -84,213 +80,93 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
     final (text, color) = switch (session.status) {
       VpnStatus.connected => (
         auto ? l10n.homeStatusAuto(connected) : connected,
-        vpn.connected,
+        ds.text1,
       ),
-      VpnStatus.connecting => (l10n.statusConnecting, vpn.connecting),
-      VpnStatus.error => (
-        l10n.statusError,
-        Theme.of(context).colorScheme.error,
-      ),
-      VpnStatus.disconnected => (
-        l10n.statusNotConnected,
-        Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      VpnStatus.connecting => (l10n.statusConnecting, ds.text2),
+      VpnStatus.error => (l10n.statusError, ds.destructive),
+      VpnStatus.disconnected => (l10n.statusNotConnected, ds.text2),
     };
-    return Text(text, style: style?.copyWith(color: color));
+    return Text(text, style: style.copyWith(color: color));
   }
 }
 
-class ConnectButton extends StatefulWidget {
+// homeHero: catStage 240×200 · 16 · status 16/24 · 20 · primary button 200×48.
+class HomeHero extends ConsumerWidget {
+  const HomeHero({super.key, required this.status, required this.onTap});
+
+  final VpnStatus status;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final switching = ref.watch(
+      profilesControllerProvider.select((s) => s.switching),
+    );
+    final connected = status == VpnStatus.connected;
+    final mood = switch (status) {
+      _ when onTap == null => CatMood.asleep,
+      VpnStatus.connected => CatMood.awake,
+      VpnStatus.connecting => CatMood.looking,
+      VpnStatus.error => CatMood.error,
+      VpnStatus.disconnected => switching ? CatMood.looking : CatMood.asleep,
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CatStage(
+          mood: mood,
+          strongGlow: connected,
+          glow: status != VpnStatus.error,
+          dimmed: onTap == null,
+        ),
+        const SizedBox(height: 16),
+        const StatusLabel(),
+        const SizedBox(height: 20),
+        ConnectButton(status: status, onTap: onTap),
+      ],
+    );
+  }
+}
+
+class ConnectButton extends StatelessWidget {
   const ConnectButton({super.key, required this.status, required this.onTap});
 
   final VpnStatus status;
   final VoidCallback? onTap;
 
   @override
-  State<ConnectButton> createState() => _ConnectButtonState();
-}
-
-class _ConnectButtonState extends State<ConnectButton> {
-  bool _focusShown = false;
-
-  @override
   Widget build(BuildContext context) {
-    final status = widget.status;
-    final onTap = widget.onTap;
     final l10n = context.l10n;
-    final connected = status == VpnStatus.connected;
-    final connecting = status == VpnStatus.connecting;
-    final vpn = context.vpnColors;
-    final color = connected
-        ? vpn.connected
-        : connecting
-        ? vpn.connecting
-        : Theme.of(context).colorScheme.primary;
-
-    final enabled = onTap != null;
-
-    final ring = Semantics(
-      button: true,
-      enabled: enabled,
-      label: connected
-          ? l10n.commonDisconnect
-          : connecting
-          ? l10n.commonCancel
-          : l10n.commonConnect,
-      child: FocusableActionDetector(
-        enabled: enabled,
-        mouseCursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
-        onShowFocusHighlight: (shown) => setState(() => _focusShown = shown),
-        actions: {
-          ActivateIntent: CallbackAction<ActivateIntent>(
-            onInvoke: (_) {
-              onTap?.call();
-              return null;
-            },
-          ),
+    return SizedBox(
+      width: kConnectButtonWidth,
+      child: DsButton(
+        label: switch (status) {
+          VpnStatus.connected => l10n.commonDisconnect,
+          VpnStatus.connecting => l10n.commonCancel,
+          _ => l10n.commonConnect,
         },
-        child: GestureDetector(
-          onTap: enabled ? onTap : null,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              if (_focusShown)
-                Positioned.fill(
-                  left: -kRingFocusGap,
-                  top: -kRingFocusGap,
-                  right: -kRingFocusGap,
-                  bottom: -kRingFocusGap,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: color, width: kRingFocusWidth),
-                    ),
-                  ),
-                ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color.withValues(alpha: 0.12),
-                  border: Border.all(color: color, width: 3),
-                ),
-                child: Center(
-                  child: connecting
-                      ? Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                                color: color,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              l10n.commonCancel,
-                              style: TextStyle(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.power_settings_new,
-                              size: 56,
-                              color: color,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              connected
-                                  ? l10n.commonDisconnect
-                                  : l10n.commonConnect,
-                              style: TextStyle(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        onPressed: onTap,
       ),
     );
-    return onTap == null ? Opacity(opacity: 0.38, child: ring) : ring;
   }
 }
 
-enum ChipTone { on, off, pending }
-
+// Chips size=S: the strip under the navigation; selected = the feature is doing something.
 class StatusChip extends StatelessWidget {
   const StatusChip({
     super.key,
-    required this.icon,
     required this.label,
-    required this.tone,
+    required this.on,
     required this.onTap,
   });
 
-  final IconData icon;
   final String label;
-  final ChipTone tone;
+  final bool on;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final (fg, bg, border) = switch (tone) {
-      ChipTone.on => (cs.onPrimaryContainer, cs.primaryContainer, null),
-      ChipTone.off => (cs.onSurfaceVariant, null, cs.outlineVariant),
-      ChipTone.pending => (
-        context.vpnColors.connecting,
-        null,
-        context.vpnColors.connecting.withValues(alpha: 0.45),
-      ),
-    };
-    return Material(
-      color: bg ?? Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: border == null ? BorderSide.none : BorderSide(color: border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: SizedBox(
-            height: kStatusChipHeight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 16, color: fg),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      DsChip(label: label, selected: on, onTap: onTap);
 }
 
 String describeGroup(ProxyGroup g, List<Location> locations) {
@@ -306,18 +182,21 @@ String describeGroup(ProxyGroup g, List<Location> locations) {
       : g.describe(n);
 }
 
-IconData groupIcon(String type) => switch (type) {
-  'url-test' => Icons.bolt,
-  'fallback' => Icons.shield_outlined,
-  'load-balance' => Icons.balance,
-  'relay' => Icons.alt_route,
-  _ => Icons.groups_outlined,
+Glyph groupIcon(String type) => switch (type) {
+  'url-test' => Glyph.zap,
+  'fallback' => Glyph.shield,
+  'load-balance' => Glyph.scale,
+  'relay' => Glyph.route,
+  _ => Glyph.users,
 };
 
 Widget flagOrIcon(Location? loc) {
   final flag = loc == null
       ? null
       : flagForCode(loc.countryCode) ?? flagEmoji(loc.label);
-  if (flag == null) return const Icon(Icons.public);
-  return Text(flag, style: const TextStyle(fontSize: 26));
+  if (flag == null) return const GlyphIcon(Glyph.globe);
+  return SizedBox.square(
+    dimension: kRowIcon,
+    child: Center(child: Text(flag, style: const TextStyle(fontSize: 20))),
+  );
 }

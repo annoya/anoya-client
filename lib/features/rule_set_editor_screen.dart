@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../core/app_error.dart';
 import '../core/country_flag.dart';
+import '../core/ds.dart';
 import '../core/geo_store.dart';
 import '../core/geosite_index.dart';
 import '../core/log.dart';
@@ -19,6 +20,7 @@ import '../core/rule_set.dart';
 import '../core/rule_set_transfer.dart';
 import '../core/service_avatar.dart';
 import '../core/service_catalog.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
@@ -94,19 +96,19 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             _ExportTo.share,
             l10n.ruleSetExportShare,
             subtitle: l10n.ruleSetExportShareSubtitle,
-            leading: const Icon(Icons.share_outlined),
+            leading: const GlyphIcon(Glyph.share),
           ),
         Option(
           _ExportTo.file,
           l10n.ruleSetExportSave,
           subtitle: fileName,
-          leading: const Icon(Icons.save_alt),
+          leading: const GlyphIcon(Glyph.download),
         ),
         Option(
           _ExportTo.copy,
           l10n.ruleSetExportCopy,
           subtitle: l10n.ruleSetExportCopySubtitle,
-          leading: const Icon(Icons.copy),
+          leading: const GlyphIcon(Glyph.copy),
         ),
         Option(
           _ExportTo.qr,
@@ -115,7 +117,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
               ? l10n.ruleSetExportQrSubtitle
               : l10n.ruleSetExportQrTooLarge,
           enabled: fitsQr,
-          leading: const Icon(Icons.qr_code_2),
+          leading: const GlyphIcon(Glyph.qrCode),
         ),
       ],
     );
@@ -310,24 +312,13 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   Future<void> _deleteSet() async {
     final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(l10n.ruleSetDeleteTitle(_name)),
-        content: Text(l10n.ruleSetDeleteBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.commonDelete),
-          ),
-        ],
-      ),
+    final ok = await confirmAction(
+      context,
+      title: l10n.ruleSetDeleteTitle(_name),
+      body: l10n.ruleSetDeleteBody,
+      confirmLabel: l10n.commonDelete,
     );
-    if (ok != true) return;
+    if (!ok) return;
     final revision = ref.read(ruleSetRevisionProvider.notifier);
     final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
@@ -384,122 +375,132 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_name),
-        actions: [
-          if (!_loading)
-            IconButton(
-              icon: const Icon(Icons.share_outlined),
-              tooltip: l10n.ruleSetExport,
-              onPressed: _export,
-            ),
-          if (!_isDefault && !_loading)
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              tooltip: l10n.ruleSetDeleteTooltip,
-              onPressed: _deleteSet,
-            ),
-        ],
-      ),
-      floatingActionButton: _editor == RuleEditor.simple
-          ? null
-          : FloatingActionButton(
+    final advanced = _editor == RuleEditor.advanced;
+    final empty = advanced && _rules.isEmpty;
+    return DsPage(
+      actions: [
+        if (!_loading)
+          DsNavButton(
+            glyph: Glyph.share,
+            tooltip: l10n.ruleSetExport,
+            onPressed: _export,
+          ),
+        if (!_isDefault && !_loading)
+          DsNavButton(
+            glyph: Glyph.trash,
+            tooltip: l10n.ruleSetDeleteTooltip,
+            onPressed: _deleteSet,
+          ),
+      ],
+      fab: advanced
+          ? FloatingActionButton(
               tooltip: l10n.ruleAdd,
               onPressed: () => _editRule(),
-              child: const Icon(Icons.add),
-            ),
+              child: const GlyphIcon(Glyph.plus),
+            )
+          : null,
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : PageBody(
-              child: ListView(
-                padding: const EdgeInsets.only(bottom: 88),
-                children: [
-                  _editorSegment(context),
-                  if (_editor == RuleEditor.advanced)
-                    ..._advancedChildren(context)
-                  else
-                    ..._simpleChildren(context),
-                ],
-              ),
+          ? const Center(child: DsSpinner())
+          : CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: kScrollPadding.left,
+                  ),
+                  sliver: SliverList.list(
+                    children: [
+                      DsLargeTitle(
+                        _name,
+                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
+                      ),
+                      ...gapped(
+                        advanced
+                            ? _advancedChildren(context)
+                            : _simpleChildren(context),
+                        kGroupGap,
+                      ),
+                    ],
+                  ),
+                ),
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      kScrollPadding.left,
+                      0,
+                      kScrollPadding.right,
+                      kScrollPadding.bottom + (advanced ? kFabSize : 0),
+                    ),
+                    child: empty
+                        ? Center(child: emptyRulesNote(context, _mode))
+                        : null,
+                  ),
+                ),
+              ],
             ),
     );
   }
 
   Widget _editorSegment(BuildContext context) {
     final l10n = context.l10n;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
-      child: SizedBox(
-        width: double.infinity,
-        child: SegmentedButton<RuleEditor>(
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment(
-              value: RuleEditor.simple,
-              label: Text(l10n.ruleSetSimple),
-            ),
-            ButtonSegment(
-              value: RuleEditor.advanced,
-              label: Text(l10n.settingsAdvanced),
-            ),
-          ],
-          selected: {_editor},
-          onSelectionChanged: (v) => _setEditor(v.first),
-        ),
-      ),
+    return DsSegmented<RuleEditor>(
+      segments: [
+        (RuleEditor.simple, l10n.ruleSetSimple),
+        (RuleEditor.advanced, l10n.settingsAdvanced),
+      ],
+      value: _editor,
+      onChanged: _setEditor,
     );
   }
 
   List<Widget> _advancedChildren(BuildContext context) {
     final l10n = context.l10n;
     return [
-      if (!_geoReady && _rules.any((r) => r.needsGeoData))
-        GeoDownloadBanner(
-          title: l10n.ruleSetGeoNotDownloaded,
-          subtitle: l10n.ruleSetGeoNotDownloadedDetail,
-          busy: _geoBusy,
-          onDownload: _downloadGeo,
-        ),
-      RoutingModeCard(mode: _mode, onChanged: _setMode),
-      SectionHeader(l10n.ruleSetRulesHeader),
+      DsStack(
+        children: [
+          _editorSegment(context),
+          if (!_geoReady && _rules.any((r) => r.needsGeoData))
+            GeoDownloadBanner(
+              title: l10n.ruleSetGeoNotDownloaded,
+              subtitle: l10n.ruleSetGeoNotDownloadedDetail,
+              busy: _geoBusy,
+              onDownload: _downloadGeo,
+            ),
+          RoutingModeCard(mode: _mode, onChanged: _setMode),
+        ],
+      ),
       if (_rules.isEmpty)
-        emptyRulesNote(context, _mode)
+        DsCaption(l10n.ruleSetRulesHeader)
       else
-        ReorderableListView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false,
-          onReorderItem: _reorder,
-          children: [
-            for (var i = 0; i < _rules.length; i++)
-              RuleTile(
-                key: ObjectKey(_rules[i]),
-                rule: _rules[i],
-                geoReady: _geoReady,
-                onTap: () => _editRule(i),
-                onRemove: () => _removeRule(i),
-                reorderIndex: i,
-              ),
-          ],
-        ),
+        DsGroup(caption: l10n.ruleSetRulesHeader, child: _rulesCard(context)),
     ];
   }
+
+  Widget _rulesCard(BuildContext context) => DsReorderableCard<RoutingRule>(
+    items: _rules,
+    keyOf: ObjectKey.new,
+    onReorder: _reorder,
+    itemBuilder: (i, rule) => RuleTile(
+      rule: rule,
+      geoReady: _geoReady,
+      onTap: () => _editRule(i),
+      onRemove: () => _removeRule(i),
+      reorderIndex: i,
+    ),
+  );
 
   List<Widget> _simpleChildren(BuildContext context) {
     final l10n = context.l10n;
     if (!_geoReady) {
       return [
+        _editorSegment(context),
         GeoDownloadBanner(
           title: l10n.ruleSetDownloadSiteLists,
           subtitle: l10n.ruleSetDownloadSiteListsDetail,
           busy: _geoBusy,
           onDownload: _downloadGeoThenIndex,
         ),
-        Opacity(
-          opacity: 0.38,
-          child: Column(children: _serviceGroups(interactive: false)),
-        ),
+        ..._serviceGroups(interactive: false),
       ];
     }
 
@@ -514,123 +515,72 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
         .length;
 
     return [
-      _simpleModeCard(context),
+      DsStack(
+        children: [
+          _editorSegment(context),
+          DirectionCard<RoutingMode>(
+            segments: [
+              (RoutingMode.split, l10n.ruleSetOnlySelected),
+              (RoutingMode.full, l10n.ruleSetAllExceptSelected),
+            ],
+            value: _mode,
+            onChanged: _setSimpleMode,
+            note: _mode == RoutingMode.split
+                ? l10n.ruleSetOnlySelectedDescription
+                : l10n.ruleSetAllExceptSelectedDescription,
+          ),
+        ],
+      ),
       if (_advancedCount > 0)
-        Card(
-          margin: kCardMargin,
-          color: Theme.of(
-            context,
-          ).colorScheme.primaryContainer.withValues(alpha: 0.35),
-          child: ListTile(
-            leading: const Icon(Icons.layers_outlined),
-            title: Text(l10n.ruleSetAdvancedRules(_advancedCount)),
-            subtitle: Text(l10n.ruleSetAdvancedRulesDetail),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _setEditor(RuleEditor.advanced),
-          ),
-        ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 0),
-        child: TextField(
-          autocorrect: false,
-          decoration: InputDecoration(
-            labelText: l10n.ruleSetSearchServices,
-            prefixIcon: const Icon(Icons.search),
-          ),
-          onChanged: (v) => setState(() => _query = v),
-        ),
-      ),
-      if (q.isEmpty) ...[
-        SectionHeader(l10n.ruleSetCountriesHeader),
-        Card(
-          margin: kCardMargin,
-          child: Column(
-            children: [
-              _addRow(l10n.ruleSetAddCountry, _addCountry),
-              for (final code in countries) ...[
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                _countryRow(code),
-              ],
-            ],
-          ),
-        ),
-        SectionHeader(l10n.ruleSetServicesHeader),
-        Card(
-          margin: kCardMargin,
-          child: Column(
-            children: [
-              _addRow(l10n.ruleSetAddCategory, _addCategory),
-              for (final cat in _extraCategories('')) ...[
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                _removableRow(
-                  ServiceAvatar(cat),
-                  cat,
-                  () => _setOn('geosite', cat, false),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-      ..._serviceGroups(interactive: true, query: q),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(kGutter, 10, kGutter, 0),
-        child: Text(
-          selected == 0
-              ? (_mode == RoutingMode.split
-                    ? l10n.ruleSetNothingSelectedSplit
-                    : l10n.ruleSetNothingSelectedFull)
-              : (_mode == RoutingMode.split
-                    ? l10n.ruleSetSelectedSplit(selected)
-                    : l10n.ruleSetSelectedFull(selected)),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-    ];
-  }
-
-  Widget _simpleModeCard(BuildContext context) {
-    final l10n = context.l10n;
-    return Card(
-      margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        DsCard(
+          color: context.ds.accentSubtle,
           children: [
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<RoutingMode>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: RoutingMode.split,
-                    label: Text(l10n.ruleSetOnlySelected),
-                  ),
-                  ButtonSegment(
-                    value: RoutingMode.full,
-                    label: Text(l10n.ruleSetAllExceptSelected),
-                  ),
-                ],
-                selected: {_mode},
-                onSelectionChanged: (v) => _setSimpleMode(v.first),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _mode == RoutingMode.split
-                  ? l10n.ruleSetOnlySelectedDescription
-                  : l10n.ruleSetAllExceptSelectedDescription,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            DsRow(
+              glyph: Glyph.layers,
+              title: l10n.ruleSetAdvancedRules(_advancedCount),
+              subtitle: l10n.ruleSetAdvancedRulesDetail,
+              trailing: const [DsChevron()],
+              onTap: () => _setEditor(RuleEditor.advanced),
             ),
           ],
         ),
+      DsSearchField(
+        hint: l10n.ruleSetSearchServices,
+        clearTooltip: l10n.commonClear,
+        onChanged: (v) => setState(() => _query = v),
       ),
-    );
+      if (q.isEmpty) ...[
+        DsGroup(
+          caption: l10n.ruleSetCountriesHeader,
+          children: [
+            _addRow(l10n.ruleSetAddCountry, _addCountry),
+            for (final code in countries) _countryRow(code),
+          ],
+        ),
+        DsGroup(
+          caption: l10n.ruleSetServicesHeader,
+          children: [
+            _addRow(l10n.ruleSetAddCategory, _addCategory),
+            for (final cat in _extraCategories(''))
+              _removableRow(
+                ServiceAvatar(cat),
+                cat,
+                () => _setOn('geosite', cat, false),
+              ),
+          ],
+        ),
+      ],
+      ..._serviceGroups(interactive: true, query: q),
+      DsNote(
+        selected == 0
+            ? (_mode == RoutingMode.split
+                  ? l10n.ruleSetNothingSelectedSplit
+                  : l10n.ruleSetNothingSelectedFull)
+            : (_mode == RoutingMode.split
+                  ? l10n.ruleSetSelectedSplit(selected)
+                  : l10n.ruleSetSelectedFull(selected)),
+      ),
+    ];
   }
 
   Future<void> _downloadGeoThenIndex() async {
@@ -653,45 +603,34 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             s,
       ];
       if (services.isEmpty) continue;
-      out.add(SectionHeader(group.header));
       out.add(
-        Card(
-          margin: kCardMargin,
-          child: Column(
-            children: [
-              for (final (i, s) in services.indexed) ...[
-                if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-                SwitchListTile(
-                  secondary: ServiceAvatar(s.name, category: s.category),
-                  title: Text(s.name),
-                  value: _isOn('geosite', s.category),
-                  onChanged: interactive ? (v) => _setService(s, v) : null,
-                ),
-              ],
-            ],
-          ),
+        DsGroup(
+          caption: group.header,
+          children: [
+            for (final s in services)
+              _CatalogRow(
+                service: s,
+                on: _isOn('geosite', s.category),
+                onChanged: interactive ? (v) => _setService(s, v) : null,
+              ),
+          ],
         ),
       );
     }
 
     final extras = _extraCategories(query);
     if (query.isNotEmpty && extras.isNotEmpty) {
-      out.add(SectionHeader(context.l10n.ruleSetOtherCategoriesHeader));
       out.add(
-        Card(
-          margin: kCardMargin,
-          child: Column(
-            children: [
-              for (final (i, cat) in extras.indexed) ...[
-                if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-                _removableRow(
-                  ServiceAvatar(cat),
-                  cat,
-                  interactive ? () => _setOn('geosite', cat, false) : null,
-                ),
-              ],
-            ],
-          ),
+        DsGroup(
+          caption: context.l10n.ruleSetOtherCategoriesHeader,
+          children: [
+            for (final cat in extras)
+              _removableRow(
+                ServiceAvatar(cat),
+                cat,
+                interactive ? () => _setOn('geosite', cat, false) : null,
+              ),
+          ],
         ),
       );
     }
@@ -710,24 +649,20 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     ];
   }
 
-  Widget _addRow(String label, VoidCallback onTap) => ListTile(
-    leading: const Icon(Icons.add),
-    title: Text(
-      label,
-      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-    ),
-    onTap: onTap,
-  );
+  Widget _addRow(String label, VoidCallback onTap) =>
+      DsRow(glyph: Glyph.plusCircle, title: label, onTap: onTap);
 
   Widget _removableRow(Widget leading, String title, VoidCallback? onRemove) =>
-      ListTile(
+      DsRow(
         leading: leading,
-        title: Text(title),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, size: 20),
-          tooltip: context.l10n.commonRemove,
-          onPressed: onRemove,
-        ),
+        title: title,
+        trailing: [
+          DsAction(
+            glyph: Glyph.trash,
+            tooltip: context.l10n.commonRemove,
+            onPressed: onRemove,
+          ),
+        ],
       );
 
   Widget _countryRow(String code) {
@@ -736,10 +671,50 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     for (final (c, n) in geoCountries()) {
       if (c == up) name = n;
     }
+    final flag = flagForCode(up);
     return _removableRow(
-      Text(flagForCode(up) ?? '🌐', style: const TextStyle(fontSize: 22)),
+      flag == null
+          ? const GlyphIcon(Glyph.globe)
+          : SizedBox.square(
+              dimension: kRowIcon,
+              child: Center(
+                child: Text(flag, style: const TextStyle(fontSize: 20)),
+              ),
+            ),
       name,
       () => _setOn('geoip', code, false),
+    );
+  }
+}
+
+class _CatalogRow extends StatelessWidget {
+  const _CatalogRow({required this.service, required this.on, this.onChanged});
+
+  final CatalogService service;
+  final bool on;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final change = onChanged;
+    Widget faded(Widget child) => change == null
+        ? Opacity(opacity: kDisabledOpacity, child: child)
+        : child;
+    return DsRow(
+      leading: faded(ServiceAvatar(service.name, category: service.category)),
+      title: service.name,
+      titleWidget: change == null
+          ? faded(
+              Text(
+                service.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: DsType.h3.copyWith(color: context.ds.text1),
+              ),
+            )
+          : null,
+      trailing: [DsToggle(value: on, onChanged: change)],
+      onTap: change == null ? null : () => change(!on),
     );
   }
 }

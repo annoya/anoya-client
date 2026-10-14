@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/connection_check.dart';
+import '../core/ds.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
@@ -21,64 +22,63 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     final prefs = st.prefs;
     final l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsAdvanced)),
-      body: PageBody(
-        child: ListView(
+    return DsPage(
+      title: l10n.settingsAdvanced,
+      children: [
+        DsGroup(
+          caption: l10n.advancedSectionConnectionCheck,
           children: [
-            SectionHeader(l10n.advancedSectionConnectionCheck),
-            Card(
-              margin: kCardMargin,
-              child: Column(
-                children: [
-                  SwitchListTile(
-                    secondary: const Icon(Icons.check_circle_outline),
-                    title: Text(l10n.advancedCheckAfterConnecting),
-                    subtitle: Text(l10n.advancedCheckAfterConnectingSubtitle),
-                    value: prefs.enabled,
-                    onChanged: ctrl.setEnabled,
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.language_outlined),
-                    title: Text(l10n.advancedTestUrl),
-                    subtitle: Text(prefs.url),
-                    trailing: const Icon(Icons.edit_outlined, size: 18),
-                    onTap: () => _editUrl(context, ctrl, prefs),
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.timer_outlined),
-                    title: Text(l10n.advancedGiveUpAfter),
-                    subtitle: Text(l10n.advancedSeconds(prefs.timeoutSeconds)),
-                    trailing: const Icon(Icons.expand_more),
-                    onTap: () => _pickTimeout(context, ctrl, prefs),
-                  ),
-                ],
-              ),
+            DsRow(
+              glyph: Glyph.activity,
+              title: l10n.advancedCheckAfterConnecting,
+              subtitle: l10n.advancedCheckAfterConnectingSubtitle,
+              onTap: () => ctrl.setEnabled(!prefs.enabled),
+              trailing: [
+                DsToggle(value: prefs.enabled, onChanged: ctrl.setEnabled),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(kGutter, 14, kGutter, 0),
-              child: FilledButton(
-                onPressed: (!connected || st.running) ? null : ctrl.run,
-                child: st.running
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(l10n.advancedTestNow),
-              ),
+            DsRow(
+              glyph: Glyph.globe,
+              title: l10n.advancedTestUrl,
+              subtitle: prefs.url,
+              onTap: () => _editUrl(context, ctrl, prefs),
+              trailing: [
+                DsAction(
+                  glyph: Glyph.pencil,
+                  tooltip: l10n.commonEdit,
+                  onPressed: () => _editUrl(context, ctrl, prefs),
+                ),
+              ],
             ),
-            if (!connected) SectionNote(l10n.advancedNeedsTunnelNote),
-            if (st.last != null) ...[
-              SectionHeader(l10n.advancedSectionLastCheck),
-              _ResultCard(check: st.last!),
-            ],
-            SectionNote(l10n.advancedCheckScopeNote),
+            DsRow(
+              glyph: Glyph.timer,
+              title: l10n.advancedGiveUpAfter,
+              subtitle: l10n.advancedSeconds(prefs.timeoutSeconds),
+              onTap: () => _pickTimeout(context, ctrl, prefs),
+              trailing: const [DsChevron(down: true)],
+            ),
           ],
         ),
-      ),
+        DsStack(
+          gap: kNoteGap,
+          children: [
+            DsButton(
+              label: l10n.advancedTestNow,
+              busy: st.running,
+              onPressed: connected ? ctrl.run : null,
+            ),
+            if (!connected) DsNote(l10n.advancedNeedsTunnelNote),
+            if (st.last == null) DsNote(l10n.advancedCheckScopeNote),
+          ],
+        ),
+        if (st.last != null) ...[
+          DsGroup(
+            caption: l10n.advancedSectionLastCheck,
+            child: _ResultCard(check: st.last!),
+          ),
+          DsNote(l10n.advancedCheckScopeNote),
+        ],
+      ],
     );
   }
 
@@ -158,39 +158,30 @@ class _ResultCardState extends State<_ResultCard> {
   @override
   Widget build(BuildContext context) {
     final check = widget.check;
-    final cs = Theme.of(context).colorScheme;
-    final warn = context.vpnColors.connecting;
+    final ds = context.ds;
     final l10n = context.l10n;
     if (!check.passed) {
-      return Card(
-        margin: kCardMargin,
-        color: warn.withValues(alpha: 0.12),
-        child: ListTile(
-          leading: Icon(Icons.warning_amber_outlined, color: warn),
-          title: Text(l10n.advancedNoAnswer),
-          subtitle: Text(l10n.advancedNoAnswerDetail(check.failure ?? '')),
-          isThreeLine: true,
-        ),
+      return DsNotification(
+        glyph: Glyph.alertTriangle,
+        tone: DsTone.warning,
+        boldTitle: true,
+        title: l10n.advancedNoAnswer,
+        body: l10n.advancedNoAnswerDetail(check.failure ?? ''),
       );
     }
     final ago = _ago(l10n, check.at);
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        leading: Icon(
-          Icons.check_circle_outline,
-          color: context.vpnColors.connected,
-        ),
-        title: Text(
-          check.observed
+    return DsCard(
+      children: [
+        DsRow(
+          leading: GlyphIcon(Glyph.check, color: ds.success),
+          title: check.observed
               ? l10n.advancedTrafficGettingThrough
               : l10n.advancedAnsweredIn(check.delayMs ?? 0),
+          subtitle: check.via.isEmpty
+              ? ago
+              : l10n.advancedResultVia(ago, check.via),
         ),
-        subtitle: Text(
-          check.via.isEmpty ? ago : l10n.advancedResultVia(ago, check.via),
-          style: TextStyle(color: cs.onSurfaceVariant),
-        ),
-      ),
+      ],
     );
   }
 

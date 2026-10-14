@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/app_version.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
@@ -14,6 +15,8 @@ import 'package:anoya/state/favorites_controller.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/l10n/l10n.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   setUpAll(loadAppVersion);
@@ -59,7 +62,7 @@ void main() {
 
     expect(find.text('backup.single'), findsOneWidget);
     expect(
-      find.text('Configurations'),
+      findRow('Configurations'),
       findsNothing,
       reason: 'no aggregate row — the sheet would hold a single entry',
     );
@@ -86,14 +89,14 @@ void main() {
     expect(find.text('work'), findsOneWidget);
     expect(find.text('travel'), findsOneWidget);
     expect(
-      find.byIcon(Icons.radio_button_off),
+      find.byType(DsRadio),
       findsNothing,
       reason: 'the sheet navigates, it does not select the active one',
     );
     expect(
       find.descendant(
         of: find.byType(BottomSheet),
-        matching: find.byIcon(Icons.chevron_right),
+        matching: findGlyph(Glyph.chevronRight),
       ),
       findsNWidgets(3),
     );
@@ -105,7 +108,7 @@ void main() {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     await pump(tester, [profile('a', 'Config')]);
 
-    expect(find.text('CONNECTION'), findsOneWidget);
+    expect(find.text('Connection'), findsOneWidget);
     expect(find.text('On demand'), findsNothing);
     expect(find.text('Always-on VPN'), findsNothing);
     expect(find.text('Advanced'), findsOneWidget);
@@ -115,7 +118,7 @@ void main() {
 
   testWidgets('About is one row that already names the build', (tester) async {
     await pump(tester, [profile('a', 'Config')]);
-    await tester.scrollUntilVisible(find.text('About'), 200);
+    await tester.scrollUntilVisible(findRow('About'), 200);
 
     expect(
       find.text('$kAppName $appVersionLabel'),
@@ -132,10 +135,10 @@ void main() {
   testWidgets('the row opens the About screen', (tester) async {
     await pump(tester, [profile('a', 'Config')]);
     // scrollUntilVisible stops while the row is still off-screen in the cache extent.
-    await tester.scrollUntilVisible(find.text('About'), 200);
-    await tester.ensureVisible(find.text('About'));
+    await tester.scrollUntilVisible(findRow('About'), 200);
+    await tester.ensureVisible(findRow('About'));
     await tester.pump();
-    await tester.tap(find.text('About'));
+    await tester.tap(findRow('About'));
     await tester.pumpAndSettle();
 
     expect(find.byType(AboutScreen), findsOneWidget);
@@ -144,9 +147,7 @@ void main() {
     expect(find.text(engineVersionLabel), findsOneWidget);
 
     for (final title in ['Terms of Service', 'Privacy Policy']) {
-      final tile = tester.widget<ListTile>(
-        find.widgetWithText(ListTile, title),
-      );
+      final tile = tester.widget<DsRow>(findRow(title));
       expect(tile.onTap, isNotNull, reason: '$title opens the published page');
     }
     expect(find.text('Not published yet'), findsNothing);

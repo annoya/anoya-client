@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/geosite_index.dart';
 import 'package:anoya/core/json_file_store.dart';
 import 'package:anoya/core/norm_config.dart';
@@ -18,6 +19,8 @@ import 'package:anoya/features/rule_set_editor_screen.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
 import 'package:anoya/l10n/l10n.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -119,13 +122,11 @@ void main() {
     Future<RuleSet> storedDefault(WidgetTester tester) async =>
         (await tester.runAsync(() => RuleSetStore.byId(RuleSet.defaultId)))!;
 
-    Finder switchOf(String title) => find.descendant(
-      of: find.widgetWithText(SwitchListTile, title),
-      matching: find.byType(Switch),
-    );
+    Finder switchOf(String title) =>
+        find.descendant(of: findRow(title), matching: find.byType(DsToggle));
 
     Future<void> scrollBy(WidgetTester tester, double dy) async {
-      await tester.drag(find.byType(ListView).first, Offset(0, dy));
+      await tester.drag(find.byType(Scrollable).first, Offset(0, dy));
       await tester.pump();
     }
 
@@ -174,7 +175,7 @@ void main() {
           );
           await pump(tester);
           await scrollBy(tester, -400);
-          expect(tester.widget<Switch>(switchOf('YouTube')).value, true);
+          expect(tester.widget<DsToggle>(switchOf('YouTube')).value, true);
         },
       );
     }
@@ -202,7 +203,7 @@ void main() {
             'the user changed what "selected" means, not what is selected — '
             'the toggle must stay on, so the rule follows the new direction',
       );
-      expect(tester.widget<Switch>(switchOf('YouTube')).value, true);
+      expect(tester.widget<DsToggle>(switchOf('YouTube')).value, true);
     });
 
     testWidgets('rules the catalog cannot express are surfaced, not hidden', (
@@ -271,7 +272,7 @@ void main() {
 
       await scrollBy(tester, -400);
       expect(
-        tester.widget<Switch>(switchOf('YouTube')).value,
+        tester.widget<DsToggle>(switchOf('YouTube')).value,
         isFalse,
         reason: 'turning it off would have to edit a list Simple cannot show',
       );
@@ -282,9 +283,14 @@ void main() {
     ) async {
       await writeGeo(categories: ['YOUTUBE', 'NETFLIX']);
       await pump(tester);
+      await tester.scrollUntilVisible(
+        findRow('YouTube'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
 
-      expect(find.widgetWithText(SwitchListTile, 'YouTube'), findsOneWidget);
-      expect(find.widgetWithText(SwitchListTile, 'Telegram'), findsNothing);
+      expect(findRow('YouTube'), findsOneWidget);
+      expect(findRow('Telegram'), findsNothing);
     });
 
     testWidgets(
@@ -293,6 +299,8 @@ void main() {
         await writeGeo(categories: ['YOUTUBE', 'YANDEX']);
         await pump(tester);
 
+        await tester.ensureVisible(find.text('Add category'));
+        await tester.pump();
         await tester.tap(find.text('Add category'));
         await settle(tester);
         await tester.tap(find.text('yandex'));
@@ -307,10 +315,12 @@ void main() {
         );
 
         expect(find.text('yandex'), findsOneWidget);
+        await tester.ensureVisible(findRow('yandex'));
+        await tester.pump();
         await tester.tap(
           find.descendant(
-            of: find.widgetWithText(ListTile, 'yandex'),
-            matching: find.byIcon(Icons.delete_outline),
+            of: findRow('yandex'),
+            matching: findGlyph(Glyph.trash),
           ),
         );
         await settle(tester);
@@ -326,9 +336,7 @@ void main() {
       await pump(tester);
 
       expect(find.text('Download the site lists first'), findsOneWidget);
-      final sw = tester.widget<SwitchListTile>(
-        find.widgetWithText(SwitchListTile, 'YouTube'),
-      );
+      final sw = tester.widget<DsToggle>(switchOf('YouTube'));
       expect(sw.onChanged, isNull);
     });
 
@@ -484,7 +492,7 @@ void main() {
 
       await tester.tap(find.text('Advanced'));
       await settle(tester);
-      expect(find.text('RULES — FIRST MATCH WINS'), findsOneWidget);
+      expect(find.text('Rules — first match wins'), findsOneWidget);
 
       expect((await storedDefault(tester)).editor, RuleEditor.advanced);
     });

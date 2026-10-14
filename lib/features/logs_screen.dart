@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/app_error.dart';
+import '../core/ds.dart';
 import '../core/ext_logs.dart';
 import '../core/log.dart';
 import '../core/log_archive.dart';
 import '../core/platform_support.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
@@ -45,11 +47,13 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
                 _SaveTo.file,
                 l10n.logsSaveToFile,
                 subtitle: l10n.logsSaveToFileSubtitle,
+                leading: const GlyphIcon(Glyph.folder),
               ),
               Option(
                 _SaveTo.share,
                 l10n.logsShare,
                 subtitle: l10n.logsShareSubtitle,
+                leading: const GlyphIcon(Glyph.share2),
               ),
             ],
           )
@@ -88,24 +92,13 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
   Future<void> _clear() async {
     final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.logsClearAllQuestion),
-        content: Text(l10n.logsClearAllContent),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.commonClear),
-          ),
-        ],
-      ),
+    final ok = await confirmAction(
+      context,
+      title: l10n.logsClearAllQuestion,
+      body: l10n.logsClearAllContent,
+      confirmLabel: l10n.commonClear,
     );
-    if (ok != true || !mounted) return;
+    if (!ok || !mounted) return;
     setState(() => _busy = _clearing = true);
     Log.clear();
     final wiped = await clearExtensionLogs();
@@ -119,84 +112,79 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
     final collecting = ref.watch(appPrefsProvider).collectLogs;
     final l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.logsTitle)),
-      body: PageBody(
-        child: ListView(
+    return DsPage(
+      title: l10n.logsTitle,
+      children: [
+        DsGroup(
+          caption: l10n.logsSectionCollection,
           children: [
-            SectionHeader(l10n.logsSectionCollection),
-            Card(
-              margin: kCardMargin,
-              child: SwitchListTile(
-                secondary: const Icon(Icons.article_outlined),
-                title: Text(l10n.logsCollect),
-                subtitle: Text(l10n.logsCollectSubtitle),
-                value: collecting,
-                onChanged: _busy ? null : _setCollecting,
-              ),
-            ),
-            SectionHeader(l10n.logsSectionTunnel),
-            _LogTile(
-              title: l10n.logsTunnel,
-              subtitle: l10n.logsTunnelSubtitle,
-              onTap: () => _open(context, l10n.logsTunnel, logKey: 'tunnel'),
-            ),
-            _LogTile(
-              title: l10n.logsCore,
-              subtitle: l10n.logsCoreSubtitle,
-              onTap: () => _open(context, l10n.logsCore, logKey: 'mihomo'),
-            ),
-            SectionHeader(l10n.logsSectionApp),
-            _LogTile(
-              title: l10n.logsApplication,
-              subtitle: l10n.logsApplicationSubtitle,
-              size: formatBytes(Log.sizeBytes),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => LogViewerScreen(
-                    title: l10n.logsApplication,
-                    appLog: true,
-                  ),
+            DsRow(
+              glyph: Glyph.fileText,
+              title: l10n.logsCollect,
+              subtitle: l10n.logsCollectSubtitle,
+              subtitleMaxLines: 3,
+              onTap: _busy ? null : () => _setCollecting(!collecting),
+              trailing: [
+                DsToggle(
+                  value: collecting,
+                  onChanged: _busy ? null : _setCollecting,
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: OutlinedButton.icon(
-                icon: _busy && !_clearing
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.archive_outlined, size: 18),
-                label: Text(l10n.logsSaveAllZip),
-                onPressed: _busy ? null : _save,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: kGutter),
-              child: OutlinedButton.icon(
-                icon: _clearing
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.delete_outline, size: 18),
-                label: Text(l10n.logsClearAll),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-                onPressed: _busy ? null : _clear,
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
-      ),
+        DsGroup(
+          caption: l10n.logsSectionTunnel,
+          child: DsStack(
+            gap: kNoteGap,
+            children: [
+              _LogRow(
+                glyph: Glyph.network,
+                title: l10n.logsTunnel,
+                subtitle: l10n.logsTunnelSubtitle,
+                onTap: () => _open(context, l10n.logsTunnel, logKey: 'tunnel'),
+              ),
+              _LogRow(
+                glyph: Glyph.cpu,
+                title: l10n.logsCore,
+                subtitle: l10n.logsCoreSubtitle,
+                onTap: () => _open(context, l10n.logsCore, logKey: 'mihomo'),
+              ),
+            ],
+          ),
+        ),
+        DsGroup(
+          caption: l10n.logsSectionApp,
+          child: _LogRow(
+            glyph: Glyph.smartphone,
+            title: l10n.logsApplication,
+            subtitle: l10n.logsApplicationSubtitle,
+            size: formatBytes(Log.sizeBytes),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    LogViewerScreen(title: l10n.logsApplication, appLog: true),
+              ),
+            ),
+          ),
+        ),
+        DsStack(
+          children: [
+            DsButton.tonal(
+              label: l10n.logsSaveAllZip,
+              glyph: Glyph.download,
+              busy: _busy && !_clearing,
+              onPressed: _busy ? null : _save,
+            ),
+            DsButton.destructive(
+              label: l10n.logsClearAll,
+              glyph: Glyph.trash,
+              busy: _clearing,
+              onPressed: _busy ? null : _clear,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -209,43 +197,37 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
   }
 }
 
-class _LogTile extends StatelessWidget {
-  const _LogTile({
+class _LogRow extends StatelessWidget {
+  const _LogRow({
+    required this.glyph,
     required this.title,
     required this.subtitle,
     this.size,
     required this.onTap,
   });
+
+  final Glyph glyph;
   final String title;
   final String subtitle;
   final String? size;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: kCardMargin,
-      child: ListTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (size != null)
-              Text(
-                size!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            const SizedBox(width: 6),
-            const Icon(Icons.chevron_right),
-          ],
-        ),
+  Widget build(BuildContext context) => DsCard(
+    children: [
+      DsRow(
+        glyph: glyph,
+        title: title,
+        subtitle: subtitle,
         onTap: onTap,
+        trailing: [
+          if (size != null)
+            Text(size!, style: DsType.small.copyWith(color: context.ds.text3)),
+          const DsChevron(),
+        ],
       ),
-    );
-  }
+    ],
+  );
 }
 
 enum _SaveTo { file, share }

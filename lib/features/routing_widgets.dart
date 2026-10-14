@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_error.dart';
 import '../core/country_flag.dart';
+import '../core/ds.dart';
 import '../core/geo_store.dart';
 import '../core/log.dart';
 import '../core/norm_config.dart';
@@ -10,6 +11,45 @@ import '../core/rule_set.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
+
+const double kInactiveRuleOpacity = 0.45;
+
+class DirectionCard<T> extends StatelessWidget {
+  const DirectionCard({
+    super.key,
+    required this.segments,
+    required this.value,
+    required this.note,
+    this.onChanged,
+  });
+
+  final List<(T, String)> segments;
+  final T value;
+  final String note;
+  final ValueChanged<T>? onChanged;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: context.ds.surface,
+    borderRadius: BorderRadius.circular(kRadius),
+    child: Padding(
+      padding: const EdgeInsets.all(kRowPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DsSegmented<T>(
+            compact: true,
+            segments: segments,
+            value: value,
+            onChanged: onChanged,
+          ),
+          const SizedBox(height: kNoteGap),
+          DsNote(note),
+        ],
+      ),
+    ),
+  );
+}
 
 class RoutingModeCard extends StatelessWidget {
   const RoutingModeCard({super.key, required this.mode, this.onChanged});
@@ -20,56 +60,28 @@ class RoutingModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Card(
-      margin: kCardMargin,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<RoutingMode>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: RoutingMode.full,
-                    label: Text(l10n.ruleSetModeFull),
-                  ),
-                  ButtonSegment(
-                    value: RoutingMode.split,
-                    label: Text(l10n.ruleSetModeSplit),
-                  ),
-                ],
-                selected: {mode},
-                onSelectionChanged: onChanged == null
-                    ? null
-                    : (s) => onChanged!(s.first),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              mode == RoutingMode.full
-                  ? l10n.ruleSetModeFullDescription
-                  : l10n.ruleSetModeSplitDescription,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return DirectionCard<RoutingMode>(
+      segments: [
+        (RoutingMode.full, l10n.ruleSetModeFull),
+        (RoutingMode.split, l10n.ruleSetModeSplit),
+      ],
+      value: mode,
+      onChanged: onChanged,
+      note: mode == RoutingMode.full
+          ? l10n.ruleSetModeFullDescription
+          : l10n.ruleSetModeSplitDescription,
     );
   }
 }
 
 Widget emptyRulesNote(BuildContext context, RoutingMode mode) => Padding(
-  padding: const EdgeInsets.all(kGutter),
+  padding: const EdgeInsets.symmetric(vertical: kGroupGap),
   child: Text(
     mode == RoutingMode.split
         ? context.l10n.ruleSetNoRulesSplit
         : context.l10n.ruleSetNoRulesFull,
-    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+    textAlign: TextAlign.center,
+    style: DsType.text.copyWith(color: context.ds.text3),
   ),
 );
 
@@ -88,38 +100,16 @@ class GeoDownloadBanner extends StatelessWidget {
   final VoidCallback onDownload;
 
   @override
-  Widget build(BuildContext context) {
-    final warn = context.vpnColors.connecting;
-    return Card(
-      margin: const EdgeInsets.fromLTRB(kGutter, 12, kGutter, 4),
-      color: warn.withValues(alpha: 0.12),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 0, 12, 10),
-        child: Column(
-          children: [
-            ListTile(
-              leading: Icon(Icons.public_off, color: warn),
-              title: Text(title),
-              subtitle: Text(subtitle),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.tonal(
-                onPressed: busy ? null : onDownload,
-                child: busy
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(context.l10n.ruleSetDownload),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => DsNotification(
+    glyph: Glyph.cloudOff,
+    title: title,
+    body: subtitle,
+    action: DsButton.tonal(
+      label: context.l10n.ruleSetDownload,
+      busy: busy,
+      onPressed: onDownload,
+    ),
+  );
 }
 
 Future<bool?> downloadGeoDatabases(BuildContext context) async {
@@ -166,11 +156,15 @@ class RuleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final actionColor = switch (rule.action) {
-      'proxy' => context.vpnColors.connected,
-      'direct' => context.vpnColors.direct,
-      _ => Theme.of(context).colorScheme.error,
-    };
+    final ds = context.ds;
+    final badge = DsBadge(
+      rule.action.toUpperCase(),
+      tone: switch (rule.action) {
+        'proxy' => DsTone.success,
+        'direct' => DsTone.neutral,
+        _ => DsTone.destructive,
+      },
+    );
     final noDatabase = rule.needsGeoData && !geoReady;
     final unsupported = rule.type == 'process-name' && !supportsProcessRules;
     final noList = rule.needsRuleList && !listNames.contains(rule.value);
@@ -194,82 +188,47 @@ class RuleTile extends StatelessWidget {
         : rule.noResolve
         ? l10n.ruleNoResolveKind(kind)
         : kind;
-    final cs = Theme.of(context).colorScheme;
-    return Opacity(
-      opacity: inactive ? 0.45 : 1,
-      child: Card(
-        margin: kCardMargin,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-            child: Row(
+    final editable = onRemove != null || reorderIndex != null;
+    final row = DsRow(
+      title: title,
+      titleWidget: editable
+          ? null
+          : Row(
               children: [
-                SizedBox(
-                  width: 46,
-                  child: Text(
-                    rule.action.toUpperCase(),
-                    style: TextStyle(
-                      color: actionColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DsType.h3.copyWith(color: ds.text1),
                   ),
                 ),
-                if (onRemove != null)
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    tooltip: l10n.commonRemove,
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onRemove,
-                  ),
-                if (reorderIndex != null)
-                  ReorderableDragStartListener(
-                    index: reorderIndex!,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 6,
-                      ),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 20,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
+                const SizedBox(width: 4),
+                badge,
               ],
             ),
+      badge: editable ? badge : null,
+      subtitle: subtitle,
+      subtitleMaxLines: 1,
+      onTap: onTap,
+      trailing: [
+        if (onRemove != null)
+          DsAction(
+            glyph: Glyph.trash,
+            tooltip: l10n.commonRemove,
+            onPressed: onRemove,
           ),
-        ),
-      ),
+        if (reorderIndex != null)
+          ReorderableDragStartListener(
+            index: reorderIndex!,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: const DsAction(glyph: Glyph.gripVertical),
+            ),
+          ),
+      ],
     );
+    return inactive ? Opacity(opacity: kInactiveRuleOpacity, child: row) : row;
   }
 }
 

@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/rule_set.dart';
 import '../core/rule_set_transfer.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
@@ -86,20 +88,20 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
           _ImportFrom.file,
           l10n.ruleSetImportFromFile,
           subtitle: l10n.ruleSetImportFromFileSubtitle,
-          leading: const Icon(Icons.folder_open),
+          leading: const GlyphIcon(Glyph.folder),
         ),
         Option(
           _ImportFrom.clipboard,
           l10n.ruleSetImportFromClipboard,
           subtitle: l10n.ruleSetImportFromClipboardSubtitle,
-          leading: const Icon(Icons.content_paste_go),
+          leading: const GlyphIcon(Glyph.clipboard),
         ),
         if (phone)
           Option(
             _ImportFrom.qr,
             l10n.startScanQr,
             subtitle: l10n.ruleSetImportScanSubtitle,
-            leading: const Icon(Icons.qr_code_scanner),
+            leading: const GlyphIcon(Glyph.scan),
           ),
       ],
     );
@@ -176,50 +178,48 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
       usage[id] = (usage[id] ?? 0) + 1;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.ruleSetsTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: l10n.ruleSetImport,
-            onPressed: _loading ? null : _import,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
+    return DsPage(
+      title: l10n.ruleSetsTitle,
+      actions: [
+        DsNavButton(
+          glyph: Glyph.download,
+          tooltip: l10n.ruleSetImport,
+          onPressed: _loading ? null : _import,
+        ),
+      ],
+      fab: FloatingActionButton(
         tooltip: l10n.ruleSetNew,
         onPressed: _create,
-        child: const Icon(Icons.add),
+        child: const GlyphIcon(Glyph.plus),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : PageBody(
-              child: ListView(
-                padding: const EdgeInsets.only(top: 8, bottom: 88),
-                children: _sets
-                    .map(
-                      (s) => Card(
-                        margin: kCardMargin,
-                        child: ListTile(
-                          leading: const Icon(Icons.layers_outlined),
-                          title: Text(s.name),
-                          subtitle: Text(_subtitle(s, usage)),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => RuleSetEditorScreen(s.id),
-                              ),
-                            );
-                            await _load();
-                          },
+      body: _loading ? const Center(child: DsSpinner()) : null,
+      children: [
+        DsStack(
+          gap: kNoteGap,
+          children: [
+            for (final s in _sets)
+              DsCard(
+                children: [
+                  DsRow(
+                    glyph: Glyph.layers,
+                    title: s.name,
+                    subtitle: _subtitle(s, usage),
+                    trailing: const [DsChevron()],
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => RuleSetEditorScreen(s.id),
                         ),
-                      ),
-                    )
-                    .toList(),
+                      );
+                      await _load();
+                    },
+                  ),
+                ],
               ),
-            ),
+          ],
+        ),
+        const SizedBox(height: kFabSize),
+      ],
     );
   }
 }

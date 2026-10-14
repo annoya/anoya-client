@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_error.dart';
+import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/profile.dart';
 import '../core/ui.dart';
@@ -9,18 +10,9 @@ import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 
 class RefreshButton extends ConsumerStatefulWidget {
-  const RefreshButton({
-    super.key,
-    required this.profile,
-    this.iconSize,
-    this.spinnerPadding = 12,
-  });
+  const RefreshButton({super.key, required this.profile});
 
   final Profile profile;
-
-  final double? iconSize;
-
-  final double spinnerPadding;
 
   @override
   ConsumerState<RefreshButton> createState() => _RefreshButtonState();
@@ -55,21 +47,10 @@ class _RefreshButtonState extends ConsumerState<RefreshButton> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_busy) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: widget.spinnerPadding),
-        child: const SizedBox(
-          height: 18,
-          width: 18,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-    return IconButton(
-      icon: Icon(Icons.refresh, size: widget.iconSize),
-      tooltip: context.l10n.configRefreshNow,
-      onPressed: _refresh,
-    );
-  }
+  Widget build(BuildContext context) => DsAction(
+    glyph: Glyph.refreshCw,
+    busy: _busy,
+    tooltip: context.l10n.configRefreshNow,
+    onPressed: _refresh,
+  );
 }

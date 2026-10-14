@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/amnezia/amnezia_account.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/device_identity.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
@@ -18,6 +19,7 @@ import 'package:anoya/core/ui.dart';
 import 'package:anoya/state/provider_rule_lists.dart';
 import 'package:anoya/features/config/config_screen.dart';
 import 'package:anoya/l10n/l10n.dart';
+import 'support/ds_finders.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 
@@ -76,8 +78,8 @@ void main() {
   }
 
   Future<void> openRouting(WidgetTester tester) async {
-    await tester.scrollUntilVisible(find.text('Routing'), 200);
-    await tester.tap(find.text('Routing'));
+    await tester.scrollUntilVisible(findRow('Routing'), 200);
+    await tester.tap(findRow('Routing'));
     await tester.pumpAndSettle();
   }
 
@@ -86,7 +88,7 @@ void main() {
     await tester.pump();
     final outer = tester.getSize(find.byType(PageBody).first).width;
     final content = outer < kMaxContentWidth ? outer : kMaxContentWidth;
-    final buttons = find.byType(OutlinedButton);
+    final buttons = find.byType(DsButton);
     expect(buttons, findsWidgets);
     for (var i = 0; i < tester.widgetList(buttons).length; i++) {
       final w = tester.getSize(buttons.at(i)).width;
@@ -126,7 +128,7 @@ void main() {
       reason: 'a panel never tells us an account state (ADR-005)',
     );
     expect(
-      find.text('THIS DEVICE'),
+      find.text('This device'),
       findsNothing,
       reason: 'not until the panel says it counts devices',
     );
@@ -165,6 +167,8 @@ void main() {
     await pump(tester, profile(ProfileType.subscription).copyWithDeviceLimit());
     await tester.pump();
     await tester.scrollUntilVisible(find.text('Device id'), 200);
+    await tester.ensureVisible(find.byTooltip('Copy'));
+    await tester.pump();
 
     expect(find.text('7f3a9c21e4b8…6c5d0146'), findsOneWidget);
     await tester.tap(find.byTooltip('Copy'));
@@ -183,7 +187,7 @@ void main() {
           dns: ['https://dns.quad9.net/dns-query#PROXY'],
         ),
       );
-      await tester.scrollUntilVisible(find.text('Routing'), 200);
+      await tester.scrollUntilVisible(findRow('Routing'), 200);
       expect(
         find.text(
           'Off · everything through the VPN · DNS from your subscription',
@@ -202,7 +206,7 @@ void main() {
             dns: ['h3://dns.google/dns-query', 'tls://9.9.9.9'],
           ),
         );
-        await tester.scrollUntilVisible(find.text('Routing'), 200);
+        await tester.scrollUntilVisible(findRow('Routing'), 200);
         expect(find.textContaining('DNS: 1 refused'), findsOneWidget);
       },
     );
@@ -211,7 +215,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, profile(ProfileType.link));
-      await tester.scrollUntilVisible(find.text('Routing'), 200);
+      await tester.scrollUntilVisible(findRow('Routing'), 200);
       expect(find.textContaining('DNS by the app'), findsOneWidget);
     });
 
@@ -224,9 +228,11 @@ void main() {
         ),
       );
       await openRouting(tester);
-      await tester.tap(find.widgetWithText(ListTile, 'DNS'));
+      await tester.ensureVisible(findRow('DNS'));
+      await tester.pump();
+      await tester.tap(findRow('DNS'));
       await tester.pumpAndSettle();
-      expect(find.text('https://dns.quad9.net/dns-query'), findsOneWidget);
+      expect(findRow('https://dns.quad9.net/dns-query'), findsOneWidget);
       expect(find.text('through the tunnel'), findsOneWidget);
     });
   });
@@ -358,7 +364,7 @@ void main() {
       );
       expect(
         src,
-        anyOf(contains('RefreshCard('), contains('RefreshButton(')),
+        anyOf(contains('RefreshRow('), contains('RefreshButton(')),
         reason: '${f.path} offers a refresh, so it must use the shared one',
       );
     }
@@ -379,7 +385,8 @@ void main() {
       ),
     );
     expect(find.text('Account'), findsOneWidget);
-    expect(find.textContaining('Traffic:'), findsOneWidget);
+    expect(find.text('Traffic'), findsOneWidget);
+    expect(find.text('20 B of 100 B'), findsOneWidget);
     await expectFullWidthButtons(tester);
   });
 
@@ -405,7 +412,7 @@ void main() {
       findsNothing,
       reason: 'offering a rule set would promise control this config lacks',
     );
-    expect(find.byType(SwitchListTile), findsNothing);
+    expect(find.byType(DsToggle), findsNothing);
   });
 
   testWidgets(
@@ -451,7 +458,7 @@ void main() {
         profile(ProfileType.subscription).copyWithProviderRoutes(),
       );
       await openRouting(tester);
-      expect(find.text('SUBSCRIPTION ROUTING'), findsOneWidget);
+      expect(find.text('Subscription routing'), findsOneWidget);
       expect(
         find.text('Split · 2 rules · 1 not supported'),
         findsOneWidget,
@@ -463,10 +470,11 @@ void main() {
         findsNWidgets(2),
         reason: 'one row per owner, named the same on both halves',
       );
-      final sw = tester.widget<SwitchListTile>(
+      final sw = _toggleOf(
+        tester,
         find.ancestor(
           of: find.text('Split · 2 rules · 1 not supported'),
-          matching: find.byType(SwitchListTile),
+          matching: find.byType(DsRow),
         ),
       );
       expect(sw.value, isTrue, reason: 'a provider that sent rules meant them');
@@ -521,9 +529,7 @@ void main() {
       expect(find.text('Split · 1 rule · 1 needs their lists'), findsOneWidget);
       expect(find.text('Rule lists'), findsOneWidget);
       expect(find.text('Off · 1 rule needs them'), findsOneWidget);
-      final sw = tester.widget<SwitchListTile>(
-        find.widgetWithText(SwitchListTile, 'Rule lists'),
-      );
+      final sw = _toggleOf(tester, findRow('Rule lists'));
       expect(
         sw.value,
         isFalse,
@@ -543,14 +549,12 @@ void main() {
       onSetLists: (_) => gate.future,
     );
     await openRouting(tester);
-    await tester.tap(find.widgetWithText(SwitchListTile, 'Rule lists'));
+    await tester.tap(findRow('Rule lists'));
     await tester.pump();
 
     expect(find.text('Downloading one list…'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    final sw = tester.widget<SwitchListTile>(
-      find.widgetWithText(SwitchListTile, 'Rule lists'),
-    );
+    expect(find.byType(DsSpinner), findsOneWidget);
+    final sw = _toggleOf(tester, findRow('Rule lists'));
     expect(
       sw.onChanged,
       isNull,
@@ -561,7 +565,7 @@ void main() {
 
     gate.complete();
     await tester.pumpAndSettle();
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(DsSpinner), findsNothing);
   });
 
   testWidgets('a policy with no external lists is offered no switch for them', (
@@ -633,11 +637,11 @@ void main() {
       await pump(tester, profile(ProfileType.subscription));
       await openRouting(tester);
       expect(
-        find.text('SUBSCRIPTION ROUTING'),
+        find.text('Subscription routing'),
         findsNothing,
         reason: 'nothing came from the panel, so it gets no section',
       );
-      expect(find.text('DEVICE ROUTING'), findsOneWidget);
+      expect(find.text('Device routing'), findsOneWidget);
       expect(find.text('Rule set'), findsOneWidget);
     },
   );
@@ -647,7 +651,7 @@ void main() {
   ) async {
     await pump(tester, profile(ProfileType.link));
     expect(find.text('Set active'), findsNothing);
-    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(findGlyph(Glyph.check), findsOneWidget);
   });
 }
 
@@ -750,11 +754,15 @@ extension on Profile {
 
 bool _ignoringLocalCard(WidgetTester tester) {
   final card = find.ancestor(
-    of: find.widgetWithText(SwitchListTile, 'Routing'),
+    of: findRow('Rule set').last,
     matching: find.byType(IgnorePointer),
   );
   return tester.widgetList<IgnorePointer>(card).any((w) => w.ignoring);
 }
+
+DsToggle _toggleOf(WidgetTester tester, Finder row) => tester.widget<DsToggle>(
+  find.descendant(of: row, matching: find.byType(DsToggle)),
+);
 
 class _FixedProfiles extends ProfilesController {
   _FixedProfiles(this.profiles, {this.onSetLists});

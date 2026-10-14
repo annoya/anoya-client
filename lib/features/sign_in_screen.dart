@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_client.dart';
 import '../core/app_error.dart';
+import '../core/ds.dart';
 import '../core/log.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
@@ -83,83 +85,58 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         title: context.l10n.signInWith,
         options: [
           for (final p in providers)
-            Option(p, p.name, leading: const Icon(Icons.login)),
+            Option(p, p.name, leading: const GlyphIcon(Glyph.briefcase)),
         ],
       );
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.signIn)),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(Icons.business_outlined, size: 48, color: cs.primary),
-                  const SizedBox(height: 10),
-                  Text(
-                    l10n.signInSubtitle,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _server,
-                    keyboardType: TextInputType.url,
-                    autocorrect: false,
-                    enabled: !_busy,
-                    decoration: InputDecoration(
-                      labelText: l10n.signInServerAddress,
-                      hintText: l10n.signInServerHint,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _username,
-                    autocorrect: false,
-                    enabled: !_busy,
-                    decoration: InputDecoration(labelText: l10n.signInUsername),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _password,
-                    obscureText: true,
-                    enabled: !_busy,
-                    decoration: InputDecoration(labelText: l10n.signInPassword),
-                    onSubmitted: (_) => _busy ? null : _signIn(),
-                  ),
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: _busy ? null : _signIn,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.signIn),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : _ssoSignIn,
-                    icon: const Icon(Icons.login, size: 18),
-                    label: Text(l10n.signInWithSso),
-                  ),
-                ],
+    return DsPage(
+      title: l10n.signIn,
+      subtitle: l10n.signInSubtitle,
+      children: [
+        Opacity(
+          opacity: _busy ? kDisabledOpacity : 1,
+          child: DsStack(
+            children: [
+              TextField(
+                controller: _server,
+                keyboardType: TextInputType.url,
+                autocorrect: false,
+                enabled: !_busy,
+                decoration: InputDecoration(
+                  labelText: l10n.signInServerAddress,
+                  hintText: l10n.signInServerHint,
+                ),
               ),
-            ),
+              TextField(
+                controller: _username,
+                autocorrect: false,
+                enabled: !_busy,
+                decoration: InputDecoration(labelText: l10n.signInUsername),
+              ),
+              TextField(
+                controller: _password,
+                obscureText: true,
+                enabled: !_busy,
+                decoration: InputDecoration(labelText: l10n.signInPassword),
+                onSubmitted: (_) => _busy ? null : _signIn(),
+              ),
+            ],
           ),
         ),
-      ),
+        DsStack(
+          children: [
+            DsButton(label: l10n.signIn, busy: _busy, onPressed: _signIn),
+            DsButton.tonal(
+              label: l10n.signInWithSso,
+              glyph: Glyph.briefcase,
+              onPressed: _busy ? null : _ssoSignIn,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

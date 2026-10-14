@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/parsers/qr_payload.dart';
 import '../core/parsers/subscription.dart';
@@ -110,24 +111,36 @@ class _QrScanScreenState extends State<QrScanScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    if (_noCamera) return _noCameraPage(context);
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: _noCamera ? null : Colors.black,
-      extendBodyBehindAppBar: !_noCamera,
-      appBar: AppBar(
-        backgroundColor: _noCamera ? null : Colors.transparent,
-        foregroundColor: _noCamera ? null : Colors.white,
-        leading: const CloseButton(),
-        title: Text(l10n.startScanQr),
-        actions: [
-          if (!_noCamera)
-            IconButton(
-              tooltip: l10n.qrTorch,
-              icon: Icon(_torch ? Icons.flashlight_off : Icons.flashlight_on),
-              onPressed: _toggleTorch,
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kNavRowHeight),
+        child: Theme(
+          data: theme.copyWith(
+            appBarTheme: theme.appBarTheme.copyWith(
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
             ),
-        ],
+            iconButtonTheme: IconButtonThemeData(
+              style: IconButton.styleFrom(foregroundColor: Colors.white),
+            ),
+          ),
+          child: DsNavBar(
+            leading: DsLeading.close,
+            actions: [
+              DsNavButton(
+                glyph: _torch ? Glyph.flashlightOff : Glyph.flashlight,
+                tooltip: l10n.qrTorch,
+                onPressed: _toggleTorch,
+              ),
+            ],
+          ),
+        ),
       ),
-      body: _noCamera ? _noCameraBody(context) : _scanner(context),
+      body: _scanner(context),
     );
   }
 
@@ -135,6 +148,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
     final l10n = context.l10n;
     final parts = _parts;
     final refusal = _refusal;
+    final insets = MediaQuery.paddingOf(context);
     return LayoutBuilder(
       builder: (context, box) {
         final below = box.maxHeight / 2 + kQrViewfinder / 2;
@@ -163,55 +177,51 @@ class _QrScanScreenState extends State<QrScanScreen> {
               ),
             ),
             Positioned(
-              top: below + 20,
-              left: 24,
-              right: 24,
-              child: Column(
+              top: insets.top,
+              left: 0,
+              right: 0,
+              child: DsLargeTitle(l10n.startScanQr, color: Colors.white),
+            ),
+            Positioned(
+              top: below + 24,
+              left: kGutter,
+              right: kGutter,
+              child: DsStack(
+                gap: 6,
                 children: [
                   if (parts != null) ...[
-                    _Chip(
-                      leading: const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      ),
-                      text: l10n.qrParts(parts.received, parts.total),
+                    DsNotification(
+                      small: true,
+                      title: l10n.qrParts(parts.received, parts.total),
                     ),
-                    _Hint(detail: l10n.qrPartsDetail),
+                    _HintTitle(l10n.qrPartsDetail),
                   ] else if (refusal != null) ...[
-                    _Chip(
-                      warn: true,
-                      leading: Icon(
-                        Icons.error_outline,
-                        size: 18,
-                        color: context.vpnColors.connecting,
+                    DsNotification(
+                      small: true,
+                      boldTitle: true,
+                      title: l10n.startCantUseThis(refusal),
+                    ),
+                    _HintTitle(l10n.qrStillLooking),
+                  ] else ...[
+                    _HintTitle(l10n.qrHint),
+                    Text(
+                      widget.hint ?? l10n.qrHintDetail,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xCCFFFFFF),
+                        fontSize: 13,
+                        height: 16 / 13,
                       ),
-                      text: l10n.startCantUseThis(refusal),
                     ),
-                    _Hint(detail: l10n.qrStillLooking),
-                  ] else
-                    _Hint(
-                      title: l10n.qrHint,
-                      detail: widget.hint ?? l10n.qrHintDetail,
-                    ),
+                  ],
                 ],
               ),
             ),
             Positioned(
-              left: 24,
-              right: 24,
-              bottom: 40 + MediaQuery.paddingOf(context).bottom,
-              child: FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.16),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _fromPhotos,
-                icon: const Icon(Icons.photo_library_outlined, size: 18),
-                label: Text(l10n.qrFromPhotos),
-              ),
+              left: kGutter,
+              right: kGutter,
+              bottom: kGutter + insets.bottom,
+              child: _fromPhotosButton(context),
             ),
           ],
         );
@@ -219,128 +229,53 @@ class _QrScanScreenState extends State<QrScanScreen> {
     );
   }
 
-  Widget _noCameraBody(BuildContext context) {
+  Widget _fromPhotosButton(BuildContext context) => DsButton.tonal(
+    label: context.l10n.qrFromPhotos,
+    glyph: Glyph.image,
+    onPressed: _fromPhotos,
+  );
+
+  Widget _noCameraPage(BuildContext context) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
-    return SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(
-                  Icons.no_photography_outlined,
-                  size: 56,
-                  color: cs.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.qrNoCamera,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.qrNoCameraDetail,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                ),
-                const SizedBox(height: 24),
-                FilledButton.tonalIcon(
-                  onPressed: _fromPhotos,
-                  icon: const Icon(Icons.photo_library_outlined, size: 18),
-                  label: Text(l10n.qrFromPhotos),
-                ),
-              ],
-            ),
+    final ds = context.ds;
+    return DsPage(
+      title: l10n.startScanQr,
+      leading: DsLeading.close,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 80),
+          child: DsStack(
+            children: [
+              const Center(child: GlyphIcon(Glyph.cameraOff, size: 48)),
+              Text(
+                l10n.qrNoCamera,
+                textAlign: TextAlign.center,
+                style: DsType.h3.copyWith(color: ds.text1),
+              ),
+              DsNote(l10n.qrNoCameraDetail, align: TextAlign.center),
+              _fromPhotosButton(context),
+            ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.leading, required this.text, this.warn = false});
+class _HintTitle extends StatelessWidget {
+  const _HintTitle(this.text);
 
-  final Widget leading;
   final String text;
-  final bool warn;
 
   @override
-  Widget build(BuildContext context) {
-    final background = warn
-        ? Color.alphaBlend(
-            context.vpnColors.connecting.withValues(alpha: 0.30),
-            Colors.black.withValues(alpha: 0.40),
-          )
-        : Colors.white.withValues(alpha: 0.16);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          leading,
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Hint extends StatelessWidget {
-  const _Hint({this.title, required this.detail});
-
-  final String? title;
-  final String detail;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12, left: 8, right: 8),
-      child: Column(
-        children: [
-          if (title != null)
-            Text(
-              title!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          if (title != null) const SizedBox(height: 6),
-          Text(
-            detail,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
-              fontSize: 12.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Text(
+    text,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      color: Colors.white,
+      fontSize: 15,
+      height: 18 / 15,
+      fontWeight: FontWeight.w600,
+    ),
+  );
 }

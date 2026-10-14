@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/amnezia/amnezia_account.dart';
 import '../../core/device_identity.dart';
+import '../../core/ds.dart';
 import '../../core/profile.dart';
 import '../../core/profile_store.dart';
-import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import 'config_parts.dart';
 
@@ -24,59 +24,55 @@ class AmneziaConfigScreen extends ConsumerWidget {
     final p = profile;
     final state = p.amnezia;
     final account = state?.account;
-    return Scaffold(
-      appBar: AppBar(title: Text(p.name)),
-      body: PageBody(
-        child: ListView(
+    final expired = account?.expired == true;
+    final l10n = context.l10n;
+    return DsPage(
+      title: p.name,
+      children: [
+        DsCard(
           children: [
-            const SizedBox(height: 8),
-            ProfileHeaderCard(profile: p, isActive: isActive),
-            if (account?.expired == true) const _ExpiredCard(),
-            RefreshCard(profile: p),
-            if (account != null) ..._subscription(context.l10n, account),
-            RoutingRow(profile: p),
+            ProfileHeaderRow(profile: p, isActive: isActive),
+            RefreshRow(profile: p),
+          ],
+        ),
+        if (expired)
+          ConfigAlert(
+            title: l10n.accountExpiredTitle,
+            body: l10n.configSubscriptionExpiredDetail,
+          ),
+        if (account != null) ?_subscription(l10n, account),
+        if (!expired) RoutingRow(profile: p),
+        DsStack(
+          gap: 0,
+          children: [
             const _ThisInstallation(),
             ConfigActions(profile: p, isActive: isActive),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  List<Widget> _subscription(AppLocalizations l10n, AmneziaAccount account) {
+  Widget? _subscription(AppLocalizations l10n, AmneziaAccount account) {
     final rows = <Widget>[
       if (account.endsAt != null)
-        ListTile(
-          leading: const Icon(Icons.event_outlined),
-          title: Text(
-            account.expired ? l10n.configRanUntil : l10n.configRunsUntil,
-          ),
-          subtitle: Text(_endLabel(l10n, account)),
+        DsRow(
+          glyph: Glyph.calendar,
+          title: account.expired ? l10n.configRanUntil : l10n.configRunsUntil,
+          subtitle: _endLabel(l10n, account),
         ),
-      if (account.hasDeviceCount)
-        ListTile(
-          leading: const Icon(Icons.devices_outlined),
-          title: Text(l10n.configDevices),
-          subtitle: Text(
-            l10n.configDevicesUsed(account.activeDevices, account.maxDevices),
+      if (account.hasDeviceCount && !account.expired)
+        DsRow(
+          glyph: Glyph.smartphone,
+          title: l10n.configDevices,
+          subtitle: l10n.configDevicesUsed(
+            account.activeDevices,
+            account.maxDevices,
           ),
         ),
     ];
-    if (rows.isEmpty) return const [];
-    return [
-      SectionHeader(l10n.configSectionSubscription),
-      Card(
-        margin: kCardMargin,
-        child: Column(
-          children: [
-            for (final (i, row) in rows.indexed) ...[
-              if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
-              row,
-            ],
-          ],
-        ),
-      ),
-    ];
+    if (rows.isEmpty) return null;
+    return DsGroup(caption: l10n.configSectionSubscription, children: rows);
   }
 
   String _endLabel(AppLocalizations l10n, AmneziaAccount account) {
@@ -109,6 +105,7 @@ class _ThisInstallationState extends State<_ThisInstallation> {
         final data = snap.data;
         if (data == null || data.$2.isEmpty) return const SizedBox.shrink();
         return DeviceSection(
+          spaced: true,
           label: data.$1.label,
           labelSubtitle: l10n.configDeviceIdentifiedSubtitle,
           idTitle: l10n.configDeviceId,
@@ -116,26 +113,6 @@ class _ThisInstallationState extends State<_ThisInstallation> {
           hint: l10n.configDeviceHintAmnezia,
         );
       },
-    );
-  }
-}
-
-class _ExpiredCard extends StatelessWidget {
-  const _ExpiredCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final l10n = context.l10n;
-    return Card(
-      margin: kCardMargin,
-      color: cs.errorContainer.withValues(alpha: 0.35),
-      child: ListTile(
-        leading: Icon(Icons.warning_amber_outlined, color: cs.error),
-        title: Text(l10n.accountExpiredTitle),
-        subtitle: Text(l10n.configSubscriptionExpiredDetail),
-        isThreeLine: true,
-      ),
     );
   }
 }

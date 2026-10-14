@@ -23,6 +23,8 @@ import 'package:anoya/state/providers.dart';
 import 'package:anoya/state/routing_status.dart';
 import 'package:anoya/l10n/l10n.dart';
 
+import 'support/ds_finders.dart';
+
 void main() {
   Profile profile({
     bool routingEnabled = false,
@@ -52,6 +54,11 @@ void main() {
       required bool collectLogs,
       bool withProfile = true,
     }) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -210,7 +217,7 @@ void main() {
     );
     await tester.pump();
 
-    final row = find.widgetWithText(ListTile, 'Rule sets');
+    final row = findRow('Rule sets');
     expect(row, findsOneWidget);
     expect(
       find.descendant(of: row, matching: find.text('2 sets')),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/on_demand_rule_screen.dart';
@@ -57,7 +58,7 @@ void main() {
     await tester.pump();
 
     expect(ctrl.saved.map((r) => r.name), ['Office HQ']);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(DsSpinner), findsOneWidget);
     expect(
       find.byType(OnDemandRuleScreen),
       findsOneWidget,
@@ -74,7 +75,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();
-    await tester.tap(find.byType(CloseButton));
+    await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
     expect(find.text('open'), findsOneWidget);
@@ -87,7 +88,7 @@ void main() {
     final ctrl = await open(tester, isNew: true);
 
     await tester.enterText(find.byType(TextField).first, 'Office HQ');
-    await tester.tap(find.byType(CloseButton));
+    await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
 
     expect(ctrl.saved, isEmpty);

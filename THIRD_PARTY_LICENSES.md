@@ -116,3 +116,11 @@ distributed under the license on its pub.dev page.
 - License: CC0 1.0 Universal (the brand glyphs in `assets/brands/`)
 - License Text: https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md
 - The brands themselves are trademarks of their owners.
+
+---
+
+## Lucide
+
+- Source: https://github.com/lucide-icons/lucide (lucide-static 0.460.0)
+- License: ISC License (the interface icons in `assets/icons/`)
+- License Text: https://github.com/lucide-icons/lucide/blob/main/LICENSE

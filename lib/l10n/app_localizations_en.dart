@@ -84,10 +84,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonName => 'Name';
 
   @override
-  String get commonAll => 'ALL';
+  String get commonAll => 'All';
 
   @override
-  String get commonFavorites => 'FAVORITES';
+  String get commonFavorites => 'Favorites';
 
   @override
   String get themeSystem => 'System';
@@ -135,22 +135,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonJustNow => 'just now';
 
   @override
-  String get settingsSectionConfigurations => 'CONFIGURATIONS';
+  String get settingsSectionConfigurations => 'Configurations';
 
   @override
-  String get settingsSectionConnection => 'CONNECTION';
+  String get settingsSectionConnection => 'Connection';
 
   @override
-  String get settingsSectionRouting => 'ROUTING';
+  String get settingsSectionRouting => 'Routing';
 
   @override
-  String get settingsSectionGeneral => 'GENERAL';
+  String get settingsSectionGeneral => 'General';
 
   @override
-  String get settingsSectionDiagnostics => 'DIAGNOSTICS';
+  String get settingsSectionDiagnostics => 'Diagnostics';
 
   @override
-  String get settingsSectionAbout => 'ABOUT';
+  String get settingsSectionAbout => 'About';
 
   @override
   String get settingsConfigurations => 'Configurations';
@@ -276,10 +276,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uiCouldNotOpenPage => 'Couldn’t open that page.';
 
   @override
-  String get advancedSectionConnectionCheck => 'CONNECTION CHECK';
+  String get advancedSectionConnectionCheck => 'Connection check';
 
   @override
-  String get advancedSectionLastCheck => 'LAST CHECK';
+  String get advancedSectionLastCheck => 'Last check';
 
   @override
   String get advancedCheckAfterConnecting => 'Check after connecting';
@@ -384,10 +384,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dnsTitle => 'DNS';
 
   @override
-  String get dnsSectionInEffect => 'IN EFFECT';
+  String get dnsSectionInEffect => 'In effect';
 
   @override
-  String get dnsSectionDropped => 'DROPPED';
+  String get dnsSectionDropped => 'Dropped';
 
   @override
   String get dnsParallelNote =>
@@ -481,10 +481,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get geoTitle => 'GeoIP & GeoSite';
 
   @override
-  String get geoSectionDatabases => 'DATABASES';
+  String get geoSectionDatabases => 'Databases';
 
   @override
-  String get geoSectionUpdates => 'UPDATES';
+  String get geoSectionUpdates => 'Updates';
 
   @override
   String get geoGeoipSource => 'GeoIP source';
@@ -574,29 +574,29 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get geositeSectionPopular => 'POPULAR';
+  String get geositeSectionPopular => 'Popular';
 
   @override
   String geositeSectionAll(int count) {
-    return 'ALL · $count';
+    return 'All · $count';
   }
 
   @override
   String geositeSectionAllMatch(int count, int total) {
-    return 'ALL · $count OF $total MATCH';
+    return 'All · $count of $total match';
   }
 
   @override
   String get logsTitle => 'Logs';
 
   @override
-  String get logsSectionCollection => 'COLLECTION';
+  String get logsSectionCollection => 'Collection';
 
   @override
-  String get logsSectionTunnel => 'TUNNEL';
+  String get logsSectionTunnel => 'Tunnel';
 
   @override
-  String get logsSectionApp => 'APP';
+  String get logsSectionApp => 'App';
 
   @override
   String get logsCollect => 'Collect logs';
@@ -770,7 +770,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This configuration will be removed from this device.';
 
   @override
-  String get configSectionSubscription => 'SUBSCRIPTION';
+  String get configSectionSubscription => 'Subscription';
 
   @override
   String get configRanUntil => 'Ran until';
@@ -827,7 +827,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Renew the subscription, then refresh this configuration.';
 
   @override
-  String get configSectionThisDevice => 'THIS DEVICE';
+  String get configSectionThisDevice => 'This device';
 
   @override
   String get configDeviceIdentifiedSubtitle =>
@@ -1037,13 +1037,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get configSectionOrganizationRouting => 'ORGANIZATION ROUTING';
+  String get configSectionOrganizationRouting => 'Organization routing';
 
   @override
-  String get configSectionSubscriptionRouting => 'SUBSCRIPTION ROUTING';
+  String get configSectionSubscriptionRouting => 'Subscription routing';
 
   @override
-  String get configSectionDeviceRouting => 'DEVICE ROUTING';
+  String get configSectionDeviceRouting => 'Device routing';
 
   @override
   String get configOrganizationRoutingNote =>
@@ -1061,7 +1061,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.';
 
   @override
-  String get configSectionDetails => 'DETAILS';
+  String get configSectionDetails => 'Details';
 
   @override
   String get configGetSupport => 'Get support';
@@ -1078,6 +1078,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String configTrafficOf(String used, String total) {
     return 'Traffic: $used of $total';
+  }
+
+  @override
+  String get configTraffic => 'Traffic';
+
+  @override
+  String configTrafficUsedOf(String used, String total) {
+    return '$used of $total';
   }
 
   @override
@@ -1211,7 +1219,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'geoip / geosite rules are inactive until then (~25 MB)';
 
   @override
-  String get ruleSetRulesHeader => 'RULES — FIRST MATCH WINS';
+  String get ruleSetRulesHeader => 'Rules — first match wins';
 
   @override
   String get homeAddConfiguration => 'Add configuration';
@@ -1278,18 +1286,35 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String homeAccountUntil(String status, String until) {
-    return '$status · until $until';
+  String get homeConfiguration => 'Configuration';
+
+  @override
+  String homeExpiryEndsIn(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Subscription ends in $days days',
+      one: 'Subscription ends in 1 day',
+      zero: 'Subscription ends today',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get homeConfiguration => 'Configuration';
+  String homeExpiryTraffic(int percent) {
+    return '$percent% of traffic used';
+  }
+
+  @override
+  String homeExpiryValidUntil(String date) {
+    return 'Valid until $date';
+  }
 
   @override
   String get homeServer => 'Server';
 
   @override
-  String get homeChosenByEngine => 'CHOSEN BY THE ENGINE';
+  String get homeChosenByEngine => 'Chosen by the engine';
 
   @override
   String get homeSwitchingServer => 'Switching server…';
@@ -1433,7 +1458,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get ruleSetImportSkipped => 'NOT CARRIED OVER';
+  String get ruleSetImportSkipped => 'Not carried over';
 
   @override
   String get ruleSetImportSkipDns => 'DNS servers';
@@ -1625,11 +1650,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uiAddToFavorites => 'Add to favorites';
 
   @override
-  String get uiAllNothingMatches => 'ALL · NOTHING MATCHES';
+  String get uiAllNothingMatches => 'All · nothing matches';
 
   @override
   String uiAllMatchCount(int shown, int total) {
-    return 'ALL · $shown OF $total MATCH';
+    return 'All · $shown of $total match';
   }
 
   @override
@@ -1828,19 +1853,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ruleSetSearchServices => 'Search services';
 
   @override
-  String get ruleSetCountriesHeader => 'COUNTRIES';
+  String get ruleSetCountriesHeader => 'Countries';
 
   @override
   String get ruleSetAddCountry => 'Add country';
 
   @override
-  String get ruleSetServicesHeader => 'SERVICES';
+  String get ruleSetServicesHeader => 'Services';
 
   @override
   String get ruleSetAddCategory => 'Add category';
 
   @override
-  String get ruleSetOtherCategoriesHeader => 'OTHER CATEGORIES';
+  String get ruleSetOtherCategoriesHeader => 'Other categories';
 
   @override
   String get ruleSetNothingSelectedSplit =>
@@ -1964,7 +1989,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onDemandNameHint => 'Office';
 
   @override
-  String get onDemandNetworkHeader => 'NETWORK';
+  String get onDemandNetworkHeader => 'Network';
 
   @override
   String get onDemandNetworkHelpAny =>
@@ -1983,7 +2008,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'When the device is on a wired network, the system checks the conditions below and applies the rule.';
 
   @override
-  String get onDemandConditionsHeader => 'CONDITIONS';
+  String get onDemandConditionsHeader => 'Conditions';
 
   @override
   String get onDemandWifiNetworks => 'Wi-Fi networks';
@@ -1992,7 +2017,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onDemandWifiNetwork => 'Wi-Fi network';
 
   @override
-  String get onDemandNetworksUnit => 'NETWORKS';
+  String get onDemandNetworksUnit => 'networks';
 
   @override
   String get onDemandWifiNetworksHelp =>
@@ -2005,7 +2030,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onDemandDnsDomain => 'DNS search domain';
 
   @override
-  String get onDemandDomainsUnit => 'DOMAINS';
+  String get onDemandDomainsUnit => 'domains';
 
   @override
   String get onDemandDnsDomainsHelp =>
@@ -2018,14 +2043,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onDemandDnsServer => 'DNS server';
 
   @override
-  String get onDemandServersUnit => 'SERVERS';
+  String get onDemandServersUnit => 'servers';
 
   @override
   String get onDemandDnsServersHelp =>
       'Matches the network’s DNS servers; a single “*” wildcard is allowed.';
 
   @override
-  String get onDemandUrlProbeHeader => 'URL PROBE';
+  String get onDemandUrlProbeHeader => 'URL probe';
 
   @override
   String get onDemandUrlOptional => 'URL (optional)';
@@ -2035,11 +2060,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'The rule matches only if this URL returns 200 without redirects.';
 
   @override
-  String get onDemandNoEntries => 'NO ENTRIES';
+  String get onDemandNoEntries => 'No entries';
 
   @override
   String onDemandEntriesHeader(int count, String unit) {
-    return '$count $unit · ANY OF THEM MATCHES';
+    return '$count $unit · any of them matches';
   }
 
   @override
@@ -2597,16 +2622,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importUnusableNotALink => 'Not a link or subscription';
 
   @override
-  String get catalogGroupStreaming => 'STREAMING';
+  String get catalogGroupStreaming => 'Streaming';
 
   @override
-  String get catalogGroupMessengers => 'MESSENGERS';
+  String get catalogGroupMessengers => 'Messengers';
 
   @override
-  String get catalogGroupSocial => 'SOCIAL';
+  String get catalogGroupSocial => 'Social';
 
   @override
-  String get catalogGroupOther => 'OTHER';
+  String get catalogGroupOther => 'Other';
 
   @override
   String proxyGroupUrlTest(int count) {

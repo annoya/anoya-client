@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'ds.dart';
 import 'service_catalog.dart';
+import 'theme.dart';
 
 class ServiceAvatar extends StatelessWidget {
   const ServiceAvatar(this.label, {super.key, this.category});
@@ -11,34 +13,15 @@ class ServiceAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final service = category == null ? null : catalogServiceFor(category!);
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        color: cs.primaryContainer,
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: service != null && service.glyph
-          ? SvgPicture.asset(
-              service.glyphAsset,
-              width: 14,
-              height: 14,
-              colorFilter: ColorFilter.mode(
-                cs.onPrimaryContainer,
-                BlendMode.srcIn,
-              ),
-            )
-          : Text(
-              label.isEmpty ? '?' : label[0].toUpperCase(),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: cs.onPrimaryContainer,
-              ),
-            ),
+    if (service == null || !service.glyph) {
+      return const GlyphIcon(Glyph.globe, size: kRowIcon);
+    }
+    return SvgPicture.asset(
+      service.glyphAsset,
+      width: kRowIcon,
+      height: kRowIcon,
+      colorFilter: ColorFilter.mode(context.ds.icon1, BlendMode.srcIn),
     );
   }
 }

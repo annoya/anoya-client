@@ -1058,6 +1058,14 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get configTraffic => '流量';
+
+  @override
+  String configTrafficUsedOf(String used, String total) {
+    return '$used / $total';
+  }
+
+  @override
   String get configNoExpiryDate => '未提供到期日期';
 
   @override
@@ -1248,12 +1256,28 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String homeAccountUntil(String status, String until) {
-    return '$status · 至 $until';
+  String get homeConfiguration => '配置';
+
+  @override
+  String homeExpiryEndsIn(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '订阅将在 $days 天后到期',
+      zero: '订阅今天到期',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get homeConfiguration => '配置';
+  String homeExpiryTraffic(int percent) {
+    return '已使用 $percent% 流量';
+  }
+
+  @override
+  String homeExpiryValidUntil(String date) {
+    return '有效期至 $date';
+  }
 
   @override
   String get homeServer => '服务器';

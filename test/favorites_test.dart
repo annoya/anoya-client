@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/favorites.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/ui.dart';
 import 'package:anoya/l10n/l10n.dart';
 import 'package:anoya/state/favorites_controller.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   group('model', () {
@@ -125,8 +128,8 @@ void main() {
     testWidgets('favourites sit above the rest', (tester) async {
       await open(tester, favorites: {'s5'}, onToggleFavorite: (_) {});
 
-      expect(find.text('FAVORITES'), findsOneWidget);
-      expect(find.text('ALL'), findsOneWidget);
+      expect(find.text('Favorites'), findsOneWidget);
+      expect(find.text('All'), findsOneWidget);
       expect(
         tester.getRect(find.text('server-5')).top,
         lessThan(tester.getRect(find.text('server-1')).top),
@@ -141,8 +144,8 @@ void main() {
 
       await tester.tap(
         find.descendant(
-          of: find.widgetWithText(ListTile, 'server-3'),
-          matching: find.byIcon(Icons.star_border),
+          of: findRow('server-3'),
+          matching: findGlyph(Glyph.star),
         ),
       );
       await tester.pumpAndSettle();
@@ -156,7 +159,7 @@ void main() {
       expect(
         tester.getRect(find.text('server-3')).top,
         lessThan(tester.getRect(find.text('server-1')).top),
-        reason: 'it moves into FAVORITES immediately',
+        reason: 'it moves into Favorites immediately',
       );
     });
 
@@ -175,21 +178,35 @@ void main() {
         findsNothing,
         reason: 'a favourite that does not match is filtered out like the rest',
       );
-      expect(find.text('FAVORITES'), findsNothing);
-      expect(find.text('ALL · 1 OF 7 MATCH'), findsOneWidget);
+      expect(find.text('Favorites'), findsNothing);
+      expect(find.text('All · 1 of 7 match'), findsOneWidget);
     });
 
-    testWidgets('a matching favourite keeps its place on top', (tester) async {
-      await open(tester, favorites: {'s5'}, onToggleFavorite: (_) {});
+    testWidgets('a search flattens the groups, a favourite keeps its star', (
+      tester,
+    ) async {
+      final toggled = <String>[];
+      await open(tester, favorites: {'s5'}, onToggleFavorite: toggled.add);
 
       await tester.enterText(find.byType(TextField), 'server-');
       await tester.pumpAndSettle();
 
-      expect(find.text('FAVORITES'), findsOneWidget);
+      expect(find.text('Favorites'), findsNothing);
+      expect(find.text('All · 7 of 7 match'), findsOneWidget);
       expect(
-        tester.getRect(find.text('server-5')).top,
-        lessThan(tester.getRect(find.text('server-1')).top),
+        tester.getRect(find.text('server-1')).top,
+        lessThan(tester.getRect(find.text('server-5')).top),
+        reason: 'one list in its own order while searching',
       );
+      final star = find.descendant(
+        of: findRow('server-5'),
+        matching: findGlyph(Glyph.star),
+      );
+      await tester.ensureVisible(star);
+      await tester.pumpAndSettle();
+      await tester.tap(star);
+      await tester.pumpAndSettle();
+      expect(toggled, ['s5'], reason: 'the star still works on a found row');
     });
 
     testWidgets('a search with no match says so and names the total', (
@@ -200,7 +217,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'reykjavik');
       await tester.pumpAndSettle();
 
-      expect(find.text('ALL · NOTHING MATCHES'), findsOneWidget);
+      expect(find.text('All'), findsNothing, reason: 'no empty group header');
       expect(
         find.textContaining('Clear the search to see all 7'),
         findsOneWidget,
@@ -212,10 +229,10 @@ void main() {
     ) async {
       await open(tester);
 
-      expect(find.text('FAVORITES'), findsNothing);
-      expect(find.text('ALL'), findsNothing);
-      expect(find.byIcon(Icons.star_border), findsNothing);
-      expect(find.byIcon(Icons.settings_outlined), findsNothing);
+      expect(find.text('Favorites'), findsNothing);
+      expect(find.text('All'), findsNothing);
+      expect(findGlyph(Glyph.star), findsNothing);
+      expect(findGlyph(Glyph.settings), findsNothing);
     });
 
     testWidgets('the current value is a filled, selected row — no check mark', (
@@ -223,16 +240,18 @@ void main() {
     ) async {
       await open(tester);
 
-      expect(find.byIcon(Icons.check), findsNothing);
-      final tiles = tester.widgetList<ListTile>(find.byType(ListTile));
-      final selected = tiles.where((t) => t.selected).toList();
+      expect(findGlyph(Glyph.check), findsNothing);
+      final rows = tester.widgetList<DsRow>(find.byType(DsRow));
+      final selected = rows.where((r) => r.selected).toList();
       expect(selected.length, 1, reason: 'exactly the current value');
-      expect(selected.single.selectedTileColor, isNotNull);
+      expect(selected.single.title, 'server-1');
       expect(
-        tester
-            .widget<ListTile>(find.widgetWithText(ListTile, 'server-1'))
-            .selected,
-        true,
+        find.descendant(
+          of: findRow('server-1'),
+          matching: find.byWidgetPredicate((w) => w is DsRadio && w.selected),
+        ),
+        findsOneWidget,
+        reason: 'a plain choice marks the current one with its radio',
       );
     });
 
@@ -304,8 +323,8 @@ void main() {
 
       await tester.tap(
         find.descendant(
-          of: find.widgetWithText(ListTile, 'server-4'),
-          matching: find.byIcon(Icons.settings_outlined),
+          of: findRow('server-4'),
+          matching: findGlyph(Glyph.settings),
         ),
       );
       await tester.pumpAndSettle();

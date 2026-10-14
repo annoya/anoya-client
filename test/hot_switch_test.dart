@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/mihomo_tun_config.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
@@ -15,6 +16,8 @@ import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
 import 'package:anoya/l10n/l10n.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   Profile profile(String id, String name) => Profile(
@@ -40,6 +43,9 @@ void main() {
     required VpnStatus status,
     bool switching = false,
   }) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -63,15 +69,15 @@ void main() {
     await tester.pump();
   }
 
-  ListTile tile(WidgetTester tester, String title) =>
-      tester.widget<ListTile>(find.widgetWithText(ListTile, title));
+  DsRow tile(WidgetTester tester, String title) =>
+      tester.widget<DsRow>(findRow(title));
 
   testWidgets('a connected tunnel keeps both pickers active — no locks', (
     tester,
   ) async {
     await pump(tester, status: VpnStatus.connected);
 
-    expect(find.byIcon(Icons.lock_outline), findsNothing);
+    expect(findGlyph(Glyph.lock), findsNothing);
     expect(tile(tester, 'nexus').onTap, isNotNull);
     expect(tile(tester, 'Germany').onTap, isNotNull);
   });
@@ -81,7 +87,7 @@ void main() {
   ) async {
     await pump(tester, status: VpnStatus.connecting);
 
-    expect(find.byIcon(Icons.lock_outline), findsNWidgets(2));
+    expect(findGlyph(Glyph.lock), findsNWidgets(2));
     expect(tile(tester, 'nexus').onTap, isNull);
     expect(tile(tester, 'Germany').onTap, isNull);
   });
@@ -92,7 +98,7 @@ void main() {
     await pump(tester, status: VpnStatus.connected, switching: true);
 
     expect(find.text('Switching server…'), findsOneWidget);
-    expect(find.byIcon(Icons.lock_outline), findsNothing);
+    expect(findGlyph(Glyph.lock), findsNothing);
     expect(tile(tester, 'nexus').onTap, isNull);
     expect(tile(tester, 'Germany').onTap, isNull);
   });

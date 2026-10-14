@@ -257,13 +257,13 @@ abstract class AppLocalizations {
   /// No description provided for @commonAll.
   ///
   /// In en, this message translates to:
-  /// **'ALL'**
+  /// **'All'**
   String get commonAll;
 
   /// No description provided for @commonFavorites.
   ///
   /// In en, this message translates to:
-  /// **'FAVORITES'**
+  /// **'Favorites'**
   String get commonFavorites;
 
   /// No description provided for @themeSystem.
@@ -347,37 +347,37 @@ abstract class AppLocalizations {
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'CONFIGURATIONS'**
+  /// **'Configurations'**
   String get settingsSectionConfigurations;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION'**
+  /// **'Connection'**
   String get settingsSectionConnection;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'ROUTING'**
+  /// **'Routing'**
   String get settingsSectionRouting;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'GENERAL'**
+  /// **'General'**
   String get settingsSectionGeneral;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'DIAGNOSTICS'**
+  /// **'Diagnostics'**
   String get settingsSectionDiagnostics;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'ABOUT'**
+  /// **'About'**
   String get settingsSectionAbout;
 
   /// No description provided for @settingsConfigurations.
@@ -581,13 +581,13 @@ abstract class AppLocalizations {
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION CHECK'**
+  /// **'Connection check'**
   String get advancedSectionConnectionCheck;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'LAST CHECK'**
+  /// **'Last check'**
   String get advancedSectionLastCheck;
 
   /// No description provided for @advancedCheckAfterConnecting.
@@ -749,13 +749,13 @@ abstract class AppLocalizations {
   /// Section header, all caps: the resolvers currently in use
   ///
   /// In en, this message translates to:
-  /// **'IN EFFECT'**
+  /// **'In effect'**
   String get dnsSectionInEffect;
 
   /// Section header, all caps: resolvers the app refused to use
   ///
   /// In en, this message translates to:
-  /// **'DROPPED'**
+  /// **'Dropped'**
   String get dnsSectionDropped;
 
   /// No description provided for @dnsParallelNote.
@@ -917,13 +917,13 @@ abstract class AppLocalizations {
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'DATABASES'**
+  /// **'Databases'**
   String get geoSectionDatabases;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'UPDATES'**
+  /// **'Updates'**
   String get geoSectionUpdates;
 
   /// No description provided for @geoGeoipSource.
@@ -1049,19 +1049,19 @@ abstract class AppLocalizations {
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'POPULAR'**
+  /// **'Popular'**
   String get geositeSectionPopular;
 
   /// Section header, all caps: every category with its count
   ///
   /// In en, this message translates to:
-  /// **'ALL · {count}'**
+  /// **'All · {count}'**
   String geositeSectionAll(int count);
 
   /// Section header, all caps: how many categories match the search
   ///
   /// In en, this message translates to:
-  /// **'ALL · {count} OF {total} MATCH'**
+  /// **'All · {count} of {total} match'**
   String geositeSectionAllMatch(int count, int total);
 
   /// No description provided for @logsTitle.
@@ -1073,19 +1073,19 @@ abstract class AppLocalizations {
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'COLLECTION'**
+  /// **'Collection'**
   String get logsSectionCollection;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'TUNNEL'**
+  /// **'Tunnel'**
   String get logsSectionTunnel;
 
   /// Section header, all caps
   ///
   /// In en, this message translates to:
-  /// **'APP'**
+  /// **'App'**
   String get logsSectionApp;
 
   /// No description provided for @logsCollect.
@@ -1349,7 +1349,7 @@ abstract class AppLocalizations {
   /// Section header
   ///
   /// In en, this message translates to:
-  /// **'SUBSCRIPTION'**
+  /// **'Subscription'**
   String get configSectionSubscription;
 
   /// No description provided for @configRanUntil.
@@ -1409,7 +1409,7 @@ abstract class AppLocalizations {
   /// Section header
   ///
   /// In en, this message translates to:
-  /// **'THIS DEVICE'**
+  /// **'This device'**
   String get configSectionThisDevice;
 
   /// No description provided for @configDeviceIdentifiedSubtitle.
@@ -1643,19 +1643,19 @@ abstract class AppLocalizations {
   /// Section header
   ///
   /// In en, this message translates to:
-  /// **'ORGANIZATION ROUTING'**
+  /// **'Organization routing'**
   String get configSectionOrganizationRouting;
 
   /// Section header
   ///
   /// In en, this message translates to:
-  /// **'SUBSCRIPTION ROUTING'**
+  /// **'Subscription routing'**
   String get configSectionSubscriptionRouting;
 
   /// Section header
   ///
   /// In en, this message translates to:
-  /// **'DEVICE ROUTING'**
+  /// **'Device routing'**
   String get configSectionDeviceRouting;
 
   /// No description provided for @configOrganizationRoutingNote.
@@ -1685,7 +1685,7 @@ abstract class AppLocalizations {
   /// Section header
   ///
   /// In en, this message translates to:
-  /// **'DETAILS'**
+  /// **'Details'**
   String get configSectionDetails;
 
   /// No description provided for @configGetSupport.
@@ -1711,6 +1711,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Traffic: {used} of {total}'**
   String configTrafficOf(String used, String total);
+
+  /// No description provided for @configTraffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic'**
+  String get configTraffic;
+
+  /// No description provided for @configTrafficUsedOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {total}'**
+  String configTrafficUsedOf(String used, String total);
 
   /// No description provided for @configNoExpiryDate.
   ///
@@ -1883,7 +1895,7 @@ abstract class AppLocalizations {
   /// Section header
   ///
   /// In en, this message translates to:
-  /// **'RULES — FIRST MATCH WINS'**
+  /// **'Rules — first match wins'**
   String get ruleSetRulesHeader;
 
   /// No description provided for @homeAddConfiguration.
@@ -1994,17 +2006,29 @@ abstract class AppLocalizations {
   /// **'auto · {server}'**
   String homeGroupAutoPicked(String server);
 
-  /// Account line: the account status and its expiry date
-  ///
-  /// In en, this message translates to:
-  /// **'{status} · until {until}'**
-  String homeAccountUntil(String status, String until);
-
   /// No description provided for @homeConfiguration.
   ///
   /// In en, this message translates to:
   /// **'Configuration'**
   String get homeConfiguration;
+
+  /// Home card shown shortly before the subscription ends
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =0{Subscription ends today} =1{Subscription ends in 1 day} other{Subscription ends in {days} days}}'**
+  String homeExpiryEndsIn(int days);
+
+  /// Home card shown when most of the traffic is used
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of traffic used'**
+  String homeExpiryTraffic(int percent);
+
+  /// Subtitle of the subscription-ending card
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String homeExpiryValidUntil(String date);
 
   /// No description provided for @homeServer.
   ///
@@ -2015,7 +2039,7 @@ abstract class AppLocalizations {
   /// Section header in the server picker above the proxy groups
   ///
   /// In en, this message translates to:
-  /// **'CHOSEN BY THE ENGINE'**
+  /// **'Chosen by the engine'**
   String get homeChosenByEngine;
 
   /// No description provided for @homeSwitchingServer.
@@ -2249,7 +2273,7 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSetImportSkipped.
   ///
   /// In en, this message translates to:
-  /// **'NOT CARRIED OVER'**
+  /// **'Not carried over'**
   String get ruleSetImportSkipped;
 
   /// No description provided for @ruleSetImportSkipDns.
@@ -2573,13 +2597,13 @@ abstract class AppLocalizations {
   /// Picker section header while a search matches nothing
   ///
   /// In en, this message translates to:
-  /// **'ALL · NOTHING MATCHES'**
+  /// **'All · nothing matches'**
   String get uiAllNothingMatches;
 
   /// Picker section header while searching: how many rows match
   ///
   /// In en, this message translates to:
-  /// **'ALL · {shown} OF {total} MATCH'**
+  /// **'All · {shown} of {total} match'**
   String uiAllMatchCount(int shown, int total);
 
   /// Picker empty state; noun is one of the uiNoun* keys
@@ -2903,7 +2927,7 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSetCountriesHeader.
   ///
   /// In en, this message translates to:
-  /// **'COUNTRIES'**
+  /// **'Countries'**
   String get ruleSetCountriesHeader;
 
   /// No description provided for @ruleSetAddCountry.
@@ -2915,7 +2939,7 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSetServicesHeader.
   ///
   /// In en, this message translates to:
-  /// **'SERVICES'**
+  /// **'Services'**
   String get ruleSetServicesHeader;
 
   /// No description provided for @ruleSetAddCategory.
@@ -2927,7 +2951,7 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSetOtherCategoriesHeader.
   ///
   /// In en, this message translates to:
-  /// **'OTHER CATEGORIES'**
+  /// **'Other categories'**
   String get ruleSetOtherCategoriesHeader;
 
   /// No description provided for @ruleSetNothingSelectedSplit.
@@ -3113,7 +3137,7 @@ abstract class AppLocalizations {
   /// No description provided for @onDemandNetworkHeader.
   ///
   /// In en, this message translates to:
-  /// **'NETWORK'**
+  /// **'Network'**
   String get onDemandNetworkHeader;
 
   /// No description provided for @onDemandNetworkHelpAny.
@@ -3143,7 +3167,7 @@ abstract class AppLocalizations {
   /// No description provided for @onDemandConditionsHeader.
   ///
   /// In en, this message translates to:
-  /// **'CONDITIONS'**
+  /// **'Conditions'**
   String get onDemandConditionsHeader;
 
   /// No description provided for @onDemandWifiNetworks.
@@ -3161,7 +3185,7 @@ abstract class AppLocalizations {
   /// Unit word in the header '3 NETWORKS · ANY OF THEM MATCHES'
   ///
   /// In en, this message translates to:
-  /// **'NETWORKS'**
+  /// **'networks'**
   String get onDemandNetworksUnit;
 
   /// No description provided for @onDemandWifiNetworksHelp.
@@ -3185,7 +3209,7 @@ abstract class AppLocalizations {
   /// Unit word in the header '3 DOMAINS · ANY OF THEM MATCHES'
   ///
   /// In en, this message translates to:
-  /// **'DOMAINS'**
+  /// **'domains'**
   String get onDemandDomainsUnit;
 
   /// No description provided for @onDemandDnsDomainsHelp.
@@ -3209,7 +3233,7 @@ abstract class AppLocalizations {
   /// Unit word in the header '3 SERVERS · ANY OF THEM MATCHES'
   ///
   /// In en, this message translates to:
-  /// **'SERVERS'**
+  /// **'servers'**
   String get onDemandServersUnit;
 
   /// No description provided for @onDemandDnsServersHelp.
@@ -3221,7 +3245,7 @@ abstract class AppLocalizations {
   /// No description provided for @onDemandUrlProbeHeader.
   ///
   /// In en, this message translates to:
-  /// **'URL PROBE'**
+  /// **'URL probe'**
   String get onDemandUrlProbeHeader;
 
   /// No description provided for @onDemandUrlOptional.
@@ -3239,13 +3263,13 @@ abstract class AppLocalizations {
   /// No description provided for @onDemandNoEntries.
   ///
   /// In en, this message translates to:
-  /// **'NO ENTRIES'**
+  /// **'No entries'**
   String get onDemandNoEntries;
 
   /// Section header of a condition list; unit is one of the *Unit strings (NETWORKS, DOMAINS, SERVERS)
   ///
   /// In en, this message translates to:
-  /// **'{count} {unit} · ANY OF THEM MATCHES'**
+  /// **'{count} {unit} · any of them matches'**
   String onDemandEntriesHeader(int count, String unit);
 
   /// No description provided for @onDemandConditionIgnored.
@@ -4103,25 +4127,25 @@ abstract class AppLocalizations {
   /// Section header in the service catalog
   ///
   /// In en, this message translates to:
-  /// **'STREAMING'**
+  /// **'Streaming'**
   String get catalogGroupStreaming;
 
   /// Section header in the service catalog
   ///
   /// In en, this message translates to:
-  /// **'MESSENGERS'**
+  /// **'Messengers'**
   String get catalogGroupMessengers;
 
   /// Section header in the service catalog
   ///
   /// In en, this message translates to:
-  /// **'SOCIAL'**
+  /// **'Social'**
   String get catalogGroupSocial;
 
   /// Section header in the service catalog
   ///
   /// In en, this message translates to:
-  /// **'OTHER'**
+  /// **'Other'**
   String get catalogGroupOther;
 
   /// What a proxy group of {count} servers does

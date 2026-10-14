@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/rule_set.dart';
 import 'package:anoya/core/theme.dart';
@@ -13,6 +14,8 @@ import 'package:anoya/features/rule_set_editor_screen.dart';
 import 'package:anoya/features/rule_sets_screen.dart';
 import 'package:anoya/l10n/l10n.dart';
 import 'package:anoya/state/profiles_controller.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -147,11 +150,7 @@ void main() {
 
     expect(find.text('www.youtube.com'), findsOneWidget);
     expect(find.text('yandex.ru'), findsOneWidget);
-    expect(
-      find.byIcon(Icons.delete_outline),
-      findsNothing,
-      reason: 'read-only',
-    );
+    expect(findGlyph(Glyph.trash), findsNothing, reason: 'read-only');
   });
 
   testWidgets('text that is not a rule set is refused with the formats', (

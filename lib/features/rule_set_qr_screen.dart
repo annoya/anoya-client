@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
 
+import '../core/ds.dart';
 import '../core/log.dart';
-import '../core/ui.dart';
+import '../core/theme.dart';
 import '../l10n/l10n.dart';
 
 const kRuleSetQrMaxChars = 2331;
+
+const double _kTileHeight = 348;
+const double _kCodeSize = 328;
 
 class RuleSetQrScreen extends StatefulWidget {
   const RuleSetQrScreen({
@@ -44,51 +48,41 @@ class _RuleSetQrScreenState extends State<RuleSetQrScreen> {
         (code.width ?? 0) > 0 &&
         (code.height ?? 0) > 0;
     if (!ok) Log.e('rule set QR not generated', code.error ?? 'no data');
-    return Scaffold(
-      appBar: AppBar(leading: const CloseButton(), title: Text(widget.name)),
-      body: PageBody(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(32, 72, 32, 32),
-          children: [
-            Center(
-              child: Container(
-                width: kQrExportSize,
-                height: kQrExportSize,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+    final ds = context.ds;
+    return DsPage(
+      leading: DsLeading.close,
+      title: widget.name,
+      gap: 16,
+      children: [
+        Container(
+          height: _kTileHeight,
+          margin: const EdgeInsets.only(top: 24),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(kRadius),
+          ),
+          child: ok
+              ? SizedBox.square(
+                  dimension: _kCodeSize,
+                  child: CustomPaint(painter: _Modules(code)),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(kRowPadding),
+                  child: Text(
+                    l10n.ruleSetExportQrTooLarge,
+                    textAlign: TextAlign.center,
+                    style: DsType.text.copyWith(color: Colors.black),
+                  ),
                 ),
-                child: ok
-                    ? CustomPaint(painter: _Modules(code))
-                    : Center(
-                        child: Text(
-                          l10n.ruleSetExportQrTooLarge,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '${widget.name} · ${l10n.ruleSetImportRules(widget.ruleCount)}',
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.ruleSetQrHint,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
         ),
-      ),
+        Text(
+          '${widget.name} · ${l10n.ruleSetImportRules(widget.ruleCount)}',
+          textAlign: TextAlign.center,
+          style: DsType.h3.copyWith(color: ds.text1),
+        ),
+        DsNote(l10n.ruleSetQrHint, align: TextAlign.center),
+      ],
     );
   }
 }

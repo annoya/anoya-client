@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/platform_support.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/always_on_screen.dart';
@@ -25,7 +26,7 @@ void main() {
     expect(find.text('Started by the system'), findsOneWidget);
     expect(find.text('Block connections without VPN'), findsOneWidget);
     expect(
-      find.byType(Switch),
+      find.byType(DsToggle),
       findsNothing,
       reason: 'the switch is the system’s; ours would show a guess',
     );

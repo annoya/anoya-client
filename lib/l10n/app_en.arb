@@ -25,8 +25,8 @@
   "commonEdit": "Edit",
   "commonRename": "Rename",
   "commonName": "Name",
-  "commonAll": "ALL",
-  "commonFavorites": "FAVORITES",
+  "commonAll": "All",
+  "commonFavorites": "Favorites",
   "themeSystem": "System",
   "themeLight": "Light",
   "themeDark": "Dark",
@@ -57,27 +57,27 @@
   "@commonJustNow": {
     "description": "Relative time: an event less than a minute ago"
   },
-  "settingsSectionConfigurations": "CONFIGURATIONS",
+  "settingsSectionConfigurations": "Configurations",
   "@settingsSectionConfigurations": {
     "description": "Section header, all caps"
   },
-  "settingsSectionConnection": "CONNECTION",
+  "settingsSectionConnection": "Connection",
   "@settingsSectionConnection": {
     "description": "Section header, all caps"
   },
-  "settingsSectionRouting": "ROUTING",
+  "settingsSectionRouting": "Routing",
   "@settingsSectionRouting": {
     "description": "Section header, all caps"
   },
-  "settingsSectionGeneral": "GENERAL",
+  "settingsSectionGeneral": "General",
   "@settingsSectionGeneral": {
     "description": "Section header, all caps"
   },
-  "settingsSectionDiagnostics": "DIAGNOSTICS",
+  "settingsSectionDiagnostics": "Diagnostics",
   "@settingsSectionDiagnostics": {
     "description": "Section header, all caps"
   },
-  "settingsSectionAbout": "ABOUT",
+  "settingsSectionAbout": "About",
   "@settingsSectionAbout": {
     "description": "Section header, all caps"
   },
@@ -152,11 +152,11 @@
   "aboutPrivacyPolicy": "Privacy Policy",
   "aboutNotPublishedYet": "Not published yet",
   "uiCouldNotOpenPage": "Couldn’t open that page.",
-  "advancedSectionConnectionCheck": "CONNECTION CHECK",
+  "advancedSectionConnectionCheck": "Connection check",
   "@advancedSectionConnectionCheck": {
     "description": "Section header, all caps"
   },
-  "advancedSectionLastCheck": "LAST CHECK",
+  "advancedSectionLastCheck": "Last check",
   "@advancedSectionLastCheck": {
     "description": "Section header, all caps"
   },
@@ -232,11 +232,11 @@
   "alwaysOnNote": "Android owns this switch, so it lives in system settings: Network & internet → VPN → the gear next to this app. The system starts whatever configuration was used last.",
   "alwaysOnOpenSystemSettings": "Open system VPN settings",
   "dnsTitle": "DNS",
-  "dnsSectionInEffect": "IN EFFECT",
+  "dnsSectionInEffect": "In effect",
   "@dnsSectionInEffect": {
     "description": "Section header, all caps: the resolvers currently in use"
   },
-  "dnsSectionDropped": "DROPPED",
+  "dnsSectionDropped": "Dropped",
   "@dnsSectionDropped": {
     "description": "Section header, all caps: resolvers the app refused to use"
   },
@@ -286,11 +286,11 @@
   "dnsErrorNotResolverAddress": "Not a resolver address.",
   "dnsErrorAddressedByName": "Addressed by name, so it would need resolving before it could resolve anything. Use its IP address.",
   "geoTitle": "GeoIP & GeoSite",
-  "geoSectionDatabases": "DATABASES",
+  "geoSectionDatabases": "Databases",
   "@geoSectionDatabases": {
     "description": "Section header, all caps"
   },
-  "geoSectionUpdates": "UPDATES",
+  "geoSectionUpdates": "Updates",
   "@geoSectionUpdates": {
     "description": "Section header, all caps"
   },
@@ -348,11 +348,11 @@
       }
     }
   },
-  "geositeSectionPopular": "POPULAR",
+  "geositeSectionPopular": "Popular",
   "@geositeSectionPopular": {
     "description": "Section header, all caps"
   },
-  "geositeSectionAll": "ALL · {count}",
+  "geositeSectionAll": "All · {count}",
   "@geositeSectionAll": {
     "description": "Section header, all caps: every category with its count",
     "placeholders": {
@@ -361,7 +361,7 @@
       }
     }
   },
-  "geositeSectionAllMatch": "ALL · {count} OF {total} MATCH",
+  "geositeSectionAllMatch": "All · {count} of {total} match",
   "@geositeSectionAllMatch": {
     "description": "Section header, all caps: how many categories match the search",
     "placeholders": {
@@ -374,15 +374,15 @@
     }
   },
   "logsTitle": "Logs",
-  "logsSectionCollection": "COLLECTION",
+  "logsSectionCollection": "Collection",
   "@logsSectionCollection": {
     "description": "Section header, all caps"
   },
-  "logsSectionTunnel": "TUNNEL",
+  "logsSectionTunnel": "Tunnel",
   "@logsSectionTunnel": {
     "description": "Section header, all caps"
   },
-  "logsSectionApp": "APP",
+  "logsSectionApp": "App",
   "@logsSectionApp": {
     "description": "Section header, all caps"
   },
@@ -508,7 +508,7 @@
     }
   },
   "configRemoveDetail": "This configuration will be removed from this device.",
-  "configSectionSubscription": "SUBSCRIPTION",
+  "configSectionSubscription": "Subscription",
   "@configSectionSubscription": {
     "description": "Section header"
   },
@@ -561,7 +561,7 @@
   },
   "accountExpiredTitle": "Subscription expired",
   "configSubscriptionExpiredDetail": "Renew the subscription, then refresh this configuration.",
-  "configSectionThisDevice": "THIS DEVICE",
+  "configSectionThisDevice": "This device",
   "@configSectionThisDevice": {
     "description": "Section header"
   },
@@ -777,15 +777,15 @@
       }
     }
   },
-  "configSectionOrganizationRouting": "ORGANIZATION ROUTING",
+  "configSectionOrganizationRouting": "Organization routing",
   "@configSectionOrganizationRouting": {
     "description": "Section header"
   },
-  "configSectionSubscriptionRouting": "SUBSCRIPTION ROUTING",
+  "configSectionSubscriptionRouting": "Subscription routing",
   "@configSectionSubscriptionRouting": {
     "description": "Section header"
   },
-  "configSectionDeviceRouting": "DEVICE ROUTING",
+  "configSectionDeviceRouting": "Device routing",
   "@configSectionDeviceRouting": {
     "description": "Section header"
   },
@@ -796,7 +796,7 @@
   },
   "configSubscriptionRoutingNote": "Turn the switch off to use your own rule set instead. Your subscription cannot enforce this either way.",
   "configDeviceRoutingNote": "Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.",
-  "configSectionDetails": "DETAILS",
+  "configSectionDetails": "Details",
   "@configSectionDetails": {
     "description": "Section header"
   },
@@ -812,6 +812,18 @@
   },
   "configTrafficOf": "Traffic: {used} of {total}",
   "@configTrafficOf": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "configTraffic": "Traffic",
+  "configTrafficUsedOf": "{used} of {total}",
+  "@configTrafficUsedOf": {
     "placeholders": {
       "used": {
         "type": "String"
@@ -953,7 +965,7 @@
   "ruleSetSplitTunneling": "Split tunneling",
   "ruleSetGeoNotDownloaded": "Geo databases not downloaded",
   "ruleSetGeoNotDownloadedDetail": "geoip / geosite rules are inactive until then (~25 MB)",
-  "ruleSetRulesHeader": "RULES — FIRST MATCH WINS",
+  "ruleSetRulesHeader": "Rules — first match wins",
   "@ruleSetRulesHeader": {
     "description": "Section header"
   },
@@ -1025,21 +1037,36 @@
       }
     }
   },
-  "homeAccountUntil": "{status} · until {until}",
-  "@homeAccountUntil": {
-    "description": "Account line: the account status and its expiry date",
+  "homeConfiguration": "Configuration",
+  "homeExpiryEndsIn": "{days, plural, =0{Subscription ends today} =1{Subscription ends in 1 day} other{Subscription ends in {days} days}}",
+  "@homeExpiryEndsIn": {
+    "description": "Home card shown shortly before the subscription ends",
     "placeholders": {
-      "status": {
-        "type": "String"
-      },
-      "until": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "homeExpiryTraffic": "{percent}% of traffic used",
+  "@homeExpiryTraffic": {
+    "description": "Home card shown when most of the traffic is used",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "homeExpiryValidUntil": "Valid until {date}",
+  "@homeExpiryValidUntil": {
+    "description": "Subtitle of the subscription-ending card",
+    "placeholders": {
+      "date": {
         "type": "String"
       }
     }
   },
-  "homeConfiguration": "Configuration",
   "homeServer": "Server",
-  "homeChosenByEngine": "CHOSEN BY THE ENGINE",
+  "homeChosenByEngine": "Chosen by the engine",
   "@homeChosenByEngine": {
     "description": "Section header in the server picker above the proxy groups"
   },
@@ -1112,7 +1139,7 @@
   "@ruleSetImportProxy": {"description": "Rules sent through the VPN, on the import preview", "placeholders": {"count": {"type": "int"}}},
   "ruleSetImportBlock": "{count} blocked",
   "@ruleSetImportBlock": {"description": "Blocked rules, on the import preview", "placeholders": {"count": {"type": "int"}}},
-  "ruleSetImportSkipped": "NOT CARRIED OVER",
+  "ruleSetImportSkipped": "Not carried over",
   "ruleSetImportSkipDns": "DNS servers",
   "ruleSetImportSkipDnsDetail": "Set per configuration in Anoya",
   "ruleSetImportSkipGeo": "Geo database links",
@@ -1200,11 +1227,11 @@
   },
   "uiRemoveFromFavorites": "Remove from favorites",
   "uiAddToFavorites": "Add to favorites",
-  "uiAllNothingMatches": "ALL · NOTHING MATCHES",
+  "uiAllNothingMatches": "All · nothing matches",
   "@uiAllNothingMatches": {
     "description": "Picker section header while a search matches nothing"
   },
-  "uiAllMatchCount": "ALL · {shown} OF {total} MATCH",
+  "uiAllMatchCount": "All · {shown} of {total} match",
   "@uiAllMatchCount": {
     "description": "Picker section header while searching: how many rows match",
     "placeholders": {
@@ -1384,11 +1411,11 @@
   },
   "ruleSetAdvancedRulesDetail": "Apply before the list below · edit in Advanced",
   "ruleSetSearchServices": "Search services",
-  "ruleSetCountriesHeader": "COUNTRIES",
+  "ruleSetCountriesHeader": "Countries",
   "ruleSetAddCountry": "Add country",
-  "ruleSetServicesHeader": "SERVICES",
+  "ruleSetServicesHeader": "Services",
   "ruleSetAddCategory": "Add category",
-  "ruleSetOtherCategoriesHeader": "OTHER CATEGORIES",
+  "ruleSetOtherCategoriesHeader": "Other categories",
   "ruleSetNothingSelectedSplit": "Nothing selected · no traffic goes through the VPN yet",
   "ruleSetNothingSelectedFull": "Nothing selected · everything goes through the VPN",
   "ruleSetSelectedSplit": "{count} selected · everything else connects directly",
@@ -1483,38 +1510,38 @@
   },
   "onDemandNameOptional": "Name (optional)",
   "onDemandNameHint": "Office",
-  "onDemandNetworkHeader": "NETWORK",
+  "onDemandNetworkHeader": "Network",
   "onDemandNetworkHelpAny": "The rule is checked on every network — Wi-Fi, mobile or wired.",
   "onDemandNetworkHelpWifi": "When the device joins a Wi-Fi network, the system checks the conditions below and applies the rule.",
   "onDemandNetworkHelpCellular": "When the device is on mobile data, the system checks the conditions below and applies the rule.",
   "onDemandNetworkHelpEthernet": "When the device is on a wired network, the system checks the conditions below and applies the rule.",
-  "onDemandConditionsHeader": "CONDITIONS",
+  "onDemandConditionsHeader": "Conditions",
   "onDemandWifiNetworks": "Wi-Fi networks",
   "onDemandWifiNetwork": "Wi-Fi network",
-  "onDemandNetworksUnit": "NETWORKS",
+  "onDemandNetworksUnit": "networks",
   "@onDemandNetworksUnit": {
     "description": "Unit word in the header '3 NETWORKS · ANY OF THEM MATCHES'"
   },
   "onDemandWifiNetworksHelp": "Matches the network name exactly. Leave empty for any Wi-Fi.",
   "onDemandDnsDomains": "DNS search domains",
   "onDemandDnsDomain": "DNS search domain",
-  "onDemandDomainsUnit": "DOMAINS",
+  "onDemandDomainsUnit": "domains",
   "@onDemandDomainsUnit": {
     "description": "Unit word in the header '3 DOMAINS · ANY OF THEM MATCHES'"
   },
   "onDemandDnsDomainsHelp": "Matches when the network’s search domain ends with an entry.",
   "onDemandDnsServers": "DNS servers",
   "onDemandDnsServer": "DNS server",
-  "onDemandServersUnit": "SERVERS",
+  "onDemandServersUnit": "servers",
   "@onDemandServersUnit": {
     "description": "Unit word in the header '3 SERVERS · ANY OF THEM MATCHES'"
   },
   "onDemandDnsServersHelp": "Matches the network’s DNS servers; a single “*” wildcard is allowed.",
-  "onDemandUrlProbeHeader": "URL PROBE",
+  "onDemandUrlProbeHeader": "URL probe",
   "onDemandUrlOptional": "URL (optional)",
   "onDemandUrlProbeHelp": "The rule matches only if this URL returns 200 without redirects.",
-  "onDemandNoEntries": "NO ENTRIES",
-  "onDemandEntriesHeader": "{count} {unit} · ANY OF THEM MATCHES",
+  "onDemandNoEntries": "No entries",
+  "onDemandEntriesHeader": "{count} {unit} · any of them matches",
   "@onDemandEntriesHeader": {
     "description": "Section header of a condition list; unit is one of the *Unit strings (NETWORKS, DOMAINS, SERVERS)",
     "placeholders": {
@@ -1920,19 +1947,19 @@
     }
   },
   "importUnusableNotALink": "Not a link or subscription",
-  "catalogGroupStreaming": "STREAMING",
+  "catalogGroupStreaming": "Streaming",
   "@catalogGroupStreaming": {
     "description": "Section header in the service catalog"
   },
-  "catalogGroupMessengers": "MESSENGERS",
+  "catalogGroupMessengers": "Messengers",
   "@catalogGroupMessengers": {
     "description": "Section header in the service catalog"
   },
-  "catalogGroupSocial": "SOCIAL",
+  "catalogGroupSocial": "Social",
   "@catalogGroupSocial": {
     "description": "Section header in the service catalog"
   },
-  "catalogGroupOther": "OTHER",
+  "catalogGroupOther": "Other",
   "@catalogGroupOther": {
     "description": "Section header in the service catalog"
   },

@@ -84,10 +84,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonName => 'Название';
 
   @override
-  String get commonAll => 'ВСЕ';
+  String get commonAll => 'Все';
 
   @override
-  String get commonFavorites => 'ИЗБРАННОЕ';
+  String get commonFavorites => 'Избранное';
 
   @override
   String get themeSystem => 'Как в системе';
@@ -135,22 +135,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonJustNow => 'только что';
 
   @override
-  String get settingsSectionConfigurations => 'КОНФИГУРАЦИИ';
+  String get settingsSectionConfigurations => 'Конфигурации';
 
   @override
-  String get settingsSectionConnection => 'ПОДКЛЮЧЕНИЕ';
+  String get settingsSectionConnection => 'Подключение';
 
   @override
-  String get settingsSectionRouting => 'МАРШРУТИЗАЦИЯ';
+  String get settingsSectionRouting => 'Маршрутизация';
 
   @override
-  String get settingsSectionGeneral => 'ОБЩИЕ';
+  String get settingsSectionGeneral => 'Общие';
 
   @override
-  String get settingsSectionDiagnostics => 'ДИАГНОСТИКА';
+  String get settingsSectionDiagnostics => 'Диагностика';
 
   @override
-  String get settingsSectionAbout => 'О ПРИЛОЖЕНИИ';
+  String get settingsSectionAbout => 'О приложении';
 
   @override
   String get settingsConfigurations => 'Конфигурации';
@@ -282,10 +282,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get uiCouldNotOpenPage => 'Не удалось открыть страницу.';
 
   @override
-  String get advancedSectionConnectionCheck => 'ПРОВЕРКА СОЕДИНЕНИЯ';
+  String get advancedSectionConnectionCheck => 'Проверка соединения';
 
   @override
-  String get advancedSectionLastCheck => 'ПОСЛЕДНЯЯ ПРОВЕРКА';
+  String get advancedSectionLastCheck => 'Последняя проверка';
 
   @override
   String get advancedCheckAfterConnecting => 'Проверять после подключения';
@@ -393,10 +393,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dnsTitle => 'DNS';
 
   @override
-  String get dnsSectionInEffect => 'ДЕЙСТВУЮТ';
+  String get dnsSectionInEffect => 'Действуют';
 
   @override
-  String get dnsSectionDropped => 'ОТБРОШЕНЫ';
+  String get dnsSectionDropped => 'Отброшены';
 
   @override
   String get dnsParallelNote =>
@@ -490,10 +490,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get geoTitle => 'GeoIP и GeoSite';
 
   @override
-  String get geoSectionDatabases => 'БАЗЫ ДАННЫХ';
+  String get geoSectionDatabases => 'Базы данных';
 
   @override
-  String get geoSectionUpdates => 'ОБНОВЛЕНИЯ';
+  String get geoSectionUpdates => 'Обновления';
 
   @override
   String get geoGeoipSource => 'Источник GeoIP';
@@ -589,29 +589,29 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get geositeSectionPopular => 'ПОПУЛЯРНЫЕ';
+  String get geositeSectionPopular => 'Популярные';
 
   @override
   String geositeSectionAll(int count) {
-    return 'ВСЕ · $count';
+    return 'Все · $count';
   }
 
   @override
   String geositeSectionAllMatch(int count, int total) {
-    return 'ВСЕ · СОВПАДАЮТ $count ИЗ $total';
+    return 'Все · совпадают $count из $total';
   }
 
   @override
   String get logsTitle => 'Журналы';
 
   @override
-  String get logsSectionCollection => 'СБОР';
+  String get logsSectionCollection => 'Сбор';
 
   @override
-  String get logsSectionTunnel => 'ТУННЕЛЬ';
+  String get logsSectionTunnel => 'Туннель';
 
   @override
-  String get logsSectionApp => 'ПРИЛОЖЕНИЕ';
+  String get logsSectionApp => 'Приложение';
 
   @override
   String get logsCollect => 'Собирать журналы';
@@ -792,7 +792,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Конфигурация будет удалена с этого устройства.';
 
   @override
-  String get configSectionSubscription => 'ПОДПИСКА';
+  String get configSectionSubscription => 'Подписка';
 
   @override
   String get configRanUntil => 'Действовала до';
@@ -851,7 +851,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Продлите подписку, затем обновите эту конфигурацию.';
 
   @override
-  String get configSectionThisDevice => 'ЭТО УСТРОЙСТВО';
+  String get configSectionThisDevice => 'Это устройство';
 
   @override
   String get configDeviceIdentifiedSubtitle =>
@@ -1078,13 +1078,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get configSectionOrganizationRouting => 'МАРШРУТИЗАЦИЯ ОРГАНИЗАЦИИ';
+  String get configSectionOrganizationRouting => 'Маршрутизация организации';
 
   @override
-  String get configSectionSubscriptionRouting => 'МАРШРУТИЗАЦИЯ ПОДПИСКИ';
+  String get configSectionSubscriptionRouting => 'Маршрутизация подписки';
 
   @override
-  String get configSectionDeviceRouting => 'МАРШРУТИЗАЦИЯ УСТРОЙСТВА';
+  String get configSectionDeviceRouting => 'Маршрутизация устройства';
 
   @override
   String get configOrganizationRoutingNote =>
@@ -1102,7 +1102,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Наборы правил общие для всех конфигураций; переключатель — у каждой свой, так что рабочая и личная подписки могут использовать один набор по-разному.';
 
   @override
-  String get configSectionDetails => 'ПОДРОБНОСТИ';
+  String get configSectionDetails => 'Подробности';
 
   @override
   String get configGetSupport => 'Обратиться в поддержку';
@@ -1119,6 +1119,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String configTrafficOf(String used, String total) {
     return 'Трафик: $used из $total';
+  }
+
+  @override
+  String get configTraffic => 'Трафик';
+
+  @override
+  String configTrafficUsedOf(String used, String total) {
+    return '$used из $total';
   }
 
   @override
@@ -1258,7 +1266,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'правила geoip / geosite неактивны, пока их нет (~25 МБ)';
 
   @override
-  String get ruleSetRulesHeader => 'ПРАВИЛА — ПРИМЕНЯЕТСЯ ПЕРВОЕ СОВПАВШЕЕ';
+  String get ruleSetRulesHeader => 'Правила — применяется первое совпавшее';
 
   @override
   String get homeAddConfiguration => 'Добавить конфигурацию';
@@ -1327,18 +1335,37 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String homeAccountUntil(String status, String until) {
-    return '$status · до $until';
+  String get homeConfiguration => 'Конфигурация';
+
+  @override
+  String homeExpiryEndsIn(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Подписка закончится через $days дня',
+      many: 'Подписка закончится через $days дней',
+      few: 'Подписка закончится через $days дня',
+      one: 'Подписка закончится через 1 день',
+      zero: 'Подписка заканчивается сегодня',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get homeConfiguration => 'Конфигурация';
+  String homeExpiryTraffic(int percent) {
+    return 'Использовано $percent% трафика';
+  }
+
+  @override
+  String homeExpiryValidUntil(String date) {
+    return 'Действует до $date';
+  }
 
   @override
   String get homeServer => 'Сервер';
 
   @override
-  String get homeChosenByEngine => 'ВЫБИРАЕТ ДВИЖОК';
+  String get homeChosenByEngine => 'Выбирает движок';
 
   @override
   String get homeSwitchingServer => 'Смена сервера…';
@@ -1483,7 +1510,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get ruleSetImportSkipped => 'НЕ ПЕРЕНЕСЕНО';
+  String get ruleSetImportSkipped => 'Не перенесено';
 
   @override
   String get ruleSetImportSkipDns => 'DNS-серверы';
@@ -1680,11 +1707,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get uiAddToFavorites => 'В избранное';
 
   @override
-  String get uiAllNothingMatches => 'ВСЕ · НИЧЕГО НЕ НАЙДЕНО';
+  String get uiAllNothingMatches => 'Все · ничего не найдено';
 
   @override
   String uiAllMatchCount(int shown, int total) {
-    return 'ВСЕ · СОВПАДАЮТ $shown ИЗ $total';
+    return 'Все · совпадают $shown из $total';
   }
 
   @override
@@ -1882,19 +1909,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ruleSetSearchServices => 'Поиск сервисов';
 
   @override
-  String get ruleSetCountriesHeader => 'СТРАНЫ';
+  String get ruleSetCountriesHeader => 'Страны';
 
   @override
   String get ruleSetAddCountry => 'Добавить страну';
 
   @override
-  String get ruleSetServicesHeader => 'СЕРВИСЫ';
+  String get ruleSetServicesHeader => 'Сервисы';
 
   @override
   String get ruleSetAddCategory => 'Добавить категорию';
 
   @override
-  String get ruleSetOtherCategoriesHeader => 'ДРУГИЕ КАТЕГОРИИ';
+  String get ruleSetOtherCategoriesHeader => 'Другие категории';
 
   @override
   String get ruleSetNothingSelectedSplit =>
@@ -2023,7 +2050,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onDemandNameHint => 'Офис';
 
   @override
-  String get onDemandNetworkHeader => 'СЕТЬ';
+  String get onDemandNetworkHeader => 'Сеть';
 
   @override
   String get onDemandNetworkHelpAny =>
@@ -2042,7 +2069,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Когда устройство подключено к проводной сети, система проверяет условия ниже и применяет правило.';
 
   @override
-  String get onDemandConditionsHeader => 'УСЛОВИЯ';
+  String get onDemandConditionsHeader => 'Условия';
 
   @override
   String get onDemandWifiNetworks => 'Сети Wi-Fi';
@@ -2051,7 +2078,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onDemandWifiNetwork => 'Сеть Wi-Fi';
 
   @override
-  String get onDemandNetworksUnit => 'СЕТИ';
+  String get onDemandNetworksUnit => 'сети';
 
   @override
   String get onDemandWifiNetworksHelp =>
@@ -2064,7 +2091,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onDemandDnsDomain => 'Поисковый домен DNS';
 
   @override
-  String get onDemandDomainsUnit => 'ДОМЕНЫ';
+  String get onDemandDomainsUnit => 'домены';
 
   @override
   String get onDemandDnsDomainsHelp =>
@@ -2077,14 +2104,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onDemandDnsServer => 'Сервер DNS';
 
   @override
-  String get onDemandServersUnit => 'СЕРВЕРЫ';
+  String get onDemandServersUnit => 'серверы';
 
   @override
   String get onDemandDnsServersHelp =>
       'Сравнивается с серверами DNS сети; допускается один символ «*».';
 
   @override
-  String get onDemandUrlProbeHeader => 'ПРОВЕРКА URL';
+  String get onDemandUrlProbeHeader => 'Проверка URL';
 
   @override
   String get onDemandUrlOptional => 'URL (необязательно)';
@@ -2094,11 +2121,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Правило совпадает, только если этот URL отвечает 200 без перенаправлений.';
 
   @override
-  String get onDemandNoEntries => 'НЕТ ЗАПИСЕЙ';
+  String get onDemandNoEntries => 'Нет записей';
 
   @override
   String onDemandEntriesHeader(int count, String unit) {
-    return '$count $unit · ДОСТАТОЧНО ОДНОГО СОВПАДЕНИЯ';
+    return '$count $unit · достаточно одного совпадения';
   }
 
   @override
@@ -2661,16 +2688,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importUnusableNotALink => 'Это не ссылка и не подписка';
 
   @override
-  String get catalogGroupStreaming => 'СТРИМИНГ';
+  String get catalogGroupStreaming => 'Стриминг';
 
   @override
-  String get catalogGroupMessengers => 'МЕССЕНДЖЕРЫ';
+  String get catalogGroupMessengers => 'Мессенджеры';
 
   @override
-  String get catalogGroupSocial => 'СОЦСЕТИ';
+  String get catalogGroupSocial => 'Соцсети';
 
   @override
-  String get catalogGroupOther => 'ДРУГОЕ';
+  String get catalogGroupOther => 'Другое';
 
   @override
   String proxyGroupUrlTest(int count) {

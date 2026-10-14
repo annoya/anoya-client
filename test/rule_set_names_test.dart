@@ -6,10 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/rule_set.dart';
 import 'package:anoya/core/rule_set_transfer.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/theme.dart';
+import 'package:anoya/core/ui.dart';
 import 'package:anoya/core/vpn_core.dart';
 import 'package:anoya/features/rule_set_import_screen.dart';
 import 'package:anoya/features/rule_sets_screen.dart';
@@ -79,8 +81,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('There is already a set named “China”'), findsOneWidget);
-    final create = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Create'),
+    final create = tester.widget<DsDialogAction>(
+      find.widgetWithText(DsDialogAction, 'Create'),
     );
     expect(create.onPressed, isNull);
 
@@ -106,9 +108,8 @@ void main() {
     );
 
     expect(find.text('China 2'), findsOneWidget);
-    FilledButton add() => tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Add rule set'),
-    );
+    DsButton add() =>
+        tester.widget<DsButton>(find.widgetWithText(DsButton, 'Add rule set'));
     expect(add().onPressed, isNotNull);
 
     await tester.enterText(find.byType(TextField), 'CHINA');

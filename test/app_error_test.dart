@@ -4,11 +4,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/api/api_client.dart';
 import 'package:anoya/core/app_error.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/ui.dart';
 import 'package:anoya/l10n/l10n.dart';
+
+import 'support/ds_finders.dart';
 
 void main() {
   group('describeError', () {
@@ -129,7 +132,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(SnackBar),
-          matching: find.byIcon(Icons.close),
+          matching: findGlyph(Glyph.x),
         ),
         findsNothing,
       );
@@ -212,7 +215,7 @@ void main() {
       expect(find.text('Couldn’t reach the server'), findsOneWidget);
       expect(dismissed, false);
 
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(findGlyph(Glyph.x));
       await tester.pumpAndSettle();
       expect(find.text('Couldn’t reach the server'), findsNothing);
       expect(

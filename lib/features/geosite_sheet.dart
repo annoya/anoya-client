@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../core/ds.dart';
 import '../core/geosite_index.dart';
 import '../core/service_avatar.dart';
 import '../core/service_catalog.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
@@ -35,12 +37,37 @@ class _GeositeSheetState extends State<GeositeSheet> {
     );
   }
 
-  Widget? _check(String category) => _picked == null
-      ? null
-      : Checkbox(
-          value: _picked.contains(category),
-          onChanged: (_) => _choose(category),
-        );
+  Widget _row({
+    required String category,
+    required String title,
+    required String subtitle,
+    Widget? leading,
+    required bool last,
+  }) {
+    final row = DsRow(
+      leading: leading,
+      title: title,
+      subtitle: subtitle,
+      subtitleMaxLines: 1,
+      onTap: () => _choose(category),
+      trailing: [
+        if (_picked != null) DsCheck(checked: _picked.contains(category)),
+      ],
+    );
+    if (last) return row;
+    return DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: context.ds.borderSoft)),
+      ),
+      child: row,
+    );
+  }
+
+  Widget _header(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: DsCaption(text, strong: true),
+  );
 
   @override
   void initState() {
@@ -52,7 +79,6 @@ class _GeositeSheetState extends State<GeositeSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final index = _index;
     final q = _query.trim().toLowerCase();
@@ -84,53 +110,55 @@ class _GeositeSheetState extends State<GeositeSheet> {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height * kSheetMaxHeightFraction,
+          ),
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: TextField(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: DsSearchField(
+                  hint: l10n.geositeCategoryLabel,
                   autofocus: true,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: l10n.geositeCategoryLabel,
-                  ),
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
               if (index == null)
-                const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
-                )
+                const Expanded(child: Center(child: DsSpinner()))
               else if (popular.isEmpty && all.isEmpty)
                 Expanded(
                   child: Center(
-                    child: Text(
-                      index.isEmpty
+                    child: DsEmptyState(
+                      title: index.isEmpty
                           ? l10n.geositeNoCategories
                           : l10n.uiNothingMatches(_query),
-                      style: TextStyle(color: cs.onSurfaceVariant),
                     ),
                   ),
                 )
               else
                 Expanded(
                   child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: [
-                      if (popular.isNotEmpty)
-                        SectionHeader(l10n.geositeSectionPopular),
-                      ...popular.map((s) {
-                        final c = byName[s.category]!;
-                        return ListTile(
-                          leading: ServiceAvatar(s.name, category: s.category),
-                          title: Text(s.name),
-                          subtitle: Text('${s.category} · ${subtitle(c)}'),
-                          trailing: _check(s.category),
-                          onTap: () => _choose(s.category),
-                        );
-                      }),
-                      SectionHeader(
+                      if (popular.isNotEmpty) ...[
+                        _header(l10n.geositeSectionPopular),
+                        for (final (i, s) in popular.indexed)
+                          _row(
+                            category: s.category,
+                            leading: ServiceAvatar(
+                              s.name,
+                              category: s.category,
+                            ),
+                            title: s.name,
+                            subtitle:
+                                '${s.category} · ${subtitle(byName[s.category]!)}',
+                            last: i == popular.length - 1,
+                          ),
+                        const SizedBox(height: kGroupGap),
+                      ],
+                      _header(
                         q.isEmpty
                             ? l10n.geositeSectionAll(all.length)
                             : l10n.geositeSectionAllMatch(
@@ -138,26 +166,22 @@ class _GeositeSheetState extends State<GeositeSheet> {
                                 index.length,
                               ),
                       ),
-                      ...all.map(
-                        (c) => ListTile(
-                          title: Text(c.name),
-                          subtitle: Text(subtitle(c)),
-                          trailing: _check(c.name),
-                          onTap: () => _choose(c.name),
+                      for (final (i, c) in all.indexed)
+                        _row(
+                          category: c.name,
+                          title: c.name,
+                          subtitle: subtitle(c),
+                          last: i == all.length - 1,
                         ),
-                      ),
                     ],
                   ),
                 ),
               if (_picked != null)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(kGutter, 8, kGutter, 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(context).pop(_picked),
-                      child: Text(l10n.uiDoneCount(_picked.length)),
-                    ),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: DsButton(
+                    label: l10n.uiDoneCount(_picked.length),
+                    onPressed: () => Navigator.of(context).pop(_picked),
                   ),
                 ),
             ],

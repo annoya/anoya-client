@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ds.dart';
 import '../../core/norm_config.dart';
 import '../../core/profile.dart';
 import '../../core/ui.dart';
@@ -22,30 +23,33 @@ class SelfhostedConfigScreen extends ConsumerWidget {
     final p = profile;
     final account = p.account;
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(title: Text(p.name)),
-      body: PageBody(
-        child: ListView(
-          children: [
-            const SizedBox(height: 8),
-            ProfileHeaderCard(profile: p, isActive: isActive),
-            if (p.serverUrl != null) SourceCard(value: p.serverUrl!),
-            RefreshCard(profile: p),
-            RoutingRow(profile: p),
-            if (account != null) ...[
-              Card(
-                margin: kCardMargin,
-                child: ListTile(
-                  title: Text(l10n.configAccount),
-                  subtitle: Text(_accountSummary(l10n, account)),
-                ),
-              ),
-              if (account.dataLimit > 0) _TrafficCard(account: account),
-            ],
-            ConfigActions(profile: p, isActive: isActive),
-          ],
+    final head = [
+      ProfileHeaderRow(profile: p, isActive: isActive),
+      if (account != null) ...[
+        DsRow(
+          glyph: Glyph.user,
+          title: l10n.configAccount,
+          subtitle: _accountSummary(l10n, account),
         ),
-      ),
+        if (account.dataLimit > 0) _TrafficRow(account: account),
+      ],
+    ];
+    final origin = [
+      if (p.serverUrl != null) SourceRow(value: p.serverUrl!),
+      RefreshRow(profile: p),
+    ];
+    return DsPage(
+      title: p.name,
+      children: [
+        if (account == null)
+          DsCard(children: [...head, ...origin])
+        else ...[
+          DsCard(children: head),
+          DsCard(children: origin),
+        ],
+        RoutingRow(profile: p),
+        ConfigActions(profile: p, isActive: isActive),
+      ],
     );
   }
 
@@ -62,36 +66,27 @@ class SelfhostedConfigScreen extends ConsumerWidget {
   }
 }
 
-class _TrafficCard extends StatelessWidget {
-  const _TrafficCard({required this.account});
+class _TrafficRow extends StatelessWidget {
+  const _TrafficRow({required this.account});
 
   final Account account;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: kCardMargin,
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            context.l10n.configTrafficOf(
-              formatBytes(account.usedBytes),
-              formatBytes(account.dataLimit),
-            ),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: (account.usedBytes / account.dataLimit).clamp(0.0, 1.0),
-              minHeight: 6,
-            ),
-          ),
-        ],
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      DsRow(
+        glyph: Glyph.zap,
+        title: context.l10n.configTraffic,
+        subtitle: context.l10n.configTrafficUsedOf(
+          formatBytes(account.usedBytes),
+          formatBytes(account.dataLimit),
+        ),
       ),
-    ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        child: DsProgress(value: account.usedBytes / account.dataLimit),
+      ),
+    ],
   );
 }

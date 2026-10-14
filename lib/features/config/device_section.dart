@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/device_identity.dart';
+import '../../core/ds.dart';
+import '../../core/theme.dart';
 import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 
@@ -17,6 +19,7 @@ class ThisDeviceSection extends StatelessWidget {
         final id = snap.data;
         if (id == null) return const SizedBox.shrink();
         return DeviceSection(
+          spaced: true,
           label: id.label,
           labelSubtitle: l10n.configDeviceIdentifiedSubtitle,
           idTitle: l10n.configDeviceId,
@@ -36,6 +39,7 @@ class DeviceSection extends StatelessWidget {
     required this.idTitle,
     required this.idValue,
     required this.hint,
+    this.spaced = false,
   });
 
   final String label;
@@ -44,38 +48,27 @@ class DeviceSection extends StatelessWidget {
   final String idValue;
   final String hint;
 
+  final bool spaced;
+
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SectionHeader(context.l10n.configSectionThisDevice),
-        Card(
-          margin: kCardMargin,
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.smartphone_outlined),
-                title: Text(label),
-                subtitle: Text(labelSubtitle),
-              ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              IdentifierRow(title: idTitle, value: idValue),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(kGutter, 10, kGutter, 0),
-          child: Text(
-            hint,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.only(bottom: spaced ? kGroupGap : 0),
+    child: _group(context),
+  );
+
+  Widget _group(BuildContext context) => DsGroup(
+    caption: context.l10n.configSectionThisDevice,
+    note: hint,
+    children: [
+      DsRow(
+        glyph: Glyph.lock,
+        title: label,
+        subtitle: labelSubtitle,
+        subtitleMaxLines: 1,
+      ),
+      IdentifierRow(title: idTitle, value: idValue),
+    ],
+  );
 }
 
 class IdentifierRow extends StatelessWidget {
@@ -89,20 +82,26 @@ class IdentifierRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.badge_outlined),
-      title: Text(title),
-      subtitle: Text(shorten(value)),
-      trailing: IconButton(
-        icon: const Icon(Icons.copy_outlined, size: 18),
-        tooltip: context.l10n.commonCopy,
-        onPressed: () async {
-          await Clipboard.setData(ClipboardData(text: value));
-          if (context.mounted) {
-            showToast(context, context.l10n.configCopiedTitle(title));
-          }
-        },
-      ),
+    Future<void> copy() async {
+      await Clipboard.setData(ClipboardData(text: value));
+      if (context.mounted) {
+        showToast(context, context.l10n.configCopiedTitle(title));
+      }
+    }
+
+    return DsRow(
+      glyph: Glyph.fileText,
+      title: title,
+      subtitle: shorten(value),
+      subtitleMaxLines: 1,
+      trailing: [
+        DsAction(
+          glyph: Glyph.copy,
+          tooltip: context.l10n.commonCopy,
+          onPressed: copy,
+        ),
+      ],
+      onTap: copy,
     );
   }
 }

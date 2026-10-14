@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/ds.dart';
 import '../core/ext_logs.dart';
 import '../core/log.dart';
+import '../core/theme.dart';
 import '../l10n/l10n.dart';
 
 class LogViewerScreen extends StatefulWidget {
@@ -63,47 +65,92 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     });
   }
 
+  String? _placeholder(AppLocalizations l10n) {
+    if (_content.trim().isEmpty) return l10n.logsEmpty;
+    if (_content == l10n.logsNoLogYet || _content == l10n.logsNoLog) {
+      return _content;
+    }
+    return null;
+  }
+
+  Future<void> _copy() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final copied = context.l10n.commonCopied;
+    await Clipboard.setData(ClipboardData(text: _content));
+    messenger.showSnackBar(SnackBar(content: Text(copied)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: l10n.commonRefresh,
-            onPressed: _load,
+    final ds = context.ds;
+    final placeholder = _loading ? null : _placeholder(l10n);
+    return DsPage(
+      actions: [
+        DsNavButton(
+          glyph: Glyph.refreshCw,
+          tooltip: l10n.commonRefresh,
+          onPressed: _load,
+        ),
+        DsNavButton(
+          glyph: Glyph.copy,
+          tooltip: l10n.commonCopy,
+          onPressed: _loading || placeholder != null ? null : _copy,
+        ),
+      ],
+      body: ListView(
+        controller: _scroll,
+        padding: kScrollPadding.copyWith(top: 0),
+        children: [
+          DsLargeTitle(
+            widget.title,
+            padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
           ),
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: l10n.commonCopy,
-            onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
-              await Clipboard.setData(ClipboardData(text: _content));
-              messenger.showSnackBar(
-                SnackBar(content: Text(l10n.commonCopied)),
-              );
-            },
-          ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _content.trim().isEmpty
-          ? Center(child: Text(l10n.logsEmpty))
-          : SingleChildScrollView(
-              controller: _scroll,
+          if (_loading)
+            const Center(child: DsSpinner())
+          else if (placeholder != null)
+            _EmptyLog(placeholder)
+          else
+            Container(
               padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ds.surface,
+                borderRadius: BorderRadius.circular(kRadius),
+              ),
               child: SelectableText(
                 _content,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
-                  fontSize: 11,
-                  height: 1.4,
+                  fontSize: 12,
+                  height: 1.5,
+                  color: ds.text2,
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyLog extends StatelessWidget {
+  const _EmptyLog(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = context.ds;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GlyphIcon(Glyph.fileText, size: 40, color: ds.icon2),
+          const SizedBox(height: 8),
+          Text(text, style: DsType.text.copyWith(color: ds.text2)),
+        ],
+      ),
     );
   }
 }

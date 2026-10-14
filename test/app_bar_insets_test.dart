@@ -2,12 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/theme.dart';
 
 void main() {
   for (final platform in [TargetPlatform.macOS, TargetPlatform.iOS]) {
     testWidgets(
-      'app bar icons sit as far from either edge on ${platform.name}',
+      'nav icons sit as far from either edge on ${platform.name}',
       (tester) async {
         debugDefaultTargetPlatformOverride = platform;
         await tester.pumpWidget(
@@ -15,45 +16,48 @@ void main() {
             theme: buildAppTheme(Brightness.light),
             home: Navigator(
               onGenerateRoute: (_) => MaterialPageRoute(
-                builder: (_) => Scaffold(
-                  appBar: AppBar(
-                    leading: const BackButton(),
-                    title: const Text('Rule sets'),
+                builder: (_) => const SizedBox(),
+              ),
+              onGenerateInitialRoutes: (navigator, _) => [
+                MaterialPageRoute(builder: (_) => const SizedBox()),
+                MaterialPageRoute(
+                  builder: (_) => DsPage(
+                    title: 'Rule sets',
                     actions: [
-                      IconButton(
+                      DsNavButton(
                         key: const Key('a'),
-                        icon: const Icon(Icons.share_outlined),
+                        glyph: Glyph.share,
                         onPressed: () {},
                       ),
-                      IconButton(
+                      DsNavButton(
                         key: const Key('b'),
-                        icon: const Icon(Icons.delete_outline),
+                        glyph: Glyph.trash,
                         onPressed: () {},
                       ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         );
-        final width = tester.getSize(find.byType(AppBar)).width;
-        final back = tester.getCenter(find.byType(BackButton)).dx;
+        final width = tester.getSize(find.byType(DsNavBar)).width;
+        final back = tester.getCenter(find.byType(DsNavButton).first).dx;
         final last = width - tester.getCenter(find.byKey(const Key('b'))).dx;
         final gap =
             tester.getCenter(find.byKey(const Key('b'))).dx -
             tester.getCenter(find.byKey(const Key('a'))).dx;
         debugDefaultTargetPlatformOverride = null;
+        expect(back, closeTo(15 + kNavButton / 2, 0.5));
         expect(
           last,
-          back,
-          reason:
-              'desktop shrink-wraps icon buttons to 40 unless told otherwise',
+          closeTo(back - 1, 0.5),
+          reason: 'the last action sits as far from the right edge',
         );
         expect(
           gap,
-          48,
-          reason: 'two actions sit a full 48 apart, as on phones',
+          kNavButton + 16,
+          reason: 'two actions sit 16 apart, as in the navigation bar',
         );
       },
     );

@@ -46,23 +46,22 @@ horizontally, so set `rail.scrollLeft` to reach boards that are off-screen.
 
 ## What the validator actually checks
 
-Frame overflow, row heights (56 one-line / 72 two-line / 64 rule rows), button
-heights (48, and equal within a stack), inputs (56), segmented controls (40 and
-full width), app bars (56 with symmetric icon insets), ring (180), FAB (56),
-switch (52×32), horizontal overflow, and class-name collisions between canvas
-markup and page chrome.
+Frame overflow, row heights (72, wrapping rows up to 120 / 72 rule rows), button
+heights (48, and equal within a stack), text fields (64), search fields (56),
+segmented controls (48 and full width), chips (34), nav rows (48), status bars (47),
+large titles (30), the home cat stage (240×200), FAB (56), toggles (50×30),
+horizontal overflow, and class-name collisions between canvas markup and page chrome.
 
 Two traps worth knowing before they cost you a debugging round:
 
-- **A `.s` class anywhere inside a `.row` means "this row has a subtitle"**, so
-  the checker demands 72pt. An icon written as `class="icon s muted"` inside a
-  one-line row trips this. Use `xs` there instead.
+- **Every row is 72pt now**, one line or two. A subtitle that wraps must be
+  marked `.s.multi`, otherwise the checker reports the taller row.
 - **Every canvas needs a `.cap .id`** — the validator uses it to name the
   offender in its report, and without it violations read as `(no id)`.
 
 ## Conventions the mockup encodes
 
-- Phone frame 402×874, macOS window 700×630, content capped at 560 — all in
+- Phone frame 390×844, desktop window 400×700, content capped at 560 — all in
   logical points, displayed at 62%.
 - Shared primitives already exist and should be reused rather than re-invented:
   `pickOption` (the single bottom-sheet picker for every list), `SelectField`,
