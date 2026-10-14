@@ -74,9 +74,17 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 300));
       client.cancelAll();
 
-      expect((await first).code, AgwStatus.cancelled);
-      expect((await queued).code, AgwStatus.cancelled);
+      final running = await first;
+      final waiting = await queued;
+      expect(running.code, AgwStatus.cancelled);
+      expect(waiting.code, AgwStatus.cancelled);
       expect(started.elapsed, lessThan(const Duration(seconds: 5)));
+      expect(
+        running.trace,
+        allOf(startsWith('request '), contains('cancelled after')),
+        reason: 'the steps taken before the cancel stay in the trace',
+      );
+      expect(waiting.trace, contains('before it started'));
     },
     skip: _needsLibrary,
   );
