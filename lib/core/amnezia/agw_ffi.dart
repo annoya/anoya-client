@@ -245,7 +245,11 @@ class AgwClient {
     required int generation,
   }) async {
     if (generation != _generation) {
-      return const AgwResponse(AgwStatus.cancelled, '');
+      return const AgwResponse(
+        AgwStatus.cancelled,
+        '',
+        'cancelled before it started, while an earlier request was running',
+      );
     }
     // `post` blocks the worker isolate's only thread, so only this isolate can cancel it.
     final b = _Bindings.instance;
