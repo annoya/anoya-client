@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../core/ds.dart';
 import '../core/geosite_index.dart';
-import '../core/service_avatar.dart';
 import '../core/service_catalog.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
@@ -41,11 +40,12 @@ class _GeositeSheetState extends State<GeositeSheet> {
     required String category,
     required String title,
     required String subtitle,
-    Widget? leading,
+    required bool first,
     required bool last,
-  }) {
-    final row = DsRow(
-      leading: leading,
+  }) => DsCardSlice(
+    first: first,
+    last: last,
+    child: DsRow(
       title: title,
       subtitle: subtitle,
       subtitleMaxLines: 1,
@@ -53,20 +53,12 @@ class _GeositeSheetState extends State<GeositeSheet> {
       trailing: [
         if (_picked != null) DsCheck(checked: _picked.contains(category)),
       ],
-    );
-    if (last) return row;
-    return DecoratedBox(
-      position: DecorationPosition.foreground,
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: context.ds.borderSoft)),
-      ),
-      child: row,
-    );
-  }
+    ),
+  );
 
   Widget _header(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 4),
-    child: DsCaption(text, strong: true),
+    padding: const EdgeInsets.only(bottom: kCaptionGap),
+    child: DsCaption(text),
   );
 
   @override
@@ -119,6 +111,18 @@ class _GeositeSheetState extends State<GeositeSheet> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _picked == null
+                        ? l10n.geositeCategoryLabel
+                        : l10n.ruleCategories,
+                    style: DsType.h2.copyWith(color: context.ds.text1),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: DsSearchField(
                   hint: l10n.geositeCategoryLabel,
                   autofocus: true,
@@ -147,13 +151,10 @@ class _GeositeSheetState extends State<GeositeSheet> {
                         for (final (i, s) in popular.indexed)
                           _row(
                             category: s.category,
-                            leading: ServiceAvatar(
-                              s.name,
-                              category: s.category,
-                            ),
                             title: s.name,
                             subtitle:
                                 '${s.category} · ${subtitle(byName[s.category]!)}',
+                            first: i == 0,
                             last: i == popular.length - 1,
                           ),
                         const SizedBox(height: kGroupGap),
@@ -171,6 +172,7 @@ class _GeositeSheetState extends State<GeositeSheet> {
                           category: c.name,
                           title: c.name,
                           subtitle: subtitle(c),
+                          first: i == 0,
                           last: i == all.length - 1,
                         ),
                     ],

@@ -89,7 +89,7 @@ void main() {
     expect(find.text('work'), findsOneWidget);
     expect(find.text('travel'), findsOneWidget);
     expect(
-      find.byType(DsRadio),
+      findGlyph(Glyph.check),
       findsNothing,
       reason: 'the sheet navigates, it does not select the active one',
     );

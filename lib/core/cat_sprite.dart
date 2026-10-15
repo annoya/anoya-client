@@ -244,13 +244,11 @@ class CatStage extends StatefulWidget {
     super.key,
     required this.mood,
     this.strongGlow = false,
-    this.glow = true,
     this.dimmed = false,
   });
 
   final CatMood mood;
   final bool strongGlow;
-  final bool glow;
   final bool dimmed;
 
   @override
@@ -304,7 +302,8 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
         final t = elapsed.inMilliseconds / 2400;
         _zzzLift.value = (1 - math.cos(2 * math.pi * t)) / 2;
       case CatMood.looking:
-        final right = (elapsed.inMilliseconds ~/ kCatLookFrame.inMilliseconds).isOdd;
+        final right =
+            (elapsed.inMilliseconds ~/ kCatLookFrame.inMilliseconds).isOdd;
         if (right != _lookRight) setState(() => _lookRight = right);
       case CatMood.awake:
         if (!_blinking && elapsed >= _nextBlink) {
@@ -338,8 +337,7 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
     return 0;
   }
 
-  bool get _petHappy =>
-      _petActive && (_stillPet || _petAt >= kCatPetSway * 2);
+  bool get _petHappy => _petActive && (_stillPet || _petAt >= kCatPetSway * 2);
 
   @override
   void dispose() {
@@ -363,17 +361,18 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
     final reach = glowSize + kCatGlowBlur * 2;
     final cat = CustomPaint(
       size: const Size.square(kCatSize),
-      painter: CatPainter(frame: _frame, body: ds.text1, eyes: ds.chroma),
+      painter: CatPainter(frame: _frame, body: ds.text1, eyes: ds.catEye),
     );
     return ExcludeSemantics(
-      child: SizedBox(
-        width: kCatStageWidth,
-        height: kCatStageHeight,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            if (widget.glow)
+      child: Opacity(
+        opacity: widget.dimmed ? kDisabledOpacity : 1,
+        child: SizedBox(
+          width: kCatStageWidth,
+          height: kCatStageHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
               Positioned(
                 left: (kCatStageWidth - reach) / 2,
                 top: (kCatStageHeight - reach) / 2,
@@ -395,13 +394,10 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-            Opacity(
-              opacity: widget.dimmed ? kDisabledOpacity : 1,
-              child: MouseRegion(
+              MouseRegion(
                 cursor: widget.mood == CatMood.awake
                     ? SystemMouseCursors.click
                     : MouseCursor.defer,
-                onEnter: (_) => _pet(),
                 child: GestureDetector(
                   onTap: _pet,
                   child: SizedBox.square(
@@ -428,8 +424,8 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

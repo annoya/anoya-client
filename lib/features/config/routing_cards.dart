@@ -47,31 +47,36 @@ class LocalRoutingCard extends ConsumerWidget {
         ],
       );
     }
-    return DsCard(
+    return DsStack(
+      gap: 8,
       children: [
-        DsRow(
-          glyph: Glyph.split,
-          title: l10n.configRouting,
-          subtitle: localRoutingSummary(profile, ruleSet),
-          onTap: () => ctrl.setRoutingEnabled(profile.id, !on),
-          trailing: [
-            DsToggle(
-              value: on,
-              onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
+        DsCard(
+          children: [
+            DsRow(
+              glyph: Glyph.split,
+              title: l10n.configRouting,
+              subtitle: localRoutingSummary(profile, ruleSet),
+              onTap: () => ctrl.setRoutingEnabled(profile.id, !on),
+              trailing: [
+                DsToggle(
+                  value: on,
+                  onChanged: (v) => ctrl.setRoutingEnabled(profile.id, v),
+                ),
+              ],
+            ),
+            Opacity(
+              opacity: on ? 1 : kDisabledOpacity,
+              child: DsRow(
+                glyph: Glyph.layers,
+                title: l10n.configRuleSet,
+                subtitle: ruleSet?.name ?? l10n.configRuleSetDefault,
+                trailing: const [DsChevron(down: true)],
+                onTap: () => _pick(context, ref, sets),
+              ),
             ),
           ],
         ),
-        Opacity(
-          opacity: on ? 1 : kDisabledOpacity,
-          child: DsRow(
-            glyph: Glyph.layers,
-            title: l10n.configRuleSet,
-            subtitle: ruleSet?.name ?? l10n.configRuleSetDefault,
-            trailing: const [DsChevron(down: true)],
-            onTap: () => _pick(context, ref, sets),
-          ),
-        ),
-        const RuleSetsRow(),
+        const DsCard(children: [RuleSetsRow()]),
       ],
     );
   }
@@ -175,11 +180,13 @@ class RoutingRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final plan = dnsPlanForProfile(ref, profile);
     final l10n = context.l10n;
-    final dns = plan.dropped.isNotEmpty
+    final refused = plan.dropped.isNotEmpty;
+    final dns = refused
         ? l10n.configDnsRefused(plan.dropped.length)
         : plan.usingFallback
         ? l10n.configDnsByApp
         : l10n.configDnsOrigin(dnsOriginLabel(profile, plan));
+    final ds = context.ds;
     return DsGroup(
       caption: l10n.settingsSectionRouting,
       children: [
@@ -187,6 +194,22 @@ class RoutingRow extends ConsumerWidget {
           glyph: Glyph.split,
           title: l10n.configRouting,
           subtitle: '${_routing(l10n, ref)} · $dns',
+          subtitleWidget: refused
+              ? Text.rich(
+                  TextSpan(
+                    text: '${_routing(l10n, ref)} · ',
+                    children: [
+                      TextSpan(
+                        text: dns,
+                        style: TextStyle(color: ds.destructive),
+                      ),
+                    ],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: DsType.small.copyWith(color: ds.text3),
+                )
+              : null,
           trailing: const [DsChevron()],
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(

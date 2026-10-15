@@ -211,9 +211,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final check = ref.watch(connectionCheckProvider.select((s) => s.last));
     if (check == null || check.passed) return null;
     final l10n = context.l10n;
-    return DsNotification(
-      glyph: Glyph.alertTriangle,
-      tone: DsTone.warning,
+    return DsNotification.warning(
       title: l10n.homeCheckFailedTitle,
       body: l10n.homeCheckFailedDetail,
     );
@@ -258,7 +256,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return DsCard(
       children: [
         DsRow(
-          compact: true,
           glyph: Glyph.clock,
           title: ending
               ? l10n.homeExpiryEndsIn(daysLeft.ceil())
@@ -268,7 +265,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               : l10n.homeExpiryValidUntil(
                   MaterialLocalizations.of(context).formatMediumDate(until),
                 ),
-          trailing: const [_SmallChevron()],
+          trailing: const [DsChevron()],
           onTap: () => _push(ConfigScreen(profileId: active!.id)),
         ),
       ],
@@ -280,7 +277,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return DsCard(
       children: [
         DsRow(
-          compact: true,
           glyph: Glyph.plus,
           title: l10n.startAddConnection,
           subtitle: l10n.startSubtitle,
@@ -299,7 +295,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return DsCard(
       children: [
         DsRow(
-          compact: true,
           glyph: profileIcon(active.type),
           title: active.name,
           subtitle: profileKind(active),
@@ -311,7 +306,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               tooltip: context.l10n.homeConfigurationSettings,
               onPressed: () => _push(ConfigScreen(profileId: active.id)),
             ),
-            if (pickable) _SmallChevron(down: true, locked: connecting),
+            if (pickable) DsChevron(down: true, locked: connecting),
           ],
           onTap: (!pickable || _locked) ? null : _pickProfile,
         ),
@@ -335,7 +330,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final card = DsCard(
       children: [
         DsRow(
-          compact: true,
           leading: group != null
               ? GlyphIcon(groupIcon(group.type))
               : flagOrIcon(loc),
@@ -348,16 +342,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : l10n.homeGroupAutoPicked(picked))
               : loc?.subtitle,
           subtitleMaxLines: 1,
-          trailing: [
-            if (pickable)
-              _SmallChevron(down: group != null, locked: connecting),
-          ],
+          trailing: [if (pickable) DsChevron(locked: connecting)],
           onTap: (!pickable || _locked) ? null : () => _pickLocation(active),
         ),
       ],
     );
     return connecting && pickable
-        ? Opacity(opacity: kLockedCardOpacity, child: card)
+        ? Opacity(opacity: kDisabledOpacity, child: card)
         : card;
   }
 
@@ -428,25 +419,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(profilesControllerProvider.notifier).selectLocation(picked);
     }
   }
-}
-
-// Chevron 20 of the home cards (24×20 slot, 4 to the edge); a lock while connecting.
-class _SmallChevron extends StatelessWidget {
-  const _SmallChevron({this.down = false, this.locked = false});
-
-  final bool down;
-  final bool locked;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 2, right: 4),
-    child: GlyphIcon(
-      locked
-          ? Glyph.lock
-          : down
-          ? Glyph.chevronDown
-          : Glyph.chevronRight,
-      size: kSmallChevron,
-    ),
-  );
 }

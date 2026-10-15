@@ -46,16 +46,16 @@ horizontally, so set `rail.scrollLeft` to reach boards that are off-screen.
 
 ## What the validator actually checks
 
-Frame overflow, row heights (72, wrapping rows up to 120 / 72 rule rows), button
-heights (48, and equal within a stack), text fields (64), search fields (56),
+Frame overflow, row heights (56 one line, 72 with a subtitle, wrapping rows up to 120),
+button heights (48, and equal within a stack), text fields (56), search fields (44),
 segmented controls (48 and full width), chips (34), nav rows (48), status bars (47),
 large titles (30), the home cat stage (240×200), FAB (56), toggles (50×30),
 horizontal overflow, and class-name collisions between canvas markup and page chrome.
 
 Two traps worth knowing before they cost you a debugging round:
 
-- **Every row is 72pt now**, one line or two. A subtitle that wraps must be
-  marked `.s.multi`, otherwise the checker reports the taller row.
+- **Rows follow ListTile**: 56 with one line, 72 with a subtitle. A subtitle
+  that wraps must be marked `.s.multi`, otherwise the checker reports the taller row.
 - **Every canvas needs a `.cap .id`** — the validator uses it to name the
   offender in its report, and without it violations read as `(no id)`.
 

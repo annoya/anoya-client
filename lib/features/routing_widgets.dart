@@ -12,8 +12,6 @@ import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
-const double kInactiveRuleOpacity = 0.45;
-
 class DirectionCard<T> extends StatelessWidget {
   const DirectionCard({
     super.key,
@@ -156,7 +154,6 @@ class RuleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final ds = context.ds;
     final badge = DsBadge(
       rule.action.toUpperCase(),
       tone: switch (rule.action) {
@@ -188,26 +185,9 @@ class RuleTile extends StatelessWidget {
         : rule.noResolve
         ? l10n.ruleNoResolveKind(kind)
         : kind;
-    final editable = onRemove != null || reorderIndex != null;
     final row = DsRow(
       title: title,
-      titleWidget: editable
-          ? null
-          : Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DsType.h3.copyWith(color: ds.text1),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                badge,
-              ],
-            ),
-      badge: editable ? badge : null,
+      titleBadge: badge,
       subtitle: subtitle,
       subtitleMaxLines: 1,
       onTap: onTap,
@@ -228,7 +208,7 @@ class RuleTile extends StatelessWidget {
           ),
       ],
     );
-    return inactive ? Opacity(opacity: kInactiveRuleOpacity, child: row) : row;
+    return inactive ? Opacity(opacity: kDisabledOpacity, child: row) : row;
   }
 }
 

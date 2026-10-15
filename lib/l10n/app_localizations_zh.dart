@@ -1742,7 +1742,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String ruleSummaryGeosite(String category) {
-    return '“$category”域名（GeoSite 列表）';
+    return '发往“$category”域名（GeoSite 列表）的流量';
   }
 
   @override

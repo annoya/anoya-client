@@ -13,7 +13,11 @@ class AppError {
   final String title;
   final String? detail;
 
-  String get line => detail == null ? title : '$title — $detail';
+  String get line => switch (detail) {
+    null => title,
+    final d when RegExp(r'[.!?…]$').hasMatch(title) => '$title $d',
+    final d => '$title. $d',
+  };
 }
 
 class AppErrorException implements Exception {

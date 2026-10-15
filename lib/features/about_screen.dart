@@ -44,7 +44,6 @@ class AboutScreen extends StatelessWidget {
               glyph: Glyph.zap,
               title: l10n.aboutEngine,
               subtitle: engineVersionLabel,
-              onTap: () => _copyVersion(context),
               trailing: [
                 DsAction(
                   glyph: Glyph.copy,

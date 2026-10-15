@@ -13,12 +13,15 @@ class DsNavButton extends StatelessWidget {
     required this.onPressed,
     this.tooltip,
     this.busy = false,
+    this.filled = false,
   });
 
   final Glyph glyph;
   final VoidCallback? onPressed;
   final String? tooltip;
   final bool busy;
+
+  final bool filled;
 
   @override
   Widget build(BuildContext context) => IconButton(
@@ -32,6 +35,7 @@ class DsNavButton extends StatelessWidget {
     style: IconButton.styleFrom(
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       minimumSize: const Size.square(kNavButton),
+      backgroundColor: filled ? context.ds.accentAlpha : null,
       disabledForegroundColor: context.ds.icon1.withValues(
         alpha: busy ? 1 : kDisabledOpacity,
       ),
@@ -264,24 +268,15 @@ class DsStack extends StatelessWidget {
 }
 
 class DsCaption extends StatelessWidget {
-  const DsCaption(this.text, {super.key, this.strong = false});
+  const DsCaption(this.text, {super.key});
 
   final String text;
-  final bool strong;
 
   @override
-  Widget build(BuildContext context) {
-    final ds = context.ds;
-    return Semantics(
-      header: true,
-      child: Text(
-        text,
-        style: strong
-            ? DsType.h4.copyWith(color: ds.text1)
-            : DsType.text.copyWith(color: ds.text3),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Semantics(
+    header: true,
+    child: Text(text, style: DsType.text.copyWith(color: context.ds.text3)),
+  );
 }
 
 class DsNote extends StatelessWidget {
@@ -349,7 +344,6 @@ class DsGroup extends StatelessWidget {
     this.child,
     this.note,
     this.color,
-    this.strongCaption = false,
     this.captionGap = kCaptionGap,
   });
 
@@ -358,7 +352,6 @@ class DsGroup extends StatelessWidget {
   final Widget? child;
   final String? note;
   final Color? color;
-  final bool strongCaption;
   final double captionGap;
 
   @override
@@ -367,8 +360,8 @@ class DsGroup extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       if (caption != null) ...[
-        DsCaption(caption!, strong: strongCaption),
-        SizedBox(height: strongCaption ? 4 : captionGap),
+        DsCaption(caption!),
+        SizedBox(height: captionGap),
       ],
       child ?? DsCard(color: color, children: children),
       if (note != null) ...[const SizedBox(height: kNoteGap), DsNote(note!)],
@@ -461,6 +454,43 @@ class DsReorderableCard<T> extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+// One row of a DsCard built lazily: rounds its top when first, its bottom when last, a divider in between.
+class DsCardSlice extends StatelessWidget {
+  const DsCardSlice({
+    super.key,
+    required this.first,
+    required this.last,
+    required this.child,
+  });
+
+  final bool first;
+  final bool last;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = context.ds;
+    const r = Radius.circular(kRadius);
+    return Material(
+      color: ds.surface,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: BorderRadius.vertical(
+        top: first ? r : Radius.zero,
+        bottom: last ? r : Radius.zero,
+      ),
+      child: last
+          ? child
+          : DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: ds.borderSoft)),
+              ),
+              child: child,
+            ),
     );
   }
 }

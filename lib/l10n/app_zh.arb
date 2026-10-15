@@ -454,7 +454,7 @@
   "ruleNoResolveDescription": "仅匹配直接使用 IP 的连接，不解析域名",
   "ruleValue": "值",
   "ruleSummaryGeoip": "发往{country} IP 的流量",
-  "ruleSummaryGeosite": "“{category}”域名（GeoSite 列表）",
+  "ruleSummaryGeosite": "发往“{category}”域名（GeoSite 列表）的流量",
   "ruleSummaryProcess": "“{name}”的流量",
   "ruleSummaryMatching": "匹配 {value} 的流量",
   "ruleSummaryProxy": "经由 VPN",

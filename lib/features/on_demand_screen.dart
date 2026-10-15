@@ -78,6 +78,7 @@ class OnDemandScreen extends ConsumerWidget {
       title: rule.name.isNotEmpty ? rule.name : rule.action.label,
       badge: DsBadge(tag, tone: tone),
       subtitle: rule.summary,
+      subtitleMaxLines: 1,
       onTap: () => _openRule(context, rule),
       trailing: [
         DsAction(

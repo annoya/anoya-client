@@ -809,7 +809,7 @@ abstract class AppLocalizations {
   /// No description provided for @dnsOriginOrganisation.
   ///
   /// In en, this message translates to:
-  /// **'from your organisation'**
+  /// **'from your organization'**
   String get dnsOriginOrganisation;
 
   /// No description provided for @dnsOriginConfiguration.
@@ -2831,7 +2831,7 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSummaryGeosite.
   ///
   /// In en, this message translates to:
-  /// **'\"{category}\" domains (GeoSite list)'**
+  /// **'traffic to \"{category}\" domains (GeoSite list)'**
   String ruleSummaryGeosite(String category);
 
   /// No description provided for @ruleSummaryProcess.
@@ -3071,13 +3071,13 @@ abstract class AppLocalizations {
   /// Short tag in a rule row for the Connect action
   ///
   /// In en, this message translates to:
-  /// **'CONN.'**
+  /// **'CONNECT'**
   String get onDemandTagConnect;
 
   /// Short tag in a rule row for the Disconnect action
   ///
   /// In en, this message translates to:
-  /// **'DISC.'**
+  /// **'DISCONNECT'**
   String get onDemandTagDisconnect;
 
   /// Short tag in a rule row for the Ignore action

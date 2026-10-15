@@ -42,7 +42,7 @@ void main() {
     }
   });
 
-  testWidgets('list rows are 72 with one line or two', (tester) async {
+  testWidgets('list rows are 56 with one line and 72 with two', (tester) async {
     await tester.pumpWidget(
       _app(
         DsCard(
@@ -66,11 +66,14 @@ void main() {
         ),
       ),
     );
-    expect(tester.getSize(find.byKey(const Key('one'))).height, kRowMinHeight);
-    expect(tester.getSize(find.byKey(const Key('two'))).height, kRowMinHeight);
+    expect(tester.getSize(find.byKey(const Key('one'))).height, kRowHeight);
+    expect(
+      tester.getSize(find.byKey(const Key('two'))).height,
+      kRowHeightTwoLines,
+    );
   });
 
-  testWidgets('text fields are 64, with the label above the value', (
+  testWidgets('text fields are 56, with the label above the value', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -110,7 +113,10 @@ void main() {
       tester.getSize(find.byType(AnimatedContainer)),
       const Size(kToggleWidth, kToggleHeight),
     );
-    expect(tester.getSize(find.byType(DsSegmented<int>)).height, kSegmentedHeight);
+    expect(
+      tester.getSize(find.byType(DsSegmented<int>)).height,
+      kSegmentedHeight,
+    );
   });
 
   testWidgets('both themes carry the DS tokens', (tester) async {

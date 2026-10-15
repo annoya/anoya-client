@@ -1806,7 +1806,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String ruleSummaryGeosite(String category) {
-    return 'les domaines « $category » (liste GeoSite)';
+    return 'le trafic vers les domaines « $category » (liste GeoSite)';
   }
 
   @override
@@ -1974,10 +1974,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les règles sont évaluées de haut en bas. Si aucune ne correspond, le tunnel reste tel quel.';
 
   @override
-  String get onDemandTagConnect => 'CONN.';
+  String get onDemandTagConnect => 'CONNECTER';
 
   @override
-  String get onDemandTagDisconnect => 'DÉCO.';
+  String get onDemandTagDisconnect => 'DÉCONNECTER';
 
   @override
   String get onDemandTagIgnore => 'IGNORER';
