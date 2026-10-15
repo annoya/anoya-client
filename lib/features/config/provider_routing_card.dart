@@ -186,11 +186,10 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
         .toSet()
         .join(', ');
     final l10n = context.l10n;
-    return DsNotification(
+    return DsNotification.warning(
       title: l10n.configListsFailedTitle(n),
       body: l10n.configListsFailedDetail(n, names, hosts),
-      glyph: Glyph.alertTriangle,
-      tone: DsTone.warning,
+
       action: DsButton.tonal(
         label: l10n.commonTryAgain,
         busy: _busy,

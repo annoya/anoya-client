@@ -210,14 +210,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       subtitle: cloudSyncStatus(l10n, cloud),
       enabled: usable,
       onTap: usable ? () => set(!cloud.enabled) : null,
-      trailing: [DsToggle(value: cloud.enabled, onChanged: usable ? set : null)],
+      trailing: [
+        DsToggle(value: cloud.enabled, onChanged: usable ? set : null),
+      ],
     );
   }
 
   List<Widget> _connectionRows({
     required bool autoConnect,
     required OnDemandPrefs onDemand,
-    required bool checkEnabled,
   }) {
     final l10n = context.l10n;
     return [
@@ -227,7 +228,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             glyph: Glyph.zap,
             title: l10n.settingsAutoConnect,
             subtitle: l10n.settingsAutoConnectSubtitle,
-            onTap: () => ref.read(autoConnectProvider.notifier).set(!autoConnect),
+            onTap: () =>
+                ref.read(autoConnectProvider.notifier).set(!autoConnect),
             trailing: [
               DsToggle(
                 value: autoConnect,
@@ -266,16 +268,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             trailing: const [DsChevron()],
             onTap: () => _push(const AlwaysOnScreen()),
           ),
-      DsRow(
-        glyph: Glyph.settings,
-        title: l10n.settingsAdvanced,
-        subtitle: checkEnabled
-            ? l10n.settingsConnectionCheckOn
-            : l10n.settingsConnectionCheckOff,
-        trailing: const [DsChevron()],
-        onTap: () => _push(const AdvancedConnectionScreen()),
-      ),
     ];
+  }
+
+  Widget _advancedRow(bool checkEnabled) {
+    final l10n = context.l10n;
+    return DsRow(
+      glyph: Glyph.settings,
+      title: l10n.settingsAdvanced,
+      subtitle: checkEnabled
+          ? l10n.settingsConnectionCheckOn
+          : l10n.settingsConnectionCheckOff,
+      trailing: const [DsChevron()],
+      onTap: () => _push(const AdvancedConnectionScreen()),
+    );
   }
 
   Future<void> _setLanDirect(bool v) async {
@@ -306,10 +312,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         DsGroup(
           caption: l10n.settingsSectionConnection,
-          children: _connectionRows(
-            autoConnect: autoConnect,
-            onDemand: onDemand,
-            checkEnabled: check.enabled,
+          child: DsStack(
+            gap: 8,
+            children: [
+              if (hasAutoConnect)
+                DsCard(
+                  children: _connectionRows(
+                    autoConnect: autoConnect,
+                    onDemand: onDemand,
+                  ),
+                ),
+              DsCard(children: [_advancedRow(check.enabled)]),
+            ],
           ),
         ),
         DsGroup(

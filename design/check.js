@@ -19,21 +19,22 @@
   document.querySelectorAll('.inp').forEach(i => {
     const h = pt(i.getBoundingClientRect().height);
     const multiline = i.querySelector('.vl.multi');
-    if (!multiline && (h < 62 || h > 66)) bad.push(`${label(i)}: text field ${h}pt, expected 64`);
+    if (!multiline && (h < 54 || h > 58)) bad.push(`${label(i)}: text field ${h}pt, expected 56`);
     if (i.classList.contains('sel') && getComputedStyle(i).flexDirection !== 'row') {
       bad.push(`${label(i)}: field with an action is a column — the action must sit on the right`);
     }
   });
   document.querySelectorAll('.search').forEach(i => {
     const h = pt(i.getBoundingClientRect().height);
-    if (Math.abs(h - 56) > 2) bad.push(`${label(i)}: search field ${h}pt, expected 56`);
+    if (Math.abs(h - 44) > 2) bad.push(`${label(i)}: search field ${h}pt, expected 44`);
   });
 
   document.querySelectorAll('.row').forEach(r => {
     const h = pt(r.getBoundingClientRect().height);
     const wraps = !!r.querySelector('.s.multi, .t.multi');
-    if (r.classList.contains('dense')) return;
-    if (!wraps && Math.abs(h - 72) > 2) bad.push(`${label(r)}: row ${h}pt, expected 72`);
+    const want = r.querySelector('.s') ? 72 : 56;
+    if (!wraps && h < want - 2) bad.push(`${label(r)}: row ${h}pt, expected at least ${want}`);
+    if (!wraps && h > want + 2 && !r.querySelector('.badge, .x04-rb, .x04-tb')) bad.push(`${label(r)}: row ${h}pt, expected ${want}`);
     if (wraps && (h < 70 || h > 120)) bad.push(`${label(r)}: wrapped row ${h}pt — expected 72…120`);
   });
   document.querySelectorAll('.rule').forEach(r => {

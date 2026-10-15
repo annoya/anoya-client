@@ -47,7 +47,6 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
     });
     try {
       await GeoStore.download();
-      await _load();
     } catch (e) {
       Log.e('geo update failed', '$e');
       if (mounted) {
@@ -57,6 +56,7 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
         );
       }
     } finally {
+      if (mounted) await _load();
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -69,7 +69,6 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
       label: l10n.geoDownloadUrlLabel,
       confirmLabel: l10n.commonSave,
       initial: geoip ? _prefs.geoipUrl : _prefs.geositeUrl,
-      longValue: true,
       autocorrect: false,
       resetLabel: l10n.geoResetToDefault,
       resetValue: geoip
@@ -95,7 +94,7 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
   }) => DsCard(
     children: [
       DsRow(
-        glyph: _busy ? null : Glyph.database,
+        glyph: Glyph.database,
         title: name,
         subtitle: _shortUrl(url),
         subtitleMaxLines: 1,
@@ -106,12 +105,11 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
             _bytes(bytes),
             style: DsType.small.copyWith(color: context.ds.text3),
           ),
-          if (!_busy)
-            DsAction(
-              glyph: Glyph.pencil,
-              tooltip: context.l10n.commonEdit,
-              onPressed: onEdit,
-            ),
+          DsAction(
+            glyph: Glyph.pencil,
+            tooltip: context.l10n.commonEdit,
+            onPressed: onEdit,
+          ),
         ],
       ),
     ],

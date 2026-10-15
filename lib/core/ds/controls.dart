@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import 'glyph.dart';
+import 'ink.dart';
 import 'layout.dart';
 
 enum DsButtonKind { primary, tonal, destructive, text }
 
-// DS button size=large: 48, r12, p8/12, gap 4, label 16/24.
+// DS button size=large: 48 (text 40), r12, p8/12, gap 4, label 16/24. Muted is the whole button at 0.4.
 class DsButton extends StatelessWidget {
   const DsButton({
     super.key,
@@ -16,6 +17,7 @@ class DsButton extends StatelessWidget {
     this.onPressed,
     this.busy = false,
     this.busyLabel,
+    this.spinning = false,
     this.expand = true,
     this.focusNode,
     this.autofocus = false,
@@ -28,6 +30,7 @@ class DsButton extends StatelessWidget {
     this.onPressed,
     this.busy = false,
     this.busyLabel,
+    this.spinning = false,
     this.expand = true,
     this.focusNode,
     this.autofocus = false,
@@ -40,6 +43,7 @@ class DsButton extends StatelessWidget {
     this.onPressed,
     this.busy = false,
     this.busyLabel,
+    this.spinning = false,
     this.expand = true,
     this.focusNode,
     this.autofocus = false,
@@ -52,6 +56,7 @@ class DsButton extends StatelessWidget {
     this.onPressed,
     this.busy = false,
     this.busyLabel,
+    this.spinning = false,
     this.expand = false,
     this.focusNode,
     this.autofocus = false,
@@ -62,9 +67,12 @@ class DsButton extends StatelessWidget {
   final Glyph? glyph;
   final VoidCallback? onPressed;
 
-  // The spinner replaces the icon (or the label when there is no busy label).
+  // Busy: muted, a spinner in place of the icon — or of the label when there is no icon.
   final bool busy;
   final String? busyLabel;
+
+  // Still pressable, a spinner in place of the icon — Cancel while connecting.
+  final bool spinning;
   final bool expand;
   final FocusNode? focusNode;
   final bool autofocus;
@@ -73,21 +81,19 @@ class DsButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final ds = context.ds;
     final enabled = onPressed != null && !busy;
-    // A muted tonal or text button keeps its fill and greys the label (DS state=muted).
-    final muted = !enabled && !busy;
     final (bg, fg, iconColor, side, style) = switch (kind) {
       DsButtonKind.primary => (
         ds.buttonPrimary,
         ds.textInverted,
         ds.textInverted,
-        null,
+        BorderSide.none,
         DsType.button,
       ),
       DsButtonKind.tonal => (
         ds.selected,
-        muted ? ds.text4 : ds.text2,
-        muted ? ds.icon3 : ds.icon1,
-        null,
+        ds.text2,
+        ds.icon1,
+        BorderSide.none,
         DsType.button,
       ),
       DsButtonKind.destructive => (
@@ -99,23 +105,24 @@ class DsButton extends StatelessWidget {
       ),
       DsButtonKind.text => (
         Colors.transparent,
-        muted ? ds.text4 : ds.textAccent,
-        muted ? ds.icon3 : ds.icon2,
-        null,
+        ds.textAccent,
+        ds.icon2,
+        BorderSide.none,
         DsType.text,
       ),
     };
+    final spinner = busy || spinning;
     final showLabel = !busy || busyLabel != null || glyph != null;
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (busy)
+        if (spinner)
           DsSpinner(color: iconColor)
         else if (glyph != null)
           GlyphIcon(glyph!, color: iconColor),
         if (showLabel) ...[
-          if (busy || glyph != null) const SizedBox(width: 4),
+          if (spinner || glyph != null) const SizedBox(width: 4),
           Flexible(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
@@ -130,27 +137,24 @@ class DsButton extends StatelessWidget {
         ],
       ],
     );
-    final button = Material(
+    final button = DsInk(
       color: bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(kRadius),
-        side: side ?? BorderSide.none,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: enabled ? onPressed : null,
-        focusNode: focusNode,
-        autofocus: autofocus,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: kButtonHeight),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Center(widthFactor: 1, child: content),
-          ),
+      side: side,
+      onTap: enabled ? onPressed : null,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: kind == DsButtonKind.text
+              ? kTextButtonHeight
+              : kButtonHeight,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Center(widthFactor: 1, child: content),
         ),
       ),
     );
-    final dimmed = kind == DsButtonKind.primary && muted;
     final sized = expand
         ? SizedBox(width: double.infinity, child: button)
         : button;
@@ -158,7 +162,7 @@ class DsButton extends StatelessWidget {
       button: true,
       enabled: enabled,
       label: busy ? busyLabel ?? label : null,
-      child: Opacity(opacity: dimmed ? kDisabledOpacity : 1, child: sized),
+      child: Opacity(opacity: enabled ? 1 : kDisabledOpacity, child: sized),
     );
   }
 }
@@ -195,24 +199,19 @@ class DsSegmented<T> extends StatelessWidget {
                 child: Semantics(
                   selected: v == value,
                   button: true,
-                  child: Material(
+                  child: DsInk(
                     color: v == value ? ds.selected : Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: radius,
-                      side: v == value
-                          ? BorderSide(color: ds.accentLight)
-                          : BorderSide.none,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: enabled && v != value ? () => onChanged!(v) : null,
-                      child: Center(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: (compact ? DsType.small : DsType.text)
-                              .copyWith(color: ds.text1),
+                    side: v == value
+                        ? BorderSide(color: ds.accentLight)
+                        : BorderSide.none,
+                    onTap: enabled && v != value ? () => onChanged!(v) : null,
+                    child: Center(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: (compact ? DsType.small : DsType.text).copyWith(
+                          color: ds.text1,
                         ),
                       ),
                     ),
@@ -249,50 +248,44 @@ class DsChip extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       selected: selected,
-      child: Material(
+      child: DsInk(
         color: selected ? ds.selected : ds.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(kRadius),
-          side: selected
-              ? BorderSide(color: ds.accent, width: 2)
-              : BorderSide(color: ds.borderBold),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            height: kChipHeight,
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 14,
-                right: onRemove == null ? 14 : 6,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: DsType.small.copyWith(
-                        color: selected ? ds.text1 : ds.text2,
-                      ),
+        side: selected
+            ? BorderSide(color: ds.accent, width: 2)
+            : BorderSide(color: ds.borderBold),
+        onTap: onTap,
+        child: SizedBox(
+          height: kChipHeight,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 14,
+              right: onRemove == null ? 14 : 6,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DsType.small.copyWith(
+                      color: selected ? ds.text1 : ds.text2,
                     ),
                   ),
-                  if (onRemove != null) ...[
-                    const SizedBox(width: 4),
-                    InkResponse(
-                      onTap: onRemove,
-                      radius: 14,
-                      child: Tooltip(
-                        message: removeTooltip ?? '',
-                        child: GlyphIcon(Glyph.x, size: 18, color: ds.icon2),
-                      ),
+                ),
+                if (onRemove != null) ...[
+                  const SizedBox(width: 4),
+                  InkResponse(
+                    onTap: onRemove,
+                    radius: 14,
+                    child: Tooltip(
+                      message: removeTooltip ?? '',
+                      child: GlyphIcon(Glyph.x, size: 18, color: ds.icon2),
                     ),
-                  ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -390,7 +383,7 @@ class DsBadge extends StatelessWidget {
   }
 }
 
-// searchField: 56, p16, gap 12, r12, surface-alt, 1 pt border/field.
+// searchField: 44, gap 12, r12, surface-alt, 1 pt border/field.
 class DsSearchField extends StatefulWidget {
   const DsSearchField({
     super.key,
@@ -441,7 +434,7 @@ class _DsSearchFieldState extends State<DsSearchField> {
           hintText: widget.hint,
           hintStyle: DsType.text.copyWith(color: ds.text3),
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
           border: border,
           enabledBorder: border,
           focusedBorder: border.copyWith(

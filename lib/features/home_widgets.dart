@@ -69,8 +69,14 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
     }
     if (ref.watch(profilesControllerProvider.select((s) => s.switching))) {
       return session.connected
-          ? Text(l10n.homeSwitchingServer, style: style.copyWith(color: ds.text1))
-          : Text(l10n.homeGettingServer, style: style.copyWith(color: ds.text2));
+          ? Text(
+              l10n.homeSwitchingServer,
+              style: style.copyWith(color: ds.text1),
+            )
+          : Text(
+              l10n.homeGettingServer,
+              style: style.copyWith(color: ds.text2),
+            );
     }
     final auto = ref.watch(onDemandProvider.select((p) => p.systemArmed));
     final clock = sessionClock(session.startedAt);
@@ -113,12 +119,7 @@ class HomeHero extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CatStage(
-          mood: mood,
-          strongGlow: connected,
-          glow: status != VpnStatus.error,
-          dimmed: onTap == null,
-        ),
+        CatStage(mood: mood, strongGlow: connected, dimmed: onTap == null),
         const SizedBox(height: 16),
         const StatusLabel(),
         const SizedBox(height: 20),
@@ -145,6 +146,7 @@ class ConnectButton extends StatelessWidget {
           VpnStatus.connecting => l10n.commonCancel,
           _ => l10n.commonConnect,
         },
+        spinning: status == VpnStatus.connecting,
         onPressed: onTap,
       ),
     );

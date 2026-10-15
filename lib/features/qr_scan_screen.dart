@@ -132,7 +132,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
             leading: DsLeading.close,
             actions: [
               DsNavButton(
-                glyph: _torch ? Glyph.flashlightOff : Glyph.flashlight,
+                glyph: Glyph.flashlight,
+                filled: _torch,
                 tooltip: l10n.qrTorch,
                 onPressed: _toggleTorch,
               ),
@@ -151,10 +152,15 @@ class _QrScanScreenState extends State<QrScanScreen> {
     final insets = MediaQuery.paddingOf(context);
     return LayoutBuilder(
       builder: (context, box) {
-        final below = box.maxHeight / 2 + kQrViewfinder / 2;
+        // The reader centres its crop and frame: growing it past the top lifts both together.
+        final below = box.maxHeight / 2 - kQrViewfinderLift + kQrViewfinder / 2;
         return Stack(
           children: [
-            Positioned.fill(
+            Positioned(
+              top: -2 * kQrViewfinderLift,
+              left: 0,
+              right: 0,
+              bottom: 0,
               child: ReaderWidget(
                 onScan: _onCode,
                 onControllerCreated: _onCamera,
@@ -163,16 +169,18 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 showFlashlight: false,
                 showToggleCamera: false,
                 showGallery: false,
-                cropPercent: 0.7,
+                cropPercent: kQrViewfinder / box.maxWidth,
                 scanDelay: const Duration(milliseconds: 150),
                 scanDelaySuccess: const Duration(milliseconds: 300),
                 scannerOverlay: ScannerOverlayBorder(
                   cutOutSize: kQrViewfinder,
                   borderColor: Colors.white,
                   borderWidth: 4,
-                  borderRadius: 20,
-                  borderLength: 36,
-                  overlayColor: Colors.black.withValues(alpha: kQrScrimOpacity),
+                  borderRadius: kQrViewfinderRadius,
+                  borderLength: kQrViewfinderCorner,
+                  overlayColor: const Color(
+                    0xFF08090E,
+                  ).withValues(alpha: kQrScrimOpacity),
                 ),
               ),
             ),
@@ -198,7 +206,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   ] else if (refusal != null) ...[
                     DsNotification(
                       small: true,
-                      boldTitle: true,
                       title: l10n.startCantUseThis(refusal),
                     ),
                     _HintTitle(l10n.qrStillLooking),

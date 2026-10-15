@@ -182,31 +182,18 @@ void main() {
       expect(find.text('All · 1 of 7 match'), findsOneWidget);
     });
 
-    testWidgets('a search flattens the groups, a favourite keeps its star', (
-      tester,
-    ) async {
-      final toggled = <String>[];
-      await open(tester, favorites: {'s5'}, onToggleFavorite: toggled.add);
+    testWidgets('a matching favourite keeps its place on top', (tester) async {
+      await open(tester, favorites: {'s5'}, onToggleFavorite: (_) {});
 
       await tester.enterText(find.byType(TextField), 'server-');
       await tester.pumpAndSettle();
 
-      expect(find.text('Favorites'), findsNothing);
-      expect(find.text('All · 7 of 7 match'), findsOneWidget);
+      expect(find.text('Favorites'), findsOneWidget);
+      expect(find.text('All · 6 of 7 match'), findsOneWidget);
       expect(
-        tester.getRect(find.text('server-1')).top,
-        lessThan(tester.getRect(find.text('server-5')).top),
-        reason: 'one list in its own order while searching',
+        tester.getRect(find.text('server-5')).top,
+        lessThan(tester.getRect(find.text('server-1')).top),
       );
-      final star = find.descendant(
-        of: findRow('server-5'),
-        matching: findGlyph(Glyph.star),
-      );
-      await tester.ensureVisible(star);
-      await tester.pumpAndSettle();
-      await tester.tap(star);
-      await tester.pumpAndSettle();
-      expect(toggled, ['s5'], reason: 'the star still works on a found row');
     });
 
     testWidgets('a search with no match says so and names the total', (
@@ -235,12 +222,11 @@ void main() {
       expect(findGlyph(Glyph.settings), findsNothing);
     });
 
-    testWidgets('the current value is a filled, selected row — no check mark', (
+    testWidgets('the current value is a filled row with a check', (
       tester,
     ) async {
       await open(tester);
 
-      expect(findGlyph(Glyph.check), findsNothing);
       final rows = tester.widgetList<DsRow>(find.byType(DsRow));
       final selected = rows.where((r) => r.selected).toList();
       expect(selected.length, 1, reason: 'exactly the current value');
@@ -248,11 +234,12 @@ void main() {
       expect(
         find.descendant(
           of: findRow('server-1'),
-          matching: find.byWidgetPredicate((w) => w is DsRadio && w.selected),
+          matching: findGlyph(Glyph.check),
         ),
         findsOneWidget,
-        reason: 'a plain choice marks the current one with its radio',
+        reason: 'the fill alone is too faint: a check marks the current one',
       );
+      expect(findGlyph(Glyph.check), findsOneWidget);
     });
 
     testWidgets(

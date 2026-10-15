@@ -43,13 +43,7 @@ class DnsScreen extends ConsumerWidget {
               gap: kNoteGap,
               children: [
                 for (final d in plan.dropped)
-                  DsNotification(
-                    title: d.address,
-                    body: d.explanation,
-                    glyph: Glyph.alertTriangle,
-                    tone: DsTone.warning,
-                    boldTitle: true,
-                  ),
+                  DsNotification.warning(title: d.address, body: d.explanation),
               ],
             ),
           ),
@@ -71,13 +65,6 @@ class _ResolverRow extends StatelessWidget {
     return DsRow(
       glyph: Glyph.server,
       title: resolver.address,
-      titleWidget: Text(
-        resolver.address.split('').join('\u200B'),
-        semanticsLabel: resolver.address,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: DsType.h3.copyWith(color: ds.text1),
-      ),
       subtitle: context.l10n.dnsResolverSubtitle(resolver.protocol, origin),
       trailing: [
         Text(

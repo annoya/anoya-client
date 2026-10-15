@@ -126,7 +126,6 @@ class FallbackSourceNote extends StatelessWidget {
     title: context.l10n.configSourceViaFallback,
     glyph: Glyph.info,
     small: true,
-    boldTitle: true,
   );
 }
 
@@ -137,13 +136,8 @@ class ConfigAlert extends StatelessWidget {
   final String body;
 
   @override
-  Widget build(BuildContext context) => DsNotification(
-    title: title,
-    body: body,
-    glyph: Glyph.alertTriangle,
-    tone: DsTone.warning,
-    boldTitle: true,
-  );
+  Widget build(BuildContext context) =>
+      DsNotification.warning(title: title, body: body);
 }
 
 class UnsupportedServersAlert extends StatelessWidget {

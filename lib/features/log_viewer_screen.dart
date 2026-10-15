@@ -5,6 +5,7 @@ import '../core/ds.dart';
 import '../core/ext_logs.dart';
 import '../core/log.dart';
 import '../core/theme.dart';
+import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class LogViewerScreen extends StatefulWidget {
@@ -77,7 +78,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final copied = context.l10n.commonCopied;
     await Clipboard.setData(ClipboardData(text: _content));
-    messenger.showSnackBar(SnackBar(content: Text(copied)));
+    showToastWith(messenger, copied);
   }
 
   @override
@@ -95,7 +96,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         DsNavButton(
           glyph: Glyph.copy,
           tooltip: l10n.commonCopy,
-          onPressed: _loading || placeholder != null ? null : _copy,
+          onPressed: _loading ? null : _copy,
         ),
       ],
       body: ListView(
@@ -139,18 +140,8 @@ class _EmptyLog extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    final ds = context.ds;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GlyphIcon(Glyph.fileText, size: 40, color: ds.icon2),
-          const SizedBox(height: 8),
-          Text(text, style: DsType.text.copyWith(color: ds.text2)),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Text(text, style: DsType.text.copyWith(color: context.ds.text2)),
+  );
 }

@@ -224,9 +224,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
           children: [
             TextField(
               controller: _input,
-              minLines: 1,
-              maxLines: 3,
               autocorrect: false,
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.done,
               enabled: !_busy,
               onChanged: _onChanged,
               decoration: InputDecoration(
@@ -301,10 +301,7 @@ class _Rejected extends StatelessWidget {
   final SubscriptionFormatException failure;
 
   @override
-  Widget build(BuildContext context) => DsNotification(
-    glyph: Glyph.alertTriangle,
-    tone: DsTone.warning,
-    boldTitle: true,
+  Widget build(BuildContext context) => DsNotification.warning(
     title: failure.error.title,
     body: failure.error.detail,
   );

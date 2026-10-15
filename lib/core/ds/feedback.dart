@@ -5,7 +5,7 @@ import 'controls.dart';
 import 'glyph.dart';
 
 // notification (inline): r12 on background/surface.
-// regular — p16, icon 24, gap 12, title 14/18 (or 16/24 bold), body 14/18 text/secondary, action 16 below;
+// regular — p16, icon 24, gap 12, title 14/18, body 14/18 text/secondary, action 16 below;
 // small — p12, icon 18, gap 8, text 14/18.
 class DsNotification extends StatelessWidget {
   const DsNotification({
@@ -14,17 +14,25 @@ class DsNotification extends StatelessWidget {
     this.body,
     this.glyph = Glyph.info,
     this.tone = DsTone.neutral,
-    this.boldTitle = false,
     this.small = false,
     this.action,
     this.onTap,
   });
 
+  const DsNotification.warning({
+    super.key,
+    required this.title,
+    this.body,
+    this.small = false,
+    this.action,
+    this.onTap,
+  }) : glyph = Glyph.alertTriangle,
+       tone = DsTone.warning;
+
   final String title;
   final String? body;
   final Glyph glyph;
   final DsTone tone;
-  final bool boldTitle;
   final bool small;
   final Widget? action;
   final VoidCallback? onTap;
@@ -40,9 +48,7 @@ class DsNotification extends StatelessWidget {
       DsTone.neutral => ds.icon1,
     };
     final iconSize = small ? 18.0 : kRowIcon;
-    final titleStyle = boldTitle
-        ? DsType.h4.copyWith(color: ds.text1)
-        : DsType.small.copyWith(color: ds.text1);
+    final titleStyle = DsType.small.copyWith(color: ds.text1);
     return Material(
       color: ds.surface,
       borderRadius: BorderRadius.circular(kRadius),
@@ -196,7 +202,7 @@ class DsEmptyState extends StatelessWidget {
   }
 }
 
-// Progress line: 4 pt, r2, track background/panel, fill accent/light (warning when spent).
+// Progress line: 4 pt, r2, track background/panel, fill accent (warning when spent).
 class DsProgress extends StatelessWidget {
   const DsProgress({super.key, required this.value, this.warning = false});
 
@@ -212,7 +218,7 @@ class DsProgress extends StatelessWidget {
         value: value.clamp(0, 1),
         minHeight: 4,
         backgroundColor: ds.panel,
-        color: warning ? ds.warning : ds.accentLight,
+        color: warning ? ds.warning : ds.accent,
       ),
     );
   }

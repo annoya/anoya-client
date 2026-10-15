@@ -161,10 +161,7 @@ class _ResultCardState extends State<_ResultCard> {
     final ds = context.ds;
     final l10n = context.l10n;
     if (!check.passed) {
-      return DsNotification(
-        glyph: Glyph.alertTriangle,
-        tone: DsTone.warning,
-        boldTitle: true,
+      return DsNotification.warning(
         title: l10n.advancedNoAnswer,
         body: l10n.advancedNoAnswerDetail(check.failure ?? ''),
       );

@@ -233,12 +233,7 @@ class _RuleScreenState extends State<RuleScreen> {
             textInputAction: TextInputAction.newline,
             minLines: _valueLines,
             maxLines: _valueLines,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              height: 18 / 14,
-              color: ds.text1,
-            ),
+            style: DsType.text.copyWith(color: ds.text1),
             decoration: InputDecoration(
               hintText:
                   '${_hints[_type] ?? ''}\n'

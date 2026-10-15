@@ -1847,7 +1847,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String ruleSummaryGeosite(String category) {
-    return 'домены «$category» (список GeoSite)';
+    return 'трафик к доменам «$category» (список GeoSite)';
   }
 
   @override
@@ -2017,13 +2017,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Правила проверяются сверху вниз. Если ни одно не совпало, туннель остаётся как есть.';
 
   @override
-  String get onDemandTagConnect => 'ПОДКЛ.';
+  String get onDemandTagConnect => 'ПОДКЛЮЧИТЬ';
 
   @override
-  String get onDemandTagDisconnect => 'ОТКЛ.';
+  String get onDemandTagDisconnect => 'ОТКЛЮЧИТЬ';
 
   @override
-  String get onDemandTagIgnore => 'ИГНОР.';
+  String get onDemandTagIgnore => 'ИГНОРИРОВАТЬ';
 
   @override
   String get onDemandNewRule => 'Новое правило';

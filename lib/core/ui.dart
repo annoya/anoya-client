@@ -160,7 +160,8 @@ void showToastWith(ScaffoldMessengerState messenger, String message) {
   );
 }
 
-// AlertDialog of the DS: 16 from the screen edges, r12, title 18/24, body 14/18, actions as halves of a 48 row.
+// AlertDialog of the DS: 16 from the screen edges, r12, title 18/24, body 14/18 scrolling within 80% of the screen,
+// text actions 40 sharing the row.
 class DsDialog extends StatelessWidget {
   const DsDialog({
     super.key,
@@ -184,78 +185,88 @@ class DsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ds = context.ds;
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                0,
-                onDismiss == null ? 16 : 10,
-                actions.isEmpty ? 16 : 0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (glyph != null) ...[
-                        GlyphIcon(glyph!),
-                        const SizedBox(width: kRowGap),
-                      ],
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: DsType.h3.copyWith(color: ds.text1),
-                        ),
-                      ),
-                      if (onDismiss != null)
-                        Transform.translate(
-                          offset: const Offset(0, -6),
-                          child: DsAction(
-                            glyph: Glyph.x,
-                            size: kNavButton,
-                            iconSize: kNavIcon,
-                            tooltip: dismissTooltip,
-                            onPressed: onDismiss,
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (body != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      body!,
-                      style: DsType.small.copyWith(
-                        color: glyph != null ? ds.text2 : ds.text3,
-                      ),
-                    ),
-                  ],
-                  if (content != null) ...[
-                    const SizedBox(height: 16),
-                    content!,
-                  ],
-                ],
-              ),
+    final header = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (glyph != null) ...[
+          GlyphIcon(glyph!),
+          const SizedBox(width: kRowGap),
+        ],
+        Expanded(
+          child: Text(title, style: DsType.h3.copyWith(color: ds.text1)),
+        ),
+        if (onDismiss != null)
+          Transform.translate(
+            offset: const Offset(0, -6),
+            child: DsAction(
+              glyph: Glyph.x,
+              size: kNavButton,
+              iconSize: kNavIcon,
+              tooltip: dismissTooltip,
+              onPressed: onDismiss,
             ),
-            if (actions.isNotEmpty) ...[
-              const SizedBox(height: 18),
+          ),
+      ],
+    );
+    final scrolled = [
+      if (body != null)
+        Text(
+          body!,
+          style: DsType.small.copyWith(
+            color: glyph != null ? ds.text2 : ds.text3,
+          ),
+        ),
+      ?content,
+    ];
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight:
+              MediaQuery.sizeOf(context).height * kSheetMaxHeightFraction,
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(top: glyph != null ? 28 : 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: SizedBox(
-                  height: kButtonHeight,
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  0,
+                  onDismiss == null ? 16 : 10,
+                  0,
+                ),
+                child: header,
+              ),
+              if (scrolled.isNotEmpty)
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      8,
+                      16,
+                      actions.isEmpty ? 16 : 0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: gapped(scrolled, 16),
+                    ),
+                  ),
+                )
+              else if (actions.isEmpty)
+                const SizedBox(height: 16),
+              if (actions.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
                   child: Row(
                     children: [for (final a in actions) Expanded(child: a)],
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -369,7 +380,6 @@ Future<String?> promptText(
   required String confirmLabel,
   String initial = '',
   String? hint,
-  bool longValue = false,
   bool autocorrect = true,
   String? resetLabel,
   String? resetValue,
@@ -383,7 +393,6 @@ Future<String?> promptText(
       confirmLabel: confirmLabel,
       initial: initial,
       hint: hint,
-      longValue: longValue,
       autocorrect: autocorrect,
       resetLabel: resetLabel,
       resetValue: resetValue,
@@ -399,7 +408,6 @@ class _TextPromptDialog extends StatefulWidget {
     required this.confirmLabel,
     required this.initial,
     required this.hint,
-    required this.longValue,
     required this.autocorrect,
     required this.resetLabel,
     required this.resetValue,
@@ -412,7 +420,6 @@ class _TextPromptDialog extends StatefulWidget {
   final String initial;
   final String? hint;
 
-  final bool longValue;
   final bool autocorrect;
   final String? resetLabel;
   final String? resetValue;
@@ -447,8 +454,7 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
             controller: _controller,
             autofocus: true,
             autocorrect: widget.autocorrect,
-            maxLines: widget.longValue ? kLongValueMaxLines : 1,
-            minLines: 1,
+            maxLines: 1,
             decoration: InputDecoration(
               labelText: widget.label,
               hintText: widget.hint,
@@ -507,17 +513,21 @@ String formatBytes(int n) {
 
 const int kSearchThreshold = 6;
 
-const int kLongValueMaxLines = 4;
-
 const kTextEditDebounce = Duration(milliseconds: 600);
 
 const double kSheetMaxHeightFraction = 0.8;
 
-const double kQrViewfinder = 248;
+const double kQrViewfinder = 294;
+
+const double kQrViewfinderRadius = 12;
+
+const double kQrViewfinderCorner = 78;
+
+const double kQrViewfinderLift = 60;
 
 const double kQrExportSize = 232;
 
-const double kQrScrimOpacity = 0.55;
+const double kQrScrimOpacity = 0.3;
 
 Future<T?> showDsSheet<T>(BuildContext context, WidgetBuilder builder) =>
     showModalBottomSheet<T>(
@@ -661,10 +671,6 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
 
   bool get _grouped => widget.onToggleFavorite != null || _favorites.isNotEmpty;
 
-  // Plain choices (theme, language, DNS) carry a radio; rich ones (servers, configurations) their own icon.
-  bool get _radio =>
-      widget.options.every((o) => o.leading == null) && !widget.navigational;
-
   bool _matches(Option<T> o) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return true;
@@ -690,9 +696,9 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     final l10n = context.l10n;
     final ds = context.ds;
     final favorite = _favorites.contains(o.value);
-    final selected = o.value == widget.selected;
+    final selected = o.value == widget.selected && !widget.navigational;
     return DsRow(
-      leading: _radio ? DsRadio(selected: selected) : o.leading,
+      leading: o.leading,
       title: o.title,
       subtitle: o.subtitle,
       selected: selected,
@@ -715,16 +721,13 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
             onPressed: () => _openSettings(o.value),
           ),
         if (widget.navigational) const DsChevron(),
+        if (selected) DsAction(glyph: Glyph.check, color: ds.textAccent),
       ],
     );
   }
 
-  Widget _group(String? caption, Iterable<Widget> rows) => DsGroup(
-    caption: caption,
-    strongCaption: true,
-    color: _radio ? null : Colors.transparent,
-    children: rows.toList(),
-  );
+  Widget _group(String? caption, Iterable<Widget> rows) =>
+      DsGroup(caption: caption, children: rows.toList());
 
   @override
   Widget build(BuildContext context) {
@@ -755,11 +758,15 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
         else if (searching)
           if (shown.isEmpty)
             _nothing(l10n)
-          else
-            _group(
-              l10n.uiAllMatchCount(shown.length, widget.options.length),
-              shown.map(_row),
-            )
+          else ...[
+            if (favorites.isNotEmpty)
+              _group(l10n.commonFavorites, favorites.map(_row)),
+            if (rest.isNotEmpty)
+              _group(
+                l10n.uiAllMatchCount(rest.length, widget.options.length),
+                rest.map(_row),
+              ),
+          ]
         else ...[
           if (favorites.isNotEmpty)
             _group(l10n.commonFavorites, favorites.map(_row)),
@@ -864,7 +871,6 @@ class _MultiPickSheetState<T> extends State<_MultiPickSheet<T>> {
           )
         else
           DsCard(
-            color: Colors.transparent,
             children: [
               for (final o in shown)
                 DsRow(

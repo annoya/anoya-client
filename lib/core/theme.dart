@@ -4,7 +4,8 @@ const double kRadius = 12;
 const double kSnackbarRadius = 10;
 const double kFabRadius = 16;
 
-const double kRowMinHeight = 72;
+const double kRowHeight = 56;
+const double kRowHeightTwoLines = 72;
 const double kRowPadding = 12;
 const double kRowGap = 12;
 const double kRowIcon = 24;
@@ -13,8 +14,8 @@ const double kFieldActionButton = 40;
 const double kNavRowHeight = 48;
 const double kNavButton = 36;
 const double kNavIcon = 20;
-const double kTextFieldHeight = 64;
-const double kSearchFieldHeight = 56;
+const double kTextFieldHeight = 56;
+const double kSearchFieldHeight = 44;
 const double kSegmentedHeight = 48;
 const double kSegmentedCompactHeight = 30;
 const double kButtonHeight = 48;
@@ -27,8 +28,6 @@ const double kRadioSize = 24;
 const double kFabSize = 56;
 const double kFabBottom = 48;
 const double kConnectButtonWidth = 200;
-const double kSmallChevron = 20;
-const double kLockedCardOpacity = 0.5;
 const int kExpiryWarnDays = 3;
 const double kExpiryWarnTraffic = 0.9;
 
@@ -38,7 +37,11 @@ const double kStackGap = 12;
 const double kNoteGap = 8;
 const EdgeInsets kScrollPadding = EdgeInsets.fromLTRB(16, 16, 16, 24);
 
-const double kDisabledOpacity = 0.38;
+const double kDisabledOpacity = 0.4;
+const double kHoverLayer = 0.08;
+const double kPressedLayer = 0.10;
+const double kFocusRing = 2;
+const double kTextButtonHeight = 40;
 
 @immutable
 class DsColors extends ThemeExtension<DsColors> {
@@ -82,6 +85,7 @@ class DsColors extends ThemeExtension<DsColors> {
     required this.badgeSuccess,
     required this.badgeDestructive,
     required this.chroma,
+    required this.catEye,
     required this.shadow1,
     required this.shadow2,
   });
@@ -125,6 +129,7 @@ class DsColors extends ThemeExtension<DsColors> {
   final Color badgeSuccess;
   final Color badgeDestructive;
   final Color chroma;
+  final Color catEye;
   final List<BoxShadow> shadow1;
   final List<BoxShadow> shadow2;
 
@@ -168,6 +173,7 @@ class DsColors extends ThemeExtension<DsColors> {
     badgeSuccess: Color(0xFF166534),
     badgeDestructive: Color(0xFFB91C1C),
     chroma: Color(0xFFA5B4FC),
+    catEye: Color(0xFFA5B4FC),
     shadow1: [
       BoxShadow(color: Color(0x14000000), offset: Offset(0, 4), blurRadius: 12),
     ],
@@ -216,6 +222,7 @@ class DsColors extends ThemeExtension<DsColors> {
     badgeSuccess: Color(0xFF4ADE80),
     badgeDestructive: Color(0xFFF87171),
     chroma: Color(0xFFA5B4FC),
+    catEye: Color(0xFF7881F6),
     shadow1: [
       BoxShadow(
         color: Color(0x26000000),
@@ -343,37 +350,18 @@ ThemeData buildAppTheme(Brightness brightness) {
     borderRadius: BorderRadius.circular(kRadius),
   );
   DsFieldBorder field(Color color) => DsFieldBorder(color);
-  ButtonStyle button({
-    required Color background,
-    required Color foreground,
-    BorderSide? side,
-    TextStyle style = DsType.button,
-  }) => ButtonStyle(
-    minimumSize: const WidgetStatePropertyAll(Size(64, kButtonHeight)),
-    padding: const WidgetStatePropertyAll(
-      EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    ),
-    shape: WidgetStatePropertyAll(rounded),
-    textStyle: WidgetStatePropertyAll(style),
-    iconSize: const WidgetStatePropertyAll(kRowIcon),
-    elevation: const WidgetStatePropertyAll(0),
-    side: side == null ? null : WidgetStatePropertyAll(side),
-    backgroundColor: WidgetStateProperty.resolveWith(
-      (s) => s.contains(WidgetState.disabled)
-          ? background.withValues(alpha: background.a * kDisabledOpacity)
-          : background,
-    ),
-    foregroundColor: WidgetStateProperty.resolveWith(
-      (s) => s.contains(WidgetState.disabled)
-          ? foreground.withValues(alpha: kDisabledOpacity)
-          : foreground,
-    ),
-    iconColor: WidgetStateProperty.resolveWith(
-      (s) => s.contains(WidgetState.disabled)
-          ? foreground.withValues(alpha: kDisabledOpacity)
-          : foreground,
-    ),
-    overlayColor: WidgetStatePropertyAll(c.text1.withValues(alpha: 0.08)),
+  WidgetStateProperty<Color?> stateLayer(Color on) =>
+      WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.pressed)
+            ? on.withValues(alpha: kPressedLayer)
+            : s.contains(WidgetState.hovered)
+            ? on.withValues(alpha: kHoverLayer)
+            : Colors.transparent,
+      );
+  final focusRing = WidgetStateProperty.resolveWith<BorderSide?>(
+    (s) => s.contains(WidgetState.focused)
+        ? BorderSide(color: c.borderFocus, width: kFocusRing)
+        : null,
   );
 
   return ThemeData(
@@ -385,12 +373,16 @@ ThemeData buildAppTheme(Brightness brightness) {
     canvasColor: c.base,
     extensions: [c],
     iconTheme: IconThemeData(color: c.icon1, size: kRowIcon),
+    hoverColor: c.text1.withValues(alpha: kHoverLayer),
+    highlightColor: c.text1.withValues(alpha: kPressedLayer),
+    focusColor: Colors.transparent,
+    splashFactory: NoSplash.splashFactory,
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
         foregroundColor: c.icon1,
         tapTargetSize: MaterialTapTargetSize.padded,
         shape: rounded,
-      ),
+      ).copyWith(overlayColor: stateLayer(c.text1), side: focusRing),
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: c.base,
@@ -413,15 +405,25 @@ ThemeData buildAppTheme(Brightness brightness) {
       clipBehavior: Clip.antiAlias,
     ),
     textButtonTheme: TextButtonThemeData(
-      style: button(
-        background: Colors.transparent,
-        foreground: c.textAccent,
-        style: DsType.text,
+      style: ButtonStyle(
+        minimumSize: const WidgetStatePropertyAll(Size(64, kTextButtonHeight)),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 12),
+        ),
+        shape: WidgetStatePropertyAll(rounded),
+        textStyle: const WidgetStatePropertyAll(DsType.text),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.disabled)
+              ? c.textAccent.withValues(alpha: kDisabledOpacity)
+              : c.textAccent,
+        ),
+        overlayColor: stateLayer(c.text1),
+        side: focusRing,
       ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: c.accentLight,
-      foregroundColor: c.iconInverted,
+      backgroundColor: c.accent,
+      foregroundColor: c.textInverted,
       elevation: 0,
       focusElevation: 0,
       hoverElevation: 0,
@@ -435,7 +437,7 @@ ThemeData buildAppTheme(Brightness brightness) {
       fillColor: c.surfaceAlt,
       floatingLabelBehavior: FloatingLabelBehavior.always,
       // The filled decorator adds 4 on each side: 12 here puts the text 16 from the frame.
-      contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       // The floating label is drawn at 75%: 16 here is the 12/14 caption of the DS.
       labelStyle: DsType.caption.copyWith(
         color: c.text3,
@@ -483,7 +485,9 @@ ThemeData buildAppTheme(Brightness brightness) {
       dragHandleColor: c.icon3,
       dragHandleSize: const Size(36, 5),
       shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(kRadius)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(kRadius),
+        ),
         side: BorderSide(color: c.borderFaint),
       ),
     ),
@@ -491,6 +495,7 @@ ThemeData buildAppTheme(Brightness brightness) {
       behavior: SnackBarBehavior.floating,
       backgroundColor: c.inverse,
       contentTextStyle: DsType.small.copyWith(color: c.textInverted),
+      insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(kSnackbarRadius),
@@ -498,7 +503,7 @@ ThemeData buildAppTheme(Brightness brightness) {
     ),
     dividerTheme: DividerThemeData(color: c.borderSoft, space: 1, thickness: 1),
     progressIndicatorTheme: ProgressIndicatorThemeData(
-      color: c.accentLight,
+      color: c.accent,
       linearTrackColor: c.panel,
       circularTrackColor: Colors.transparent,
     ),

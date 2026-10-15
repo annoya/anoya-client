@@ -14,14 +14,24 @@ class ServiceAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = category == null ? null : catalogServiceFor(category!);
-    if (service == null || !service.glyph) {
-      return const GlyphIcon(Glyph.globe, size: kRowIcon);
+    final color = context.ds.icon2;
+    if (service == null) return GlyphIcon(Glyph.globe, color: color);
+    if (!service.glyph) {
+      return SizedBox.square(
+        dimension: kRowIcon,
+        child: Center(
+          child: Text(
+            label.isEmpty ? '?' : label[0].toUpperCase(),
+            style: DsType.h4.copyWith(color: color),
+          ),
+        ),
+      );
     }
     return SvgPicture.asset(
       service.glyphAsset,
       width: kRowIcon,
       height: kRowIcon,
-      colorFilter: ColorFilter.mode(context.ds.icon1, BlendMode.srcIn),
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
     );
   }
 }

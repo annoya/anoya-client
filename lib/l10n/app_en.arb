@@ -258,7 +258,7 @@
   "dnsPinIgnoredTooltip": "This configuration asked for an outbound this app does not create, so the request was dropped and the resolver is reached directly.",
   "dnsOriginAppDefault": "app default",
   "dnsOriginSubscription": "from your subscription",
-  "dnsOriginOrganisation": "from your organisation",
+  "dnsOriginOrganisation": "from your organization",
   "dnsOriginConfiguration": "from this configuration",
   "dnsRoutingDirect": "direct",
   "@dnsRoutingDirect": {
@@ -1349,7 +1349,7 @@
       }
     }
   },
-  "ruleSummaryGeosite": "\"{category}\" domains (GeoSite list)",
+  "ruleSummaryGeosite": "traffic to \"{category}\" domains (GeoSite list)",
   "@ruleSummaryGeosite": {
     "placeholders": {
       "category": {
@@ -1487,11 +1487,11 @@
   "onDemandEnableSubtitle": "The system applies the first matching rule",
   "onDemandNoRules": "No rules. Enabling on demand adds “Connect · Any network”.",
   "onDemandRulesFootnote": "Rules are evaluated top to bottom. If none matches, the tunnel is left as is.",
-  "onDemandTagConnect": "CONN.",
+  "onDemandTagConnect": "CONNECT",
   "@onDemandTagConnect": {
     "description": "Short tag in a rule row for the Connect action"
   },
-  "onDemandTagDisconnect": "DISC.",
+  "onDemandTagDisconnect": "DISCONNECT",
   "@onDemandTagDisconnect": {
     "description": "Short tag in a rule row for the Disconnect action"
   },

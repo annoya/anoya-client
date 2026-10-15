@@ -81,7 +81,7 @@
     --bd-control:#3e3f46; --bd-medium:#51535a; --bd-brand:#c7d2fe; --bd-emph:#e3e4e9;
     --ok:#4ade80; --warn:#eab308; --err:#f87171; --badge-ok:#4ade80; --badge-err:#f87171;
     --sh-1:0 4px 8px 3px rgba(0,0,0,.15); --sh-2:0 1px 3px rgba(0,0,0,.3);
-    --cat-body:var(--tx-1); --cat-eye:#a5b4fc; --cat-glint:#ffffff;
+    --cat-body:var(--tx-1); --cat-eye:#7881f6; --cat-glint:#ffffff;
 
     /* legacy aliases — older markup keeps rendering in the DS palette */
     --m-surface:var(--bg-base); --m-card:var(--bg-surface); --m-line:var(--bd-soft);
@@ -91,6 +91,7 @@
     --m-inv:var(--bg-inverse); --m-oninv:var(--tx-inv); --m-dim:var(--bg-overlay);
   }
   .mocks.light{
+    --cat-eye:#a5b4fc;
     --bg-base:#f9fafe; --bg-surface:#eeeff3; --bg-surface-alt:#e3e4e9; --bg-dialog:#f9fafe;
     --bg-sheet:#e3e4e9; --bg-panel:#e0e0e3; --bg-overlay:rgba(8,9,14,.3); --bg-selected:#eef2ff;
     --bg-selected-strong:#4f46e5; --bg-accent-subtle:rgba(99,102,241,.15); --bg-track:#e3e4e9; --bg-inverse:#17181e;
@@ -203,21 +204,24 @@
   /* card = SelectableListItem_Item: r12, background/surface, clips, no outline */
   .card{background:var(--bg-surface);border-radius:12px;overflow:hidden;flex:none}
   .ph > .card,.mac > .card,.hbot > .card,.sheet > .card{margin:0 16px}
-  /* actionItem: p12, gap 12, min 72; rows divided by 1 pt border/soft, the last one without */
-  .row{display:flex;align-items:center;gap:12px;padding:12px;min-height:72px;
+  /* actionItem, as a ListTile: 56 one line, 72 two, 88 three; 48 actions 4 from the edges, text 8 (12 with a subtitle);
+     rows divided by 1 pt border/soft, the last one without */
+  .row{display:flex;align-items:center;gap:12px;padding:4px 12px;min-height:56px;
     box-shadow:inset 0 -1px 0 var(--bd-soft);position:relative}
+  .row:has(.s){min-height:72px}
   .row:last-child,.row.last{box-shadow:none}
-  .row.one{min-height:72px}
-  .row.dense{min-height:64px}
+  .row.one{min-height:56px}
+  .row.dense{min-height:56px}
   .row > .icon{color:var(--ic-1)}
-  .row .tx{flex:1;min-width:0;padding-left:4px}
+  .row .tx{flex:1;min-width:0;padding:4px 0 4px 4px}
+  .row:has(.s) .tx{padding:8px 0 8px 4px}
   .row .t{font-size:18px;line-height:24px;font-weight:400;letter-spacing:-.4px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .s{font-size:14px;line-height:18px;letter-spacing:0;color:var(--tx-3);margin-top:4px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .s.multi{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   .row.sel{background:var(--bg-accent-subtle)}
-  .row.off{opacity:.38}
+  .row.off{opacity:.4}
   /* trailing actionButton 48 (p8, icon 24) */
   .row .ic,.iconbtn{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ic-1)}
   .row .ic.s,.iconbtn.s{width:40px;height:40px}
@@ -241,13 +245,13 @@
   .btn.err{background:var(--bg-surface);box-shadow:inset 0 0 0 1px var(--bd-soft);color:var(--err)}
   .btn.err .icon{color:var(--err)}
   .btn.txt{color:var(--tx-acc);font-weight:400}
-  .btn.dis{opacity:.38}
+  .btn.dis{opacity:.4}
   .btns{display:flex;flex-direction:column;gap:12px}
   .btn.w200{width:200px;margin:0}
 
   /* textField: h64, r12, surface-alt, 1 pt border/soft; label 12/14 tertiary, value 16/24, gap 2 */
   .inp{background:var(--bg-surface-alt);border-radius:12px;box-shadow:inset 0 0 0 1px var(--bd-soft);
-    margin:0;padding:12px 16px;min-height:64px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+    margin:0;padding:8px 16px;min-height:56px;display:flex;flex-direction:column;justify-content:center;gap:2px}
   .inp .lb{font-size:12px;line-height:14px;letter-spacing:0;color:var(--tx-3)}
   .inp .vl{font-size:16px;line-height:24px;color:var(--tx-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .inp .vl.plc{color:var(--tx-4)}
@@ -258,14 +262,14 @@
   .inp.err{box-shadow:inset 0 0 0 1px var(--bd-soft)}
   .inp.dis{opacity:.4}
   .inp.sel{flex-direction:row;align-items:center;gap:4px;padding-top:0;padding-bottom:0}
-  .inp.sel .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:12px 0}
+  .inp.sel .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 0}
   .inp .ic{width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--ic-1)}
   /* helper / error line under a field: 14/18, padding-top 4 */
   .help{font-size:14px;line-height:18px;letter-spacing:0;color:var(--tx-3);padding-top:4px}
   .help.err,.errtext{color:var(--err)}
   .errtext{font-size:14px;line-height:18px;letter-spacing:0;padding:4px 0 0}
   /* searchField: 56, p16, gap 12, r12, surface-alt, 1 pt border/field */
-  .search{display:flex;align-items:center;gap:12px;height:56px;padding:16px;border-radius:12px;flex:none;
+  .search{display:flex;align-items:center;gap:12px;height:44px;padding:10px 16px;border-radius:12px;flex:none;
     background:var(--bg-surface-alt);box-shadow:inset 0 0 0 1px var(--bd-field);color:var(--tx-3)}
   .search .vl{flex:1;min-width:0;color:var(--tx-3)}
   .search .vl.on{color:var(--tx-1)}
@@ -297,7 +301,7 @@
   .segm div{flex:1;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:24px;
     color:var(--tx-1);border-radius:12px}
   .segm .on{background:var(--bg-selected);box-shadow:inset 0 0 0 1px var(--acc-light)}
-  .segm.dis{opacity:.38}
+  .segm.dis{opacity:.4}
 
   /* Toggle 50×30, knob 20 */
   .sw{width:50px;height:30px;border-radius:15px;position:relative;flex:0 0 auto;
@@ -306,7 +310,7 @@
     box-shadow:0 0 4px var(--acc-alpha),0 0 8px var(--acc-alpha)}
   .sw.off{background:var(--bg-surface-alt);box-shadow:inset 0 0 0 1px var(--bd-soft)}
   .sw.off i{left:5px;right:auto;background:var(--ic-2);box-shadow:none}
-  .sw.dis{opacity:.38}
+  .sw.dis{opacity:.4}
   /* circle radio 24 inside a 48 action button */
   .radio{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--ic-1);flex:0 0 auto;position:relative}
   .radio.on{box-shadow:inset 0 0 0 1px var(--acc-dark);background:var(--bg-base)}
@@ -404,7 +408,7 @@
   .dlg .acts > .act{flex:1;justify-content:center}
   .dlg .acts.split{justify-content:space-between}
   .dlg .acts.col{flex-direction:column;height:auto}
-  .act{height:48px;padding:8px 12px;display:flex;align-items:center;gap:4px;border-radius:12px;
+  .act{height:40px;padding:8px 12px;display:flex;align-items:center;gap:4px;border-radius:12px;
     font-size:16px;line-height:24px;color:var(--tx-acc)}
   .act.fill{background:var(--btn-pri);color:var(--tx-inv);font-weight:600}
   .act.txt{color:var(--tx-acc)}
@@ -433,7 +437,7 @@
 
   /* FAB = actionButton bigIcon-only filled: 56, r16, accent/light, 48 from the bottom */
   .fab{position:absolute;right:16px;bottom:48px;width:56px;height:56px;border-radius:16px;
-    background:var(--acc-light);color:var(--tx-inv);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-1)}
+    background:var(--acc);color:var(--tx-inv);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-1)}
   .fab .icon{color:var(--tx-inv)}
 
   /* notification (inline banner): r12, background/surface, p12, icon 18 + text 14/18 */
@@ -449,7 +453,7 @@
   .empty{padding:16px 0;color:var(--tx-3);font-size:16px;line-height:24px}
   .hint{font-size:14px;line-height:18px;letter-spacing:0;color:var(--tx-3)}
   /* Snackbar: 358, r10, surface-inverse, p12/8/12/16, text 14/18 inverted, shadow */
-  .toast{position:absolute;left:16px;right:16px;bottom:68px;z-index:4;
+  .toast{position:absolute;left:16px;right:16px;bottom:48px;z-index:4;
     display:flex;align-items:center;gap:4px;padding:12px 8px 12px 16px;border-radius:10px;
     background:var(--bg-inverse);color:var(--tx-inv);font-size:14px;line-height:18px;letter-spacing:0;
     box-shadow:var(--sh-2),var(--sh-1)}
@@ -540,7 +544,7 @@
   .x04-seg div{flex:1;display:flex;align-items:center;justify-content:center;border-radius:12px;
     font-size:14px;line-height:18px;letter-spacing:0;color:var(--tx-1);white-space:nowrap}
   .x04-seg .on{background:var(--bg-selected);box-shadow:inset 0 0 0 1px var(--acc-light)}
-  .x04-seg.dis{opacity:.38}
+  .x04-seg.dis{opacity:.4}
   /* rule row (96): title 18/24 · badge 22 · type 14/18, 4 apart */
   .x04-rb{display:flex;width:max-content;margin-top:4px}
   /* read-only rule row (72): title fixed 234 · 4 · badge, on one line */
@@ -580,7 +584,7 @@
   .x10-plan{padding:12px 16px 16px}
   .x10-pt{font-size:18px;line-height:24px}
   .x10-bar{height:4px;border-radius:2px;background:var(--bg-panel);overflow:hidden}
-  .x10-bar i{display:block;height:100%;border-radius:2px;background:var(--acc-light)}
+  .x10-bar i{display:block;height:100%;border-radius:2px;background:var(--acc)}
   .x10-bar.x10-full i{width:100%;background:var(--warn)}
   .x10-pl{margin-top:8px;font-size:14px;line-height:18px;letter-spacing:0;color:var(--tx-3)}
   .x10-pl.x10-exp{color:var(--badge-err)}
@@ -797,7 +801,9 @@
       <tr><td>Button, field, chip radius</td><td>12</td></tr>
       <tr><td>Dialog radius / inset</td><td>12 / 16</td></tr>
       <tr><td>Sheet radius</td><td>12 top, 1 pt border/faint</td></tr>
-      <tr><td>Snackbar radius</td><td>10</td></tr>
+      <tr><td>Snackbar</td><td>r10, 16 above the safe area, up to 3 lines</td></tr>
+      <tr><td>Disabled / inactive</td><td>opacity 0.4</td></tr>
+      <tr><td>Hover / pressed / focus</td><td>layer 8 % / 10 %, ring border/focus</td></tr>
       <tr><td>Desktop window</td><td>400 × 700 incl. 44 title bar</td></tr>
       <tr><td>Max content width</td><td>560</td></tr>
     </table>
@@ -817,13 +823,13 @@
   <div class="mt">
     <h4>Rows and controls</h4>
     <table>
-      <tr><td>List row (actionItem)</td><td>min 72, p12, gap 12</td></tr>
+      <tr><td>List row (actionItem, as ListTile)</td><td>56 / 72 / 88 by lines, p4/12, gap 12</td></tr>
       <tr><td>Row icon / action button</td><td>24 / 48 (p8)</td></tr>
       <tr><td>Row divider</td><td>1, border/soft; none under the last</td></tr>
       <tr><td>Nav row / back button</td><td>48 / 36 (icon 20, x 15)</td></tr>
-      <tr><td>Button (large)</td><td>48, p8/12, gap 4</td></tr>
-      <tr><td>Text field</td><td>64, p0/16, 1 pt border/soft</td></tr>
-      <tr><td>Search field</td><td>56, p16, 1 pt border/field</td></tr>
+      <tr><td>Button (large) / text button</td><td>48 / 40, gap 4; muted = whole button at 0.4</td></tr>
+      <tr><td>Text field</td><td>56, label inside, 1 pt border/soft</td></tr>
+      <tr><td>Search field</td><td>44, 1 pt border/field</td></tr>
       <tr><td>Segmented control</td><td>48, full width</td></tr>
       <tr><td>Toggle</td><td>50 × 30, knob 20</td></tr>
       <tr><td>Radio</td><td>24 in a 48 button</td></tr>
@@ -1166,9 +1172,9 @@
       <div class="lt"><div class="h">Sign in</div><div class="sub">Your organization’s or personal server</div></div>
       <div class="scr">
         <div class="grp">
-          <div class="inp" style="opacity:.38"><div class="lb">Server address</div><div class="vl">https://vpn.acme.dev</div></div>
-          <div class="inp" style="opacity:.38"><div class="lb">Username</div><div class="vl">maria</div></div>
-          <div class="inp" style="opacity:.38"><div class="lb">Password</div><div class="vl">••••••••</div></div>
+          <div class="inp" style="opacity:.4"><div class="lb">Server address</div><div class="vl">https://vpn.acme.dev</div></div>
+          <div class="inp" style="opacity:.4"><div class="lb">Username</div><div class="vl">maria</div></div>
+          <div class="inp" style="opacity:.4"><div class="lb">Password</div><div class="vl">••••••••</div></div>
         </div>
         <div class="btns">
           <div class="btn fill"><svg class="icon"><use href="#l-loader-2"/></svg></div>
@@ -1286,7 +1292,7 @@
 <p class="flowdesc"><b>One hero, six looks.</b> Not connected — <i>off</i> (asleep, Zzz), glow 240, status <code>text/secondary</code>, <b>Connect</b>. Connecting — <i>lookL/lookR</i> every 600&nbsp;ms, glow 240, <code>text/secondary</code>, <b>Cancel</b>. Connected — <i>on</i> with a 200&nbsp;ms <i>happy</i> blink every 4–6&nbsp;s, strong glow 260, <code>text/primary</code>, <b>Disconnect</b>. Switching server — the same as connected, only the status changes. Error — <i>error</i> (cross eyes), no glow, <code>status/destructive</code>, <b>Connect</b>. No configuration — <i>off</i> at .38 and a muted button. The button is always DS <code>button</code> primary large; only its label changes. The cat is decorative (hidden from VoiceOver/TalkBack); the status line announces the state. On a desktop the button takes keyboard focus, Enter and Space press it.</p>
 <div class="rail">
   <div class="board">
-    <div class="scaler"><div class="ph"><div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div><div class="ab home"><span class="ic"><svg class="icon"><use href="#l-plus"/></svg></span><span class="sp"></span><span class="ic"><svg class="icon"><use href="#l-settings"/></svg></span></div><div class="hbody"><div class="strip"><span class="pill">Auto · off</span><span class="pill">Routing · off</span><span class="pill on">Logs · on</span></div><div class="hfill"><div class="hero"><div class="stage"><i class="glow"></i><div class="cat" style="opacity:.38"><div class="rig"><svg class="f show" viewBox="0 0 200 200"><use href="#cat-off"/></svg></div><svg class="zzz" viewBox="0 0 70 70"><path class="z1" style="fill:var(--acc)" d="M0 30h7v7h-7zM7 30h7v7h-7zM14 30h7v7h-7zM21 30h7v7h-7zM28 30h7v7h-7zM21 37h7v7h-7zM14 44h7v7h-7zM7 51h7v7h-7zM0 58h7v7h-7zM7 58h7v7h-7zM14 58h7v7h-7zM21 58h7v7h-7zM28 58h7v7h-7z"/><path class="z2" style="fill:var(--acc)" d="M40 0h5v5h-5zM45 0h5v5h-5zM50 0h5v5h-5zM55 0h5v5h-5zM60 0h5v5h-5zM55 5h5v5h-5zM50 10h5v5h-5zM45 15h5v5h-5zM40 20h5v5h-5zM45 20h5v5h-5zM50 20h5v5h-5zM55 20h5v5h-5zM60 20h5v5h-5z"/></svg></div></div><div class="hstat">No configuration</div><div class="btn fill w200 dis"><span>Connect</span></div></div></div><div class="hbot"><div class="card"><div class="row"><svg class="icon"><use href="#l-plus"/></svg><div class="tx"><div class="t">Add a connection</div><div class="s">Link, subscription or config file</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div></div></div><div class="bbar" style="height:32px"></div><div class="homeind"></div></div></div>
+    <div class="scaler"><div class="ph"><div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div><div class="ab home"><span class="ic"><svg class="icon"><use href="#l-plus"/></svg></span><span class="sp"></span><span class="ic"><svg class="icon"><use href="#l-settings"/></svg></span></div><div class="hbody"><div class="strip"><span class="pill">Auto · off</span><span class="pill">Routing · off</span><span class="pill on">Logs · on</span></div><div class="hfill"><div class="hero"><div class="stage"><i class="glow"></i><div class="cat" style="opacity:.4"><div class="rig"><svg class="f show" viewBox="0 0 200 200"><use href="#cat-off"/></svg></div><svg class="zzz" viewBox="0 0 70 70"><path class="z1" style="fill:var(--acc)" d="M0 30h7v7h-7zM7 30h7v7h-7zM14 30h7v7h-7zM21 30h7v7h-7zM28 30h7v7h-7zM21 37h7v7h-7zM14 44h7v7h-7zM7 51h7v7h-7zM0 58h7v7h-7zM7 58h7v7h-7zM14 58h7v7h-7zM21 58h7v7h-7zM28 58h7v7h-7z"/><path class="z2" style="fill:var(--acc)" d="M40 0h5v5h-5zM45 0h5v5h-5zM50 0h5v5h-5zM55 0h5v5h-5zM60 0h5v5h-5zM55 5h5v5h-5zM50 10h5v5h-5zM45 15h5v5h-5zM40 20h5v5h-5zM45 20h5v5h-5zM50 20h5v5h-5zM55 20h5v5h-5zM60 20h5v5h-5z"/></svg></div></div><div class="hstat">No configuration</div><div class="btn fill w200 dis"><span>Connect</span></div></div></div><div class="hbot"><div class="card"><div class="row"><svg class="icon"><use href="#l-plus"/></svg><div class="tx"><div class="t">Add a connection</div><div class="s">Link, subscription or config file</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div></div></div><div class="bbar" style="height:32px"></div><div class="homeind"></div></div></div>
     <p class="cap"><span class="id">HomeScreen · empty</span><span class="fig">Figma 535:21640 · 2.0 · HomeScreen · нет конфигураций</span><b>No configurations, but it is still the home screen.</b> The root used to be the add screen, which has neither settings nor logs: if a link failed to add, the person could neither open the log nor export it — exactly when it is needed most. Now home is always there; deleting the last configuration returns here too.<br><br>The cat sleeps at .38 and the <b>Connect</b> button is DS <code>muted</code> (.38) and not tappable: there is nothing to connect, and a “No configuration” dialog on the very first tap would reproach the person for something the app never explained. Status — “No configuration”, the same wording as in the menu bar menu.<br><br>One card instead of two: a plus 24 in <code>icon/default</code> (no longer accent), “Add a connection” / “Link, subscription or config file”, a 48 chevron-right button. Tapping the row opens <code>1.1 · StartScreen</code> with a back arrow. There is no server card: a nonexistent configuration has no servers. The status strip is fully in place; the Routing chip leads to <code>4.1 · RuleSetsScreen</code> here, since there is no configuration to route.</p>
   </div>
   <div class="board">
@@ -1758,7 +1764,7 @@
       <div class="lt"><div class="h">Work</div></div>
       <div class="scr">
         <div class="grp"><div class="segm"><div>Simple</div><div class="on">Advanced</div></div><div class="x04-nb"><div class="x04-nbh"><svg class="icon"><use href="#l-cloud-off"/></svg><div><div class="x04-nbt">Geo databases not downloaded</div><div class="x04-nbs">geoip / geosite rules are inactive until then (~25 MB)</div></div></div><div class="btn tonal"><span>Download</span></div></div><div class="x04-dir"><div class="x04-seg"><div class="on">Full tunnel</div><div>Split</div></div><div class="note">All traffic goes through the VPN; rules define exceptions.</div></div></div>
-        <div class="grp"><div class="sh">Rules — first match wins</div><div class="card"><div class="row"><div class="tx"><div class="t">corp.example.com</div><span class="badge ok x04-rb">PROXY</span><div class="s multi">domain-suffix</div></div><span class="ic"><svg class="icon"><use href="#l-trash"/></svg></span><span class="ic"><svg class="icon"><use href="#l-grip-vertical"/></svg></span></div><div class="row" style="opacity:.45"><div class="tx"><div class="t"><span class="flag" style="display:inline-flex;vertical-align:-3px">🇷🇺</span> RU</div><span class="badge x04-rb">DIRECT</span><div class="s multi">geoip · inactive — no database</div></div><span class="ic"><svg class="icon"><use href="#l-trash"/></svg></span><span class="ic"><svg class="icon"><use href="#l-grip-vertical"/></svg></span></div></div></div>
+        <div class="grp"><div class="sh">Rules — first match wins</div><div class="card"><div class="row"><div class="tx"><div class="t">corp.example.com</div><span class="badge ok x04-rb">PROXY</span><div class="s multi">domain-suffix</div></div><span class="ic"><svg class="icon"><use href="#l-trash"/></svg></span><span class="ic"><svg class="icon"><use href="#l-grip-vertical"/></svg></span></div><div class="row" style="opacity:.4"><div class="tx"><div class="t"><span class="flag" style="display:inline-flex;vertical-align:-3px">🇷🇺</span> RU</div><span class="badge x04-rb">DIRECT</span><div class="s multi">geoip · inactive — no database</div></div><span class="ic"><svg class="icon"><use href="#l-trash"/></svg></span><span class="ic"><svg class="icon"><use href="#l-grip-vertical"/></svg></span></div></div></div>
       </div>
       <div class="fab" style="background:var(--acc-light)"><svg class="icon"><use href="#l-plus"/></svg></div>
       <div class="homeind"></div>
@@ -1859,7 +1865,7 @@
       <div class="scr">
         <div class="segm"><div class="on">Simple</div><div>Advanced</div></div>
         <div class="x04-nb"><div class="x04-nbh"><svg class="icon"><use href="#l-cloud-off"/></svg><div><div class="x04-nbt">Download the site lists first</div><div class="x04-nbs">Picking services needs the geo databases (~25 MB, one time)</div></div></div><div class="btn tonal"><span>Download</span></div></div>
-        <div class="grp"><div class="sh">Streaming</div><div class="card"><div class="row" style="opacity:.45"><svg class="icon"><use href="#l-youtube"/></svg><div class="tx"><div class="t">YouTube</div></div><span class="sw off"><i></i></span></div><div class="row" style="opacity:.45"><svg class="icon"><use href="#l-tv"/></svg><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div></div></div>
+        <div class="grp"><div class="sh">Streaming</div><div class="card"><div class="row" style="opacity:.4"><svg class="icon"><use href="#l-youtube"/></svg><div class="tx"><div class="t">YouTube</div></div><span class="sw off"><i></i></span></div><div class="row" style="opacity:.4"><svg class="icon"><use href="#l-tv"/></svg><div class="tx"><div class="t">Netflix</div></div><span class="sw off"><i></i></span></div></div></div>
       </div>
       <div class="homeind"></div>
     </div></div>
@@ -1964,7 +1970,7 @@
         <div class="grp" style="gap:8px"><div class="card"><div class="row"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Default</div><div class="s multi">Full tunnel · no rules · used by 1 config</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div><div class="card"><div class="row"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Work</div><div class="s multi">Full tunnel · 4 rules · used by 2 configs</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div><div class="card"><div class="row"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Streaming off VPN</div><div class="s">Full tunnel · 2 rules</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div></div>
       </div>
       <div class="fab" style="background:var(--acc-light);bottom:48px"><svg class="icon"><use href="#l-plus"/></svg></div>
-      <div class="dim"></div><div class="dlg"><h4>New rule set</h4><div class="body"><div class="inp sel x04-muted"><div class="tx"><div class="lb">Name</div><div class="vl">work</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div><div class="help err">There is already a set named “Work”</div></div><div class="acts"><span class="act">Cancel</span><span class="act" style="font-weight:600;opacity:.38">Create</span></div></div>
+      <div class="dim"></div><div class="dlg"><h4>New rule set</h4><div class="body"><div class="inp sel x04-muted"><div class="tx"><div class="lb">Name</div><div class="vl">work</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div><div class="help err">There is already a set named “Work”</div></div><div class="acts"><span class="act">Cancel</span><span class="act" style="font-weight:600;opacity:.4">Create</span></div></div>
       <div class="homeind"></div>
     </div></div>
     <p class="cap"><span class="id">RuleSetsScreen · _create · name taken</span><span class="fig">Figma 495:18043 · 4.17 · RuleSetsScreen · новый набор · имя занято</span><b>A name picks one set.</b> Sets are chosen by name — in the configuration’s set picker, in the settings list — and two sets called the same are two rows nobody can tell apart. So a name already in use is refused while it is typed: the line under the field (14/18 <code>status/destructive</code>) names the set it collides with as that set is spelled, and Create goes to .38. Case and surrounding spaces do not make a name new (“work” collides with “Work”). The field keeps its border and gets a clear (×) button once it has text. The import screen’s name field does the same. Sets that already share a name are left as they are — nothing renames the user’s data behind their back.</p>
@@ -2223,7 +2229,7 @@
       <div class="sheet" style="top:73px;max-height:none"><div class="grab"></div><div class="stitle">Match</div>
         <div class="sbody" style="flex:1">
           <div class="search"><svg class="icon"><use href="#l-search"/></svg><span class="vl">Search</span></div>
-          <div class="card"><div class="row sel"><div class="tx"><div class="t">domain-suffix</div><div class="s">domain and subdomains</div></div></div><div class="row"><div class="tx"><div class="t">domain-keyword</div><div class="s">domain contains</div></div></div><div class="row"><div class="tx"><div class="t">domain-exact</div><div class="s">exact domain</div></div></div><div class="row"><div class="tx"><div class="t">domain-regex</div><div class="s">domain matches a pattern</div></div></div><div class="row"><div class="tx"><div class="t">ip-cidr</div><div class="s">IP range</div></div></div><div class="row off" style="opacity:.45"><div class="tx"><div class="t">process-name</div><div class="s">not available on this platform</div></div></div><div class="row"><div class="tx"><div class="t">geoip</div><div class="s">country by IP</div></div></div><div class="row"><div class="tx"><div class="t">geosite</div><div class="s">domain lists</div></div></div></div>
+          <div class="card"><div class="row sel"><div class="tx"><div class="t">domain-suffix</div><div class="s">domain and subdomains</div></div></div><div class="row"><div class="tx"><div class="t">domain-keyword</div><div class="s">domain contains</div></div></div><div class="row"><div class="tx"><div class="t">domain-exact</div><div class="s">exact domain</div></div></div><div class="row"><div class="tx"><div class="t">domain-regex</div><div class="s">domain matches a pattern</div></div></div><div class="row"><div class="tx"><div class="t">ip-cidr</div><div class="s">IP range</div></div></div><div class="row off" style="opacity:.4"><div class="tx"><div class="t">process-name</div><div class="s">not available on this platform</div></div></div><div class="row"><div class="tx"><div class="t">geoip</div><div class="s">country by IP</div></div></div><div class="row"><div class="tx"><div class="t">geosite</div><div class="s">domain lists</div></div></div></div>
         </div>
       </div>
       <div class="homeind"></div>
@@ -2403,7 +2409,7 @@ time="13:29:05" level=info msg="[TCP] 10.0.0.4:52320 --&gt; api.telegram.org:443
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="sp"></span><span class="ic"><svg class="icon"><use href="#l-refresh-cw"/></svg></span><span class="ic" style="opacity:.38"><svg class="icon"><use href="#l-copy"/></svg></span></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="sp"></span><span class="ic"><svg class="icon"><use href="#l-refresh-cw"/></svg></span><span class="ic" style="opacity:.4"><svg class="icon"><use href="#l-copy"/></svg></span></div>
       <div class="lt"><div class="h">Tunnel</div></div>
       <div class="scr">
         <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start"><svg class="icon" style="width:40px;height:40px;stroke-width:1.5;color:var(--ic-2)"><use href="#l-file-text"/></svg><div style="font-size:16px;line-height:24px;color:var(--tx-2)">No log yet.</div></div>
@@ -3411,7 +3417,7 @@ of a link subscription. Every fixed string says “subscription”. Flows drawn 
         </div></div>
         <div class="hbot">
           <div class="card"><div class="row"><svg class="icon"><use href="#l-shield"/></svg><div class="tx"><div class="t">Amnezia Premium</div><div class="s">Subscription · 44 servers</div></div><span class="ic"><svg class="icon"><use href="#l-refresh-cw"/></svg></span><span class="ic"><svg class="icon"><use href="#l-settings"/></svg></span><svg class="icon"><use href="#l-chevron-down"/></svg></div></div>
-          <div class="card" style="opacity:.38"><div class="row"><span class="flag">🇩🇪</span><div class="tx"><div class="t">Germany</div><div class="s">AmneziaWG</div></div><svg class="icon"><use href="#l-chevron-right"/></svg></div></div>
+          <div class="card" style="opacity:.4"><div class="row"><span class="flag">🇩🇪</span><div class="tx"><div class="t">Germany</div><div class="s">AmneziaWG</div></div><svg class="icon"><use href="#l-chevron-right"/></svg></div></div>
         </div>
       </div>
       <div style="height:32px;flex:none"></div>

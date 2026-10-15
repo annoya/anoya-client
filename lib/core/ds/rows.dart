@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import 'glyph.dart';
+import 'ink.dart';
 
-// actionItem: min 72, p12, gap 12; text 4 after the gap; title 18/24, subtitle 14/18.
+// actionItem, as a ListTile: 56 for one line, 72 for two, 88 for three. Side padding 12, gap 12, text 4 after
+// the gap; the 48 actions sit 4 from the edges, the text 8 (12 with a subtitle). Title 18/24, subtitle 14/18.
 class DsRow extends StatelessWidget {
   const DsRow({
     super.key,
@@ -15,12 +17,12 @@ class DsRow extends StatelessWidget {
     this.subtitleWidget,
     this.subtitleMaxLines = 2,
     this.badge,
+    this.titleBadge,
     this.trailing = const [],
     this.onTap,
     this.onLongPress,
     this.enabled = true,
     this.selected = false,
-    this.compact = false,
     this.titleStyle,
     this.subtitleColor,
     this.tooltip,
@@ -33,15 +35,15 @@ class DsRow extends StatelessWidget {
   final String? subtitle;
   final Widget? subtitleWidget;
   final int subtitleMaxLines;
+
+  // Under the title, or right after it on the title line.
   final Widget? badge;
+  final Widget? titleBadge;
   final List<Widget> trailing;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool enabled;
   final bool selected;
-
-  // Home cards: p8/12, no gap between the actions, title 12 after the icon.
-  final bool compact;
   final TextStyle? titleStyle;
   final Color? subtitleColor;
   final String? tooltip;
@@ -54,28 +56,41 @@ class DsRow extends StatelessWidget {
         (glyph == null
             ? null
             : GlyphIcon(glyph!, color: selected ? ds.textAccent : null));
-    final gap = compact ? 0.0 : kRowGap;
+    final hasSubtitle =
+        subtitleWidget != null || (subtitle != null && subtitle!.isNotEmpty);
+    final titleText =
+        titleWidget ??
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: titleStyle ?? DsType.h3.copyWith(color: ds.text1),
+        );
     final text = Padding(
       padding: EdgeInsets.only(
-        left: lead == null ? 0 : (compact ? kRowGap : 4),
-        right: compact ? 4 : 0,
+        left: lead == null ? 0 : 4,
+        top: hasSubtitle || badge != null ? 8 : 4,
+        bottom: hasSubtitle || badge != null ? 8 : 4,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          titleWidget ??
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: titleStyle ?? DsType.h3.copyWith(color: ds.text1),
-              ),
+          if (titleBadge == null)
+            titleText
+          else
+            Row(
+              children: [
+                Flexible(child: titleText),
+                const SizedBox(width: 8),
+                titleBadge!,
+              ],
+            ),
           if (badge != null) ...[const SizedBox(height: 4), badge!],
           if (subtitleWidget != null) ...[
             const SizedBox(height: 4),
             subtitleWidget!,
-          ] else if (subtitle != null && subtitle!.isNotEmpty) ...[
+          ] else if (hasSubtitle) ...[
             const SizedBox(height: 4),
             Text(
               subtitle!,
@@ -88,11 +103,16 @@ class DsRow extends StatelessWidget {
       ),
     );
     Widget row = ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: kRowMinHeight),
+      constraints: BoxConstraints(
+        minHeight: hasSubtitle || badge != null
+            ? kRowHeightTwoLines
+            : kRowHeight,
+      ),
       child: Padding(
-        padding: compact
-            ? const EdgeInsets.symmetric(horizontal: kRowPadding, vertical: 8)
-            : const EdgeInsets.all(kRowPadding),
+        padding: const EdgeInsets.symmetric(
+          horizontal: kRowPadding,
+          vertical: 4,
+        ),
         child: Row(
           children: [
             if (lead != null)
@@ -100,20 +120,18 @@ class DsRow extends StatelessWidget {
                 data: const IconThemeData(size: kRowIcon),
                 child: lead,
               ),
-            if (lead != null && !compact) SizedBox(width: gap),
+            if (lead != null) const SizedBox(width: kRowGap),
             Expanded(child: text),
-            for (final t in trailing) ...[SizedBox(width: gap), t],
+            for (final t in trailing) ...[const SizedBox(width: kRowGap), t],
           ],
         ),
       ),
     );
-    row = Material(
+    row = DsInk(
       color: selected ? ds.accentSubtle : Colors.transparent,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        onLongPress: enabled ? onLongPress : null,
-        child: row,
-      ),
+      onTap: enabled ? onTap : null,
+      onLongPress: enabled ? onLongPress : null,
+      child: row,
     );
     if (tooltip != null) row = Tooltip(message: tooltip!, child: row);
     return enabled
@@ -146,13 +164,13 @@ class DsAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = busy
-        ? SizedBox.square(
-            dimension: iconSize,
-            child: const _RowSpinner(),
-          )
+        ? SizedBox.square(dimension: iconSize, child: const _RowSpinner())
         : GlyphIcon(glyph, size: iconSize, color: color);
     if (onPressed == null && !busy) {
-      return SizedBox.square(dimension: size, child: Center(child: icon));
+      return SizedBox.square(
+        dimension: size,
+        child: Center(child: icon),
+      );
     }
     return IconButton(
       onPressed: busy ? null : onPressed,
@@ -240,41 +258,6 @@ class DsToggle extends StatelessWidget {
             cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
             child: toggle,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// circle-radio 24 inside the 48 action slot.
-class DsRadio extends StatelessWidget {
-  const DsRadio({super.key, required this.selected});
-
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final ds = context.ds;
-    return SizedBox.square(
-      dimension: kActionButton,
-      child: Center(
-        child: Container(
-          width: kRadioSize,
-          height: kRadioSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: selected ? ds.base : null,
-            border: Border.all(color: selected ? ds.accentDark : ds.icon1),
-          ),
-          padding: const EdgeInsets.all(6),
-          child: selected
-              ? DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: ds.accentLight,
-                  ),
-                )
-              : null,
         ),
       ),
     );

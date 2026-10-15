@@ -421,7 +421,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dnsOriginSubscription => 'from your subscription';
 
   @override
-  String get dnsOriginOrganisation => 'from your organisation';
+  String get dnsOriginOrganisation => 'from your organization';
 
   @override
   String get dnsOriginConfiguration => 'from this configuration';
@@ -1791,7 +1791,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String ruleSummaryGeosite(String category) {
-    return '\"$category\" domains (GeoSite list)';
+    return 'traffic to \"$category\" domains (GeoSite list)';
   }
 
   @override
@@ -1956,10 +1956,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rules are evaluated top to bottom. If none matches, the tunnel is left as is.';
 
   @override
-  String get onDemandTagConnect => 'CONN.';
+  String get onDemandTagConnect => 'CONNECT';
 
   @override
-  String get onDemandTagDisconnect => 'DISC.';
+  String get onDemandTagDisconnect => 'DISCONNECT';
 
   @override
   String get onDemandTagIgnore => 'IGNORE';
