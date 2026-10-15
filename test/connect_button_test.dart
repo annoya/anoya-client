@@ -18,7 +18,9 @@ void main() {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
-        body: Center(child: ConnectButton(status: status, onTap: onTap)),
+        body: Center(
+          child: ConnectButton(status: status, onTap: onTap),
+        ),
       ),
     ),
   );
@@ -55,7 +57,10 @@ void main() {
       ),
     );
     expect(ink.onTap, isNotNull);
-    expect(ink.mouseCursor ?? SystemMouseCursors.click, SystemMouseCursors.click);
+    expect(
+      ink.mouseCursor ?? SystemMouseCursors.click,
+      SystemMouseCursors.click,
+    );
   });
 
   testWidgets('a button with nothing to connect takes no focus', (
