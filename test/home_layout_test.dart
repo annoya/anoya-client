@@ -190,10 +190,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(
-          of: card,
-          matching: findGlyph(Glyph.settings),
-        ),
+        find.descendant(of: card, matching: findGlyph(Glyph.settings)),
         findsOneWidget,
         reason: 'refresh sits beside the gear, it does not replace it',
       );

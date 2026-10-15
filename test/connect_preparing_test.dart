@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/amnezia/amnezia_account.dart';
+import 'package:anoya/core/json_file_store.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
@@ -46,7 +47,12 @@ void main() {
     });
   });
 
-  tearDown(() {
+  tearDown(() async {
+    // Windows refuses to delete a file a store write still holds open.
+    for (var i = 0; i < 200 && JsonFileStore.pending > 0; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       null,
@@ -93,7 +99,7 @@ void main() {
     final core = _FakeCore();
     final c = await boot(core);
 
-    unawaited(c.read(profilesControllerProvider.notifier).connect());
+    final attempt = c.read(profilesControllerProvider.notifier).connect();
     await Future<void>.delayed(const Duration(milliseconds: 20));
 
     expect(c.read(profilesControllerProvider).preparing, isTrue);
@@ -103,6 +109,9 @@ void main() {
       reason: 'a silent button here is what looked like a lost tap',
     );
     expect(c.read(sessionProvider).busy, isTrue);
+
+    key.complete(null);
+    await attempt;
   });
 
   test('a second tap while issuing cancels instead of being lost', () async {
