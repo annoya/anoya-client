@@ -197,6 +197,10 @@ class AgwConfig {
     'public_key_pem': publicKeyPem,
     if (s3Primary.isNotEmpty) 's3_primary_endpoints': s3Primary,
     if (s3Fallback.isNotEmpty) 's3_fallback_endpoints': s3Fallback,
+    'request_timeout_msecs': 6000,
+    'proxy_request_timeout_msecs': 6000,
+    'proxy_storage_timeout_msecs': 6000,
+    'proxy_health_timeout_msecs': 1000,
   };
 }
 
