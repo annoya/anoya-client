@@ -259,7 +259,7 @@ class _RuleScreenState extends State<RuleScreen> {
         _parseCard(context)
       else if (_typeDescription(_type) case final d?)
         DsNote(d),
-      DsButton.tonal(
+      DsButton.secondary(
         label: l10n.ruleValuesFromFile,
         glyph: Glyph.file,
         onPressed: _fromFile,

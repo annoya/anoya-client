@@ -31,6 +31,10 @@ void main() {
         'public_key_pem',
         's3_primary_endpoints',
         's3_fallback_endpoints',
+        'request_timeout_msecs',
+        'proxy_request_timeout_msecs',
+        'proxy_storage_timeout_msecs',
+        'proxy_health_timeout_msecs',
       ]) {
         expect(
           header,
@@ -40,6 +44,17 @@ void main() {
       }
     },
   );
+
+  test('every attempt gets its timeout: gateway, proxy, storage, health', () {
+    final json = const AgwConfig(
+      endpoint: 'https://gw.example.com/',
+      publicKeyPem: 'x',
+    ).toJson();
+    expect(json['request_timeout_msecs'], 6000);
+    expect(json['proxy_request_timeout_msecs'], 6000);
+    expect(json['proxy_storage_timeout_msecs'], 6000);
+    expect(json['proxy_health_timeout_msecs'], 1000);
+  });
 
   test('a list nobody supplied is left out, not sent empty', () {
     const cfg = AgwConfig(

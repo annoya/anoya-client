@@ -68,7 +68,7 @@ class _RuleSetQrScreenState extends State<RuleSetQrScreen> {
                   child: CustomPaint(painter: _Modules(code)),
                 )
               : Padding(
-                  padding: const EdgeInsets.all(kRowPadding),
+                  padding: const EdgeInsets.all(kCardPadding),
                   child: Text(
                     l10n.ruleSetExportQrTooLarge,
                     textAlign: TextAlign.center,

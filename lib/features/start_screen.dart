@@ -211,7 +211,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       children: [
         if (rejected != null) _Rejected(failure: rejected),
         if (rejected?.openUrl != null)
-          DsButton.tonal(
+          DsButton.secondary(
             label: l10n.startOpenSubscriptionPage,
             glyph: Glyph.link,
             onPressed: () => launchUrl(
@@ -268,12 +268,12 @@ class _StartScreenState extends ConsumerState<StartScreen> {
               onPressed: _detected == null ? null : _continue,
             ),
             if (_canScanQr)
-              DsButton.tonal(
+              DsButton.secondary(
                 label: l10n.startScanQr,
                 glyph: Glyph.scan,
                 onPressed: _busy ? null : _scanQr,
               ),
-            DsButton.tonal(
+            DsButton.secondary(
               label: l10n.startOpenConfigFile,
               glyph: Glyph.folder,
               onPressed: _busy ? null : _openFile,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'controls.dart';
 import 'glyph.dart';
+import 'layout.dart';
 
 // notification (inline): r12 on background/surface.
 // regular — p16, icon 24, gap 12, title 14/18, body 14/18 text/secondary, action 16 below;
@@ -49,10 +50,7 @@ class DsNotification extends StatelessWidget {
     };
     final iconSize = small ? 18.0 : kRowIcon;
     final titleStyle = DsType.small.copyWith(color: ds.text1);
-    return Material(
-      color: ds.surface,
-      borderRadius: BorderRadius.circular(kRadius),
-      clipBehavior: Clip.antiAlias,
+    return DsSurface(
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -109,13 +107,9 @@ class DsStickyAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ds = context.ds;
-    return Material(
+    return DsSurface(
       color: ds.selected,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(kRadius),
-        side: BorderSide(color: ds.borderBrand),
-      ),
-      clipBehavior: Clip.antiAlias,
+      borderColor: ds.borderBrand,
       child: InkWell(
         onTap: onTap,
         child: Padding(

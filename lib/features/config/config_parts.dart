@@ -184,7 +184,7 @@ class ConfigActions extends ConsumerWidget {
     return DsStack(
       children: [
         if (!isActive)
-          DsButton.tonal(
+          DsButton.secondary(
             label: l10n.configSetActive,
             glyph: Glyph.check,
             onPressed: () => ctrl.setActive(profile.id),

@@ -27,24 +27,20 @@ class DirectionCard<T> extends StatelessWidget {
   final ValueChanged<T>? onChanged;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: context.ds.surface,
-    borderRadius: BorderRadius.circular(kRadius),
-    child: Padding(
-      padding: const EdgeInsets.all(kRowPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DsSegmented<T>(
-            compact: true,
-            segments: segments,
-            value: value,
-            onChanged: onChanged,
-          ),
-          const SizedBox(height: kNoteGap),
-          DsNote(note),
-        ],
-      ),
+  Widget build(BuildContext context) => DsSurface(
+    padding: const EdgeInsets.all(kCardPadding),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DsSegmented<T>(
+          compact: true,
+          segments: segments,
+          value: value,
+          onChanged: onChanged,
+        ),
+        const SizedBox(height: kNoteGap),
+        DsNote(note),
+      ],
     ),
   );
 }

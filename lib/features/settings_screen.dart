@@ -70,6 +70,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final picked = await pickOption<String>(
       context,
       title: l10n.settingsDefaultDns,
+      radio: true,
       selected: kDnsPresets.any((p) => p.address == current) ? current : custom,
       options: [
         for (final p in kDnsPresets)
@@ -121,6 +122,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final picked = await pickOption<ThemeMode>(
       context,
       title: l10n.settingsAppearance,
+      radio: true,
       selected: ref.read(appPrefsProvider).themeMode,
       options: [
         Option(
@@ -141,6 +143,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final picked = await pickOption<AppLanguage>(
       context,
       title: context.l10n.settingsLanguage,
+      radio: true,
       selected: ref.read(appPrefsProvider).language,
       options: AppLanguage.values.map((l) => Option(l, l.label)).toList(),
     );

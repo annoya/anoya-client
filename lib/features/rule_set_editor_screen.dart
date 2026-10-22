@@ -378,6 +378,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     final advanced = _editor == RuleEditor.advanced;
     final empty = advanced && _rules.isEmpty;
     return DsPage(
+      title: _loading ? null : _name,
       actions: [
         if (!_loading)
           DsNavButton(
@@ -404,15 +405,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
           : CustomScrollView(
               slivers: [
                 SliverPadding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: kScrollPadding.left,
-                  ),
+                  padding: kScrollPadding.copyWith(bottom: 0),
                   sliver: SliverList.list(
                     children: [
-                      DsLargeTitle(
-                        _name,
-                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
-                      ),
                       ...gapped(
                         advanced
                             ? _advancedChildren(context)

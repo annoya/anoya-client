@@ -47,16 +47,21 @@ void main() {
           tester.getCenter(find.byKey(const Key('b'))).dx -
           tester.getCenter(find.byKey(const Key('a'))).dx;
       debugDefaultTargetPlatformOverride = null;
-      expect(back, closeTo(15 + kNavButton / 2, 0.5));
+      expect(back, closeTo(kNavPadding + kNavButton / 2, 0.5));
       expect(
         last,
-        closeTo(back - 1, 0.5),
+        closeTo(back, 0.5),
         reason: 'the last action sits as far from the right edge',
       );
       expect(
         gap,
-        kNavButton + 16,
-        reason: 'two actions sit 16 apart, as in the navigation bar',
+        kNavButton,
+        reason: 'actions sit side by side, as in the navigation bar',
+      );
+      expect(
+        tester.getCenter(find.text('Rule sets')).dx,
+        closeTo(width / 2, 0.5),
+        reason: 'the title is centred in the bar',
       );
     });
   }
