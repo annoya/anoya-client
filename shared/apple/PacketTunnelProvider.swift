@@ -206,8 +206,9 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                                                              queue: .global(qos: .utility))
         source.setEventHandler { [weak self] in
             guard let self else { return }
-            let level = source.data.contains(.critical) ? "critical" : "warning"
-            self.log("memory pressure: \(level) · \(Self.memoryFootprint())")
+            let critical = source.data.contains(.critical)
+            self.log("memory pressure: \(critical ? "critical" : "warning") · \(Self.memoryFootprint())")
+            if critical { MihomoReleaseMemory() }
         }
         source.resume()
         pressureSource = source
@@ -440,11 +441,16 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             forSecurityApplicationGroupIdentifier: Self.appGroup) ?? Self.cachesDir()
     }
 
+    private static let jetsamBudget: Int64 = 50 << 20
+
     private func startEngine(fd: Int32, config: String) -> String? {
         let home = mihomoHomeDir().path
         home.withCString { MihomoSetHomeDir(UnsafeMutablePointer(mutating: $0)) }
         Self.logDir.appendingPathComponent("mihomo.log").path
             .withCString { MihomoSetEngineLog(UnsafeMutablePointer(mutating: $0)) }
+        #if os(iOS)
+        MihomoSetMemoryBudget(Self.jetsamBudget)
+        #endif
         log("mihomo home dir: \(home)")
         return config.withCString { cfgPtr -> String? in
             guard let res = MihomoStart(fd, UnsafeMutablePointer(mutating: cfgPtr)) else {
