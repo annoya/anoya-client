@@ -829,6 +829,9 @@ The tunnel journal records only what explains a drop or a restart: who started
 the tunnel, the stop reason and uptime, a previous process that died without a
 stop (with the system's exit reason on Android 11+), network changes, memory
 pressure, engine start and reload failures and watchdog recoveries (ADR-016).
+On iOS the extension keeps under the jetsam cap (ADR-021): on critical memory
+pressure it returns memory to the system and logs what the memory was made of,
+and close to the cap it closes the open connections rather than be killed.
 While clearing runs, the clear button shows a spinner and both buttons are
 disabled.
 `scripts/leak-check.sh` verifies on a live tunnel that nothing escapes

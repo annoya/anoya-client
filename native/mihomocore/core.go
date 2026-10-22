@@ -39,6 +39,16 @@ func MihomoSetEngineLog(path *C.char) {
 	engine.SetEngineLog(C.GoString(path))
 }
 
+//export MihomoSetMemoryBudget
+func MihomoSetMemoryBudget(bytes C.longlong) {
+	engine.SetMemoryBudget(int64(bytes))
+}
+
+//export MihomoReleaseMemory
+func MihomoReleaseMemory() {
+	engine.ReleaseMemory()
+}
+
 //export MihomoSetCrashLog
 func MihomoSetCrashLog(path *C.char) {
 	engine.SetCrashLog(C.GoString(path))

@@ -65,15 +65,18 @@ fi
 # gateway (198.18.0.1) and fails with "can't assign requested address" in the
 # NE. Memory (iOS NE ~50MB cap) is validated empirically on device instead.
 # Set IOS=0 to skip (e.g. on a Mac without the iOS SDK).
+# The iOS extension lives under a ~50 MB jetsam cap: mihomo's with_low_memory
+# halves its relay buffers (TCP 32→16 KB, UDP 16→8 KB). macOS has no such cap.
+IOS_TAGS="with_gvisor,with_low_memory"
 XCARGS=(-library "$LIB" -headers "$OUT/headers")
 if [ "${IOS:-1}" = "1" ] && xcrun --sdk iphoneos --show-sdk-path >/dev/null 2>&1; then
-  echo ">> building ios/arm64 c-archive (with_gvisor)"
+  echo ">> building ios/arm64 c-archive ($IOS_TAGS)"
   mkdir -p "$OUT/ios-arm64" "$OUT/ios-headers"
   IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
   CGO_ENABLED=1 GOOS=ios GOARCH=arm64 \
     SDKROOT="$IOS_SDK" \
     CC="$(xcrun --sdk iphoneos --find clang) -arch arm64 -isysroot $IOS_SDK -miphoneos-version-min=15.0" \
-    go build -tags with_gvisor -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/ios-arm64/libmihomocore.a" .
+    go build -tags "$IOS_TAGS" -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/ios-arm64/libmihomocore.a" .
   cp "$OUT/ios-arm64/libmihomocore.h" "$OUT/ios-headers/mihomocore.h"
   modulemap "$OUT/ios-headers"
   XCARGS+=(-library "$OUT/ios-arm64/libmihomocore.a" -headers "$OUT/ios-headers")
@@ -84,13 +87,13 @@ fi
 # iOS simulator slice (arm64), so the app builds and UI can be exercised in
 # the Simulator. NE tunnels don't actually run there — this is link-only.
 if [ "${IOS:-1}" = "1" ] && xcrun --sdk iphonesimulator --show-sdk-path >/dev/null 2>&1; then
-  echo ">> building ios-simulator/arm64 c-archive (with_gvisor)"
+  echo ">> building ios-simulator/arm64 c-archive ($IOS_TAGS)"
   mkdir -p "$OUT/ios-sim-arm64" "$OUT/ios-sim-headers"
   SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
   CGO_ENABLED=1 GOOS=ios GOARCH=arm64 \
     SDKROOT="$SIM_SDK" \
     CC="$(xcrun --sdk iphonesimulator --find clang) -arch arm64 -isysroot $SIM_SDK -target arm64-apple-ios15.0-simulator" \
-    go build -tags with_gvisor -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/ios-sim-arm64/libmihomocore.a" .
+    go build -tags "$IOS_TAGS" -buildmode=c-archive -trimpath -ldflags="-s -w" -o "$OUT/ios-sim-arm64/libmihomocore.a" .
   cp "$OUT/ios-sim-arm64/libmihomocore.h" "$OUT/ios-sim-headers/mihomocore.h"
   modulemap "$OUT/ios-sim-headers"
   XCARGS+=(-library "$OUT/ios-sim-arm64/libmihomocore.a" -headers "$OUT/ios-sim-headers")
