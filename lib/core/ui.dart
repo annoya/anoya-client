@@ -200,8 +200,8 @@ class DsDialog extends StatelessWidget {
             offset: const Offset(0, -6),
             child: DsAction(
               glyph: Glyph.x,
-              size: kNavButton,
-              iconSize: kNavIcon,
+              size: kDialogDismiss,
+              iconSize: kSmallIcon,
               tooltip: dismissTooltip,
               onPressed: onDismiss,
             ),
@@ -464,7 +464,7 @@ class _TextPromptDialogState extends State<_TextPromptDialog> {
                   : DsAction(
                       glyph: Glyph.x,
                       size: kFieldActionButton,
-                      iconSize: kNavIcon,
+                      iconSize: kSmallIcon,
                       tooltip: MaterialLocalizations.of(
                         context,
                       ).deleteButtonTooltip,
@@ -539,7 +539,6 @@ Future<T?> showDsSheet<T>(BuildContext context, WidgetBuilder builder) =>
       builder: builder,
     );
 
-// Sheet body: title 24/36 on the left, scrollable content padded 16, an optional pinned footer.
 class DsSheet extends StatelessWidget {
   const DsSheet({
     super.key,
@@ -587,7 +586,7 @@ class DsSheet extends StatelessWidget {
                   type: MaterialType.transparency,
                   child: ListView(
                     shrinkWrap: true,
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     children: gapped(children, gap),
                   ),
                 ),
@@ -614,6 +613,7 @@ Future<T?> pickOption<T>(
   ValueChanged<T>? onToggleFavorite,
   ValueChanged<T>? onOpenSettings,
   bool navigational = false,
+  bool radio = false,
   String? itemNoun,
   List<Option<T>> pinned = const [],
   String pinnedHeader = '',
@@ -628,6 +628,7 @@ Future<T?> pickOption<T>(
       onToggleFavorite: onToggleFavorite,
       onOpenSettings: onOpenSettings,
       navigational: navigational,
+      radio: radio,
       itemNoun: itemNoun ?? context.l10n.uiNounItem,
       pinned: pinned,
       pinnedHeader: pinnedHeader,
@@ -644,6 +645,7 @@ class _PickSheet<T> extends StatefulWidget {
     required this.onToggleFavorite,
     required this.onOpenSettings,
     required this.navigational,
+    required this.radio,
     required this.itemNoun,
     required this.pinned,
     required this.pinnedHeader,
@@ -656,6 +658,7 @@ class _PickSheet<T> extends StatefulWidget {
   final ValueChanged<T>? onToggleFavorite;
   final ValueChanged<T>? onOpenSettings;
   final bool navigational;
+  final bool radio;
   final String itemNoun;
 
   final List<Option<T>> pinned;
@@ -696,9 +699,9 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     final l10n = context.l10n;
     final ds = context.ds;
     final favorite = _favorites.contains(o.value);
-    final selected = o.value == widget.selected && !widget.navigational;
+    final selected = o.value == widget.selected;
     return DsRow(
-      leading: o.leading,
+      leading: widget.radio ? DsRadio(selected: selected) : o.leading,
       title: o.title,
       subtitle: o.subtitle,
       selected: selected,
@@ -721,7 +724,6 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
             onPressed: () => _openSettings(o.value),
           ),
         if (widget.navigational) const DsChevron(),
-        if (selected) DsAction(glyph: Glyph.check, color: ds.textAccent),
       ],
     );
   }

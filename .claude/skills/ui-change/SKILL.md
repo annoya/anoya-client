@@ -48,8 +48,8 @@ horizontally, so set `rail.scrollLeft` to reach boards that are off-screen.
 
 Frame overflow, row heights (56 one line, 72 with a subtitle, wrapping rows up to 120),
 button heights (48, and equal within a stack), text fields (56), search fields (44),
-segmented controls (48 and full width), chips (34), nav rows (48), status bars (47),
-large titles (30), the home cat stage (240×200), FAB (56), toggles (50×30),
+segmented controls (48 and full width), chips (34), nav rows (56) with 48×48 buttons and a centred title, status bars (47),
+large titles (30, camera boards only), the home cat stage (240×200), FAB (56), toggles (50×30),
 horizontal overflow, and class-name collisions between canvas markup and page chrome.
 
 Two traps worth knowing before they cost you a debugging round:

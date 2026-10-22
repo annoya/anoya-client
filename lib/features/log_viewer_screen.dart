@@ -87,6 +87,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     final ds = context.ds;
     final placeholder = _loading ? null : _placeholder(l10n);
     return DsPage(
+      title: widget.title,
       actions: [
         DsNavButton(
           glyph: Glyph.refreshCw,
@@ -101,23 +102,15 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       ],
       body: ListView(
         controller: _scroll,
-        padding: kScrollPadding.copyWith(top: 0),
+        padding: kScrollPadding,
         children: [
-          DsLargeTitle(
-            widget.title,
-            padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
-          ),
           if (_loading)
             const Center(child: DsSpinner())
           else if (placeholder != null)
             _EmptyLog(placeholder)
           else
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ds.surface,
-                borderRadius: BorderRadius.circular(kRadius),
-              ),
+            DsSurface(
+              padding: const EdgeInsets.all(kCardPadding),
               child: SelectableText(
                 _content,
                 style: TextStyle(

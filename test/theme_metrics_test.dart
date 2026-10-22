@@ -67,10 +67,7 @@ void main() {
       ),
     );
     expect(tester.getSize(find.byKey(const Key('one'))).height, kRowHeight);
-    expect(
-      tester.getSize(find.byKey(const Key('two'))).height,
-      kRowHeightTwoLines,
-    );
+    expect(tester.getSize(find.byKey(const Key('two'))).height, 72);
   });
 
   testWidgets('text fields are 56, with the label above the value', (

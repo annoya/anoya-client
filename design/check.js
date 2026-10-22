@@ -74,7 +74,20 @@
 
   document.querySelectorAll('.ab').forEach(a => {
     const h = pt(a.getBoundingClientRect().height);
-    if (Math.abs(h - 48) > 2) bad.push(`${label(a)}: nav row ${h}pt, expected 48`);
+    if (Math.abs(h - 56) > 2) bad.push(`${label(a)}: nav row ${h}pt, expected 56`);
+    a.querySelectorAll('.ic').forEach(b => {
+      const r = b.getBoundingClientRect();
+      if (Math.abs(pt(r.width) - 48) > 2 || Math.abs(pt(r.height) - 48) > 2) {
+        bad.push(`${label(a)}: nav button ${pt(r.width)}×${pt(r.height)}pt, expected 48×48`);
+      }
+    });
+    const t = a.querySelector('.ttl');
+    const f = a.closest('.ph, .mac');
+    if (t && f) {
+      const tr = t.getBoundingClientRect(), fr = f.getBoundingClientRect();
+      const off = pt((tr.left + tr.right) / 2 - (fr.left + fr.right) / 2);
+      if (Math.abs(off) > 2) bad.push(`${label(a)}: nav title ${off}pt off the centre`);
+    }
   });
   document.querySelectorAll('.sb').forEach(a => {
     const h = pt(a.getBoundingClientRect().height);
@@ -83,6 +96,7 @@
   document.querySelectorAll('.lt .h').forEach(t => {
     const fs = parseFloat(getComputedStyle(t).fontSize);
     if (fs !== 30 && !t.closest('.lt.sm')) bad.push(`${label(t)}: large title ${fs}pt, expected 30`);
+    if (!t.closest('.lt.sm') && !t.closest('.ph.cam')) bad.push(`${label(t)}: large title outside the camera — the title belongs in the nav row`);
   });
 
   document.querySelectorAll('.stage').forEach(r => {

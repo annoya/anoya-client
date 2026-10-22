@@ -129,7 +129,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         DsStack(
           children: [
             DsButton(label: l10n.signIn, busy: _busy, onPressed: _signIn),
-            DsButton.tonal(
+            DsButton.secondary(
               label: l10n.signInWithSso,
               glyph: Glyph.briefcase,
               onPressed: _busy ? null : _ssoSignIn,

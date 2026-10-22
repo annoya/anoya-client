@@ -170,7 +170,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
         ),
         DsStack(
           children: [
-            DsButton.tonal(
+            DsButton.secondary(
               label: l10n.logsSaveAllZip,
               glyph: Glyph.download,
               busy: _busy && !_clearing,

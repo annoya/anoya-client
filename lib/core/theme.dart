@@ -5,15 +5,20 @@ const double kSnackbarRadius = 10;
 const double kFabRadius = 16;
 
 const double kRowHeight = 56;
-const double kRowHeightTwoLines = 72;
-const double kRowPadding = 12;
+const double kRowPadding = 16;
+const double kRowTextPadding = 10;
 const double kRowGap = 12;
 const double kRowIcon = 24;
-const double kActionButton = 48;
+const double kActionButton = 40;
 const double kFieldActionButton = 40;
-const double kNavRowHeight = 48;
-const double kNavButton = 36;
-const double kNavIcon = 20;
+const double kNavRowHeight = 56;
+const double kNavButton = 48;
+const double kNavIcon = 24;
+const double kNavPadding = 4;
+const double kNavGap = 8;
+const double kDialogDismiss = 36;
+const double kSmallIcon = 20;
+const double kCardPadding = 12;
 const double kTextFieldHeight = 56;
 const double kSearchFieldHeight = 44;
 const double kSegmentedHeight = 48;
@@ -41,6 +46,7 @@ const double kDisabledOpacity = 0.4;
 const double kHoverLayer = 0.08;
 const double kPressedLayer = 0.10;
 const double kFocusRing = 2;
+const double kCardBorder = 1;
 const double kTextButtonHeight = 40;
 
 @immutable
@@ -134,15 +140,15 @@ class DsColors extends ThemeExtension<DsColors> {
   final List<BoxShadow> shadow2;
 
   static const light = DsColors(
-    base: Color(0xFFF9FAFE),
-    surface: Color(0xFFEEEFF3),
+    base: Color(0xFFF3F4F8),
+    surface: Color(0xFFFFFFFF),
     surfaceAlt: Color(0xFFE3E4E9),
-    dialog: Color(0xFFF9FAFE),
-    panel: Color(0xFFE0E0E3),
+    dialog: Color(0xFFF3F4F8),
+    panel: Color(0xFFDFE0E5),
     overlay: Color(0x4D08090E),
     selected: Color(0xFFEEF2FF),
     selectedStrong: Color(0xFF4F46E5),
-    accentSubtle: Color(0x266366F1),
+    accentSubtle: Color(0x4D6366F1),
     controlTrack: Color(0xFFE3E4E9),
     inverse: Color(0xFF17181E),
     text1: Color(0xFF17181E),
@@ -150,11 +156,11 @@ class DsColors extends ThemeExtension<DsColors> {
     text3: Color(0xFF575960),
     text4: Color(0xFF6B6D74),
     textAccent: Color(0xFF4338CA),
-    textInverted: Color(0xFFF9FAFE),
+    textInverted: Color(0xFFF3F4F8),
     icon1: Color(0xFF17181E),
     icon2: Color(0xFF3E3F46),
     icon3: Color(0xFF51535A),
-    iconInverted: Color(0xFFF9FAFE),
+    iconInverted: Color(0xFFF3F4F8),
     accent: Color(0xFF4F46E5),
     accentDark: Color(0xFF4338CA),
     accentLight: Color(0xFF7881F6),
@@ -162,16 +168,16 @@ class DsColors extends ThemeExtension<DsColors> {
     buttonPrimary: Color(0xFF4F46E5),
     borderSoft: Color(0xFFD3D4D9),
     borderFaint: Color(0xFFE3E4E9),
-    borderField: Color(0xFFD3D4D9),
+    borderField: Color(0xFF85878D),
     borderFocus: Color(0xFF4F46E5),
     borderBold: Color(0xFF797B82),
     borderMedium: Color(0xFF85878D),
     borderBrand: Color(0xFF7881F6),
-    success: Color(0xFF16A34A),
-    warning: Color(0xFFCA8A04),
+    success: Color(0xFF059669),
+    warning: Color(0xFFD97706),
     destructive: Color(0xFFB91C1C),
-    badgeSuccess: Color(0xFF166534),
-    badgeDestructive: Color(0xFFB91C1C),
+    badgeSuccess: Color(0xFF065F46),
+    badgeDestructive: Color(0xFFBE123C),
     chroma: Color(0xFFA5B4FC),
     catEye: Color(0xFFA5B4FC),
     shadow1: [
@@ -191,10 +197,10 @@ class DsColors extends ThemeExtension<DsColors> {
     overlay: Color(0x8008090E),
     selected: Color(0x4D6366F1),
     selectedStrong: Color(0xFFA5B4FC),
-    accentSubtle: Color(0x26818CF8),
+    accentSubtle: Color(0x4D818CF8),
     controlTrack: Color(0xFF1E1F25),
     inverse: Color(0xFFE3E4E9),
-    text1: Color(0xFFF9FAFE),
+    text1: Color(0xFFF3F4F8),
     text2: Color(0xFFE3E4E9),
     text3: Color(0xFFA0A2A8),
     text4: Color(0xFF85878D),
@@ -216,13 +222,13 @@ class DsColors extends ThemeExtension<DsColors> {
     borderBold: Color(0xFFA0A2A8),
     borderMedium: Color(0xFF51535A),
     borderBrand: Color(0xFFC7D2FE),
-    success: Color(0xFF4ADE80),
-    warning: Color(0xFFEAB308),
+    success: Color(0xFF6EE7B7),
+    warning: Color(0xFFFDBA74),
     destructive: Color(0xFFF87171),
-    badgeSuccess: Color(0xFF4ADE80),
-    badgeDestructive: Color(0xFFF87171),
+    badgeSuccess: Color(0xFF6EE7B7),
+    badgeDestructive: Color(0xFFFB7185),
     chroma: Color(0xFFA5B4FC),
-    catEye: Color(0xFF7881F6),
+    catEye: Color(0xFFA5B4FC),
     shadow1: [
       BoxShadow(
         color: Color(0x26000000),
@@ -264,6 +270,12 @@ abstract final class DsType {
     fontWeight: FontWeight.w400,
     letterSpacing: -0.4,
   );
+  static const navTitle = TextStyle(
+    fontSize: 18,
+    height: 24 / 18,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0,
+  );
   static const h4 = TextStyle(
     fontSize: 16,
     height: 24 / 16,
@@ -285,6 +297,12 @@ abstract final class DsType {
   static const small = TextStyle(
     fontSize: 14,
     height: 18 / 14,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0,
+  );
+  static const subtitle = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
     fontWeight: FontWeight.w400,
     letterSpacing: 0,
   );
@@ -390,9 +408,9 @@ ThemeData buildAppTheme(Brightness brightness) {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
-      centerTitle: false,
+      centerTitle: true,
       toolbarHeight: kNavRowHeight,
-      titleTextStyle: DsType.h3.copyWith(color: c.text1),
+      titleTextStyle: DsType.navTitle.copyWith(color: c.text1),
       iconTheme: IconThemeData(color: c.icon1, size: kNavIcon),
       actionsIconTheme: IconThemeData(color: c.icon1, size: kNavIcon),
     ),
@@ -473,7 +491,7 @@ ThemeData buildAppTheme(Brightness brightness) {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: rounded,
       barrierColor: c.overlay,
-      titleTextStyle: DsType.h3.copyWith(color: c.text1),
+      titleTextStyle: DsType.navTitle.copyWith(color: c.text1),
       contentTextStyle: DsType.small.copyWith(color: c.text3),
     ),
     bottomSheetTheme: BottomSheetThemeData(

@@ -4,8 +4,8 @@ import '../theme.dart';
 import 'glyph.dart';
 import 'ink.dart';
 
-// actionItem, as a ListTile: 56 for one line, 72 for two, 88 for three. Side padding 12, gap 12, text 4 after
-// the gap; the 48 actions sit 4 from the edges, the text 8 (12 with a subtitle). Title 18/24, subtitle 14/18.
+// actionItem: 56 for one line, 72 for two, 92 for three. Sides 16, gap 12; the 40 actions sit 4 from the
+// top and bottom, the text 10 inside that. Title 18/24, subtitle 14/20.
 class DsRow extends StatelessWidget {
   const DsRow({
     super.key,
@@ -67,11 +67,7 @@ class DsRow extends StatelessWidget {
           style: titleStyle ?? DsType.h3.copyWith(color: ds.text1),
         );
     final text = Padding(
-      padding: EdgeInsets.only(
-        left: lead == null ? 0 : 4,
-        top: hasSubtitle || badge != null ? 8 : 4,
-        bottom: hasSubtitle || badge != null ? 8 : 4,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: kRowTextPadding),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,27 +83,20 @@ class DsRow extends StatelessWidget {
               ],
             ),
           if (badge != null) ...[const SizedBox(height: 4), badge!],
-          if (subtitleWidget != null) ...[
-            const SizedBox(height: 4),
-            subtitleWidget!,
-          ] else if (hasSubtitle) ...[
-            const SizedBox(height: 4),
+          if (subtitleWidget != null)
+            subtitleWidget!
+          else if (hasSubtitle)
             Text(
               subtitle!,
               maxLines: subtitleMaxLines,
               overflow: TextOverflow.ellipsis,
-              style: DsType.small.copyWith(color: subtitleColor ?? ds.text3),
+              style: DsType.subtitle.copyWith(color: subtitleColor ?? ds.text3),
             ),
-          ],
         ],
       ),
     );
     Widget row = ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: hasSubtitle || badge != null
-            ? kRowHeightTwoLines
-            : kRowHeight,
-      ),
+      constraints: const BoxConstraints(minHeight: kRowHeight),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: kRowPadding,
@@ -128,7 +117,8 @@ class DsRow extends StatelessWidget {
       ),
     );
     row = DsInk(
-      color: selected ? ds.accentSubtle : Colors.transparent,
+      radius: 0,
+      color: selected ? ds.selected : Colors.transparent,
       onTap: enabled ? onTap : null,
       onLongPress: enabled ? onLongPress : null,
       child: row,
@@ -258,6 +248,42 @@ class DsToggle extends StatelessWidget {
             cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
             child: toggle,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// circle-radio 24 in a 24×48 slot, the leading of a single-choice row.
+class DsRadio extends StatelessWidget {
+  const DsRadio({super.key, required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = context.ds;
+    return SizedBox(
+      width: kRadioSize,
+      height: 48,
+      child: Center(
+        child: Container(
+          width: kRadioSize,
+          height: kRadioSize,
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: selected ? ds.base : null,
+            border: Border.all(color: selected ? ds.accentDark : ds.icon1),
+          ),
+          child: selected
+              ? DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: ds.accentLight,
+                  ),
+                )
+              : null,
         ),
       ),
     );

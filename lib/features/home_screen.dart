@@ -76,27 +76,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final busy = ref.watch(sessionProvider.select((s) => s.busy));
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        titleSpacing: 0,
-        title: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              DsAction(
-                glyph: Glyph.plus,
-                tooltip: l10n.homeAddConfiguration,
-                onPressed: () => _push(const StartScreen()),
-              ),
-              DsAction(
-                glyph: Glyph.settings,
-                tooltip: l10n.commonSettings,
-                onPressed: () => _push(const SettingsScreen()),
-              ),
-            ],
-          ),
+      appBar: DsNavBar(
+        lead: DsNavButton(
+          glyph: Glyph.plus,
+          tooltip: l10n.homeAddConfiguration,
+          onPressed: () => _push(const StartScreen()),
         ),
+        actions: [
+          DsNavButton(
+            glyph: Glyph.settings,
+            tooltip: l10n.commonSettings,
+            onPressed: () => _push(const SettingsScreen()),
+          ),
+        ],
       ),
       body: PageBody(
         child: LayoutBuilder(

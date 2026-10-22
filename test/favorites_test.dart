@@ -222,7 +222,7 @@ void main() {
       expect(findGlyph(Glyph.settings), findsNothing);
     });
 
-    testWidgets('the current value is a filled row with a check', (
+    testWidgets('the current value is a filled row without a check', (
       tester,
     ) async {
       await open(tester);
@@ -232,14 +232,11 @@ void main() {
       expect(selected.length, 1, reason: 'exactly the current value');
       expect(selected.single.title, 'server-1');
       expect(
-        find.descendant(
-          of: findRow('server-1'),
-          matching: findGlyph(Glyph.check),
-        ),
-        findsOneWidget,
-        reason: 'the fill alone is too faint: a check marks the current one',
+        tester.getSemantics(findRow('server-1')),
+        isSemantics(isSelected: true),
+        reason: 'the fill is the only mark, so screen readers hear "selected"',
       );
-      expect(findGlyph(Glyph.check), findsOneWidget);
+      expect(findGlyph(Glyph.check), findsNothing);
     });
 
     testWidgets(

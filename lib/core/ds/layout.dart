@@ -59,8 +59,10 @@ class DsNavBar extends StatelessWidget implements PreferredSizeWidget {
     this.onLeading,
     this.actions = const [],
     this.title,
+    this.lead,
   });
 
+  final Widget? lead;
   final DsLeading leading;
   final VoidCallback? onLeading;
   final List<Widget> actions;
@@ -73,49 +75,56 @@ class DsNavBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final material = MaterialLocalizations.of(context);
     final canPop = ModalRoute.of(context)?.canPop ?? false;
-    final lead = switch (leading) {
-      DsLeading.back when canPop || onLeading != null => DsNavButton(
-        glyph: Glyph.arrowLeft,
-        tooltip: material.backButtonTooltip,
-        onPressed: onLeading ?? () => Navigator.of(context).maybePop(),
-      ),
-      DsLeading.close => DsNavButton(
-        glyph: Glyph.x,
-        tooltip: material.closeButtonTooltip,
-        onPressed: onLeading ?? () => Navigator.of(context).maybePop(),
-      ),
-      _ => null,
-    };
+    final lead =
+        this.lead ??
+        switch (leading) {
+          DsLeading.back when canPop || onLeading != null => DsNavButton(
+            glyph: Glyph.arrowLeft,
+            tooltip: material.backButtonTooltip,
+            onPressed: onLeading ?? () => Navigator.of(context).maybePop(),
+          ),
+          DsLeading.close => DsNavButton(
+            glyph: Glyph.x,
+            tooltip: material.closeButtonTooltip,
+            onPressed: onLeading ?? () => Navigator.of(context).maybePop(),
+          ),
+          _ => null,
+        };
     return AppBar(
       automaticallyImplyLeading: false,
       toolbarHeight: kNavRowHeight,
-      titleSpacing: 0,
-      title: Padding(
-        padding: const EdgeInsets.only(left: 15, right: 14),
-        child: Row(
-          children: [
-            ?lead,
-            Expanded(
-              child: title == null
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        title!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+      titleSpacing: kNavGap,
+      leadingWidth: kNavPadding + kNavButton,
+      leading: lead == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(left: kNavPadding),
+              child: Center(child: lead),
             ),
-            for (final (i, a) in actions.indexed) ...[
-              if (i > 0) const SizedBox(width: 16),
-              a,
-            ],
-          ],
-        ),
-      ),
+      actionsPadding: const EdgeInsets.only(right: kNavPadding),
+      title: title == null
+          ? null
+          : Text(
+              title!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge!.merge(
+                DsType.navTitle.copyWith(color: context.ds.text1),
+              ),
+            ),
+      actions: actions,
     );
   }
+}
+
+class DsSubtitle extends StatelessWidget {
+  const DsSubtitle(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(text, style: DsType.text.copyWith(color: context.ds.text2));
 }
 
 class DsLargeTitle extends StatelessWidget {
@@ -173,7 +182,6 @@ class DsPage extends StatelessWidget {
     this.dock = const [],
     this.fab,
     this.gap = kGroupGap,
-    this.navTitle,
   });
 
   final String? title;
@@ -186,30 +194,24 @@ class DsPage extends StatelessWidget {
   final List<Widget> dock;
   final Widget? fab;
   final double gap;
-  final String? navTitle;
 
   @override
   Widget build(BuildContext context) {
     final content =
         body ??
         ListView(
-          padding: kScrollPadding.copyWith(top: title == null ? null : 0),
-          children: [
-            if (title != null)
-              DsLargeTitle(
-                title!,
-                subtitle: subtitle,
-                padding: const EdgeInsets.fromLTRB(0, 12, 0, 32),
-              ),
-            ...gapped(children, gap),
-          ],
+          padding: kScrollPadding,
+          children: gapped([
+            if (subtitle != null) DsSubtitle(subtitle!),
+            ...children,
+          ], gap),
         );
     return Scaffold(
       appBar: DsNavBar(
         leading: leading,
         onLeading: onLeading,
         actions: actions,
-        title: navTitle,
+        title: title,
       ),
       floatingActionButton: fab,
       body: PageBody(
@@ -294,6 +296,43 @@ class DsNote extends StatelessWidget {
   );
 }
 
+// The card surface of the DS: background/surface, r12, a 1 pt border/soft inside (border-width/card).
+class DsSurface extends StatelessWidget {
+  const DsSurface({
+    super.key,
+    required this.child,
+    this.color,
+    this.borderColor,
+    this.padding,
+    this.elevation = 0,
+  });
+
+  final Widget child;
+  final Color? color;
+  final Color? borderColor;
+  final EdgeInsets? padding;
+  final double elevation;
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = context.ds;
+    return Material(
+      color: color ?? ds.surface,
+      elevation: elevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(kRadius),
+        side: BorderSide(
+          color: borderColor ?? ds.borderSoft,
+          width: kCardBorder,
+          strokeAlign: BorderSide.strokeAlignInside,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: padding == null ? child : Padding(padding: padding!, child: child),
+    );
+  }
+}
+
 // Card of rows: r12 surface, 1 pt dividers inside the rows, none under the last.
 class DsCard extends StatelessWidget {
   const DsCard({
@@ -313,10 +352,8 @@ class DsCard extends StatelessWidget {
     final line = BoxDecoration(
       border: Border(bottom: BorderSide(color: ds.borderSoft)),
     );
-    return Material(
-      color: color ?? ds.surface,
-      borderRadius: BorderRadius.circular(kRadius),
-      clipBehavior: Clip.antiAlias,
+    return DsSurface(
+      color: color,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -430,13 +467,8 @@ class DsReorderableCard<T> extends StatelessWidget {
     final line = BoxDecoration(
       border: Border(bottom: BorderSide(color: ds.borderSoft)),
     );
-    Widget card(Widget child, {double elevation = 0}) => Material(
-      color: ds.surface,
-      borderRadius: BorderRadius.circular(kRadius),
-      clipBehavior: Clip.antiAlias,
-      elevation: elevation,
-      child: child,
-    );
+    Widget card(Widget child, {double elevation = 0}) =>
+        DsSurface(elevation: elevation, child: child);
     return card(
       ReorderableListView(
         shrinkWrap: true,
@@ -482,15 +514,60 @@ class DsCardSlice extends StatelessWidget {
         top: first ? r : Radius.zero,
         bottom: last ? r : Radius.zero,
       ),
-      child: last
-          ? child
-          : DecoratedBox(
-              position: DecorationPosition.foreground,
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: ds.borderSoft)),
-              ),
-              child: child,
-            ),
+      child: CustomPaint(
+        foregroundPainter: _SliceBorder(
+          first: first,
+          last: last,
+          color: ds.borderSoft,
+        ),
+        child: child,
+      ),
     );
   }
+}
+
+class _SliceBorder extends CustomPainter {
+  _SliceBorder({required this.first, required this.last, required this.color});
+
+  final bool first;
+  final bool last;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const h = kCardBorder / 2;
+    const r = Radius.circular(kRadius - h);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = kCardBorder
+      ..color = color;
+    // The open ends run past the clip, so only the sides and the rounded ends of the card are stroked.
+    final outline = RRect.fromRectAndCorners(
+      Rect.fromLTRB(
+        h,
+        first ? h : -kRadius,
+        size.width - h,
+        last ? size.height - h : size.height + kRadius,
+      ),
+      topLeft: first ? r : Radius.zero,
+      topRight: first ? r : Radius.zero,
+      bottomLeft: last ? r : Radius.zero,
+      bottomRight: last ? r : Radius.zero,
+    );
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    canvas.drawRRect(outline, paint);
+    canvas.restore();
+    if (!last) {
+      canvas.drawLine(
+        Offset(0, size.height - h),
+        Offset(size.width, size.height - h),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SliceBorder old) =>
+      old.first != first || old.last != last || old.color != color;
 }

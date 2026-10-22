@@ -5,7 +5,7 @@ import 'glyph.dart';
 import 'ink.dart';
 import 'layout.dart';
 
-enum DsButtonKind { primary, tonal, destructive, text }
+enum DsButtonKind { primary, tonal, secondary, destructive, text }
 
 // DS button size=large: 48 (text 40), r12, p8/12, gap 4, label 16/24. Muted is the whole button at 0.4.
 class DsButton extends StatelessWidget {
@@ -35,6 +35,19 @@ class DsButton extends StatelessWidget {
     this.focusNode,
     this.autofocus = false,
   }) : kind = DsButtonKind.tonal;
+
+  const DsButton.secondary({
+    super.key,
+    required this.label,
+    this.glyph,
+    this.onPressed,
+    this.busy = false,
+    this.busyLabel,
+    this.spinning = false,
+    this.expand = true,
+    this.focusNode,
+    this.autofocus = false,
+  }) : kind = DsButtonKind.secondary;
 
   const DsButton.destructive({
     super.key,
@@ -94,6 +107,13 @@ class DsButton extends StatelessWidget {
         ds.text2,
         ds.icon1,
         BorderSide.none,
+        DsType.button,
+      ),
+      DsButtonKind.secondary => (
+        ds.surface,
+        ds.text2,
+        ds.icon1,
+        BorderSide(color: ds.borderSoft, width: kCardBorder),
         DsType.button,
       ),
       DsButtonKind.destructive => (
@@ -249,17 +269,17 @@ class DsChip extends StatelessWidget {
       button: onTap != null,
       selected: selected,
       child: DsInk(
-        color: selected ? ds.selected : ds.surface,
+        color: selected ? ds.selected : ds.surfaceAlt,
         side: selected
             ? BorderSide(color: ds.accent, width: 2)
-            : BorderSide(color: ds.borderBold),
+            : BorderSide(color: ds.borderSoft, width: kCardBorder),
         onTap: onTap,
         child: SizedBox(
           height: kChipHeight,
           child: Padding(
             padding: EdgeInsets.only(
-              left: 14,
-              right: onRemove == null ? 14 : 6,
+              left: 12,
+              right: onRemove == null ? 12 : 6,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
