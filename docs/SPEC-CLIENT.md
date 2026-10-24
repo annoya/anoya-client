@@ -774,8 +774,11 @@ list that did not arrive means its rule is not applied and the screen says so.
 Xray's `ext:` files stay unsupported at any setting — they live on the panel
 server's disk and have no address to fetch. Geo rules require the GeoIP/GeoSite databases, which the app
 downloads into the shared container and refreshes weekly — the engine never
-fetches them itself. `process-name` rules work on desktop only and are dropped
-before rendering elsewhere. See ADR-003.
+fetches them itself. `process-name` rules work on desktops and on Android 10+,
+where they match package names picked from the installed apps; iOS and older
+Android do not offer the type and drop such rules before rendering. Android also
+has a device setting, “Apps outside the VPN”: those apps never enter the tunnel,
+applied when the tunnel starts. See ADR-003 and ADR-022.
 
 The routing editor has two views over one rule list: **simple** (a catalog of
 ~34 services and countries, with direction expressed as "only selected" /

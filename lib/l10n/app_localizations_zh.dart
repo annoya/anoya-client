@@ -2703,4 +2703,45 @@ class AppLocalizationsZh extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get settingsExcludedApps => '绕过 VPN 的应用';
+
+  @override
+  String settingsExcludedAppsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个应用',
+      zero: '无',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get excludedAppsHint =>
+      '这些应用的流量不会进入 VPN，它们也看不到 VPN——适用于无法在 VPN 下工作的应用，例如银行应用。仅限此手机。';
+
+  @override
+  String get excludedAppsAdd => '添加应用…';
+
+  @override
+  String get excludedAppsPending => '重新连接后生效';
+
+  @override
+  String get excludedAppsPendingDetail => '隧道仍在使用之前的列表';
+
+  @override
+  String get excludedAppsReconnect => '立即重新连接';
+
+  @override
+  String get appPickerTitle => '应用';
+
+  @override
+  String get ruleApps => '应用';
+
+  @override
+  String ruleSummaryApps(String apps) {
+    return '来自 $apps 的流量';
+  }
 }

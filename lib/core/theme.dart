@@ -9,6 +9,7 @@ const double kRowPadding = 16;
 const double kRowTextPadding = 10;
 const double kRowGap = 12;
 const double kRowIcon = 24;
+const double kAppIconRadius = 6;
 const double kActionButton = 40;
 const double kFieldActionButton = 40;
 const double kNavRowHeight = 56;

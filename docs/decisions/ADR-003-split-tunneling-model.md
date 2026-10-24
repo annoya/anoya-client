@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. The `process-name` gating is superseded by ADR-022.
 
 ## Date
 

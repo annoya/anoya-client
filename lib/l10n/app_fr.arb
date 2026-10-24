@@ -704,5 +704,15 @@
   "ruleCountSubnets": "{count, plural, =1{1 sous-réseau} other{{count} sous-réseaux}}",
   "ruleCountProcesses": "{count, plural, =1{1 processus} other{{count} processus}}",
   "ruleCountCountries": "{count, plural, =1{1 pays} other{{count} pays}}",
-  "ruleCountCategories": "{count, plural, =1{1 catégorie} other{{count} catégories}}"
+  "ruleCountCategories": "{count, plural, =1{1 catégorie} other{{count} catégories}}",
+  "settingsExcludedApps": "Apps hors du VPN",
+  "settingsExcludedAppsCount": "{count, plural, =0{Aucune} =1{1 app} other{{count} apps}}",
+  "excludedAppsHint": "Le trafic de ces apps n’entre jamais dans le VPN, et elles ne le voient pas — pour les apps qui refusent de fonctionner avec un VPN, comme les apps bancaires. Uniquement sur ce téléphone.",
+  "excludedAppsAdd": "Ajouter des apps…",
+  "excludedAppsPending": "S’applique à la reconnexion",
+  "excludedAppsPendingDetail": "Le tunnel tourne encore avec l’ancienne liste",
+  "excludedAppsReconnect": "Reconnecter maintenant",
+  "appPickerTitle": "Apps",
+  "ruleApps": "Apps",
+  "ruleSummaryApps": "le trafic de {apps}"
 }

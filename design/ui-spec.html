@@ -563,6 +563,10 @@
   /* unrecognized value: row title in monospace */
   .row .t.x05-mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:0}
 
+  /* §3 app icon in a row: the launcher icon at 24, r6 — the row-icon slot, not a new size */
+  .x03-app{width:24px;height:24px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:13px;line-height:16px;font-weight:600;color:#fff}
+
   /* ---------- §10 ---------- */
   /* §10 · subscription plan block (Figma progressiveBarWithLabel): 12/16/16, title 18/24, bar 4 r2 on background/panel, label 14/18 8 below */
   .x10-plan{padding:12px 16px 16px}
@@ -822,6 +826,7 @@
       <tr><td>Radio</td><td>24 in a 48 button</td></tr>
       <tr><td>Chip (status strip, size S)</td><td>34, p0/12, surface-alt, 1 pt border/soft</td></tr>
       <tr><td>Badge</td><td>22, p4/8, r8</td></tr>
+      <tr><td>App icon in a row (Android)</td><td>24, r6 — in the row-icon slot</td></tr>
       <tr><td>Home: cat · glow</td><td>120 · 240 (connected 260), blur 80</td></tr>
       <tr><td>Home: connect button</td><td>200 × 48</td></tr>
     </table>
@@ -1676,6 +1681,64 @@
 </div>
 
 <!-- ============ 4 ============ -->
+<h3>Apps outside the VPN (Android)</h3>
+<div class="rail">
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Settings</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh">Routing</div><div class="card"><div class="row"><svg class="icon"><use href="#l-wifi"/></svg><div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div><span class="sw"><i></i></span></div><div class="row"><svg class="icon"><use href="#l-smartphone"/></svg><div class="tx"><div class="t">Apps outside the VPN</div><div class="s">2 apps</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div><div class="row"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule sets</div><div class="s">3 sets</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div><div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Default DNS</div><div class="s multi">Cloudflare · used when a configuration brings none</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div></div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">SettingsScreen · Android routing</span><span class="q">нет в Figma</span><b>A device setting, next to LAN.</b> Android only: “Apps outside the VPN” sits right under Local network direct — both decide what never enters the tunnel on this device, whatever the configuration. Subtitle: “2 apps”, or “None” when the list is empty. Right chevron → the screen. Not on iOS and desktop: the system there cannot keep an app out of the tunnel.</p>
+  </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Apps outside the VPN</span></div>
+      <div class="scr" style="gap:8px">
+        <div class="hint">Traffic from these apps never enters the VPN, and they don’t see it — for apps that refuse to work with a VPN, like banking. Only this phone.</div><div class="card"><div class="row"><span class="x03-app" style="background:#21a038">S</span><div class="tx"><div class="t">SberBank Online</div><div class="s">ru.sberbankmobile</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div><div class="row"><span class="x03-app" style="background:#0d4cd3">Г</span><div class="tx"><div class="t">Госуслуги</div><div class="s">ru.rostel</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div></div><div class="btn secondary"><svg class="icon"><use href="#l-plus"/></svg><span>Add apps…</span></div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">ExcludedAppsScreen</span><span class="q">нет в Figma</span><b>The list, and why it exists.</b> A hint (14/18 tertiary) says what the setting does and that it belongs to this phone. The chosen apps are one card of 72 rows: the launcher icon (24, r6, in the row-icon slot), the app’s name, its package as the subtitle, and an <code>x</code> that removes it at once. “Add apps…” (secondary, <code>plus</code>) opens the picker. All 8 apart. With nothing chosen the card is gone and the hint and the button remain. An app that was uninstalled stays in the list under its package name, without an icon.</p>
+  </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Apps outside the VPN</span></div>
+      <div class="scr" style="gap:8px">
+        <div class="hint">Traffic from these apps never enters the VPN, and they don’t see it — for apps that refuse to work with a VPN, like banking. Only this phone.</div><div class="card"><div class="row"><span class="x03-app" style="background:#21a038">S</span><div class="tx"><div class="t">SberBank Online</div><div class="s">ru.sberbankmobile</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div><div class="row"><span class="x03-app" style="background:#0d4cd3">Г</span><div class="tx"><div class="t">Госуслуги</div><div class="s">ru.rostel</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div></div><div class="btn secondary"><svg class="icon"><use href="#l-plus"/></svg><span>Add apps…</span></div>
+        <div class="card"><div class="row"><svg class="icon"><use href="#l-info"/></svg><div class="tx"><div class="t">Applies after reconnecting</div><div class="s multi">The tunnel still runs with the previous list</div></div></div></div><div class="btn secondary"><svg class="icon"><use href="#l-refresh-cw"/></svg><span>Reconnect now</span></div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">ExcludedAppsScreen · pending</span><span class="q">нет в Figma</span><b>The system takes the list only when the tunnel starts.</b> When the tunnel is up and the saved list differs from the one it started with, a card row (<code>info</code>) says “Applies after reconnecting / The tunnel still runs with the previous list”, and “Reconnect now” restarts it. The app never reconnects on its own: a restart drops connections and resets the timer, so it is the user’s call. Both disappear once the running list matches, or when the tunnel is down — the next connect takes the list anyway.</p>
+  </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Apps outside the VPN</span></div>
+      <div class="scr" style="gap:8px">
+        <div class="hint">Traffic from these apps never enters the VPN, and they don’t see it — for apps that refuse to work with a VPN, like banking. Only this phone.</div><div class="card"><div class="row"><span class="x03-app" style="background:#21a038">S</span><div class="tx"><div class="t">SberBank Online</div><div class="s">ru.sberbankmobile</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div><div class="row"><span class="x03-app" style="background:#0d4cd3">Г</span><div class="tx"><div class="t">Госуслуги</div><div class="s">ru.rostel</div></div><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span></div></div><div class="btn secondary"><svg class="icon"><use href="#l-plus"/></svg><span>Add apps…</span></div>
+      </div>
+      <div class="dim"></div>
+      <div class="sheet"><div class="grab"></div>
+        <div class="sbody" style="gap:24px">
+          <div class="stitle" style="padding:0">Apps</div>
+          <div class="search"><svg class="icon"><use href="#l-search"/></svg><span class="vl on">s</span><svg class="icon"><use href="#l-x-circle"/></svg></div>
+          <div class="card" style="border-radius:0"><div class="row"><span class="x03-app" style="background:#21a038">S</span><div class="tx"><div class="t">SberBank Online</div><div class="s">ru.sberbankmobile</div></div><span class="ic"><svg class="icon"><use href="#l-check-square"/></svg></span></div><div class="row"><span class="x03-app" style="background:#4a154b">S</span><div class="tx"><div class="t">Slack</div><div class="s">com.Slack</div></div><span class="ic"><svg class="icon"><use href="#l-square"/></svg></span></div><div class="row"><span class="x03-app" style="background:#1db954">S</span><div class="tx"><div class="t">Spotify</div><div class="s">com.spotify.music</div></div><span class="ic"><svg class="icon"><use href="#l-square"/></svg></span></div><div class="row"><span class="x03-app" style="background:#2aabee">S</span><div class="tx"><div class="t">Signal</div><div class="s">org.thoughtcrime.securesms</div></div><span class="ic"><svg class="icon"><use href="#l-square"/></svg></span></div></div>
+          <div class="btn fill" style="margin:0"><span>Done · 2</span></div>
+        </div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">AppPickerSheet · multi</span><span class="q">нет в Figma</span><b>The countries picker, for apps.</b> Same sheet as 5.5: title “Apps”, a 56 search over name and package, rows 72 without a card (icon · name · package) with <code>square</code> / <code>check-square</code>, then “Done · N”, 24 apart. The list is the apps that have a launcher icon, sorted by name, the chosen ones first; this app is not in it. Search does not clear the selection. Done returns the selection; swiping down discards it. The same sheet picks apps for a process-name rule (5.11).</p>
+  </div>
+</div>
+
 <h2>4 · Rule sets</h2>
 <p class="flowdesc">A rule set is a named, ordered list of routing rules plus a direction (full tunnel or split). Configurations pick a set by name; the default set is <code>Default</code>. Every screen here has its title centred in the 56 navigation row; lists are DS list groups (caption 16/24 sentence case · 12 · surface card r12, rows 72+). The editor has two views of one set — <b>Simple</b> (a catalog with switches) and <b>Advanced</b> (the ordered rule list) — see the second group below.</p>
 <div class="rail">
@@ -2152,6 +2215,21 @@
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span><span class="ttl">Add rule</span><span class="sp"></span><span class="ic"><svg class="icon"><use href="#l-check"/></svg></span></div>
+      <div class="scr" style="gap:8px">
+        <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">process-name</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+        <div class="inp sel"><div class="tx"><div class="lb">Action</div><div class="vl">proxy</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+        <div class="inp sel"><div class="tx"><div class="lb">Apps</div><div class="vl">2 selected</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div>
+        <div class="chips"><span class="x05-chip">Telegram<svg class="icon"><use href="#l-x"/></svg></span><span class="x05-chip">Slack<svg class="icon"><use href="#l-x"/></svg></span></div>
+        <div class="hint">→ Connections from Telegram, Slack go through the VPN.</div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">RuleScreen · process-name · Android</span><span class="q">нет в Figma</span><b>Apps are picked, not typed.</b> On Android 10 and later a process-name rule takes package names, chosen in the app picker (AppPickerSheet · multi) behind the “Apps · N selected” select (<code>chevron-right</code>), shown as chips by app name as in 5.4. The rule set stores package names; on a desktop they simply match nothing, as a desktop name like “Slack” matches nothing here. Where process-name is not supported at all (iOS, Android before 10), a rule of that type that arrived with a shared set stays in the list, inactive, and is never deleted. Same actions as any rule; the engine decides per connection, so a hot switch applies it like any other rule.</p>
+  </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span><span class="ttl">Add rule</span><span class="sp"></span><span class="ic" style="opacity:.5"><svg class="icon"><use href="#l-check"/></svg></span></div>
       <div class="scr" style="gap:8px">
         <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">domain-suffix</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
@@ -2165,12 +2243,12 @@
       <div class="sheet" style="top:73px;max-height:none"><div class="grab"></div><div class="stitle">Match</div>
         <div class="sbody" style="flex:1">
           <div class="search"><svg class="icon"><use href="#l-search"/></svg><span class="vl">Search</span></div>
-          <div class="card"><div class="row sel"><div class="tx"><div class="t">domain-suffix</div><div class="s">domain and subdomains</div></div></div><div class="row"><div class="tx"><div class="t">domain-keyword</div><div class="s">domain contains</div></div></div><div class="row"><div class="tx"><div class="t">domain-exact</div><div class="s">exact domain</div></div></div><div class="row"><div class="tx"><div class="t">domain-regex</div><div class="s">domain matches a pattern</div></div></div><div class="row"><div class="tx"><div class="t">ip-cidr</div><div class="s">IP range</div></div></div><div class="row off" style="opacity:.4"><div class="tx"><div class="t">process-name</div><div class="s">not available on this platform</div></div></div><div class="row"><div class="tx"><div class="t">geoip</div><div class="s">country by IP</div></div></div><div class="row"><div class="tx"><div class="t">geosite</div><div class="s">domain lists</div></div></div></div>
+          <div class="card"><div class="row sel"><div class="tx"><div class="t">domain-suffix</div><div class="s">domain and subdomains</div></div></div><div class="row"><div class="tx"><div class="t">domain-keyword</div><div class="s">domain contains</div></div></div><div class="row"><div class="tx"><div class="t">domain-exact</div><div class="s">exact domain</div></div></div><div class="row"><div class="tx"><div class="t">domain-regex</div><div class="s">domain matches a pattern</div></div></div><div class="row"><div class="tx"><div class="t">ip-cidr</div><div class="s">IP range</div></div></div><div class="row"><div class="tx"><div class="t">geoip</div><div class="s">country by IP</div></div></div><div class="row"><div class="tx"><div class="t">geosite</div><div class="s">domain lists</div></div></div></div>
         </div>
       </div>
       <div class="homeind"></div>
     </div></div>
-    <p class="cap"><span class="id">RuleScreen · _pickType</span><span class="fig">Figma 505:20316 · 5.9 · RuleScreen · выбор Match (телефон)</span><b>Match type.</b> pickOption sheet, tall (from y 73): title “Match”, 56 search, one card of 72 rows — type as the title, what it matches as the subtitle; the current type is the selected row (<code>background/selected</code>). A type the platform cannot do stays in the list, muted (.45), with “not available on this platform” (process-name on phones). geoip / geosite are muted with “needs geo databases” until the databases are downloaded. Switching between text types keeps what was typed; switching to or from geoip / geosite clears it.</p>
+    <p class="cap"><span class="id">RuleScreen · _pickType</span><span class="fig">Figma 505:20316 · 5.9 · RuleScreen · выбор Match (телефон)</span><b>Match type.</b> pickOption sheet, tall (from y 73): title “Match”, 56 search, one card of 72 rows — type as the title, what it matches as the subtitle; the current type is the selected row (<code>background/selected</code>). A type the platform cannot do is not offered at all: process-name is in the list on desktops and on Android 10 and later, and absent on iOS and older Android (the board is a phone without it). geoip / geosite are muted with “needs geo databases” until the databases are downloaded. Switching between text types keeps what was typed; switching to or from geoip / geosite clears it.</p>
   </div>
   <div class="board">
     <div class="scaler"><div class="ph">

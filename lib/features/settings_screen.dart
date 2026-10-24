@@ -13,6 +13,7 @@ import '../l10n/l10n.dart';
 import '../state/favorites_controller.dart';
 import '../state/auto_connect_controller.dart';
 import '../state/cloud_sync_controller.dart';
+import '../state/excluded_apps_controller.dart';
 import '../state/connection_check_controller.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
@@ -22,6 +23,7 @@ import 'about_screen.dart';
 import 'advanced_connection_screen.dart';
 import 'always_on_screen.dart';
 import 'config/config_screen.dart';
+import 'excluded_apps_screen.dart';
 import 'geo_screen.dart';
 import 'logs_screen.dart';
 import 'on_demand_screen.dart';
@@ -341,6 +343,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 DsToggle(value: prefs.lanDirect, onChanged: _setLanDirect),
               ],
             ),
+            if (supportsExcludedApps)
+              DsRow(
+                glyph: Glyph.smartphone,
+                title: l10n.settingsExcludedApps,
+                subtitle: l10n.settingsExcludedAppsCount(
+                  ref.watch(excludedAppsProvider).packages.length,
+                ),
+                trailing: const [DsChevron()],
+                onTap: () => _push(const ExcludedAppsScreen()),
+              ),
             DsRow(
               glyph: Glyph.layers,
               title: l10n.ruleSetsTitle,

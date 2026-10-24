@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/android_apps.dart';
 import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/norm_config.dart';
+import 'package:anoya/core/platform_support.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/routing_widgets.dart';
 import 'package:anoya/features/rule_screen.dart';
@@ -229,5 +231,75 @@ void main() {
 
     expect(find.text('youtube.com, ytimg.com, youtu.be'), findsOneWidget);
     expect(find.text('domain-suffix · 3 domains'), findsOneWidget);
+  });
+
+  group('app rules', () {
+    const control = MethodChannel('vpn/control');
+
+    setUp(() {
+      AndroidApps.forgetForTesting();
+      messenger.setMockMethodCallHandler(control, (call) async {
+        if (call.method == 'installed_apps') {
+          return [
+            {'package': 'com.Slack', 'label': 'Slack'},
+            {'package': 'org.telegram.messenger', 'label': 'Telegram'},
+          ];
+        }
+        return null;
+      });
+    });
+    tearDown(() {
+      messenger.setMockMethodCallHandler(control, null);
+      androidSdk = 0;
+    });
+
+    Future<bool> offered(WidgetTester tester) async {
+      await open(tester);
+      await tester.tap(find.text('domain-suffix'));
+      await tester.pumpAndSettle();
+      final shown = find.text('process-name').evaluate().isNotEmpty;
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      return shown;
+    }
+
+    testWidgets('where the platform cannot name the app, the type is not offered', (
+      tester,
+    ) async {
+      androidSdk = 28;
+      expect(await offered(tester), isFalse);
+    });
+
+    testWidgets('on Android 10 the type is offered', (tester) async {
+      androidSdk = 29;
+      expect(await offered(tester), isTrue);
+    });
+
+    testWidgets('on Android apps are picked, and the rule stores their packages', (
+      tester,
+    ) async {
+      androidSdk = 29;
+      final saved = await open(
+        tester,
+        initial: const RoutingRule(
+          type: 'process-name',
+          values: ['org.telegram.messenger'],
+          action: 'proxy',
+        ),
+      );
+      expect(find.byType(TextField), findsNothing, reason: 'nothing to type');
+      expect(find.text('Telegram'), findsOneWidget, reason: 'the chip names the app');
+
+      await tester.tap(find.text('Apps'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Slack'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Done · 2'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Telegram, Slack'), findsOneWidget);
+
+      await save(tester);
+      expect(saved()!.single.values, ['org.telegram.messenger', 'com.Slack']);
+    });
   });
 }

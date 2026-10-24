@@ -16,6 +16,9 @@ import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
 import android.system.Os
+import android.system.OsConstants
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.io.FileOutputStream
 import java.time.Instant
 import java.time.ZoneOffset
@@ -24,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import mobile.Mobile
+import mobile.PackageResolver
 import mobile.SocketProtector
 
 class MihomoVpnService : VpnService() {
@@ -31,6 +35,7 @@ class MihomoVpnService : VpnService() {
     companion object {
         const val ACTION_START = "org.anoya.vpn.START"
         const val ACTION_STOP = "org.anoya.vpn.STOP"
+        const val ACTION_RESTART = "org.anoya.vpn.RESTART"
 
         const val kTunnelOutbound = "PROXY"
 
@@ -103,6 +108,18 @@ class MihomoVpnService : VpnService() {
             shutdown()
             return START_NOT_STICKY
         }
+        if (intent?.action == ACTION_RESTART) {
+            if (TunnelState.status != TunnelState.CONNECTED) return START_STICKY
+            log("restart requested by the app to apply apps outside the VPN")
+            startForeground(1, buildNotification())
+            TunnelState.set(TunnelState.CONNECTING)
+            executor.execute {
+                runCatching { Mobile.stop() }
+                tunFd = null
+                bringUp()
+            }
+            return START_STICKY
+        }
         val by = when (intent?.action) {
             null -> "the system (service restarted)"
             ACTION_START -> "the app"
@@ -135,10 +152,19 @@ class MihomoVpnService : VpnService() {
                 .addRoute("::", 0)
                 // A public resolver makes automatic Private DNS switch to DoT and bypass dns-hijack.
                 .addDnsServer("172.19.0.2")
+            val excluded = TunnelFiles.excludedApps(this).filter { it != packageName }
+            val missing = excluded.filter {
+                runCatching { builder.addDisallowedApplication(it) }.isFailure
+            }
             val pfd = builder.establish()
                 ?: throw IllegalStateException("the system refused to establish the tunnel")
             val fd = pfd.detachFd()
             tunFd = fd
+            TunnelFiles.setExcludedAppsInUse(this, excluded)
+            if (excluded.isNotEmpty()) {
+                log("apps outside the VPN: ${excluded.size - missing.size}" +
+                    if (missing.isEmpty()) "" else ", ${missing.size} not installed")
+            }
             startNetworkLog()
 
             Mobile.setSocketProtector(object : SocketProtector {
@@ -148,6 +174,7 @@ class MihomoVpnService : VpnService() {
                     return ok
                 }
             })
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) Mobile.setPackageResolver(ownerResolver)
             Mobile.setHomeDir(TunnelFiles.engineDir(this).absolutePath)
             Mobile.setEngineLog(TunnelFiles.engineLog(this).absolutePath)
             redirectEngineOutput()
@@ -172,6 +199,7 @@ class MihomoVpnService : VpnService() {
             TunnelFiles.runningMarker(this).delete()
             runCatching { Mobile.stop() }
             tunFd = null
+            TunnelFiles.setExcludedAppsInUse(this, null)
             TunnelState.set(TunnelState.DISCONNECTED)
             val uptime = if (since > 0) " after ${duration(System.currentTimeMillis() / 1000.0 - since)}" else ""
             log("tunnel down$uptime")
@@ -208,6 +236,26 @@ class MihomoVpnService : VpnService() {
     override fun onLowMemory() {
         super.onLowMemory()
         log("low memory · ${memory()}")
+    }
+
+    private val owners = ConcurrentHashMap<Int, String>()
+
+    private val ownerResolver = object : PackageResolver {
+        override fun ownerPackage(network: String, srcIP: String, srcPort: Long,
+                                  dstIP: String, dstPort: Long): String {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return ""
+            val cm = getSystemService(ConnectivityManager::class.java) ?: return ""
+            val protocol = if (network == "udp") OsConstants.IPPROTO_UDP else OsConstants.IPPROTO_TCP
+            val uid = runCatching {
+                cm.getConnectionOwnerUid(
+                    protocol,
+                    InetSocketAddress(InetAddress.getByName(srcIP), srcPort.toInt()),
+                    InetSocketAddress(InetAddress.getByName(dstIP), dstPort.toInt()),
+                )
+            }.getOrDefault(android.os.Process.INVALID_UID)
+            if (uid == android.os.Process.INVALID_UID) return ""
+            return owners.getOrPut(uid) { packageManager.getPackagesForUid(uid)?.firstOrNull() ?: "" }
+        }
     }
 
     private var networkCallback: ConnectivityManager.NetworkCallback? = null

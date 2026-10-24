@@ -13,6 +13,29 @@ object TunnelFiles {
     fun serviceLog(context: Context): File = File(engineDir(context), "tunnel.log")
     fun runningMarker(context: Context): File = File(engineDir(context), "tunnel_running")
 
+    private fun excludedFile(context: Context) = File(engineDir(context), "excluded_apps")
+    private fun excludedInUseFile(context: Context) = File(engineDir(context), "excluded_apps_in_use")
+
+    fun excludedApps(context: Context): List<String> = readList(excludedFile(context)) ?: emptyList()
+
+    fun setExcludedApps(context: Context, packages: List<String>) {
+        runCatching { excludedFile(context).writeText(packages.joinToString("\n")) }
+    }
+
+    fun excludedAppsInUse(context: Context): List<String>? = readList(excludedInUseFile(context))
+
+    fun setExcludedAppsInUse(context: Context, packages: List<String>?) {
+        runCatching {
+            if (packages == null) excludedInUseFile(context).delete()
+            else excludedInUseFile(context).writeText(packages.joinToString("\n"))
+        }
+    }
+
+    private fun readList(file: File): List<String>? = runCatching {
+        if (!file.exists()) null
+        else file.readLines().map { it.trim() }.filter { it.isNotEmpty() }
+    }.getOrNull()
+
     private fun errorFile(context: Context) = File(engineDir(context), "disconnect_error")
     private fun logFlagFile(context: Context) = File(engineDir(context), "log_enabled")
 

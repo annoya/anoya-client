@@ -4333,6 +4333,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 category} other{{count} categories}}'**
   String ruleCountCategories(int count);
+
+  /// No description provided for @settingsExcludedApps.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps outside the VPN'**
+  String get settingsExcludedApps;
+
+  /// No description provided for @settingsExcludedAppsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{None} =1{1 app} other{{count} apps}}'**
+  String settingsExcludedAppsCount(int count);
+
+  /// No description provided for @excludedAppsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic from these apps never enters the VPN, and they don’t see it — for apps that refuse to work with a VPN, like banking. Only this phone.'**
+  String get excludedAppsHint;
+
+  /// No description provided for @excludedAppsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add apps…'**
+  String get excludedAppsAdd;
+
+  /// No description provided for @excludedAppsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies after reconnecting'**
+  String get excludedAppsPending;
+
+  /// No description provided for @excludedAppsPendingDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The tunnel still runs with the previous list'**
+  String get excludedAppsPendingDetail;
+
+  /// No description provided for @excludedAppsReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect now'**
+  String get excludedAppsReconnect;
+
+  /// No description provided for @appPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps'**
+  String get appPickerTitle;
+
+  /// No description provided for @ruleApps.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps'**
+  String get ruleApps;
+
+  /// No description provided for @ruleSummaryApps.
+  ///
+  /// In en, this message translates to:
+  /// **'traffic from {apps}'**
+  String ruleSummaryApps(String apps);
 }
 
 class _AppLocalizationsDelegate
