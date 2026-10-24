@@ -13,6 +13,7 @@ import 'package:anoya/core/vpn_core.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
+import 'support/memory_secrets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -51,12 +52,10 @@ void main() {
       const MethodChannel('vpn/control'),
       (call) async => null,
     );
-    File('${tmp.path}/profiles.json').writeAsStringSync(
-      jsonEncode([
-        profile('p1', 'nexus').toJson(),
-        profile('p2', 'work').toJson(),
-      ]),
-    );
+    memorySecrets['profiles'] = jsonEncode([
+      profile('p1', 'nexus').toJson(),
+      profile('p2', 'work').toJson(),
+    ]);
   });
   tearDown(() async {
     // Un-awaited writes from disposed containers race the directory delete.

@@ -959,14 +959,17 @@ understands, so a server adding a protocol does not require a client change.
 
 - Tokens are stored in the Keychain, one per self-hosted configuration, and
   removed with the configuration.
-- Secrets (tokens, `vpn://` keys, the gateway's installation id and state) go
-  through `SecretStore` (`lib/core/secret_store.dart`): the Keychain on Apple,
+- Configurations — servers with their credentials and subscription URLs — and
+  secrets (tokens, `vpn://` keys, the gateway's installation id and state) go
+  through `SecretStore` (`lib/core/secret_store.dart`), never into a plain file
+  (ADR-023): the Keychain on Apple,
   the Android Keystore, a DPAPI-encrypted file on Windows, and the Secret
   Service (GNOME Keyring, KWallet) on Linux. A Linux desktop without a Secret
   Service — or with a locked one — falls back to `secrets.json` in the app's
   data directory, mode 0600 in a 0700 directory, and the app says so once per
   launch. Once a keyring is reachable again, new values go there and their file
-  copies are removed. See ADR-017.
+  copies are removed. See ADR-017. Apple items are readable after the first
+  unlock, on this device only.
 - With iCloud sync on, tokens and keys leave the device only sealed with
   AES-256-GCM under a key kept in iCloud Keychain; iCloud key-value storage
   never holds them in the clear (ADR-020).

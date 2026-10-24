@@ -14,6 +14,7 @@ import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
 import 'package:anoya/state/session.dart';
+import 'support/memory_secrets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -28,9 +29,7 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       (call) async => tmp.path,
     );
-    messenger.setMockMethodCallHandler(secure, (call) async => null);
-    File('${tmp.path}/profiles.json').writeAsStringSync(
-      jsonEncode([
+    memorySecrets['profiles'] = jsonEncode([
         Profile(
           id: 'running',
           type: ProfileType.link,
@@ -48,8 +47,7 @@ void main() {
             ),
           ],
         ).toJson(),
-      ]),
-    );
+      ]);
   });
 
   tearDown(() async {

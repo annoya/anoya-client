@@ -20,6 +20,7 @@ import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
 import 'package:anoya/state/session.dart';
+import 'support/memory_secrets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,9 +30,7 @@ void main() {
   late Directory tmp;
   late Completer<String?> key;
 
-  void seed(Profile p) => File(
-    '${tmp.path}/profiles.json',
-  ).writeAsStringSync(jsonEncode([p.toJson()]));
+  void seed(Profile p) => memorySecrets['profiles'] = jsonEncode([p.toJson()]);
 
   setUp(() {
     tmp = Directory.systemTemp.createTempSync('vpn-connect');
@@ -42,8 +41,11 @@ void main() {
       (call) async => tmp.path,
     );
     messenger.setMockMethodCallHandler(secure, (call) async {
-      if (call.method == 'read') return key.future;
-      return null;
+      final name = (call.arguments as Map)['key'] as String?;
+      if (call.method == 'read' && (name?.startsWith('amnezia_key_') ?? false)) {
+        return key.future;
+      }
+      return memorySecretsHandler(call);
     });
   });
 
