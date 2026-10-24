@@ -119,9 +119,9 @@ void main() {
   );
 
   void seed(Directory dir, List<Profile> profiles, {String? theme}) {
-    File(
-      '${dir.path}/profiles.json',
-    ).writeAsStringSync(jsonEncode([for (final p in profiles) p.toJson()]));
+    keychains[dir]!['profiles'] = jsonEncode([
+      for (final p in profiles) p.toJson(),
+    ]);
     if (theme != null) {
       File(
         '${dir.path}/app_prefs.json',

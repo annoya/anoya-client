@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:anoya/core/json_file_store.dart';
 import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/profile_store.dart';
+import 'support/memory_secrets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -36,11 +37,10 @@ void main() {
   });
 
   test('one damaged entry never discards the rest of the list', () async {
-    File('${tmp.path}/profiles.json').writeAsStringSync(
-      '[{"id":"a","type":"link","name":"Good","locations":[]},'
-      '{"id":"b","type":"unknown-type","name":"Bad"},'
-      '{"id":"c","type":"link","name":"Also good","locations":[]}]',
-    );
+    memorySecrets['profiles'] =
+        '[{"id":"a","type":"link","name":"Good","locations":[]},'
+        '{"id":"b","type":"unknown-type","name":"Bad"},'
+        '{"id":"c","type":"link","name":"Also good","locations":[]}]';
     final profiles = await ProfileStore.load();
     expect(profiles.map((p) => p.id), ['a', 'c']);
   });

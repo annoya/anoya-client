@@ -41,6 +41,7 @@ test.
 | [020](ADR-020-icloud-sync.md) | client | Configurations and settings sync through iCloud, sealed with a key from iCloud Keychain | opt-in per device, key-value store, recipes instead of profiles, what stays per device, three-way merge, why not CloudKit |
 | [021](ADR-021-ios-tunnel-memory-budget.md) | client | The iOS tunnel holds itself under the jetsam cap instead of being killed at it | low-memory build, Go soft limit, release on pressure with a memory breakdown, shedding near the cap, why not restart or session caps |
 | [022](ADR-022-android-per-app-split.md) | client | Android splits by app: rules in the engine, a device list in the system | supersedes ADR-003's process-name gating, package lookup through getConnectionOwnerUid, app picker, apps outside the VPN, why not exclusions as rules |
+| [023](ADR-023-configurations-in-the-keychain.md) | client | Configurations live in the platform keychain, with their keys | one secure document, first-unlock accessibility, never saving over an unreadable store, Linux fallback, why not plain JSON or an encrypted file |
 
 ## Open Questions
 

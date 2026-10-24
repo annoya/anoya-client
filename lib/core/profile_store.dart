@@ -6,7 +6,7 @@ import 'secret_store.dart';
 class ProfileStore {
   static SecretStore get _secure => SecretStore.instance;
 
-  static final _store = JsonFileStore('profiles.json');
+  static final _store = SecureJsonStore('profiles');
 
   static Future<List<Profile>> load() => _store.load(
     (j) => decodeListLenient(j, 'profiles', Profile.fromJson),

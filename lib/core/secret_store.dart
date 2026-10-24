@@ -13,7 +13,14 @@ import 'log.dart';
 
 class SecretStore {
   SecretStore({
-    FlutterSecureStorage keyring = const FlutterSecureStorage(),
+    FlutterSecureStorage keyring = const FlutterSecureStorage(
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock_this_device,
+      ),
+      mOptions: MacOsOptions(
+        accessibility: KeychainAccessibility.first_unlock_this_device,
+      ),
+    ),
     bool? fileFallback,
     Future<Directory> Function()? directory,
   }) : _keyring = keyring,
@@ -45,7 +52,7 @@ class SecretStore {
   }
 
   Future<void> write(String key, String value) async {
-    if (!_fallback) return _keyring.write(key: key, value: value);
+    if (!_fallback) return _rewrite(key, value);
     try {
       await _keyring.write(key: key, value: value);
       await _serial(() => _remove(key));
@@ -59,6 +66,15 @@ class SecretStore {
       await _save(all);
     });
     usingFile.value = true;
+  }
+
+  Future<void> _rewrite(String key, String value) async {
+    try {
+      await _keyring.write(key: key, value: value);
+    } on PlatformException {
+      await _keyring.delete(key: key);
+      await _keyring.write(key: key, value: value);
+    }
   }
 
   Future<void> delete(String key) async {

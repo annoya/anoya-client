@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path_provider/path_provider.dart';
 
 import 'log.dart';
+import 'secret_store.dart';
 
 class JsonFileStore {
   JsonFileStore(this.filename);
@@ -67,6 +68,46 @@ class JsonFileStore {
       if (await tmp.exists()) await tmp.delete();
       rethrow;
     }
+  }
+}
+
+class SecureJsonStore {
+  SecureJsonStore(this.name);
+
+  final String name;
+
+  bool _unreadable = false;
+  Future<void> _queue = Future.value();
+
+  Future<T> load<T>(T Function(dynamic json) decode, T fallback) async {
+    final String? raw;
+    try {
+      raw = await SecretStore.instance.read(name);
+    } catch (e) {
+      _unreadable = true;
+      Log.e('$name: secure storage unreadable, not saving over it', '$e');
+      return fallback;
+    }
+    _unreadable = false;
+    if (raw == null) return fallback;
+    try {
+      return decode(jsonDecode(raw));
+    } catch (e) {
+      Log.e('$name: could not load', '$e');
+      return fallback;
+    }
+  }
+
+  Future<void> save(Object json) {
+    final run = _queue.then((_) async {
+      if (_unreadable) {
+        throw StateError('$name was not readable; refusing to overwrite it');
+      }
+      await SecretStore.instance.write(name, jsonEncode(json));
+      JsonFileStore._saved.add(name);
+    });
+    _queue = run.then((_) {}, onError: (_) {});
+    return run;
   }
 }
 
