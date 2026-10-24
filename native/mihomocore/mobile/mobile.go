@@ -2,6 +2,7 @@ package mobile
 
 import (
 	"fmt"
+	"net/netip"
 	"syscall"
 
 	"github.com/metacubex/mihomo/component/dialer"
@@ -59,3 +60,17 @@ func URLTest(name, url string, timeoutMs int) (int, error) {
 }
 
 func GroupMember(group string) string { return engine.GroupMember(group) }
+
+type PackageResolver interface {
+	OwnerPackage(network, srcIP string, srcPort int, dstIP string, dstPort int) string
+}
+
+func SetPackageResolver(r PackageResolver) {
+	if r == nil {
+		engine.SetPackageLookup(nil)
+		return
+	}
+	engine.SetPackageLookup(func(network string, src, dst netip.AddrPort) string {
+		return r.OwnerPackage(network, src.Addr().String(), int(src.Port()), dst.Addr().String(), int(dst.Port()))
+	})
+}

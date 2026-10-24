@@ -2036,5 +2036,17 @@
   "ruleCountCountries": "{count, plural, =1{1 country} other{{count} countries}}",
   "@ruleCountCountries": {"placeholders": {"count": {"type": "int"}}},
   "ruleCountCategories": "{count, plural, =1{1 category} other{{count} categories}}",
-  "@ruleCountCategories": {"placeholders": {"count": {"type": "int"}}}
+  "@ruleCountCategories": {"placeholders": {"count": {"type": "int"}}},
+  "settingsExcludedApps": "Apps outside the VPN",
+  "settingsExcludedAppsCount": "{count, plural, =0{None} =1{1 app} other{{count} apps}}",
+  "@settingsExcludedAppsCount": {"placeholders": {"count": {"type": "int"}}},
+  "excludedAppsHint": "Traffic from these apps never enters the VPN, and they don’t see it — for apps that refuse to work with a VPN, like banking. Only this phone.",
+  "excludedAppsAdd": "Add apps…",
+  "excludedAppsPending": "Applies after reconnecting",
+  "excludedAppsPendingDetail": "The tunnel still runs with the previous list",
+  "excludedAppsReconnect": "Reconnect now",
+  "appPickerTitle": "Apps",
+  "ruleApps": "Apps",
+  "ruleSummaryApps": "traffic from {apps}",
+  "@ruleSummaryApps": {"placeholders": {"apps": {"type": "String"}}}
 }

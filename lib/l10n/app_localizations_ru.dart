@@ -2891,4 +2891,49 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get settingsExcludedApps => 'Приложения мимо VPN';
+
+  @override
+  String settingsExcludedAppsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count приложения',
+      many: '$count приложений',
+      few: '$count приложения',
+      one: '1 приложение',
+      zero: 'Нет',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get excludedAppsHint =>
+      'Трафик этих приложений не заходит в VPN, и они его не видят — для приложений, которые не работают с VPN, например банковских. Только на этом телефоне.';
+
+  @override
+  String get excludedAppsAdd => 'Добавить приложения…';
+
+  @override
+  String get excludedAppsPending => 'Применится после переподключения';
+
+  @override
+  String get excludedAppsPendingDetail =>
+      'Туннель пока работает со старым списком';
+
+  @override
+  String get excludedAppsReconnect => 'Переподключить';
+
+  @override
+  String get appPickerTitle => 'Приложения';
+
+  @override
+  String get ruleApps => 'Приложения';
+
+  @override
+  String ruleSummaryApps(String apps) {
+    return 'трафик приложений $apps';
+  }
 }

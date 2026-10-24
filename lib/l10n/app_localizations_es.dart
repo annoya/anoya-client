@@ -2846,4 +2846,47 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get settingsExcludedApps => 'Apps fuera de la VPN';
+
+  @override
+  String settingsExcludedAppsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count apps',
+      one: '1 app',
+      zero: 'Ninguna',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get excludedAppsHint =>
+      'El tráfico de estas apps nunca entra en la VPN y no la ven: para apps que no funcionan con una VPN, como las bancarias. Solo en este teléfono.';
+
+  @override
+  String get excludedAppsAdd => 'Añadir apps…';
+
+  @override
+  String get excludedAppsPending => 'Se aplica al reconectar';
+
+  @override
+  String get excludedAppsPendingDetail =>
+      'El túnel sigue con la lista anterior';
+
+  @override
+  String get excludedAppsReconnect => 'Reconectar ahora';
+
+  @override
+  String get appPickerTitle => 'Apps';
+
+  @override
+  String get ruleApps => 'Apps';
+
+  @override
+  String ruleSummaryApps(String apps) {
+    return 'el tráfico de $apps';
+  }
 }

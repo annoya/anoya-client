@@ -704,5 +704,15 @@
   "ruleCountSubnets": "{count, plural, =1{1 subred} other{{count} subredes}}",
   "ruleCountProcesses": "{count, plural, =1{1 proceso} other{{count} procesos}}",
   "ruleCountCountries": "{count, plural, =1{1 país} other{{count} países}}",
-  "ruleCountCategories": "{count, plural, =1{1 categoría} other{{count} categorías}}"
+  "ruleCountCategories": "{count, plural, =1{1 categoría} other{{count} categorías}}",
+  "settingsExcludedApps": "Apps fuera de la VPN",
+  "settingsExcludedAppsCount": "{count, plural, =0{Ninguna} =1{1 app} other{{count} apps}}",
+  "excludedAppsHint": "El tráfico de estas apps nunca entra en la VPN y no la ven: para apps que no funcionan con una VPN, como las bancarias. Solo en este teléfono.",
+  "excludedAppsAdd": "Añadir apps…",
+  "excludedAppsPending": "Se aplica al reconectar",
+  "excludedAppsPendingDetail": "El túnel sigue con la lista anterior",
+  "excludedAppsReconnect": "Reconectar ahora",
+  "appPickerTitle": "Apps",
+  "ruleApps": "Apps",
+  "ruleSummaryApps": "el tráfico de {apps}"
 }

@@ -156,7 +156,25 @@ object VpnChannel {
                     "os" to "Android",
                     "version" to Build.VERSION.RELEASE,
                     "model" to Build.MODEL,
+                    "sdk" to Build.VERSION.SDK_INT,
                 ))
+                "excluded_apps" -> io(result) { TunnelFiles.excludedApps(context) }
+                "set_excluded_apps" -> {
+                    val packages = call.argument<List<String>>("packages") ?: emptyList()
+                    io(result) { TunnelFiles.setExcludedApps(context, packages); null }
+                }
+                "excluded_apps_in_use" -> io(result) {
+                    if (lastStatus == TunnelState.CONNECTED) TunnelFiles.excludedAppsInUse(context) else null
+                }
+                "restart_tunnel" -> {
+                    context.startService(
+                        Intent(context, MihomoVpnService::class.java).setAction(MihomoVpnService.ACTION_RESTART))
+                    result.success(null)
+                }
+                "installed_apps" -> probes.execute {
+                    val apps = runCatching { InstalledApps.list(context) }.getOrDefault(emptyList())
+                    main.post { result.success(apps) }
+                }
                 "shared_dir" -> result.success(TunnelFiles.engineDir(context).absolutePath)
                 "set_logging" -> {
                     val on = call.argument<Boolean>("enabled") ?: true

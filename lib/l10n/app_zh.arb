@@ -704,5 +704,15 @@
   "ruleCountSubnets": "{count, plural, other{{count} 个子网}}",
   "ruleCountProcesses": "{count, plural, other{{count} 个进程}}",
   "ruleCountCountries": "{count, plural, other{{count} 个国家/地区}}",
-  "ruleCountCategories": "{count, plural, other{{count} 个分类}}"
+  "ruleCountCategories": "{count, plural, other{{count} 个分类}}",
+  "settingsExcludedApps": "绕过 VPN 的应用",
+  "settingsExcludedAppsCount": "{count, plural, =0{无} other{{count} 个应用}}",
+  "excludedAppsHint": "这些应用的流量不会进入 VPN，它们也看不到 VPN——适用于无法在 VPN 下工作的应用，例如银行应用。仅限此手机。",
+  "excludedAppsAdd": "添加应用…",
+  "excludedAppsPending": "重新连接后生效",
+  "excludedAppsPendingDetail": "隧道仍在使用之前的列表",
+  "excludedAppsReconnect": "立即重新连接",
+  "appPickerTitle": "应用",
+  "ruleApps": "应用",
+  "ruleSummaryApps": "来自 {apps} 的流量"
 }

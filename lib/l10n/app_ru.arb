@@ -704,5 +704,15 @@
   "ruleCountSubnets": "{count, plural, one{{count} подсеть} few{{count} подсети} other{{count} подсетей}}",
   "ruleCountProcesses": "{count, plural, one{{count} процесс} few{{count} процесса} other{{count} процессов}}",
   "ruleCountCountries": "{count, plural, one{{count} страна} few{{count} страны} other{{count} стран}}",
-  "ruleCountCategories": "{count, plural, one{{count} категория} few{{count} категории} other{{count} категорий}}"
+  "ruleCountCategories": "{count, plural, one{{count} категория} few{{count} категории} other{{count} категорий}}",
+  "settingsExcludedApps": "Приложения мимо VPN",
+  "settingsExcludedAppsCount": "{count, plural, =0{Нет} =1{1 приложение} few{{count} приложения} many{{count} приложений} other{{count} приложения}}",
+  "excludedAppsHint": "Трафик этих приложений не заходит в VPN, и они его не видят — для приложений, которые не работают с VPN, например банковских. Только на этом телефоне.",
+  "excludedAppsAdd": "Добавить приложения…",
+  "excludedAppsPending": "Применится после переподключения",
+  "excludedAppsPendingDetail": "Туннель пока работает со старым списком",
+  "excludedAppsReconnect": "Переподключить",
+  "appPickerTitle": "Приложения",
+  "ruleApps": "Приложения",
+  "ruleSummaryApps": "трафик приложений {apps}"
 }

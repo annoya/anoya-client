@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/android_apps.dart';
 import '../core/country_flag.dart';
 import '../core/ds.dart';
 import '../core/norm_config.dart';
@@ -12,6 +13,7 @@ import '../core/rule_values.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
+import 'app_picker.dart';
 import 'geosite_sheet.dart';
 import 'routing_widgets.dart';
 
@@ -30,11 +32,11 @@ class _RuleScreenState extends State<RuleScreen> {
   late String _action = widget.initial?.action ?? 'proxy';
   late bool _noResolve = widget.initial?.noResolve ?? false;
   late final TextEditingController _text = TextEditingController(
-    text: takesTextValues(_type)
+    text: _typedByHand(_type)
         ? (widget.initial?.values ?? const []).join('\n')
         : '',
   );
-  late List<String> _picked = takesTextValues(_type)
+  late List<String> _picked = _typedByHand(_type)
       ? []
       : List.of(widget.initial?.values ?? const []);
   late ParsedRuleValues _parsed = parseRuleValues(_type, _text.text);
@@ -47,6 +49,18 @@ class _RuleScreenState extends State<RuleScreen> {
     'process-name': 'Slack',
     'domain-regex': r'^.*\.example\.(com|net)$',
   };
+
+  Map<String, AndroidApp> _apps = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (processRulesPickApps) {
+      AndroidApps.installed().then((apps) {
+        if (mounted) setState(() => _apps = appsByPackage(apps));
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -71,7 +85,7 @@ class _RuleScreenState extends State<RuleScreen> {
   }
 
   List<RoutingRule>? get _result {
-    if (!takesTextValues(_type)) {
+    if (!_typedByHand(_type)) {
       if (_picked.isEmpty) return null;
       return [
         RoutingRule(
@@ -132,31 +146,38 @@ class _RuleScreenState extends State<RuleScreen> {
     if (picked != null) setState(() => _picked = picked.toList());
   }
 
+  Future<void> _pickApps() async {
+    final picked = await pickApps(context, selected: _picked.toSet());
+    if (picked != null) setState(() => _picked = picked.toList());
+  }
+
   Future<void> _pickType() async {
     final l10n = context.l10n;
     final picked = await pickOption<String>(
       context,
       title: l10n.ruleMatch,
       selected: _type,
-      options: RoutingRule.types.where((t) => t != 'rule-list').map((t) {
-        final geoLocked = (t == 'geoip' || t == 'geosite') && !widget.geoReady;
-        final unsupported = t == 'process-name' && !supportsProcessRules;
-        return Option(
-          t,
-          t,
-          subtitle: unsupported
-              ? l10n.ruleNotAvailableOnPlatform
-              : geoLocked
-              ? l10n.ruleNeedsGeoDatabases
-              : _typeDescription(t),
-          enabled: !geoLocked && !unsupported,
-        );
-      }).toList(),
+      options: RoutingRule.types
+          .where((t) => t != 'rule-list')
+          .where((t) => t != 'process-name' || supportsProcessRules)
+          .map((t) {
+            final geoLocked =
+                (t == 'geoip' || t == 'geosite') && !widget.geoReady;
+            return Option(
+              t,
+              t,
+              subtitle: geoLocked
+                  ? l10n.ruleNeedsGeoDatabases
+                  : _typeDescription(t),
+              enabled: !geoLocked,
+            );
+          })
+          .toList(),
     );
     if (picked == null || picked == _type) return;
     setState(() {
-      if (takesTextValues(picked) != takesTextValues(_type) ||
-          !takesTextValues(picked)) {
+      if (_typedByHand(picked) != _typedByHand(_type) ||
+          !_typedByHand(picked)) {
         _text.clear();
         _picked = [];
       }
@@ -205,8 +226,10 @@ class _RuleScreenState extends State<RuleScreen> {
       children: [
         SelectField(label: l10n.ruleMatch, value: _type, onTap: _pickType),
         SelectField(label: l10n.ruleAction, value: _action, onTap: _pickAction),
-        if (takesTextValues(_type))
+        if (_typedByHand(_type))
           ..._textInput(context)
+        else if (_type == 'process-name')
+          ..._appInput(context)
         else
           ..._geoInput(context),
       ],
@@ -345,6 +368,34 @@ class _RuleScreenState extends State<RuleScreen> {
     ];
   }
 
+  List<Widget> _appInput(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      SelectField(
+        label: l10n.ruleApps,
+        value: _picked.isEmpty
+            ? l10n.ruleChoose
+            : l10n.ruleSelectedCount(_picked.length),
+        trailing: Glyph.chevronRight,
+        onTap: _pickApps,
+      ),
+      if (_picked.isNotEmpty)
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final p in _picked)
+              DsValueChip(
+                label: _apps[p]?.label ?? p,
+                removeTooltip: l10n.commonRemove,
+                onRemove: () => setState(() => _picked.remove(p)),
+              ),
+          ],
+        ),
+      if (_summary() case final s?) DsNote(s),
+    ];
+  }
+
   String _countryChip(String code) {
     final up = code.toUpperCase();
     final flag = flagForCode(up);
@@ -354,9 +405,13 @@ class _RuleScreenState extends State<RuleScreen> {
   String? _summary() {
     if (_picked.isEmpty) return null;
     final l10n = context.l10n;
-    final target = _type == 'geoip'
-        ? l10n.ruleSummaryGeoip(_picked.map(countryName).join(', '))
-        : l10n.ruleSummaryGeosite(_picked.join('", "'));
+    final target = switch (_type) {
+      'geoip' => l10n.ruleSummaryGeoip(_picked.map(countryName).join(', ')),
+      'process-name' => l10n.ruleSummaryApps(
+        _picked.map((p) => _apps[p]?.label ?? p).join(', '),
+      ),
+      _ => l10n.ruleSummaryGeosite(_picked.join('", "')),
+    };
     final verb = switch (_action) {
       'proxy' => l10n.ruleSummaryProxy,
       'direct' => l10n.ruleSummaryDirect,
@@ -370,6 +425,9 @@ class _RuleScreenState extends State<RuleScreen> {
 }
 
 const int _valueLines = 6;
+
+bool _typedByHand(String type) =>
+    takesTextValues(type) && !(type == 'process-name' && processRulesPickApps);
 
 class _UnrecognizedSheet extends StatelessWidget {
   const _UnrecognizedSheet({required this.type, required this.bad});
