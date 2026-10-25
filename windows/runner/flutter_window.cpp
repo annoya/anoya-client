@@ -30,6 +30,7 @@ bool FlutterWindow::OnCreate() {
   tray_ = std::make_unique<TrayIcon>(GetHandle(), flutter_controller_->engine()->messenger(),
                                      L"Anoya");
   tray_->on_toggle_window = [this]() { ToggleWindow(); };
+  tray_->on_show_window = [this]() { BringToFront(); };
   // Closing inline inside TrackPopupMenuEx's modal loop hangs engine shutdown.
   tray_->on_quit = [this]() {
     quitting_ = true;

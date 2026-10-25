@@ -4393,6 +4393,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'traffic from {apps}'**
   String ruleSummaryApps(String apps);
+
+  /// No description provided for @noticeChannelProblems.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection problems'**
+  String get noticeChannelProblems;
+
+  /// No description provided for @noticeConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected · {server}'**
+  String noticeConnected(String server);
+
+  /// No description provided for @noticeSilentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is not answering'**
+  String get noticeSilentTitle;
+
+  /// No description provided for @noticeSilentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing comes back through “{server}”, so the internet through the VPN is down. Tap to choose another server.'**
+  String noticeSilentBody(String server);
+
+  /// No description provided for @noticeConnectedSilent.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected · no answer from the server'**
+  String get noticeConnectedSilent;
+
+  /// No description provided for @noticeConnectedSilentDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{server} · tap to choose another server'**
+  String noticeConnectedSilentDetail(String server);
+
+  /// No description provided for @noticeStartFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The VPN could not start'**
+  String get noticeStartFailedTitle;
+
+  /// No description provided for @noticeStartFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Anoya to see why.'**
+  String get noticeStartFailedBody;
 }
 
 class _AppLocalizationsDelegate

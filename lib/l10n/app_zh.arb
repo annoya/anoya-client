@@ -714,5 +714,13 @@
   "excludedAppsReconnect": "立即重新连接",
   "appPickerTitle": "应用",
   "ruleApps": "应用",
-  "ruleSummaryApps": "来自 {apps} 的流量"
+  "ruleSummaryApps": "来自 {apps} 的流量",
+  "noticeChannelProblems": "连接问题",
+  "noticeConnected": "已连接 · {server}",
+  "noticeSilentTitle": "服务器没有响应",
+  "noticeSilentBody": "通过“{server}”没有任何返回，VPN 下的网络无法使用。点按以选择其他服务器。",
+  "noticeConnectedSilent": "已连接 · 服务器没有响应",
+  "noticeConnectedSilentDetail": "{server} · 点按以选择其他服务器",
+  "noticeStartFailedTitle": "VPN 无法启动",
+  "noticeStartFailedBody": "打开 Anoya 查看原因。"
 }

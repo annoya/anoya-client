@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +11,8 @@ import 'core/ui.dart';
 import 'l10n/l10n.dart';
 import 'features/home_screen.dart';
 import 'state/cloud_sync_controller.dart';
+import 'state/desktop_notices.dart';
+import 'state/launch_action.dart';
 import 'state/menu_bar_controller.dart';
 import 'state/profiles_controller.dart';
 import 'state/providers.dart';
@@ -30,10 +34,11 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   void initState() {
     super.initState();
     ref.read(menuBarProvider);
+    if (Platform.isWindows || Platform.isLinux) ref.read(desktopNoticesProvider);
     ref.read(cloudSyncProvider);
     SecretStore.instance.usingFile.addListener(_secretsInFile);
-    _lifecycle = AppLifecycleListener(onResume: _logLastDisconnect);
-    _logLastDisconnect();
+    _lifecycle = AppLifecycleListener(onResume: _resumed);
+    _resumed();
   }
 
   @override
@@ -41,6 +46,11 @@ class _VpnAppState extends ConsumerState<VpnApp> {
     _lifecycle.dispose();
     SecretStore.instance.usingFile.removeListener(_secretsInFile);
     super.dispose();
+  }
+
+  void _resumed() {
+    _logLastDisconnect();
+    ref.read(launchActionProvider.notifier).check();
   }
 
   Future<void> _logLastDisconnect() async {

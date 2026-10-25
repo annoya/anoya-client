@@ -43,6 +43,8 @@ func SetJournal(path string) { engine.SetJournal(path) }
 
 func SetEngineLog(path string) { engine.SetEngineLog(path) }
 
+func ServerSilent() bool { return engine.ServerSilent() }
+
 func Start(fd int, configYAML string) error { return engine.Start(fd, configYAML) }
 
 func Reload(fd int, configYAML string) error { return engine.Reload(fd, configYAML) }

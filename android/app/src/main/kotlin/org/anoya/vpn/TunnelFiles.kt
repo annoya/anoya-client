@@ -3,6 +3,7 @@ package org.anoya.vpn
 import android.content.Context
 import java.io.File
 import java.io.RandomAccessFile
+import org.json.JSONObject
 
 object TunnelFiles {
     fun engineDir(context: Context): File =
@@ -12,6 +13,17 @@ object TunnelFiles {
     fun engineLog(context: Context): File = File(engineDir(context), "mihomo.log")
     fun serviceLog(context: Context): File = File(engineDir(context), "tunnel.log")
     fun runningMarker(context: Context): File = File(engineDir(context), "tunnel_running")
+
+    private fun noticeFile(context: Context) = File(engineDir(context), "notice.json")
+
+    fun setNotice(context: Context, json: String) {
+        runCatching { noticeFile(context).writeText(json) }
+    }
+
+    fun notice(context: Context): Map<String, String> = runCatching {
+        val o = JSONObject(noticeFile(context).readText())
+        o.keys().asSequence().associateWith { o.getString(it) }
+    }.getOrDefault(emptyMap())
 
     private fun excludedFile(context: Context) = File(engineDir(context), "excluded_apps")
     private fun excludedInUseFile(context: Context) = File(engineDir(context), "excluded_apps_in_use")

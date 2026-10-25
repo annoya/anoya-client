@@ -19,6 +19,14 @@ const (
 
 const TunnelOutbound = "PROXY"
 
+const (
+	NoticeSilent      = "silent"
+	NoticeAnswers     = "answers"
+	NoticeStartFailed = "start_failed"
+)
+
+const silencePoll = 5 * time.Second
+
 type Service struct {
 	eng   Engine
 	files Files
@@ -30,6 +38,11 @@ type Service struct {
 	status string
 	since  time.Time
 	conns  map[*conn]struct{}
+	silent bool
+	missed string
+
+	silencePoll time.Duration
+	quiet       chan struct{}
 }
 
 func New(eng Engine, files Files) *Service {
@@ -39,6 +52,8 @@ func New(eng Engine, files Files) *Service {
 		now:    time.Now,
 		status: StatusDisconnected,
 		conns:  map[*conn]struct{}{},
+
+		silencePoll: silencePoll,
 	}
 }
 
@@ -51,13 +66,58 @@ func (s *Service) Status() string {
 func (s *Service) setStatus(st string) {
 	s.mu.Lock()
 	s.status = st
+	s.mu.Unlock()
+	s.broadcast(event{Event: "status", Status: st})
+}
+
+func (s *Service) broadcast(ev event) {
+	s.mu.Lock()
 	subs := make([]*conn, 0, len(s.conns))
 	for c := range s.conns {
 		subs = append(subs, c)
 	}
 	s.mu.Unlock()
 	for _, c := range subs {
-		c.send(event{Event: "status", Status: st})
+		c.send(ev)
+	}
+}
+
+func (s *Service) watchSilence(quiet <-chan struct{}) {
+	ticker := time.NewTicker(s.silencePoll)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-quiet:
+			return
+		case <-ticker.C:
+			now := s.eng.ServerSilent()
+			s.mu.Lock()
+			changed := now != s.silent
+			s.silent = now
+			s.mu.Unlock()
+			if !changed {
+				continue
+			}
+			if now {
+				s.files.Append("the app is told: the server is not answering")
+				s.broadcast(event{Event: "notice", Notice: NoticeSilent})
+			} else {
+				s.broadcast(event{Event: "notice", Notice: NoticeAnswers})
+			}
+		}
+	}
+}
+
+func (s *Service) stopWatchingSilence() {
+	s.mu.Lock()
+	quiet, wasSilent := s.quiet, s.silent
+	s.quiet, s.silent = nil, false
+	s.mu.Unlock()
+	if quiet != nil {
+		close(quiet)
+	}
+	if wasSilent {
+		s.broadcast(event{Event: "notice", Notice: NoticeAnswers})
 	}
 }
 
@@ -249,11 +309,14 @@ func (s *Service) start(config string) error {
 		return err
 	}
 	s.files.ClearError()
+	quiet := make(chan struct{})
 	s.mu.Lock()
 	s.since = s.now()
+	s.quiet = quiet
 	s.mu.Unlock()
 	s.setStatus(StatusConnected)
 	s.files.Append("tunnel up")
+	go s.watchSilence(quiet)
 	return nil
 }
 
@@ -267,10 +330,27 @@ func (s *Service) StartSaved() error {
 	}
 	if err := checkConfig(config); err != nil {
 		s.files.Append("saved config refused: " + err.Error())
+		s.noticeStartFailed()
 		return err
 	}
 	s.files.Append("auto-connect: starting the saved config")
-	return s.start(config)
+	if err := s.start(config); err != nil {
+		s.noticeStartFailed()
+		return err
+	}
+	return nil
+}
+
+func (s *Service) noticeStartFailed() {
+	s.mu.Lock()
+	nobody := len(s.conns) == 0
+	if nobody {
+		s.missed = NoticeStartFailed
+	}
+	s.mu.Unlock()
+	if !nobody {
+		s.broadcast(event{Event: "notice", Notice: NoticeStartFailed})
+	}
 }
 
 func (s *Service) stop() {
@@ -279,6 +359,7 @@ func (s *Service) stop() {
 	if s.Status() == StatusDisconnected {
 		return
 	}
+	s.stopWatchingSilence()
 	s.eng.Stop()
 	s.mu.Lock()
 	up := s.now().Sub(s.since)
@@ -319,7 +400,8 @@ type response struct {
 
 type event struct {
 	Event  string `json:"event"`
-	Status string `json:"status"`
+	Status string `json:"status,omitempty"`
+	Notice string `json:"notice,omitempty"`
 }
 
 const maxLineBytes = 16 << 20
@@ -390,7 +472,8 @@ func (s *Service) ServeConn(nc net.Conn) {
 	c := newConn(nc)
 	s.mu.Lock()
 	s.conns[c] = struct{}{}
-	current := s.status
+	current, silent, missed := s.status, s.silent, s.missed
+	s.missed = ""
 	s.mu.Unlock()
 	defer func() {
 		s.mu.Lock()
@@ -400,6 +483,12 @@ func (s *Service) ServeConn(nc net.Conn) {
 	}()
 
 	c.send(event{Event: "status", Status: current})
+	if silent {
+		c.send(event{Event: "notice", Notice: NoticeSilent})
+	}
+	if missed != "" {
+		c.send(event{Event: "notice", Notice: missed})
+	}
 
 	sc := bufio.NewScanner(nc)
 	sc.Buffer(make([]byte, 64*1024), maxLineBytes)

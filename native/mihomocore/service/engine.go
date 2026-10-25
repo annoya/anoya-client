@@ -20,6 +20,7 @@ type Engine interface {
 	URLTest(name, url string, timeoutMs int) (int, error)
 	ProxyBytes(name string) (up, down int64)
 	GroupMember(group string) string
+	ServerSilent() bool
 }
 
 type RealEngine struct{}
@@ -33,6 +34,7 @@ func (RealEngine) Start(configYAML string) error         { return engine.StartOw
 func (RealEngine) Reload(configYAML string) error        { return engine.ReloadOwnDevice(configYAML) }
 func (RealEngine) Stop()                                 { engine.Stop() }
 func (RealEngine) GroupMember(group string) string       { return engine.GroupMember(group) }
+func (RealEngine) ServerSilent() bool                    { return engine.ServerSilent() }
 func (RealEngine) ProxyBytes(name string) (int64, int64) { return engine.ProxyBytes(name) }
 func (RealEngine) URLTest(name, url string, timeoutMs int) (int, error) {
 	return engine.URLTest(name, url, timeoutMs)

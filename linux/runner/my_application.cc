@@ -6,12 +6,14 @@
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
+#include "notifier.h"
 #include "tray_icon.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
   TrayIcon* tray;
+  Notifier* notifier;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
@@ -32,6 +34,7 @@ static gboolean window_delete_cb(GtkWidget* window, GdkEvent* event,
 static void window_destroy_cb(GtkWidget* window, gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
   g_clear_pointer(&self->tray, tray_icon_free);
+  g_clear_pointer(&self->notifier, notifier_free);
 }
 
 // Implements GApplication::activate.
@@ -102,6 +105,11 @@ static void my_application_activate(GApplication* application) {
   self->tray =
       tray_icon_new(application, window,
                     fl_plugin_registrar_get_messenger(tray_registrar));
+  g_autoptr(FlPluginRegistrar) notify_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(FL_PLUGIN_REGISTRY(view),
+                                                  "AnoyaNotify");
+  self->notifier = notifier_new(
+      window, fl_plugin_registrar_get_messenger(notify_registrar));
   g_signal_connect(window, "delete-event", G_CALLBACK(window_delete_cb), self);
   g_signal_connect(window, "destroy", G_CALLBACK(window_destroy_cb), self);
 

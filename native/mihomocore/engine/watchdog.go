@@ -2,6 +2,7 @@ package engine
 
 import (
 	"slices"
+	"sync/atomic"
 	"time"
 
 	"github.com/metacubex/mihomo/log"
@@ -89,6 +90,28 @@ func watchedSamples() []connSample {
 
 var watchdogStop chan struct{}
 
+var serverSilent atomic.Bool
+
+func ServerSilent() bool { return serverSilent.Load() }
+
+type silenceEpisode struct {
+	reloaded bool
+}
+
+func (e *silenceEpisode) answered() bool {
+	e.reloaded = false
+	return serverSilent.Swap(false)
+}
+
+func (e *silenceEpisode) stalled() bool {
+	if !e.reloaded {
+		return false
+	}
+	return !serverSilent.Swap(true)
+}
+
+func (e *silenceEpisode) afterReload() { e.reloaded = true }
+
 func startWatchdog() {
 	stopWatchdog()
 	stop := make(chan struct{})
@@ -101,6 +124,7 @@ func stopWatchdog() {
 		close(watchdogStop)
 		watchdogStop = nil
 	}
+	serverSilent.Store(false)
 }
 
 func runWatchdog(stop <-chan struct{}) {
@@ -109,6 +133,7 @@ func runWatchdog(stop <-chan struct{}) {
 	detector := newStallDetector(time.Now())
 	lastRotate := time.Now()
 	memory := &memoryGuard{}
+	episode := &silenceEpisode{}
 	backoff := minRecoverBackoff
 	var notBefore time.Time
 	for {
@@ -125,6 +150,9 @@ func runWatchdog(stop <-chan struct{}) {
 			stalled, unanswered := detector.observe(now, watchedSamples())
 			if detector.lastAnswer.After(answeredBefore) {
 				backoff = minRecoverBackoff
+				if episode.answered() {
+					journal("watchdog: the server answers again")
+				}
 			}
 			if !stalled || now.Before(notBefore) {
 				continue
@@ -133,6 +161,9 @@ func runWatchdog(stop <-chan struct{}) {
 				watchedGroup, now.Sub(detector.lastAnswer).Round(time.Second), unanswered)
 			journal("watchdog: nothing came back through %s for %s, %d connection(s) unanswered; reloading the engine",
 				watchedGroup, now.Sub(detector.lastAnswer).Round(time.Second), unanswered)
+			if episode.stalled() {
+				journal("watchdog: still silent after a reload; the person is told")
+			}
 			select {
 			case <-stop:
 				return
@@ -142,6 +173,7 @@ func runWatchdog(stop <-chan struct{}) {
 				log.Warnln("[watchdog] reload failed: %v", err)
 				journal("watchdog: reload failed: %s", briefError(err))
 			}
+			episode.afterReload()
 			notBefore = now.Add(backoff)
 			backoff = min(backoff*2, maxRecoverBackoff)
 			detector = newStallDetector(time.Now())

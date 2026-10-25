@@ -714,5 +714,13 @@
   "excludedAppsReconnect": "Reconectar ahora",
   "appPickerTitle": "Apps",
   "ruleApps": "Apps",
-  "ruleSummaryApps": "el tráfico de {apps}"
+  "ruleSummaryApps": "el tráfico de {apps}",
+  "noticeChannelProblems": "Problemas de conexión",
+  "noticeConnected": "Conectado · {server}",
+  "noticeSilentTitle": "El servidor no responde",
+  "noticeSilentBody": "No vuelve nada a través de «{server}», así que internet por la VPN no funciona. Toca para elegir otro servidor.",
+  "noticeConnectedSilent": "Conectado · el servidor no responde",
+  "noticeConnectedSilentDetail": "{server} · toca para elegir otro servidor",
+  "noticeStartFailedTitle": "La VPN no pudo iniciarse",
+  "noticeStartFailedBody": "Abre Anoya para ver por qué."
 }

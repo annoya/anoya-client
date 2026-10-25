@@ -2048,5 +2048,16 @@
   "appPickerTitle": "Apps",
   "ruleApps": "Apps",
   "ruleSummaryApps": "traffic from {apps}",
-  "@ruleSummaryApps": {"placeholders": {"apps": {"type": "String"}}}
+  "@ruleSummaryApps": {"placeholders": {"apps": {"type": "String"}}},
+  "noticeChannelProblems": "Connection problems",
+  "noticeConnected": "Connected · {server}",
+  "@noticeConnected": {"placeholders": {"server": {"type": "String"}}},
+  "noticeSilentTitle": "The server is not answering",
+  "noticeSilentBody": "Nothing comes back through “{server}”, so the internet through the VPN is down. Tap to choose another server.",
+  "@noticeSilentBody": {"placeholders": {"server": {"type": "String"}}},
+  "noticeConnectedSilent": "Connected · no answer from the server",
+  "noticeConnectedSilentDetail": "{server} · tap to choose another server",
+  "@noticeConnectedSilentDetail": {"placeholders": {"server": {"type": "String"}}},
+  "noticeStartFailedTitle": "The VPN could not start",
+  "noticeStartFailedBody": "Open Anoya to see why."
 }

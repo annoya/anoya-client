@@ -2859,4 +2859,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String ruleSummaryApps(String apps) {
     return 'traffic from $apps';
   }
+
+  @override
+  String get noticeChannelProblems => 'Connection problems';
+
+  @override
+  String noticeConnected(String server) {
+    return 'Connected · $server';
+  }
+
+  @override
+  String get noticeSilentTitle => 'The server is not answering';
+
+  @override
+  String noticeSilentBody(String server) {
+    return 'Nothing comes back through “$server”, so the internet through the VPN is down. Tap to choose another server.';
+  }
+
+  @override
+  String get noticeConnectedSilent => 'Connected · no answer from the server';
+
+  @override
+  String noticeConnectedSilentDetail(String server) {
+    return '$server · tap to choose another server';
+  }
+
+  @override
+  String get noticeStartFailedTitle => 'The VPN could not start';
+
+  @override
+  String get noticeStartFailedBody => 'Open Anoya to see why.';
 }

@@ -2936,4 +2936,34 @@ class AppLocalizationsRu extends AppLocalizations {
   String ruleSummaryApps(String apps) {
     return 'трафик приложений $apps';
   }
+
+  @override
+  String get noticeChannelProblems => 'Проблемы с подключением';
+
+  @override
+  String noticeConnected(String server) {
+    return 'Подключено · $server';
+  }
+
+  @override
+  String get noticeSilentTitle => 'Сервер не отвечает';
+
+  @override
+  String noticeSilentBody(String server) {
+    return 'Через «$server» ничего не возвращается — интернет через VPN не работает. Нажмите, чтобы выбрать другой сервер.';
+  }
+
+  @override
+  String get noticeConnectedSilent => 'Подключено · сервер не отвечает';
+
+  @override
+  String noticeConnectedSilentDetail(String server) {
+    return '$server · нажмите, чтобы выбрать другой сервер';
+  }
+
+  @override
+  String get noticeStartFailedTitle => 'VPN не запустился';
+
+  @override
+  String get noticeStartFailedBody => 'Откройте Anoya, чтобы узнать причину.';
 }

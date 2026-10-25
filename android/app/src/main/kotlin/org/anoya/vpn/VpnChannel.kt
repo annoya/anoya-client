@@ -31,6 +31,7 @@ object VpnChannel {
 
     @Volatile private var tunnel: ITunnel? = null
     @Volatile private var lastStatus: String = TunnelState.DISCONNECTED
+    @Volatile var launchAction: String? = null
     private var events: EventChannel.EventSink? = null
 
     private val main = Handler(Looper.getMainLooper())
@@ -83,7 +84,7 @@ object VpnChannel {
                     }
                     val logEnabled = call.argument<Boolean>("log_enabled") ?: true
                     calls.execute {
-                        persist(context, config, logEnabled)
+                        persist(context, config, logEnabled, call.argument<String>("notice"))
                         main.post {
                             val consent = VpnService.prepare(context)
                             val act = host.get()
@@ -110,7 +111,7 @@ object VpnChannel {
                         val err = if (t == null) "tunnel is not running"
                                   else runCatching { t.reload(config) }
                                       .getOrElse { it.message ?: "reload failed" }
-                        if (err.isEmpty()) persist(context, config, logEnabled)
+                        if (err.isEmpty()) persist(context, config, logEnabled, call.argument<String>("notice"))
                         main.post {
                             if (err.isEmpty()) result.success(null)
                             else result.error("reload_failed", err, null)
@@ -123,7 +124,7 @@ object VpnChannel {
                         result.error("bad_args", "config required", null); return@setMethodCallHandler
                     }
                     val logEnabled = call.argument<Boolean>("log_enabled") ?: true
-                    io(result) { persist(context, config, logEnabled); null }
+                    io(result) { persist(context, config, logEnabled, call.argument<String>("notice")); null }
                 }
                 "remove_profile" -> {
                     calls.execute {
@@ -158,6 +159,11 @@ object VpnChannel {
                     "model" to Build.MODEL,
                     "sdk" to Build.VERSION.SDK_INT,
                 ))
+                "take_launch_action" -> {
+                    val action = launchAction
+                    launchAction = null
+                    result.success(action)
+                }
                 "excluded_apps" -> io(result) { TunnelFiles.excludedApps(context) }
                 "set_excluded_apps" -> {
                     val packages = call.argument<List<String>>("packages") ?: emptyList()
@@ -258,8 +264,9 @@ object VpnChannel {
             Intent(context, MihomoVpnService::class.java).setAction(MihomoVpnService.ACTION_START))
     }
 
-    private fun persist(context: Context, config: String, logEnabled: Boolean) {
+    private fun persist(context: Context, config: String, logEnabled: Boolean, notice: String?) {
         TunnelFiles.config(context).writeText(config)
         TunnelFiles.setLogsEnabled(context, logEnabled)
+        if (notice != null) TunnelFiles.setNotice(context, notice)
     }
 }

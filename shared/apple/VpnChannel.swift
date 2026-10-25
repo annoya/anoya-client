@@ -5,9 +5,50 @@ import Flutter
 #endif
 import Foundation
 import Libagw
+import UserNotifications
+#if os(macOS)
+import AppKit
+#endif
+
+final class TunnelNotifications: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = TunnelNotifications()
+
+    private let lock = NSLock()
+    private var pending: String?
+
+    func takeAction() -> String? {
+        lock.lock(); defer { lock.unlock() }
+        let action = pending
+        pending = nil
+        return action
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        if let action = response.notification.request.content.userInfo["action"] as? String {
+            lock.lock(); pending = action; lock.unlock()
+        }
+        #if os(macOS)
+        DispatchQueue.main.async {
+            NSApp.unhide(nil)
+            NSApp.windows.first { $0.canBecomeMain }?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        #endif
+        completionHandler()
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list, .sound])
+    }
+}
 
 enum VpnChannel {
     static func register(messenger: FlutterBinaryMessenger) {
+        UNUserNotificationCenter.current().delegate = TunnelNotifications.shared
         let control = FlutterMethodChannel(name: "vpn/control", binaryMessenger: messenger)
         control.setMethodCallHandler { call, result in
             switch call.method {
@@ -20,7 +61,8 @@ enum VpnChannel {
                 let logEnabled = args?["log_enabled"] as? Bool ?? true
                 Task { @MainActor in
                     do {
-                        try await VPNManager.shared.start(config: config, logEnabled: logEnabled)
+                        try await VPNManager.shared.start(config: config, logEnabled: logEnabled,
+                                                          notice: args?["notice"] as? String)
                         result(nil)
                     }
                     catch { result(FlutterError(code: "start_failed", message: error.localizedDescription, details: nil)) }
@@ -39,7 +81,8 @@ enum VpnChannel {
                         let armed = try await VPNManager.shared.setOnDemand(
                             enabled: enabled, rules: rules, disconnectOnSleep: sleep,
                             config: args["config"] as? String,
-                            logEnabled: args["log_enabled"] as? Bool ?? true)
+                            logEnabled: args["log_enabled"] as? Bool ?? true,
+                            notice: args["notice"] as? String)
                         result(armed)
                     } catch {
                         result(FlutterError(code: "on_demand_failed",
@@ -55,7 +98,8 @@ enum VpnChannel {
                 Task { @MainActor in
                     do {
                         let unsaved = try await VPNManager.shared.reload(
-                            config: config, logEnabled: args["log_enabled"] as? Bool ?? true)
+                            config: config, logEnabled: args["log_enabled"] as? Bool ?? true,
+                            notice: args["notice"] as? String)
                         result(unsaved)
                     } catch {
                         result(FlutterError(code: "reload_failed",
@@ -71,7 +115,8 @@ enum VpnChannel {
                 Task { @MainActor in
                     do {
                         try await VPNManager.shared.syncConfig(
-                            config: config, logEnabled: args["log_enabled"] as? Bool ?? true)
+                            config: config, logEnabled: args["log_enabled"] as? Bool ?? true,
+                            notice: args["notice"] as? String)
                         result(nil)
                     } catch {
                         result(FlutterError(code: "sync_failed",
@@ -107,6 +152,8 @@ enum VpnChannel {
                 }
             case "device_info":
                 result(deviceInfo())
+            case "take_launch_action":
+                result(TunnelNotifications.shared.takeAction())
             case "gateway_abi":
                 // Keeps the linker from dropping the Libagw archive, otherwise only used via Dart FFI.
                 result(Int(agw_abi_version()))

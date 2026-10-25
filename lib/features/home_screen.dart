@@ -13,6 +13,7 @@ import '../l10n/l10n.dart';
 import '../state/connection_check_controller.dart';
 import '../state/favorites_controller.dart';
 import '../state/group_member.dart';
+import '../state/launch_action.dart';
 import '../state/on_demand_controller.dart';
 import '../state/profiles_controller.dart';
 import '../state/providers.dart';
@@ -36,6 +37,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _takeLaunchAction(ref.read(launchActionProvider)),
+    );
+  }
+
   VpnStatus get _status => ref.watch(sessionProvider.select((s) => s.status));
 
   bool get _locked =>
@@ -67,6 +76,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       }
     });
+
+    ref.listen(launchActionProvider, (_, action) => _takeLaunchAction(action));
 
     ref.listen(profilesControllerProvider.select((s) => s.notice), (_, notice) {
       if (notice == null) return;
@@ -371,6 +382,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (picked != null) {
       ref.read(profilesControllerProvider.notifier).setActive(picked);
     }
+  }
+
+  void _takeLaunchAction(String? action) {
+    if (action != kLaunchServerPicker) return;
+    ref.read(launchActionProvider.notifier).consume();
+    final profile = ref.read(profilesControllerProvider).active;
+    if (profile == null || _locked || profile.locations.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _pickLocation(profile);
+    });
   }
 
   Future<void> _pickLocation(Profile active) async {

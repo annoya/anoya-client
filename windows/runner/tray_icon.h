@@ -19,6 +19,7 @@ class TrayIcon {
   bool HandleMessage(UINT message, WPARAM wparam, LPARAM lparam);
 
   std::function<void()> on_toggle_window;
+  std::function<void()> on_show_window;
   std::function<void()> on_quit;
 
  private:
@@ -32,6 +33,8 @@ class TrayIcon {
   };
 
   void Apply(const flutter::EncodableMap& args);
+  void Notify(const flutter::EncodableMap& args);
+  void Withdraw(const flutter::EncodableMap& args);
   void AddIcon();
   void UpdateIcon();
   void ShowMenu();
@@ -43,6 +46,10 @@ class TrayIcon {
   HWND owner_;
   std::wstring app_name_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> notify_channel_;
+  std::string balloon_id_;
+  std::string balloon_action_;
+  HICON balloon_icon_ = nullptr;
   State state_;
   HICON closed_icon_ = nullptr;
   HICON open_icon_ = nullptr;

@@ -1,5 +1,6 @@
 import Foundation
 import NetworkExtension
+import UserNotifications
 
 @MainActor
 final class VPNManager {
@@ -54,19 +55,21 @@ final class VPNManager {
         return m
     }
 
-    private func persist(config: String, logEnabled: Bool,
+    private func persist(config: String, logEnabled: Bool, notice: String?,
                          into m: NETunnelProviderManager) async throws {
         guard let proto = m.protocolConfiguration as? NETunnelProviderProtocol else { return }
         let current = proto.providerConfiguration
+        let notice = notice ?? (current?["Notice"] as? String) ?? ""
         let changed = (current?["Config"] as? String) != config
             || (current?["LogEnabled"] as? Bool) != logEnabled
+            || (current?["Notice"] as? String ?? "") != notice
         guard changed else { return }
-        proto.providerConfiguration = ["Config": config, "LogEnabled": logEnabled]
+        proto.providerConfiguration = ["Config": config, "LogEnabled": logEnabled, "Notice": notice]
         try await save(m)
         NSLog("VPN-NATIVE: persisted tunnel config (\(config.count) bytes)")
     }
 
-    func syncConfig(config: String, logEnabled: Bool) async throws {
+    func syncConfig(config: String, logEnabled: Bool, notice: String?) async throws {
         try await exclusively {
             let managers = try await NETunnelProviderManager.loadAllFromPreferences()
             guard let m = managers.first else {
@@ -75,7 +78,7 @@ final class VPNManager {
             }
             self.manager = m
             self.observe(m)
-            try await self.persist(config: config, logEnabled: logEnabled, into: m)
+            try await self.persist(config: config, logEnabled: logEnabled, notice: notice, into: m)
         }
     }
 
@@ -98,21 +101,22 @@ final class VPNManager {
         NSLog("VPN-NATIVE: removed VPN profile from system preferences")
     }
 
-    func start(config: String, logEnabled: Bool) async throws {
+    func start(config: String, logEnabled: Bool, notice: String?) async throws {
         let m = try await exclusively {
             let m = try await self.loadOrCreate()
             NSLog("VPN-NATIVE: loadOrCreate ok, status=\(self.currentStatus()), enabled=\(m.isEnabled)")
-            try await self.persist(config: config, logEnabled: logEnabled, into: m)
+            try await self.persist(config: config, logEnabled: logEnabled, notice: notice, into: m)
             return m
         }
 
         guard let session = m.connection as? NETunnelProviderSession else {
             throw NSError(domain: "vpn", code: 1, userInfo: [NSLocalizedDescriptionKey: "no tunnel session"])
         }
-        let options: [String: NSObject] = [
+        var options: [String: NSObject] = [
             "Config": config as NSString,
             "LogEnabled": NSNumber(value: logEnabled),
         ]
+        if let notice { options["Notice"] = notice as NSString }
         do {
             try session.startTunnel(options: options)
             NSLog("VPN-NATIVE: startTunnel called (config \(config.count) bytes)")
@@ -191,7 +195,8 @@ final class VPNManager {
         rules: [[String: Any]],
         disconnectOnSleep: Bool,
         config: String?,
-        logEnabled: Bool
+        logEnabled: Bool,
+        notice: String?
     ) async throws -> Bool {
         try await exclusively {
             let m: NETunnelProviderManager
@@ -208,7 +213,7 @@ final class VPNManager {
                 self.observe(existing)
             }
             if let config, !config.isEmpty {
-                try await self.persist(config: config, logEnabled: logEnabled, into: m)
+                try await self.persist(config: config, logEnabled: logEnabled, notice: notice, into: m)
             }
             let compiled = rules.compactMap(self.compileRule)
             let hasConfig = !((m.protocolConfiguration as? NETunnelProviderProtocol)?
@@ -320,7 +325,7 @@ final class VPNManager {
         return rule
     }
 
-    func reload(config: String, logEnabled: Bool) async throws -> String? {
+    func reload(config: String, logEnabled: Bool, notice: String?) async throws -> String? {
         guard let m = await adopt(),
               let session = m.connection as? NETunnelProviderSession,
               session.status == .connected else { throw tunnelNotRunning }
@@ -330,13 +335,14 @@ final class VPNManager {
                           userInfo: [NSLocalizedDescriptionKey: failure])
         }
         NSLog("VPN-NATIVE: hot-reloaded tunnel config (\(config.count) bytes)")
+        if let notice { _ = try? await ask(session, "notice:\(notice)") }
         do {
             try await exclusively {
                 guard let fresh = try await NETunnelProviderManager.loadAllFromPreferences().first
                 else { return }
                 self.manager = fresh
                 self.observe(fresh)
-                try await self.persist(config: config, logEnabled: logEnabled, into: fresh)
+                try await self.persist(config: config, logEnabled: logEnabled, notice: notice, into: fresh)
             }
             return nil
         } catch {
@@ -460,6 +466,16 @@ final class VPNManager {
         lastStatus = status
         NSLog("VPN-NATIVE: status changed -> \(status)")
         onStatus?(status)
+        if status == "connected" { askForNotificationsOnce() }
+    }
+
+    private static let notificationsAskedKey = "notifications_asked"
+
+    private func askForNotificationsOnce() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Self.notificationsAskedKey) else { return }
+        defaults.set(true, forKey: Self.notificationsAskedKey)
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
     private var lastStatus: String?

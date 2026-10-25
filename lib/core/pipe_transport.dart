@@ -32,10 +32,14 @@ class PipeTransport implements ControlTransport {
   int _seq = 0;
   final _pending = <int, Completer<Object?>>{};
   final _status = StreamController<String?>.broadcast();
+  final _notices = StreamController<String>.broadcast();
   final _partial = <int>[];
 
   @override
   Stream<String?> get statusEvents => _status.stream;
+
+  @override
+  Stream<String> get noticeEvents => _notices.stream;
 
   @override
   Future<T?> invoke<T>(String method, [Map<String, Object?>? args]) async {
@@ -149,6 +153,10 @@ class PipeTransport implements ControlTransport {
       _emit(decoded['status'] as String?);
       return;
     }
+    if (decoded['event'] == 'notice') {
+      if (decoded['notice'] case final String notice) _notices.add(notice);
+      return;
+    }
     final id = decoded['id'];
     final done = id is int ? _pending.remove(id) : null;
     if (done == null) return;
@@ -167,5 +175,6 @@ class PipeTransport implements ControlTransport {
     _retry?.cancel();
     _dropLink();
     _status.close();
+    _notices.close();
   }
 }

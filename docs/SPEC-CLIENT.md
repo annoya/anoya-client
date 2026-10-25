@@ -832,6 +832,11 @@ The tunnel journal records only what explains a drop or a restart: who started
 the tunnel, the stop reason and uptime, a previous process that died without a
 stop (with the system's exit reason on Android 11+), network changes, memory
 pressure, engine start and reload failures and watchdog recoveries (ADR-016).
+When the server stays silent after the watchdog's reload, or the system started
+the tunnel and it could not start, the tunnel itself posts a notification — one
+per episode, withdrawn once traffic returns, in the app's language, naming the
+server but never its address. A tap on a silence opens the server picker
+(ADR-024). On Windows and Linux the app in the tray shows them for the service.
 On iOS the extension keeps under the jetsam cap (ADR-021): on critical memory
 pressure it returns memory to the system and logs what the memory was made of,
 and close to the cap it closes the open connections rather than be killed.

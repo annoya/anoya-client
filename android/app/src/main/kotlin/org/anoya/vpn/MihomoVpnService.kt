@@ -14,7 +14,9 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.system.Os
 import android.system.OsConstants
 import java.net.InetAddress
@@ -39,11 +41,20 @@ class MihomoVpnService : VpnService() {
 
         const val kTunnelOutbound = "PROXY"
 
+        private const val ONGOING_ID = 1
+        private const val SILENT_ID = 2
+        private const val START_FAILED_ID = 3
+        private const val ONGOING_CHANNEL = "vpn"
+        private const val PROBLEMS_CHANNEL = "problems"
+        private const val SILENCE_POLL_MS = 5_000L
+
         private val stamp: DateTimeFormatter =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC)
     }
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+    @Volatile private var startedByApp = false
 
     // Not a PFD: its second close() of the engine-owned fd is a SIGABRT under fdsan.
     @Volatile private var tunFd: Int? = null
@@ -111,7 +122,9 @@ class MihomoVpnService : VpnService() {
         if (intent?.action == ACTION_RESTART) {
             if (TunnelState.status != TunnelState.CONNECTED) return START_STICKY
             log("restart requested by the app to apply apps outside the VPN")
-            startForeground(1, buildNotification())
+            startedByApp = true
+            stopSilenceWatch()
+            startForeground(ONGOING_ID, buildNotification(Ongoing.CONNECTING))
             TunnelState.set(TunnelState.CONNECTING)
             executor.execute {
                 runCatching { Mobile.stop() }
@@ -132,7 +145,8 @@ class MihomoVpnService : VpnService() {
         applyJournal()
         log("start requested by $by · pid ${android.os.Process.myPid()}")
         checkPreviousRun()
-        startForeground(1, buildNotification())
+        startedByApp = intent?.action == ACTION_START
+        startForeground(ONGOING_ID, buildNotification(Ongoing.CONNECTING))
         TunnelState.set(TunnelState.CONNECTING)
         executor.execute { bringUp() }
         return START_STICKY
@@ -184,9 +198,12 @@ class MihomoVpnService : VpnService() {
             TunnelFiles.clearError(this)
             TunnelState.set(TunnelState.CONNECTED)
             log("tunnel up · ${memory()}")
+            notifications().cancel(START_FAILED_ID)
+            startSilenceWatch()
         } catch (e: Exception) {
             log("start failed: ${e.message}")
             TunnelFiles.recordError(this, e.message ?: "start failed")
+            if (!startedByApp) notifyStartFailed()
             TunnelState.set(TunnelState.ERROR)
             shutdown()
         }
@@ -195,6 +212,7 @@ class MihomoVpnService : VpnService() {
     fun shutdown() {
         executor.execute {
             val since = TunnelState.connectedSince
+            main.post { stopSilenceWatch() }
             stopNetworkLog()
             TunnelFiles.runningMarker(this).delete()
             runCatching { Mobile.stop() }
@@ -403,18 +421,116 @@ class MihomoVpnService : VpnService() {
         }
     }
 
-    private fun buildNotification(): Notification {
-        val channelId = "vpn"
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private enum class Ongoing { CONNECTING, CONNECTED, SILENT }
+
+    private fun notifications() = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    private fun openApp(action: String? = null): PendingIntent {
+        val intent = Intent(this, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        if (action != null) intent.putExtra(MainActivity.EXTRA_ACTION, action)
+        return PendingIntent.getActivity(
+            this, if (action == null) 0 else 1, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+    }
+
+    private fun buildNotification(state: Ongoing): Notification {
+        val nm = notifications()
         nm.createNotificationChannel(
-            NotificationChannel(channelId, "VPN", NotificationManager.IMPORTANCE_LOW))
-        val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        return Notification.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_lock_lock)
-            .setContentTitle("VPN")
-            .setContentIntent(open)
+            NotificationChannel(ONGOING_CHANNEL, "VPN", NotificationManager.IMPORTANCE_LOW))
+        val notice = TunnelFiles.notice(this)
+        val configuration = notice["configuration"]?.takeIf { it.isNotEmpty() }
+        val (title, text) = when (state) {
+            Ongoing.CONNECTING -> (configuration ?: "VPN") to null
+            Ongoing.CONNECTED -> (notice["connected"] ?: "VPN") to configuration
+            Ongoing.SILENT -> (notice["connected_silent"] ?: "VPN") to notice["connected_silent_detail"]
+        }
+        return Notification.Builder(this, ONGOING_CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(getColor(R.color.notification_accent))
+            .setContentTitle(title)
+            .setContentText(text)
+            .setContentIntent(openApp(if (state == Ongoing.SILENT) MainActivity.ACTION_SERVER_PICKER else null))
             .setOngoing(true)
             .build()
     }
+
+    private fun notifyProblem(id: Int, title: String, body: String, action: String?) {
+        val nm = notifications()
+        val channelName = TunnelFiles.notice(this)["channel_problems"] ?: "Connection problems"
+        nm.createNotificationChannel(
+            NotificationChannel(PROBLEMS_CHANNEL, channelName, NotificationManager.IMPORTANCE_HIGH))
+        nm.notify(id, Notification.Builder(this, PROBLEMS_CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(getColor(R.color.notification_accent))
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(Notification.BigTextStyle().bigText(body))
+            .setContentIntent(openApp(action))
+            .setAutoCancel(true)
+            .build())
+    }
+
+    private fun notifyStartFailed() {
+        val notice = TunnelFiles.notice(this)
+        notifyProblem(
+            START_FAILED_ID,
+            notice["start_failed_title"] ?: "The VPN could not start",
+            notice["start_failed_body"] ?: "Open Anoya to see why.",
+            null,
+        )
+    }
+
+    private var silent = false
+    private var shownOngoing: String? = null
+
+    private val silenceWatch = object : Runnable {
+        override fun run() {
+            if (TunnelState.status != TunnelState.CONNECTED) return
+            val now = runCatching { Mobile.serverSilent() }.getOrDefault(false)
+            if (now != silent) {
+                silent = now
+                if (now) {
+                    val notice = TunnelFiles.notice(this@MihomoVpnService)
+                    notifyProblem(
+                        SILENT_ID,
+                        notice["silent_title"] ?: "The server is not answering",
+                        notice["silent_body"] ?: "",
+                        MainActivity.ACTION_SERVER_PICKER,
+                    )
+                    log("told the person: the server is not answering")
+                } else {
+                    notifications().cancel(SILENT_ID)
+                    log("the server answers again; the notice is withdrawn")
+                }
+            }
+            showOngoing(if (silent) Ongoing.SILENT else Ongoing.CONNECTED)
+            main.postDelayed(this, SILENCE_POLL_MS)
+        }
+    }
+
+    private fun showOngoing(state: Ongoing) {
+        val notice = TunnelFiles.notice(this)
+        val key = "$state ${notice["connected"]} ${notice["configuration"]}"
+        if (key == shownOngoing) return
+        shownOngoing = key
+        notifications().notify(ONGOING_ID, buildNotification(state))
+    }
+
+    private fun startSilenceWatch() {
+        main.post {
+            main.removeCallbacks(silenceWatch)
+            silent = false
+            shownOngoing = null
+            silenceWatch.run()
+        }
+    }
+
+    private fun stopSilenceWatch() {
+        main.removeCallbacks(silenceWatch)
+        silent = false
+        shownOngoing = null
+        notifications().cancel(SILENT_ID)
+    }
+
 }

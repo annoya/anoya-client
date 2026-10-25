@@ -39,6 +39,14 @@ func MihomoSetEngineLog(path *C.char) {
 	engine.SetEngineLog(C.GoString(path))
 }
 
+//export MihomoServerSilent
+func MihomoServerSilent() C.int {
+	if engine.ServerSilent() {
+		return 1
+	}
+	return 0
+}
+
 //export MihomoSetMemoryBudget
 func MihomoSetMemoryBudget(bytes C.longlong) {
 	engine.SetMemoryBudget(int64(bytes))
