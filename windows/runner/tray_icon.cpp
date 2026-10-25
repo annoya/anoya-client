@@ -59,6 +59,9 @@ TrayIcon::TrayIcon(HWND owner, flutter::BinaryMessenger* messenger, std::wstring
   open_icon_ = LoadTrayIcon(IDI_TRAY_OPEN);
   wink_left_icon_ = LoadTrayIcon(IDI_TRAY_WINK_L);
   wink_right_icon_ = LoadTrayIcon(IDI_TRAY_WINK_R);
+  balloon_icon_ = static_cast<HICON>(LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_APP_ICON),
+                                                IMAGE_ICON, GetSystemMetrics(SM_CXICON),
+                                                GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR));
 
   channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       messenger, "vpn/tray", &flutter::StandardMethodCodec::GetInstance());
@@ -69,6 +72,25 @@ TrayIcon::TrayIcon(HWND owner, flutter::BinaryMessenger* messenger, std::wstring
           if (const auto* map = std::get_if<flutter::EncodableMap>(call.arguments())) {
             Apply(*map);
           }
+          result->Success();
+          return;
+        }
+        result->NotImplemented();
+      });
+
+  notify_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+      messenger, "vpn/notify", &flutter::StandardMethodCodec::GetInstance());
+  notify_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+        const auto* map = std::get_if<flutter::EncodableMap>(call.arguments());
+        if (call.method_name() == "notify" && map) {
+          Notify(*map);
+          result->Success();
+          return;
+        }
+        if (call.method_name() == "withdraw" && map) {
+          Withdraw(*map);
           result->Success();
           return;
         }
@@ -88,10 +110,11 @@ TrayIcon::~TrayIcon() {
     nid.uID = kIconId;
     Shell_NotifyIconW(NIM_DELETE, &nid);
   }
-  for (HICON icon : {closed_icon_, open_icon_, wink_left_icon_, wink_right_icon_}) {
+  for (HICON icon : {closed_icon_, open_icon_, wink_left_icon_, wink_right_icon_, balloon_icon_}) {
     if (icon) DestroyIcon(icon);
   }
   if (channel_) channel_->SetMethodCallHandler(nullptr);
+  if (notify_channel_) notify_channel_->SetMethodCallHandler(nullptr);
 }
 
 void TrayIcon::AddIcon() {
@@ -154,6 +177,39 @@ void TrayIcon::Apply(const flutter::EncodableMap& args) {
   UpdateIcon();
 }
 
+void TrayIcon::Notify(const flutter::EncodableMap& args) {
+  if (!added_) return;
+  const auto* id = GetString(args, "id");
+  const auto* title = GetString(args, "title");
+  const auto* body = GetString(args, "body");
+  const auto* action = GetString(args, "action");
+  balloon_id_ = id ? *id : "";
+  balloon_action_ = action ? *action : "";
+  NOTIFYICONDATAW nid = {};
+  nid.cbSize = sizeof(nid);
+  nid.hWnd = owner_;
+  nid.uID = kIconId;
+  nid.uFlags = NIF_INFO;
+  nid.dwInfoFlags = balloon_icon_ ? (NIIF_USER | NIIF_LARGE_ICON) : NIIF_WARNING;
+  nid.hBalloonIcon = balloon_icon_;
+  wcsncpy_s(nid.szInfoTitle, title ? Widen(*title).c_str() : L"", _TRUNCATE);
+  wcsncpy_s(nid.szInfo, body ? Widen(*body).c_str() : L"", _TRUNCATE);
+  Shell_NotifyIconW(NIM_MODIFY, &nid);
+}
+
+void TrayIcon::Withdraw(const flutter::EncodableMap& args) {
+  const auto* id = GetString(args, "id");
+  if (!added_ || !id || *id != balloon_id_) return;
+  balloon_id_.clear();
+  balloon_action_.clear();
+  NOTIFYICONDATAW nid = {};
+  nid.cbSize = sizeof(nid);
+  nid.hWnd = owner_;
+  nid.uID = kIconId;
+  nid.uFlags = NIF_INFO;
+  Shell_NotifyIconW(NIM_MODIFY, &nid);
+}
+
 bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
   if (message == WM_TIMER && wparam == kWinkTimerId) {
     Wink();
@@ -167,6 +223,13 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
       case NIN_SELECT:
       case NIN_KEYSELECT:
         if (on_toggle_window) on_toggle_window();
+        return true;
+      case NIN_BALLOONUSERCLICK:
+        if (on_show_window) on_show_window();
+        if (!balloon_action_.empty()) {
+          notify_channel_->InvokeMethod(
+              "clicked", std::make_unique<flutter::EncodableValue>(balloon_action_));
+        }
         return true;
     }
     return true;

@@ -53,6 +53,7 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     routing: routing,
     dns: p.dns,
     defaultDns: prefs.defaultDns,
+    name: p.name,
   );
 }
 

@@ -2744,4 +2744,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String ruleSummaryApps(String apps) {
     return '来自 $apps 的流量';
   }
+
+  @override
+  String get noticeChannelProblems => '连接问题';
+
+  @override
+  String noticeConnected(String server) {
+    return '已连接 · $server';
+  }
+
+  @override
+  String get noticeSilentTitle => '服务器没有响应';
+
+  @override
+  String noticeSilentBody(String server) {
+    return '通过“$server”没有任何返回，VPN 下的网络无法使用。点按以选择其他服务器。';
+  }
+
+  @override
+  String get noticeConnectedSilent => '已连接 · 服务器没有响应';
+
+  @override
+  String noticeConnectedSilentDetail(String server) {
+    return '$server · 点按以选择其他服务器';
+  }
+
+  @override
+  String get noticeStartFailedTitle => 'VPN 无法启动';
+
+  @override
+  String get noticeStartFailedBody => '打开 Anoya 查看原因。';
 }

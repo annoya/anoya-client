@@ -4,6 +4,8 @@ abstract class ControlTransport {
   Future<T?> invoke<T>(String method, [Map<String, Object?>? args]);
 
   Stream<String?> get statusEvents;
+
+  Stream<String> get noticeEvents;
 }
 
 class ChannelTransport implements ControlTransport {
@@ -17,4 +19,7 @@ class ChannelTransport implements ControlTransport {
   @override
   Stream<String?> get statusEvents =>
       _status.receiveBroadcastStream().map((e) => e as String?);
+
+  @override
+  Stream<String> get noticeEvents => const Stream.empty();
 }

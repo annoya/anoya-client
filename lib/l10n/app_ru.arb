@@ -714,5 +714,13 @@
   "excludedAppsReconnect": "Переподключить",
   "appPickerTitle": "Приложения",
   "ruleApps": "Приложения",
-  "ruleSummaryApps": "трафик приложений {apps}"
+  "ruleSummaryApps": "трафик приложений {apps}",
+  "noticeChannelProblems": "Проблемы с подключением",
+  "noticeConnected": "Подключено · {server}",
+  "noticeSilentTitle": "Сервер не отвечает",
+  "noticeSilentBody": "Через «{server}» ничего не возвращается — интернет через VPN не работает. Нажмите, чтобы выбрать другой сервер.",
+  "noticeConnectedSilent": "Подключено · сервер не отвечает",
+  "noticeConnectedSilentDetail": "{server} · нажмите, чтобы выбрать другой сервер",
+  "noticeStartFailedTitle": "VPN не запустился",
+  "noticeStartFailedBody": "Откройте Anoya, чтобы узнать причину."
 }

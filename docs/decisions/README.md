@@ -42,6 +42,7 @@ test.
 | [021](ADR-021-ios-tunnel-memory-budget.md) | client | The iOS tunnel holds itself under the jetsam cap instead of being killed at it | low-memory build, Go soft limit, release on pressure with a memory breakdown, shedding near the cap, why not restart or session caps |
 | [022](ADR-022-android-per-app-split.md) | client | Android splits by app: rules in the engine, a device list in the system | supersedes ADR-003's process-name gating, package lookup through getConnectionOwnerUid, app picker, apps outside the VPN, why not exclusions as rules |
 | [023](ADR-023-configurations-in-the-keychain.md) | client | Configurations live in the platform keychain, with their keys | one secure document, first-unlock accessibility, never saving over an unreadable store, Linux fallback, why not plain JSON or an encrypted file |
+| [024](ADR-024-tunnel-notifications.md) | client | The tunnel notifies when it cannot help, from its own process | silence after a reload, a start without the app that failed, one per episode, words from the app, Android channel and icon, why not the connection check |
 
 ## Open Questions
 

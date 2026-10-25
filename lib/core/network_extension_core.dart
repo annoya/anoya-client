@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import 'norm_config.dart';
 import 'on_demand.dart';
 import 'platform_support.dart';
 import 'rule_list_store.dart';
+import 'tunnel_notice.dart';
 import 'vpn_core.dart';
 
 class NetworkExtensionCore implements VpnCore {
@@ -60,6 +62,7 @@ class NetworkExtensionCore implements VpnCore {
     try {
       await _control.invoke<void>('start', {
         'config': yaml,
+        'notice': rendered['notice'],
         'log_enabled': Log.enabled,
       });
     } on PlatformException catch (e) {
@@ -197,6 +200,12 @@ class NetworkExtensionCore implements VpnCore {
           device: Platform.isWindows || Platform.isLinux ? kAppName : null,
           dnsDecoy: Platform.isAndroid ? kAndroidDnsDecoy : null,
           mtu: Platform.isAndroid ? kAndroidTunMtu : kTunMtu,
+        ),
+        'notice': jsonEncode(
+          tunnelNotice(
+            configuration: config.name,
+            server: group?.name ?? location.label,
+          ),
         ),
       };
     } catch (e) {

@@ -8,6 +8,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         VpnChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
+        takeAction(intent)
         WebAuthChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
     }
 
@@ -15,6 +16,21 @@ class MainActivity : FlutterActivity() {
         VpnChannel.unregister(this)
         WebAuthChannel.unregister(this)
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        takeAction(intent)
+    }
+
+    private fun takeAction(intent: Intent?) {
+        intent?.getStringExtra(EXTRA_ACTION)?.let { VpnChannel.launchAction = it }
+    }
+
+    companion object {
+        const val EXTRA_ACTION = "org.anoya.vpn.ACTION"
+        const val ACTION_SERVER_PICKER = "server_picker"
     }
 
     override fun onResume() {

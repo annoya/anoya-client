@@ -9,6 +9,7 @@ class NormConfig {
     this.routing,
     this.dns = const [],
     this.defaultDns = '',
+    this.name = '',
   });
 
   final int version;
@@ -22,6 +23,8 @@ class NormConfig {
   final List<String> dns;
 
   final String defaultDns;
+
+  final String name;
 
   factory NormConfig.fromJson(Map<String, dynamic> json) {
     final locs = (json['locations'] as List<dynamic>? ?? [])

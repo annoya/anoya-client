@@ -130,3 +130,34 @@ func TestOnlyConnectionsThroughTheProxyAreWatched(t *testing.T) {
 		t.Fatalf("sample = %+v, want the tracker's own counters", samples[0])
 	}
 }
+
+func TestOnlyASilenceThatOutlivesAReloadIsReported(t *testing.T) {
+	serverSilent.Store(false)
+	t.Cleanup(func() { serverSilent.Store(false) })
+	e := &silenceEpisode{}
+
+	if e.stalled() || ServerSilent() {
+		t.Fatal("the first silence is the watchdog's to heal, not the person's")
+	}
+	e.afterReload()
+	if !e.stalled() || !ServerSilent() {
+		t.Fatal("silent again after the reload must be reported")
+	}
+	if e.stalled() {
+		t.Fatal("one report per episode, not one per stall")
+	}
+	if !e.answered() || ServerSilent() {
+		t.Fatal("any answer ends the episode and clears the report")
+	}
+	if e.stalled() {
+		t.Fatal("after an answer, a new silence starts over with a reload first")
+	}
+}
+
+func TestStoppingTheEngineClearsTheReport(t *testing.T) {
+	serverSilent.Store(true)
+	stopWatchdog()
+	if ServerSilent() {
+		t.Fatal("a stopped tunnel has no silent server to report")
+	}
+}

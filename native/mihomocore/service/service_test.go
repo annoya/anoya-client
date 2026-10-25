@@ -25,6 +25,7 @@ type fakeEngine struct {
 	level    string
 	journal  string
 	home     string
+	silent   bool
 }
 
 func (f *fakeEngine) record(c string) {
@@ -51,6 +52,11 @@ func (f *fakeEngine) Stop()                                    { f.record("stop"
 func (f *fakeEngine) GroupMember(string) string                { return "p1" }
 func (f *fakeEngine) ProxyBytes(string) (int64, int64)         { return 10, 20 }
 func (f *fakeEngine) URLTest(string, string, int) (int, error) { return 42, nil }
+func (f *fakeEngine) ServerSilent() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.silent
+}
 
 func (f *fakeEngine) sequence() string {
 	f.mu.Lock()
@@ -487,5 +493,63 @@ func TestWireErrorsAreAnswersNotHangUps(t *testing.T) {
 	}
 	if res := w.call(t, "version", nil); res["result"] != "mihomo test" {
 		t.Fatalf("after the bad line: %v", res)
+	}
+}
+
+func TestTheAppIsToldWhenTheServerStopsAndStartsAnswering(t *testing.T) {
+	s, eng, _ := harness(t)
+	s.silencePoll = 10 * time.Millisecond
+	w := dialFake(t, s)
+	_ = w.read(t)
+	if res := w.call(t, "start", map[string]any{"config": "mode: c"}); res["error"] != nil {
+		t.Fatal(res["error"])
+	}
+
+	eng.mu.Lock()
+	eng.silent = true
+	eng.mu.Unlock()
+	if got := w.nextNotice(t); got != NoticeSilent {
+		t.Fatalf("notice %q, want silent", got)
+	}
+	late := dialFake(t, s)
+	_ = late.read(t)
+	if got := late.nextNotice(t); got != NoticeSilent {
+		t.Fatalf("a client that connects later must hear it too, got %q", got)
+	}
+
+	eng.mu.Lock()
+	eng.silent = false
+	eng.mu.Unlock()
+	if got := w.nextNotice(t); got != NoticeAnswers {
+		t.Fatalf("notice %q, want answers", got)
+	}
+}
+
+func TestAFailedStartAtBootReachesTheFirstClient(t *testing.T) {
+	s, eng, files := harness(t)
+	files.SetAutoConnect(true)
+	if err := files.SaveConfig("mode: c"); err != nil {
+		t.Fatal(err)
+	}
+	eng.startErr = errors.New("parse config: bad")
+	if err := s.StartSaved(); err == nil {
+		t.Fatal("the start was meant to fail")
+	}
+
+	w := dialFake(t, s)
+	_ = w.read(t)
+	if got := w.nextNotice(t); got != NoticeStartFailed {
+		t.Fatalf("notice %q, want start_failed", got)
+	}
+}
+
+func (w *wireClient) nextNotice(t *testing.T) string {
+	t.Helper()
+	_ = w.nc.SetReadDeadline(time.Now().Add(2 * time.Second))
+	for {
+		m := w.read(t)
+		if m["event"] == "notice" {
+			return m["notice"].(string)
+		}
 	}
 }

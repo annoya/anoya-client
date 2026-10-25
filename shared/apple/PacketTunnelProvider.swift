@@ -1,6 +1,7 @@
 import Network
 import NetworkExtension
 import MihomoCore
+import UserNotifications
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
 
@@ -63,8 +64,11 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let config = (options?["Config"] as? String)
             ?? (persisted?["Config"] as? String)
             ?? ""
+        startedBySystem = options?["Config"] == nil
+        notice = Self.parseNotice((options?["Notice"] as? String) ?? (persisted?["Notice"] as? String))
         guard !config.isEmpty else {
             log("startTunnel: missing config (no options, nothing persisted)")
+            noticeStartFailed()
             completionHandler(err("missing tunnel config"))
             return
         }
@@ -78,6 +82,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             guard let self else { return }
             if let error {
                 self.log("setTunnelNetworkSettings error: \(error.localizedDescription)")
+                self.noticeStartFailed()
                 completionHandler(error)
                 return
             }
@@ -86,6 +91,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             if fd <= 0 { fd = self.tunnelFileDescriptor() ?? -1 }
             guard fd > 0 else {
                 self.log("could not obtain tunnel fd")
+                self.noticeStartFailed()
                 completionHandler(self.err("could not obtain tunnel file descriptor"))
                 return
             }
@@ -96,6 +102,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             self.applyEngineLogLevel(self.logEnabled)
             if let message = self.startEngine(fd: fd, config: config) {
                 self.log("mihomo start failed")
+                self.noticeStartFailed()
                 self.tunFd = -1
                 completionHandler(self.err("mihomo start failed: \(message)"))
                 return
@@ -105,6 +112,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             self.log("mihomo started; tunnel up · \(Self.memoryFootprint())")
             self.startedAt = Date()
             self.startMemoryLog()
+            self.withdraw(Self.startFailedId)
+            self.startSilenceWatch()
             completionHandler(nil)
         }
     }
@@ -118,6 +127,9 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         pressureSource = nil
         pathMonitor?.cancel()
         pathMonitor = nil
+        silenceTimer?.cancel()
+        silenceTimer = nil
+        withdraw(Self.silentId)
         unlink(Self.runningMarker)
         tunFd = -1
         MihomoStop()
@@ -212,6 +224,75 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
         source.resume()
         pressureSource = source
+    }
+
+    private static let silentId = "anoya.silent"
+    private static let startFailedId = "anoya.start_failed"
+    private static let serverPickerAction = "server_picker"
+    private static let silencePoll = DispatchTimeInterval.seconds(5)
+
+    private var notice: [String: String] {
+        get { stateLock.withLock { _notice } }
+        set { stateLock.withLock { _notice = newValue } }
+    }
+    private var _notice: [String: String] = [:]
+    private var startedBySystem = false
+    private var silenceTimer: DispatchSourceTimer?
+    private var silent = false
+
+    private static func parseNotice(_ json: String?) -> [String: String] {
+        guard let data = json?.data(using: .utf8),
+              let map = try? JSONSerialization.jsonObject(with: data) as? [String: String] else { return [:] }
+        return map
+    }
+
+    private func post(_ id: String, title: String?, body: String?, action: String? = nil) {
+        guard let title, !title.isEmpty else { return }
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body ?? ""
+        if let action { content.userInfo = ["action": action] }
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: id, content: content, trigger: nil)
+        ) { [weak self] error in
+            if let error { self?.log("notification not posted: \(error.localizedDescription)") }
+        }
+    }
+
+    private func withdraw(_ id: String) {
+        let center = UNUserNotificationCenter.current()
+        center.removeDeliveredNotifications(withIdentifiers: [id])
+        center.removePendingNotificationRequests(withIdentifiers: [id])
+    }
+
+    private func noticeStartFailed() {
+        guard startedBySystem else { return }
+        let n = notice
+        post(Self.startFailedId, title: n["start_failed_title"], body: n["start_failed_body"])
+    }
+
+    private func startSilenceWatch() {
+        silenceTimer?.cancel()
+        silent = false
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        timer.schedule(deadline: .now() + Self.silencePoll, repeating: Self.silencePoll)
+        timer.setEventHandler { [weak self] in self?.checkSilence() }
+        timer.resume()
+        silenceTimer = timer
+    }
+
+    private func checkSilence() {
+        let now = MihomoServerSilent() != 0
+        guard now != silent else { return }
+        silent = now
+        if now {
+            let n = notice
+            post(Self.silentId, title: n["silent_title"], body: n["silent_body"], action: Self.serverPickerAction)
+            log("told the person: the server is not answering")
+        } else {
+            withdraw(Self.silentId)
+            log("the server answers again; the notice is withdrawn")
+        }
     }
 
     private static let runningMarker = logDir.appendingPathComponent(".tunnel-running").path
@@ -343,6 +424,11 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 }
                 completionHandler?(Data(answer.utf8))
             }
+            return
+        }
+        if request.hasPrefix("notice:") {
+            notice = Self.parseNotice(String(request.dropFirst("notice:".count)))
+            completionHandler?(Data())
             return
         }
         if request.hasPrefix("logging:") {
