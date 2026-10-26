@@ -450,6 +450,19 @@ mean "let a human choose", which the picker already is. A group's members are
 resolved to servers this app can actually run, and a group left with none is not
 offered at all.
 
+An Xray JSON config that routes through a **balancer** is a group too, not a
+server: its `selector` (tag prefixes) picks two or more outbounds, and the
+config becomes one `url-test` group named after its `remarks`, probed at the
+`burstObservatory` or `observatory` URL and interval. Every strategy
+(`leastLoad`, `leastPing`, `random`, `roundRobin`) maps to `url-test` — the
+engine has none of them as such, and lowest latency is what a provider means by
+"Auto". Splitting the config into its outbounds would give N servers under one
+name, which the picker cannot tell apart. A member with the same settings as a
+standalone server in the subscription is that server, not a copy; one without
+gets its own entry named `host:port`, since the remarks name the group. A
+balancer that leaves a single runnable outbound is that server, named by its
+remarks.
+
 Choosing a group renders every member as a proxy plus the group itself; the
 rules keep pointing at `PROXY`, so nothing about routing or the `tun` section
 changes. Member names in the rendered config are positional (`p0…pN`) — a
