@@ -83,6 +83,60 @@ void main() {
       expect(p.locations, isEmpty);
       expect(p.unsupported, {'wireguard': 1});
     });
+
+    group('a config with a balancer', () {
+      String vless(String tag, String host) =>
+          '''
+{"tag": "$tag", "protocol": "vless",
+ "settings": {"vnext": [{"address": "$host", "port": 443, "users": [{"id": "u"}]}]},
+ "streamSettings": {"network": "tcp", "security": "reality",
+   "realitySettings": {"publicKey": "PK", "serverName": "sni.example"}}}''';
+
+      final balanced =
+          '''
+[
+  {"remarks": "Auto",
+   "outbounds": [${vless('proxy-a', 'a.example')}, ${vless('proxy-b', 'b.example')},
+     {"tag": "direct", "protocol": "freedom"}],
+   "routing": {"balancers": [{"tag": "Auto_Balancer", "selector": ["proxy"],
+     "strategy": {"type": "leastLoad"}}]},
+   "burstObservatory": {"subjectSelector": ["proxy"],
+     "pingConfig": {"destination": "https://probe.example/204", "interval": "2m"}}},
+  {"remarks": "A", "outbounds": [${vless('proxy', 'a.example')}]}
+]''';
+
+      test('is one url-test group named by its remarks', () {
+        final p = parseSubscriptionBody(balanced);
+        final g = p.groups.single;
+        expect(g.name, 'Auto');
+        expect(g.type, 'url-test');
+        expect(g.testUrl, 'https://probe.example/204');
+        expect(g.intervalSeconds, 120);
+        expect(
+          p.locations.map((l) => l.label),
+          isNot(contains('Auto')),
+          reason: 'the members are not servers named after the group',
+        );
+      });
+
+      test('reuses a standalone server with the same settings', () {
+        final p = parseSubscriptionBody(balanced);
+        final byId = {for (final l in p.locations) l.id: l.label};
+        expect(p.locations.map((l) => l.label), ['A', 'b.example:443']);
+        expect(p.groups.single.members.map((id) => byId[id]), [
+          'A',
+          'b.example:443',
+        ]);
+      });
+
+      test('that picks a single server stays a plain server', () {
+        final p = parseSubscriptionBody('''
+{"remarks": "Solo", "outbounds": [${vless('proxy', 'a.example')}],
+ "routing": {"balancers": [{"tag": "b", "selector": ["proxy"]}]}}''');
+        expect(p.groups, isEmpty);
+        expect(p.locations.single.label, 'Solo');
+      });
+    });
   });
 
   group('sing-box', () {

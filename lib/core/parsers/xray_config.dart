@@ -25,11 +25,13 @@ ParsedSubscription? parseXrayServers(String body) {
 
   final out = <Location>[];
   final unsupported = <String, int>{};
+  final balanced = <(Map, String, List<_Outbound>)>[];
   var index = 0;
   for (final cfg in configs) {
     if (cfg is! Map) continue;
     final label = '${cfg['remarks'] ?? ''}'.trim();
     final description = _metaDescription(cfg['meta']);
+    final parsed = <_Outbound>[];
     for (final ob in (cfg['outbounds'] as List? ?? const [])) {
       if (ob is! Map) continue;
       final protocol = '${ob['protocol'] ?? ''}'.toLowerCase();
@@ -46,8 +48,9 @@ ParsedSubscription? parseXrayServers(String body) {
           unsupported.update(skip, (n) => n + 1, ifAbsent: () => 1);
           continue;
         }
-        out.add(
-          locationFor(
+        parsed.add((
+          tag: tag,
+          location: locationFor(
             'xray:$index:${proxy['server']}:${proxy['port']}',
             labelOr(
               label.isNotEmpty ? label : tag,
@@ -59,20 +62,108 @@ ParsedSubscription? parseXrayServers(String body) {
                 ? description
                 : _metaDescription(ob['meta']),
           ),
-        );
+        ));
       } catch (e) {
         Log.e('xray json: unusable outbound', '$protocol -> $e');
       }
       index++;
     }
+    final selectors = _balancerSelectors(cfg);
+    final members = [
+      for (final o in parsed)
+        if (selectors.any(o.tag.startsWith)) o,
+    ];
+    if (members.length > 1) balanced.add((cfg, label, members));
+    for (final o in parsed) {
+      if (members.length > 1 && members.contains(o)) continue;
+      out.add(o.location);
+    }
   }
+  final groups = _balancerGroups(balanced, out);
   if (out.isEmpty && unsupported.isEmpty) return null;
   return ParsedSubscription(
     locations: out,
     unsupported: unsupported,
+    groups: groups,
     dns: _dnsServers(configs),
     format: SubscriptionFormat.xray,
   );
+}
+
+typedef _Outbound = ({String tag, Location location});
+
+List<String> _balancerSelectors(Map cfg) {
+  final routing = cfg['routing'];
+  final balancers = routing is Map ? routing['balancers'] : null;
+  return [
+    for (final b in balancers is List ? balancers : const [])
+      if (b is Map)
+        for (final s in (b['selector'] as List? ?? const []))
+          if ('$s'.trim().isNotEmpty) '$s'.trim(),
+  ];
+}
+
+List<ProxyGroup> _balancerGroups(
+  List<(Map, String, List<_Outbound>)> balanced,
+  List<Location> out,
+) {
+  final byProxy = {for (final l in out) jsonEncode(l.proxy): l.id};
+  final groups = <ProxyGroup>[];
+  for (final (cfg, label, members) in balanced) {
+    final ids = <String>[];
+    for (final m in members) {
+      final loc = m.location;
+      final id = byProxy.putIfAbsent(jsonEncode(loc.proxy), () {
+        out.add(
+          Location(
+            id: loc.id,
+            label: labelOr(
+              '',
+              '${loc.proxy['server']}',
+              loc.proxy['port'] as int? ?? 0,
+            ),
+            proxy: loc.proxy,
+            description: loc.description,
+          ),
+        );
+        return loc.id;
+      });
+      if (!ids.contains(id)) ids.add(id);
+    }
+    final routing = cfg['routing'] as Map;
+    final first = (routing['balancers'] as List).whereType<Map>().first;
+    final (url, interval) = _probe(cfg);
+    final group = ProxyGroup(
+      name: label.isNotEmpty ? label : '${first['tag'] ?? ''}'.trim(),
+      type: 'url-test',
+      members: ids,
+      testUrl: url,
+      intervalSeconds: interval,
+    );
+    if (group.isValid) groups.add(group);
+  }
+  return groups;
+}
+
+(String, int) _probe(Map cfg) {
+  final burst = cfg['burstObservatory'];
+  final ping = burst is Map && burst['pingConfig'] is Map
+      ? burst['pingConfig'] as Map
+      : const {};
+  final obs = cfg['observatory'] is Map ? cfg['observatory'] as Map : const {};
+  final url = '${ping['destination'] ?? obs['probeURL'] ?? ''}'.trim();
+  final interval = '${ping['interval'] ?? obs['probeInterval'] ?? ''}';
+  var ms = 0;
+  for (final m in RegExp(r'(\d+)(ms|s|m|h)').allMatches(interval)) {
+    final n = int.parse(m[1]!);
+    ms += switch (m[2]) {
+      'ms' => n,
+      's' => n * 1000,
+      'm' => n * 60000,
+      _ => n * 3600000,
+    };
+  }
+  return (url, ms ~/ 1000);
 }
 
 List<String> _dnsServers(List configs) {
