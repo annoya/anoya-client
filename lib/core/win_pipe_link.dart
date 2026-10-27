@@ -65,7 +65,8 @@ class WinPipeLink implements PipeLink {
       if (event == NULL) return -1;
       overlapped.ref.hEvent = event;
       start(overlapped);
-      if (GetOverlappedResult(handle, overlapped, count, TRUE) == 0) return -1;
+      while (WaitForSingleObject(event, 100) == WAIT_TIMEOUT) {}
+      if (GetOverlappedResult(handle, overlapped, count, FALSE) == 0) return -1;
       return count.value;
     } finally {
       if (event != NULL) CloseHandle(event);
