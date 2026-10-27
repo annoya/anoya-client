@@ -107,7 +107,14 @@ final class SubscriptionSource extends ConfigSource {
     if (profile.providerRuleListsEnabled && routing != null) {
       await RuleListStore.sync(routing.lists);
     }
-    return profile.withBundle(
+    final moved = res.info.movedFrom(profile.subscriptionUrl!);
+    if (moved != null) {
+      Log.i(
+        'subscription moved: ${Uri.parse(profile.subscriptionUrl!).host} '
+        '-> ${Uri.parse(moved).host}',
+      );
+    }
+    final next = profile.withBundle(
       locations: parsed.locations,
       account: null,
       routing: null,
@@ -125,6 +132,7 @@ final class SubscriptionSource extends ConfigSource {
       renderingProbed: res.renderingProbed || profile.renderingProbed,
       refreshedAt: DateTime.now(),
     );
+    return moved == null ? next : next.copyWith(subscriptionUrl: moved);
   }
 }
 

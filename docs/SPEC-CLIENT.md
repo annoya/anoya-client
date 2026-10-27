@@ -389,10 +389,15 @@ It survives restarts, so launching the app does not consume a device slot;
 reinstalling generates a new one, which does, and the configuration screen says
 so rather than leaving it to be discovered at the limit.
 
-When the panel reports that it counts devices (`x-hwid-active`), the
-configuration screen shows what this device is identified as. No count is
-shown, because none is sent — the panel reports only that it counts and, via
-`x-hwid-max-devices-reached`, that it is full. That case is named as itself
+The configuration screen of every panel subscription shows the id as **HWID**
+— the word panels and their support use — with a copy action, whether or not
+the panel counts devices: it is sent either way, and a provider asking which
+HWID is yours should not have to switch a limit on first. There is no Devices
+row until the limit is reached: no panel sends a count — Remnawave's headers
+are flags only (`x-hwid-active`, `x-hwid-max-devices-reached`, `x-hwid-limit`),
+and its public `/api/sub/{shortUuid}/info` carries traffic and expiry but no
+devices — so a row could say only "counted", which tells nothing. Once
+`x-hwid-max-devices-reached` arrives it reads "No free slots". That case is named as itself
 instead of a generic refresh failure, and states that the servers already
 fetched keep working.
 
@@ -511,6 +516,23 @@ address is unreachable from this device; the source row keeps showing the
 address the user added, since that is what they chose and would share. When both
 fail, the error names the main address: the backup is the provider's
 arrangement, and the user has never seen it.
+
+What a configuration's source states about its terms is shown in one group of
+the same shape for every kind that has terms: **Subscription** for an Amnezia
+key and a panel subscription, **Account** for a self-hosted server. It sits
+under the header and its alerts, above Routing, and carries, each only when
+stated: the subscription's message (a panel's `announce`), a status row (a
+self-hosted account that is neither active nor expired), the term, traffic
+(with a bar when there is a limit), and devices (Amnezia's "5 of 7 used"; a
+panel's "No free slots" once its limit is reached, since it sends no count). The term is in words — "46 days left" /
+"Active until 12 Dec 2026", "Ends today" on the last day, "Subscription has
+expired" / "Ended on …" once the date has passed, "No expiry date given" when a
+panel sends none. A second card holds the ways out: "Renew subscription" from
+`sub-expire-button-link` (Happ's parameter, https only) and "Get support" from
+`support-url`, both opening outside the app. Home shows none of this for a
+subscription. For a panel the term informs, never enforces — whether the server
+still answers is the panel's business; a self-hosted server and the Amnezia
+gateway enforce their own.
 
 When a poll changes the active configuration's proxy or its managed routing
 policy, the tunnel re-applies it. When it reports the account can no longer

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/ds.dart';
 import '../../core/norm_config.dart';
 import '../../core/profile.dart';
-import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import 'config_parts.dart';
 
@@ -23,70 +22,38 @@ class SelfhostedConfigScreen extends ConsumerWidget {
     final p = profile;
     final account = p.account;
     final l10n = context.l10n;
-    final head = [
-      ProfileHeaderRow(profile: p, isActive: isActive),
-      if (account != null) ...[
-        DsRow(
-          glyph: Glyph.user,
-          title: l10n.configAccount,
-          subtitle: _accountSummary(l10n, account),
-        ),
-        if (account.dataLimit > 0) _TrafficRow(account: account),
-      ],
-    ];
-    final origin = [
-      if (p.serverUrl != null) SourceRow(value: p.serverUrl!),
-      RefreshRow(profile: p),
-    ];
     return DsPage(
       title: p.name,
       children: [
-        if (account == null)
-          DsCard(children: [...head, ...origin])
-        else ...[
-          DsCard(children: head),
-          DsCard(children: origin),
-        ],
+        DsCard(
+          children: [
+            ProfileHeaderRow(profile: p, isActive: isActive),
+            if (p.serverUrl != null) SourceRow(value: p.serverUrl!),
+            RefreshRow(profile: p),
+          ],
+        ),
+        if (account != null)
+          PlanGroup(caption: l10n.configAccount, rows: _rows(l10n, account)),
         RoutingRow(profile: p),
         ConfigActions(profile: p, isActive: isActive),
       ],
     );
   }
 
-  String _accountSummary(AppLocalizations l10n, Account a) {
+  List<Widget> _rows(AppLocalizations l10n, Account a) {
     final status = a.status.replaceAll('_', ' ');
-    if (a.status == 'on_hold') return l10n.configStatusOnHold(status);
-    if (a.expiresAt != null) {
-      return l10n.configStatusExpires(
-        status,
-        a.expiresAt!.toLocal().toString().split('.').first,
-      );
-    }
-    return l10n.configStatus(status);
-  }
-}
-
-class _TrafficRow extends StatelessWidget {
-  const _TrafficRow({required this.account});
-
-  final Account account;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      DsRow(
-        glyph: Glyph.zap,
-        title: context.l10n.configTraffic,
-        subtitle: context.l10n.configTrafficUsedOf(
-          formatBytes(account.usedBytes),
-          formatBytes(account.dataLimit),
+    final statedEnd = a.status == 'expired' && a.expiresAt != null;
+    return [
+      if (a.status != 'active' && !statedEnd)
+        DsRow(
+          glyph: Glyph.user,
+          title: a.status == 'on_hold'
+              ? l10n.configStatusOnHold(status)
+              : l10n.configStatus(status),
         ),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: DsProgress(value: account.usedBytes / account.dataLimit),
-      ),
-    ],
-  );
+      if (a.expiresAt != null) TermRow(endsAt: a.expiresAt),
+      if (a.dataLimit > 0 || a.usedBytes > 0)
+        TrafficRow(used: a.usedBytes, total: a.dataLimit),
+    ];
+  }
 }

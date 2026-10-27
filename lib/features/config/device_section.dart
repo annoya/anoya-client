@@ -8,7 +8,9 @@ import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 
 class ThisDeviceSection extends StatelessWidget {
-  const ThisDeviceSection({super.key});
+  const ThisDeviceSection({super.key, required this.counted});
+
+  final bool counted;
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +23,14 @@ class ThisDeviceSection extends StatelessWidget {
         return DeviceSection(
           spaced: true,
           label: id.label,
-          labelSubtitle: l10n.configDeviceIdentifiedSubtitle,
-          idTitle: l10n.configDeviceId,
+          labelSubtitle: counted
+              ? l10n.configDeviceIdentifiedSubtitle
+              : l10n.configDeviceSentSubtitle,
+          idTitle: l10n.configDeviceHwid,
           idValue: id.hwid,
-          hint: l10n.configDeviceHintPanel,
+          hint: counted
+              ? l10n.configDeviceHintPanel
+              : l10n.configDeviceHintPanelUncounted,
         );
       },
     );

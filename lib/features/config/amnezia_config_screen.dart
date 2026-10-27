@@ -55,16 +55,9 @@ class AmneziaConfigScreen extends ConsumerWidget {
 
   Widget? _subscription(AppLocalizations l10n, AmneziaAccount account) {
     final rows = <Widget>[
-      if (account.endsAt != null)
-        DsRow(
-          glyph: Glyph.calendar,
-          title: account.expired ? l10n.configRanUntil : l10n.configRunsUntil,
-          subtitle: _endLabel(l10n, account),
-        ),
+      if (account.endsAt != null) TermRow(endsAt: account.endsAt),
       if (account.hasDeviceCount && !account.expired)
-        DsRow(
-          glyph: Glyph.smartphone,
-          title: l10n.configDevices,
+        DevicesRow(
           subtitle: l10n.configDevicesUsed(
             account.activeDevices,
             account.maxDevices,
@@ -72,14 +65,7 @@ class AmneziaConfigScreen extends ConsumerWidget {
         ),
     ];
     if (rows.isEmpty) return null;
-    return DsGroup(caption: l10n.configSectionSubscription, children: rows);
-  }
-
-  String _endLabel(AppLocalizations l10n, AmneziaAccount account) {
-    final date = l10n.configDateLong(account.endsAt!.toLocal());
-    if (account.expired) return date;
-    final left = account.endsAt!.difference(DateTime.now().toUtc()).inDays;
-    return left <= 0 ? date : l10n.configDaysLeft(date, left);
+    return PlanGroup(caption: l10n.configSectionSubscription, rows: rows);
   }
 }
 

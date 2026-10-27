@@ -10,10 +10,13 @@ class SubscriptionInfo {
     this.expiresAt,
     this.announce = '',
     this.supportUrl = '',
+    this.renewUrl = '',
     this.webPageUrl = '',
     this.updateInterval,
     this.fallbackUrl = '',
     this.requestTimeout,
+    this.newUrl = '',
+    this.newDomain = '',
   });
 
   final String title;
@@ -28,6 +31,8 @@ class SubscriptionInfo {
 
   final String supportUrl;
 
+  final String renewUrl;
+
   final String webPageUrl;
 
   final int? updateInterval;
@@ -35,6 +40,10 @@ class SubscriptionInfo {
   final String fallbackUrl;
 
   final int? requestTimeout;
+
+  final String newUrl;
+
+  final String newDomain;
 
   bool get hasPlan => usedBytes > 0 || totalBytes > 0 || expiresAt != null;
   bool get unlimited => totalBytes <= 0;
@@ -54,6 +63,7 @@ class SubscriptionInfo {
     if (expiresAt != null) 'expires_at': expiresAt!.toIso8601String(),
     if (announce.isNotEmpty) 'announce': announce,
     if (supportUrl.isNotEmpty) 'support_url': supportUrl,
+    if (renewUrl.isNotEmpty) 'renew_url': renewUrl,
     if (webPageUrl.isNotEmpty) 'web_page_url': webPageUrl,
     if (updateInterval != null) 'update_interval': updateInterval,
     if (fallbackUrl.isNotEmpty) 'fallback_url': fallbackUrl,
@@ -67,6 +77,7 @@ class SubscriptionInfo {
     expiresAt: DateTime.tryParse(j['expires_at'] as String? ?? ''),
     announce: j['announce'] as String? ?? '',
     supportUrl: j['support_url'] as String? ?? '',
+    renewUrl: j['renew_url'] as String? ?? '',
     webPageUrl: j['web_page_url'] as String? ?? '',
     updateInterval: j['update_interval'] as int?,
     fallbackUrl: j['fallback_url'] as String? ?? '',
@@ -88,6 +99,7 @@ class SubscriptionInfo {
           : null,
       announce: _text(headers['announce']),
       supportUrl: (headers['support-url'] ?? '').trim(),
+      renewUrl: _url(headers['sub-expire-button-link']),
       webPageUrl: (headers['profile-web-page-url'] ?? '').trim(),
       updateInterval: int.tryParse(
         (headers['profile-update-interval'] ?? '').trim(),
@@ -96,7 +108,25 @@ class SubscriptionInfo {
       requestTimeout: int.tryParse(
         (headers['subscription-request-timeout'] ?? '').trim(),
       ),
+      newUrl: _url(headers['new-url']),
+      newDomain: _domain(headers['new-domain']),
     );
+  }
+
+  String? movedFrom(String current) {
+    if (newUrl.isNotEmpty && newUrl != current) return newUrl;
+    final uri = Uri.tryParse(current);
+    if (newDomain.isEmpty || uri == null || uri.host == newDomain) return null;
+    return uri.replace(host: newDomain).toString();
+  }
+
+  static final _hostname = RegExp(
+    r'^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$',
+  );
+
+  static String _domain(String? raw) {
+    final v = (raw ?? '').trim().toLowerCase();
+    return _hostname.hasMatch(v) ? v : '';
   }
 
   static String _url(String? raw) {
@@ -126,5 +156,38 @@ class SubscriptionInfo {
       if (n != null) out[kv[0].trim().toLowerCase()] = n;
     }
     return out;
+  }
+}
+
+Map<String, String> subscriptionParameters(
+  Map<String, String> headers,
+  String body,
+) => {
+  ...bodyParameters(body),
+  for (final e in headers.entries) e.key.toLowerCase(): e.value,
+};
+
+final _bodyParameter = RegExp(r'^#\s*([A-Za-z][A-Za-z0-9-]*)\s*:\s*(.*)$');
+
+Map<String, String> bodyParameters(String body) {
+  final out = <String, String>{};
+  for (final line in const LineSplitter().convert(_plainBody(body))) {
+    final m = _bodyParameter.firstMatch(line.trim());
+    if (m != null) out.putIfAbsent(m[1]!.toLowerCase(), () => m[2]!.trim());
+  }
+  return out;
+}
+
+String _plainBody(String body) {
+  final trimmed = body.trim();
+  if (trimmed.contains('://') || trimmed.startsWith('#')) return body;
+  try {
+    final compact = trimmed.replaceAll(RegExp(r'\s'), '');
+    return utf8.decode(
+      base64.decode(base64.normalize(compact)),
+      allowMalformed: true,
+    );
+  } catch (_) {
+    return body;
   }
 }
