@@ -29,12 +29,6 @@ android {
 
     buildFeatures { aidl = true }
 
-    packaging {
-        // The engine has no 32-bit build, but a native-assets dependency still
-        // adds a 32-bit stub that lets a 32-bit phone install and then crash.
-        jniLibs { excludes += "lib/armeabi-v7a/**" }
-    }
-
     buildTypes {
         release {
             // Debug keys until a release signing config exists.

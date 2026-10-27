@@ -122,10 +122,12 @@ designed for 393×852; a 1280×720 default shows one column in a field.
 - A second web sign-in start cancels the pending one (`superseded`): the first
   browser tab can no longer answer anything the app waits for
   (`WebAuthChannel.kt`).
-- `scripts/build-android.sh` builds one APK per ABI, named
-  `<label>-<version>-<abi>.apk` from the manifest label and pubspec version.
-  ABIs are pinned there (arm64-v8a, x86_64): the engine AAR has no
-  armeabi-v7a, and gradle `abiFilters` are overridden by the Flutter plugin.
+- `scripts/build-android.sh` builds one APK per ABI plus a universal one,
+  named `<label>-<version>-<abi>.apk` (`-universal` for the fat one) from the
+  manifest label and pubspec version. ABIs are pinned there (armeabi-v7a,
+  arm64-v8a, x86_64), because gradle `abiFilters` are overridden by the
+  Flutter plugin; the engine AAR and `libagw.so` are built for the same three.
+  There is no x86: Flutter has no 32-bit x86 release engine.
 
 ### Logs, on every platform
 

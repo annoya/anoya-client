@@ -33,12 +33,13 @@ build() { # abi goarch triple
   local abi="$1" goarch="$2" triple="$3"
   echo ">> $abi"
   mkdir -p "$OUT/$abi"
-  CGO_ENABLED=1 GOOS=android GOARCH="$goarch" \
+  CGO_ENABLED=1 GOOS=android GOARCH="$goarch" GOARM=7 \
     CC="$BIN/${triple}${ANDROID_API}-clang" \
     go build -buildmode=c-shared -trimpath -ldflags="-s -w" \
       -o "$OUT/$abi/libagw.so" .
 }
 
+build armeabi-v7a arm armv7a-linux-androideabi
 build arm64-v8a arm64 aarch64-linux-android
 build x86_64 amd64 x86_64-linux-android
 

@@ -30,12 +30,12 @@ export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 OUT=../../android/app/libs
 mkdir -p "$OUT"
 
-echo ">> gomobile bind (android/arm64, android/amd64, api $ANDROID_API)"
+echo ">> gomobile bind (android/arm, android/arm64, android/amd64, api $ANDROID_API)"
 # cmfa: mihomo's own "running inside an Android app" tag. Without it the TUN
 # listener starts a package manager that reads /data/system/packages.xml —
 # system-only, so the listener dies on the first start. -s -w: the debug
 # tables are a third of the binary and nothing on a phone reads them.
-"$TOOLS/gomobile" bind -target=android/arm64,android/amd64 -androidapi "$ANDROID_API" \
+"$TOOLS/gomobile" bind -target=android/arm,android/arm64,android/amd64 -androidapi "$ANDROID_API" \
   -tags with_gvisor,cmfa -trimpath -ldflags="-s -w" -o "$OUT/mihomocore.aar" ./mobile
 
 echo ">> done: $OUT/mihomocore.aar"

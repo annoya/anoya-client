@@ -1,5 +1,5 @@
 # Builds the client for the three platforms that can be built on hosted
-# runners: an Android APK, a Windows installer and Linux packages. Apple needs
+# runners: Android APKs, a Windows installer and Linux packages. Apple needs
 # signing identities and a paid team, so those builds stay on a Mac for now.
 #
 # Amnezia support needs credentials that are not in the repository. Set them as
@@ -142,8 +142,20 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: ${{ steps.meta.outputs.prefix }}-android-armeabi-v7a
+          path: build/app/outputs/flutter-apk/*-armeabi-v7a.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
           name: ${{ steps.meta.outputs.prefix }}-android-x86_64
           path: build/app/outputs/flutter-apk/*-x86_64.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.prefix }}-android-universal
+          path: build/app/outputs/flutter-apk/*-universal.apk
           if-no-files-found: error
 
   windows:
