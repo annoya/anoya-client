@@ -141,11 +141,18 @@ Future<SubscriptionResponse> _fetch(
       Uri(host: uri.host),
     );
   }
-  final (routing, probed) = await _providerRouting(uri, res, c, probeRouting);
+  final params = subscriptionParameters(res.headers, res.body);
+  final (routing, probed) = await _providerRouting(
+    uri,
+    res,
+    params,
+    c,
+    probeRouting,
+  );
 
   return SubscriptionResponse(
     body: res.body,
-    info: SubscriptionInfo.fromHeaders(res.headers),
+    info: SubscriptionInfo.fromHeaders(params),
     deviceLimitActive: _flag(res.headers, 'x-hwid-active') || reached,
     deviceLimitReached: reached,
     routing: routing,
@@ -229,10 +236,15 @@ const kSubscriptionRenderings = {
 Future<(ProviderRouting?, bool)> _providerRouting(
   Uri uri,
   http.Response res,
+  Map<String, String> params,
   http.Client client,
   bool probeRouting,
 ) async {
-  final header = res.headers['routing'];
+  final enable = params['routing-enable']?.trim().toLowerCase() ?? '';
+  if (enable.isNotEmpty && enable != 'true' && enable != '1') {
+    return (null, true);
+  }
+  final header = params['routing'];
   if (header != null && header.isNotEmpty) {
     final happ = parseHappRouting(header);
     if (happ != null) return (happ, true);

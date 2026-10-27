@@ -331,6 +331,61 @@ rules:
       expect(res.routing!.routing.rules.single.value, 'ads.example');
     });
 
+    test(
+      'routing-enable false keeps the provider\'s routing out, without probing',
+      () async {
+        final payload = base64Url.encode(
+          utf8.encode(
+            jsonEncode({
+              'BlockSites': ['ads.example'],
+            }),
+          ),
+        );
+        final asked = <String>[];
+        final client = MockClient((req) async {
+          asked.add(req.url.path);
+          return http.Response(
+            'vless://x',
+            200,
+            headers: {
+              'routing': 'happ://routing/add/$payload',
+              'routing-enable': 'false',
+            },
+          );
+        });
+        final res = await fetchSubscription(
+          'https://sub.example/tok3n',
+          probeRenderings: false,
+          client: client,
+        );
+        expect(res.routing, isNull);
+        expect(res.routingProbed, isTrue);
+        expect(asked, ['/tok3n']);
+      },
+    );
+
+    test('routing can come from the body as a #routing line', () async {
+      final payload = base64Url.encode(
+        utf8.encode(
+          jsonEncode({
+            'BlockSites': ['ads.example'],
+          }),
+        ),
+      );
+      final client = MockClient(
+        (req) async => http.Response(
+          '#routing: happ://routing/add/$payload\nvless://x',
+          200,
+        ),
+      );
+      final res = await fetchSubscription(
+        'https://sub.example/tok3n',
+        probeRenderings: false,
+        client: client,
+      );
+      expect(res.routing!.routing.rules.single.value, 'ads.example');
+    });
+
     test('a probe that fails leaves the subscription working', () async {
       final client = MockClient(
         (req) async => req.url.path.endsWith('/json')

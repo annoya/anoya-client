@@ -44,12 +44,14 @@ class SubscriptionConfigScreen extends ConsumerWidget {
         if (p.deviceLimitReached) const DeviceLimitAlert(),
         if (p.unsupportedServers.isNotEmpty)
           UnsupportedServersAlert(profile: p),
+        if (SubscriptionPlanGroup.shows(p)) SubscriptionPlanGroup(profile: p),
         RoutingRow(profile: p),
-        if (p.providerInfo != null) ProviderSection(info: p.providerInfo!),
         DsStack(
           gap: 0,
           children: [
-            if (p.deviceLimitActive) const ThisDeviceSection(),
+            ThisDeviceSection(
+              counted: p.deviceLimitActive || p.deviceLimitReached,
+            ),
             ConfigActions(profile: p, isActive: isActive),
           ],
         ),

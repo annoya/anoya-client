@@ -512,8 +512,6 @@
   "@configSectionSubscription": {
     "description": "Section header"
   },
-  "configRanUntil": "Ran until",
-  "configRunsUntil": "Runs until",
   "configDevices": "Devices",
   "configDevicesUsed": "{active} of {max} used",
   "@configDevicesUsed": {
@@ -523,17 +521,6 @@
       },
       "max": {
         "type": "int"
-      }
-    }
-  },
-  "configDateLong": "{date}",
-  "@configDateLong": {
-    "description": "A date such as 21 September 2026",
-    "placeholders": {
-      "date": {
-        "type": "DateTime",
-        "format": "d MMMM y",
-        "isCustomDateFormat": "true"
       }
     }
   },
@@ -548,17 +535,6 @@
       }
     }
   },
-  "configDaysLeft": "{date} · {count, plural, =1{1 day left} other{{count} days left}}",
-  "@configDaysLeft": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "accountExpiredTitle": "Subscription expired",
   "configSubscriptionExpiredDetail": "Renew the subscription, then refresh this configuration.",
   "configSectionThisDevice": "This device",
@@ -568,6 +544,16 @@
   "configDeviceIdentifiedSubtitle": "Identified to your subscription, which counts devices",
   "configDeviceId": "Device id",
   "configDeviceHintAmnezia": "Your subscription counts devices by this id. It is made once and kept, so reconnecting costs no slot — but a reinstall takes a new one.",
+  "configDevicesFull": "No free slots",
+  "@configDevicesFull": {
+    "description": "Devices row when the panel says its device limit is reached"
+  },
+  "configDeviceHwid": "HWID",
+  "@configDeviceHwid": {
+    "description": "Title of the device id row for panel subscriptions; the word panels and their support use"
+  },
+  "configDeviceSentSubtitle": "Sent to the subscription with every refresh",
+  "configDeviceHintPanelUncounted": "This app sends this id with every refresh, so a subscription that limits devices can tell them apart. It is made once and kept; a reinstall makes a new one.",
   "configDeviceHintPanel": "Your subscription counts devices by an id this app generates once and keeps. Reinstalling makes a new one, which takes another slot.",
   "configCopiedTitle": "{title} copied",
   "@configCopiedTitle": {
@@ -796,27 +782,12 @@
   },
   "configSubscriptionRoutingNote": "Turn the switch off to use your own rule set instead. Your subscription cannot enforce this either way.",
   "configDeviceRoutingNote": "Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.",
-  "configSectionDetails": "Details",
-  "@configSectionDetails": {
-    "description": "Section header"
-  },
   "configGetSupport": "Get support",
   "configNoPlanDetails": "Your subscription reported no plan details.",
   "configUsedNoLimit": "Used {used} · no limit",
   "@configUsedNoLimit": {
     "placeholders": {
       "used": {
-        "type": "String"
-      }
-    }
-  },
-  "configTrafficOf": "Traffic: {used} of {total}",
-  "@configTrafficOf": {
-    "placeholders": {
-      "used": {
-        "type": "String"
-      },
-      "total": {
         "type": "String"
       }
     }
@@ -834,14 +805,6 @@
     }
   },
   "configNoExpiryDate": "No expiry date given",
-  "configExpiredOn": "Expired {date}",
-  "@configExpiredOn": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
   "configActiveUntil": "Active until {date}",
   "@configActiveUntil": {
     "placeholders": {
@@ -850,13 +813,30 @@
       }
     }
   },
-  "configPlanLine": "{when} · what the subscription reports, not verified here",
-  "@configPlanLine": {
+  "configTermLeft": "{days, plural, =0{Ends today} =1{1 day left} other{{days} days left}}",
+  "@configTermLeft": {
+    "description": "Term row of a subscription's details: how long is left",
     "placeholders": {
-      "when": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "configExpired": "Subscription has expired",
+  "@configExpired": {
+    "description": "Term row of a subscription's details once its end date has passed"
+  },
+  "configEndedOn": "Ended on {date}",
+  "@configEndedOn": {
+    "placeholders": {
+      "date": {
         "type": "String"
       }
     }
+  },
+  "configRenew": "Renew subscription",
+  "@configRenew": {
+    "description": "Opens the subscription's renewal link (sub-expire-button-link)"
   },
   "configAccount": "Account",
   "configStatus": "Status: {status}",
@@ -871,17 +851,6 @@
   "@configStatusOnHold": {
     "placeholders": {
       "status": {
-        "type": "String"
-      }
-    }
-  },
-  "configStatusExpires": "Status: {status} · expires {date}",
-  "@configStatusExpires": {
-    "placeholders": {
-      "status": {
-        "type": "String"
-      },
-      "date": {
         "type": "String"
       }
     }

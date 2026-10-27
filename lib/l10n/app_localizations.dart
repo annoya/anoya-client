@@ -1352,18 +1352,6 @@ abstract class AppLocalizations {
   /// **'Subscription'**
   String get configSectionSubscription;
 
-  /// No description provided for @configRanUntil.
-  ///
-  /// In en, this message translates to:
-  /// **'Ran until'**
-  String get configRanUntil;
-
-  /// No description provided for @configRunsUntil.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs until'**
-  String get configRunsUntil;
-
   /// No description provided for @configDevices.
   ///
   /// In en, this message translates to:
@@ -1376,23 +1364,11 @@ abstract class AppLocalizations {
   /// **'{active} of {max} used'**
   String configDevicesUsed(int active, int max);
 
-  /// A date such as 21 September 2026
-  ///
-  /// In en, this message translates to:
-  /// **'{date}'**
-  String configDateLong(DateTime date);
-
   /// A date such as 21 Sep 2026
   ///
   /// In en, this message translates to:
   /// **'{date}'**
   String configDateShort(DateTime date);
-
-  /// No description provided for @configDaysLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'{date} · {count, plural, =1{1 day left} other{{count} days left}}'**
-  String configDaysLeft(String date, int count);
 
   /// No description provided for @accountExpiredTitle.
   ///
@@ -1429,6 +1405,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your subscription counts devices by this id. It is made once and kept, so reconnecting costs no slot — but a reinstall takes a new one.'**
   String get configDeviceHintAmnezia;
+
+  /// Devices row when the panel says its device limit is reached
+  ///
+  /// In en, this message translates to:
+  /// **'No free slots'**
+  String get configDevicesFull;
+
+  /// Title of the device id row for panel subscriptions; the word panels and their support use
+  ///
+  /// In en, this message translates to:
+  /// **'HWID'**
+  String get configDeviceHwid;
+
+  /// No description provided for @configDeviceSentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to the subscription with every refresh'**
+  String get configDeviceSentSubtitle;
+
+  /// No description provided for @configDeviceHintPanelUncounted.
+  ///
+  /// In en, this message translates to:
+  /// **'This app sends this id with every refresh, so a subscription that limits devices can tell them apart. It is made once and kept; a reinstall makes a new one.'**
+  String get configDeviceHintPanelUncounted;
 
   /// No description provided for @configDeviceHintPanel.
   ///
@@ -1682,12 +1682,6 @@ abstract class AppLocalizations {
   /// **'Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.'**
   String get configDeviceRoutingNote;
 
-  /// Section header
-  ///
-  /// In en, this message translates to:
-  /// **'Details'**
-  String get configSectionDetails;
-
   /// No description provided for @configGetSupport.
   ///
   /// In en, this message translates to:
@@ -1705,12 +1699,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Used {used} · no limit'**
   String configUsedNoLimit(String used);
-
-  /// No description provided for @configTrafficOf.
-  ///
-  /// In en, this message translates to:
-  /// **'Traffic: {used} of {total}'**
-  String configTrafficOf(String used, String total);
 
   /// No description provided for @configTraffic.
   ///
@@ -1730,23 +1718,35 @@ abstract class AppLocalizations {
   /// **'No expiry date given'**
   String get configNoExpiryDate;
 
-  /// No description provided for @configExpiredOn.
-  ///
-  /// In en, this message translates to:
-  /// **'Expired {date}'**
-  String configExpiredOn(String date);
-
   /// No description provided for @configActiveUntil.
   ///
   /// In en, this message translates to:
   /// **'Active until {date}'**
   String configActiveUntil(String date);
 
-  /// No description provided for @configPlanLine.
+  /// Term row of a subscription's details: how long is left
   ///
   /// In en, this message translates to:
-  /// **'{when} · what the subscription reports, not verified here'**
-  String configPlanLine(String when);
+  /// **'{days, plural, =0{Ends today} =1{1 day left} other{{days} days left}}'**
+  String configTermLeft(int days);
+
+  /// Term row of a subscription's details once its end date has passed
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription has expired'**
+  String get configExpired;
+
+  /// No description provided for @configEndedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended on {date}'**
+  String configEndedOn(String date);
+
+  /// Opens the subscription's renewal link (sub-expire-button-link)
+  ///
+  /// In en, this message translates to:
+  /// **'Renew subscription'**
+  String get configRenew;
 
   /// No description provided for @configAccount.
   ///
@@ -1765,12 +1765,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Status: {status} · starts on first use'**
   String configStatusOnHold(String status);
-
-  /// No description provided for @configStatusExpires.
-  ///
-  /// In en, this message translates to:
-  /// **'Status: {status} · expires {date}'**
-  String configStatusExpires(String status, String date);
 
   /// No description provided for @configLastRefreshed.
   ///

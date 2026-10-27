@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/subscription_info.dart';
@@ -86,6 +88,7 @@ void main() {
           'upload=1; download=2; total=9; expire=1785093975',
       'announce': 'hello',
       'support-url': 'https://s.example',
+      'sub-expire-button-link': 'https://pay.example/renew',
       'profile-web-page-url': 'https://w.example',
       'profile-update-interval': '12',
     });
@@ -96,7 +99,99 @@ void main() {
     expect(back.expiresAt, info.expiresAt);
     expect(back.announce, info.announce);
     expect(back.supportUrl, info.supportUrl);
+    expect(back.renewUrl, 'https://pay.example/renew');
     expect(back.webPageUrl, info.webPageUrl);
     expect(back.updateInterval, info.updateInterval);
+  });
+
+  test('the renew link is taken over https only', () {
+    expect(
+      SubscriptionInfo.fromHeaders({
+        'sub-expire-button-link': 'https://t.me/example_bot?start=renew',
+      }).renewUrl,
+      'https://t.me/example_bot?start=renew',
+    );
+    for (final bad in ['http://pay.example', 'javascript:alert(1)', 'pay']) {
+      expect(
+        SubscriptionInfo.fromHeaders({
+          'sub-expire-button-link': bad,
+        }).renewUrl,
+        isEmpty,
+        reason: bad,
+      );
+    }
+  });
+
+  group('parameters in the body', () {
+    test('a plain body carries #name: value lines', () {
+      final p = bodyParameters(
+        '#profile-title: Swaga\n#announce: base64:0J/RgNC40LLQtdGC\nvless://x',
+      );
+      expect(p['profile-title'], 'Swaga');
+      expect(SubscriptionInfo.fromHeaders(p).announce, 'Привет');
+    });
+
+    test('a base64 body is read after decoding', () {
+      final body = base64.encode(
+        utf8.encode('#profile-title: Swaga\nvless://x'),
+      );
+      expect(bodyParameters(body)['profile-title'], 'Swaga');
+    });
+
+    test('a header wins over the same parameter in the body', () {
+      final p = subscriptionParameters({
+        'profile-title': 'From header',
+      }, '#profile-title: From body\n#support-url: https://t.me/help');
+      expect(p['profile-title'], 'From header');
+      expect(p['support-url'], 'https://t.me/help');
+    });
+  });
+
+  group('a subscription that moved', () {
+    test('new-url replaces the address, https only', () {
+      final moved = SubscriptionInfo.fromHeaders({
+        'new-url': 'https://new.example/sub/abc',
+      }).movedFrom('https://old.example/sub/abc');
+      expect(moved, 'https://new.example/sub/abc');
+      expect(
+        SubscriptionInfo.fromHeaders({
+          'new-url': 'http://new.example/sub/abc',
+        }).movedFrom('https://old.example/sub/abc'),
+        isNull,
+      );
+    });
+
+    test('new-domain keeps the path and the token', () {
+      final moved = SubscriptionInfo.fromHeaders({
+        'new-domain': 'sub2.example.net',
+      }).movedFrom('https://sub.example.com/api/sub/tok3n?f=1');
+      expect(moved, 'https://sub2.example.net/api/sub/tok3n?f=1');
+    });
+
+    test('a domain that is not a hostname is ignored', () {
+      for (final bad in [
+        'evil.example/path',
+        'http://x.example',
+        'localhost',
+      ]) {
+        expect(
+          SubscriptionInfo.fromHeaders({
+            'new-domain': bad,
+          }).movedFrom('https://sub.example.com/tok3n'),
+          isNull,
+          reason: bad,
+        );
+      }
+    });
+
+    test('where it already is, nothing moves', () {
+      expect(
+        SubscriptionInfo.fromHeaders({
+          'new-url': 'https://sub.example.com/tok3n',
+          'new-domain': 'sub.example.com',
+        }).movedFrom('https://sub.example.com/tok3n'),
+        isNull,
+      );
+    });
   });
 }

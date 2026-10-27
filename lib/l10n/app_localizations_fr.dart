@@ -779,28 +779,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get configSectionSubscription => 'Abonnement';
 
   @override
-  String get configRanUntil => 'A pris fin le';
-
-  @override
-  String get configRunsUntil => 'Valide jusqu’au';
-
-  @override
   String get configDevices => 'Appareils';
 
   @override
   String configDevicesUsed(int active, int max) {
     return '$active sur $max utilisés';
-  }
-
-  @override
-  String configDateLong(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat(
-      'd MMMM y',
-      localeName,
-    );
-    final String dateString = dateDateFormat.format(date);
-
-    return '$dateString';
   }
 
   @override
@@ -812,17 +795,6 @@ class AppLocalizationsFr extends AppLocalizations {
     final String dateString = dateDateFormat.format(date);
 
     return '$dateString';
-  }
-
-  @override
-  String configDaysLeft(String date, int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count jours restants',
-      one: '1 jour restant',
-    );
-    return '$date · $_temp0';
   }
 
   @override
@@ -845,6 +817,20 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get configDeviceHintAmnezia =>
       'Votre abonnement compte les appareils par cet identifiant. Il est créé une fois et conservé : se reconnecter ne coûte aucune place — mais une réinstallation en prend une nouvelle.';
+
+  @override
+  String get configDevicesFull => 'Plus de place libre';
+
+  @override
+  String get configDeviceHwid => 'HWID';
+
+  @override
+  String get configDeviceSentSubtitle =>
+      'Envoyé à l’abonnement à chaque actualisation';
+
+  @override
+  String get configDeviceHintPanelUncounted =>
+      'L’app envoie cet id à chaque actualisation, pour qu’un abonnement qui limite les appareils puisse les distinguer. Il est créé une fois et conservé ; une réinstallation en crée un nouveau.';
 
   @override
   String get configDeviceHintPanel =>
@@ -1068,9 +1054,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les jeux de règles sont partagés par toutes les configurations ; l’interrupteur est propre à chacune, si bien qu’un abonnement professionnel et un abonnement personnel peuvent utiliser le même jeu différemment.';
 
   @override
-  String get configSectionDetails => 'Détails';
-
-  @override
   String get configGetSupport => 'Obtenir de l’aide';
 
   @override
@@ -1080,11 +1063,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String configUsedNoLimit(String used) {
     return 'Utilisé $used · sans limite';
-  }
-
-  @override
-  String configTrafficOf(String used, String total) {
-    return 'Trafic : $used sur $total';
   }
 
   @override
@@ -1099,19 +1077,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get configNoExpiryDate => 'Aucune date d’expiration indiquée';
 
   @override
-  String configExpiredOn(String date) {
-    return 'Expiré le $date';
-  }
-
-  @override
   String configActiveUntil(String date) {
     return 'Actif jusqu’au $date';
   }
 
   @override
-  String configPlanLine(String when) {
-    return '$when · d’après l’abonnement, non vérifié ici';
+  String configTermLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Encore $days jours',
+      one: 'Plus qu’un jour',
+      zero: 'Se termine aujourd’hui',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String get configExpired => 'L’abonnement a expiré';
+
+  @override
+  String configEndedOn(String date) {
+    return 'Terminé le $date';
+  }
+
+  @override
+  String get configRenew => 'Renouveler l’abonnement';
 
   @override
   String get configAccount => 'Compte';
@@ -1124,11 +1115,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String configStatusOnHold(String status) {
     return 'Statut : $status · démarre à la première utilisation';
-  }
-
-  @override
-  String configStatusExpires(String status, String date) {
-    return 'Statut : $status · expire le $date';
   }
 
   @override

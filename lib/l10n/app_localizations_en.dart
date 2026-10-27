@@ -773,28 +773,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get configSectionSubscription => 'Subscription';
 
   @override
-  String get configRanUntil => 'Ran until';
-
-  @override
-  String get configRunsUntil => 'Runs until';
-
-  @override
   String get configDevices => 'Devices';
 
   @override
   String configDevicesUsed(int active, int max) {
     return '$active of $max used';
-  }
-
-  @override
-  String configDateLong(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat(
-      'd MMMM y',
-      localeName,
-    );
-    final String dateString = dateDateFormat.format(date);
-
-    return '$dateString';
   }
 
   @override
@@ -806,17 +789,6 @@ class AppLocalizationsEn extends AppLocalizations {
     final String dateString = dateDateFormat.format(date);
 
     return '$dateString';
-  }
-
-  @override
-  String configDaysLeft(String date, int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count days left',
-      one: '1 day left',
-    );
-    return '$date · $_temp0';
   }
 
   @override
@@ -839,6 +811,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get configDeviceHintAmnezia =>
       'Your subscription counts devices by this id. It is made once and kept, so reconnecting costs no slot — but a reinstall takes a new one.';
+
+  @override
+  String get configDevicesFull => 'No free slots';
+
+  @override
+  String get configDeviceHwid => 'HWID';
+
+  @override
+  String get configDeviceSentSubtitle =>
+      'Sent to the subscription with every refresh';
+
+  @override
+  String get configDeviceHintPanelUncounted =>
+      'This app sends this id with every refresh, so a subscription that limits devices can tell them apart. It is made once and kept; a reinstall makes a new one.';
 
   @override
   String get configDeviceHintPanel =>
@@ -1061,9 +1047,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.';
 
   @override
-  String get configSectionDetails => 'Details';
-
-  @override
   String get configGetSupport => 'Get support';
 
   @override
@@ -1073,11 +1056,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String configUsedNoLimit(String used) {
     return 'Used $used · no limit';
-  }
-
-  @override
-  String configTrafficOf(String used, String total) {
-    return 'Traffic: $used of $total';
   }
 
   @override
@@ -1092,19 +1070,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get configNoExpiryDate => 'No expiry date given';
 
   @override
-  String configExpiredOn(String date) {
-    return 'Expired $date';
-  }
-
-  @override
   String configActiveUntil(String date) {
     return 'Active until $date';
   }
 
   @override
-  String configPlanLine(String when) {
-    return '$when · what the subscription reports, not verified here';
+  String configTermLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days left',
+      one: '1 day left',
+      zero: 'Ends today',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String get configExpired => 'Subscription has expired';
+
+  @override
+  String configEndedOn(String date) {
+    return 'Ended on $date';
+  }
+
+  @override
+  String get configRenew => 'Renew subscription';
 
   @override
   String get configAccount => 'Account';
@@ -1117,11 +1108,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String configStatusOnHold(String status) {
     return 'Status: $status · starts on first use';
-  }
-
-  @override
-  String configStatusExpires(String status, String date) {
-    return 'Status: $status · expires $date';
   }
 
   @override

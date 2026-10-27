@@ -753,28 +753,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get configSectionSubscription => '订阅';
 
   @override
-  String get configRanUntil => '有效期至';
-
-  @override
-  String get configRunsUntil => '有效期至';
-
-  @override
   String get configDevices => '设备';
 
   @override
   String configDevicesUsed(int active, int max) {
     return '已用 $active，上限 $max';
-  }
-
-  @override
-  String configDateLong(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat(
-      'd MMMM y',
-      localeName,
-    );
-    final String dateString = dateDateFormat.format(date);
-
-    return '$dateString';
   }
 
   @override
@@ -786,17 +769,6 @@ class AppLocalizationsZh extends AppLocalizations {
     final String dateString = dateDateFormat.format(date);
 
     return '$dateString';
-  }
-
-  @override
-  String configDaysLeft(String date, int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '剩 $count 天',
-      one: '剩 1 天',
-    );
-    return '$date · $_temp0';
   }
 
   @override
@@ -817,6 +789,19 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get configDeviceHintAmnezia =>
       '订阅按此 ID 统计设备数。它只生成一次并长期保留，重新连接不会占用新名额，但重新安装会生成新的 ID。';
+
+  @override
+  String get configDevicesFull => '没有空余名额';
+
+  @override
+  String get configDeviceHwid => 'HWID';
+
+  @override
+  String get configDeviceSentSubtitle => '每次刷新时发送给订阅';
+
+  @override
+  String get configDeviceHintPanelUncounted =>
+      '本应用在每次刷新时发送此 id，以便限制设备数的订阅区分设备。它只生成一次并保存；重新安装会生成新的 id。';
 
   @override
   String get configDeviceHintPanel =>
@@ -1039,9 +1024,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '规则集由所有配置共享；开关则按配置单独设置，因此工作订阅和个人订阅可以用不同方式使用同一规则集。';
 
   @override
-  String get configSectionDetails => '详情';
-
-  @override
   String get configGetSupport => '获取支持';
 
   @override
@@ -1050,11 +1032,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String configUsedNoLimit(String used) {
     return '已用 $used · 无限制';
-  }
-
-  @override
-  String configTrafficOf(String used, String total) {
-    return '流量：$used / $total';
   }
 
   @override
@@ -1069,19 +1046,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get configNoExpiryDate => '未提供到期日期';
 
   @override
-  String configExpiredOn(String date) {
-    return '已于 $date 过期';
-  }
-
-  @override
   String configActiveUntil(String date) {
     return '有效期至 $date';
   }
 
   @override
-  String configPlanLine(String when) {
-    return '$when · 订阅方报告的数据，本应用未作核实';
+  String configTermLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '还剩 $days 天',
+      zero: '今天到期',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String get configExpired => '订阅已到期';
+
+  @override
+  String configEndedOn(String date) {
+    return '已于 $date 到期';
+  }
+
+  @override
+  String get configRenew => '续订';
 
   @override
   String get configAccount => '账户';
@@ -1094,11 +1083,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String configStatusOnHold(String status) {
     return '状态：$status · 首次使用时开始';
-  }
-
-  @override
-  String configStatusExpires(String status, String date) {
-    return '状态：$status · $date 到期';
   }
 
   @override

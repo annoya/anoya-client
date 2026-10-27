@@ -780,28 +780,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get configSectionSubscription => 'Suscripción';
 
   @override
-  String get configRanUntil => 'Válida hasta';
-
-  @override
-  String get configRunsUntil => 'Válida hasta';
-
-  @override
   String get configDevices => 'Dispositivos';
 
   @override
   String configDevicesUsed(int active, int max) {
     return '$active de $max en uso';
-  }
-
-  @override
-  String configDateLong(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat(
-      'd MMMM y',
-      localeName,
-    );
-    final String dateString = dateDateFormat.format(date);
-
-    return '$dateString';
   }
 
   @override
@@ -813,17 +796,6 @@ class AppLocalizationsEs extends AppLocalizations {
     final String dateString = dateDateFormat.format(date);
 
     return '$dateString';
-  }
-
-  @override
-  String configDaysLeft(String date, int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'quedan $count días',
-      one: 'queda 1 día',
-    );
-    return '$date · $_temp0';
   }
 
   @override
@@ -846,6 +818,20 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get configDeviceHintAmnezia =>
       'Tu suscripción cuenta los dispositivos por este ID. Se genera una vez y se conserva, así que reconectar no gasta plazas, pero una reinstalación toma una nueva.';
+
+  @override
+  String get configDevicesFull => 'No quedan plazas';
+
+  @override
+  String get configDeviceHwid => 'HWID';
+
+  @override
+  String get configDeviceSentSubtitle =>
+      'Se envía a la suscripción en cada actualización';
+
+  @override
+  String get configDeviceHintPanelUncounted =>
+      'La app envía este id en cada actualización para que una suscripción que limita dispositivos pueda distinguirlos. Se crea una vez y se conserva; al reinstalar se crea uno nuevo.';
 
   @override
   String get configDeviceHintPanel =>
@@ -1070,9 +1056,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los conjuntos de reglas se comparten entre todas las configuraciones; el interruptor es por configuración, así que una suscripción de trabajo y una personal pueden usar el mismo conjunto de forma distinta.';
 
   @override
-  String get configSectionDetails => 'Detalles';
-
-  @override
   String get configGetSupport => 'Obtener ayuda';
 
   @override
@@ -1082,11 +1065,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String configUsedNoLimit(String used) {
     return 'Usado: $used · sin límite';
-  }
-
-  @override
-  String configTrafficOf(String used, String total) {
-    return 'Tráfico: $used de $total';
   }
 
   @override
@@ -1101,19 +1079,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get configNoExpiryDate => 'No se indicó fecha de caducidad';
 
   @override
-  String configExpiredOn(String date) {
-    return 'Caducó el $date';
-  }
-
-  @override
   String configActiveUntil(String date) {
     return 'Activa hasta el $date';
   }
 
   @override
-  String configPlanLine(String when) {
-    return '$when · lo que informa la suscripción, sin verificar aquí';
+  String configTermLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Quedan $days días',
+      one: 'Queda 1 día',
+      zero: 'Termina hoy',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String get configExpired => 'La suscripción ha terminado';
+
+  @override
+  String configEndedOn(String date) {
+    return 'Terminó el $date';
+  }
+
+  @override
+  String get configRenew => 'Renovar suscripción';
 
   @override
   String get configAccount => 'Cuenta';
@@ -1126,11 +1117,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String configStatusOnHold(String status) {
     return 'Estado: $status · empieza con el primer uso';
-  }
-
-  @override
-  String configStatusExpires(String status, String date) {
-    return 'Estado: $status · caduca el $date';
   }
 
   @override

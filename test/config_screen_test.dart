@@ -166,7 +166,7 @@ void main() {
 
     await pump(tester, profile(ProfileType.subscription).copyWithDeviceLimit());
     await tester.pump();
-    await tester.scrollUntilVisible(find.text('Device id'), 200);
+    await tester.scrollUntilVisible(find.text('HWID'), 200);
     await tester.ensureVisible(find.byTooltip('Copy'));
     await tester.pump();
 

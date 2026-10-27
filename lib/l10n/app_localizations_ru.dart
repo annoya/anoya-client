@@ -795,28 +795,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get configSectionSubscription => 'Подписка';
 
   @override
-  String get configRanUntil => 'Действовала до';
-
-  @override
-  String get configRunsUntil => 'Действует до';
-
-  @override
   String get configDevices => 'Устройства';
 
   @override
   String configDevicesUsed(int active, int max) {
     return '$active из $max занято';
-  }
-
-  @override
-  String configDateLong(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat(
-      'd MMMM y',
-      localeName,
-    );
-    final String dateString = dateDateFormat.format(date);
-
-    return '$dateString';
   }
 
   @override
@@ -828,19 +811,6 @@ class AppLocalizationsRu extends AppLocalizations {
     final String dateString = dateDateFormat.format(date);
 
     return '$dateString';
-  }
-
-  @override
-  String configDaysLeft(String date, int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'осталось $count дня',
-      many: 'осталось $count дней',
-      few: 'осталось $count дня',
-      one: 'остался 1 день',
-    );
-    return '$date · $_temp0';
   }
 
   @override
@@ -863,6 +833,20 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get configDeviceHintAmnezia =>
       'Ваша подписка считает устройства по этому id. Он создаётся один раз и сохраняется, поэтому переподключение не занимает новый слот — а переустановка занимает.';
+
+  @override
+  String get configDevicesFull => 'Нет свободных слотов';
+
+  @override
+  String get configDeviceHwid => 'HWID';
+
+  @override
+  String get configDeviceSentSubtitle =>
+      'Отправляется подписке при каждом обновлении';
+
+  @override
+  String get configDeviceHintPanelUncounted =>
+      'Приложение отправляет этот id при каждом обновлении, чтобы подписка с лимитом устройств могла их различать. Он создаётся один раз и сохраняется; после переустановки создаётся новый.';
 
   @override
   String get configDeviceHintPanel =>
@@ -1102,9 +1086,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Наборы правил общие для всех конфигураций; переключатель — у каждой свой, так что рабочая и личная подписки могут использовать один набор по-разному.';
 
   @override
-  String get configSectionDetails => 'Подробности';
-
-  @override
   String get configGetSupport => 'Обратиться в поддержку';
 
   @override
@@ -1114,11 +1095,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String configUsedNoLimit(String used) {
     return 'Использовано $used · без лимита';
-  }
-
-  @override
-  String configTrafficOf(String used, String total) {
-    return 'Трафик: $used из $total';
   }
 
   @override
@@ -1133,19 +1109,34 @@ class AppLocalizationsRu extends AppLocalizations {
   String get configNoExpiryDate => 'Дата окончания не указана';
 
   @override
-  String configExpiredOn(String date) {
-    return 'Истекла $date';
-  }
-
-  @override
   String configActiveUntil(String date) {
     return 'Активна до $date';
   }
 
   @override
-  String configPlanLine(String when) {
-    return '$when · по данным подписки, здесь не проверяется';
+  String configTermLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Осталось $days дня',
+      many: 'Осталось $days дней',
+      few: 'Осталось $days дня',
+      one: 'Остался $days день',
+      zero: 'Заканчивается сегодня',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String get configExpired => 'Подписка закончилась';
+
+  @override
+  String configEndedOn(String date) {
+    return 'Закончилась $date';
+  }
+
+  @override
+  String get configRenew => 'Продлить подписку';
 
   @override
   String get configAccount => 'Аккаунт';
@@ -1158,11 +1149,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String configStatusOnHold(String status) {
     return 'Статус: $status · начнётся при первом использовании';
-  }
-
-  @override
-  String configStatusExpires(String status, String date) {
-    return 'Статус: $status · истекает $date';
   }
 
   @override

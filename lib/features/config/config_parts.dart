@@ -14,7 +14,7 @@ import '../../state/profiles_controller.dart';
 export 'device_section.dart';
 export 'names_section.dart';
 export 'provider_routing_card.dart';
-export 'provider_section.dart';
+export 'plan_group.dart';
 export 'refresh_card.dart';
 export 'routing_cards.dart';
 
