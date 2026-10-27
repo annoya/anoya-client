@@ -79,7 +79,7 @@ void main() {
     await expectLater(ProfileStore.save([]), throwsStateError);
     expect(writes, 0);
     expect(memorySecrets['profiles'], contains('secret-uuid'));
-  });
+  }, skip: Platform.isLinux ? _linuxFallsBackToFile : false);
 
   test(
     'a write over an item the keychain will not update replaces it',
@@ -96,5 +96,9 @@ void main() {
       await SecretStore().write('token_p1', 'fresh');
       expect(memorySecrets['token_p1'], 'fresh');
     },
+    skip: Platform.isLinux ? _linuxFallsBackToFile : false,
   );
 }
+
+const _linuxFallsBackToFile =
+    'on Linux a keyring failure goes to secrets.json (secret_store_test)';

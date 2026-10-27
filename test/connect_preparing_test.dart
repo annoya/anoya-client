@@ -42,7 +42,8 @@ void main() {
     );
     messenger.setMockMethodCallHandler(secure, (call) async {
       final name = (call.arguments as Map)['key'] as String?;
-      if (call.method == 'read' && (name?.startsWith('amnezia_key_') ?? false)) {
+      if (call.method == 'read' &&
+          (name?.startsWith('amnezia_key_') ?? false)) {
         return key.future;
       }
       return memorySecretsHandler(call);

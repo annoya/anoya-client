@@ -30,24 +30,24 @@ void main() {
       (call) async => tmp.path,
     );
     memorySecrets['profiles'] = jsonEncode([
-        Profile(
-          id: 'running',
-          type: ProfileType.link,
-          name: 'Running',
-          locations: [
-            Location(
-              id: 'r1',
-              label: 'Frankfurt',
-              proxy: const {
-                'type': 'vless',
-                'server': 'r.example',
-                'port': 443,
-                'uuid': 'u',
-              },
-            ),
-          ],
-        ).toJson(),
-      ]);
+      Profile(
+        id: 'running',
+        type: ProfileType.link,
+        name: 'Running',
+        locations: [
+          Location(
+            id: 'r1',
+            label: 'Frankfurt',
+            proxy: const {
+              'type': 'vless',
+              'server': 'r.example',
+              'port': 443,
+              'uuid': 'u',
+            },
+          ),
+        ],
+      ).toJson(),
+    ]);
   });
 
   tearDown(() async {
