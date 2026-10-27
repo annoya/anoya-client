@@ -113,9 +113,7 @@ void main() {
     );
     for (final bad in ['http://pay.example', 'javascript:alert(1)', 'pay']) {
       expect(
-        SubscriptionInfo.fromHeaders({
-          'sub-expire-button-link': bad,
-        }).renewUrl,
+        SubscriptionInfo.fromHeaders({'sub-expire-button-link': bad}).renewUrl,
         isEmpty,
         reason: bad,
       );

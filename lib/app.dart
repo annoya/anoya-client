@@ -34,7 +34,9 @@ class _VpnAppState extends ConsumerState<VpnApp> {
   void initState() {
     super.initState();
     ref.read(menuBarProvider);
-    if (Platform.isWindows || Platform.isLinux) ref.read(desktopNoticesProvider);
+    if (Platform.isWindows || Platform.isLinux) {
+      ref.read(desktopNoticesProvider);
+    }
     ref.read(cloudSyncProvider);
     SecretStore.instance.usingFile.addListener(_secretsInFile);
     _lifecycle = AppLifecycleListener(onResume: _resumed);

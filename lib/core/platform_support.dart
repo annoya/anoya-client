@@ -12,9 +12,11 @@ bool get supportsProcessRules => switch (defaultTargetPlatform) {
   _ => false,
 };
 
-bool get processRulesPickApps => defaultTargetPlatform == TargetPlatform.android;
+bool get processRulesPickApps =>
+    defaultTargetPlatform == TargetPlatform.android;
 
-bool get supportsExcludedApps => defaultTargetPlatform == TargetPlatform.android;
+bool get supportsExcludedApps =>
+    defaultTargetPlatform == TargetPlatform.android;
 
 bool get supportsOnDemand => switch (defaultTargetPlatform) {
   TargetPlatform.macOS || TargetPlatform.iOS => true,

@@ -170,7 +170,10 @@ class TrafficRow extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: DsProgress(value: warning ? 1 : used / total, warning: warning),
+          child: DsProgress(
+            value: warning ? 1 : used / total,
+            warning: warning,
+          ),
         ),
       ],
     );

@@ -263,43 +263,49 @@ void main() {
       return shown;
     }
 
-    testWidgets('where the platform cannot name the app, the type is not offered', (
-      tester,
-    ) async {
-      androidSdk = 28;
-      expect(await offered(tester), isFalse);
-    });
+    testWidgets(
+      'where the platform cannot name the app, the type is not offered',
+      (tester) async {
+        androidSdk = 28;
+        expect(await offered(tester), isFalse);
+      },
+    );
 
     testWidgets('on Android 10 the type is offered', (tester) async {
       androidSdk = 29;
       expect(await offered(tester), isTrue);
     });
 
-    testWidgets('on Android apps are picked, and the rule stores their packages', (
-      tester,
-    ) async {
-      androidSdk = 29;
-      final saved = await open(
-        tester,
-        initial: const RoutingRule(
-          type: 'process-name',
-          values: ['org.telegram.messenger'],
-          action: 'proxy',
-        ),
-      );
-      expect(find.byType(TextField), findsNothing, reason: 'nothing to type');
-      expect(find.text('Telegram'), findsOneWidget, reason: 'the chip names the app');
+    testWidgets(
+      'on Android apps are picked, and the rule stores their packages',
+      (tester) async {
+        androidSdk = 29;
+        final saved = await open(
+          tester,
+          initial: const RoutingRule(
+            type: 'process-name',
+            values: ['org.telegram.messenger'],
+            action: 'proxy',
+          ),
+        );
+        expect(find.byType(TextField), findsNothing, reason: 'nothing to type');
+        expect(
+          find.text('Telegram'),
+          findsOneWidget,
+          reason: 'the chip names the app',
+        );
 
-      await tester.tap(find.text('Apps'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Slack'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Done · 2'));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Telegram, Slack'), findsOneWidget);
+        await tester.tap(find.text('Apps'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Slack'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Done · 2'));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Telegram, Slack'), findsOneWidget);
 
-      await save(tester);
-      expect(saved()!.single.values, ['org.telegram.messenger', 'com.Slack']);
-    });
+        await save(tester);
+        expect(saved()!.single.values, ['org.telegram.messenger', 'com.Slack']);
+      },
+    );
   });
 }
