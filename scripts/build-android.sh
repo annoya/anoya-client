@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ABIs pinned here, not via gradle abiFilters: the Flutter plugin overrides
-# them, and the engine AAR has no armeabi-v7a.
+# them. One APK per ABI plus a universal one for people who do not know theirs.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -8,7 +8,7 @@ OUT=build/app/outputs/flutter-apk
 marker="$(mktemp)"
 
 # A user --target-platform replaces ours; passing it twice breaks gradle.
-targets=(--target-platform android-arm64,android-x64)
+targets=(--target-platform android-arm,android-arm64,android-x64)
 split=(--split-per-abi)
 for arg in "$@"; do
   case "$arg" in
@@ -18,6 +18,9 @@ for arg in "$@"; do
 done
 
 flutter build apk --release "${targets[@]+"${targets[@]}"}" "${split[@]+"${split[@]}"}" "$@"
+if [ "${#split[@]}" -gt 0 ]; then
+  flutter build apk --release "${targets[@]+"${targets[@]}"}" "$@"
+fi
 
 label="$(sed -n 's/.*android:label="\([^"]*\)".*/\1/p' android/app/src/main/AndroidManifest.xml | head -1)"
 version="$(awk '/^version:/ {print $2}' pubspec.yaml)"
