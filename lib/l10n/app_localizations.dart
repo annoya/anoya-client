@@ -4675,6 +4675,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{device} has a new code now. Scan it again.'**
   String transferRefused(String device);
+
+  /// No description provided for @fileNoPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'No app to pick a file with'**
+  String get fileNoPicker;
+
+  /// No description provided for @fileNoPickerDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the link instead, or receive the configuration from a phone.'**
+  String get fileNoPickerDetail;
+
+  /// No description provided for @fileAccessDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'No access to files'**
+  String get fileAccessDenied;
+
+  /// No description provided for @fileAccessDeniedDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Anoya to read storage in the system settings, or paste the link instead.'**
+  String get fileAccessDeniedDetail;
 }
 
 class _AppLocalizationsDelegate

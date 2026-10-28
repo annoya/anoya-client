@@ -1,13 +1,14 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/app_error.dart';
 import '../core/ds.dart';
+import '../core/file_open.dart';
 import '../core/log.dart';
+import '../core/platform_support.dart';
 import '../core/rule_set.dart';
 import '../core/rule_set_transfer.dart';
 import '../core/theme.dart';
@@ -77,26 +78,24 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
 
   Future<void> _import() async {
     final l10n = context.l10n;
-    final phone =
-        defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
     final from = await pickOption<_ImportFrom>(
       context,
       title: l10n.ruleSetImport,
       options: [
-        Option(
-          _ImportFrom.file,
-          l10n.ruleSetImportFromFile,
-          subtitle: l10n.ruleSetImportFromFileSubtitle,
-          leading: const GlyphIcon(Glyph.folder),
-        ),
+        if (canOpenFiles)
+          Option(
+            _ImportFrom.file,
+            l10n.ruleSetImportFromFile,
+            subtitle: l10n.ruleSetImportFromFileSubtitle,
+            leading: const GlyphIcon(Glyph.folder),
+          ),
         Option(
           _ImportFrom.clipboard,
           l10n.ruleSetImportFromClipboard,
           subtitle: l10n.ruleSetImportFromClipboardSubtitle,
           leading: const GlyphIcon(Glyph.clipboard),
         ),
-        if (phone)
+        if (canScanQr)
           Option(
             _ImportFrom.qr,
             l10n.startScanQr,
@@ -136,14 +135,19 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
   }
 
   Future<(String?, String)> _readFile() async {
-    final res = await FilePicker.platform.pickFiles(withData: true);
-    final file = res?.files.single;
-    final bytes = file?.bytes;
-    if (file == null || bytes == null) return (null, '');
+    final OpenedFile? file;
+    try {
+      file = await openFile();
+    } catch (e) {
+      Log.e('rule set file not read', '$e');
+      if (mounted) showErrorDialog(context, describeError(e));
+      return (null, '');
+    }
+    if (file == null) return (null, '');
     final base = file.name
         .replaceFirst(RegExp(r'\.anoya-rules\.json$'), '')
         .replaceFirst(RegExp(r'\.[^.]+$'), '');
-    return (utf8.decode(bytes, allowMalformed: true), base);
+    return (utf8.decode(file.bytes, allowMalformed: true), base);
   }
 
   Future<String?> _scan() => Navigator.of(context).push<String>(

@@ -1,12 +1,14 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/android_apps.dart';
 import '../core/country_flag.dart';
+import '../core/app_error.dart';
 import '../core/ds.dart';
+import '../core/file_open.dart';
+import '../core/log.dart';
 import '../core/norm_config.dart';
 import '../core/platform_support.dart';
 import '../core/rule_values.dart';
@@ -127,10 +129,15 @@ class _RuleScreenState extends State<RuleScreen> {
   }
 
   Future<void> _fromFile() async {
-    final res = await FilePicker.platform.pickFiles(withData: true);
-    final bytes = res?.files.single.bytes;
-    if (bytes == null) return;
-    _append(utf8.decode(bytes, allowMalformed: true));
+    final OpenedFile? file;
+    try {
+      file = await openFile();
+    } catch (e) {
+      Log.e('rule values file not read', '$e');
+      if (mounted) showErrorDialog(context, describeError(e));
+      return;
+    }
+    if (file != null) _append(utf8.decode(file.bytes, allowMalformed: true));
   }
 
   Future<void> _pickCountries() async {
@@ -282,11 +289,12 @@ class _RuleScreenState extends State<RuleScreen> {
         _parseCard(context)
       else if (_typeDescription(_type) case final d?)
         DsNote(d),
-      DsButton.secondary(
-        label: l10n.ruleValuesFromFile,
-        glyph: Glyph.file,
-        onPressed: _fromFile,
-      ),
+      if (canOpenFiles)
+        DsButton.secondary(
+          label: l10n.ruleValuesFromFile,
+          glyph: Glyph.file,
+          onPressed: _fromFile,
+        ),
     ];
   }
 

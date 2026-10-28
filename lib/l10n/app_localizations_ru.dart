@@ -3099,4 +3099,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String transferRefused(String device) {
     return 'У $device теперь новый код. Отсканируйте его снова.';
   }
+
+  @override
+  String get fileNoPicker => 'Нет приложения для выбора файла';
+
+  @override
+  String get fileNoPickerDetail =>
+      'Вставьте ссылку или получите конфигурацию с телефона.';
+
+  @override
+  String get fileAccessDenied => 'Нет доступа к файлам';
+
+  @override
+  String get fileAccessDeniedDetail =>
+      'Разрешите Anoya доступ к хранилищу в настройках системы или вставьте ссылку.';
 }

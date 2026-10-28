@@ -3020,4 +3020,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String transferRefused(String device) {
     return '$device has a new code now. Scan it again.';
   }
+
+  @override
+  String get fileNoPicker => 'No app to pick a file with';
+
+  @override
+  String get fileNoPickerDetail =>
+      'Paste the link instead, or receive the configuration from a phone.';
+
+  @override
+  String get fileAccessDenied => 'No access to files';
+
+  @override
+  String get fileAccessDeniedDetail =>
+      'Allow Anoya to read storage in the system settings, or paste the link instead.';
 }

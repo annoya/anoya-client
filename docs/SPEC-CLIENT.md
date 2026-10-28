@@ -648,7 +648,12 @@ screen says so in as many words.
   desktops: a laptop camera against a QR in the next browser window is a
   chore, and there the link is copied; not on Android TV, which has no camera
   and no file picker either). **Receive from a phone** (§4.3.2) is offered
-  everywhere and takes the initial focus on a TV. A scanned code is never added on its
+  everywhere and takes the initial focus on a TV.
+  Opening a file goes through the system's "open a document". On Android 9–10
+  without DocumentsUI a box's own file manager answers with a `file://` path,
+  so the app asks for `READ_EXTERNAL_STORAGE` right before the picker there,
+  and only there; with no app to pick files at all, the error names the link
+  and the phone as the ways that still work. A scanned code is never added on its
   own: it lands in the field like a paste and gets the same chip, and the
   user presses Continue — a QR on someone else's screen may not be the one
   they meant. The scanner reads what the field reads, plus two shapes that
