@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,12 +94,24 @@ void main() {
     expect(ctrl.removed, ['p2']);
     expect(find.byType(ConfigScreen), findsNothing);
   });
+
+  testWidgets('a tunnel sync that hangs does not hold a blank page open', (
+    tester,
+  ) async {
+    final ctrl = await open(tester, 'p1');
+    ctrl.tunnelSync = Completer<void>();
+    addTearDown(ctrl.tunnelSync!.complete);
+    await remove(tester);
+    expect(find.byType(ConfigScreen), findsNothing);
+    expect(find.text('home'), findsOneWidget);
+  });
 }
 
 class _SlowRemoval extends ProfilesController {
   _SlowRemoval(this.profiles);
   final List<Profile> profiles;
   final removed = <String>[];
+  Completer<void>? tunnelSync;
 
   @override
   ProfilesState build() =>
@@ -110,6 +124,7 @@ class _SlowRemoval extends ProfilesController {
     state = ProfilesState(profiles: left, activeId: left.first.id);
     await SchedulerBinding.instance.endOfFrame;
     await Future<void>.delayed(const Duration(milliseconds: 20));
+    await tunnelSync?.future;
   }
 
   @override

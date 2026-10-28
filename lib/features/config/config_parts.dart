@@ -199,9 +199,6 @@ class ConfigActions extends ConsumerWidget {
   }
 
   Future<void> _remove(BuildContext context, WidgetRef ref) async {
-    // After the removal this element is a placeholder, and popping through it does nothing.
-    final nav = Navigator.of(context);
-    final container = ProviderScope.containerOf(context, listen: false);
     final l10n = context.l10n;
     final ok = await confirmAction(
       context,
@@ -219,8 +216,5 @@ class ConfigActions extends ConsumerWidget {
       }
     }
     await ctrl.removeProfile(profile.id);
-    if (container.read(profilesControllerProvider).hasProfiles && nav.mounted) {
-      nav.pop();
-    }
   }
 }

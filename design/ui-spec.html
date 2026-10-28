@@ -3351,6 +3351,111 @@ the title the user reads and the format. Nothing from the left column reaches th
 <p class="flowdesc"><b>The third row is about third-party files, and it's off by default.</b> Some rules (<code>RULE-SET</code> in Clash) reference not a domain but a <b>list hosted by the provider</b>. While the row is off, such rules are counted and the counter names the reason in its own words — “13 need their lists”, not an impersonal “not supported”, because the former is fixed with one toggle and the latter can't be fixed at all. Turning it on means: download third-party files to the device and update them once a week.</p>
 <p class="flowdesc"><b>Turning it off doesn't delete the files.</b> A live subscription has thirteen lists, and changing your mind would cost a full re-download. The toggle is “apply their rules”, not “delete their files”; the files go stale after a week and get cleaned up on their own. Cleanup stays where it's about garbage: after a subscription refresh, where the provider may have removed a list and the file would be left orphaned. The toggle lives <b>in the configuration, not in global settings</b>: trusting lists means trusting a specific provider. It never enables Xray-style <code>ext:</code> — that's a file on the panel server's disk, there's nothing to download.</p>
 
+<h3>Services from the subscription (select groups)</h3>
+<p class="flowdesc"><b>A subscription can send each service its own way.</b> Remnawave-style templates route YouTube through one group of servers, AI through another, blocked sites through a third — Clash <code>select</code> groups that the rules name as their target. Until now every rule that said “through the VPN” went through the one server picked on Home, so a rule meant for “servers that are not in Russia” could land on a Russian server. The groups the rules point at become <b>services</b>: each starts where the subscription put it (its first entry, the engine's own default) and can be moved to another of the subscription's options or to the <b>main server</b> — the one picked on Home. The main server keeps carrying everything the rules send through the VPN without naming a service. A group that offers a single option is shown, not offered: it answers “where does Telegram go”, and there is nothing to choose.</p>
+<div class="rail">
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Routing</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh">Subscription routing</div>
+          <div class="card" style="background:var(--bg-accent-subtle)">
+            <div class="row"><svg class="icon"><use href="#l-split"/></svg><div class="tx"><div class="t">Routing</div><div class="s">Split · 20 rules</div></div><span class="sw"><i></i></span></div>
+            <div class="row"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule set</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div>
+            <div class="row"><svg class="icon"><use href="#l-database"/></svg><div class="tx"><div class="t">Rule lists</div><div class="s">20 lists · 3.1 MB</div></div><span class="sw"><i></i></span></div>
+            <div class="row"><svg class="icon"><use href="#l-network"/></svg><div class="tx"><div class="t">Services</div><div class="s">3 to choose · 1 changed by you</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div>
+          </div>
+        </div>
+        <div class="grp"><div class="sh">Device routing</div>
+          <div class="card">
+            <div class="row off"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule set</div><div class="s">Replaced by the subscription’s routes</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">RoutingConfigScreen · services</span><span class="q">нет в Figma</span><b>One more row in the subscription card.</b> <i>Services</i> (<code>network</code>, chevron → ServicesScreen) appears only when the subscription's rules name at least one <code>select</code> group; a subscription without them looks exactly as 10.9. It belongs here, not on Home: a service exit is a routing decision, and the Routing chip on Home already leads to this page. The subtitle counts what can be chosen and what the user changed — “3 to choose · 1 changed by you” — so a changed exit is visible without opening the screen. With the subscription's routing switched off the row goes with the rest of the card's meaning: no rules, no services.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Services</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh">Choose the exit</div>
+          <div class="card">
+            <div class="row"><span class="flag">🚫</span><div class="tx"><div class="t">Недоступные сайты</div><div class="s">Main server · your choice</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+            <div class="row"><span class="flag">▶️</span><div class="tx"><div class="t">YouTube</div><div class="s">Monetization-free · YTRU server 06</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+            <div class="row"><span class="flag">✨</span><div class="tx"><div class="t">AI</div><div class="s">NotRU · Mock server 12</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+          </div>
+        </div>
+        <div class="grp"><div class="sh">Set by the subscription</div>
+          <div class="card">
+            <div class="row"><span class="flag">💬</span><div class="tx"><div class="t">Discord</div><div class="s">Same as Недоступные сайты</div></div></div>
+            <div class="row"><span class="flag">➤</span><div class="tx"><div class="t">Telegram</div><div class="s">Same as Недоступные сайты</div></div></div>
+            <div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">⚪🔵🔴 RU сайты</div><div class="s">Direct, outside the VPN</div></div></div>
+          </div>
+        </div>
+        <div class="note">Everything else the rules send through the VPN goes through the main server you pick on Home — now NotRU.</div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">ServicesScreen</span><span class="q">нет в Figma</span><b>The subscription's names, our words.</b> Titles are the group names as the subscription sent them, leading emoji moved into the 24 glyph slot (as flags are in the server picker; a name without one gets <code>split</code>, several emoji stay in the title). Provider <code>icon:</code> URLs are not loaded — fetching third-party images would tell that host when the user opens the screen.<br><br><b>Two groups.</b> <i>Choose the exit</i>: groups with more than one option, chevron-down → the exit sheet. The subtitle is the exit, then — while connected — the server the engine is using, as on the Home group card (2.18). <i>Set by the subscription</i>: a group with one option, read-only, no chevron — “Same as …” when that option is another service, “Direct, outside the VPN” when it is a direct connection. Hidden groups (<code>hidden: true</code>) and groups no rule points at are not listed.<br><br><b>A changed exit says so in words</b> — “your choice” — not with colour. The note under the cards closes the loop with Home: the main server is not demoted, it is the exit for whatever no service claims.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Services</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh">Choose the exit</div>
+          <div class="card">
+            <div class="row"><span class="flag">🚫</span><div class="tx"><div class="t">Недоступные сайты</div><div class="s">Main server · your choice</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+            <div class="row"><span class="flag">▶️</span><div class="tx"><div class="t">YouTube</div><div class="s">Monetization-free · YTRU server 06</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+            <div class="row"><span class="flag">✨</span><div class="tx"><div class="t">AI</div><div class="s">NotRU · Mock server 12</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="dim"></div>
+      <div class="sheet"><div class="grab"></div><div class="stitle">YouTube</div><div class="sbody" style="gap:24px">
+        <div class="grp x02-sgrp"><div class="sh">From the subscription</div><div class="card">
+          <div class="row sel"><svg class="icon" style="color:var(--tx-acc)"><use href="#l-zap"/></svg><div class="tx"><div class="t">Monetization-free</div><div class="s">Default · lowest latency of 11</div></div></div>
+          <div class="row"><svg class="icon"><use href="#l-split"/></svg><div class="tx"><div class="t">LoadBlalance</div><div class="s">Spread over 8 · same site, same server</div></div></div>
+          <div class="row"><svg class="icon"><use href="#l-activity"/></svg><div class="tx"><div class="t">Любой доступный сервер</div><div class="s">First that answers of 29</div></div></div>
+        </div></div>
+        <div class="grp x02-sgrp"><div class="sh">This app</div><div class="card">
+          <div class="row"><svg class="icon"><use href="#l-server"/></svg><div class="tx"><div class="t">Main server</div><div class="s">The one picked on Home · now NotRU</div></div></div>
+        </div></div>
+      </div></div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">ServicesScreen · _pickExit</span><span class="q">нет в Figma</span><b>The shared picker sheet, no new chooser.</b> <code>pickOption</code> titled with the service. <i>From the subscription</i> lists the group's own options in the subscription's order; the first is marked <b>Default</b> in its subtitle, so going back to what the subscription meant is one tap and needs no separate reset. Each option is described by what it does, in the words of the server picker — “lowest latency of 11”, “first that answers of 29”, “spread over 8” — not <code>url-test</code>. An option that is a single server shows its flag and protocol line, as in 2.13; <code>DIRECT</code> reads “Direct, outside the VPN”, <code>REJECT</code> “Blocked”.<br><br><i>This app</i> holds one row, <b>Main server</b>: whatever is picked on Home, named in the subtitle. It is how a user who does not care about the provider's split sends a service through their own choice. The active row is <code>background/selected</code>, as everywhere; tapping applies at once — on a live tunnel by the same hot reload as a server switch (ADR-002) — and closes the sheet. No search: a group with six or more options gets one, as any <code>pickOption</code>.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Services</span></div>
+      <div class="scr">
+        <div class="banner alert x10-bn x10-col">
+          <div class="x10-hd"><svg class="icon"><use href="#l-info"/></svg><div><div class="x10-st">Rule lists are off</div><div class="x10-bd">These services are matched by the subscription’s rule lists. Until they are on, all of this traffic goes through the main server.</div></div></div>
+          <div class="btn tonal"><span>Turn on rule lists</span></div>
+        </div>
+        <div class="grp"><div class="sh">Choose the exit</div>
+          <div class="card">
+            <div class="row off"><span class="flag">🚫</span><div class="tx"><div class="t">Недоступные сайты</div><div class="s">Fastest · inactive</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+            <div class="row off"><span class="flag">▶️</span><div class="tx"><div class="t">YouTube</div><div class="s">Monetization-free · inactive</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+            <div class="row off"><span class="flag">✨</span><div class="tx"><div class="t">AI</div><div class="s">NotRU · inactive</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">ServicesScreen · lists off</span><span class="q">нет в Figma</span><b>Services that cannot apply say so.</b> On this subscription every rule that names a service is a <code>RULE-SET</code>, and rule lists are off by default — so no service exit is in effect and, by the split-without-lists rule, the whole tunnel goes through the main server. Hiding the screen would hide why YouTube does not go where the subscription meant; showing live-looking choices would be a lie. The rows stay, dimmed (.4) with “inactive” in the subtitle, as list rules are in 10.10, and still open the sheet — the choice is remembered for when lists arrive. The banner names the condition and offers the switch itself; <i>Turn on rule lists</i> runs the same download as the toggle in 10.9 (→ 10.11). A service whose rules do not need lists stays active and is not dimmed.</p>
+  </div>
+</div>
+
 <!-- ============ 11 ============ -->
 <h2>11 · Menu bar menu (macOS) and tray (Windows, Linux)</h2>
 <p class="flowdesc">The menu bar icon and its menu are the only way to control the tunnel without bringing up the window. Four actions: show/hide the window, connect to the active configuration, disconnect, quit. The surface is system-owned: <code>NSStatusItem</code> plus <code>NSMenu</code> on macOS, <code>Shell_NotifyIcon</code> plus <code>TrackPopupMenu</code> on Windows. Figma draws it with the DS <code>trayMenu</code> (<code>dropdown-list-item</code> size=small: 30 rows, 14/18 text, 8 dividers, r10, p4/0) so the content and order can be reviewed; on the device the system draws the menu with its own metrics, and we only supply the words and the enabled flags.</p>
