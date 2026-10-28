@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-// A pressable DS surface: hover and pressed are state layers over it, keyboard focus is a border/focus ring.
+// A pressable DS surface: hover and pressed are state layers over it, keyboard focus is a border/focus ring over the hover layer.
 class DsInk extends StatefulWidget {
   const DsInk({
     super.key,
@@ -30,7 +30,27 @@ class DsInk extends StatefulWidget {
 }
 
 class _DsInkState extends State<DsInk> {
-  bool _focused = false;
+  bool _hasFocus = false;
+
+  bool get _focused =>
+      _hasFocus &&
+      FocusManager.instance.highlightMode == FocusHighlightMode.traditional;
+
+  @override
+  void initState() {
+    super.initState();
+    FocusManager.instance.addHighlightModeListener(_onHighlightMode);
+  }
+
+  @override
+  void dispose() {
+    FocusManager.instance.removeHighlightModeListener(_onHighlightMode);
+    super.dispose();
+  }
+
+  void _onHighlightMode(FocusHighlightMode _) {
+    if (_hasFocus) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,12 +70,9 @@ class _DsInkState extends State<DsInk> {
         focusNode: widget.focusNode,
         autofocus: widget.autofocus,
         borderRadius: radius,
+        focusColor: context.ds.text1.withValues(alpha: kHoverLayer),
         onFocusChange: (f) {
-          final shown =
-              f &&
-              FocusManager.instance.highlightMode ==
-                  FocusHighlightMode.traditional;
-          if (shown != _focused) setState(() => _focused = shown);
+          if (f != _hasFocus) setState(() => _hasFocus = f);
         },
         child: widget.child,
       ),

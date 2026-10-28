@@ -373,7 +373,7 @@ ThemeData buildAppTheme(Brightness brightness) {
       WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.pressed)
             ? on.withValues(alpha: kPressedLayer)
-            : s.contains(WidgetState.hovered)
+            : s.contains(WidgetState.hovered) || s.contains(WidgetState.focused)
             ? on.withValues(alpha: kHoverLayer)
             : Colors.transparent,
       );

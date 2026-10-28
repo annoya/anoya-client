@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:anoya/core/ds.dart';
+import 'package:anoya/core/platform_support.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/qr_scan_screen.dart';
 import 'package:anoya/features/start_screen.dart';
@@ -153,6 +154,42 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).controller!.text,
         'kept',
       );
+    });
+  });
+
+  group('receiving from a phone', () {
+    tearDown(() {
+      debugDefaultTargetPlatformOverride = null;
+      isTv = false;
+    });
+
+    testWidgets('on a TV it replaces the camera and the file, and has focus', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      isTv = true;
+      await pump(tester);
+      expect(find.text('Scan a QR code'), findsNothing);
+      expect(find.text('Open a config file…'), findsNothing);
+      final focused = FocusManager.instance.primaryFocus!.context!;
+      expect(
+        find.descendant(
+          of: find.byElementPredicate((e) => e == focused),
+          matching: find.text('Receive from a phone'),
+        ),
+        findsOneWidget,
+        reason: 'OK on the remote opens it; the field would raise a keyboard',
+      );
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('is offered on phones and computers too', (tester) async {
+      for (final platform in [TargetPlatform.android, TargetPlatform.macOS]) {
+        debugDefaultTargetPlatformOverride = platform;
+        await pump(tester);
+        expect(find.text('Receive from a phone'), findsOneWidget);
+      }
+      debugDefaultTargetPlatformOverride = null;
     });
   });
 

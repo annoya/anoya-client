@@ -27,7 +27,9 @@ import 'excluded_apps_screen.dart';
 import 'geo_screen.dart';
 import 'logs_screen.dart';
 import 'on_demand_screen.dart';
+import 'receive_screen.dart';
 import 'rule_sets_screen.dart';
+import 'send_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -310,10 +312,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return DsPage(
       title: l10n.commonSettings,
       children: [
-        if (st.profiles.isNotEmpty)
+        if (st.profiles.isNotEmpty || !canScanQr)
           DsGroup(
             caption: l10n.settingsSectionConfigurations,
-            children: [_configurationsRow(st)],
+            children: [
+              if (st.profiles.isNotEmpty) _configurationsRow(st),
+              if (canScanQr && st.profiles.isNotEmpty)
+                DsRow(
+                  glyph: Glyph.send,
+                  title: l10n.transferSend,
+                  subtitle: l10n.transferSendSubtitle,
+                  trailing: const [DsChevron()],
+                  onTap: () => sendToAnotherDevice(context),
+                ),
+              if (!canScanQr)
+                DsRow(
+                  glyph: Glyph.smartphone,
+                  title: l10n.transferReceive,
+                  subtitle: l10n.transferReceiveSubtitle,
+                  trailing: const [DsChevron()],
+                  onTap: () => _push(const ReceiveScreen()),
+                ),
+            ],
           ),
         DsGroup(
           caption: l10n.settingsSectionConnection,

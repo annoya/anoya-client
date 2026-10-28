@@ -61,10 +61,13 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
 ; changed start type or description would otherwise never reach it.
 Filename: "{app}\service\tunnel-service.exe"; Parameters: "-uninstall"; Flags: runhidden waituntilterminated; StatusMsg: "Stopping the tunnel service..."
 Filename: "{app}\service\tunnel-service.exe"; Parameters: "-install"; Flags: runhidden waituntilterminated; StatusMsg: "Installing the tunnel service..."
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#AppName} transfer"""; Flags: runhidden waituntilterminated
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""{#AppName} transfer"" dir=in action=allow protocol=TCP profile=private program=""{app}\{#AppName}.exe"""; Flags: runhidden waituntilterminated; StatusMsg: "Allowing transfers from a phone..."
 Filename: "{app}\{#AppName}.exe"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 Filename: "{app}\service\tunnel-service.exe"; Parameters: "-uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#AppName} transfer"""; Flags: runhidden waituntilterminated; RunOnceId: "TransferRule"
 
 [Code]
 // A running service holds its executable open; stop it before the files are

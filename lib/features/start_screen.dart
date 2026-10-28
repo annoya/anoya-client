@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,15 +9,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/app_error.dart';
+import '../core/device_transfer.dart';
 import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/parsers/qr_payload.dart';
 import '../core/parsers/subscription.dart';
+import '../core/platform_support.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 import 'qr_scan_screen.dart';
+import 'receive_screen.dart';
+import 'send_screen.dart';
 import 'sign_in_screen.dart';
 
 class StartScreen extends ConsumerStatefulWidget {
@@ -84,15 +87,28 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   }
 
   Future<void> _scanQr() async {
-    final text = await Navigator.of(
-      context,
-    ).push<String>(MaterialPageRoute(builder: (_) => const QrScanScreen()));
-    if (text != null && mounted) _fill(text);
+    final text = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => QrScanScreen(
+          refuse: (text) => TransferCode.parse(text) != null
+              ? null
+              : QrScanScreen.refuseUnlessConnection(text),
+        ),
+      ),
+    );
+    if (text == null || !mounted) return;
+    if (TransferCode.parse(text) case final code?) {
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => SendScreen(code: code)));
+      return;
+    }
+    _fill(text);
   }
 
-  static bool get _canScanQr =>
-      defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
+  void _receive() => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const ReceiveScreen()));
 
   void _fill(String text) {
     _input.value = TextEditingValue(
@@ -267,16 +283,23 @@ class _StartScreenState extends ConsumerState<StartScreen> {
               busy: _busy,
               onPressed: _detected == null ? null : _continue,
             ),
-            if (_canScanQr)
+            if (canScanQr)
               DsButton.secondary(
                 label: l10n.startScanQr,
                 glyph: Glyph.scan,
                 onPressed: _busy ? null : _scanQr,
               ),
+            if (canOpenFiles)
+              DsButton.secondary(
+                label: l10n.startOpenConfigFile,
+                glyph: Glyph.folder,
+                onPressed: _busy ? null : _openFile,
+              ),
             DsButton.secondary(
-              label: l10n.startOpenConfigFile,
-              glyph: Glyph.folder,
-              onPressed: _busy ? null : _openFile,
+              label: l10n.transferReceive,
+              glyph: Glyph.smartphone,
+              autofocus: isTv,
+              onPressed: _busy ? null : _receive,
             ),
             _OrDivider(l10n.startOr),
             DsButton.tonal(

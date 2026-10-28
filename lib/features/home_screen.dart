@@ -101,62 +101,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      body: PageBody(
-        child: LayoutBuilder(
-          builder: (context, box) => SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: box.maxHeight),
-              child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    _statusStrip(active),
-                    Expanded(
-                      child: Center(
-                        child: HomeHero(
-                          status: _status,
-                          onTap: active == null && !busy ? null : _toggle,
-                        ),
+      body: LayoutBuilder(
+        builder: (context, box) {
+          final hero = HomeHero(
+            key: isTv ? ValueKey(active?.id) : null,
+            status: _status,
+            onTap: active == null && !busy ? null : _toggle,
+            autofocus: isTv,
+          );
+          if (isWideLandscape(box.biggest)) {
+            return Row(
+              children: [
+                SizedBox(
+                  width: kWideHeroColumn,
+                  child: Center(child: hero),
+                ),
+                const SizedBox(width: kWideColumnGap),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: DsStack(
+                        gap: 8,
+                        children: [
+                          _statusStrip(active, wide: true),
+                          ..._cards(active),
+                        ],
                       ),
                     ),
-                    SafeArea(
-                      top: false,
-                      minimum: const EdgeInsets.only(bottom: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          kGutter,
-                          8,
-                          kGutter,
-                          0,
+                  ),
+                ),
+              ],
+            );
+          }
+          return PageBody(
+            child: LayoutBuilder(
+              builder: (context, box) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: box.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        _statusStrip(active),
+                        Expanded(child: Center(child: hero)),
+                        SafeArea(
+                          top: false,
+                          minimum: const EdgeInsets.only(bottom: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              kGutter,
+                              8,
+                              kGutter,
+                              0,
+                            ),
+                            child: DsStack(gap: 8, children: _cards(active)),
+                          ),
                         ),
-                        child: DsStack(
-                          gap: 8,
-                          children: [
-                            ?_checkBanner(),
-                            ?_onDemandBanner(),
-                            ?_expiryCard(active),
-                            if (active != null)
-                              _profileRow(active)
-                            else
-                              _addRow(),
-                            if (active != null) _locationRow(active),
-                          ],
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
+  List<Widget> _cards(Profile? active) => [
+    ?_checkBanner(),
+    ?_onDemandBanner(),
+    ?_expiryCard(active),
+    if (active != null) _profileRow(active) else _addRow(),
+    if (active != null) _locationRow(active),
+  ];
+
   void _push(Widget screen) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
-  Widget _statusStrip(Profile? active) {
+  Widget _statusStrip(Profile? active, {bool wide = false}) {
     final l10n = context.l10n;
     final onDemand = ref.watch(onDemandProvider);
     final collectLogs = ref.watch(
@@ -173,9 +196,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     };
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: kGutter, vertical: 8),
+      padding: wide
+          ? const EdgeInsets.only(bottom: 8)
+          : const EdgeInsets.symmetric(horizontal: kGutter, vertical: 8),
       child: Wrap(
-        alignment: WrapAlignment.center,
+        alignment: wide ? WrapAlignment.start : WrapAlignment.center,
         spacing: 8,
         runSpacing: 8,
         children: [
@@ -282,7 +307,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         DsRow(
           glyph: Glyph.plus,
           title: l10n.startAddConnection,
-          subtitle: l10n.startSubtitle,
+          subtitle: isTv
+              ? l10n.homeAddConnectionTvSubtitle
+              : l10n.startSubtitle,
+          autofocus: isTv,
           trailing: const [DsChevron()],
           onTap: () => _push(const StartScreen()),
         ),

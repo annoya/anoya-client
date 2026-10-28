@@ -97,4 +97,5 @@ Future<void> loadAndroidSdk() async {
   if (defaultTargetPlatform != TargetPlatform.android) return;
   final info = await NetworkExtensionCore.deviceInfo();
   androidSdk = int.tryParse(info?['sdk'] ?? '') ?? 0;
+  isTv = info?['tv'] == 'true';
 }

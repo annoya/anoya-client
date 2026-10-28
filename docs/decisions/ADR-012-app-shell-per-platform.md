@@ -127,7 +127,8 @@ designed for 393×852; a 1280×720 default shows one column in a field.
   manifest label and pubspec version. ABIs are pinned there (armeabi-v7a,
   arm64-v8a, x86_64), because gradle `abiFilters` are overridden by the
   Flutter plugin; the engine AAR and `libagw.so` are built for the same three.
-  There is no x86: Flutter has no 32-bit x86 release engine.
+  There is no x86: Flutter has no 32-bit x86 release engine. The same APKs
+  run on Android TV (ADR-025).
 
 ### Logs, on every platform
 

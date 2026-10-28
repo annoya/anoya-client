@@ -8,6 +8,26 @@ import 'theme.dart';
 const double kGutter = 16;
 const double kMaxContentWidth = 560;
 
+const EdgeInsets kTvSafeArea = EdgeInsets.symmetric(
+  horizontal: 48,
+  vertical: 27,
+);
+
+const double kWideMinWidth = 720;
+const double kWideMaxHeight = 600;
+const double kWideColumnGap = 48;
+const double kWideHeroColumn = 360;
+const double kWideSideColumn = 340;
+
+bool isWideLandscape(Size size) =>
+    size.width >= kWideMinWidth && size.height < kWideMaxHeight;
+
+const double kTransferTile = 300;
+const double kTransferCode = 276;
+const double kTransferTileSmall = 232;
+const double kTransferCodeSmall = 208;
+const double kTransferStepBadge = 28;
+
 const EdgeInsets kCardMargin = EdgeInsets.symmetric(
   horizontal: kGutter,
   vertical: 4,

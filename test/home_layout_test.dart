@@ -10,6 +10,7 @@ import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/vpn_core.dart';
 import 'package:anoya/features/home_screen.dart';
+import 'package:anoya/core/cat_sprite.dart';
 import 'package:anoya/features/start_screen.dart';
 import 'package:anoya/state/on_demand_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
@@ -61,7 +62,15 @@ void main() {
     ],
   );
 
-  Future<void> pump(WidgetTester tester, List<Profile> profiles) async {
+  Future<void> pump(
+    WidgetTester tester,
+    List<Profile> profiles, {
+    Size size = const Size(390, 844),
+  }) async {
+    tester.view
+      ..physicalSize = size
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     tester.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
@@ -131,6 +140,23 @@ void main() {
       lessThan(serverRow.top),
     );
   });
+  testWidgets('a short, wide screen puts the cat beside the cards', (
+    tester,
+  ) async {
+    await pump(tester, [
+      profile('p1', 'backup.single'),
+    ], size: const Size(864, 486));
+
+    final button = tester.getRect(find.text('Connect'));
+    final serverRow = tester.getRect(find.widgetWithText(DsCard, 'Germany'));
+    expect(button.right, lessThan(serverRow.left));
+    expect(
+      tester.getRect(find.byType(CatStage)).bottom,
+      lessThan(486),
+      reason: 'the phone column would push the cat off a TV',
+    );
+  });
+
   testWidgets('a subscription\'s groups reach the picker, above the servers', (
     tester,
   ) async {

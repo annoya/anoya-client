@@ -2901,4 +2901,155 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noticeStartFailedBody => 'Ouvrez Anoya pour savoir pourquoi.';
+
+  @override
+  String get transferReceive => 'Recevoir depuis un téléphone';
+
+  @override
+  String get transferReceiveSubtitle =>
+      'Configurations et réglages, via le Wi-Fi';
+
+  @override
+  String get transferSend => 'Envoyer vers un autre appareil';
+
+  @override
+  String get transferSendSubtitle =>
+      'Une télé, un ordinateur ou un nouveau téléphone';
+
+  @override
+  String get homeAddConnectionTvSubtitle =>
+      'Depuis votre téléphone ou par un lien';
+
+  @override
+  String get transferStepOpen => 'Ouvrez Anoya sur votre téléphone';
+
+  @override
+  String get transferStepSettings =>
+      'Réglages → Envoyer vers un autre appareil';
+
+  @override
+  String get transferStepScan => 'Visez ce code avec l’appareil photo';
+
+  @override
+  String get transferWaiting => 'En attente du téléphone…';
+
+  @override
+  String get transferReceiveNote =>
+      'Les deux appareils doivent être sur le même réseau. Le téléphone envoie directement ici, chiffré pour ce code — rien ne passe par un serveur.';
+
+  @override
+  String get transferNoNetwork => 'Pas de réseau';
+
+  @override
+  String get transferNoNetworkDetail =>
+      'Connectez cet appareil au Wi-Fi ou à l’Ethernet. Le code s’affiche dès qu’il a une adresse.';
+
+  @override
+  String get transferCouldntListen => 'Impossible de commencer la réception';
+
+  @override
+  String transferCouldntListenDetail(String reason) {
+    return 'Le système n’a pas laissé Anoya ouvrir un port sur ce réseau : $reason';
+  }
+
+  @override
+  String transferFrom(String device) {
+    return 'De $device';
+  }
+
+  @override
+  String get transferConfirmNote =>
+      'Rien n’est ajouté avant votre confirmation. Une configuration déjà reçue de ce téléphone est mise à jour, pas dupliquée.';
+
+  @override
+  String get transferConfirmNoteShort =>
+      'Rien n’est ajouté avant votre confirmation.';
+
+  @override
+  String transferItemNew(String kind) {
+    return '$kind · nouvelle';
+  }
+
+  @override
+  String transferItemUpdates(String kind) {
+    return '$kind · remplace celle d’ici';
+  }
+
+  @override
+  String get transferKindSelfhosted => 'Auto-hébergé';
+
+  @override
+  String get transferKindKey => 'Clé d’abonnement';
+
+  @override
+  String get transferSettingsSubtitle =>
+      'Routage, DNS, vérification de connexion';
+
+  @override
+  String get transferAddFailed => 'Impossible d’ajouter ce qui est arrivé';
+
+  @override
+  String get transferSendTitle => 'Envoyer';
+
+  @override
+  String get transferScanTitle => 'Scannez l’autre appareil';
+
+  @override
+  String get transferScanHint => 'Visez son code avec l’appareil photo';
+
+  @override
+  String get transferScanDetail =>
+      'Sur la télé ou l’ordinateur : Ajouter une connexion → Recevoir depuis un téléphone';
+
+  @override
+  String get transferNotAReceiveCode =>
+      'Ce n’est pas un code de l’écran Recevoir d’Anoya';
+
+  @override
+  String get transferOnYourNetwork => 'Sur votre réseau';
+
+  @override
+  String get transferSameNetworkTitle =>
+      'Fonctionne uniquement sur le même réseau';
+
+  @override
+  String get transferSameNetworkBody =>
+      'Les deux appareils doivent être sur le même Wi-Fi ou réseau filaire — cela ne passe pas par internet.';
+
+  @override
+  String get transferVpnHint =>
+      'Votre VPN est actif : activez « Réseau local en direct » dans les réglages, ou déconnectez-vous un instant.';
+
+  @override
+  String get transferAlso => 'Aussi';
+
+  @override
+  String get transferRuleSetsUsedOnly =>
+      'Seulement ceux qu’utilisent ces configurations';
+
+  @override
+  String get transferSendButton => 'Envoyer';
+
+  @override
+  String transferSent(String device) {
+    return 'Envoyé. Confirmez sur $device pour l’ajouter.';
+  }
+
+  @override
+  String transferUnreachable(String device) {
+    return 'Impossible de joindre $device';
+  }
+
+  @override
+  String get transferUnreachableDetail =>
+      'Vérifiez que les deux sont sur le même Wi-Fi.';
+
+  @override
+  String get transferUnreachableVpn =>
+      'Si le VPN est actif ici, activez « Réseau local en direct » dans les réglages, ou déconnectez-vous un instant.';
+
+  @override
+  String transferRefused(String device) {
+    return '$device affiche maintenant un nouveau code. Scannez-le à nouveau.';
+  }
 }

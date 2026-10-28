@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_zxing/flutter_zxing.dart';
 
 import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/theme.dart';
 import '../l10n/l10n.dart';
+import 'qr_code_view.dart';
 
 const kRuleSetQrMaxChars = 2331;
 
@@ -28,25 +28,13 @@ class RuleSetQrScreen extends StatefulWidget {
 }
 
 class _RuleSetQrScreenState extends State<RuleSetQrScreen> {
-  late final Encode _code = zx.encodeBarcode(
-    contents: widget.link,
-    params: EncodeParams(
-      format: Format.qrCode,
-      width: 1,
-      height: 1,
-      eccLevel: EccLevel.medium,
-    ),
-  );
+  late final _code = encodeQr(widget.link);
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final code = _code;
-    final ok =
-        code.isValid &&
-        code.data != null &&
-        (code.width ?? 0) > 0 &&
-        (code.height ?? 0) > 0;
+    final ok = qrUsable(code);
     if (!ok) Log.e('rule set QR not generated', code.error ?? 'no data');
     final ds = context.ds;
     return DsPage(
@@ -65,7 +53,7 @@ class _RuleSetQrScreenState extends State<RuleSetQrScreen> {
           child: ok
               ? SizedBox.square(
                   dimension: _kCodeSize,
-                  child: CustomPaint(painter: _Modules(code)),
+                  child: CustomPaint(painter: QrModules(code)),
                 )
               : Padding(
                   padding: const EdgeInsets.all(kCardPadding),
@@ -85,32 +73,4 @@ class _RuleSetQrScreenState extends State<RuleSetQrScreen> {
       ],
     );
   }
-}
-
-class _Modules extends CustomPainter {
-  _Modules(this.code);
-
-  final Encode code;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = code.width!;
-    final h = code.height!;
-    final data = code.data!;
-    final cell = size.shortestSide / (w > h ? w : h);
-    final paint = Paint()..color = Colors.black;
-    for (var y = 0; y < h; y++) {
-      for (var x = 0; x < w; x++) {
-        if (data[y * w + x] < 128) {
-          canvas.drawRect(
-            Rect.fromLTWH(x * cell, y * cell, cell + 0.5, cell + 0.5),
-            paint,
-          );
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_Modules old) => old.code != code;
 }
