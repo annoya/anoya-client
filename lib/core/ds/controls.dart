@@ -222,7 +222,7 @@ class DsSegmented<T> extends StatelessWidget {
                   child: DsInk(
                     color: v == value ? ds.selected : Colors.transparent,
                     side: v == value
-                        ? BorderSide(color: ds.accentLight)
+                        ? BorderSide(color: ds.borderSelectedStrong)
                         : BorderSide.none,
                     onTap: enabled && v != value ? () => onChanged!(v) : null,
                     child: Center(

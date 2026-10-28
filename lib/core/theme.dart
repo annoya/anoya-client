@@ -11,6 +11,7 @@ const double kRowGap = 12;
 const double kRowIcon = 24;
 const double kAppIconRadius = 6;
 const double kActionButton = 40;
+const double kCompactActionIcon = 20;
 const double kFieldActionButton = 40;
 const double kNavRowHeight = 56;
 const double kNavButton = 48;
@@ -81,6 +82,9 @@ class DsColors extends ThemeExtension<DsColors> {
     required this.buttonPrimary,
     required this.borderSoft,
     required this.borderFaint,
+    required this.borderDivider,
+    required this.borderInput,
+    required this.borderSelectedStrong,
     required this.borderField,
     required this.borderFocus,
     required this.borderBold,
@@ -93,6 +97,7 @@ class DsColors extends ThemeExtension<DsColors> {
     required this.badgeDestructive,
     required this.chroma,
     required this.catEye,
+    required this.highlightMuted,
     required this.shadow1,
     required this.shadow2,
   });
@@ -125,6 +130,9 @@ class DsColors extends ThemeExtension<DsColors> {
   final Color buttonPrimary;
   final Color borderSoft;
   final Color borderFaint;
+  final Color borderDivider;
+  final Color borderInput;
+  final Color borderSelectedStrong;
   final Color borderField;
   final Color borderFocus;
   final Color borderBold;
@@ -137,6 +145,7 @@ class DsColors extends ThemeExtension<DsColors> {
   final Color badgeDestructive;
   final Color chroma;
   final Color catEye;
+  final Color highlightMuted;
   final List<BoxShadow> shadow1;
   final List<BoxShadow> shadow2;
 
@@ -167,8 +176,11 @@ class DsColors extends ThemeExtension<DsColors> {
     accentLight: Color(0xFF7881F6),
     accentAlpha: Color(0x806366F1),
     buttonPrimary: Color(0xFF4F46E5),
-    borderSoft: Color(0xFFD3D4D9),
-    borderFaint: Color(0xFFE3E4E9),
+    borderSoft: Color(0xFFC7D2FE),
+    borderFaint: Color(0xFFE0E7FF),
+    borderDivider: Color(0xFFDBDCE1),
+    borderInput: Color(0xFFD3D4D9),
+    borderSelectedStrong: Color(0xFF7881F6),
     borderField: Color(0xFF85878D),
     borderFocus: Color(0xFF4F46E5),
     borderBold: Color(0xFF797B82),
@@ -181,6 +193,7 @@ class DsColors extends ThemeExtension<DsColors> {
     badgeDestructive: Color(0xFFBE123C),
     chroma: Color(0xFFA5B4FC),
     catEye: Color(0xFFA5B4FC),
+    highlightMuted: Color(0xFF797B82),
     shadow1: [
       BoxShadow(color: Color(0x14000000), offset: Offset(0, 4), blurRadius: 12),
     ],
@@ -196,13 +209,13 @@ class DsColors extends ThemeExtension<DsColors> {
     dialog: Color(0xFF1E1F25),
     panel: Color(0xFF3E3F46),
     overlay: Color(0x8008090E),
-    selected: Color(0x4D6366F1),
+    selected: Color(0x26818CF8),
     selectedStrong: Color(0xFFA5B4FC),
-    accentSubtle: Color(0x4D818CF8),
+    accentSubtle: Color(0x26818CF8),
     controlTrack: Color(0xFF1E1F25),
     inverse: Color(0xFFE3E4E9),
-    text1: Color(0xFFF3F4F8),
-    text2: Color(0xFFE3E4E9),
+    text1: Color(0xFFE3E4E9),
+    text2: Color(0xFFD3D4D9),
     text3: Color(0xFFA0A2A8),
     text4: Color(0xFF85878D),
     textAccent: Color(0xFFC7D2FE),
@@ -218,6 +231,9 @@ class DsColors extends ThemeExtension<DsColors> {
     buttonPrimary: Color(0xFFA5B4FC),
     borderSoft: Color(0xFF3E3F46),
     borderFaint: Color(0xFF303138),
+    borderDivider: Color(0xFF303138),
+    borderInput: Color(0xFF3E3F46),
+    borderSelectedStrong: Color(0xFF7881F6),
     borderField: Color(0xFF51535A),
     borderFocus: Color(0xFFC7D2FE),
     borderBold: Color(0xFFA0A2A8),
@@ -230,6 +246,7 @@ class DsColors extends ThemeExtension<DsColors> {
     badgeDestructive: Color(0xFFFB7185),
     chroma: Color(0xFFA5B4FC),
     catEye: Color(0xFFA5B4FC),
+    highlightMuted: Color(0xFF797B82),
     shadow1: [
       BoxShadow(
         color: Color(0x26000000),
@@ -473,9 +490,9 @@ ThemeData buildAppTheme(Brightness brightness) {
       errorStyle: DsType.small.copyWith(color: c.destructive),
       prefixIconColor: c.icon1,
       suffixIconColor: c.icon1,
-      border: field(c.borderSoft),
-      enabledBorder: field(c.borderSoft),
-      disabledBorder: field(c.borderSoft.withValues(alpha: kDisabledOpacity)),
+      border: field(c.borderInput),
+      enabledBorder: field(c.borderInput),
+      disabledBorder: field(c.borderInput.withValues(alpha: kDisabledOpacity)),
       focusedBorder: field(c.borderFocus),
       errorBorder: field(c.destructive),
       focusedErrorBorder: field(c.destructive),
@@ -520,7 +537,11 @@ ThemeData buildAppTheme(Brightness brightness) {
         borderRadius: BorderRadius.circular(kSnackbarRadius),
       ),
     ),
-    dividerTheme: DividerThemeData(color: c.borderSoft, space: 1, thickness: 1),
+    dividerTheme: DividerThemeData(
+      color: c.borderDivider,
+      space: 1,
+      thickness: 1,
+    ),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       color: c.accent,
       linearTrackColor: c.panel,

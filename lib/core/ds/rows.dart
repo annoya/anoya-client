@@ -27,6 +27,7 @@ class DsRow extends StatelessWidget {
     this.subtitleColor,
     this.tooltip,
     this.autofocus = false,
+    this.trailingGap = kRowGap,
   });
 
   final Glyph? glyph;
@@ -49,6 +50,7 @@ class DsRow extends StatelessWidget {
   final Color? subtitleColor;
   final String? tooltip;
   final bool autofocus;
+  final double trailingGap;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +115,7 @@ class DsRow extends StatelessWidget {
               ),
             if (lead != null) const SizedBox(width: kRowGap),
             Expanded(child: text),
-            for (final t in trailing) ...[const SizedBox(width: kRowGap), t],
+            for (final t in trailing) ...[SizedBox(width: trailingGap), t],
           ],
         ),
       ),
@@ -191,10 +193,16 @@ class _RowSpinner extends StatelessWidget {
 
 // Trailing chevron: a 48 slot so the text column lines up with the rows that have actions.
 class DsChevron extends StatelessWidget {
-  const DsChevron({super.key, this.down = false, this.locked = false});
+  const DsChevron({
+    super.key,
+    this.down = false,
+    this.locked = false,
+    this.iconSize = kRowIcon,
+  });
 
   final bool down;
   final bool locked;
+  final double iconSize;
 
   @override
   Widget build(BuildContext context) => DsAction(
@@ -203,6 +211,7 @@ class DsChevron extends StatelessWidget {
         : down
         ? Glyph.chevronDown
         : Glyph.chevronRight,
+    iconSize: iconSize,
   );
 }
 

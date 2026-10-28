@@ -73,6 +73,7 @@ enum Glyph {
   split('split'),
   square('square'),
   star('star'),
+  starFilled('star-filled'),
   starOff('star-off'),
   sunMoon('sun-moon'),
   timer('timer'),
