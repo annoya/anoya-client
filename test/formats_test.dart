@@ -136,6 +136,22 @@ void main() {
         expect(p.groups, isEmpty);
         expect(p.locations.single.label, 'Solo');
       });
+
+      test(
+        'over the hops of a chain is not a group, only the egress shows',
+        () {
+          final p = parseSubscriptionBody(
+            '''
+{"remarks": "DE", "outbounds": [${vless('proxy', 'de.example')},
+  ${vless('bridge', 'ru1.example')}, ${vless('bridge-2', 'ru2.example')},
+  {"tag": "LOOP-BRIDGE", "protocol": "loopback"}],
+ "routing": {"balancers": [{"tag": "Super_Balancer", "selector": ["bridge"]}]}}''',
+          );
+          expect(p.groups, isEmpty);
+          expect(p.locations.single.label, 'DE');
+          expect(p.locations.single.proxy['server'], 'de.example');
+        },
+      );
     });
   });
 

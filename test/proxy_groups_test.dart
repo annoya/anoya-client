@@ -104,6 +104,26 @@ proxy-groups:
         expect(labels('Listed'), ['🇩🇪 Germany']);
       });
 
+      test('a code point written the engine\'s way still matches', () {
+        const escaped = '''
+proxies:
+  - {name: "🏳LTE #1", type: vless, server: lte.example, port: 443, uuid: u1}
+  - {name: "🇩🇪 Germany", type: vless, server: de.example, port: 443, uuid: u2}
+proxy-groups:
+  - name: WHITE LISTS
+    type: url-test
+    include-all: true
+    filter: \\x{1F3F3}
+''';
+        final p = parseSubscriptionBody(escaped);
+        expect(
+          p.groups.single.members.map(
+            (id) => p.locations.firstWhere((l) => l.id == id).label,
+          ),
+          ['🏳LTE #1'],
+        );
+      });
+
       test('a pattern we cannot run drops the group, never widens it', () {
         const broken = '''
 proxies:

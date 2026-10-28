@@ -138,7 +138,48 @@ ProviderRouting? parseClashRouting(String body) {
   }
   final rules = (doc['rules'] as YamlList?)?.map((e) => '$e').toList();
   if (rules == null || rules.isEmpty) return null;
-  return parseClashRules(rules, lists: _clashRuleLists(doc['rule-providers']));
+  return parseClashRules(
+    rules,
+    lists: _clashRuleLists(doc['rule-providers']),
+    targets: _clashTargets(doc),
+  );
+}
+
+Map<String, String?> _clashTargets(YamlMap doc) {
+  final proxies = <String, String>{
+    for (final p in (doc['proxies'] as YamlList? ?? const []))
+      if (p is YamlMap && p['name'] != null)
+        '${p['name']}': '${p['type'] ?? ''}'.toLowerCase(),
+  };
+  final groups = <String, YamlMap>{
+    for (final g in (doc['proxy-groups'] as YamlList? ?? const []))
+      if (g is YamlMap && g['name'] != null) '${g['name']}': g,
+  };
+
+  String? resolve(String tag, Set<String> seen) {
+    final type = proxies[tag];
+    if (type != null) {
+      return switch (type) {
+        'direct' => 'direct',
+        'reject' => 'block',
+        'dns' => null,
+        _ => 'proxy',
+      };
+    }
+    final group = groups[tag];
+    if (group == null) return _actionForTag(tag);
+    if (!seen.add(tag)) return 'proxy';
+    final kind = '${group['type'] ?? ''}'.toLowerCase();
+    final first = (group['proxies'] as YamlList?)?.firstOrNull;
+    if ((kind == 'select' || kind == 'fallback') && first != null) {
+      return resolve('$first', seen);
+    }
+    return 'proxy';
+  }
+
+  return {
+    for (final tag in {...proxies.keys, ...groups.keys}) tag: resolve(tag, {}),
+  };
 }
 
 List<RuleList> _clashRuleLists(Object? node) {
@@ -161,7 +202,10 @@ List<RuleList> _clashRuleLists(Object? node) {
 ProviderRouting? parseClashRules(
   List<String> lines, {
   List<RuleList> lists = const [],
+  Map<String, String?> targets = const {},
 }) {
+  String? actionFor(String tag) =>
+      targets.containsKey(tag) ? targets[tag] : _actionForTag(tag);
   final rules = <RoutingRule>[];
   var skipped = 0;
   String? catchAll;
@@ -170,7 +214,7 @@ ProviderRouting? parseClashRules(
     if (parts.length < 2) continue;
     final type = parts[0].toUpperCase();
     if (type == 'MATCH') {
-      catchAll = _actionForTag(parts[1]);
+      catchAll = actionFor(parts[1]);
       continue;
     }
     final ourType = switch (type) {
@@ -185,7 +229,7 @@ ProviderRouting? parseClashRules(
       'RULE-SET' => 'rule-list',
       _ => null,
     };
-    final action = parts.length >= 3 ? _actionForTag(parts[2]) : null;
+    final action = parts.length >= 3 ? actionFor(parts[2]) : null;
     if (ourType == null || action == null) {
       skipped++;
       continue;

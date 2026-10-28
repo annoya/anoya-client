@@ -29,9 +29,11 @@ final class ProviderRoutingPolicy extends RoutingPolicy {
   @override
   Future<Routing> resolve() async {
     if (listsEnabled) return routing;
+    final rules = routing.rules.where((r) => !r.needsRuleList).toList();
+    final tunnelsNothing = !rules.any((r) => r.action == 'proxy');
     return Routing(
-      mode: routing.mode,
-      rules: routing.rules.where((r) => !r.needsRuleList).toList(),
+      mode: routing.mode == 'split' && tunnelsNothing ? 'full' : routing.mode,
+      rules: rules,
       lists: const [],
     );
   }

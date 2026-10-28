@@ -25,7 +25,7 @@ ParsedSubscription? parseXrayServers(String body) {
 
   final out = <Location>[];
   final unsupported = <String, int>{};
-  final balanced = <(Map, String, List<_Outbound>)>[];
+  final balanced = <(Map, String, List<Location>)>[];
   var index = 0;
   for (final cfg in configs) {
     if (cfg is! Map) continue;
@@ -40,12 +40,12 @@ ParsedSubscription? parseXrayServers(String body) {
       try {
         final proxy = _proxyFor(protocol, ob);
         if (proxy == null) {
-          unsupported.update(protocol, (n) => n + 1, ifAbsent: () => 1);
+          parsed.add((tag: tag, location: null, unsupported: protocol));
           continue;
         }
         final skip = _applyStream(proxy, protocol, ob['streamSettings']);
         if (skip != null) {
-          unsupported.update(skip, (n) => n + 1, ifAbsent: () => 1);
+          parsed.add((tag: tag, location: null, unsupported: skip));
           continue;
         }
         parsed.add((
@@ -62,21 +62,34 @@ ParsedSubscription? parseXrayServers(String body) {
                 ? description
                 : _metaDescription(ob['meta']),
           ),
+          unsupported: null,
         ));
       } catch (e) {
         Log.e('xray json: unusable outbound', '$protocol -> $e');
       }
       index++;
     }
-    final selectors = _balancerSelectors(cfg);
-    final members = [
-      for (final o in parsed)
-        if (selectors.any(o.tag.startsWith)) o,
+    if (parsed.isEmpty) continue;
+    final egress = parsed.first;
+    final balancer = _balancerOf(cfg, egress.tag);
+    final members = balancer == null
+        ? [egress]
+        : [
+            for (final o in parsed)
+              if (balancer.selector.any(o.tag.startsWith)) o,
+          ];
+    for (final o in members) {
+      final why = o.unsupported;
+      if (why != null) unsupported.update(why, (n) => n + 1, ifAbsent: () => 1);
+    }
+    final usable = [
+      for (final o in members)
+        if (o.location != null) o.location!,
     ];
-    if (members.length > 1) balanced.add((cfg, label, members));
-    for (final o in parsed) {
-      if (members.length > 1 && members.contains(o)) continue;
-      out.add(o.location);
+    if (usable.length > 1) {
+      balanced.add((cfg, label.isNotEmpty ? label : balancer!.tag, usable));
+    } else {
+      out.addAll(usable);
     }
   }
   final groups = _balancerGroups(balanced, out);
@@ -90,29 +103,33 @@ ParsedSubscription? parseXrayServers(String body) {
   );
 }
 
-typedef _Outbound = ({String tag, Location location});
+typedef _Outbound = ({String tag, Location? location, String? unsupported});
 
-List<String> _balancerSelectors(Map cfg) {
+({String tag, List<String> selector})? _balancerOf(Map cfg, String egress) {
   final routing = cfg['routing'];
   final balancers = routing is Map ? routing['balancers'] : null;
-  return [
-    for (final b in balancers is List ? balancers : const [])
-      if (b is Map)
-        for (final s in (b['selector'] as List? ?? const []))
-          if ('$s'.trim().isNotEmpty) '$s'.trim(),
-  ];
+  for (final b in balancers is List ? balancers : const []) {
+    if (b is! Map) continue;
+    final selector = [
+      for (final s in (b['selector'] as List? ?? const []))
+        if ('$s'.trim().isNotEmpty) '$s'.trim(),
+    ];
+    if (selector.any(egress.startsWith)) {
+      return (tag: '${b['tag'] ?? ''}'.trim(), selector: selector);
+    }
+  }
+  return null;
 }
 
 List<ProxyGroup> _balancerGroups(
-  List<(Map, String, List<_Outbound>)> balanced,
+  List<(Map, String, List<Location>)> balanced,
   List<Location> out,
 ) {
   final byProxy = {for (final l in out) jsonEncode(l.proxy): l.id};
   final groups = <ProxyGroup>[];
-  for (final (cfg, label, members) in balanced) {
+  for (final (cfg, name, members) in balanced) {
     final ids = <String>[];
-    for (final m in members) {
-      final loc = m.location;
+    for (final loc in members) {
       final id = byProxy.putIfAbsent(jsonEncode(loc.proxy), () {
         out.add(
           Location(
@@ -130,11 +147,9 @@ List<ProxyGroup> _balancerGroups(
       });
       if (!ids.contains(id)) ids.add(id);
     }
-    final routing = cfg['routing'] as Map;
-    final first = (routing['balancers'] as List).whereType<Map>().first;
     final (url, interval) = _probe(cfg);
     final group = ProxyGroup(
-      name: label.isNotEmpty ? label : '${first['tag'] ?? ''}'.trim(),
+      name: name,
       type: 'url-test',
       members: ids,
       testUrl: url,

@@ -455,9 +455,14 @@ mean "let a human choose", which the picker already is. A group's members are
 resolved to servers this app can actually run, and a group left with none is not
 offered at all.
 
-An Xray JSON config that routes through a **balancer** is a group too, not a
-server: its `selector` (tag prefixes) picks two or more outbounds, and the
-config becomes one `url-test` group named after its `remarks`, probed at the
+An Xray JSON config is one entry — its egress, the first outbound that is not
+plumbing (Xray's default). Its other outbounds are hops the config uses on
+the way (a chain's entry nodes behind a loopback, an exit for some domains)
+and are not listed: offered as servers they would connect somewhere the
+provider never meant traffic to leave from. When the egress is one of a
+**balancer**'s outbounds the entry is a group, not a server: the balancer's
+`selector` (tag prefixes) picks two or more outbounds, and the config becomes
+one `url-test` group named after its `remarks`, probed at the
 `burstObservatory` or `observatory` URL and interval. Every strategy
 (`leastLoad`, `leastPing`, `random`, `roundRobin`) maps to `url-test` — the
 engine has none of them as such, and lowest latency is what a provider means by
@@ -814,6 +819,22 @@ would be worse than none. They are applied by default and attributed to the
 provider on screen, but — unlike an organization's policy — the user can switch
 them off, at which point the device's own rule set applies again: a panel
 controls what it returns, not where this device's traffic goes (ADR-005).
+
+A Clash rule names its target, and panels name targets after services ("🚫
+Blocked sites", "RU sites"), not directions. So the direction is read from what
+the target is in the same document, never from words in its name: a proxy of
+`type: direct` is direct, `type: reject` is block; a `select` group goes where
+its first entry goes (the engine's default) and a `fallback` group where its
+first entry goes (a direct connection is always alive), followed to the end;
+any other group, and a loop, is the tunnel. Only a target the document does not
+define (`DIRECT`, `REJECT`, `PROXY`) is read by its name. The `MATCH` target
+decides the mode the same way: a fallback that starts with a direct connection
+makes the policy a split.
+
+A split policy that tunnels nothing once its rule lists are set aside applies
+as **full** while the rule lists switch is off: it would send nothing to the
+tunnel, and a connected VPN that carries no traffic is the one outcome worse
+than ignoring the provider's exceptions.
 
 Rule types are the client's own superset of the shared schema (like `geoip` and
 `geosite` before them): `domain-regex` maps to the engine's `DOMAIN-REGEX`, and

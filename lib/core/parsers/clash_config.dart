@@ -156,6 +156,8 @@ dynamic _deepConvert(dynamic node) {
   return node;
 }
 
+final _codePointEscape = RegExp(r'\\x\{([0-9A-Fa-f]{1,6})\}');
+
 List<RegExp>? _patterns(Object? node) {
   final raw = '${node ?? ''}'.trim();
   if (raw.isEmpty) return null;
@@ -168,6 +170,10 @@ List<RegExp>? _patterns(Object? node) {
       body = body.substring(4);
       sensitive = false;
     }
+    body = body.replaceAllMapped(_codePointEscape, (m) {
+      final cp = int.parse(m[1]!, radix: 16);
+      return cp > 0x10FFFF ? m[0]! : RegExp.escape(String.fromCharCode(cp));
+    });
     out.add(RegExp(body, caseSensitive: sensitive));
   }
   return out.isEmpty ? null : out;
