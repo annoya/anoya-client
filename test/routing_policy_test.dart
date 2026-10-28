@@ -140,5 +140,43 @@ void main() {
         expect(policy.listsEnabled, isTrue);
       },
     );
+
+    test(
+      'a split that tunnels only through lists is full until they are accepted',
+      () async {
+        const listsOnly = Routing(
+          mode: 'split',
+          rules: [
+            RoutingRule(
+              type: 'rule-list',
+              values: ['blocked'],
+              action: 'proxy',
+            ),
+            RoutingRule(
+              type: 'domain-suffix',
+              values: ['ru.example'],
+              action: 'direct',
+            ),
+          ],
+          lists: [],
+        );
+        final off = await routingPolicyFor(
+          profile(provider: listsOnly),
+          loadRuleSet: load,
+        ).resolve();
+        expect(
+          off.mode,
+          'full',
+          reason: 'a split with nothing to tunnel sends everything around it',
+        );
+        expect(off.rules.single.value, 'ru.example');
+
+        final on = await routingPolicyFor(
+          profile(provider: listsOnly, listsOn: true),
+          loadRuleSet: load,
+        ).resolve();
+        expect(on.mode, 'split');
+      },
+    );
   });
 }

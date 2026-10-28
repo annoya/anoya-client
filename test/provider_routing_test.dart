@@ -180,6 +180,48 @@ void main() {
     test('a rules list that is only MATCH says nothing', () {
       expect(parseClashRules(['MATCH,→ Provider']), isNull);
     });
+
+    group('aimed at the provider\'s own groups', () {
+      const body = '''
+proxies:
+  - {name: Без VPN, type: direct}
+  - {name: Блок, type: reject}
+  - {name: nl, type: vless, server: nl.example, port: 443, uuid: u}
+proxy-groups:
+  - {name: RU сайты, type: select, proxies: [Без VPN]}
+  - {name: Остальные, type: fallback, proxies: [Без VPN, Auto]}
+  - {name: Auto, type: url-test, proxies: [nl]}
+  - {name: Недоступные, type: select, proxies: [Auto, Без VPN]}
+  - {name: Реклама, type: select, proxies: [Блок]}
+  - {name: Loop, type: select, proxies: [Loop2]}
+  - {name: Loop2, type: select, proxies: [Loop]}
+rules:
+  - DOMAIN-SUFFIX,ru.example,RU сайты
+  - DOMAIN-SUFFIX,blocked.example,Недоступные
+  - DOMAIN-SUFFIX,ads.example,Реклама
+  - DOMAIN-SUFFIX,loop.example,Loop
+  - DOMAIN-SUFFIX,nl.example,nl
+  - MATCH,Остальные
+''';
+
+      test(
+        'a rule goes where the group sends it, not where its name hints',
+        () {
+          final r = parseClashRouting(body)!;
+          expect(r.routing.rules.map((e) => '${e.value} ${e.action}'), [
+            'ru.example direct',
+            'blocked.example proxy',
+            'ads.example block',
+            'loop.example proxy',
+            'nl.example proxy',
+          ]);
+        },
+      );
+
+      test('a fallback that starts with a direct connection is a split', () {
+        expect(parseClashRouting(body)!.routing.mode, 'split');
+      });
+    });
   });
 
   group('clash rule lists', () {
