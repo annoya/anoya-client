@@ -761,5 +761,9 @@
   "transferUnreachable": "Impossible de joindre {device}",
   "transferUnreachableDetail": "Vérifiez que les deux sont sur le même Wi-Fi.",
   "transferUnreachableVpn": "Si le VPN est actif ici, activez « Réseau local en direct » dans les réglages, ou déconnectez-vous un instant.",
-  "transferRefused": "{device} affiche maintenant un nouveau code. Scannez-le à nouveau."
+  "transferRefused": "{device} affiche maintenant un nouveau code. Scannez-le à nouveau.",
+  "fileNoPicker": "Aucune app pour choisir un fichier",
+  "fileNoPickerDetail": "Collez plutôt le lien, ou recevez la configuration depuis un téléphone.",
+  "fileAccessDenied": "Pas d’accès aux fichiers",
+  "fileAccessDeniedDetail": "Autorisez Anoya à lire le stockage dans les réglages du système, ou collez plutôt le lien."
 }

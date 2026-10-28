@@ -761,5 +761,9 @@
   "transferUnreachable": "无法连接到 {device}",
   "transferUnreachableDetail": "请检查两台设备是否连接同一个 Wi-Fi。",
   "transferUnreachableVpn": "如果此设备的 VPN 已开启，请在设置中打开“局域网直连”，或暂时断开连接。",
-  "transferRefused": "{device} 现在有新的二维码，请重新扫描。"
+  "transferRefused": "{device} 现在有新的二维码，请重新扫描。",
+  "fileNoPicker": "没有可用于选择文件的应用",
+  "fileNoPickerDetail": "请改为粘贴链接，或从手机接收配置。",
+  "fileAccessDenied": "无法访问文件",
+  "fileAccessDeniedDetail": "请在系统设置中允许 Anoya 读取存储，或改为粘贴链接。"
 }

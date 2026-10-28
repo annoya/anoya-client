@@ -2075,5 +2075,9 @@
   "transferUnreachableDetail": "Check that both are on the same Wi-Fi.",
   "transferUnreachableVpn": "If the VPN is on here, turn on Local network direct in Settings, or disconnect for a moment.",
   "transferRefused": "{device} has a new code now. Scan it again.",
-  "@transferRefused": {"placeholders": {"device": {"type": "String"}}}
+  "@transferRefused": {"placeholders": {"device": {"type": "String"}}},
+  "fileNoPicker": "No app to pick a file with",
+  "fileNoPickerDetail": "Paste the link instead, or receive the configuration from a phone.",
+  "fileAccessDenied": "No access to files",
+  "fileAccessDeniedDetail": "Allow Anoya to read storage in the system settings, or paste the link instead."
 }

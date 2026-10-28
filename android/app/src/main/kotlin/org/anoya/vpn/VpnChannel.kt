@@ -27,6 +27,9 @@ object VpnChannel {
     private var pendingStart: MethodChannel.Result? = null
     const val PREPARE_REQUEST = 24001
     const val NOTIFICATIONS_REQUEST = 24002
+    const val FILE_ACCESS_REQUEST = 24003
+
+    private var pendingFileAccess: MethodChannel.Result? = null
 
     private val calls = Executors.newSingleThreadExecutor()
 
@@ -189,6 +192,17 @@ object VpnChannel {
                         Intent(context, MihomoVpnService::class.java).setAction(MihomoVpnService.ACTION_RESTART))
                     result.success(null)
                 }
+                "ensure_file_access" -> {
+                    val activity = host.get()
+                    if (activity == null || !needsStorageRead(activity)) {
+                        result.success(true)
+                    } else {
+                        pendingFileAccess?.success(false)
+                        pendingFileAccess = result
+                        activity.requestPermissions(
+                            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), FILE_ACCESS_REQUEST)
+                    }
+                }
                 "installed_apps" -> probes.execute {
                     val apps = runCatching { InstalledApps.list(context) }.getOrDefault(emptyList())
                     main.post { result.success(apps) }
@@ -253,6 +267,23 @@ object VpnChannel {
         if (host.get() === activity) host = WeakReference(null)
         events = null
         pendingStart = null
+        pendingFileAccess?.success(false)
+        pendingFileAccess = null
+    }
+
+    fun onFileAccessResult(granted: Boolean) {
+        pendingFileAccess?.success(granted)
+        pendingFileAccess = null
+    }
+
+    private fun needsStorageRead(activity: Activity): Boolean {
+        if (Build.VERSION.SDK_INT !in Build.VERSION_CODES.M..Build.VERSION_CODES.Q) return false
+        if (activity.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_GRANTED) return false
+        val pm = activity.packageManager
+        return listOf("com.android.documentsui", "com.google.android.documentsui").none {
+            runCatching { pm.getPackageInfo(it, 0) }.isSuccess
+        }
     }
 
     fun onVpnPermissionResult(context: Context, resultCode: Int) {

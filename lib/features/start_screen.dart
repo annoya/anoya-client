@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/app_error.dart';
 import '../core/device_transfer.dart';
 import '../core/ds.dart';
+import '../core/file_open.dart';
 import '../core/log.dart';
 import '../core/parsers/qr_payload.dart';
 import '../core/parsers/subscription.dart';
@@ -198,18 +198,9 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   }
 
   Future<void> _openFile() => _run(() async {
-    final res = await FilePicker.platform.pickFiles(withData: true);
-    if (res == null) return false;
-    final bytes = res.files.single.bytes;
-    if (bytes == null) {
-      throw AppErrorException(
-        AppError(
-          L10n.current.startCouldntReadFile,
-          detail: L10n.current.startCouldntReadFileDetail,
-        ),
-      );
-    }
-    await _ctrl.addFromText(utf8.decode(bytes), name: res.files.single.name);
+    final file = await openFile();
+    if (file == null) return false;
+    await _ctrl.addFromText(utf8.decode(file.bytes), name: file.name);
     return true;
   });
 

@@ -761,5 +761,9 @@
   "transferUnreachable": "Не удалось связаться с {device}",
   "transferUnreachableDetail": "Проверьте, что оба устройства в одной сети Wi-Fi.",
   "transferUnreachableVpn": "Если здесь включён VPN, включите «Локальная сеть напрямую» в настройках или ненадолго отключитесь.",
-  "transferRefused": "У {device} теперь новый код. Отсканируйте его снова."
+  "transferRefused": "У {device} теперь новый код. Отсканируйте его снова.",
+  "fileNoPicker": "Нет приложения для выбора файла",
+  "fileNoPickerDetail": "Вставьте ссылку или получите конфигурацию с телефона.",
+  "fileAccessDenied": "Нет доступа к файлам",
+  "fileAccessDeniedDetail": "Разрешите Anoya доступ к хранилищу в настройках системы или вставьте ссылку."
 }

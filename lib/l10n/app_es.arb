@@ -761,5 +761,9 @@
   "transferUnreachable": "No se pudo contactar con {device}",
   "transferUnreachableDetail": "Comprueba que ambos estén en la misma red Wi-Fi.",
   "transferUnreachableVpn": "Si la VPN está activa aquí, activa «Red local directa» en Ajustes o desconéctate un momento.",
-  "transferRefused": "{device} tiene ahora un código nuevo. Escanéalo de nuevo."
+  "transferRefused": "{device} tiene ahora un código nuevo. Escanéalo de nuevo.",
+  "fileNoPicker": "No hay ninguna app para elegir un archivo",
+  "fileNoPickerDetail": "Pega el enlace o recibe la configuración desde un teléfono.",
+  "fileAccessDenied": "Sin acceso a los archivos",
+  "fileAccessDeniedDetail": "Permite a Anoya leer el almacenamiento en los ajustes del sistema, o pega el enlace."
 }

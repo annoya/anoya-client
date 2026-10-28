@@ -1,6 +1,7 @@
 package org.anoya.vpn
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -36,6 +37,18 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         WebAuthChannel.onHostResumed()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == VpnChannel.FILE_ACCESS_REQUEST) {
+            VpnChannel.onFileAccessResult(
+                grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
+        }
     }
 
     @Deprecated("Deprecated in Java")

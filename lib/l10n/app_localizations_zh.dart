@@ -2892,4 +2892,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String transferRefused(String device) {
     return '$device 现在有新的二维码，请重新扫描。';
   }
+
+  @override
+  String get fileNoPicker => '没有可用于选择文件的应用';
+
+  @override
+  String get fileNoPickerDetail => '请改为粘贴链接，或从手机接收配置。';
+
+  @override
+  String get fileAccessDenied => '无法访问文件';
+
+  @override
+  String get fileAccessDeniedDetail => '请在系统设置中允许 Anoya 读取存储，或改为粘贴链接。';
 }
