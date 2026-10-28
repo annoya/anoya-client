@@ -24,6 +24,11 @@ class ConfigScreen extends ConsumerWidget {
       if (p.id == profileId) profile = p;
     }
     if (profile == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted && ModalRoute.of(context)?.isCurrent == true) {
+          Navigator.of(context).pop();
+        }
+      });
       return const DsPage();
     }
     final isActive = st.activeId == profile.id;
