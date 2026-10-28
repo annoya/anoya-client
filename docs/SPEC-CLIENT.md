@@ -71,7 +71,7 @@ user may do. See ADR-005.
 
 ## 2. Tech
 
-Flutter (macOS, iOS, Android, Windows, Linux), Riverpod for state, `http`, `flutter_secure_storage` for
+Flutter (macOS, iOS, Android including Android TV, Windows, Linux), Riverpod for state, `http`, `flutter_secure_storage` for
 tokens, `path_provider`, `crypto`, `yaml` (subscription parsing), `file_picker`,
 `archive` + `share_plus` (log export), `flutter_svg` (brand glyphs).
 
@@ -562,6 +562,18 @@ active configuration and server, auto-connect, on-demand arming, issued Amnezia
 servers, device identity, geo databases and logs stay on the device. Every
 value is sealed with a key that lives in iCloud Keychain. See ADR-020.
 
+### 4.3.2 From a phone to another device
+
+A TV, a computer or another phone shows **Receive from a phone**: a QR code
+with its private IPv4 addresses, a port and a one-time X25519 key, valid while
+the screen is open. The phone's **Send to another device** (Settings, phones
+only) scans it, lets the person pick configurations, rule sets and settings,
+warns that both devices must share a network, and posts the package sealed to
+that key straight to the receiver over the LAN — no server in between. What
+travels is the iCloud recipe of §4.3.1; rule sets the picked configurations use
+always go along. The receiver lists what arrived and adds nothing until it is
+confirmed; a configuration it already has is updated. See ADR-025.
+
 ### 4.4 The connection check
 
 "Connected" is a claim about an interface, not about a path. An AmneziaWG peer
@@ -634,7 +646,9 @@ screen says so in as many words.
 
   On Android and iOS the screen also offers **Scan a QR code** (not on
   desktops: a laptop camera against a QR in the next browser window is a
-  chore, and there the link is copied). A scanned code is never added on its
+  chore, and there the link is copied; not on Android TV, which has no camera
+  and no file picker either). **Receive from a phone** (§4.3.2) is offered
+  everywhere and takes the initial focus on a TV. A scanned code is never added on its
   own: it lands in the field like a paste and gets the same chip, and the
   user presses Continue — a QR on someone else's screen may not be the one
   they meant. The scanner reads what the field reads, plus two shapes that
@@ -674,12 +688,15 @@ screen says so in as many words.
   strip stays — removing the last configuration lands here too. Each strip chip
   names a state, not a screen; the routing chip is only `on` or `off` (whether
   rules apply, not which mode) and opens the active configuration's routing
-  page, or the rule sets when there is no configuration.
+  page, or the rule sets when there is no configuration. On a landscape screen
+  lower than 600 (Android TV, a phone on its side, a short window) the hero
+  stands in its own column beside the strip and cards.
 - **Settings** — configurations, connection (on-demand and disconnect-on-sleep
   on Apple; the Always-on VPN explainer on Android; the **Auto-connect** switch
   on Windows; **Advanced**, which holds the connection check), routing (LAN
   direct, rule sets, geo databases), appearance, language and iCloud sync
-  (Apple only), logs.
+  (Apple only), logs. The configurations group also holds **Send to another
+  device** on phones and **Receive from a phone** on TVs and computers.
 - **Advanced connection** — the connection check: whether to run it after
   connecting, the URL it fetches, how long it waits, a "Test now" button and the
   last answer.

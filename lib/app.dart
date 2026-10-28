@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_version.dart';
 import 'core/log.dart';
+import 'core/platform_support.dart';
 import 'core/secret_store.dart';
 import 'core/theme.dart';
 import 'core/ui.dart';
@@ -97,7 +98,14 @@ class _VpnAppState extends ConsumerState<VpnApp> {
       navigatorKey: _navigator,
       scaffoldMessengerKey: _messenger,
       scrollBehavior: const AppScrollBehavior(),
-      builder: (context, child) => DismissKeyboardOnTapOutside(child: child!),
+      builder: (context, child) => DismissKeyboardOnTapOutside(
+        child: isTv
+            ? ColoredBox(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: Padding(padding: kTvSafeArea, child: child),
+              )
+            : child!,
+      ),
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
       themeMode: prefs.themeMode,

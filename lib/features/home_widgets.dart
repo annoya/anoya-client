@@ -98,10 +98,16 @@ class _StatusLabelState extends ConsumerState<StatusLabel> {
 
 // homeHero: catStage 240×200 · 16 · status 16/24 · 20 · primary button 200×48.
 class HomeHero extends ConsumerWidget {
-  const HomeHero({super.key, required this.status, required this.onTap});
+  const HomeHero({
+    super.key,
+    required this.status,
+    required this.onTap,
+    this.autofocus = false,
+  });
 
   final VpnStatus status;
   final VoidCallback? onTap;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -123,17 +129,23 @@ class HomeHero extends ConsumerWidget {
         const SizedBox(height: 16),
         const StatusLabel(),
         const SizedBox(height: 20),
-        ConnectButton(status: status, onTap: onTap),
+        ConnectButton(status: status, onTap: onTap, autofocus: autofocus),
       ],
     );
   }
 }
 
 class ConnectButton extends StatelessWidget {
-  const ConnectButton({super.key, required this.status, required this.onTap});
+  const ConnectButton({
+    super.key,
+    required this.status,
+    required this.onTap,
+    this.autofocus = false,
+  });
 
   final VpnStatus status;
   final VoidCallback? onTap;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +159,7 @@ class ConnectButton extends StatelessWidget {
           _ => l10n.commonConnect,
         },
         spinning: status == VpnStatus.connecting,
+        autofocus: autofocus,
         onPressed: onTap,
       ),
     );

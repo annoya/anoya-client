@@ -7,12 +7,13 @@
     return b?.querySelector('.cap .id')?.textContent?.trim() || '(no id)';
   };
 
-  document.querySelectorAll('.ph, .mac').forEach(f => {
+  document.querySelectorAll('.ph, .mac, .tv').forEach(f => {
     const phone = f.classList.contains('ph');
-    const limit = phone ? (f.classList.contains('tall') ? Infinity : 844) : 700;
+    const tv = f.classList.contains('tv');
+    const limit = phone ? (f.classList.contains('tall') ? Infinity : 844) : tv ? 540 : 700;
     const over = f.scrollHeight - limit;
     if (over > 2) bad.push(`${label(f)}: content overflows frame by ${over}pt`);
-    const wide = f.scrollWidth - (phone ? 390 : 400);
+    const wide = f.scrollWidth - (phone ? 390 : tv ? 960 : 400);
     if (wide > 2) bad.push(`${label(f)}: content wider than frame by ${wide}pt`);
   });
 
@@ -46,7 +47,7 @@
     const h = pt(b.getBoundingClientRect().height);
     if (Math.abs(h - 48) > 2) bad.push(`${label(b)}: button ${h}pt, expected 48`);
   });
-  document.querySelectorAll('.ph, .mac').forEach(f => {
+  document.querySelectorAll('.ph, .mac, .tv').forEach(f => {
     const groups = new Map();
     f.querySelectorAll('.btn').forEach(b => {
       const key = b.parentElement;

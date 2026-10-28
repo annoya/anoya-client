@@ -2758,4 +2758,138 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noticeStartFailedBody => '打开 Anoya 查看原因。';
+
+  @override
+  String get transferReceive => '从手机接收';
+
+  @override
+  String get transferReceiveSubtitle => '通过 Wi-Fi 接收配置和设置';
+
+  @override
+  String get transferSend => '发送到其他设备';
+
+  @override
+  String get transferSendSubtitle => '电视、电脑或新手机';
+
+  @override
+  String get homeAddConnectionTvSubtitle => '从手机或通过链接';
+
+  @override
+  String get transferStepOpen => '在手机上打开 Anoya';
+
+  @override
+  String get transferStepSettings => '设置 → 发送到其他设备';
+
+  @override
+  String get transferStepScan => '用摄像头对准此二维码';
+
+  @override
+  String get transferWaiting => '正在等待手机…';
+
+  @override
+  String get transferReceiveNote => '两台设备需要在同一网络中。手机直接发送到这里，并用此二维码加密，不经过任何服务器。';
+
+  @override
+  String get transferNoNetwork => '未连接网络';
+
+  @override
+  String get transferNoNetworkDetail => '请将此设备连接到 Wi-Fi 或有线网络。一旦获得地址，二维码就会出现。';
+
+  @override
+  String get transferCouldntListen => '无法开始接收';
+
+  @override
+  String transferCouldntListenDetail(String reason) {
+    return '系统不允许 Anoya 在此网络上打开端口：$reason';
+  }
+
+  @override
+  String transferFrom(String device) {
+    return '来自 $device';
+  }
+
+  @override
+  String get transferConfirmNote => '确认之前不会添加任何内容。此设备已从该手机收到过的配置会被更新，而不会重复添加。';
+
+  @override
+  String get transferConfirmNoteShort => '确认之前不会添加任何内容。';
+
+  @override
+  String transferItemNew(String kind) {
+    return '$kind · 新';
+  }
+
+  @override
+  String transferItemUpdates(String kind) {
+    return '$kind · 更新此处已有的';
+  }
+
+  @override
+  String get transferKindSelfhosted => '自建';
+
+  @override
+  String get transferKindKey => '订阅密钥';
+
+  @override
+  String get transferSettingsSubtitle => '路由、DNS、连接检查';
+
+  @override
+  String get transferAddFailed => '无法添加收到的内容';
+
+  @override
+  String get transferSendTitle => '发送';
+
+  @override
+  String get transferScanTitle => '扫描另一台设备';
+
+  @override
+  String get transferScanHint => '用摄像头对准它的二维码';
+
+  @override
+  String get transferScanDetail => '在电视或电脑上：添加连接 → 从手机接收';
+
+  @override
+  String get transferNotAReceiveCode => '这不是 Anoya “接收”界面上的二维码';
+
+  @override
+  String get transferOnYourNetwork => '在你的网络中';
+
+  @override
+  String get transferSameNetworkTitle => '仅在同一网络中可用';
+
+  @override
+  String get transferSameNetworkBody => '两台设备需要连接同一个 Wi-Fi 或有线网络——此功能不经过互联网。';
+
+  @override
+  String get transferVpnHint => 'VPN 已开启：请在设置中打开“局域网直连”，或暂时断开连接。';
+
+  @override
+  String get transferAlso => '其他';
+
+  @override
+  String get transferRuleSetsUsedOnly => '仅这些配置使用的规则集';
+
+  @override
+  String get transferSendButton => '发送';
+
+  @override
+  String transferSent(String device) {
+    return '已发送。请在 $device 上确认以添加。';
+  }
+
+  @override
+  String transferUnreachable(String device) {
+    return '无法连接到 $device';
+  }
+
+  @override
+  String get transferUnreachableDetail => '请检查两台设备是否连接同一个 Wi-Fi。';
+
+  @override
+  String get transferUnreachableVpn => '如果此设备的 VPN 已开启，请在设置中打开“局域网直连”，或暂时断开连接。';
+
+  @override
+  String transferRefused(String device) {
+    return '$device 现在有新的二维码，请重新扫描。';
+  }
 }

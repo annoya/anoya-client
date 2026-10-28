@@ -43,6 +43,7 @@ test.
 | [022](ADR-022-android-per-app-split.md) | client | Android splits by app: rules in the engine, a device list in the system | supersedes ADR-003's process-name gating, package lookup through getConnectionOwnerUid, app picker, apps outside the VPN, why not exclusions as rules |
 | [023](ADR-023-configurations-in-the-keychain.md) | client | Configurations live in the platform keychain, with their keys | one secure document, first-unlock accessibility, never saving over an unreadable store, Linux fallback, why not plain JSON or an encrypted file |
 | [024](ADR-024-tunnel-notifications.md) | client | The tunnel notifies when it cannot help, from its own process | silence after a reload, a start without the app that failed, one per episode, words from the app, Android channel and icon, why not the connection check |
+| [025](ADR-025-device-transfer-and-android-tv.md) | client | A phone carries the setup to a TV or computer over the local network; Android TV runs the same app | receive code, X25519 + AES-GCM over LAN HTTP, recipes as in iCloud sync, confirm before adding, leanback manifest, overscan, two-column home, D-pad focus, why not a relay or Drive |
 
 ## Open Questions
 

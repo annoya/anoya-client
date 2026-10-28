@@ -2952,4 +2952,151 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noticeStartFailedBody => 'Откройте Anoya, чтобы узнать причину.';
+
+  @override
+  String get transferReceive => 'Получить с телефона';
+
+  @override
+  String get transferReceiveSubtitle => 'Конфигурации и настройки по Wi-Fi';
+
+  @override
+  String get transferSend => 'Отправить на другое устройство';
+
+  @override
+  String get transferSendSubtitle => 'Телевизор, компьютер или новый телефон';
+
+  @override
+  String get homeAddConnectionTvSubtitle => 'С телефона или по ссылке';
+
+  @override
+  String get transferStepOpen => 'Откройте Anoya на телефоне';
+
+  @override
+  String get transferStepSettings =>
+      'Настройки → Отправить на другое устройство';
+
+  @override
+  String get transferStepScan => 'Наведите камеру на этот код';
+
+  @override
+  String get transferWaiting => 'Ждём телефон…';
+
+  @override
+  String get transferReceiveNote =>
+      'Оба устройства должны быть в одной сети. Телефон отправляет данные прямо сюда, зашифрованными под этот код, — через сервер ничего не идёт.';
+
+  @override
+  String get transferNoNetwork => 'Нет сети';
+
+  @override
+  String get transferNoNetworkDetail =>
+      'Подключите это устройство к Wi-Fi или кабелю. Код появится, как только у него будет адрес.';
+
+  @override
+  String get transferCouldntListen => 'Не удалось начать приём';
+
+  @override
+  String transferCouldntListenDetail(String reason) {
+    return 'Система не дала Anoya открыть порт в этой сети: $reason';
+  }
+
+  @override
+  String transferFrom(String device) {
+    return 'От $device';
+  }
+
+  @override
+  String get transferConfirmNote =>
+      'Ничего не добавится, пока вы не подтвердите. Конфигурация, которая уже пришла с этого телефона раньше, обновится, а не задвоится.';
+
+  @override
+  String get transferConfirmNoteShort =>
+      'Ничего не добавится, пока вы не подтвердите.';
+
+  @override
+  String transferItemNew(String kind) {
+    return '$kind · новая';
+  }
+
+  @override
+  String transferItemUpdates(String kind) {
+    return '$kind · обновит здешнюю';
+  }
+
+  @override
+  String get transferKindSelfhosted => 'Свой сервер';
+
+  @override
+  String get transferKindKey => 'Ключ подписки';
+
+  @override
+  String get transferSettingsSubtitle =>
+      'Маршрутизация, DNS, проверка соединения';
+
+  @override
+  String get transferAddFailed => 'Не удалось добавить полученное';
+
+  @override
+  String get transferSendTitle => 'Отправка';
+
+  @override
+  String get transferScanTitle => 'Сканируйте другое устройство';
+
+  @override
+  String get transferScanHint => 'Наведите камеру на его код';
+
+  @override
+  String get transferScanDetail =>
+      'На телевизоре или компьютере: Добавить подключение → Получить с телефона';
+
+  @override
+  String get transferNotAReceiveCode =>
+      'Это не код с экрана «Получить с телефона» в Anoya';
+
+  @override
+  String get transferOnYourNetwork => 'В вашей сети';
+
+  @override
+  String get transferSameNetworkTitle => 'Работает только в одной сети';
+
+  @override
+  String get transferSameNetworkBody =>
+      'Оба устройства должны быть в одной сети Wi-Fi или подключены к одной проводной сети — через интернет это не работает.';
+
+  @override
+  String get transferVpnHint =>
+      'VPN включён: включите «Локальная сеть напрямую» в настройках или ненадолго отключитесь.';
+
+  @override
+  String get transferAlso => 'Ещё';
+
+  @override
+  String get transferRuleSetsUsedOnly =>
+      'Только те, что нужны этим конфигурациям';
+
+  @override
+  String get transferSendButton => 'Отправить';
+
+  @override
+  String transferSent(String device) {
+    return 'Отправлено. Подтвердите на $device, чтобы добавить.';
+  }
+
+  @override
+  String transferUnreachable(String device) {
+    return 'Не удалось связаться с $device';
+  }
+
+  @override
+  String get transferUnreachableDetail =>
+      'Проверьте, что оба устройства в одной сети Wi-Fi.';
+
+  @override
+  String get transferUnreachableVpn =>
+      'Если здесь включён VPN, включите «Локальная сеть напрямую» в настройках или ненадолго отключитесь.';
+
+  @override
+  String transferRefused(String device) {
+    return 'У $device теперь новый код. Отсканируйте его снова.';
+  }
 }

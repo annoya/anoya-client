@@ -4435,6 +4435,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open Anoya to see why.'**
   String get noticeStartFailedBody;
+
+  /// No description provided for @transferReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive from a phone'**
+  String get transferReceive;
+
+  /// No description provided for @transferReceiveSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configurations and settings, over Wi-Fi'**
+  String get transferReceiveSubtitle;
+
+  /// No description provided for @transferSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to another device'**
+  String get transferSend;
+
+  /// No description provided for @transferSendSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A TV, a computer or a new phone'**
+  String get transferSendSubtitle;
+
+  /// No description provided for @homeAddConnectionTvSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'From your phone, or a link'**
+  String get homeAddConnectionTvSubtitle;
+
+  /// No description provided for @transferStepOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Anoya on your phone'**
+  String get transferStepOpen;
+
+  /// No description provided for @transferStepSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings → Send to another device'**
+  String get transferStepSettings;
+
+  /// No description provided for @transferStepScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at this code'**
+  String get transferStepScan;
+
+  /// No description provided for @transferWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the phone…'**
+  String get transferWaiting;
+
+  /// No description provided for @transferReceiveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Both devices need to be on the same network. The phone sends straight here, encrypted to this code — nothing passes through a server.'**
+  String get transferReceiveNote;
+
+  /// No description provided for @transferNoNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on a network'**
+  String get transferNoNetwork;
+
+  /// No description provided for @transferNoNetworkDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect this device to Wi-Fi or Ethernet. The code appears as soon as it has an address.'**
+  String get transferNoNetworkDetail;
+
+  /// No description provided for @transferCouldntListen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t start receiving'**
+  String get transferCouldntListen;
+
+  /// No description provided for @transferCouldntListenDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The system didn’t let Anoya open a port on this network: {reason}'**
+  String transferCouldntListenDetail(String reason);
+
+  /// No description provided for @transferFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From {device}'**
+  String transferFrom(String device);
+
+  /// No description provided for @transferConfirmNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is added until you confirm. A configuration this device already has from that phone is updated, not doubled.'**
+  String get transferConfirmNote;
+
+  /// No description provided for @transferConfirmNoteShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is added until you confirm.'**
+  String get transferConfirmNoteShort;
+
+  /// No description provided for @transferItemNew.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · new'**
+  String transferItemNew(String kind);
+
+  /// No description provided for @transferItemUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · updates the one here'**
+  String transferItemUpdates(String kind);
+
+  /// No description provided for @transferKindSelfhosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-hosted'**
+  String get transferKindSelfhosted;
+
+  /// No description provided for @transferKindKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription key'**
+  String get transferKindKey;
+
+  /// No description provided for @transferSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Routing, DNS, connection check'**
+  String get transferSettingsSubtitle;
+
+  /// No description provided for @transferAddFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t add what arrived'**
+  String get transferAddFailed;
+
+  /// No description provided for @transferSendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get transferSendTitle;
+
+  /// No description provided for @transferScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the other device'**
+  String get transferScanTitle;
+
+  /// No description provided for @transferScanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at its code'**
+  String get transferScanHint;
+
+  /// No description provided for @transferScanDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'On the TV or computer: Add a connection → Receive from a phone'**
+  String get transferScanDetail;
+
+  /// No description provided for @transferNotAReceiveCode.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn’t a code from Anoya’s Receive screen'**
+  String get transferNotAReceiveCode;
+
+  /// No description provided for @transferOnYourNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'On your network'**
+  String get transferOnYourNetwork;
+
+  /// No description provided for @transferSameNetworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Works only on the same network'**
+  String get transferSameNetworkTitle;
+
+  /// No description provided for @transferSameNetworkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Both devices need to be on one Wi-Fi or wired network — this doesn’t go over the internet.'**
+  String get transferSameNetworkBody;
+
+  /// No description provided for @transferVpnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your VPN is on: turn on Local network direct in Settings, or disconnect for a moment.'**
+  String get transferVpnHint;
+
+  /// No description provided for @transferAlso.
+  ///
+  /// In en, this message translates to:
+  /// **'Also'**
+  String get transferAlso;
+
+  /// No description provided for @transferRuleSetsUsedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the ones these configurations use'**
+  String get transferRuleSetsUsedOnly;
+
+  /// No description provided for @transferSendButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get transferSendButton;
+
+  /// No description provided for @transferSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent. Confirm on {device} to add it there.'**
+  String transferSent(String device);
+
+  /// No description provided for @transferUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t reach {device}'**
+  String transferUnreachable(String device);
+
+  /// No description provided for @transferUnreachableDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that both are on the same Wi-Fi.'**
+  String get transferUnreachableDetail;
+
+  /// No description provided for @transferUnreachableVpn.
+  ///
+  /// In en, this message translates to:
+  /// **'If the VPN is on here, turn on Local network direct in Settings, or disconnect for a moment.'**
+  String get transferUnreachableVpn;
+
+  /// No description provided for @transferRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} has a new code now. Scan it again.'**
+  String transferRefused(String device);
 }
 
 class _AppLocalizationsDelegate

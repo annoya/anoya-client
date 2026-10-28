@@ -8,6 +8,8 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<key>com.apple.security.network.server</key>
+	<true/>
 	<!-- Open a config file, and save the log archive where the user picks. -->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>

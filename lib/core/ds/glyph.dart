@@ -49,6 +49,7 @@ enum Glyph {
   loader2('loader-2'),
   lock('lock'),
   minus('minus'),
+  monitor('monitor'),
   moon('moon'),
   music('music'),
   network('network'),

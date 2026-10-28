@@ -2,10 +2,12 @@ package org.anoya.vpn
 
 import android.Manifest
 import android.app.Activity
+import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.res.Configuration
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
@@ -13,6 +15,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
+import android.view.WindowManager
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
@@ -158,7 +161,16 @@ object VpnChannel {
                     "version" to Build.VERSION.RELEASE,
                     "model" to Build.MODEL,
                     "sdk" to Build.VERSION.SDK_INT,
+                    "tv" to isTv(context),
                 ))
+                "keep_screen_on" -> {
+                    val on = call.argument<Boolean>("on") == true
+                    host.get()?.window?.let {
+                        if (on) it.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        else it.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
+                    result.success(null)
+                }
                 "take_launch_action" -> {
                     val action = launchAction
                     launchAction = null
@@ -212,6 +224,12 @@ object VpnChannel {
                 events = null
             }
         })
+    }
+
+    private fun isTv(context: Context): Boolean {
+        val mode = context.getSystemService(UiModeManager::class.java)?.currentModeType
+        return mode == Configuration.UI_MODE_TYPE_TELEVISION ||
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     }
 
     private fun ask(result: MethodChannel.Result, orElse: Any? = null,

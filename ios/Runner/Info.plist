@@ -22,6 +22,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Anoya sends configurations to a TV or computer on your network, and receives them from a phone, when you ask it to.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>The camera reads the QR code of a connection link, subscription or key.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

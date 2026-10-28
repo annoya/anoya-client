@@ -2875,4 +2875,149 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noticeStartFailedBody => 'Open Anoya to see why.';
+
+  @override
+  String get transferReceive => 'Receive from a phone';
+
+  @override
+  String get transferReceiveSubtitle =>
+      'Configurations and settings, over Wi-Fi';
+
+  @override
+  String get transferSend => 'Send to another device';
+
+  @override
+  String get transferSendSubtitle => 'A TV, a computer or a new phone';
+
+  @override
+  String get homeAddConnectionTvSubtitle => 'From your phone, or a link';
+
+  @override
+  String get transferStepOpen => 'Open Anoya on your phone';
+
+  @override
+  String get transferStepSettings => 'Settings → Send to another device';
+
+  @override
+  String get transferStepScan => 'Point the camera at this code';
+
+  @override
+  String get transferWaiting => 'Waiting for the phone…';
+
+  @override
+  String get transferReceiveNote =>
+      'Both devices need to be on the same network. The phone sends straight here, encrypted to this code — nothing passes through a server.';
+
+  @override
+  String get transferNoNetwork => 'Not on a network';
+
+  @override
+  String get transferNoNetworkDetail =>
+      'Connect this device to Wi-Fi or Ethernet. The code appears as soon as it has an address.';
+
+  @override
+  String get transferCouldntListen => 'Couldn’t start receiving';
+
+  @override
+  String transferCouldntListenDetail(String reason) {
+    return 'The system didn’t let Anoya open a port on this network: $reason';
+  }
+
+  @override
+  String transferFrom(String device) {
+    return 'From $device';
+  }
+
+  @override
+  String get transferConfirmNote =>
+      'Nothing is added until you confirm. A configuration this device already has from that phone is updated, not doubled.';
+
+  @override
+  String get transferConfirmNoteShort => 'Nothing is added until you confirm.';
+
+  @override
+  String transferItemNew(String kind) {
+    return '$kind · new';
+  }
+
+  @override
+  String transferItemUpdates(String kind) {
+    return '$kind · updates the one here';
+  }
+
+  @override
+  String get transferKindSelfhosted => 'Self-hosted';
+
+  @override
+  String get transferKindKey => 'Subscription key';
+
+  @override
+  String get transferSettingsSubtitle => 'Routing, DNS, connection check';
+
+  @override
+  String get transferAddFailed => 'Couldn’t add what arrived';
+
+  @override
+  String get transferSendTitle => 'Send';
+
+  @override
+  String get transferScanTitle => 'Scan the other device';
+
+  @override
+  String get transferScanHint => 'Point the camera at its code';
+
+  @override
+  String get transferScanDetail =>
+      'On the TV or computer: Add a connection → Receive from a phone';
+
+  @override
+  String get transferNotAReceiveCode =>
+      'This isn’t a code from Anoya’s Receive screen';
+
+  @override
+  String get transferOnYourNetwork => 'On your network';
+
+  @override
+  String get transferSameNetworkTitle => 'Works only on the same network';
+
+  @override
+  String get transferSameNetworkBody =>
+      'Both devices need to be on one Wi-Fi or wired network — this doesn’t go over the internet.';
+
+  @override
+  String get transferVpnHint =>
+      'Your VPN is on: turn on Local network direct in Settings, or disconnect for a moment.';
+
+  @override
+  String get transferAlso => 'Also';
+
+  @override
+  String get transferRuleSetsUsedOnly =>
+      'Only the ones these configurations use';
+
+  @override
+  String get transferSendButton => 'Send';
+
+  @override
+  String transferSent(String device) {
+    return 'Sent. Confirm on $device to add it there.';
+  }
+
+  @override
+  String transferUnreachable(String device) {
+    return 'Couldn’t reach $device';
+  }
+
+  @override
+  String get transferUnreachableDetail =>
+      'Check that both are on the same Wi-Fi.';
+
+  @override
+  String get transferUnreachableVpn =>
+      'If the VPN is on here, turn on Local network direct in Settings, or disconnect for a moment.';
+
+  @override
+  String transferRefused(String device) {
+    return '$device has a new code now. Scan it again.';
+  }
 }

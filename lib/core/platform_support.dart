@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 int androidSdk = 0;
 
+bool isTv = false;
+
 const kAndroidOwnerLookupSdk = 29;
 
 bool get supportsProcessRules => switch (defaultTargetPlatform) {
@@ -29,6 +31,21 @@ bool get supportsBootAutoConnect => switch (defaultTargetPlatform) {
 };
 
 bool get canShareFiles => defaultTargetPlatform != TargetPlatform.linux;
+
+bool get canScanQr => switch (defaultTargetPlatform) {
+  TargetPlatform.iOS => true,
+  TargetPlatform.android => !isTv,
+  _ => false,
+};
+
+bool get canOpenFiles => !isTv;
+
+bool get isDesktop => switch (defaultTargetPlatform) {
+  TargetPlatform.macOS ||
+  TargetPlatform.windows ||
+  TargetPlatform.linux => true,
+  _ => false,
+};
 
 bool get hasAutoConnect => switch (defaultTargetPlatform) {
   TargetPlatform.macOS ||

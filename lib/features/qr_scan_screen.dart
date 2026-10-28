@@ -15,12 +15,21 @@ class QrScanScreen extends StatefulWidget {
   const QrScanScreen({
     super.key,
     this.refuse = refuseUnlessConnection,
+    this.title,
+    this.headline,
     this.hint,
+    this.photos = true,
   });
 
   final String? Function(String text) refuse;
 
+  final String? title;
+
+  final String? headline;
+
   final String? hint;
+
+  final bool photos;
 
   static String? refuseUnlessConnection(String text) =>
       detectInput(text) != null
@@ -188,7 +197,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
               top: insets.top,
               left: 0,
               right: 0,
-              child: DsLargeTitle(l10n.startScanQr, color: Colors.white),
+              child: DsLargeTitle(
+                widget.title ?? l10n.startScanQr,
+                color: Colors.white,
+              ),
             ),
             Positioned(
               top: below + 24,
@@ -210,7 +222,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                     ),
                     _HintTitle(l10n.qrStillLooking),
                   ] else ...[
-                    _HintTitle(l10n.qrHint),
+                    _HintTitle(widget.headline ?? l10n.qrHint),
                     Text(
                       widget.hint ?? l10n.qrHintDetail,
                       textAlign: TextAlign.center,
@@ -224,12 +236,13 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: kGutter,
-              right: kGutter,
-              bottom: kGutter + insets.bottom,
-              child: _fromPhotosButton(context),
-            ),
+            if (widget.photos)
+              Positioned(
+                left: kGutter,
+                right: kGutter,
+                bottom: kGutter + insets.bottom,
+                child: _fromPhotosButton(context),
+              ),
           ],
         );
       },
@@ -246,7 +259,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
     final l10n = context.l10n;
     final ds = context.ds;
     return DsPage(
-      title: l10n.startScanQr,
+      title: widget.title ?? l10n.startScanQr,
       leading: DsLeading.close,
       children: [
         Padding(
@@ -260,7 +273,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 style: DsType.h3.copyWith(color: ds.text1),
               ),
               DsNote(l10n.qrNoCameraDetail, align: TextAlign.center),
-              _fromPhotosButton(context),
+              if (widget.photos) _fromPhotosButton(context),
             ],
           ),
         ),

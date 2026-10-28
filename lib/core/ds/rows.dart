@@ -26,6 +26,7 @@ class DsRow extends StatelessWidget {
     this.titleStyle,
     this.subtitleColor,
     this.tooltip,
+    this.autofocus = false,
   });
 
   final Glyph? glyph;
@@ -47,6 +48,7 @@ class DsRow extends StatelessWidget {
   final TextStyle? titleStyle;
   final Color? subtitleColor;
   final String? tooltip;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +123,7 @@ class DsRow extends StatelessWidget {
       color: selected ? ds.selected : Colors.transparent,
       onTap: enabled ? onTap : null,
       onLongPress: enabled ? onLongPress : null,
+      autofocus: autofocus,
       child: row,
     );
     if (tooltip != null) row = Tooltip(message: tooltip!, child: row);
