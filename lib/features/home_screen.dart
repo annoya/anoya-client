@@ -330,14 +330,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           title: active.name,
           subtitle: profileKind(active),
           subtitleMaxLines: 1,
+          trailingGap: 0,
           trailing: [
-            if (active.isRefreshable) RefreshButton(profile: active),
+            if (active.isRefreshable)
+              RefreshButton(profile: active, iconSize: kCompactActionIcon),
             DsAction(
               glyph: Glyph.settings,
+              iconSize: kCompactActionIcon,
               tooltip: context.l10n.homeConfigurationSettings,
               onPressed: () => _push(ConfigScreen(profileId: active.id)),
             ),
-            if (pickable) DsChevron(down: true, locked: connecting),
+            if (pickable)
+              DsChevron(
+                down: true,
+                locked: connecting,
+                iconSize: kCompactActionIcon,
+              ),
           ],
           onTap: (!pickable || _locked) ? null : _pickProfile,
         ),
@@ -373,7 +381,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : l10n.homeGroupAutoPicked(picked))
               : loc?.subtitle,
           subtitleMaxLines: 1,
-          trailing: [if (pickable) DsChevron(locked: connecting)],
+          trailing: [
+            if (pickable)
+              DsChevron(locked: connecting, iconSize: kCompactActionIcon),
+          ],
           onTap: (!pickable || _locked) ? null : () => _pickLocation(active),
         ),
       ],

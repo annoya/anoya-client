@@ -153,6 +153,9 @@ class ConnectButton extends StatelessWidget {
     return SizedBox(
       width: kConnectButtonWidth,
       child: DsButton(
+        kind: status == VpnStatus.connected || status == VpnStatus.connecting
+            ? DsButtonKind.secondary
+            : DsButtonKind.primary,
         label: switch (status) {
           VpnStatus.connected => l10n.commonDisconnect,
           VpnStatus.connecting => l10n.commonCancel,

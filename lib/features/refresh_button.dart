@@ -5,14 +5,20 @@ import '../core/app_error.dart';
 import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/profile.dart';
+import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 
 class RefreshButton extends ConsumerStatefulWidget {
-  const RefreshButton({super.key, required this.profile});
+  const RefreshButton({
+    super.key,
+    required this.profile,
+    this.iconSize = kRowIcon,
+  });
 
   final Profile profile;
+  final double iconSize;
 
   @override
   ConsumerState<RefreshButton> createState() => _RefreshButtonState();
@@ -49,6 +55,7 @@ class _RefreshButtonState extends ConsumerState<RefreshButton> {
   @override
   Widget build(BuildContext context) => DsAction(
     glyph: Glyph.refreshCw,
+    iconSize: widget.iconSize,
     busy: _busy,
     tooltip: context.l10n.configRefreshNow,
     onPressed: _refresh,

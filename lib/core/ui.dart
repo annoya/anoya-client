@@ -100,7 +100,7 @@ class SelectField extends StatelessWidget {
         color: ds.surfaceAlt,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(kRadius),
-          side: BorderSide(color: ds.borderSoft),
+          side: BorderSide(color: ds.borderInput),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -730,7 +730,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
       trailing: [
         if (widget.onToggleFavorite != null && favouritable)
           DsAction(
-            glyph: Glyph.star,
+            glyph: favorite ? Glyph.starFilled : Glyph.star,
             color: favorite ? ds.textAccent : null,
             tooltip: favorite
                 ? l10n.uiRemoveFromFavorites

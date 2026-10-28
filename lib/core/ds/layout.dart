@@ -322,7 +322,7 @@ class DsSurface extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(kRadius),
         side: BorderSide(
-          color: borderColor ?? ds.borderSoft,
+          color: borderColor ?? ds.borderFaint,
           width: kCardBorder,
           strokeAlign: BorderSide.strokeAlignInside,
         ),
@@ -350,7 +350,7 @@ class DsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ds = context.ds;
     final line = BoxDecoration(
-      border: Border(bottom: BorderSide(color: ds.borderSoft)),
+      border: Border(bottom: BorderSide(color: ds.borderDivider)),
     );
     return DsSurface(
       color: color,
@@ -465,7 +465,7 @@ class DsReorderableCard<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final ds = context.ds;
     final line = BoxDecoration(
-      border: Border(bottom: BorderSide(color: ds.borderSoft)),
+      border: Border(bottom: BorderSide(color: ds.borderDivider)),
     );
     Widget card(Widget child, {double elevation = 0}) =>
         DsSurface(elevation: elevation, child: child);
@@ -518,7 +518,8 @@ class DsCardSlice extends StatelessWidget {
         foregroundPainter: _SliceBorder(
           first: first,
           last: last,
-          color: ds.borderSoft,
+          color: ds.borderFaint,
+          divider: ds.borderDivider,
         ),
         child: child,
       ),
@@ -527,11 +528,17 @@ class DsCardSlice extends StatelessWidget {
 }
 
 class _SliceBorder extends CustomPainter {
-  _SliceBorder({required this.first, required this.last, required this.color});
+  _SliceBorder({
+    required this.first,
+    required this.last,
+    required this.color,
+    required this.divider,
+  });
 
   final bool first;
   final bool last;
   final Color color;
+  final Color divider;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -562,12 +569,15 @@ class _SliceBorder extends CustomPainter {
       canvas.drawLine(
         Offset(0, size.height - h),
         Offset(size.width, size.height - h),
-        paint,
+        paint..color = divider,
       );
     }
   }
 
   @override
   bool shouldRepaint(_SliceBorder old) =>
-      old.first != first || old.last != last || old.color != color;
+      old.first != first ||
+      old.last != last ||
+      old.color != color ||
+      old.divider != divider;
 }
