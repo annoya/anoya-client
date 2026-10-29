@@ -18,11 +18,18 @@ import '../../state/provider_rule_lists.dart';
 import 'provider_routing_card.dart';
 
 class LocalRoutingCard extends ConsumerWidget {
-  const LocalRoutingCard({super.key, required this.profile, this.overriddenBy});
+  const LocalRoutingCard({
+    super.key,
+    required this.profile,
+    this.overriddenBy,
+    this.lockedNote,
+  });
 
   final Profile profile;
 
   final String? overriddenBy;
+
+  final String? lockedNote;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,13 +41,13 @@ class LocalRoutingCard extends ConsumerWidget {
     final l10n = context.l10n;
     final on = profile.routingEnabled;
 
-    if (overriddenBy != null) {
+    if (overriddenBy != null || lockedNote != null) {
       return DsCard(
         children: [
           DsRow(
             glyph: Glyph.layers,
             title: l10n.configRuleSet,
-            subtitle: l10n.configReplacedBy(overriddenBy!),
+            subtitle: lockedNote ?? l10n.configReplacedBy(overriddenBy!),
             trailing: const [DsChevron(down: true)],
             enabled: false,
           ),
@@ -222,6 +229,11 @@ class RoutingRow extends ConsumerWidget {
   }
 
   String _routing(AppLocalizations l10n, WidgetRef ref) {
+    if (profile.usesSubscriptionRules) {
+      return l10n.routingSetBySubscription(
+        l10n.configRulesCount(profile.plan!.rules.length),
+      );
+    }
     if (profile.routing != null) {
       final mode = profile.routing!.mode == 'split'
           ? l10n.ruleSetModeSplit

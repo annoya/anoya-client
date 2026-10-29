@@ -134,9 +134,12 @@ bool _isAvailable(Profile p, String name, List<RuleListStatus>? lists) {
   return lists.any((s) => s.list.name == name && s.available);
 }
 
-String _listSummary(Profile p, int needed, List<RuleListStatus>? lists) {
+String _listSummary(Profile p, int needed, List<RuleListStatus>? lists) =>
+    ruleListsSummary(p.providerRuleListsEnabled, needed, lists);
+
+String ruleListsSummary(bool enabled, int needed, List<RuleListStatus>? lists) {
   final l10n = L10n.current;
-  if (!p.providerRuleListsEnabled) return l10n.configRuleListsOff(needed);
+  if (!enabled) return l10n.configRuleListsOff(needed);
   if (lists == null) return l10n.configChecking;
   final have = lists.where((s) => s.available).toList();
   if (have.isEmpty) return l10n.configNoneDownloadedYet;

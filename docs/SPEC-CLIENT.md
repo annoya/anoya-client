@@ -439,21 +439,58 @@ fetched keep working.
 Which of the four a panel serves is decided by a rule its admin wrote against
 the app's User-Agent (`Anoya/<version>` — ours, never another client's
 name). That makes the *amount* we get depend on somebody else's rule, so where a
-panel supports it the app asks for the rendering it wants by name: after a body
-that carries no groups, it tries `<url>/mihomo` (Remnawave), `<url>/clash-meta`
-(Marzban, Marzneshin — no "mihomo"), `<url>/clash` and, last, the 3x-ui
-sibling path `/clash/<id>` next to `/sub/<id>` — a `/sub/` prefix does not say
-which panel it is. First one that answers with groups wins and is remembered
-on the profile; a panel with none keeps its own body and is asked again on the
-next refresh, since only a rendering that answered is remembered (ADR-005). A rendering that later dies falls back to the plain address.
+panel supports it the app asks for the rendering it wants by name, before the
+plain address: `<url>/mihomo` (Remnawave), `<url>/clash-meta` (Marzban,
+Marzneshin — no "mihomo"), `<url>/clash` and, last, the 3x-ui sibling path
+`/clash/<id>` next to `/sub/<id>` — a `/sub/` prefix does not say which panel
+it is. First one that answers with groups wins and is remembered on the
+profile, and the plain address is not fetched at all. A plain address that is
+itself a Clash body with groups is remembered as such (`plain`) and asked once
+from then on. A panel with neither keeps its own body and is asked again on
+the next refresh, since only a rendering that answered is remembered
+(ADR-005). A rendering that later dies falls back to the plain address.
 
 A Clash subscription may also offer **groups** whose member the engine picks:
 `url-test` (lowest latency), `fallback` (first that answers), `load-balance` and
 `relay` (a chain). They appear in the same server picker, above the servers,
-because they answer the same question. `select` groups are not carried — they
-mean "let a human choose", which the picker already is. A group's members are
-resolved to servers this app can actually run, and a group left with none is not
-offered at all.
+because they answer the same question. A group's members are resolved to
+servers this app can actually run, and a group left with none is not offered at
+all.
+
+A Clash body whose `rules:` the app can apply gives the subscription **two
+modes**, switched in its configuration (ADR-026):
+
+- **Subscription rules** (the default). The subscription's servers, groups,
+  rules and rule lists reach the engine as written, under positional names;
+  tun, DNS, inbounds and the controller stay ours. Every rule goes to the group
+  or server it names, the catch-all included, so there is no main server: Home
+  shows *Proxy groups* instead of a server. The user chooses only where the
+  subscription offers a choice — a `select` group the rules reach, among its
+  own entries; the choice goes first in the group, which is what the engine
+  picks, and stays on the device. Device routing is locked.
+- **Own rules**. The subscription is a server list: Home picks a server or an
+  auto-select group, device routing applies, the subscription's rules are
+  ignored.
+
+What reaches the engine is filtered, not translated. Rule types that match on
+something this device does not have (`SRC-*`, `IN-*`, `UID`, `SUB-RULE`), an
+option that changes a rule's meaning (`src`), a target with nothing runnable
+left and a list that is not defined are left out and counted on screen. Groups
+no rule reaches are not rendered — each would run its own health checks — and a
+loop between groups is cut before the engine sees it. A chain on a server
+(`dialer-proxy`) is kept; one on a group is not, because the engine refuses it.
+Geo and process rules are left out where the databases or process matching are
+unavailable, as with any policy.
+
+Rule lists come with the mode, after consent. When a subscription is added with
+its rules, or switched to them, and the rules need lists, the app asks once,
+naming how many lists and from which hosts; *no* makes it Own rules. Consent is
+per subscription: lists a later refresh adds are downloaded without asking.
+The mode never waits for its lists: a rule whose list is not on disk yet is
+left out, the tunnel comes up, and the app downloads the missing lists again
+once it is connected and applies them with a hot reload. Inline lists
+(`type: inline`) need no download. A profile from before the modes keeps its
+rules only if its lists switch was on.
 
 An Xray JSON config is one entry — its egress, the first outbound that is not
 plumbing (Xray's default). Its other outbounds are hops the config uses on
@@ -809,8 +846,7 @@ a self-hosted server's (unswitchable), a subscription panel's (switchable), or
 the device's own rule sets. See `lib/core/routing_policy.dart`.
 
 A subscription's panel may send routing of its own — as a `routing:` response
-header, as the `rules:` of a Clash body, or in the Xray rendering of the same
-subscription, which the app requests by name (`<url>/json`) rather than by
+header or in the Xray rendering of the same subscription, which the app requests by name (`<url>/json`) rather than by
 impersonating another client. Those rules are translated into the app's model,
 never adopted wholesale: what has no equivalent here (external rule files,
 rules keyed on an inbound, a port or a sniffed protocol) is dropped and
@@ -820,16 +856,8 @@ provider on screen, but — unlike an organization's policy — the user can swi
 them off, at which point the device's own rule set applies again: a panel
 controls what it returns, not where this device's traffic goes (ADR-005).
 
-A Clash rule names its target, and panels name targets after services ("🚫
-Blocked sites", "RU sites"), not directions. So the direction is read from what
-the target is in the same document, never from words in its name: a proxy of
-`type: direct` is direct, `type: reject` is block; a `select` group goes where
-its first entry goes (the engine's default) and a `fallback` group where its
-first entry goes (a direct connection is always alive), followed to the end;
-any other group, and a loop, is the tunnel. Only a target the document does not
-define (`DIRECT`, `REJECT`, `PROXY`) is read by its name. The `MATCH` target
-decides the mode the same way: a fallback that starts with a direct connection
-makes the policy a split.
+A Clash body's `rules:` are not translated: they are the subscription-rules
+mode described above.
 
 A split policy that tunnels nothing once its rule lists are set aside applies
 as **full** while the rule lists switch is off: it would send nothing to the
@@ -841,10 +869,10 @@ Rule types are the client's own superset of the shared schema (like `geoip` and
 `rule-list` names a file a provider hosts. A rule carries a list of values
 (`values`; a single `value` is still read). Several domains or subnets reach
 the engine as one `RULE-SET` over an inline provider, looked up by index;
-other types are written one line per value (ADR-019). Only a provider's policy can carry
-`rule-list`, and only with the configuration's **rule lists** switch on — off by
-default, because applying someone's rules and storing someone's files are
-different decisions. The app downloads those files itself into the App Group
+other types are written one line per value (ADR-019). Only a subscription's
+own rules use lists hosted elsewhere, and only after consent (above), because
+applying someone's rules and storing someone's files are different
+decisions. The app downloads those files itself into the App Group
 container and hands the engine `type: file`: mihomo's own provider fetch runs
 inside config apply, 20 s per file, and reports failure only by logging, which
 would stall a connect and then leave a rule that silently matches nothing. A

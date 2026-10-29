@@ -4699,6 +4699,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allow Anoya to read storage in the system settings, or paste the link instead.'**
   String get fileAccessDeniedDetail;
+
+  /// No description provided for @modeCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Mode'**
+  String get modeCaption;
+
+  /// No description provided for @modeSubscriptionRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription rules'**
+  String get modeSubscriptionRules;
+
+  /// No description provided for @modeOwnRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Own rules'**
+  String get modeOwnRules;
+
+  /// No description provided for @modeSubscriptionRulesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic goes the way the subscription’s rules send it. You choose exits for its proxy groups on Home.'**
+  String get modeSubscriptionRulesNote;
+
+  /// No description provided for @modeOwnRulesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription is a list of servers. You pick one on Home and route with your own rules.'**
+  String get modeOwnRulesNote;
+
+  /// No description provided for @consentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the subscription’s rules?'**
+  String get consentTitle;
+
+  /// No description provided for @consentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} sends each service its own way. For that the app keeps {count, plural, =1{1 rule list} other{{count} rule lists}} from {hosts} and refreshes them weekly. Without them you pick a server and route with your own rules.'**
+  String consentBody(String name, int count, String hosts);
+
+  /// No description provided for @consentHostsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'{hosts} and {count} more'**
+  String consentHostsMore(String hosts, int count);
+
+  /// No description provided for @consentUseRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Use its rules'**
+  String get consentUseRules;
+
+  /// No description provided for @homeKindSubscriptionRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription · its rules'**
+  String get homeKindSubscriptionRules;
+
+  /// No description provided for @homeStateSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'subscription'**
+  String get homeStateSubscription;
+
+  /// No description provided for @proxyGroupsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxy groups'**
+  String get proxyGroupsTitle;
+
+  /// No description provided for @homeProxyGroupsRest.
+  ///
+  /// In en, this message translates to:
+  /// **'The rest via {server} · {count, plural, =1{1 group} other{{count} groups}}'**
+  String homeProxyGroupsRest(String server, int count);
+
+  /// No description provided for @homeProxyGroupsDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} through the VPN · the rest direct'**
+  String homeProxyGroupsDirect(int count);
+
+  /// No description provided for @proxyGroupsEverythingElse.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything else'**
+  String get proxyGroupsEverythingElse;
+
+  /// No description provided for @proxyGroupsChooseExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the exit'**
+  String get proxyGroupsChooseExit;
+
+  /// No description provided for @proxyGroupsSetBySubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Set by the subscription'**
+  String get proxyGroupsSetBySubscription;
+
+  /// No description provided for @proxyGroupsRestDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything else connects directly, outside the VPN.'**
+  String get proxyGroupsRestDirect;
+
+  /// No description provided for @proxyGroupsNotApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 rule of the subscription could not be applied.} other{{count} rules of the subscription could not be applied.}}'**
+  String proxyGroupsNotApplied(int count);
+
+  /// No description provided for @proxyGroupsYourChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'{exit} · your choice'**
+  String proxyGroupsYourChoice(String exit);
+
+  /// No description provided for @proxyGroupsWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{exit} · waiting for its list'**
+  String proxyGroupsWaiting(String exit);
+
+  /// No description provided for @proxyGroupsDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default · {detail}'**
+  String proxyGroupsDefault(String detail);
+
+  /// No description provided for @proxyGroupsFromSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'From the subscription'**
+  String get proxyGroupsFromSubscription;
+
+  /// No description provided for @proxyGroupsDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get proxyGroupsDirect;
+
+  /// No description provided for @proxyGroupsOutsideVpn.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside the VPN'**
+  String get proxyGroupsOutsideVpn;
+
+  /// No description provided for @proxyGroupsDirectOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct, outside the VPN'**
+  String get proxyGroupsDirectOutside;
+
+  /// No description provided for @proxyGroupsBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get proxyGroupsBlocked;
+
+  /// No description provided for @proxyGroupsDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading rule lists · {have} of {total}'**
+  String proxyGroupsDownloading(int have, int total);
+
+  /// No description provided for @proxyGroupsDownloadingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Until a list arrives, what it matches goes the way of everything else.'**
+  String get proxyGroupsDownloadingBody;
+
+  /// No description provided for @routingSetBySubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Set by the subscription · {rules}'**
+  String routingSetBySubscription(String rules);
+
+  /// No description provided for @routingWorksWithOwnRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Works with Own rules'**
+  String get routingWorksWithOwnRules;
+
+  /// No description provided for @routingSubscriptionRulesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription decides where traffic goes. Switch the configuration to Own rules to use yours.'**
+  String get routingSubscriptionRulesNote;
+
+  /// No description provided for @rulesTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} → {target}'**
+  String rulesTarget(String type, String target);
 }
 
 class _AppLocalizationsDelegate

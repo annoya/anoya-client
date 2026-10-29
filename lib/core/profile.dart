@@ -1,4 +1,5 @@
 import 'amnezia/amnezia_account.dart';
+import 'clash_plan.dart';
 import 'norm_config.dart';
 import 'subscription_info.dart';
 
@@ -21,6 +22,9 @@ class Profile {
     this.deviceLimitReached = false,
     this.unsupportedServers = const {},
     this.groups = const [],
+    this.plan,
+    this.subscriptionRules,
+    this.groupChoices = const {},
     this.providerRouting,
     this.providerRoutingSkipped = 0,
     this.providerRoutingEnabled = true,
@@ -61,6 +65,12 @@ class Profile {
 
   final List<ProxyGroup> groups;
 
+  final ClashPlan? plan;
+
+  final bool? subscriptionRules;
+
+  final Map<String, String> groupChoices;
+
   final Routing? providerRouting;
 
   final int providerRoutingSkipped;
@@ -94,6 +104,13 @@ class Profile {
 
   bool get isRefreshable => type != ProfileType.link;
 
+  bool get hasModes => plan != null;
+
+  bool get usesSubscriptionRules => plan != null && subscriptionRules == true;
+
+  bool get needsListConsent =>
+      plan != null && plan!.lists.isNotEmpty && !providerRuleListsEnabled;
+
   Profile withBundle({
     required List<Location> locations,
     required Account? account,
@@ -104,6 +121,7 @@ class Profile {
     bool deviceLimitReached = false,
     Map<String, int> unsupportedServers = const {},
     List<ProxyGroup> groups = const [],
+    ClashPlan? plan,
     Routing? providerRouting,
     int providerRoutingSkipped = 0,
     bool providerRoutingProbed = false,
@@ -128,6 +146,13 @@ class Profile {
     deviceLimitReached: deviceLimitReached,
     unsupportedServers: unsupportedServers,
     groups: groups,
+    plan: plan,
+    subscriptionRules: plan == null
+        ? subscriptionRules
+        : subscriptionRules ??
+              (providerRoutingEnabled &&
+                  (plan.lists.isEmpty || providerRuleListsEnabled)),
+    groupChoices: groupChoices,
     providerRouting: providerRouting,
     providerRoutingSkipped: providerRoutingSkipped,
     providerRoutingEnabled: providerRoutingEnabled,
@@ -143,6 +168,8 @@ class Profile {
   );
 
   Profile copyWith({
+    bool? subscriptionRules,
+    Map<String, String>? groupChoices,
     bool? providerRoutingEnabled,
     bool? providerRuleListsEnabled,
     List<Location>? locations,
@@ -169,6 +196,9 @@ class Profile {
     deviceLimitReached: deviceLimitReached,
     unsupportedServers: unsupportedServers,
     groups: groups,
+    plan: plan,
+    subscriptionRules: subscriptionRules ?? this.subscriptionRules,
+    groupChoices: groupChoices ?? this.groupChoices,
     providerRouting: providerRouting,
     providerRoutingSkipped: providerRoutingSkipped,
     providerRoutingEnabled:
@@ -209,6 +239,13 @@ class Profile {
         .whereType<Map>()
         .map((e) => ProxyGroup.fromJson(Map<String, dynamic>.from(e)))
         .toList(),
+    plan: j['plan'] is Map
+        ? ClashPlan.fromJson(Map<String, dynamic>.from(j['plan'] as Map))
+        : null,
+    subscriptionRules: j['subscription_rules'] as bool?,
+    groupChoices:
+        (j['group_choices'] as Map?)?.map((k, v) => MapEntry('$k', '$v')) ??
+        const {},
     providerRouting: j['provider_routing'] is Map
         ? Routing.fromJson(
             Map<String, dynamic>.from(j['provider_routing'] as Map),
@@ -258,6 +295,9 @@ class Profile {
     if (unsupportedServers.isNotEmpty)
       'unsupported_servers': unsupportedServers,
     if (groups.isNotEmpty) 'groups': groups.map((g) => g.toJson()).toList(),
+    if (plan != null) 'plan': plan!.toJson(),
+    if (subscriptionRules != null) 'subscription_rules': subscriptionRules,
+    if (groupChoices.isNotEmpty) 'group_choices': groupChoices,
     if (providerRouting != null) 'provider_routing': providerRouting!.toJson(),
     if (providerRoutingSkipped > 0)
       'provider_routing_skipped': providerRoutingSkipped,

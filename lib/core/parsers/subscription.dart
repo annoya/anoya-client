@@ -1,4 +1,5 @@
 import '../amnezia/vpn_key.dart';
+import '../clash_plan.dart';
 import '../../l10n/l10n.dart';
 import '../log.dart';
 import '../norm_config.dart';
@@ -18,6 +19,7 @@ class ParsedSubscription {
     this.unsupported = const {},
     this.providers = const [],
     this.groups = const [],
+    this.plan,
     this.dns = const [],
     this.format = SubscriptionFormat.unknown,
   });
@@ -29,6 +31,8 @@ class ParsedSubscription {
   final List<ProxyProvider> providers;
 
   final List<ProxyGroup> groups;
+
+  final ClashPlan? plan;
 
   final List<String> dns;
 

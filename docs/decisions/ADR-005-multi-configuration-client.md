@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted; ADR-009 adds a fourth domain, key subscriptions
+Accepted; ADR-009 adds a fourth domain, key subscriptions; ADR-026 replaces how a Clash body's rules and rule lists apply
 
 ## Date
 

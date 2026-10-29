@@ -45,7 +45,9 @@ void _push(Ref ref, MenuBar menu) => menu.update(
 MenuBarState menuBarStateFor(SessionState session, ProfilesState profiles) {
   final l10n = L10n.current;
   final Profile? active = profiles.active;
-  final location = profiles.selectedLocation;
+  final location = active?.usesSubscriptionRules ?? false
+      ? null
+      : profiles.selectedLocation;
 
   if (active == null) {
     return MenuBarState(status: l10n.statusNoConfiguration);

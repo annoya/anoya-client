@@ -15,10 +15,12 @@ import '../core/log.dart';
 import '../core/parsers/qr_payload.dart';
 import '../core/parsers/subscription.dart';
 import '../core/platform_support.dart';
+import '../core/profile.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
+import 'config/subscription_mode.dart';
 import 'qr_scan_screen.dart';
 import 'receive_screen.dart';
 import 'send_screen.dart';
@@ -152,7 +154,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     if (d.kind == InputKind.subscriptionUrl) {
       setState(() => _busy = true);
       try {
-        await _ctrl.addSubscriptionUrl('', t);
+        await _ctrl.addSubscriptionUrl('', t, consent: _consent);
         if (mounted) {
           _warnIfRefused();
           Navigator.of(context).popUntil((r) => r.isFirst);
@@ -192,15 +194,22 @@ class _StartScreenState extends ConsumerState<StartScreen> {
       return;
     }
     await _run(() async {
-      await _ctrl.addFromText(t);
+      await _ctrl.addFromText(t, consent: _consent);
       return true;
     });
   }
 
+  Future<bool> _consent(Profile p) =>
+      mounted ? askListConsent(context, p) : Future.value(false);
+
   Future<void> _openFile() => _run(() async {
     final file = await openFile();
     if (file == null) return false;
-    await _ctrl.addFromText(utf8.decode(file.bytes), name: file.name);
+    await _ctrl.addFromText(
+      utf8.decode(file.bytes),
+      name: file.name,
+      consent: _consent,
+    );
     return true;
   });
 

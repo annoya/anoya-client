@@ -20,6 +20,7 @@ import '../state/providers.dart';
 import '../state/routing_status.dart';
 import '../state/session.dart';
 import 'config/config_screen.dart';
+import 'config/proxy_groups_screen.dart';
 import 'config/routing_config_screen.dart';
 import 'home_widgets.dart';
 import 'logs_screen.dart';
@@ -173,7 +174,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ?_onDemandBanner(),
     ?_expiryCard(active),
     if (active != null) _profileRow(active) else _addRow(),
-    if (active != null) _locationRow(active),
+    if (active != null)
+      active.usesSubscriptionRules
+          ? ProxyGroupsCard(profile: active)
+          : _locationRow(active),
   ];
 
   void _push(Widget screen) =>
@@ -214,6 +218,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             label: l10n.homeChipRouting(switch (routing) {
               null => '…',
               RoutingStatus.off => l10n.homeStateOff,
+              RoutingStatus.subscription => l10n.homeStateSubscription,
               _ => l10n.homeStateOn,
             }),
             on: routing != null && routing != RoutingStatus.off,
@@ -328,7 +333,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         DsRow(
           glyph: profileIcon(active.type),
           title: active.name,
-          subtitle: profileKind(active),
+          subtitle: active.usesSubscriptionRules
+              ? context.l10n.homeKindSubscriptionRules
+              : profileKind(active),
           subtitleMaxLines: 1,
           trailingGap: 0,
           trailing: [

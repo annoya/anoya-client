@@ -9,7 +9,9 @@ enum RoutingStatus {
 
   full,
 
-  split;
+  split,
+
+  subscription;
 
   static RoutingStatus ofMode(String mode) =>
       mode == 'split' ? RoutingStatus.split : RoutingStatus.full;
@@ -35,6 +37,7 @@ final routingStatusProvider = FutureProvider<RoutingStatus>((ref) async {
   final profile = ref.watch(profilesControllerProvider.select((s) => s.active));
   ref.watch(ruleSetRevisionProvider);
   if (profile == null) return RoutingStatus.off;
+  if (profile.usesSubscriptionRules) return RoutingStatus.subscription;
   final policy = routingPolicyFor(profile, loadRuleSet: RuleSetStore.byId);
   if (policy is LocalRoutingPolicy && !policy.enabled) return RoutingStatus.off;
   return RoutingStatus.ofMode((await policy.resolve()).mode);

@@ -40,10 +40,11 @@ class DesktopNotices {
     final profiles = _ref.read(profilesControllerProvider);
     final texts = tunnelNotice(
       configuration: profiles.active?.name ?? '',
-      server:
-          profiles.selectedGroup?.name ??
-          profiles.selectedLocation?.label ??
-          '',
+      server: profiles.active?.usesSubscriptionRules ?? false
+          ? profiles.active!.name
+          : profiles.selectedGroup?.name ??
+                profiles.selectedLocation?.label ??
+                '',
     );
     try {
       switch (notice) {

@@ -1,3 +1,4 @@
+import 'clash_plan.dart';
 import 'geo_store.dart';
 import 'log.dart';
 import 'norm_config.dart';
@@ -8,6 +9,7 @@ import 'routing_prefs.dart';
 import 'rule_set.dart';
 
 Future<NormConfig> buildNormConfig(Profile p) async {
+  if (p.usesSubscriptionRules) return _subscriptionRulesConfig(p);
   final policy = routingPolicyFor(p, loadRuleSet: RuleSetStore.byId);
   Routing routing = await policy.resolve();
 
@@ -51,6 +53,50 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     locations: p.locations,
     groups: p.groups,
     routing: routing,
+    dns: p.dns,
+    defaultDns: prefs.defaultDns,
+    name: p.name,
+  );
+}
+
+Future<NormConfig> _subscriptionRulesConfig(Profile p) async {
+  final plan = p.plan!;
+  final geoReady = (await GeoStore.status()).downloaded;
+  final rules = [
+    for (final r in plan.rules)
+      if ((geoReady || !r.needsGeoData) &&
+          (supportsProcessRules || !r.needsProcess))
+        r,
+  ];
+  final left = plan.rules.length - rules.length;
+  if (left > 0) {
+    Log.e(
+      'routing',
+      '$left subscription rule(s) skipped: geo databases or process '
+          'matching unavailable here',
+    );
+  }
+  Log.i(
+    'routing: subscription rules, ${rules.length} rule(s), '
+    '${plan.groups.length} group(s), catch-all ${plan.catchAll}',
+  );
+  final prefs = await RoutingPrefsStore.load();
+  return NormConfig(
+    version: 1,
+    account: p.account ?? Account(displayName: p.name, status: 'active'),
+    locations: p.locations,
+    groups: p.groups,
+    plan: ClashPlan(
+      groups: plan.groups,
+      rules: rules,
+      lists: plan.lists,
+      skipped: plan.skipped,
+    ),
+    planChoices: p.groupChoices,
+    routing: Routing(
+      mode: 'full',
+      rules: prefs.lanDirect ? kLanDirectRules : const [],
+    ),
     dns: p.dns,
     defaultDns: prefs.defaultDns,
     name: p.name,

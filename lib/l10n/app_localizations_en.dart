@@ -3034,4 +3034,148 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fileAccessDeniedDetail =>
       'Allow Anoya to read storage in the system settings, or paste the link instead.';
+
+  @override
+  String get modeCaption => 'Mode';
+
+  @override
+  String get modeSubscriptionRules => 'Subscription rules';
+
+  @override
+  String get modeOwnRules => 'Own rules';
+
+  @override
+  String get modeSubscriptionRulesNote =>
+      'Traffic goes the way the subscription’s rules send it. You choose exits for its proxy groups on Home.';
+
+  @override
+  String get modeOwnRulesNote =>
+      'The subscription is a list of servers. You pick one on Home and route with your own rules.';
+
+  @override
+  String get consentTitle => 'Use the subscription’s rules?';
+
+  @override
+  String consentBody(String name, int count, String hosts) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rule lists',
+      one: '1 rule list',
+    );
+    return '$name sends each service its own way. For that the app keeps $_temp0 from $hosts and refreshes them weekly. Without them you pick a server and route with your own rules.';
+  }
+
+  @override
+  String consentHostsMore(String hosts, int count) {
+    return '$hosts and $count more';
+  }
+
+  @override
+  String get consentUseRules => 'Use its rules';
+
+  @override
+  String get homeKindSubscriptionRules => 'Subscription · its rules';
+
+  @override
+  String get homeStateSubscription => 'subscription';
+
+  @override
+  String get proxyGroupsTitle => 'Proxy groups';
+
+  @override
+  String homeProxyGroupsRest(String server, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+    );
+    return 'The rest via $server · $_temp0';
+  }
+
+  @override
+  String homeProxyGroupsDirect(int count) {
+    return '$count through the VPN · the rest direct';
+  }
+
+  @override
+  String get proxyGroupsEverythingElse => 'Everything else';
+
+  @override
+  String get proxyGroupsChooseExit => 'Choose the exit';
+
+  @override
+  String get proxyGroupsSetBySubscription => 'Set by the subscription';
+
+  @override
+  String get proxyGroupsRestDirect =>
+      'Everything else connects directly, outside the VPN.';
+
+  @override
+  String proxyGroupsNotApplied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules of the subscription could not be applied.',
+      one: '1 rule of the subscription could not be applied.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String proxyGroupsYourChoice(String exit) {
+    return '$exit · your choice';
+  }
+
+  @override
+  String proxyGroupsWaiting(String exit) {
+    return '$exit · waiting for its list';
+  }
+
+  @override
+  String proxyGroupsDefault(String detail) {
+    return 'Default · $detail';
+  }
+
+  @override
+  String get proxyGroupsFromSubscription => 'From the subscription';
+
+  @override
+  String get proxyGroupsDirect => 'Direct';
+
+  @override
+  String get proxyGroupsOutsideVpn => 'Outside the VPN';
+
+  @override
+  String get proxyGroupsDirectOutside => 'Direct, outside the VPN';
+
+  @override
+  String get proxyGroupsBlocked => 'Blocked';
+
+  @override
+  String proxyGroupsDownloading(int have, int total) {
+    return 'Downloading rule lists · $have of $total';
+  }
+
+  @override
+  String get proxyGroupsDownloadingBody =>
+      'Until a list arrives, what it matches goes the way of everything else.';
+
+  @override
+  String routingSetBySubscription(String rules) {
+    return 'Set by the subscription · $rules';
+  }
+
+  @override
+  String get routingWorksWithOwnRules => 'Works with Own rules';
+
+  @override
+  String get routingSubscriptionRulesNote =>
+      'The subscription decides where traffic goes. Switch the configuration to Own rules to use yours.';
+
+  @override
+  String rulesTarget(String type, String target) {
+    return '$type → $target';
+  }
 }

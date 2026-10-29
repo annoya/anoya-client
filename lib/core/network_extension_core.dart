@@ -180,14 +180,18 @@ class NetworkExtensionCore implements VpnCore {
 
     if (location.isPlaceholder) return null;
     try {
-      final listPaths = await RuleListStore.availablePaths(
-        config.routing?.lists ?? const [],
-      );
+      final listPaths = await RuleListStore.availablePaths([
+        ...?config.routing?.lists,
+        ...?config.plan?.lists,
+      ]);
       return {
         'config': mihomoTunConfigYaml(
           location,
           group: group,
           members: members,
+          clashPlan: config.plan,
+          planChoices: config.planChoices,
+          planLocations: config.locations,
           routing: config.routing,
           dns: config.dns,
           defaultDns: config.defaultDns.isEmpty
@@ -204,7 +208,9 @@ class NetworkExtensionCore implements VpnCore {
         'notice': jsonEncode(
           tunnelNotice(
             configuration: config.name,
-            server: group?.name ?? location.label,
+            server: config.plan != null
+                ? config.name
+                : group?.name ?? location.label,
           ),
         ),
       };
