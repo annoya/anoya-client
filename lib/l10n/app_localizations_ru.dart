@@ -3113,4 +3113,153 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get fileAccessDeniedDetail =>
       'Разрешите Anoya доступ к хранилищу в настройках системы или вставьте ссылку.';
+
+  @override
+  String get modeCaption => 'Режим';
+
+  @override
+  String get modeSubscriptionRules => 'Правила подписки';
+
+  @override
+  String get modeOwnRules => 'Свои правила';
+
+  @override
+  String get modeSubscriptionRulesNote =>
+      'Трафик идёт так, как задают правила подписки. Выходы для её прокси-групп выбираются на главном экране.';
+
+  @override
+  String get modeOwnRulesNote =>
+      'Подписка — это список серверов. Вы выбираете сервер на главном экране и маршрутизируете своими правилами.';
+
+  @override
+  String get consentTitle => 'Использовать правила подписки?';
+
+  @override
+  String consentBody(String name, int count, String hosts) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count списка правил',
+      many: '$count списков правил',
+      few: '$count списка правил',
+      one: '$count список правил',
+    );
+    return '$name отправляет каждый сервис своим путём. Для этого приложение хранит $_temp0 с $hosts и обновляет их раз в неделю. Без них вы выбираете сервер и маршрутизируете своими правилами.';
+  }
+
+  @override
+  String consentHostsMore(String hosts, int count) {
+    return '$hosts и ещё $count';
+  }
+
+  @override
+  String get consentUseRules => 'Использовать';
+
+  @override
+  String get homeKindSubscriptionRules => 'Подписка · её правила';
+
+  @override
+  String get homeStateSubscription => 'подписка';
+
+  @override
+  String get proxyGroupsTitle => 'Прокси-группы';
+
+  @override
+  String homeProxyGroupsRest(String server, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count группы',
+      many: '$count групп',
+      few: '$count группы',
+      one: '$count группа',
+    );
+    return 'Остальное через $server · $_temp0';
+  }
+
+  @override
+  String homeProxyGroupsDirect(int count) {
+    return '$count через VPN · остальное напрямую';
+  }
+
+  @override
+  String get proxyGroupsEverythingElse => 'Всё остальное';
+
+  @override
+  String get proxyGroupsChooseExit => 'Выбор выхода';
+
+  @override
+  String get proxyGroupsSetBySubscription => 'Задано подпиской';
+
+  @override
+  String get proxyGroupsRestDirect => 'Всё остальное идёт напрямую, мимо VPN.';
+
+  @override
+  String proxyGroupsNotApplied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count правила подписки не удалось применить.',
+      many: '$count правил подписки не удалось применить.',
+      few: '$count правила подписки не удалось применить.',
+      one: '$count правило подписки не удалось применить.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String proxyGroupsYourChoice(String exit) {
+    return '$exit · ваш выбор';
+  }
+
+  @override
+  String proxyGroupsWaiting(String exit) {
+    return '$exit · ждёт свой список';
+  }
+
+  @override
+  String proxyGroupsDefault(String detail) {
+    return 'По умолчанию · $detail';
+  }
+
+  @override
+  String get proxyGroupsFromSubscription => 'Из подписки';
+
+  @override
+  String get proxyGroupsDirect => 'Напрямую';
+
+  @override
+  String get proxyGroupsOutsideVpn => 'Мимо VPN';
+
+  @override
+  String get proxyGroupsDirectOutside => 'Напрямую, мимо VPN';
+
+  @override
+  String get proxyGroupsBlocked => 'Заблокировано';
+
+  @override
+  String proxyGroupsDownloading(int have, int total) {
+    return 'Скачиваются списки правил · $have из $total';
+  }
+
+  @override
+  String get proxyGroupsDownloadingBody =>
+      'Пока список не пришёл, то, что он описывает, идёт туда же, куда всё остальное.';
+
+  @override
+  String routingSetBySubscription(String rules) {
+    return 'Задано подпиской · $rules';
+  }
+
+  @override
+  String get routingWorksWithOwnRules => 'Работает в режиме «Свои правила»';
+
+  @override
+  String get routingSubscriptionRulesNote =>
+      'Куда идёт трафик, решает подписка. Чтобы использовать свои правила, переключите конфигурацию на «Свои правила».';
+
+  @override
+  String rulesTarget(String type, String target) {
+    return '$type → $target';
+  }
 }

@@ -1,4 +1,5 @@
 import '../l10n/l10n.dart';
+import 'clash_plan.dart';
 
 class NormConfig {
   NormConfig({
@@ -6,6 +7,8 @@ class NormConfig {
     required this.account,
     required this.locations,
     this.groups = const [],
+    this.plan,
+    this.planChoices = const {},
     this.routing,
     this.dns = const [],
     this.defaultDns = '',
@@ -17,6 +20,10 @@ class NormConfig {
   final List<Location> locations;
 
   final List<ProxyGroup> groups;
+
+  final ClashPlan? plan;
+
+  final Map<String, String> planChoices;
 
   final Routing? routing;
 

@@ -5,6 +5,7 @@ import '../../core/ds.dart';
 import '../../core/profile.dart';
 import '../../core/theme.dart';
 import 'config_parts.dart';
+import 'subscription_mode.dart';
 
 class SubscriptionConfigScreen extends ConsumerWidget {
   const SubscriptionConfigScreen({
@@ -44,6 +45,7 @@ class SubscriptionConfigScreen extends ConsumerWidget {
         if (p.deviceLimitReached) const DeviceLimitAlert(),
         if (p.unsupportedServers.isNotEmpty)
           UnsupportedServersAlert(profile: p),
+        if (p.hasModes) SubscriptionModeGroup(profile: p),
         if (SubscriptionPlanGroup.shows(p)) SubscriptionPlanGroup(profile: p),
         RoutingRow(profile: p),
         DsStack(

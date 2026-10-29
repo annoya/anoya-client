@@ -34,6 +34,8 @@ const kReapplyMinGap = Duration(minutes: 1);
 
 const kTunnelStartGrace = Duration(seconds: 3);
 
+const kListsWaitForTunnel = Duration(seconds: 30);
+
 class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Timer? _timer;
   DateTime _lastReapply = DateTime.fromMillisecondsSinceEpoch(0);
@@ -112,13 +114,27 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Future<AuthConfig> authConfig(String serverUrl) =>
       ApiClient(serverUrl).authConfig();
 
-  Future<void> addSubscriptionUrl(String name, String url) async =>
-      _append(await importSubscriptionUrl(name, url));
+  Future<void> addSubscriptionUrl(
+    String name,
+    String url, {
+    ListConsent? consent,
+  }) async => _appendWithMode(await importSubscriptionUrl(name, url), consent);
 
-  Future<void> addFromText(String text, {String? name}) async =>
-      parseAmneziaVpnKey(text) != null
+  Future<void> addFromText(
+    String text, {
+    String? name,
+    ListConsent? consent,
+  }) async => parseAmneziaVpnKey(text) != null
       ? addAmneziaKey(text)
-      : _append(await importText(text, name: name));
+      : _appendWithMode(await importText(text, name: name), consent);
+
+  Future<void> _appendWithMode(Profile added, ListConsent? consent) async {
+    final p = await withModeChosen(added, consent);
+    await _append(p);
+    if (p.usesSubscriptionRules && p.plan!.lists.isNotEmpty) {
+      unawaited(syncRuleLists(p.id));
+    }
+  }
 
   Future<void> addAmneziaKey(String text) async =>
       _append(await importAmneziaKey(text));
@@ -362,6 +378,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       deviceLimitReached: updated.deviceLimitReached,
       unsupportedServers: updated.unsupportedServers,
       groups: updated.groups,
+      plan: updated.plan,
       providerRouting: updated.providerRouting,
       providerRoutingSkipped: updated.providerRoutingSkipped,
       providerRoutingProbed: updated.providerRoutingProbed,
@@ -403,6 +420,42 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
         (p) => p.copyWith(providerRoutingEnabled: enabled),
       );
 
+  Future<bool> setSubscriptionRules(
+    String profileId,
+    bool enabled, {
+    ListConsent? consent,
+  }) async {
+    await ready;
+    final p = _byId(profileId);
+    if (p == null || p.plan == null) return false;
+    if (enabled && p.needsListConsent) {
+      if (!(await consent?.call(p) ?? false)) return false;
+    }
+    await _updateRouting(
+      profileId,
+      (p) => p.copyWith(
+        subscriptionRules: enabled,
+        providerRuleListsEnabled:
+            p.providerRuleListsEnabled || (enabled && p.plan!.lists.isNotEmpty),
+      ),
+    );
+    if (enabled && p.plan!.lists.isNotEmpty) {
+      unawaited(syncRuleLists(profileId));
+    }
+    return true;
+  }
+
+  Future<void> setGroupChoice(String profileId, String group, String? choice) =>
+      _updateRouting(profileId, (p) {
+        final choices = {...p.groupChoices};
+        if (choice == null) {
+          choices.remove(group);
+        } else {
+          choices[group] = choice;
+        }
+        return p.copyWith(groupChoices: choices);
+      });
+
   Future<void> setProviderRuleListsEnabled(
     String profileId,
     bool enabled,
@@ -419,17 +472,42 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
 
   Future<List<RuleListStatus>> syncRuleLists(String profileId) async {
     await ready;
-    final lists =
-        _byId(profileId)?.providerRouting?.lists ?? const <RuleList>[];
+    final lists = _listsOf(_byId(profileId));
     if (lists.isEmpty) return const [];
     final status = await RuleListStore.sync(lists);
     if (profileId == state.activeId) await _applySelection();
     return status;
   }
 
-  Iterable<RuleList> _liveRuleLists() => state.profiles.expand(
-    (p) => p.providerRouting?.lists ?? const <RuleList>[],
-  );
+  Future<void> _completeLists(String profileId, VpnCore core) async {
+    final lists = _byId(profileId)?.plan?.lists ?? const <RuleList>[];
+    if (lists.isEmpty) return;
+    final missing = (await RuleListStore.status(
+      lists,
+    )).where((s) => !s.available).length;
+    if (missing == 0) return;
+    if (core.status != VpnStatus.connected) {
+      final up = await core
+          .statusStream()
+          .firstWhere(
+            (s) => s == VpnStatus.connected || s == VpnStatus.disconnected,
+          )
+          .timeout(
+            kListsWaitForTunnel,
+            onTimeout: () => VpnStatus.disconnected,
+          );
+      if (up != VpnStatus.connected) return;
+    }
+    Log.i('rule lists: $missing missing, downloading with the tunnel up');
+    await syncRuleLists(profileId);
+  }
+
+  Iterable<RuleList> _liveRuleLists() => state.profiles.expand(_listsOf);
+
+  static List<RuleList> _listsOf(Profile? p) => [
+    ...?p?.providerRouting?.lists,
+    ...?p?.plan?.lists,
+  ];
 
   Future<void> _updateRouting(
     String profileId,
@@ -502,6 +580,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       _lastReapply = DateTime.now();
       _reapplyPending = false;
       await ref.read(onDemandProvider.notifier).onConnected();
+      if (p.usesSubscriptionRules) unawaited(_completeLists(p.id, core));
     } catch (e) {
       if (run != _connectRun) return;
       Log.e('connect failed', '$e');
@@ -619,9 +698,11 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     }
     final locId = state.selectionId;
     if (locId == null) return;
-    final gone = ProxyGroup.isGroupId(locId)
-        ? after.groups.every((g) => g.id != locId)
-        : after.locations.every((l) => l.id != locId);
+    final gone =
+        !after.usesSubscriptionRules &&
+        (ProxyGroup.isGroupId(locId)
+            ? after.groups.every((g) => g.id != locId)
+            : after.locations.every((l) => l.id != locId));
     if (gone) {
       Log.i('poll: connected server no longer offered — tunnel left running');
       return;
@@ -633,7 +714,13 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     final proxyDiff =
         jsonEncode(_proxyOf(before, locId)) !=
         jsonEncode(_proxyOf(after, locId));
-    if (!routingDiff && !proxyDiff && !_reapplyPending) return;
+    final planDiff =
+        after.usesSubscriptionRules &&
+        (jsonEncode(before.plan?.toJson()) !=
+                jsonEncode(after.plan?.toJson()) ||
+            jsonEncode(before.locations.map((l) => l.proxy).toList()) !=
+                jsonEncode(after.locations.map((l) => l.proxy).toList()));
+    if (!routingDiff && !proxyDiff && !planDiff && !_reapplyPending) return;
     if (DateTime.now().difference(_lastReapply) < kReapplyMinGap) {
       _reapplyPending = true;
       Log.i('poll: active config changed, reapply deferred (rate limit)');
@@ -659,6 +746,18 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     }
     return null;
   }
+}
+
+typedef ListConsent = Future<bool> Function(Profile profile);
+
+Future<Profile> withModeChosen(Profile p, ListConsent? consent) async {
+  final plan = p.plan;
+  if (plan == null) return p;
+  final yes = plan.lists.isEmpty || (await consent?.call(p) ?? false);
+  return p.copyWith(
+    subscriptionRules: yes,
+    providerRuleListsEnabled: yes && plan.lists.isNotEmpty,
+  );
 }
 
 final profilesControllerProvider =

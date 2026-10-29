@@ -9,6 +9,7 @@ import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 import '../../state/provider_rule_lists.dart';
 import 'config_parts.dart';
+import 'subscription_rules_card.dart';
 
 class RoutingConfigScreen extends ConsumerWidget {
   const RoutingConfigScreen({super.key, required this.profileId});
@@ -27,6 +28,8 @@ class RoutingConfigScreen extends ConsumerWidget {
     final l10n = context.l10n;
     final note = p.routing != null
         ? l10n.configOrganizationRoutingNote
+        : p.usesSubscriptionRules
+        ? l10n.routingSubscriptionRulesNote
         : p.providerRouting != null
         ? l10n.configSubscriptionRoutingNote
         : null;
@@ -53,6 +56,27 @@ class RoutingConfigScreen extends ConsumerWidget {
           caption: l10n.configSectionOrganizationRouting,
           color: context.ds.accentSubtle,
           children: [ManagedRoutingRow(routing: p.routing!)],
+        ),
+      ];
+    }
+    if (p.usesSubscriptionRules) {
+      final failed = (ref.watch(providerRuleListsProvider(p.id)).value ?? [])
+          .where((s) => !s.available && s.error != null)
+          .toList();
+      return [
+        DsGroup(
+          caption: l10n.configSectionSubscriptionRouting,
+          child: SubscriptionRulesCard(profile: p),
+        ),
+        if (failed.isNotEmpty) RuleListFailureCard(profile: p, failed: failed),
+        DsGroup(
+          caption: l10n.configSectionDeviceRouting,
+          child: IgnorePointer(
+            child: LocalRoutingCard(
+              profile: p,
+              lockedNote: l10n.routingWorksWithOwnRules,
+            ),
+          ),
         ),
       ];
     }

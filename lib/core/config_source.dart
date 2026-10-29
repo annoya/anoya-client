@@ -123,6 +123,7 @@ final class SubscriptionSource extends ConfigSource {
       deviceLimitReached: res.deviceLimitReached,
       unsupportedServers: parsed.unsupported,
       groups: parsed.groups,
+      plan: parsed.plan,
       providerRouting: routing,
       providerRoutingSkipped: skipped,
       providerRoutingProbed: asked,
@@ -132,6 +133,9 @@ final class SubscriptionSource extends ConfigSource {
       renderingProbed: res.renderingProbed || profile.renderingProbed,
       refreshedAt: DateTime.now(),
     );
+    if (next.usesSubscriptionRules && next.providerRuleListsEnabled) {
+      await RuleListStore.sync(next.plan!.lists);
+    }
     return moved == null ? next : next.copyWith(subscriptionUrl: moved);
   }
 }
@@ -161,6 +165,7 @@ Future<ParsedSubscription> withProxyProviders(
     locations: locations,
     unsupported: unsupported,
     groups: parsed.groups,
+    plan: parsed.plan,
     dns: parsed.dns,
     format: parsed.format,
   );

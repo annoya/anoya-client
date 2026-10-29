@@ -85,6 +85,7 @@ Future<Profile> importSubscriptionUrl(String name, String url) async {
     deviceLimitReached: res.deviceLimitReached,
     unsupportedServers: parsed.unsupported,
     groups: parsed.groups,
+    plan: parsed.plan,
     rendering: res.rendering,
     renderingProbed: res.renderingProbed,
     providerRouting: res.routing?.routing,
@@ -127,6 +128,8 @@ Future<Profile> importText(String text, {String? name}) async {
     locations: locations,
     dns: parsed.dns,
     unsupportedServers: parsed.unsupported,
+    groups: parsed.groups,
+    plan: single ? null : parsed.plan,
     refreshedAt: DateTime.now(),
   );
 }

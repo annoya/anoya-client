@@ -131,6 +131,7 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState>
 
   Future<String> _serverLabel() async {
     final profiles = ref.read(profilesControllerProvider);
+    if (profiles.active?.usesSubscriptionRules ?? false) return '';
     final group = profiles.selectedGroup;
     if (group == null) return profiles.selectedLocation?.label ?? '';
     final picked = await NetworkExtensionCore.groupMember(kGroupName);

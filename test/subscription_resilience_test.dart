@@ -255,42 +255,58 @@ proxy-groups:
   - {name: Fastest, type: url-test, proxies: [A]}
 ''';
 
-    test('a body with no groups makes the app ask by name', () async {
-      final asked = <String>[];
-      final client = MockClient((req) async {
-        asked.add(req.url.path);
-        if (req.url.path.endsWith('/mihomo')) return http.Response(clash, 200);
-        return http.Response('vless://u@h.example:443?security=none#DE', 200);
-      });
-      final res = await fetchSubscription(
-        'https://sub.example/tok3n',
-        client: client,
-        probeRouting: false,
-      );
-      expect(asked, ['/tok3n', '/tok3n/mihomo']);
-      expect(res.rendering, 'mihomo');
-      expect(res.body, contains('proxy-groups'));
-      expect(res.renderingProbed, isTrue);
-    });
+    test(
+      'the Clash rendering is asked for first, and then nothing else',
+      () async {
+        final asked = <String>[];
+        final client = MockClient((req) async {
+          asked.add(req.url.path);
+          if (req.url.path.endsWith('/mihomo')) {
+            return http.Response(clash, 200);
+          }
+          return http.Response('vless://u@h.example:443?security=none#DE', 200);
+        });
+        final res = await fetchSubscription(
+          'https://sub.example/tok3n',
+          client: client,
+          probeRouting: false,
+        );
+        expect(asked, ['/tok3n/mihomo']);
+        expect(res.rendering, 'mihomo');
+        expect(res.body, contains('proxy-groups'));
+        expect(res.renderingProbed, isTrue);
+      },
+    );
 
-    test('a body that already has groups is not second-guessed', () async {
-      final asked = <String>[];
-      final client = MockClient((req) async {
-        asked.add(req.url.path);
-        return http.Response(clash, 200);
-      });
-      final res = await fetchSubscription(
-        'https://sub.example/tok3n',
-        client: client,
-        probeRouting: false,
-      );
-      expect(asked, ['/tok3n']);
-      expect(
-        res.rendering,
-        isEmpty,
-        reason: 'the panel already sent what we need',
-      );
-    });
+    test(
+      'an address that is already Clash is remembered as such, so it is asked once',
+      () async {
+        final asked = <String>[];
+        final client = MockClient((req) async {
+          asked.add(req.url.path);
+          if (req.url.pathSegments.length > 1) {
+            return http.Response('Not Found', 404);
+          }
+          return http.Response(clash, 200);
+        });
+        final first = await fetchSubscription(
+          'https://sub.example/tok3n',
+          client: client,
+          probeRouting: false,
+        );
+        expect(first.rendering, kPlainRendering);
+        asked.clear();
+        final next = await fetchSubscription(
+          'https://sub.example/tok3n',
+          client: client,
+          probeRouting: false,
+          rendering: first.rendering,
+          probeRenderings: shouldProbeRenderings(first.rendering),
+        );
+        expect(asked, ['/tok3n']);
+        expect(next.body, contains('proxy-groups'));
+      },
+    );
 
     test(
       'a panel with no such rendering costs three requests and keeps its body',
@@ -309,10 +325,10 @@ proxy-groups:
           probeRouting: false,
         );
         expect(asked, [
-          '/tok3n',
           '/tok3n/mihomo',
           '/tok3n/clash-meta',
           '/tok3n/clash',
+          '/tok3n',
         ]);
         expect(
           res.body,

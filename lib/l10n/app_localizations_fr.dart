@@ -3066,4 +3066,148 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get fileAccessDeniedDetail =>
       'Autorisez Anoya à lire le stockage dans les réglages du système, ou collez plutôt le lien.';
+
+  @override
+  String get modeCaption => 'Mode';
+
+  @override
+  String get modeSubscriptionRules => 'Règles de l’abonnement';
+
+  @override
+  String get modeOwnRules => 'Règles personnelles';
+
+  @override
+  String get modeSubscriptionRulesNote =>
+      'Le trafic suit les règles de l’abonnement. Les sorties de ses groupes de proxys se choisissent sur l’accueil.';
+
+  @override
+  String get modeOwnRulesNote =>
+      'L’abonnement est une liste de serveurs. Vous en choisissez un sur l’accueil et routez avec vos propres règles.';
+
+  @override
+  String get consentTitle => 'Utiliser les règles de l’abonnement ?';
+
+  @override
+  String consentBody(String name, int count, String hosts) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count listes de règles',
+      one: '1 liste de règles',
+    );
+    return '$name envoie chaque service par son propre chemin. Pour cela, l’app conserve $_temp0 de $hosts et les met à jour chaque semaine. Sans elles, vous choisissez un serveur et routez avec vos propres règles.';
+  }
+
+  @override
+  String consentHostsMore(String hosts, int count) {
+    return '$hosts et $count autres';
+  }
+
+  @override
+  String get consentUseRules => 'Utiliser ses règles';
+
+  @override
+  String get homeKindSubscriptionRules => 'Abonnement · ses règles';
+
+  @override
+  String get homeStateSubscription => 'abonnement';
+
+  @override
+  String get proxyGroupsTitle => 'Groupes de proxys';
+
+  @override
+  String homeProxyGroupsRest(String server, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groupes',
+      one: '1 groupe',
+    );
+    return 'Le reste via $server · $_temp0';
+  }
+
+  @override
+  String homeProxyGroupsDirect(int count) {
+    return '$count via le VPN · le reste en direct';
+  }
+
+  @override
+  String get proxyGroupsEverythingElse => 'Tout le reste';
+
+  @override
+  String get proxyGroupsChooseExit => 'Choisir la sortie';
+
+  @override
+  String get proxyGroupsSetBySubscription => 'Fixé par l’abonnement';
+
+  @override
+  String get proxyGroupsRestDirect =>
+      'Tout le reste se connecte en direct, hors du VPN.';
+
+  @override
+  String proxyGroupsNotApplied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count règles de l’abonnement n’ont pas pu être appliquées.',
+      one: '1 règle de l’abonnement n’a pas pu être appliquée.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String proxyGroupsYourChoice(String exit) {
+    return '$exit · votre choix';
+  }
+
+  @override
+  String proxyGroupsWaiting(String exit) {
+    return '$exit · attend sa liste';
+  }
+
+  @override
+  String proxyGroupsDefault(String detail) {
+    return 'Par défaut · $detail';
+  }
+
+  @override
+  String get proxyGroupsFromSubscription => 'De l’abonnement';
+
+  @override
+  String get proxyGroupsDirect => 'Direct';
+
+  @override
+  String get proxyGroupsOutsideVpn => 'Hors du VPN';
+
+  @override
+  String get proxyGroupsDirectOutside => 'Direct, hors du VPN';
+
+  @override
+  String get proxyGroupsBlocked => 'Bloqué';
+
+  @override
+  String proxyGroupsDownloading(int have, int total) {
+    return 'Téléchargement des listes de règles · $have sur $total';
+  }
+
+  @override
+  String get proxyGroupsDownloadingBody =>
+      'Tant qu’une liste n’est pas arrivée, ce qu’elle couvre suit le même chemin que tout le reste.';
+
+  @override
+  String routingSetBySubscription(String rules) {
+    return 'Fixé par l’abonnement · $rules';
+  }
+
+  @override
+  String get routingWorksWithOwnRules => 'Fonctionne avec Règles personnelles';
+
+  @override
+  String get routingSubscriptionRulesNote =>
+      'L’abonnement décide où va le trafic. Passez la configuration en Règles personnelles pour utiliser les vôtres.';
+
+  @override
+  String rulesTarget(String type, String target) {
+    return '$type → $target';
+  }
 }

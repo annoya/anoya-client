@@ -2904,4 +2904,126 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fileAccessDeniedDetail => '请在系统设置中允许 Anoya 读取存储，或改为粘贴链接。';
+
+  @override
+  String get modeCaption => '模式';
+
+  @override
+  String get modeSubscriptionRules => '订阅规则';
+
+  @override
+  String get modeOwnRules => '自定义规则';
+
+  @override
+  String get modeSubscriptionRulesNote => '流量按订阅的规则走。其代理组的出口在主页选择。';
+
+  @override
+  String get modeOwnRulesNote => '订阅只是服务器列表。你在主页选择服务器，并用自己的规则分流。';
+
+  @override
+  String get consentTitle => '使用订阅的规则？';
+
+  @override
+  String consentBody(String name, int count, String hosts) {
+    return '$name 为每个服务指定各自的线路。为此应用会保存来自 $hosts 的 $count 个规则列表，并每周更新。不使用它们时，你自己选择服务器并用自己的规则分流。';
+  }
+
+  @override
+  String consentHostsMore(String hosts, int count) {
+    return '$hosts 等 $count 个';
+  }
+
+  @override
+  String get consentUseRules => '使用其规则';
+
+  @override
+  String get homeKindSubscriptionRules => '订阅 · 其规则';
+
+  @override
+  String get homeStateSubscription => '订阅';
+
+  @override
+  String get proxyGroupsTitle => '代理组';
+
+  @override
+  String homeProxyGroupsRest(String server, int count) {
+    return '其余经 $server · $count 个组';
+  }
+
+  @override
+  String homeProxyGroupsDirect(int count) {
+    return '$count 个经 VPN · 其余直连';
+  }
+
+  @override
+  String get proxyGroupsEverythingElse => '其余流量';
+
+  @override
+  String get proxyGroupsChooseExit => '选择出口';
+
+  @override
+  String get proxyGroupsSetBySubscription => '由订阅指定';
+
+  @override
+  String get proxyGroupsRestDirect => '其余流量直连，不经过 VPN。';
+
+  @override
+  String proxyGroupsNotApplied(int count) {
+    return '订阅中有 $count 条规则无法应用。';
+  }
+
+  @override
+  String proxyGroupsYourChoice(String exit) {
+    return '$exit · 你的选择';
+  }
+
+  @override
+  String proxyGroupsWaiting(String exit) {
+    return '$exit · 等待其列表';
+  }
+
+  @override
+  String proxyGroupsDefault(String detail) {
+    return '默认 · $detail';
+  }
+
+  @override
+  String get proxyGroupsFromSubscription => '来自订阅';
+
+  @override
+  String get proxyGroupsDirect => '直连';
+
+  @override
+  String get proxyGroupsOutsideVpn => '不经过 VPN';
+
+  @override
+  String get proxyGroupsDirectOutside => '直连，不经过 VPN';
+
+  @override
+  String get proxyGroupsBlocked => '已拦截';
+
+  @override
+  String proxyGroupsDownloading(int have, int total) {
+    return '正在下载规则列表 · $have/$total';
+  }
+
+  @override
+  String get proxyGroupsDownloadingBody => '列表到达前，它所匹配的流量与其余流量走同一路线。';
+
+  @override
+  String routingSetBySubscription(String rules) {
+    return '由订阅指定 · $rules';
+  }
+
+  @override
+  String get routingWorksWithOwnRules => '在“自定义规则”模式下生效';
+
+  @override
+  String get routingSubscriptionRulesNote =>
+      '流量去向由订阅决定。将此配置切换到“自定义规则”即可使用你自己的规则。';
+
+  @override
+  String rulesTarget(String type, String target) {
+    return '$type → $target';
+  }
 }

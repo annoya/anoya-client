@@ -12,7 +12,10 @@ final providerRuleListsProvider =
           (s) => s.profiles.where((p) => p.id == profileId).firstOrNull,
         ),
       );
-      final lists = profile?.providerRouting?.lists ?? const <RuleList>[];
+      final lists = <RuleList>[
+        ...?profile?.providerRouting?.lists,
+        if (profile?.usesSubscriptionRules ?? false) ...profile!.plan!.lists,
+      ];
       if (lists.isEmpty) return const [];
       try {
         return await RuleListStore.status(lists);

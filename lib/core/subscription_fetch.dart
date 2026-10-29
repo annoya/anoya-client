@@ -89,8 +89,17 @@ Future<SubscriptionResponse> fetchSubscription(
           }
         }
       }
+      if (probeRenderings) {
+        final named = await _clashRendering(uri, identity, c, wait);
+        if (named != null) return named;
+      }
       final plain = await _fetch(uri, identity, c, probeRouting, wait);
-      return await _withGroups(plain, uri, identity, c, wait, probeRenderings);
+      return plain._with(
+        rendering: probeRenderings && _hasGroups(plain.body)
+            ? kPlainRendering
+            : null,
+        renderingProbed: probeRenderings || plain.renderingProbed,
+      );
     } catch (e, stack) {
       final backup = Uri.tryParse(fallbackUrl);
       if (backup == null || backup.scheme != 'https' || backup.host.isEmpty) {
@@ -160,19 +169,12 @@ Future<SubscriptionResponse> _fetch(
   );
 }
 
-Future<SubscriptionResponse> _withGroups(
-  SubscriptionResponse plain,
+Future<SubscriptionResponse?> _clashRendering(
   Uri uri,
   DeviceIdentity identity,
   http.Client c,
   Duration wait,
-  bool probe,
 ) async {
-  if (!probe) return plain;
-  if (_hasGroups(plain.body)) {
-    return plain.renderingProbed ? plain : plain._with(renderingProbed: true);
-  }
-
   for (final name in kClashRenderings) {
     final url = renderingUrl(uri, name);
     if (url == null) continue;
@@ -185,7 +187,7 @@ Future<SubscriptionResponse> _withGroups(
       Log.e('rendering not available', '${uri.host}/$name');
     }
   }
-  return plain._with(renderingProbed: true);
+  return null;
 }
 
 bool _hasGroups(String body) =>
@@ -196,7 +198,10 @@ const kClashRenderings = ['mihomo', 'clash-meta', 'clash', kClashPathRendering];
 
 const kClashPathRendering = 'clash-path';
 
+const kPlainRendering = 'plain';
+
 Uri? renderingUrl(Uri uri, String name) {
+  if (name == kPlainRendering) return uri;
   final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
   if (segments.isEmpty) return null;
   if (name == kClashPathRendering) {
@@ -248,12 +253,6 @@ Future<(ProviderRouting?, bool)> _providerRouting(
   if (header != null && header.isNotEmpty) {
     final happ = parseHappRouting(header);
     if (happ != null) return (happ, true);
-  }
-
-  final body = res.body;
-  if (RegExp(r'(^|\n)\s*rules\s*:').hasMatch(body)) {
-    final clash = parseClashRouting(body);
-    if (clash != null) return (clash, true);
   }
 
   if (!probeRouting) return (null, false);
