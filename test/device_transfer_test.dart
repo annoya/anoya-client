@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/cloud_sync.dart';
 import 'package:anoya/core/device_transfer.dart';
+import 'package:anoya/core/json_file_store.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
@@ -28,7 +29,12 @@ void main() {
     tmp = Directory.systemTemp.createTempSync('vpn-transfer');
     messenger.setMockMethodCallHandler(pathProvider, (_) async => tmp.path);
   });
-  tearDown(() {
+  tearDown(() async {
+    // Windows refuses to delete a file a store write still holds open.
+    for (var i = 0; i < 200 && JsonFileStore.pending > 0; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     messenger.setMockMethodCallHandler(pathProvider, null);
     tmp.deleteSync(recursive: true);
   });
