@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # ABIs pinned here, not via gradle abiFilters: the Flutter plugin overrides
-# them. One APK per ABI plus a universal one for people who do not know theirs.
+# them. One APK per ABI plus a universal one for people who do not know theirs,
+# and an app bundle for Google Play.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 OUT=build/app/outputs/flutter-apk
+BUNDLE=build/app/outputs/bundle/release
 marker="$(mktemp)"
 
 # A user --target-platform replaces ours; passing it twice breaks gradle.
@@ -21,6 +23,7 @@ flutter build apk --release "${targets[@]+"${targets[@]}"}" "${split[@]+"${split
 if [ "${#split[@]}" -gt 0 ]; then
   flutter build apk --release "${targets[@]+"${targets[@]}"}" "$@"
 fi
+flutter build appbundle --release "${targets[@]+"${targets[@]}"}" "$@"
 
 label="$(sed -n 's/.*android:label="\([^"]*\)".*/\1/p' android/app/src/main/AndroidManifest.xml | head -1)"
 version="$(awk '/^version:/ {print $2}' pubspec.yaml)"
@@ -38,4 +41,8 @@ for apk in "$OUT"/app*-release.apk; do
 done
 rm -f "$marker"
 
+bundle="$BUNDLE/$label-$version.aab"
+mv "$BUNDLE/app-release.aab" "$bundle"
+
 for apk in "${renamed[@]}"; do echo "APK: $apk ($(du -h "$apk" | cut -f1))"; done
+echo "AAB: $bundle ($(du -h "$bundle" | cut -f1))"

@@ -71,7 +71,7 @@ jobs:
       - run: flutter test
 
   android:
-    name: Android APK
+    name: Android APK and bundle
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -108,12 +108,29 @@ jobs:
           native/mihomocore/build-aar.sh
           native/libagw/build-so.sh
 
-      - name: Build APK
+      # The same key signs the GitHub APKs and the bundle uploaded to Play;
+      # Play re-signs what it delivers with its own app signing key.
+      - name: Release keystore
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_B64" ]; then
+            echo "::warning::ANDROID_KEYSTORE_B64 is not set; release builds are debug-signed"
+            exit 0
+          fi
+          keystore="$RUNNER_TEMP/release.jks"
+          echo "$ANDROID_KEYSTORE_B64" | base64 --decode > "$keystore"
+          echo "ANDROID_KEYSTORE_PATH=$keystore" >> "$GITHUB_ENV"
+
+      - name: Build APK and app bundle
         env:
           AGW_ENDPOINT: ${{ secrets.AGW_ENDPOINT }}
           AGW_PUBLIC_KEY_B64: ${{ secrets.AGW_PUBLIC_KEY_B64 }}
           AGW_S3_ENDPOINTS: ${{ secrets.AGW_S3_ENDPOINTS }}
           AGW_S3_FALLBACK_ENDPOINTS: ${{ secrets.AGW_S3_FALLBACK_ENDPOINTS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           # One --dart-define per secret that is set. Passing an empty one
           # would override the code's default with nothing.
@@ -156,6 +173,12 @@ jobs:
         with:
           name: ${{ steps.meta.outputs.prefix }}-android-universal
           path: build/app/outputs/flutter-apk/*-universal.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.prefix }}-android-play
+          path: build/app/outputs/bundle/release/*.aab
           if-no-files-found: error
 
   windows:

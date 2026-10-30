@@ -29,10 +29,23 @@ android {
 
     buildFeatures { aidl = true }
 
+    signingConfigs {
+        val keystore = System.getenv("ANDROID_KEYSTORE_PATH").orEmpty()
+        if (keystore.isNotEmpty()) {
+            create("release") {
+                val storePass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                storeFile = file(keystore)
+                storePassword = storePass
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")?.ifEmpty { null } ?: storePass
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Debug keys until a release signing config exists.
-            signingConfig = signingConfigs.getByName("debug")
+            // Without a keystore in the environment, local release builds stay debug-signed.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 }
