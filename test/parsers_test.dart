@@ -333,17 +333,45 @@ rules:
       });
     });
 
-    test(
-      'an xhttp server with a split download channel is refused, not guessed',
-      () {
-        final r = parseShareLink(
-          'vless://u@h.example:443?security=tls&type=xhttp&path=/x'
-          '&extra=%7B%22downloadSettings%22%3A%7B%22address%22%3A%22d.example%22%7D%7D',
-        );
-        expect(r.location, isNull);
-        expect(r.unsupported, contains('xhttp'));
-      },
-    );
+    test('xhttp keeps what its extra tells the server to expect', () {
+      const extra =
+          '{"xPaddingBytes":"100-1000","xPaddingObfsMode":true,'
+          '"xPaddingPlacement":"header","sessionPlacement":"path",'
+          '"seqPlacement":"query","uplinkHTTPMethod":"PUT",'
+          '"uplinkDataPlacement":"body","noGRPCHeader":false,'
+          '"headers":{"X-A":"1"},"xmux":{"maxConcurrency":"16-32"},'
+          '"downloadSettings":{"address":"d.example","port":8443,'
+          '"network":"xhttp","security":"reality","realitySettings":'
+          '{"serverName":"r.example","fingerprint":"chrome",'
+          '"publicKey":"PK","shortId":"0a"},'
+          '"xhttpSettings":{"path":"/down"}}}';
+      final loc = parseProxyUri(
+        'vless://u@h.example:443?security=tls&type=xhttp&path=/x'
+        '&mode=packet-up&extra=${Uri.encodeQueryComponent(extra)}',
+      )!;
+      expect(loc.proxy['xhttp-opts'], {
+        'path': '/x',
+        'mode': 'packet-up',
+        'headers': {'X-A': '1'},
+        'x-padding-bytes': '100-1000',
+        'x-padding-obfs-mode': true,
+        'x-padding-placement': 'header',
+        'uplink-http-method': 'PUT',
+        'session-placement': 'path',
+        'seq-placement': 'query',
+        'uplink-data-placement': 'body',
+        'reuse-settings': {'max-concurrency': '16-32'},
+        'download-settings': {
+          'tls': true,
+          'server': 'd.example',
+          'port': 8443,
+          'servername': 'r.example',
+          'client-fingerprint': 'chrome',
+          'reality-opts': {'public-key': 'PK', 'short-id': '0a'},
+          'path': '/down',
+        },
+      });
+    });
 
     test(
       'a transport the engine has no adapter for is named, not degraded',

@@ -55,6 +55,41 @@ void main() {
       expect(de['reality-opts'], {'public-key': 'PK', 'short-id': 's1'});
     });
 
+    test('xhttp settings reach the engine whether or not they sit in extra', () {
+      String outbound(String xhttp) => '''
+{"remarks": "CDN", "outbounds": [{"tag": "proxy", "protocol": "vless",
+  "settings": {"vnext": [{"address": "cdn.example", "port": 443,
+    "users": [{"id": "u", "encryption": "none"}]}]},
+  "streamSettings": {"network": "xhttp", "security": "tls",
+    "xhttpSettings": $xhttp}}]}''';
+      Map opts(String xhttp) =>
+          parseSubscriptionBody(
+                outbound(xhttp),
+              ).locations.single.proxy['xhttp-opts']
+              as Map;
+
+      final top = opts(
+        '{"path": "/x", "mode": "packet-up", "xPaddingBytes": 100, '
+        '"sessionPlacement": "query", "seqPlacement": "header"}',
+      );
+      expect(top['path'], '/x');
+      expect(top['x-padding-bytes'], 100);
+      expect(top['session-placement'], 'query');
+      expect(top['seq-placement'], 'header');
+
+      final extra = opts(
+        '{"path": "/x", "sessionPlacement": "query", '
+        '"extra": {"uplinkHTTPMethod": "PUT"}}',
+      );
+      expect(extra['uplink-http-method'], 'PUT');
+      expect(
+        extra.containsKey('session-placement'),
+        isFalse,
+        reason:
+            'Xray ignores everything but host, path and mode once extra is set',
+      );
+    });
+
     test('the transport is mapped, not passed through', () {
       final nl = parseSubscriptionBody(body).locations[1].proxy;
       expect(nl['type'], 'trojan');

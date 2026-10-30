@@ -412,7 +412,10 @@ fetched keep working.
   an HTTP header, ws, httpupgrade, grpc, h2 and xhttp — each mapped to how the
   engine expresses it, which for three of them differs from the URI (raw is
   the engine's `tcp`; an HTTP header makes it the engine's `http` network;
-  httpupgrade is a websocket with the handshake skipped).
+  httpupgrade is a websocket with the handshake skipped). xhttp carries every
+  setting Xray reads — from the link's `extra`, or from `xhttpSettings` (its
+  `extra` replacing the rest, as in Xray) — including a separate download
+  channel.
 
   A server the engine cannot run is **counted and named**, never quietly
   dropped or degraded to plain tcp: the source's own count is what the user saw

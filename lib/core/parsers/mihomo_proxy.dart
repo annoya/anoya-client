@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../norm_config.dart';
 import 'base64_text.dart';
+import 'xray_stream.dart';
 
 void applyAlpn(Map<String, dynamic> proxy, String? raw) {
   final alpn = (raw ?? '')
@@ -77,14 +78,12 @@ String? applyTransport(
       return null;
 
     case 'xhttp':
-      if (_xhttpHasDownloadSettings(q['extra'])) {
-        return 'xhttp (split download)';
-      }
       final opts = <String, dynamic>{};
       if (path.isNotEmpty) opts['path'] = path;
       if (host.isNotEmpty) opts['host'] = host;
       final mode = q['mode'] ?? '';
       if (mode.isNotEmpty) opts['mode'] = mode;
+      opts.addAll(xhttpOptions(_xhttpExtra(q['extra'])));
       proxy['xhttp-opts'] = opts;
       return null;
 
@@ -93,13 +92,13 @@ String? applyTransport(
   }
 }
 
-bool _xhttpHasDownloadSettings(String? extra) {
-  if (extra == null || extra.isEmpty) return false;
+Map _xhttpExtra(String? extra) {
+  if (extra == null || extra.isEmpty) return const {};
   try {
     final j = jsonDecode(extra);
-    return j is Map && j['downloadSettings'] != null;
-  } catch (_) {
-    return false;
+    return j is Map ? j : const {};
+  } on FormatException {
+    return const {};
   }
 }
 

@@ -5,6 +5,7 @@ import '../norm_config.dart';
 import 'dns_servers.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
+import 'xray_stream.dart';
 
 const _plumbing = {'freedom', 'blackhole', 'dns', 'loopback'};
 
@@ -259,8 +260,7 @@ String? _applyStream(
 ) {
   final ss = stream is Map ? stream : const {};
   final network = '${ss['network'] ?? 'tcp'}'.toLowerCase();
-  final security = '${ss['security'] ?? 'none'}'.toLowerCase();
-  final tls = security == 'tls' || security == 'reality' || security == 'xtls';
+  final tls = xrayTls(ss);
 
   if (proxy['type'] == 'trojan') {
     proxy['network'] = network;
@@ -269,34 +269,11 @@ String? _applyStream(
     proxy['tls'] = tls;
   }
 
-  final tlsSettings = ss['tlsSettings'] is Map
-      ? ss['tlsSettings'] as Map
-      : const {};
-  final reality = ss['realitySettings'] is Map
-      ? ss['realitySettings'] as Map
-      : const {};
-  final sni = '${tlsSettings['serverName'] ?? reality['serverName'] ?? ''}';
-  if (tls && sni.isNotEmpty) {
-    proxy[proxy['type'] == 'trojan' ? 'sni' : 'servername'] = sni;
-  }
-  final fp = '${tlsSettings['fingerprint'] ?? reality['fingerprint'] ?? ''}';
-  if (fp.isNotEmpty) proxy['client-fingerprint'] = fp;
-  final alpn = (tlsSettings['alpn'] as List? ?? const [])
-      .map((e) => '$e')
-      .toList();
-  if (alpn.isNotEmpty) proxy['alpn'] = alpn;
-  if (tlsSettings['allowInsecure'] == true) proxy['skip-cert-verify'] = true;
-  if (security == 'reality') {
-    final r = <String, dynamic>{};
-    final pbk = '${reality['publicKey'] ?? ''}';
-    if (pbk.isNotEmpty) r['public-key'] = pbk;
-    final sid = '${reality['shortId'] ?? ''}';
-    if (sid.isNotEmpty) r['short-id'] = sid;
-    if (reality['mldsa65Verify'] != null || reality['pqv'] == true) {
-      r['support-x25519mlkem768'] = true;
-    }
-    proxy['reality-opts'] = r;
-  }
+  applyXraySecurity(
+    proxy,
+    ss,
+    sniKey: proxy['type'] == 'trojan' ? 'sni' : 'servername',
+  );
 
   final tcp = ss['tcpSettings'] is Map ? ss['tcpSettings'] as Map : const {};
   final header = tcp['header'] is Map ? tcp['header'] as Map : const {};
@@ -324,7 +301,7 @@ String? _applyStream(
     'serviceName': '${grpc['serviceName'] ?? ''}',
     'headerType': '${header['type'] ?? ''}',
     'mode': '${xhttp['mode'] ?? ''}',
-    if (xhttp['extra'] != null) 'extra': jsonEncode(xhttp['extra']),
+    if (xhttp.isNotEmpty) 'extra': jsonEncode(xhttp['extra'] ?? xhttp),
   }, protocol: protocol == 'shadowsocks' ? 'ss' : protocol);
 }
 
