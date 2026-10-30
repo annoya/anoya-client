@@ -47,6 +47,11 @@ bool get isDesktop => switch (defaultTargetPlatform) {
   _ => false,
 };
 
+bool get hasDnsProtection => switch (defaultTargetPlatform) {
+  TargetPlatform.windows || TargetPlatform.linux => true,
+  _ => false,
+};
+
 bool get hasAutoConnect => switch (defaultTargetPlatform) {
   TargetPlatform.macOS ||
   TargetPlatform.iOS ||

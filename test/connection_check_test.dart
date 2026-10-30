@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -449,6 +450,31 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('where the tunnel is ours, DNS protection is offered off', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      try {
+        await pump(tester, _FakeCore(answer: 'ms:120'));
+        expect(find.text('DNS protection'), findsOneWidget);
+        expect(find.textContaining('corporate networks'), findsOneWidget);
+        expect(
+          tester.widgetList<DsToggle>(find.byType(DsToggle)).first.value,
+          isFalse,
+        );
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets(
+      'where the system routes DNS itself, there is nothing to offer',
+      (tester) async {
+        await pump(tester, _FakeCore(answer: 'ms:120'));
+        expect(find.text('DNS protection'), findsNothing);
+      },
+    );
   });
 }
 

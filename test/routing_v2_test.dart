@@ -219,4 +219,38 @@ void main() {
       expect(whyUnusable('   '), isNull);
     });
   });
+
+  group('local network direct', () {
+    test('a private network a rule names is not swallowed by it', () {
+      final r = withLanDirect(
+        const Routing(
+          mode: 'split',
+          rules: [
+            RoutingRule(
+              type: 'ip-cidr',
+              values: ['10.20.0.0/16', '203.0.113.0/24'],
+              action: 'proxy',
+            ),
+            RoutingRule(
+              type: 'domain-suffix',
+              values: ['corp.example'],
+              action: 'proxy',
+            ),
+          ],
+        ),
+      );
+      expect(r.rules.first.values, ['10.20.0.0/16']);
+      expect(r.rules.indexWhere((x) => x.values.contains('10.0.0.0/8')), 1);
+      expect(r.rules[r.rules.length - 2].values, ['203.0.113.0/24']);
+      expect(r.rules.last.type, 'domain-suffix');
+    });
+
+    test('everything else private still goes direct first', () {
+      final r = withLanDirect(const Routing(mode: 'full', rules: []));
+      expect(r.rules, kLanDirectRules);
+      expect(withinLan('192.168.1.0/24'), isTrue);
+      expect(withinLan('10.0.0.0/7'), isFalse);
+      expect(withinLan('2001:db8::/32'), isFalse);
+    });
+  });
 }

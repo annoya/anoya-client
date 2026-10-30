@@ -2123,5 +2123,13 @@
   "routingWorksWithOwnRules": "Works with Own rules",
   "routingSubscriptionRulesNote": "The subscription decides where traffic goes. Switch the configuration to Own rules to use yours.",
   "rulesTarget": "{type} → {target}",
-  "@rulesTarget": {"placeholders": {"type": {"type": "String"}, "target": {"type": "String"}}}
+  "@rulesTarget": {"placeholders": {"type": {"type": "String"}, "target": {"type": "String"}}},
+  "advancedSectionDns": "DNS",
+  "advancedDnsProtection": "DNS protection",
+  "advancedDnsProtectionSubtitle": "Block name lookups that go around the VPN",
+  "advancedDnsProtectionNote": "The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.",
+  "settingsDnsProtectionOn": "DNS protection on",
+  "settingsDnsProtectionOff": "DNS protection off",
+  "settingsCheckOn": "check on",
+  "settingsCheckOff": "check off"
 }

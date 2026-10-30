@@ -3026,4 +3026,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String rulesTarget(String type, String target) {
     return '$type → $target';
   }
+
+  @override
+  String get advancedSectionDns => 'DNS';
+
+  @override
+  String get advancedDnsProtection => 'DNS 防护';
+
+  @override
+  String get advancedDnsProtectionSubtitle => '拦截绕过 VPN 的 DNS 查询';
+
+  @override
+  String get advancedDnsProtectionNote =>
+      '系统还会绕过 VPN 向运营商的 DNS 服务器查询，运营商因此能看到你访问了哪些网站。开启防护会拦截这些查询，同时也会拦截本机其他 VPN 的 DNS：企业网络（NetBird、Cisco、OpenVPN）将无法通过域名访问。如果你在使用这类 VPN，请保持关闭。';
+
+  @override
+  String get settingsDnsProtectionOn => 'DNS 防护 开';
+
+  @override
+  String get settingsDnsProtectionOff => 'DNS 防护 关';
+
+  @override
+  String get settingsCheckOn => '检测 开';
+
+  @override
+  String get settingsCheckOff => '检测 关';
 }

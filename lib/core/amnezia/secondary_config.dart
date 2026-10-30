@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../log.dart';
 import '../mihomo_tun_config.dart';
 import '../norm_config.dart';
 import '../parsers/subscription.dart';
@@ -10,10 +11,13 @@ class AmneziaSecondaryConfig {
     required this.location,
     required this.dns,
     required this.expiresAt,
+    this.routing,
   });
 
   final Location location;
   final List<String> dns;
+
+  final Routing? routing;
 
   final DateTime? expiresAt;
 }
@@ -51,12 +55,13 @@ AmneziaSecondaryConfig? parseAmneziaSecondaryConfig(
     if (container is! Map) continue;
     final awg = container['awg'] ?? container['wireguard'];
     if (awg is Map) {
-      final loc = _awgLocation(patched, awg.cast<String, dynamic>(), label);
-      if (loc != null) {
+      final awgCfg = _awgLocation(patched, awg.cast<String, dynamic>(), label);
+      if (awgCfg != null) {
         return AmneziaSecondaryConfig(
-          location: loc,
+          location: awgCfg.location,
           dns: dns,
           expiresAt: _expiry(patched),
+          routing: awgCfg.routing,
         );
       }
     }
@@ -85,7 +90,7 @@ DateTime? _expiry(Map<String, dynamic> doc) {
   return DateTime.tryParse('${pk['expires_at'] ?? ''}')?.toUtc();
 }
 
-Location? _awgLocation(
+({Location location, Routing? routing})? _awgLocation(
   Map<String, dynamic> doc,
   Map<String, dynamic> awg,
   String label,
@@ -129,7 +134,35 @@ Location? _awgLocation(
   final awgOpts = _amneziaOptions(cfg);
   if (awgOpts.isNotEmpty) proxy['amnezia-wg-option'] = awgOpts;
 
-  return Location(id: 'amnezia', label: label, proxy: proxy);
+  return (
+    location: Location(id: 'amnezia', label: label, proxy: proxy),
+    routing: allowedIpsRouting(cfg['allowed_ips']),
+  );
+}
+
+Routing? allowedIpsRouting(Object? allowed) {
+  final raw = switch (allowed) {
+    List() => allowed.map((e) => '$e'),
+    String() => allowed.split(','),
+    _ => const <String>[],
+  };
+  final nets = [
+    for (final e in raw.map((e) => e.trim()).where((e) => e.isNotEmpty))
+      e.contains('/') ? e : '$e/${e.contains(':') ? 128 : 32}',
+  ];
+  if (nets.isEmpty || nets.contains('0.0.0.0/0')) return null;
+  final valid = [
+    for (final n in nets)
+      if (RoutingRule.isValidValue('ip-cidr', n)) n,
+  ];
+  if (valid.length < nets.length) {
+    Log.e('amnezia: allowed_ips entries skipped', nets.length - valid.length);
+  }
+  if (valid.isEmpty) return null;
+  return Routing(
+    mode: 'split',
+    rules: [RoutingRule(type: 'ip-cidr', values: valid, action: 'proxy')],
+  );
 }
 
 Map<String, dynamic> _amneziaOptions(Map<String, dynamic> cfg) {

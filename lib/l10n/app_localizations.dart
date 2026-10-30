@@ -4897,6 +4897,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{type} → {target}'**
   String rulesTarget(String type, String target);
+
+  /// No description provided for @advancedSectionDns.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS'**
+  String get advancedSectionDns;
+
+  /// No description provided for @advancedDnsProtection.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS protection'**
+  String get advancedDnsProtection;
+
+  /// No description provided for @advancedDnsProtectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Block name lookups that go around the VPN'**
+  String get advancedDnsProtectionSubtitle;
+
+  /// No description provided for @advancedDnsProtectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.'**
+  String get advancedDnsProtectionNote;
+
+  /// No description provided for @settingsDnsProtectionOn.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS protection on'**
+  String get settingsDnsProtectionOn;
+
+  /// No description provided for @settingsDnsProtectionOff.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS protection off'**
+  String get settingsDnsProtectionOff;
+
+  /// No description provided for @settingsCheckOn.
+  ///
+  /// In en, this message translates to:
+  /// **'check on'**
+  String get settingsCheckOn;
+
+  /// No description provided for @settingsCheckOff.
+  ///
+  /// In en, this message translates to:
+  /// **'check off'**
+  String get settingsCheckOff;
 }
 
 class _AppLocalizationsDelegate

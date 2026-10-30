@@ -10,9 +10,58 @@ const kLanDirectRules = [
   RoutingRule(type: 'ip-cidr', values: ['224.0.0.0/4'], action: 'direct'),
 ];
 
+Routing withLanDirect(Routing routing) {
+  final ahead = <RoutingRule>[];
+  final rest = <RoutingRule>[];
+  for (final r in routing.rules) {
+    if (r.type != 'ip-cidr') {
+      rest.add(r);
+      continue;
+    }
+    final inside = r.values.where(withinLan).toList();
+    final outside = r.values.where((v) => !withinLan(v)).toList();
+    if (inside.isNotEmpty) ahead.add(r.copyWith(values: inside));
+    if (outside.isNotEmpty) rest.add(r.copyWith(values: outside));
+  }
+  return Routing(
+    mode: routing.mode,
+    rules: [...ahead, ...kLanDirectRules, ...rest],
+    lists: routing.lists,
+  );
+}
+
+bool withinLan(String cidr) {
+  final net = _v4Net(cidr);
+  if (net == null) return false;
+  for (final lan in kLanDirectRules.expand((r) => r.values)) {
+    final l = _v4Net(lan)!;
+    if (net.bits >= l.bits && net.addr & l.mask == l.addr & l.mask) return true;
+  }
+  return false;
+}
+
+({int addr, int bits, int mask})? _v4Net(String cidr) {
+  final slash = cidr.indexOf('/');
+  if (slash < 0) return null;
+  final bits = int.tryParse(cidr.substring(slash + 1));
+  if (bits == null || bits > 32) return null;
+  final List<int> b;
+  try {
+    b = Uri.parseIPv4Address(cidr.substring(0, slash));
+  } on FormatException {
+    return null;
+  }
+  return (
+    addr: b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3],
+    bits: bits,
+    mask: bits == 0 ? 0 : 0xFFFFFFFF << (32 - bits) & 0xFFFFFFFF,
+  );
+}
+
 class RoutingPrefs {
   const RoutingPrefs({
     this.lanDirect = true,
+    this.dnsProtection = false,
     this.geoipUrl = defaultGeoipUrl,
     this.geositeUrl = defaultGeositeUrl,
     this.geoAutoUpdate = true,
@@ -27,6 +76,8 @@ class RoutingPrefs {
 
   final bool lanDirect;
 
+  final bool dnsProtection;
+
   final String defaultDns;
 
   final String geoipUrl;
@@ -36,6 +87,7 @@ class RoutingPrefs {
 
   RoutingPrefs copyWith({
     bool? lanDirect,
+    bool? dnsProtection,
     String? defaultDns,
     String? geoipUrl,
     String? geositeUrl,
@@ -43,6 +95,7 @@ class RoutingPrefs {
     DateTime? geoUpdatedAt,
   }) => RoutingPrefs(
     lanDirect: lanDirect ?? this.lanDirect,
+    dnsProtection: dnsProtection ?? this.dnsProtection,
     defaultDns: defaultDns ?? this.defaultDns,
     geoipUrl: geoipUrl ?? this.geoipUrl,
     geositeUrl: geositeUrl ?? this.geositeUrl,
@@ -52,6 +105,7 @@ class RoutingPrefs {
 
   factory RoutingPrefs.fromJson(Map<String, dynamic> j) => RoutingPrefs(
     lanDirect: j['lan_direct'] as bool? ?? true,
+    dnsProtection: j['dns_protection'] as bool? ?? false,
     defaultDns: j['default_dns'] as String? ?? kFallbackNameserver,
     geoipUrl: j['geoip_url'] as String? ?? defaultGeoipUrl,
     geositeUrl: j['geosite_url'] as String? ?? defaultGeositeUrl,
@@ -63,6 +117,7 @@ class RoutingPrefs {
 
   Map<String, dynamic> toJson() => {
     'lan_direct': lanDirect,
+    'dns_protection': dnsProtection,
     'default_dns': defaultDns,
     'geoip_url': geoipUrl,
     'geosite_url': geositeUrl,

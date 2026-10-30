@@ -773,12 +773,23 @@ proxies:
       expect(tun['dns-hijack'], ['any:53']);
     });
 
-    test('closes the DNS side door Windows opens on every other adapter', () {
-      final tun =
-          (loadYaml(mihomoTunConfigYaml(loc(), device: 'Anoya'))
+    test('leaves other adapters\' DNS alone unless protection is on', () {
+      YamlMap tun({bool strict = false}) =>
+          (loadYaml(
+                    mihomoTunConfigYaml(
+                      loc(),
+                      device: 'Anoya',
+                      strictRoute: strict,
+                    ),
+                  )
                   as YamlMap)['tun']
               as YamlMap;
-      expect(tun['strict-route'], isTrue);
+      expect(
+        tun().containsKey('strict-route'),
+        isFalse,
+        reason: 'it blocks the DNS of corporate VPNs on the same machine',
+      );
+      expect(tun(strict: true)['strict-route'], isTrue);
     });
 
     test('a host-owned device keeps the engine out of routing', () {

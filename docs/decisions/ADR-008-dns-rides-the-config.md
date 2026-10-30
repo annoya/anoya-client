@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; the `strict-route` part is replaced by ADR-027 (opt-in, off by default)
 
 ## Date
 

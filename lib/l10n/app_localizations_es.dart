@@ -3210,4 +3210,30 @@ class AppLocalizationsEs extends AppLocalizations {
   String rulesTarget(String type, String target) {
     return '$type → $target';
   }
+
+  @override
+  String get advancedSectionDns => 'DNS';
+
+  @override
+  String get advancedDnsProtection => 'Protección DNS';
+
+  @override
+  String get advancedDnsProtectionSubtitle =>
+      'Bloquear las consultas DNS que eluden la VPN';
+
+  @override
+  String get advancedDnsProtectionNote =>
+      'El sistema también consulta el servidor DNS de tu proveedor, fuera de la VPN, así que el proveedor puede ver qué sitios abres. La protección bloquea esas consultas, y con ellas el DNS de otras VPN de este equipo: las redes corporativas (NetBird, Cisco, OpenVPN) dejan de abrirse por nombre. Déjala desactivada si usas una.';
+
+  @override
+  String get settingsDnsProtectionOn => 'Protección DNS activada';
+
+  @override
+  String get settingsDnsProtectionOff => 'Protección DNS desactivada';
+
+  @override
+  String get settingsCheckOn => 'comprobación activada';
+
+  @override
+  String get settingsCheckOff => 'comprobación desactivada';
 }

@@ -798,5 +798,13 @@
   "routingSetBySubscription": "Задано подпиской · {rules}",
   "routingWorksWithOwnRules": "Работает в режиме «Свои правила»",
   "routingSubscriptionRulesNote": "Куда идёт трафик, решает подписка. Чтобы использовать свои правила, переключите конфигурацию на «Свои правила».",
-  "rulesTarget": "{type} → {target}"
+  "rulesTarget": "{type} → {target}",
+  "advancedSectionDns": "DNS",
+  "advancedDnsProtection": "Защита DNS",
+  "advancedDnsProtectionSubtitle": "Блокировать DNS-запросы в обход VPN",
+  "advancedDnsProtectionNote": "Система, помимо VPN, спрашивает и DNS-сервер провайдера, поэтому провайдер видит, какие сайты вы открываете. Защита блокирует такие запросы — а вместе с ними DNS других VPN на этом компьютере: корпоративные сети (NetBird, Cisco, OpenVPN) перестают открываться по имени. Если пользуетесь таким VPN, оставьте защиту выключенной.",
+  "settingsDnsProtectionOn": "Защита DNS вкл.",
+  "settingsDnsProtectionOff": "Защита DNS выкл.",
+  "settingsCheckOn": "проверка вкл.",
+  "settingsCheckOff": "проверка выкл."
 }

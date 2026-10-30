@@ -3178,4 +3178,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String rulesTarget(String type, String target) {
     return '$type → $target';
   }
+
+  @override
+  String get advancedSectionDns => 'DNS';
+
+  @override
+  String get advancedDnsProtection => 'DNS protection';
+
+  @override
+  String get advancedDnsProtectionSubtitle =>
+      'Block name lookups that go around the VPN';
+
+  @override
+  String get advancedDnsProtectionNote =>
+      'The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.';
+
+  @override
+  String get settingsDnsProtectionOn => 'DNS protection on';
+
+  @override
+  String get settingsDnsProtectionOff => 'DNS protection off';
+
+  @override
+  String get settingsCheckOn => 'check on';
+
+  @override
+  String get settingsCheckOff => 'check off';
 }

@@ -125,12 +125,12 @@ Rationale and constraints: ADR-001.
 On Windows the tunnel is a Windows service (`AnoyaTunnel`,
 `native/mihomocore/cmd/tunnel-service`), started by the Service Control
 Manager and spoken to over a named pipe; the adapter is Wintun and the engine's
-home is under `ProgramData`. The tun runs with `strict-route`: Windows resolves
-names on every adapter in parallel, so without it the copy of each DNS query
-sent to the ISP's resolver leaves over the physical link and never meets the
-tunnel's rules — sing-tun's WFP filters block port 53 everywhere but the tun and
-the engine itself. Software on the host that talks to an off-tunnel DNS server
-directly is blocked while the tunnel is up, by design. The service starts with the machine, and brings a
+home is under `ProgramData`. **DNS protection** (Settings → Advanced, off by
+default) adds `strict-route`: Windows asks every adapter's resolver, so without
+it the provider's resolver can see the names looked up; with it sing-tun's WFP
+filters block port 53 everywhere but the tun and the engine — including the
+DNS of a corporate VPN on the same machine, which is why it is off (ADR-027).
+The service starts with the machine, and brings a
 tunnel up on its own **only when auto-connect is on** — a switch in Settings →
 Connection, off by default, which the app writes into the service's own
 directory because at boot there is no app to ask. The saved config cannot stand
@@ -144,8 +144,9 @@ On Linux the same service is a systemd unit (`anoya-tunnel`,
 `native/mihomocore/cmd/tunnel-service`, `main_linux.go`), running as root and
 spoken to over the unix socket `/run/anoya/tunnel.sock`; the device is
 the kernel's tun, the engine's home is `/var/lib/anoya/engine`. The same
-`tun` section as Windows — `auto-route` and `strict-route`, which sing-tun
-implements there with routing rules and nftables. The auto-connect switch and
+`tun` section as Windows — `auto-route`, and `strict-route` when DNS
+protection is on, which sing-tun implements there with routing rules and
+nftables. The auto-connect switch and
 the boot-time start are exactly the Windows ones: the service package does not
 know which of the two systems runs it.
 
@@ -1012,6 +1013,11 @@ carrying the obfuscation as issued — H1–H4 arrive as ranges — and `version
 on every AmneziaWG outbound: the engine picks its AmneziaWG implementation by
 that number, and the 3.x one reads the earlier parameter sets too. VLESS arrives as an ordinary
 Xray document and goes through the reader this app already has.
+
+An AmneziaWG config whose `allowed_ips` is not a full tunnel is the server's
+routing: split, those networks through the VPN, everything else direct —
+shown and switched like a subscription's routing, replaced on every issued
+server (ADR-027).
 
 The gateway counts devices by `installation_uuid`, not by requests: the id is
 minted once and kept in the keychain, so re-issuing a server costs nothing

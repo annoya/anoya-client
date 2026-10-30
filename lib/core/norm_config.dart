@@ -12,6 +12,7 @@ class NormConfig {
     this.routing,
     this.dns = const [],
     this.defaultDns = '',
+    this.dnsProtection = false,
     this.name = '',
   });
 
@@ -31,6 +32,8 @@ class NormConfig {
 
   final String defaultDns;
 
+  final bool dnsProtection;
+
   final String name;
 
   factory NormConfig.fromJson(Map<String, dynamic> json) {
@@ -47,6 +50,7 @@ class NormConfig {
           : null,
       dns: (json['dns'] as List<dynamic>? ?? []).whereType<String>().toList(),
       defaultDns: json['default_dns'] as String? ?? '',
+      dnsProtection: json['dns_protection'] as bool? ?? false,
     );
   }
 }

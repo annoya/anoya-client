@@ -39,13 +39,7 @@ Future<NormConfig> buildNormConfig(Profile p) async {
   Log.i('routing: ${await _describe(policy, routing)}');
 
   final prefs = await RoutingPrefsStore.load();
-  if (prefs.lanDirect) {
-    routing = Routing(
-      mode: routing.mode,
-      rules: [...kLanDirectRules, ...routing.rules],
-      lists: routing.lists,
-    );
-  }
+  if (prefs.lanDirect) routing = withLanDirect(routing);
 
   return NormConfig(
     version: 1,
@@ -55,6 +49,7 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     routing: routing,
     dns: p.dns,
     defaultDns: prefs.defaultDns,
+    dnsProtection: prefs.dnsProtection,
     name: p.name,
   );
 }
@@ -99,6 +94,7 @@ Future<NormConfig> _subscriptionRulesConfig(Profile p) async {
     ),
     dns: p.dns,
     defaultDns: prefs.defaultDns,
+    dnsProtection: prefs.dnsProtection,
     name: p.name,
   );
 }

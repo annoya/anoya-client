@@ -168,6 +168,7 @@ class Profile {
   );
 
   Profile copyWith({
+    ({Routing? value})? providerRouting,
     bool? subscriptionRules,
     Map<String, String>? groupChoices,
     bool? providerRoutingEnabled,
@@ -199,7 +200,9 @@ class Profile {
     plan: plan,
     subscriptionRules: subscriptionRules ?? this.subscriptionRules,
     groupChoices: groupChoices ?? this.groupChoices,
-    providerRouting: providerRouting,
+    providerRouting: providerRouting == null
+        ? this.providerRouting
+        : providerRouting.value,
     providerRoutingSkipped: providerRoutingSkipped,
     providerRoutingEnabled:
         providerRoutingEnabled ?? this.providerRoutingEnabled,

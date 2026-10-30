@@ -79,6 +79,7 @@ void main() {
 
   Map<String, dynamic> awgAnswer({
     String privateKey = r'$WIREGUARD_CLIENT_PRIVATE_KEY',
+    Object allowedIps = const ['0.0.0.0/0', '::/0'],
   }) {
     final lastConfig = {
       'H1': '758037244-1346176164',
@@ -103,7 +104,7 @@ void main() {
       'port': 7328,
       'psk_key': 'cHNrMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=',
       'server_pub_key': 'c2VydmVycHVibGljMDAwMDAwMDAwMDAwMDAwMDAwMDA=',
-      'allowed_ips': ['0.0.0.0/0', '::/0'],
+      'allowed_ips': allowedIps,
       'persistent_keep_alive': 25,
     };
     final doc = {
@@ -159,6 +160,40 @@ void main() {
             'WireGuard carries datagrams, and a resolver may be pinned '
             'through it only if we say so',
       );
+    });
+
+    test('a full tunnel brings no routing of its own', () {
+      final parsed = parseAmneziaSecondaryConfig(
+        awgAnswer(),
+        label: 'Germany',
+        privateKey: 'k',
+      );
+      expect(parsed!.routing, isNull);
+    });
+
+    test('a list of networks is the server routing only those', () {
+      final parsed = parseAmneziaSecondaryConfig(
+        awgAnswer(allowedIps: ['10.20.0.0/16', '203.0.113.7', 'nonsense']),
+        label: 'Germany',
+        privateKey: 'k',
+      );
+      final routing = parsed!.routing!;
+      expect(routing.mode, 'split');
+      expect(routing.rules.single.type, 'ip-cidr');
+      expect(routing.rules.single.action, 'proxy');
+      expect(routing.rules.single.values, ['10.20.0.0/16', '203.0.113.7/32']);
+    });
+
+    test('the list may come as WireGuard writes it, one comma string', () {
+      final parsed = parseAmneziaSecondaryConfig(
+        awgAnswer(allowedIps: '10.20.0.0/16, 2001:db8::/32'),
+        label: 'Germany',
+        privateKey: 'k',
+      );
+      expect(parsed!.routing!.rules.single.values, [
+        '10.20.0.0/16',
+        '2001:db8::/32',
+      ]);
     });
 
     test('keeps the obfuscation exactly as issued', () {
