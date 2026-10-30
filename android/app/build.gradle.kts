@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "org.anoya.vpn"
+        applicationId = "io.anoya.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
