@@ -3262,4 +3262,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String rulesTarget(String type, String target) {
     return '$type → $target';
   }
+
+  @override
+  String get advancedSectionDns => 'DNS';
+
+  @override
+  String get advancedDnsProtection => 'Защита DNS';
+
+  @override
+  String get advancedDnsProtectionSubtitle =>
+      'Блокировать DNS-запросы в обход VPN';
+
+  @override
+  String get advancedDnsProtectionNote =>
+      'Система, помимо VPN, спрашивает и DNS-сервер провайдера, поэтому провайдер видит, какие сайты вы открываете. Защита блокирует такие запросы — а вместе с ними DNS других VPN на этом компьютере: корпоративные сети (NetBird, Cisco, OpenVPN) перестают открываться по имени. Если пользуетесь таким VPN, оставьте защиту выключенной.';
+
+  @override
+  String get settingsDnsProtectionOn => 'Защита DNS вкл.';
+
+  @override
+  String get settingsDnsProtectionOff => 'Защита DNS выкл.';
+
+  @override
+  String get settingsCheckOn => 'проверка вкл.';
+
+  @override
+  String get settingsCheckOff => 'проверка выкл.';
 }

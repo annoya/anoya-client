@@ -137,7 +137,8 @@ final class AmneziaSource {
 
     Log.i(
       'amnezia: issued ${amneziaProtocolLabel(protocol)} config for '
-      '${parts.country.isEmpty ? 'the free service' : parts.country}',
+      '${parts.country.isEmpty ? 'the free service' : parts.country}'
+      '${parsed.routing == null ? '' : ', routing ${parsed.routing!.rules.single.values.length} network(s)'}',
     );
 
     return profile.copyWith(
@@ -163,6 +164,7 @@ final class AmneziaSource {
             ),
       ],
       dns: parsed.dns,
+      providerRouting: (value: parsed.routing),
       amnezia: _state.copyWith(
         expiries: {
           if (parsed.expiresAt != null) selectionId: parsed.expiresAt!,

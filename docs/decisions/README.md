@@ -45,6 +45,7 @@ test.
 | [024](ADR-024-tunnel-notifications.md) | client | The tunnel notifies when it cannot help, from its own process | silence after a reload, a start without the app that failed, one per episode, words from the app, Android channel and icon, why not the connection check |
 | [025](ADR-025-device-transfer-and-android-tv.md) | client | A phone carries the setup to a TV or computer over the local network; Android TV runs the same app | receive code, X25519 + AES-GCM over LAN HTTP, recipes as in iCloud sync, confirm before adding, leanback manifest, overscan, two-column home, D-pad focus, why not a relay or Drive |
 | [026](ADR-026-subscription-rules.md) | client | A Clash subscription with rules runs by its own rules or as a server list | two modes, config passed through filtered, proxy groups on Home, choices only within a select, lists after consent and after connect, rendering before the plain address, why not translation or services with a main server |
+| [027](ADR-027-other-vpns-on-the-desktop.md) | client | On the desktop, DNS protection is the user's choice and off by default; an AWG config's networks are server routing | `strict-route` switch in Advanced, why ADR-008's leak argument was not enough, `allowed_ips` as split provider routing, private-subnet rules before LAN direct, why not corporate exceptions or `route-address` first |
 
 ## Open Questions
 

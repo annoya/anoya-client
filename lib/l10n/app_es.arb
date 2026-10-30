@@ -798,5 +798,13 @@
   "routingSetBySubscription": "Fijado por la suscripción · {rules}",
   "routingWorksWithOwnRules": "Funciona con Reglas propias",
   "routingSubscriptionRulesNote": "La suscripción decide adónde va el tráfico. Cambia la configuración a Reglas propias para usar las tuyas.",
-  "rulesTarget": "{type} → {target}"
+  "rulesTarget": "{type} → {target}",
+  "advancedSectionDns": "DNS",
+  "advancedDnsProtection": "Protección DNS",
+  "advancedDnsProtectionSubtitle": "Bloquear las consultas DNS que eluden la VPN",
+  "advancedDnsProtectionNote": "El sistema también consulta el servidor DNS de tu proveedor, fuera de la VPN, así que el proveedor puede ver qué sitios abres. La protección bloquea esas consultas, y con ellas el DNS de otras VPN de este equipo: las redes corporativas (NetBird, Cisco, OpenVPN) dejan de abrirse por nombre. Déjala desactivada si usas una.",
+  "settingsDnsProtectionOn": "Protección DNS activada",
+  "settingsDnsProtectionOff": "Protección DNS desactivada",
+  "settingsCheckOn": "comprobación activada",
+  "settingsCheckOff": "comprobación desactivada"
 }

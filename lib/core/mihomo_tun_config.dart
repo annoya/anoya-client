@@ -19,6 +19,7 @@ String mihomoTunConfigYaml(
   bool autoDetectInterface = true,
   bool processNamesNeedExe = false,
   String? device,
+  bool strictRoute = false,
   String? dnsDecoy,
   int mtu = kTunMtu,
 }) {
@@ -125,7 +126,7 @@ String mihomoTunConfigYaml(
     '    - $kTunInet6Address',
     '  auto-route: ${device != null}',
     // Windows Smart Multi-Homed Name Resolution also queries the ISP resolver.
-    if (device != null) '  strict-route: true',
+    if (device != null && strictRoute) '  strict-route: true',
     // Android bans netlink since 11; VpnService.protect() avoids loops instead.
     '  auto-detect-interface: $autoDetectInterface',
     '  mtu: $mtu',

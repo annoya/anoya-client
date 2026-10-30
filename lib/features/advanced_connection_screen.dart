@@ -5,10 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/connection_check.dart';
 import '../core/ds.dart';
+import '../core/platform_support.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/connection_check_controller.dart';
+import '../state/profiles_controller.dart';
+import '../state/providers.dart';
 import '../state/session.dart';
 
 class AdvancedConnectionScreen extends ConsumerWidget {
@@ -21,10 +24,36 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     final connected = ref.watch(sessionProvider).connected;
     final prefs = st.prefs;
     final l10n = context.l10n;
+    final dnsProtection = ref.watch(
+      routingPrefsProvider.select((p) => p.dnsProtection),
+    );
+
+    Future<void> setDnsProtection(bool v) async {
+      await ref
+          .read(routingPrefsProvider.notifier)
+          .update((p) => p.copyWith(dnsProtection: v));
+      await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
+    }
 
     return DsPage(
       title: l10n.settingsAdvanced,
       children: [
+        if (hasDnsProtection)
+          DsGroup(
+            caption: l10n.advancedSectionDns,
+            note: l10n.advancedDnsProtectionNote,
+            children: [
+              DsRow(
+                glyph: Glyph.shield,
+                title: l10n.advancedDnsProtection,
+                subtitle: l10n.advancedDnsProtectionSubtitle,
+                onTap: () => setDnsProtection(!dnsProtection),
+                trailing: [
+                  DsToggle(value: dnsProtection, onChanged: setDnsProtection),
+                ],
+              ),
+            ],
+          ),
         DsGroup(
           caption: l10n.advancedSectionConnectionCheck,
           children: [
