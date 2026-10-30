@@ -68,8 +68,7 @@ const _xmuxKeys = {
 };
 
 Map<String, dynamic> _renamed(Map from, Map<String, String> keys) => {
-  for (final MapEntry(:key, :value) in keys.entries)
-    value: ?_value(from[key]),
+  for (final MapEntry(:key, :value) in keys.entries) value: ?_value(from[key]),
 };
 
 Object? _value(Object? v) => switch (v) {
