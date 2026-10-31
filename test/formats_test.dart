@@ -377,6 +377,19 @@ void main() {
     });
   });
 
+  test('a body parsed off the UI isolate brings its log lines back', () async {
+    Log.clear();
+    const body =
+        'vless://u@:0?security=none#a\n'
+        'vless://u@real.example:443?security=reality&pbk=PK#DE';
+    final parsed = await parseSubscriptionBodyInBackground(
+      body,
+      source: 'sub.example',
+    );
+    expect(parsed.locations.single.label, 'DE');
+    expect(Log.dump(), contains('sub.example: subscription: 1 malformed'));
+  });
+
   group('clash proxy-providers', () {
     test(
       'a document that only points at its servers is still a subscription',
