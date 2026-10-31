@@ -4,13 +4,37 @@ import '../norm_config.dart';
 import 'base64_text.dart';
 import 'xray_stream.dart';
 
-void applyAlpn(Map<String, dynamic> proxy, String? raw) {
-  final alpn = (raw ?? '')
-      .split(',')
-      .map((e) => e.trim())
-      .where((e) => e.isNotEmpty)
-      .toList();
+List<String> splitAlpn(String? raw) => (raw ?? '')
+    .split(',')
+    .map((e) => e.trim())
+    .where((e) => e.isNotEmpty)
+    .toList();
+
+typedef RealityOpts = ({String publicKey, String shortId, bool pqv});
+
+void applyTls(
+  Map<String, dynamic> proxy, {
+  required bool tls,
+  String sniKey = 'servername',
+  String? sni,
+  String? fingerprint,
+  List<String> alpn = const [],
+  bool insecure = false,
+  RealityOpts? reality,
+}) {
+  if (tls && sni != null && sni.isNotEmpty) proxy[sniKey] = sni;
+  if (fingerprint != null && fingerprint.isNotEmpty) {
+    proxy['client-fingerprint'] = fingerprint;
+  }
   if (alpn.isNotEmpty) proxy['alpn'] = alpn;
+  if (insecure) proxy['skip-cert-verify'] = true;
+  if (reality != null) {
+    proxy['reality-opts'] = {
+      if (reality.publicKey.isNotEmpty) 'public-key': reality.publicKey,
+      if (reality.shortId.isNotEmpty) 'short-id': reality.shortId,
+      if (reality.pqv) 'support-x25519mlkem768': true,
+    };
+  }
 }
 
 const kTransportsByProtocol = {

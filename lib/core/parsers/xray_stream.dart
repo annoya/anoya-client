@@ -1,3 +1,5 @@
+import 'mihomo_proxy.dart';
+
 Map _map(Object? v) => v is Map ? v : const {};
 
 String _security(Map stream) => '${stream['security'] ?? 'none'}'.toLowerCase();
@@ -12,29 +14,25 @@ void applyXraySecurity(
   Map stream, {
   String sniKey = 'servername',
 }) {
-  final tls = xrayTls(stream);
   final tlsSettings = _map(stream['tlsSettings']);
   final reality = _map(stream['realitySettings']);
-  final sni = '${tlsSettings['serverName'] ?? reality['serverName'] ?? ''}';
-  if (tls && sni.isNotEmpty) proxy[sniKey] = sni;
-  final fp = '${tlsSettings['fingerprint'] ?? reality['fingerprint'] ?? ''}';
-  if (fp.isNotEmpty) proxy['client-fingerprint'] = fp;
-  final alpn = (tlsSettings['alpn'] as List? ?? const [])
-      .map((e) => '$e')
-      .toList();
-  if (alpn.isNotEmpty) proxy['alpn'] = alpn;
-  if (tlsSettings['allowInsecure'] == true) proxy['skip-cert-verify'] = true;
-  if (_security(stream) == 'reality') {
-    final r = <String, dynamic>{};
-    final pbk = '${reality['publicKey'] ?? ''}';
-    if (pbk.isNotEmpty) r['public-key'] = pbk;
-    final sid = '${reality['shortId'] ?? ''}';
-    if (sid.isNotEmpty) r['short-id'] = sid;
-    if (reality['mldsa65Verify'] != null || reality['pqv'] == true) {
-      r['support-x25519mlkem768'] = true;
-    }
-    proxy['reality-opts'] = r;
-  }
+  applyTls(
+    proxy,
+    tls: xrayTls(stream),
+    sniKey: sniKey,
+    sni: '${tlsSettings['serverName'] ?? reality['serverName'] ?? ''}',
+    fingerprint:
+        '${tlsSettings['fingerprint'] ?? reality['fingerprint'] ?? ''}',
+    alpn: (tlsSettings['alpn'] as List? ?? const []).map((e) => '$e').toList(),
+    insecure: tlsSettings['allowInsecure'] == true,
+    reality: _security(stream) == 'reality'
+        ? (
+            publicKey: '${reality['publicKey'] ?? ''}',
+            shortId: '${reality['shortId'] ?? ''}',
+            pqv: reality['mldsa65Verify'] != null || reality['pqv'] == true,
+          )
+        : null,
+  );
 }
 
 const _xhttpKeys = {

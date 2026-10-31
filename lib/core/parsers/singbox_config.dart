@@ -148,30 +148,28 @@ String? _applyTls(Map<String, dynamic> proxy, Object? node) {
   }
   if (!enabled) return null;
 
-  final sni = '${tls['server_name'] ?? ''}';
-  if (sni.isNotEmpty) {
-    proxy[proxy['type'] == 'trojan' || proxy['type'] == 'hysteria2'
-            ? 'sni'
-            : 'servername'] =
-        sni;
-  }
-  final alpn = (tls['alpn'] as List? ?? const []).map((e) => '$e').toList();
-  if (alpn.isNotEmpty) proxy['alpn'] = alpn;
-  if (tls['insecure'] == true) proxy['skip-cert-verify'] = true;
   final utls = tls['utls'];
-  if (utls is Map && utls['enabled'] == true) {
-    final fp = '${utls['fingerprint'] ?? ''}';
-    if (fp.isNotEmpty) proxy['client-fingerprint'] = fp;
-  }
   final reality = tls['reality'];
-  if (reality is Map && reality['enabled'] == true) {
-    final r = <String, dynamic>{};
-    final pbk = '${reality['public_key'] ?? ''}';
-    if (pbk.isNotEmpty) r['public-key'] = pbk;
-    final sid = '${reality['short_id'] ?? ''}';
-    if (sid.isNotEmpty) r['short-id'] = sid;
-    proxy['reality-opts'] = r;
-  }
+  applyTls(
+    proxy,
+    tls: true,
+    sniKey: proxy['type'] == 'trojan' || proxy['type'] == 'hysteria2'
+        ? 'sni'
+        : 'servername',
+    sni: '${tls['server_name'] ?? ''}',
+    fingerprint: utls is Map && utls['enabled'] == true
+        ? '${utls['fingerprint'] ?? ''}'
+        : null,
+    alpn: (tls['alpn'] as List? ?? const []).map((e) => '$e').toList(),
+    insecure: tls['insecure'] == true,
+    reality: reality is Map && reality['enabled'] == true
+        ? (
+            publicKey: '${reality['public_key'] ?? ''}',
+            shortId: '${reality['short_id'] ?? ''}',
+            pqv: false,
+          )
+        : null,
+  );
   return null;
 }
 

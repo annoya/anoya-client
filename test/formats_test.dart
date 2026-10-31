@@ -352,6 +352,50 @@ void main() {
     });
   });
 
+  test('one reality server reads the same in every format', () {
+    Map<String, Object?> tlsOf(String body) {
+      final proxy = parseSubscriptionBody(body).locations.single.proxy;
+      return {
+        for (final k in const [
+          'tls',
+          'servername',
+          'client-fingerprint',
+          'alpn',
+          'skip-cert-verify',
+          'reality-opts',
+        ])
+          if (proxy.containsKey(k)) k: proxy[k],
+      };
+    }
+
+    final link = tlsOf(
+      'vless://u@r.example:443?security=reality&sni=www.example&fp=chrome'
+      '&pbk=PK&sid=s1&type=tcp#R',
+    );
+    final xray = tlsOf('''
+{"remarks": "R", "outbounds": [{"tag": "proxy", "protocol": "vless",
+  "settings": {"vnext": [{"address": "r.example", "port": 443,
+    "users": [{"id": "u", "encryption": "none"}]}]},
+  "streamSettings": {"network": "tcp", "security": "reality",
+    "realitySettings": {"publicKey": "PK", "shortId": "s1",
+      "serverName": "www.example", "fingerprint": "chrome"}}}]}''');
+    final singbox = tlsOf('''
+{"outbounds": [{"tag": "R", "type": "vless", "server": "r.example",
+  "server_port": 443, "uuid": "u",
+  "tls": {"enabled": true, "server_name": "www.example",
+    "utls": {"enabled": true, "fingerprint": "chrome"},
+    "reality": {"enabled": true, "public_key": "PK", "short_id": "s1"}}}]}''');
+
+    expect(link, {
+      'tls': true,
+      'servername': 'www.example',
+      'client-fingerprint': 'chrome',
+      'reality-opts': {'public-key': 'PK', 'short-id': 's1'},
+    });
+    expect(xray, link);
+    expect(singbox, link);
+  });
+
   group('what the log says about a body', () {
     test('malformed links are one line, counted, and say whose they were', () {
       Log.clear();
