@@ -28,11 +28,6 @@ const double kTransferTileSmall = 232;
 const double kTransferCodeSmall = 208;
 const double kTransferStepBadge = 28;
 
-const EdgeInsets kCardMargin = EdgeInsets.symmetric(
-  horizontal: kGutter,
-  vertical: 4,
-);
-
 class PageBody extends StatelessWidget {
   const PageBody({super.key, required this.child});
   final Widget child;
@@ -43,33 +38,6 @@ class PageBody extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: kMaxContentWidth),
       child: child,
     ),
-  );
-}
-
-class SectionHeader extends StatelessWidget {
-  const SectionHeader(this.text, {super.key});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      kGutter,
-      kGroupGap,
-      kGutter,
-      kCaptionGap,
-    ),
-    child: DsCaption(text),
-  );
-}
-
-class SectionNote extends StatelessWidget {
-  const SectionNote(this.text, {super.key});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(kGutter, kNoteGap, kGutter, 0),
-    child: DsNote(text),
   );
 }
 
@@ -533,8 +501,6 @@ String formatBytes(int n) {
 
 const int kSearchThreshold = 6;
 
-const kTextEditDebounce = Duration(milliseconds: 600);
-
 const double kSheetMaxHeightFraction = 0.8;
 
 const double kQrViewfinder = 294;
@@ -544,8 +510,6 @@ const double kQrViewfinderRadius = 12;
 const double kQrViewfinderCorner = 78;
 
 const double kQrViewfinderLift = 60;
-
-const double kQrExportSize = 232;
 
 const double kQrScrimOpacity = 0.3;
 
