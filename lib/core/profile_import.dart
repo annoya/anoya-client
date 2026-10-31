@@ -59,7 +59,10 @@ Future<Profile> _selfhostedFromApi(ApiClient api, String token) async {
 
 Future<Profile> importSubscriptionUrl(String name, String url) async {
   final res = await fetchSubscription(url);
-  var parsed = parseSubscriptionBody(res.body, source: Uri.parse(url).host);
+  var parsed = await parseSubscriptionBodyInBackground(
+    res.body,
+    source: Uri.parse(url).host,
+  );
   if (parsed.providers.isNotEmpty) parsed = await withProxyProviders(parsed);
   final page = res.info.webPageUrl.isNotEmpty ? res.info.webPageUrl : url;
   if (parsed.locations.isEmpty) {
@@ -106,7 +109,10 @@ AppError _whyNothingUsable(ParsedSubscription parsed) {
 }
 
 Future<Profile> importText(String text, {String? name}) async {
-  final parsed = parseSubscriptionBody(text, source: name ?? 'pasted text');
+  final parsed = await parseSubscriptionBodyInBackground(
+    text,
+    source: name ?? 'pasted text',
+  );
   final locations = parsed.locations;
   if (locations.isEmpty) {
     if (parsed.format == SubscriptionFormat.unknown && !text.contains('://')) {

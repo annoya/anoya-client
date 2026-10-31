@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import '../amnezia/vpn_key.dart';
 import '../clash_plan.dart';
 import '../../l10n/l10n.dart';
@@ -75,6 +77,17 @@ enum SubscriptionFormat {
 
 ParsedSubscription parseSubscriptionBody(String body, {String source = ''}) =>
     Log.within(source, () => _parseBody(body));
+
+Future<ParsedSubscription> parseSubscriptionBodyInBackground(
+  String body, {
+  String source = '',
+}) async {
+  final (parsed, lines) = await Isolate.run(
+    () => (parseSubscriptionBody(body, source: source), Log.drain()),
+  );
+  Log.adopt(lines);
+  return parsed;
+}
 
 ParsedSubscription _parseBody(String body) {
   final trimmed = body.trim();

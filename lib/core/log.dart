@@ -79,6 +79,22 @@ class Log {
     revision.value++;
   }
 
+  static List<String> drain() {
+    final lines = List.of(_buffer);
+    _buffer.clear();
+    _bufferBytes = 0;
+    return lines;
+  }
+
+  static void adopt(List<String> lines) {
+    if (!enabled || lines.isEmpty) return;
+    for (final line in lines) {
+      _keep(line);
+      _persist(line);
+    }
+    revision.value++;
+  }
+
   static void _keep(String line) {
     _buffer.addLast(line);
     _bufferBytes += _encodedSize(line);

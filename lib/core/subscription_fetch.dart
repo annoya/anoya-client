@@ -297,7 +297,7 @@ Future<ParsedSubscription?> fetchProxyProvider(
         'proxy list exceeds ${kMaxProxyListBytes ~/ 1024} KB',
       );
     }
-    return parseSubscriptionBody(
+    return await parseSubscriptionBodyInBackground(
       res.body,
       source: '${provider.name} @ ${uri.host}',
     );

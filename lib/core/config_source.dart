@@ -84,7 +84,7 @@ final class SubscriptionSource extends ConfigSource {
           ? null
           : Duration(seconds: info!.requestTimeout!),
     );
-    var parsed = parseSubscriptionBody(
+    var parsed = await parseSubscriptionBodyInBackground(
       res.body,
       source: Uri.parse(profile.subscriptionUrl!).host,
     );
