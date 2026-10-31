@@ -160,6 +160,32 @@ void main() {
     });
   });
 
+  group('the cat at rest', () {
+    testWidgets('asks for no frames between blinks', (tester) async {
+      await pump(tester, CatMood.awake, connected: true);
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.binding.hasScheduledFrame, isFalse);
+    });
+
+    testWidgets('still blinks', (tester) async {
+      await pump(tester, CatMood.awake, connected: true);
+      final seen = <CatFrame>{};
+      for (var i = 0; i < 70; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        seen.add(frame(tester));
+      }
+      expect(seen, contains(CatFrame.happy));
+      expect(frame(tester), CatFrame.on);
+    });
+
+    testWidgets('looks around while connecting', (tester) async {
+      await pump(tester, CatMood.looking);
+      final first = frame(tester);
+      await tester.pump(kCatLookFrame);
+      expect(frame(tester), isNot(first));
+    });
+  });
+
   group('the sleeping cat', () {
     testWidgets('opens one eye for a moment when tapped', (tester) async {
       await pump(tester, CatMood.asleep);
