@@ -43,7 +43,9 @@ provider's `sleep()` and `wake()` only write a line to the tunnel log.
 **The watchdog judges only connections through `PROXY`, and only by bytes that
 came back** (ADR-010). Once a second it samples the trackers whose chain holds
 the group. A connection that sent something and got nothing within 5 s, or
-closed without a single byte back, is unanswered. The tunnel is stalled when
+closed without a single byte back, is unanswered. A connection that closed
+between two samples is judged by its tracker's final counters, not by the last
+sample: a lookup is often seen before its answer and gone after it. The tunnel is stalled when
 nothing at all came back through `PROXY` for 15 s *and* at least 5 connections
 went unanswered in that window. An idle tunnel, a tunnel with one dead
 destination among live ones, and a machine without network (the dial fails, so
@@ -62,6 +64,9 @@ gets a reload every ten minutes and a line in the log each time, not a loop.
   *TestOnlyConnectionsThroughTheProxyAreWatched*.
 - Upload alone never counts as an answer. Pinned by the detector tests in
   `engine/watchdog_test.go`.
+- An answer that lands between two samples is an answer
+  (*TestAnAnswerBetweenSamplesIsNotAMiss*). With only some traffic tunnelled,
+  the engine's own lookups may be all that goes through `PROXY`.
 - `Recover` refuses when nothing is running
   (*TestRecoverWithoutARunningEngineRefuses*), so a watchdog tick after a stop
   cannot start anything.

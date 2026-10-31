@@ -88,6 +88,16 @@ void main() {
         reason:
             'Xray ignores everything but host, path and mode once extra is set',
       );
+
+      final sessionId = opts(
+        '{"path": "/x", "mode": "packet-up", "sessionIDPlacement": "query", '
+        '"sessionIDKey": "sid", "sessionIDTable": "base36", '
+        '"sessionIDLength": 12}',
+      );
+      expect(sessionId['session-placement'], 'query');
+      expect(sessionId['session-key'], 'sid');
+      expect(sessionId['session-table'], 'base36');
+      expect(sessionId['session-length'], 12);
     });
 
     test('the transport is mapped, not passed through', () {

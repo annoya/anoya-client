@@ -593,6 +593,8 @@
   "errorTunnelServiceStoppedDetail": "Il redémarre tout seul en quelques secondes — reconnectez-vous. Si cela se répète, le journal du tunnel dans Réglages → Journaux en indique la raison.",
   "errorSystemRefusedTunnelTitle": "Le système a refusé de démarrer le tunnel",
   "errorSystemRefusedTunnelDetail": "Autorisez le profil VPN dans les réglages système, puis reconnectez-vous.",
+  "errorTunnelServiceRefusedTitle": "Le service du tunnel n’a pas pu démarrer le tunnel",
+  "errorTunnelServiceRefusedDetail": "La raison est dans Réglages → Journaux.",
   "errorSignInNotFinishedTitle": "L’identification n’a pas abouti",
   "errorSignInNotFinishedDetail": "La fenêtre du navigateur a été fermée ou le fournisseur a refusé.",
   "errorSomethingWentWrongTitle": "Un problème est survenu",

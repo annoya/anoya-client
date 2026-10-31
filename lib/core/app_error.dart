@@ -117,6 +117,10 @@ AppError describeError(Object error, {String? subject}) {
       l10n.errorTunnelServiceStoppedTitle,
       l10n.errorTunnelServiceStoppedDetail,
     ),
+    PlatformException(code: 'service_error') => err(
+      l10n.errorTunnelServiceRefusedTitle,
+      l10n.errorTunnelServiceRefusedDetail,
+    ),
     PlatformException() => err(
       l10n.errorSystemRefusedTunnelTitle,
       l10n.errorSystemRefusedTunnelDetail,

@@ -154,6 +154,11 @@ void main() {
       );
       expect(proxy['ip'], '100.98.117.86');
       expect(
+        proxy['mtu'],
+        1376,
+        reason: 'what the Amnezia app runs the same servers with',
+      );
+      expect(
         proxy['udp'],
         isTrue,
         reason:
@@ -359,8 +364,83 @@ void main() {
       expect(parsed!.location.proxy['type'], 'vless');
       expect(parsed.location.proxy['server'], '135.136.45.186');
       expect(parsed.dns, ['100.64.0.1#PROXY']);
+      expect(parsed.routing, isNull, reason: 'no routing block, full tunnel');
     },
   );
+
+  group('an xray routing block', () {
+    Map<String, dynamic> config(List rules) => {
+      'outbounds': [
+        {'protocol': 'vless', 'tag': 'proxy'},
+        {'protocol': 'freedom', 'tag': 'direct'},
+        {'protocol': 'blackhole', 'tag': 'block'},
+      ],
+      'routing': {'domainStrategy': 'AsIs', 'rules': rules},
+    };
+
+    test('networks to the proxy and the rest direct is a split', () {
+      final routing = xrayRouting(
+        config([
+          {
+            'type': 'field',
+            'ip': ['10.20.0.0/16', '203.0.113.7', 'geoip:!ru'],
+            'outboundTag': 'proxy',
+          },
+          {'type': 'field', 'network': 'tcp,udp', 'outboundTag': 'direct'},
+        ]),
+      );
+      expect(routing?.mode, 'split');
+      expect(routing!.rules.single.type, 'ip-cidr');
+      expect(routing.rules.single.values, ['10.20.0.0/16', '203.0.113.7/32']);
+      expect(routing.rules.single.action, 'proxy');
+    });
+
+    test('exceptions to a tunnelled default keep their order', () {
+      final routing = xrayRouting(
+        config([
+          {
+            'type': 'field',
+            'domain': ['geosite:category-ads', 'full:ads.example'],
+            'outboundTag': 'block',
+          },
+          {
+            'type': 'field',
+            'domain': ['domain:ozon.ru', 'keyword:yandex'],
+            'outboundTag': 'direct',
+          },
+          {
+            'type': 'field',
+            'domain': ['domain:corp.example'],
+            'port': '443',
+            'outboundTag': 'direct',
+          },
+        ]),
+      );
+      expect(routing?.mode, 'full');
+      expect(
+        [for (final r in routing!.rules) '${r.type}:${r.values}>${r.action}'],
+        [
+          'geosite:[category-ads]>block',
+          'domain-exact:[ads.example]>block',
+          'domain-suffix:[ozon.ru]>direct',
+          'domain-keyword:[yandex]>direct',
+        ],
+        reason: 'a rule with a port is narrower than routing can say',
+      );
+    });
+
+    test('everything through the proxy brings no routing', () {
+      expect(
+        xrayRouting(
+          config([
+            {'type': 'field', 'network': 'tcp,udp', 'outboundTag': 'proxy'},
+          ]),
+        ),
+        isNull,
+      );
+      expect(xrayRouting(config([])), isNull);
+    });
+  });
 
   test('nothing the user reads names a company behind the subscription', () {
     final offenders = <String>[];

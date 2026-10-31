@@ -138,7 +138,7 @@ final class AmneziaSource {
     Log.i(
       'amnezia: issued ${amneziaProtocolLabel(protocol)} config for '
       '${parts.country.isEmpty ? 'the free service' : parts.country}'
-      '${parsed.routing == null ? '' : ', routing ${parsed.routing!.rules.single.values.length} network(s)'}',
+      '${parsed.routing == null ? '' : ', routing ${parsed.routing!.mode}, ${parsed.routing!.rules.fold(0, (n, r) => n + r.values.length)} entries'}',
     );
 
     return profile.copyWith(

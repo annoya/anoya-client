@@ -2376,6 +2376,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Разрешите профиль VPN в системных настройках, затем подключитесь снова.';
 
   @override
+  String get errorTunnelServiceRefusedTitle =>
+      'Служба туннеля не смогла запустить туннель';
+
+  @override
+  String get errorTunnelServiceRefusedDetail =>
+      'Причина — в разделе Настройки → Журналы.';
+
+  @override
   String get errorSignInNotFinishedTitle => 'Вход не завершён';
 
   @override

@@ -197,6 +197,7 @@ func TestOnlyTheRenderedShapeReachesTheEngine(t *testing.T) {
 		"tun: [1]",
 		"rule-providers:\n  ads: {type: http, url: 'https://x/y', path: ./r.yaml, behavior: domain}",
 		"rule-providers:\n  ads: {type: file, path: ./r.yaml, behavior: domain, proxy: DIRECT}",
+		"rule-providers:\n  ads: {type: inline, path: ./r.yaml, behavior: domain, payload: [x]}",
 		"not a mapping",
 	}
 	for _, config := range refused {
@@ -216,6 +217,15 @@ func TestOnlyTheRenderedShapeReachesTheEngine(t *testing.T) {
 				t.Fatalf("%s handed the refused %q to the engine", method, config)
 			}
 		}
+	}
+
+	rendered := "rule-providers:\n" +
+		"  l0: {type: file, path: ./l0.yaml, behavior: domain, format: yaml}\n" +
+		"  _inline_0:\n    type: inline\n    behavior: ipcidr\n    payload:\n      - 10.0.0.0/8\n      - 172.16.0.0/12\n" +
+		"rules:\n  - RULE-SET,_inline_0,PROXY,no-resolve\n  - RULE-SET,l0,DIRECT"
+	accepting, _, _ := harness(t)
+	if _, err := accepting.Handle("start", map[string]any{"config": rendered}); err != nil {
+		t.Fatalf("refused the rule providers the app renders: %v", err)
 	}
 
 	s, eng, files := harness(t)

@@ -593,6 +593,8 @@
   "errorTunnelServiceStoppedDetail": "Она сама перезапустится через несколько секунд — подключитесь снова. Если это повторяется, причина в журнале туннеля: Настройки → Журналы.",
   "errorSystemRefusedTunnelTitle": "Система не разрешила запустить туннель",
   "errorSystemRefusedTunnelDetail": "Разрешите профиль VPN в системных настройках, затем подключитесь снова.",
+  "errorTunnelServiceRefusedTitle": "Служба туннеля не смогла запустить туннель",
+  "errorTunnelServiceRefusedDetail": "Причина — в разделе Настройки → Журналы.",
   "errorSignInNotFinishedTitle": "Вход не завершён",
   "errorSignInNotFinishedDetail": "Окно браузера было закрыто, или провайдер отказал.",
   "errorSomethingWentWrongTitle": "Что-то пошло не так",

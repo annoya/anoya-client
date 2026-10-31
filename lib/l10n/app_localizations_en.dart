@@ -2310,6 +2310,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Allow the VPN profile in system settings, then connect again.';
 
   @override
+  String get errorTunnelServiceRefusedTitle =>
+      'The tunnel service could not start the tunnel';
+
+  @override
+  String get errorTunnelServiceRefusedDetail =>
+      'The reason is in Settings → Logs.';
+
+  @override
   String get errorSignInNotFinishedTitle => 'Sign-in didn’t finish';
 
   @override

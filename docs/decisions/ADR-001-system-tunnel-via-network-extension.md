@@ -113,7 +113,7 @@ Android tunnel process: start, stop, reload, probes, logs, a pushed status.
 - **The service runs only the shape our renderer produces.** Whoever reaches
   the socket or pipe hands a root engine its config, so the service refuses
   any top-level, `dns`, `tun` or `sniffer` key the renderer never emits, and
-  any rule provider that is not `type: file` — before the config is saved or
+  any rule provider that is not `type: file` or `type: inline` — before the config is saved or
   started, and again when a boot starts the saved one. Otherwise any local
   user could open `listeners` or `dns.listen` on every interface, add
   `iptables` rules, or have root download a provider to a path of their

@@ -2229,6 +2229,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorSystemRefusedTunnelDetail => '请在系统设置中允许此 VPN 配置，然后重新连接。';
 
   @override
+  String get errorTunnelServiceRefusedTitle => '隧道服务无法启动隧道';
+
+  @override
+  String get errorTunnelServiceRefusedDetail => '原因见“设置 → 日志”。';
+
+  @override
   String get errorSignInNotFinishedTitle => '登录未完成';
 
   @override
