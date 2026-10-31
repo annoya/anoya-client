@@ -23,7 +23,6 @@ import '../core/service_catalog.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
-import '../state/profiles_controller.dart';
 import '../state/routing_status.dart';
 import 'geosite_sheet.dart';
 import 'rule_screen.dart';
@@ -166,7 +165,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   Future<void> _persist() async {
     final revision = ref.read(ruleSetRevisionProvider.notifier);
-    final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
     final updated = [
       for (final s in sets)
@@ -174,7 +172,6 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     ];
     await RuleSetStore.save(updated);
     revision.bump();
-    await profiles.syncTunnelConfig();
   }
 
   Future<void> _loadIndex() async {
@@ -320,11 +317,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     );
     if (!ok) return;
     final revision = ref.read(ruleSetRevisionProvider.notifier);
-    final profiles = ref.read(profilesControllerProvider.notifier);
     final sets = await RuleSetStore.load();
     await RuleSetStore.save(sets.where((s) => s.id != widget.setId).toList());
     revision.bump();
-    await profiles.syncTunnelConfig();
     if (mounted) Navigator.of(context).pop();
   }
 

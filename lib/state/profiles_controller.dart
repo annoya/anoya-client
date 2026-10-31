@@ -25,6 +25,7 @@ import 'on_demand_controller.dart';
 import 'profiles_state.dart';
 import 'providers.dart';
 import 'ready_gate.dart';
+import 'routing_status.dart';
 
 export 'profiles_state.dart';
 
@@ -50,6 +51,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     _timer = Timer.periodic(kConfigPollInterval, (_) => _poll());
     ref.onDispose(() => _timer?.cancel());
     _watchForSilentFailures();
+    _syncOnTunnelInputs();
     _rememberSelection();
     ready = _init();
     return const ProfilesState(loading: true);
@@ -647,6 +649,15 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       );
     });
     ref.onDispose(() => _statusSub?.cancel());
+  }
+
+  void _syncOnTunnelInputs() {
+    ref.listen(routingPrefsProvider, (_, _) => syncTunnelConfig());
+    ref.listen(ruleSetRevisionProvider, (_, _) => syncTunnelConfig());
+    ref.listen(
+      appPrefsProvider.select((p) => p.collectLogs),
+      (_, _) => syncTunnelConfig(),
+    );
   }
 
   Future<void> syncTunnelConfig() async {

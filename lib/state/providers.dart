@@ -30,7 +30,7 @@ class AppPrefsController extends Notifier<AppPrefs> with ReadyGate {
   @override
   AppPrefs build() {
     ready = AppPrefsStore.load().then((v) {
-      state = v;
+      if (ref.mounted) state = v;
     });
     return const AppPrefs();
   }
@@ -78,8 +78,8 @@ class RoutingPrefsController extends Notifier<RoutingPrefs> with ReadyGate {
   Future<void> update(RoutingPrefs Function(RoutingPrefs) change) async {
     await ready;
     final prefs = change(await RoutingPrefsStore.load());
-    state = prefs;
     await RoutingPrefsStore.save(prefs);
+    state = prefs;
   }
 }
 
