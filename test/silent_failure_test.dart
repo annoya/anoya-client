@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/control_transport.dart';
+import 'package:anoya/core/network_extension_core.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/vpn_core.dart';
@@ -82,6 +85,32 @@ void main() {
     expect(c.read(profilesControllerProvider).error, isNull);
   });
 
+  test('a desktop tunnel service that went away says so', () async {
+    final transport = _GoneService();
+    addTearDown(() => NetworkExtensionCore(transport: ChannelTransport()));
+    final c = ProviderContainer(
+      overrides: [
+        vpnCoreProvider.overrideWithValue(
+          NetworkExtensionCore(transport: transport),
+        ),
+        onDemandProvider.overrideWith(_QuietOnDemand.new),
+      ],
+    );
+    addTearDown(c.dispose);
+    c.read(profilesControllerProvider);
+    await pumpEventQueue();
+
+    transport.status.add('connected');
+    transport.status.add('disconnected');
+    await pumpEventQueue();
+
+    expect(
+      c.read(profilesControllerProvider).error?.detail,
+      contains('not running'),
+      reason: 'the service is the one that would have kept the reason',
+    );
+  });
+
   test('a disconnected state that never went up explains nothing', () async {
     final core = _FakeCore(reason: 'stale reason from an old session');
     final c = boot(core);
@@ -95,6 +124,25 @@ void main() {
       reason: 'the reason belongs to a session this one never started',
     );
   });
+}
+
+class _GoneService implements ControlTransport {
+  final status = StreamController<String?>.broadcast();
+
+  @override
+  Future<T?> invoke<T>(String method, [Map<String, Object?>? args]) async {
+    if (method != 'disconnect_error') return null;
+    throw PlatformException(
+      code: 'service_unavailable',
+      message: 'the tunnel service is not running',
+    );
+  }
+
+  @override
+  Stream<String?> get statusEvents => status.stream;
+
+  @override
+  Stream<String> get noticeEvents => const Stream.empty();
 }
 
 class _FakeCore extends VpnCore {
