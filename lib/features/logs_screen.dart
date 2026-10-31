@@ -14,7 +14,6 @@ import '../core/platform_support.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
-import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import 'log_viewer_screen.dart';
 
@@ -31,7 +30,6 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
   Future<void> _setCollecting(bool value) async {
     await ref.read(appPrefsProvider.notifier).setCollectLogs(value);
-    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
     await setExtensionLogging(value);
     if (mounted) setState(() {});
   }

@@ -10,7 +10,6 @@ import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/connection_check_controller.dart';
-import '../state/profiles_controller.dart';
 import '../state/providers.dart';
 import '../state/session.dart';
 
@@ -32,7 +31,6 @@ class AdvancedConnectionScreen extends ConsumerWidget {
       await ref
           .read(routingPrefsProvider.notifier)
           .update((p) => p.copyWith(dnsProtection: v));
-      await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
     }
 
     return DsPage(

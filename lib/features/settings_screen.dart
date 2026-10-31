@@ -117,8 +117,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await ref
         .read(routingPrefsProvider.notifier)
         .update((p) => p.copyWith(defaultDns: value));
-    if (!mounted) return;
-    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
   }
 
   Future<void> _pickTheme() async {
@@ -302,7 +300,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await ref
         .read(routingPrefsProvider.notifier)
         .update((p) => p.copyWith(lanDirect: v));
-    await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
   }
 
   @override
