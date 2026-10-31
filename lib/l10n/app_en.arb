@@ -1699,6 +1699,8 @@
   "errorTunnelServiceStoppedDetail": "It restarts on its own within a few seconds — connect again. If this keeps happening, the tunnel log in Settings → Logs says why.",
   "errorSystemRefusedTunnelTitle": "The system refused to start the tunnel",
   "errorSystemRefusedTunnelDetail": "Allow the VPN profile in system settings, then connect again.",
+  "errorTunnelServiceRefusedTitle": "The tunnel service could not start the tunnel",
+  "errorTunnelServiceRefusedDetail": "The reason is in Settings → Logs.",
   "errorSignInNotFinishedTitle": "Sign-in didn’t finish",
   "errorSignInNotFinishedDetail": "The browser window was closed or the provider refused.",
   "errorSomethingWentWrongTitle": "Something went wrong",

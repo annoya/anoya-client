@@ -593,6 +593,8 @@
   "errorTunnelServiceStoppedDetail": "Se reinicia solo en unos segundos: conecta de nuevo. Si se repite, el registro del túnel en Ajustes → Registros indica el motivo.",
   "errorSystemRefusedTunnelTitle": "El sistema no permitió iniciar el túnel",
   "errorSystemRefusedTunnelDetail": "Permite el perfil de VPN en los ajustes del sistema y luego conecta de nuevo.",
+  "errorTunnelServiceRefusedTitle": "El servicio del túnel no pudo iniciar el túnel",
+  "errorTunnelServiceRefusedDetail": "El motivo está en Ajustes → Registros.",
   "errorSignInNotFinishedTitle": "El inicio de sesión no terminó",
   "errorSignInNotFinishedDetail": "La ventana del navegador se cerró o el proveedor lo rechazó.",
   "errorSomethingWentWrongTitle": "Algo salió mal",

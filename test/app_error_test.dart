@@ -76,6 +76,15 @@ void main() {
       );
       expect(gone.title, 'The tunnel service stopped');
       expect(gone.detail, contains('connect again'));
+      final refused = describeError(
+        PlatformException(
+          code: 'service_error',
+          message: 'rule provider "_inline_0": key "payload" is not accepted',
+        ),
+      );
+      expect(refused.title, 'The tunnel service could not start the tunnel');
+      expect(refused.detail, contains('Settings → Logs'));
+      expect(refused.line, isNot(contains('payload')));
     });
 
     test('a bad password is not the same message as an expired session', () {

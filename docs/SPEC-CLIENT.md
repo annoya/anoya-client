@@ -1015,9 +1015,12 @@ that number, and the 3.x one reads the earlier parameter sets too. VLESS arrives
 Xray document and goes through the reader this app already has.
 
 An AmneziaWG config whose `allowed_ips` is not a full tunnel is the server's
-routing: split, those networks through the VPN, everything else direct —
-shown and switched like a subscription's routing, replaced on every issued
-server (ADR-027).
+routing: split, those networks through the VPN, everything else direct. An
+Xray config's `routing` block is the server's routing the same way, its
+catch-all deciding between split and full. Either is shown and switched like a
+subscription's routing and replaced on every issued server (ADR-027). The
+outbound's `mtu` is the config's, else 1376, which the Amnezia app runs the
+same servers with.
 
 The gateway counts devices by `installation_uuid`, not by requests: the id is
 minted once and kept in the keychain, so re-issuing a server costs nothing

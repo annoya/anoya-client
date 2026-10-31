@@ -23,6 +23,7 @@ type connSample struct {
 	id       string
 	up, down int64
 	start    time.Time
+	final    func() int64
 }
 
 type stallDetector struct {
@@ -56,7 +57,10 @@ func (d *stallDetector) observe(now time.Time, samples []connSample) (stalled bo
 		if _, ok := alive[id]; ok {
 			continue
 		}
-		if s.up > 0 && s.down == 0 && !d.gaveUp[id] {
+		switch {
+		case s.final != nil && s.final() > s.down:
+			d.lastAnswer = now
+		case s.up > 0 && s.down == 0 && !d.gaveUp[id]:
 			d.misses = append(d.misses, now)
 		}
 		delete(d.gaveUp, id)
@@ -81,6 +85,7 @@ func watchedSamples() []connSample {
 				up:    info.UploadTotal.Load(),
 				down:  info.DownloadTotal.Load(),
 				start: info.Start,
+				final: info.DownloadTotal.Load,
 			})
 		}
 		return true

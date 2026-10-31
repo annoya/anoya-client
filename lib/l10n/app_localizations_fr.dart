@@ -2332,6 +2332,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Autorisez le profil VPN dans les réglages système, puis reconnectez-vous.';
 
   @override
+  String get errorTunnelServiceRefusedTitle =>
+      'Le service du tunnel n’a pas pu démarrer le tunnel';
+
+  @override
+  String get errorTunnelServiceRefusedDetail =>
+      'La raison est dans Réglages → Journaux.';
+
+  @override
   String get errorSignInNotFinishedTitle => 'L’identification n’a pas abouti';
 
   @override

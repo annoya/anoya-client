@@ -3662,6 +3662,18 @@ abstract class AppLocalizations {
   /// **'Allow the VPN profile in system settings, then connect again.'**
   String get errorSystemRefusedTunnelDetail;
 
+  /// No description provided for @errorTunnelServiceRefusedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The tunnel service could not start the tunnel'**
+  String get errorTunnelServiceRefusedTitle;
+
+  /// No description provided for @errorTunnelServiceRefusedDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The reason is in Settings → Logs.'**
+  String get errorTunnelServiceRefusedDetail;
+
   /// No description provided for @errorSignInNotFinishedTitle.
   ///
   /// In en, this message translates to:

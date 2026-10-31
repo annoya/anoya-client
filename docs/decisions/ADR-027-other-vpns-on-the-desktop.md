@@ -1,4 +1,4 @@
-# ADR-027: On the desktop, DNS protection is the user's choice and off by default; an AWG config's networks are server routing
+# ADR-027: On the desktop, DNS protection is the user's choice and off by default; an Amnezia config's routing is server routing
 
 ## Status
 
@@ -24,8 +24,8 @@ Windows. With Anoya connected, corporate resources stopped opening.
 - Clash Verge Rev, FlClash and Mihomo Party ship `strict-route` off. sing-box
   warns it can break other software on Windows.
 - Amnezia's business customers point an AWG server at only some networks
-  (`allowed_ips`) so other VPNs keep their traffic. We ignored the field: every
-  AWG config was a full tunnel.
+  (`allowed_ips`), or give an Xray config a `routing` block, so other VPNs keep
+  their traffic. We ignored both: every config was a full tunnel.
 
 ## Decision
 
@@ -37,6 +37,13 @@ Windows. With Anoya connected, corporate resources stopped opening.
   those networks (a bare address gets `/32` or `/128`; a list or a comma string
   is read; invalid entries are skipped and logged). The user sees and switches
   it like a subscription's routing. It is replaced on every issued server.
+- **An Xray config's `routing` block is server routing too.** Rules with only
+  `ip` or only `domain` map to routing rules in their order, the action from
+  the outbound's protocol (freedom direct, blackhole block, the rest proxy). A
+  rule covering every network and port, or the first outbound when there is
+  none, is the default: direct makes it split, proxy makes it full. Rules with
+  other conditions (`port`, `protocol`, `inboundTag`…) are narrower than our
+  routing can say; they are skipped and counted in the log.
 - **An explicit rule about a private subnet beats Local network direct.**
   `ip-cidr` values inside the LAN ranges go before the LAN rules, in their own
   order; the rest of the routing stays after. Otherwise a server routing
@@ -49,7 +56,7 @@ Windows. With Anoya connected, corporate resources stopped opening.
 - The switch exists only where the tunnel is ours, and starts off —
   `test/connection_check_test.dart` (*the screen*).
 - A full tunnel brings no routing; a network list routes only those networks —
-  `test/amnezia_config_test.dart` (*an AWG location*).
+  `test/amnezia_config_test.dart` (*an AWG location*, *an xray routing block*).
 - Private subnets named by a rule are not swallowed by LAN direct —
   `test/routing_v2_test.dart` (*local network direct*).
 
@@ -93,5 +100,5 @@ checked on Windows with NetBird.
 - `lib/core/mihomo_tun_config.dart` — `strictRoute`.
 - `lib/core/network_extension_core.dart`, `lib/core/effective_config.dart`.
 - `lib/features/advanced_connection_screen.dart`, `settings_screen.dart`.
-- `lib/core/amnezia/secondary_config.dart` — `allowedIpsRouting`.
+- `lib/core/amnezia/secondary_config.dart` — `allowedIpsRouting`, `xrayRouting`.
 - `lib/core/amnezia/amnezia_source.dart` — routing set on issue.

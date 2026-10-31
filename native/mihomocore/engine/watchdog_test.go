@@ -50,6 +50,23 @@ func TestConnectionsClosedWithoutAnAnswerCount(t *testing.T) {
 	}
 }
 
+func TestAnAnswerBetweenSamplesIsNotAMiss(t *testing.T) {
+	d := newStallDetector(t0)
+	var stalled bool
+	for s := 1; s <= 30; s++ {
+		lookup := unansweredConns(fmt.Sprintf("dns%d-", s), 1, at(s))
+		lookup[0].final = func() int64 { return 60 }
+		stalled, _ = d.observe(at(s), lookup)
+		if stalled {
+			break
+		}
+	}
+	if stalled {
+		t.Fatal("a lookup sampled before its answer and closed after it is answered, " +
+			"not unanswered; through the proxy that is all an only-selected tunnel carries")
+	}
+}
+
 func TestAnyAnswerKeepsTheTunnelHealthy(t *testing.T) {
 	d := newStallDetector(t0)
 	dead := unansweredConns("c", 10, t0)

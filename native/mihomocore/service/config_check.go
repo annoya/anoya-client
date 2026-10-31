@@ -84,7 +84,10 @@ func checkConfig(config string) error {
 	return nil
 }
 
-var providerKeys = map[string]bool{"type": true, "path": true, "behavior": true, "format": true}
+var providerKeys = map[any]map[string]bool{
+	"file":   {"type": true, "path": true, "behavior": true, "format": true},
+	"inline": {"type": true, "behavior": true, "payload": true},
+}
 
 func checkRuleProviders(value any) error {
 	if value == nil {
@@ -99,13 +102,14 @@ func checkRuleProviders(value any) error {
 		if !ok {
 			return fmt.Errorf("rule provider %q must be a mapping", name)
 		}
+		keys, ok := providerKeys[provider["type"]]
+		if !ok {
+			return fmt.Errorf("rule provider %q: only type file or inline is accepted", name)
+		}
 		for k := range provider {
-			if !providerKeys[k] {
+			if !keys[k] {
 				return fmt.Errorf("rule provider %q: key %q is not accepted", name, k)
 			}
-		}
-		if provider["type"] != "file" {
-			return fmt.Errorf("rule provider %q: only type file is accepted", name)
 		}
 	}
 	return nil

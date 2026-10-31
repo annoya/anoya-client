@@ -593,6 +593,8 @@
   "errorTunnelServiceStoppedDetail": "它会在几秒内自动重启，请重新连接。如果反复出现，可在“设置 → 日志”的隧道日志中查看原因。",
   "errorSystemRefusedTunnelTitle": "系统拒绝启动隧道",
   "errorSystemRefusedTunnelDetail": "请在系统设置中允许此 VPN 配置，然后重新连接。",
+  "errorTunnelServiceRefusedTitle": "隧道服务无法启动隧道",
+  "errorTunnelServiceRefusedDetail": "原因见“设置 → 日志”。",
   "errorSignInNotFinishedTitle": "登录未完成",
   "errorSignInNotFinishedDetail": "浏览器窗口已关闭，或提供方拒绝了登录。",
   "errorSomethingWentWrongTitle": "出了点问题",
