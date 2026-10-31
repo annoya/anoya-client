@@ -126,11 +126,7 @@ class MihomoVpnService : VpnService() {
             stopSilenceWatch()
             startForeground(ONGOING_ID, buildNotification(Ongoing.CONNECTING))
             TunnelState.set(TunnelState.CONNECTING)
-            executor.execute {
-                runCatching { Mobile.stop() }
-                tunFd = null
-                bringUp()
-            }
+            executor.execute { reestablish() }
             return START_STICKY
         }
         val by = when (intent?.action) {
@@ -152,33 +148,56 @@ class MihomoVpnService : VpnService() {
         return START_STICKY
     }
 
+    private fun establish(): Int {
+        val builder = Builder()
+            .setSession("VPN")
+            .setMtu(9000)
+            .addAddress("172.19.0.1", 30)
+            .addRoute("0.0.0.0", 0)
+            .addAddress("fdfe:dcba:9876::1", 126)
+            .addRoute("::", 0)
+            // A public resolver makes automatic Private DNS switch to DoT and bypass dns-hijack.
+            .addDnsServer("172.19.0.2")
+        val excluded = TunnelFiles.excludedApps(this).filter { it != packageName }
+        val missing = excluded.filter {
+            runCatching { builder.addDisallowedApplication(it) }.isFailure
+        }
+        val pfd = builder.establish()
+            ?: throw IllegalStateException("the system refused to establish the tunnel")
+        val fd = pfd.detachFd()
+        TunnelFiles.setExcludedAppsInUse(this, excluded)
+        if (excluded.isNotEmpty()) {
+            log("apps outside the VPN: ${excluded.size - missing.size}" +
+                if (missing.isEmpty()) "" else ", ${missing.size} not installed")
+        }
+        return fd
+    }
+
+    private fun savedConfig(): String =
+        TunnelFiles.config(this).takeIf { it.exists() }?.readText()
+            ?: throw IllegalStateException("no saved tunnel config to start from")
+
+    private fun reestablish() {
+        try {
+            val fd = establish()
+            Mobile.reload(fd.toLong(), savedConfig())
+            tunFd = fd
+            TunnelState.set(TunnelState.CONNECTED)
+            log("tunnel re-established on fd $fd")
+            startSilenceWatch()
+        } catch (e: Exception) {
+            log("re-establish failed: ${e.message}")
+            TunnelFiles.recordError(this, e.message ?: "re-establish failed")
+            TunnelState.set(TunnelState.ERROR)
+            shutdown()
+        }
+    }
+
     private fun bringUp() {
         try {
-            val config = TunnelFiles.config(this).takeIf { it.exists() }?.readText()
-                ?: throw IllegalStateException("no saved tunnel config to start from")
-
-            val builder = Builder()
-                .setSession("VPN")
-                .setMtu(9000)
-                .addAddress("172.19.0.1", 30)
-                .addRoute("0.0.0.0", 0)
-                .addAddress("fdfe:dcba:9876::1", 126)
-                .addRoute("::", 0)
-                // A public resolver makes automatic Private DNS switch to DoT and bypass dns-hijack.
-                .addDnsServer("172.19.0.2")
-            val excluded = TunnelFiles.excludedApps(this).filter { it != packageName }
-            val missing = excluded.filter {
-                runCatching { builder.addDisallowedApplication(it) }.isFailure
-            }
-            val pfd = builder.establish()
-                ?: throw IllegalStateException("the system refused to establish the tunnel")
-            val fd = pfd.detachFd()
+            val config = savedConfig()
+            val fd = establish()
             tunFd = fd
-            TunnelFiles.setExcludedAppsInUse(this, excluded)
-            if (excluded.isNotEmpty()) {
-                log("apps outside the VPN: ${excluded.size - missing.size}" +
-                    if (missing.isEmpty()) "" else ", ${missing.size} not installed")
-            }
             startNetworkLog()
 
             Mobile.setSocketProtector(object : SocketProtector {

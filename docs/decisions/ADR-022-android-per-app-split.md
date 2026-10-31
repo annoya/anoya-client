@@ -45,7 +45,11 @@ switch (ADR-002).
   restarts. It does not depend on the configuration, so a hot switch never makes
   it stale. Changing it while connected shows "Applies after reconnecting" and
   a "Reconnect now" that re-establishes the interface; the app never restarts the
-  tunnel on its own.
+  tunnel on its own. The new interface is established before the old one goes:
+  `establish()` on a live service moves traffic to it at once, and a reload
+  with the new fd makes the engine re-create its tun listener and close the old
+  fd. Stopping the engine first would leave every app on the physical network
+  until the new interface came up.
 
 ## Invariants
 
