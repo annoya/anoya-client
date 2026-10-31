@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -7,6 +9,8 @@ import '../core/log.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
+
+const kLogViewerRefreshDelay = Duration(milliseconds: 300);
 
 class LogViewerScreen extends StatefulWidget {
   const LogViewerScreen({
@@ -28,19 +32,28 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
   final _scroll = ScrollController();
   String _content = '';
   bool _loading = false;
+  Timer? _pending;
 
   @override
   void initState() {
     super.initState();
     _load();
-    if (widget.appLog) Log.revision.addListener(_load);
+    if (widget.appLog) Log.revision.addListener(_logChanged);
   }
 
   @override
   void dispose() {
-    if (widget.appLog) Log.revision.removeListener(_load);
+    if (widget.appLog) Log.revision.removeListener(_logChanged);
+    _pending?.cancel();
     _scroll.dispose();
     super.dispose();
+  }
+
+  void _logChanged() {
+    _pending ??= Timer(kLogViewerRefreshDelay, () {
+      _pending = null;
+      _load();
+    });
   }
 
   Future<void> _load() async {
