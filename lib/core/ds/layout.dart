@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
-import '../ui.dart';
 import 'glyph.dart';
 
 enum DsLeading { back, close, none }
+
+class PageBody extends StatelessWidget {
+  const PageBody({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: kMaxContentWidth),
+      child: child,
+    ),
+  );
+}
 
 class DsNavButton extends StatelessWidget {
   const DsNavButton({

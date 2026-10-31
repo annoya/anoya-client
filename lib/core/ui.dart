@@ -6,7 +6,6 @@ import 'ds.dart';
 import 'theme.dart';
 
 const double kGutter = 16;
-const double kMaxContentWidth = 560;
 
 const EdgeInsets kTvSafeArea = EdgeInsets.symmetric(
   horizontal: 48,
@@ -27,19 +26,6 @@ const double kTransferCode = 276;
 const double kTransferTileSmall = 232;
 const double kTransferCodeSmall = 208;
 const double kTransferStepBadge = 28;
-
-class PageBody extends StatelessWidget {
-  const PageBody({super.key, required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: kMaxContentWidth),
-      child: child,
-    ),
-  );
-}
 
 // A text-field-shaped chooser: label 12/14 over the value 16/24, a 40 action on the right.
 class SelectField extends StatelessWidget {
