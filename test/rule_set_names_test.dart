@@ -11,7 +11,6 @@ import 'package:anoya/core/rule_set.dart';
 import 'package:anoya/core/rule_set_transfer.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/theme.dart';
-import 'package:anoya/core/ui.dart';
 import 'package:anoya/core/vpn_core.dart';
 import 'package:anoya/features/rule_set_import_screen.dart';
 import 'package:anoya/features/rule_sets_screen.dart';

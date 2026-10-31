@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import '../../core/device_identity.dart';
 import '../../core/ds.dart';
 import '../../core/theme.dart';
-import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 
 class ThisDeviceSection extends StatelessWidget {

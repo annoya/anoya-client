@@ -150,7 +150,7 @@ sudo scripts/leak-check.sh        # leak check against a live tunnel (root)
   validator (`design/check.js` in the browser console, 0 violations
   required), then write the code to match. Numbers in the mockup and in
   `lib/core/theme.dart` /
-  `lib/core/ui.dart` are the same numbers.
+  `lib/core/ds/` / `lib/core/ui.dart` are the same numbers.
 - **Touched the Xcode projects, the linker flags, or anything the app reaches
   through `DynamicLibrary.process()`** — check an *archive*, not a local
   release build. `xcodebuild … archive` strips the binary and `flutter build`

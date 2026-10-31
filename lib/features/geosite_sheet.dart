@@ -4,7 +4,6 @@ import '../core/ds.dart';
 import '../core/geosite_index.dart';
 import '../core/service_catalog.dart';
 import '../core/theme.dart';
-import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class GeositeSheet extends StatefulWidget {

@@ -5,11 +5,11 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/theme.dart';
-import 'package:anoya/core/ui.dart';
 import 'package:anoya/features/config/config_screen.dart';
 import 'package:anoya/l10n/l10n.dart';
 import 'package:anoya/state/on_demand_controller.dart';

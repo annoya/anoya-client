@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ds.dart';
 import '../../core/profile.dart';
-import '../../core/ui.dart';
 import '../../l10n/l10n.dart';
 import '../../state/profiles_controller.dart';
 
