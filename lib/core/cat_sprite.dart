@@ -387,17 +387,15 @@ class CatStage extends StatefulWidget {
   State<CatStage> createState() => _CatStageState();
 }
 
-// One ticker drives every motion, so a covered or hidden home (TickerMode off) costs nothing.
 class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
   final _random = math.Random();
   final _zzzLift = ValueNotifier<double>(0);
   late final Ticker _ticker = createTicker(_onTick);
   Timer? _settle;
+  Timer? _beat;
 
   bool _lookRight = false;
   bool _blinking = false;
-  Duration _nextBlink = Duration.zero;
-  Duration _blinkEnds = Duration.zero;
 
   int _taps = 0;
   Duration? _petFrom;
@@ -434,10 +432,10 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
 
   void _restart() {
     _ticker.stop();
+    _beat?.cancel();
     _lookRight = false;
     _blinking = false;
     _zzzLift.value = 0;
-    _nextBlink = _blinkGap();
     _taps = 0;
     _petFrom = null;
     _released = null;
@@ -445,10 +443,32 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
     _act = _Act.none;
     _peekFrom = null;
     _happyUntil = null;
-    if (!_reduceMotion && widget.mood != CatMood.error) _ticker.start();
+    if (_reduceMotion) return;
+    switch (widget.mood) {
+      case CatMood.asleep:
+        _ticker.start();
+      case CatMood.looking:
+        _beat = Timer.periodic(kCatLookFrame, (_) {
+          setState(() => _lookRight = !_lookRight);
+        });
+      case CatMood.awake:
+        _scheduleBlink();
+      case CatMood.error:
+        break;
+    }
   }
 
   Duration _blinkGap() => Duration(milliseconds: 4000 + _random.nextInt(2000));
+
+  void _scheduleBlink() {
+    _beat = Timer(_blinkGap(), () {
+      setState(() => _blinking = true);
+      _beat = Timer(kCatBlink, () {
+        setState(() => _blinking = false);
+        _scheduleBlink();
+      });
+    });
+  }
 
   void _onTick(Duration elapsed) {
     switch (widget.mood) {
@@ -456,20 +476,10 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
         final t = elapsed.inMilliseconds / 2400;
         _zzzLift.value = (1 - math.cos(2 * math.pi * t)) / 2;
         if (_peekFrom != null) setState(_expire);
-      case CatMood.looking:
-        final right =
-            (elapsed.inMilliseconds ~/ kCatLookFrame.inMilliseconds).isOdd;
-        if (right != _lookRight) setState(() => _lookRight = right);
       case CatMood.awake:
-        if (!_blinking && elapsed >= _nextBlink) {
-          _blinkEnds = elapsed + kCatBlink;
-          setState(() => _blinking = true);
-        } else if (_blinking && elapsed >= _blinkEnds) {
-          _nextBlink = elapsed + _blinkGap();
-          setState(() => _blinking = false);
-        }
-        if (_busy) setState(_expire);
-      case CatMood.error:
+        setState(_expire);
+        if (!_busy) _ticker.stop();
+      case CatMood.looking || CatMood.error:
         break;
     }
   }
@@ -503,6 +513,13 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
   }
 
   void _tap() {
+    if (_ticker.isActive) return _onTap();
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
+      if (mounted) _onTap();
+    });
+  }
+
+  void _onTap() {
     switch (widget.mood) {
       case CatMood.awake:
         _pet();
@@ -550,6 +567,7 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
       }
     }
     setState(() {});
+    if (!_ticker.isActive) _ticker.start();
   }
 
   void _later(Duration after, VoidCallback done) {
@@ -685,6 +703,7 @@ class _CatStageState extends State<CatStage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _settle?.cancel();
+    _beat?.cancel();
     _ticker.dispose();
     _zzzLift.dispose();
     super.dispose();
