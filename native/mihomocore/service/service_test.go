@@ -66,7 +66,7 @@ func (f *fakeEngine) sequence() string {
 
 func harness(t *testing.T) (*Service, *fakeEngine, Files) {
 	t.Helper()
-	files := Files{Dir: t.TempDir()}
+	files := Files{Dir: t.TempDir(), State: t.TempDir()}
 	eng := &fakeEngine{}
 	s := New(eng, files)
 	return s, eng, files

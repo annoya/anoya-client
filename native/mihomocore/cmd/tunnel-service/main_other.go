@@ -17,6 +17,8 @@ func defaultDir() string {
 	return filepath.Join(os.TempDir(), "anoya-tunnel")
 }
 
+func defaultStateDir() string { return filepath.Join(defaultDir(), "service") }
+
 func socketPath(files service.Files) string { return filepath.Join(files.Dir, "tunnel.sock") }
 
 func runService(service.Files) error {

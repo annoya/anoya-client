@@ -43,9 +43,10 @@ Source: "{#Service}\tunnel-service.exe"; DestDir: "{app}\service"; Flags: ignore
 Source: "{#Service}\wintun.dll"; DestDir: "{app}\service"; Flags: ignoreversion
 
 [Dirs]
-; The engine's home (service.Files): the service writes the config and the
-; logs here, the app writes the geo databases and reads the logs. One
-; directory both may write to is the whole point of the permission.
+; The engine's home (service.Files.Dir): the app writes the geo databases and
+; rule lists here, the service reads them. One directory both may write to is
+; the whole point of the permission. The config and the logs live next to it,
+; in a directory the service locks to SYSTEM and Administrators.
 Name: "{commonappdata}\{#AppName}\engine"; Permissions: users-modify
 
 [Icons]

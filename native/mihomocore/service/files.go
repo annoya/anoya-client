@@ -12,19 +12,25 @@ import (
 )
 
 type Files struct {
-	Dir string
+	Dir   string
+	State string
 }
 
-func (f Files) Config() string     { return filepath.Join(f.Dir, "last_config.yaml") }
-func (f Files) EngineLog() string  { return filepath.Join(f.Dir, "mihomo.log") }
-func (f Files) ServiceLog() string { return filepath.Join(f.Dir, "tunnel.log") }
+func (f Files) Config() string     { return filepath.Join(f.State, "last_config.yaml") }
+func (f Files) EngineLog() string  { return filepath.Join(f.State, "mihomo.log") }
+func (f Files) ServiceLog() string { return filepath.Join(f.State, "tunnel.log") }
 
-func (f Files) CrashLog() string        { return filepath.Join(f.Dir, "crash.log") }
-func (f Files) errorFile() string       { return filepath.Join(f.Dir, "disconnect_error") }
-func (f Files) logFlag() string         { return filepath.Join(f.Dir, "log_enabled") }
-func (f Files) autoConnectFlag() string { return filepath.Join(f.Dir, "auto_connect") }
+func (f Files) CrashLog() string        { return filepath.Join(f.State, "crash.log") }
+func (f Files) errorFile() string       { return filepath.Join(f.State, "disconnect_error") }
+func (f Files) logFlag() string         { return filepath.Join(f.State, "log_enabled") }
+func (f Files) autoConnectFlag() string { return filepath.Join(f.State, "auto_connect") }
 
-func (f Files) Ensure() error { return os.MkdirAll(f.Dir, 0o755) }
+func (f Files) Ensure() error {
+	if err := os.MkdirAll(f.Dir, 0o755); err != nil {
+		return err
+	}
+	return ensurePrivateDir(f.State)
+}
 
 func (f Files) SaveConfig(yaml string) error {
 	return writeFileAtomic(f.Config(), []byte(yaml), 0o600)

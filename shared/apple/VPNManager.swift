@@ -64,8 +64,7 @@ final class VPNManager {
         }
         let current = proto.providerConfiguration
         let notice = notice ?? (current?["Notice"] as? String) ?? ""
-        let changed = current?["Config"] != nil
-            || (current?["LogEnabled"] as? Bool) != logEnabled
+        let changed = (current?["LogEnabled"] as? Bool) != logEnabled
             || (current?["Notice"] as? String ?? "") != notice
         guard changed else { return }
         proto.providerConfiguration = ["LogEnabled": logEnabled, "Notice": notice]
