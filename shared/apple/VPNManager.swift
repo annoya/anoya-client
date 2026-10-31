@@ -58,15 +58,18 @@ final class VPNManager {
     private func persist(config: String, logEnabled: Bool, notice: String?,
                          into m: NETunnelProviderManager) async throws {
         guard let proto = m.protocolConfiguration as? NETunnelProviderProtocol else { return }
+        if TunnelConfigStore.load() != config {
+            try TunnelConfigStore.save(config)
+            NSLog("VPN-NATIVE: persisted tunnel config (\(config.count) bytes)")
+        }
         let current = proto.providerConfiguration
         let notice = notice ?? (current?["Notice"] as? String) ?? ""
-        let changed = (current?["Config"] as? String) != config
+        let changed = current?["Config"] != nil
             || (current?["LogEnabled"] as? Bool) != logEnabled
             || (current?["Notice"] as? String ?? "") != notice
         guard changed else { return }
-        proto.providerConfiguration = ["Config": config, "LogEnabled": logEnabled, "Notice": notice]
+        proto.providerConfiguration = ["LogEnabled": logEnabled, "Notice": notice]
         try await save(m)
-        NSLog("VPN-NATIVE: persisted tunnel config (\(config.count) bytes)")
     }
 
     func syncConfig(config: String, logEnabled: Bool, notice: String?) async throws {
@@ -91,6 +94,7 @@ final class VPNManager {
             }
             return managers
         }
+        TunnelConfigStore.delete()
         guard !managers.isEmpty else { return }
         if let statusObserver {
             NotificationCenter.default.removeObserver(statusObserver)
@@ -216,8 +220,7 @@ final class VPNManager {
                 try await self.persist(config: config, logEnabled: logEnabled, notice: notice, into: m)
             }
             let compiled = rules.compactMap(self.compileRule)
-            let hasConfig = !((m.protocolConfiguration as? NETunnelProviderProtocol)?
-                .providerConfiguration?["Config"] as? String ?? "").isEmpty
+            let hasConfig = !(TunnelConfigStore.load() ?? "").isEmpty
             let arm = enabled && !compiled.isEmpty && hasConfig
 
             let wasArmed = m.isOnDemandEnabled
