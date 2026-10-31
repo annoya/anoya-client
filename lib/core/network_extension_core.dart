@@ -280,6 +280,7 @@ class NetworkExtensionCore implements VpnCore {
     try {
       return await _control.invoke<String>('disconnect_error') ?? '';
     } on PlatformException catch (e) {
+      if (e.code == 'service_unavailable') return e.message ?? e.code;
       Log.e('NE disconnect_error failed', e.message ?? e.code);
       return '';
     } on MissingPluginException {
