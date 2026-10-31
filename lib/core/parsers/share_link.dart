@@ -110,24 +110,21 @@ ShareLink _parseVless(String raw) {
   };
   final flow = q['flow'];
   if (flow != null && flow.isNotEmpty) proxy['flow'] = flow;
-  final sni = q['sni'] ?? q['host'];
-  if (tls && sni != null && sni.isNotEmpty) proxy['servername'] = sni;
-  if (q['fp'] != null && q['fp']!.isNotEmpty) {
-    proxy['client-fingerprint'] = q['fp'];
-  }
-  applyAlpn(proxy, q['alpn']);
-  if (security == 'reality') {
-    final r = <String, dynamic>{};
-    if (q['pbk'] != null) r['public-key'] = q['pbk'];
-    if (q['sid'] != null && q['sid']!.isNotEmpty) r['short-id'] = q['sid'];
-    if (q['pqv'] == '1' || q['pqv'] == 'true') {
-      r['support-x25519mlkem768'] = true;
-    }
-    proxy['reality-opts'] = r;
-  }
-  if (q['allowInsecure'] == '1' || q['insecure'] == '1') {
-    proxy['skip-cert-verify'] = true;
-  }
+  applyTls(
+    proxy,
+    tls: tls,
+    sni: q['sni'] ?? q['host'],
+    fingerprint: q['fp'],
+    alpn: splitAlpn(q['alpn']),
+    insecure: _insecure(q),
+    reality: security == 'reality'
+        ? (
+            publicKey: q['pbk'] ?? '',
+            shortId: q['sid'] ?? '',
+            pqv: q['pqv'] == '1' || q['pqv'] == 'true',
+          )
+        : null,
+  );
   final skip = applyTransport(proxy, network, q, protocol: 'vless');
   if (skip != null) return ShareLink.unsupported(skip);
   final meta = splitFragment(safeDecode(u.fragment));
@@ -140,6 +137,9 @@ ShareLink _parseVless(String raw) {
     ),
   );
 }
+
+bool _insecure(Map<String, String> q) =>
+    q['allowInsecure'] == '1' || q['insecure'] == '1';
 
 String _vlessUuid(String userInfo) {
   final decoded = Uri.decodeComponent(userInfo);
@@ -175,19 +175,18 @@ ShareLink _parseJsonPayload(
     'udp': true,
     'tls': tls,
   };
-  if (protocol == 'vless') {
-    if (str('flow').isNotEmpty) proxy['flow'] = str('flow');
-    if (str('fp').isNotEmpty) proxy['client-fingerprint'] = str('fp');
-    if (security == 'reality') {
-      proxy['reality-opts'] = {
-        'public-key': str('pbk'),
-        if (str('sid').isNotEmpty) 'short-id': str('sid'),
-      };
-    }
-  }
-  final sni = str('sni').isNotEmpty ? str('sni') : str('host');
-  if (tls && sni.isNotEmpty) proxy['servername'] = sni;
-  applyAlpn(proxy, str('alpn'));
+  final vless = protocol == 'vless';
+  if (vless && str('flow').isNotEmpty) proxy['flow'] = str('flow');
+  applyTls(
+    proxy,
+    tls: tls,
+    sni: str('sni').isNotEmpty ? str('sni') : str('host'),
+    fingerprint: vless ? str('fp') : null,
+    alpn: splitAlpn(str('alpn')),
+    reality: vless && security == 'reality'
+        ? (publicKey: str('pbk'), shortId: str('sid'), pqv: false)
+        : null,
+  );
   final skip = applyTransport(proxy, net, {
     'path': str('path'),
     'host': str('host'),
@@ -219,15 +218,15 @@ ShareLink _parseTrojan(String raw) {
     'network': network,
     'udp': true,
   };
-  final sni = q['sni'] ?? q['peer'];
-  if (sni != null && sni.isNotEmpty) proxy['sni'] = sni;
-  if (q['fp'] != null && q['fp']!.isNotEmpty) {
-    proxy['client-fingerprint'] = q['fp'];
-  }
-  applyAlpn(proxy, q['alpn']);
-  if (q['allowInsecure'] == '1' || q['insecure'] == '1') {
-    proxy['skip-cert-verify'] = true;
-  }
+  applyTls(
+    proxy,
+    tls: true,
+    sniKey: 'sni',
+    sni: q['sni'] ?? q['peer'],
+    fingerprint: q['fp'],
+    alpn: splitAlpn(q['alpn']),
+    insecure: _insecure(q),
+  );
   final skip = applyTransport(proxy, network, q, protocol: 'trojan');
   if (skip != null) return ShareLink.unsupported(skip);
   final meta = splitFragment(safeDecode(u.fragment));
@@ -354,17 +353,14 @@ ShareLink _parseHysteria2(String s) {
     'password': Uri.decodeComponent(u.userInfo),
     'udp': true,
   };
-  final sni = q['sni'] ?? q['peer'];
-  if (sni != null && sni.isNotEmpty) proxy['sni'] = sni;
-  final alpn = (q['alpn'] ?? '')
-      .split(',')
-      .map((e) => e.trim())
-      .where((e) => e.isNotEmpty)
-      .toList();
-  if (alpn.isNotEmpty) proxy['alpn'] = alpn;
-  if (q['insecure'] == '1' || q['allowInsecure'] == '1') {
-    proxy['skip-cert-verify'] = true;
-  }
+  applyTls(
+    proxy,
+    tls: true,
+    sniKey: 'sni',
+    sni: q['sni'] ?? q['peer'],
+    alpn: splitAlpn(q['alpn']),
+    insecure: _insecure(q),
+  );
   if ((q['obfs'] ?? '').isNotEmpty) {
     proxy['obfs'] = q['obfs'];
     final pw = q['obfs-password'] ?? q['obfs_password'];
