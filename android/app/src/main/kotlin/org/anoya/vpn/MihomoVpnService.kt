@@ -158,6 +158,7 @@ class MihomoVpnService : VpnService() {
             .addRoute("::", 0)
             // A public resolver makes automatic Private DNS switch to DoT and bypass dns-hijack.
             .addDnsServer("172.19.0.2")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) builder.setMetered(false)
         val excluded = TunnelFiles.excludedApps(this).filter { it != packageName }
         val missing = excluded.filter {
             runCatching { builder.addDisallowedApplication(it) }.isFailure
