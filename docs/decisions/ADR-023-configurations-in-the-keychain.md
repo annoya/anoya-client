@@ -47,6 +47,9 @@ dark wakes.
   accessibility. The VPN profile's `providerConfiguration` carries only
   non-secret flags: on macOS it lands in a system plist every local user can
   read. This is how WireGuard keeps its tunnel config.
+- **The tunnel's copy on Android stays out of backups.** `files/engine/`
+  (`last_config.yaml` and the engine logs) is excluded from Auto Backup and
+  device transfer.
 
 ## Invariants
 
