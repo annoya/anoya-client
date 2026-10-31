@@ -2,9 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:http/http.dart' as http;
 
-import '../api/api_client.dart';
+import 'download.dart';
 import 'log.dart';
 import 'network_extension_core.dart';
 import 'norm_config.dart';
@@ -106,42 +105,12 @@ class RuleListStore {
     return status(lists);
   }
 
-  static Future<void> _download(RuleList list, File dest) async {
-    final client = http.Client();
-    final tmp = File('${dest.path}.tmp');
-    try {
-      final res = await client
-          .send(http.Request('GET', Uri.parse(list.url)))
-          .timeout(kHttpTimeout);
-      if (res.statusCode ~/ 100 != 2) {
-        throw http.ClientException(
-          'rule list fetch failed (${res.statusCode})',
-        );
-      }
-      final sink = tmp.openWrite();
-      var written = 0;
-      try {
-        await for (final chunk in res.stream.timeout(kDownloadStallTimeout)) {
-          written += chunk.length;
-          if (written > maxBytes) {
-            throw http.ClientException(
-              'rule list exceeds ${maxBytes ~/ 1024} KB',
-            );
-          }
-          sink.add(chunk);
-        }
-      } finally {
-        await sink.close();
-      }
-      if (written == 0) throw http.ClientException('rule list was empty');
-      await tmp.rename(dest.path);
-    } catch (_) {
-      if (await tmp.exists()) await tmp.delete();
-      rethrow;
-    } finally {
-      client.close();
-    }
-  }
+  static Future<void> _download(RuleList list, File dest) => downloadToFile(
+    Uri.parse(list.url),
+    dest,
+    what: 'rule list',
+    maxBytes: maxBytes,
+  );
 
   static Future<void> prune(Iterable<RuleList> keep) async {
     final dir = await _dir();

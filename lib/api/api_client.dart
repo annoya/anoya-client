@@ -10,8 +10,6 @@ import '../core/norm_config.dart';
 
 const kHttpTimeout = Duration(seconds: 15);
 
-const kDownloadStallTimeout = Duration(seconds: 30);
-
 class ApiException implements Exception {
   ApiException(this.status, this.code, this.message);
   final int status;

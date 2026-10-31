@@ -1,9 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
-import 'package:http/http.dart' as http;
 
-import '../api/api_client.dart';
+import 'download.dart';
 import 'log.dart';
 import 'network_extension_core.dart';
 import 'routing_prefs.dart';
@@ -41,6 +40,13 @@ class GeoStore {
     );
   }
 
+  static Future<void> _fetchTo(String url, File dest) => downloadToFile(
+    Uri.parse(url),
+    dest,
+    what: 'geo database',
+    stallTimeout: stallTimeout,
+  );
+
   static Future<int> _size(File f) async =>
       await f.exists() ? await f.length() : 0;
 
@@ -53,41 +59,6 @@ class GeoStore {
     final fresh = await RoutingPrefsStore.load();
     await RoutingPrefsStore.save(fresh.copyWith(geoUpdatedAt: DateTime.now()));
     Log.i('geo: databases updated');
-  }
-
-  static Future<void> _fetchTo(String url, File dest) async {
-    final client = http.Client();
-    try {
-      final res = await client
-          .send(http.Request('GET', Uri.parse(url)))
-          .timeout(kHttpTimeout);
-      if (res.statusCode ~/ 100 != 2) {
-        throw http.ClientException(
-          'geo download failed (${res.statusCode})',
-          Uri.parse(url),
-        );
-      }
-      final tmp = File('${dest.path}.tmp');
-      final sink = tmp.openWrite();
-      try {
-        await for (final chunk in res.stream.timeout(stallTimeout)) {
-          sink.add(chunk);
-        }
-      } finally {
-        await sink.close();
-      }
-      if (await tmp.length() == 0) {
-        await tmp.delete();
-        throw http.ClientException('geo download was empty', Uri.parse(url));
-      }
-      await tmp.rename(dest.path);
-    } catch (_) {
-      final tmp = File('${dest.path}.tmp');
-      if (await tmp.exists()) await tmp.delete();
-      rethrow;
-    } finally {
-      client.close();
-    }
   }
 
   static Future<void> maybeAutoUpdate() async {
