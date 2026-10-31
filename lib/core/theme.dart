@@ -33,7 +33,6 @@ const double kToggleHeight = 30;
 const double kToggleKnob = 20;
 const double kRadioSize = 24;
 const double kFabSize = 56;
-const double kFabBottom = 48;
 const double kConnectButtonWidth = 200;
 const int kExpiryWarnDays = 3;
 const double kExpiryWarnTraffic = 0.9;
