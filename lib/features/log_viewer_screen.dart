@@ -7,7 +7,6 @@ import '../core/ds.dart';
 import '../core/ext_logs.dart';
 import '../core/log.dart';
 import '../core/theme.dart';
-import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 const kLogViewerRefreshDelay = Duration(milliseconds: 300);

@@ -6,7 +6,6 @@ import '../core/app_logo.dart';
 import '../core/app_version.dart';
 import '../core/ds.dart';
 import '../core/theme.dart';
-import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class AboutScreen extends StatelessWidget {

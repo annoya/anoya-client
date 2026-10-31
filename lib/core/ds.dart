@@ -1,6 +1,9 @@
 export 'ds/controls.dart';
+export 'ds/dialog.dart';
 export 'ds/feedback.dart';
 export 'ds/glyph.dart';
 export 'ds/ink.dart';
 export 'ds/layout.dart';
 export 'ds/rows.dart';
+export 'ds/select_field.dart';
+export 'ds/sheet.dart';

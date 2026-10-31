@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_version.dart';
+import 'core/ds.dart';
 import 'core/log.dart';
 import 'core/platform_support.dart';
 import 'core/secret_store.dart';

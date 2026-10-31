@@ -217,3 +217,26 @@ class DsProgress extends StatelessWidget {
     );
   }
 }
+
+void showToast(BuildContext context, String message) =>
+    showToastWith(ScaffoldMessenger.of(context), message);
+
+void showToastWith(ScaffoldMessengerState messenger, String message) {
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      duration: const Duration(seconds: 3),
+      content: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: messenger.hideCurrentSnackBar,
+          child: SizedBox(
+            width: double.infinity,
+            child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+          ),
+        ),
+      ),
+    ),
+  );
+}

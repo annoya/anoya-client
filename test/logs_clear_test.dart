@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:anoya/core/ds.dart';
-import 'package:anoya/core/ui.dart';
 
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/features/logs_screen.dart';

@@ -6,7 +6,6 @@ import '../core/ds.dart';
 import '../core/log.dart';
 import '../core/profile.dart';
 import '../core/theme.dart';
-import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/profiles_controller.dart';
 

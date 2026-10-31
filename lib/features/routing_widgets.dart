@@ -9,7 +9,6 @@ import '../core/norm_config.dart';
 import '../core/platform_support.dart';
 import '../core/rule_set.dart';
 import '../core/theme.dart';
-import '../core/ui.dart';
 import '../l10n/l10n.dart';
 
 class DirectionCard<T> extends StatelessWidget {
