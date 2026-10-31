@@ -41,6 +41,12 @@ dark wakes.
   also replaces an item created with another accessibility.
 - Rule sets, favorites, the selection and preferences stay plain JSON files:
   they hold no secrets.
+- **The tunnel's copy on Apple is a keychain item too.** The rendered engine
+  config, which on-demand starts read without the app, is a generic-password
+  item in the access group the app and the extension share, with the same
+  accessibility. The VPN profile's `providerConfiguration` carries only
+  non-secret flags: on macOS it lands in a system plist every local user can
+  read. This is how WireGuard keeps its tunnel config.
 
 ## Invariants
 
@@ -70,12 +76,13 @@ the clear.
   backup comes back with no configurations rather than half of each.
 - Keychain items written before this change with the old accessibility are not
   found; there was no release, so there is no migration.
-- The tunnel keeps its own copy of the selected server (the VPN profile,
-  `last_config.yaml`), unchanged.
+- The tunnel keeps its own copy of the selected server: the keychain item on
+  Apple, `last_config.yaml` elsewhere.
 
 ## Where It Lives
 
 - `lib/core/json_file_store.dart` — `SecureJsonStore`
 - `lib/core/profile_store.dart`, `lib/core/secret_store.dart`
+- `shared/apple/TunnelConfigStore.swift`
 - `test/secure_profiles_test.dart`, `test/support/memory_secrets.dart`,
   `test/flutter_test_config.dart`

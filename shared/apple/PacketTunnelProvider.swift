@@ -62,7 +62,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         log("startTunnel: begin · pid \(getpid())")
         checkPreviousRun()
         let config = (options?["Config"] as? String)
-            ?? (persisted?["Config"] as? String)
+            ?? TunnelConfigStore.load()
             ?? ""
         startedBySystem = options?["Config"] == nil
         notice = Self.parseNotice((options?["Notice"] as? String) ?? (persisted?["Notice"] as? String))
