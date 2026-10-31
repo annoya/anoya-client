@@ -26,6 +26,8 @@ func defaultDir() string {
 	return filepath.Join(base, "Anoya", "engine")
 }
 
+func defaultStateDir() string { return filepath.Join(filepath.Dir(defaultDir()), "service") }
+
 func listen() (net.Listener, error) {
 	return winio.ListenPipe(pipeName, &winio.PipeConfig{SecurityDescriptor: pipeSDDL})
 }

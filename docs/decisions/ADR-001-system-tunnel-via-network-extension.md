@@ -106,6 +106,13 @@ Android tunnel process: start, stop, reload, probes, logs, a pushed status.
 - **The app writes into the engine directory.** It downloads the geo databases
   there (`shared_dir`), so the Windows installer grants Users modify on
   `%ProgramData%\<app>\engine`; on Linux the directory is `1777`.
+- **Everything else the service keeps is its own.** The saved config (server
+  credentials and keys), the logs and the switches live in a sibling
+  `service` directory: owned by Administrators with a protected DACL for
+  SYSTEM and Administrators only on Windows, `0700 root` on Linux. A mode on
+  the file alone does not do it on Windows, where files inherit the engine
+  directory's Users-modify ACL — every local user could read the credentials
+  and plant a config that a SYSTEM service then auto-connects with.
 - **The Linux socket is world-accessible (`0666`).** No socket mode expresses
   "the console user", and a dedicated group forces a re-login after install.
   Mullvad and NetBird ship their daemon sockets the same way. The Windows pipe

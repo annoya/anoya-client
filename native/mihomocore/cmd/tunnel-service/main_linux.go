@@ -22,7 +22,8 @@ const (
 	socketPath = socketDir + "/tunnel.sock"
 )
 
-func defaultDir() string { return "/var/lib/anoya/engine" }
+func defaultDir() string      { return "/var/lib/anoya/engine" }
+func defaultStateDir() string { return "/var/lib/anoya/service" }
 
 func listen() (net.Listener, error) {
 	if err := os.MkdirAll(socketDir, 0o755); err != nil {

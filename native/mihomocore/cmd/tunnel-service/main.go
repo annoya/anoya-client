@@ -24,7 +24,7 @@ func main() {
 	dir := flag.String("dir", defaultDir(), "engine directory")
 	flag.Parse()
 
-	files := service.Files{Dir: *dir}
+	files := service.Files{Dir: *dir, State: defaultStateDir()}
 	if err := files.Ensure(); err != nil {
 		log.Fatalf("engine dir: %v", err)
 	}
