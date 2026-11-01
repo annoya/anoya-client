@@ -1020,7 +1020,9 @@ Xray config's `routing` block is the server's routing the same way, its
 catch-all deciding between split and full. Either is shown and switched like a
 subscription's routing and replaced on every issued server (ADR-027). The
 outbound's `mtu` is the config's, else 1376, which the Amnezia app runs the
-same servers with.
+same servers with. Its TCP runs on the engine's own IP stack (MIPS), mihomo's
+default for WireGuard since 1.19.33; the TUN stack stays the one the renderer
+names.
 
 The gateway counts devices by `installation_uuid`, not by requests: the id is
 minted once and kept in the keychain, so re-issuing a server costs nothing

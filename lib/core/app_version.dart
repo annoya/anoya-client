@@ -31,7 +31,7 @@ Future<void> loadAppVersion() async {
   }
 }
 
-const kEnginePin = 'v1.19.30';
+const kEnginePin = 'v1.19.33';
 
 String get engineVersionLabel {
   final parts = kEnginePin.split('-');
