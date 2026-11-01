@@ -210,10 +210,40 @@ void main() {
             as YamlList;
     expect(rules, [
       'DOMAIN-SUFFIX,corp.example.com,PROXY',
-      'IP-CIDR,10.0.0.0/8,PROXY,no-resolve',
+      'IP-CIDR,10.0.0.0/8,PROXY',
       'DOMAIN-KEYWORD,tracker,REJECT',
       'MATCH,DIRECT',
     ]);
+  });
+
+  test('a subnet rule also catches names that resolve into it', () {
+    const routing = Routing(
+      mode: 'split',
+      rules: [
+        RoutingRule(type: 'ip-cidr', values: ['10.20.0.0/16'], action: 'proxy'),
+        RoutingRule(
+          type: 'ip-cidr',
+          values: ['192.168.0.0/16'],
+          action: 'direct',
+          noResolve: true,
+        ),
+      ],
+    );
+    final rules =
+        (loadYaml(mihomoTunConfigYaml(vlessLoc(), routing: routing))
+                as YamlMap)['rules']
+            as YamlList;
+    expect(
+      rules.take(2),
+      [
+        'IP-CIDR,10.20.0.0/16,PROXY',
+        'IP-CIDR,192.168.0.0/16,DIRECT,no-resolve',
+      ],
+      reason:
+          'with fake-ip a connection by name has no address until the engine '
+          'resolves it; no-resolve would send every site past a server\'s '
+          'network list',
+    );
   });
 
   test('full routing keeps MATCH,PROXY and renders direct exceptions', () {
@@ -273,7 +303,7 @@ void main() {
     test('domains and subnets become one inline list, in place', () {
       expect((doc['rules'] as YamlList).map((e) => '$e'), [
         'RULE-SET,_inline_0,PROXY',
-        'RULE-SET,_inline_1,PROXY,no-resolve',
+        'RULE-SET,_inline_1,PROXY',
         'RULE-SET,_inline_2,REJECT',
         'GEOIP,RU,DIRECT,no-resolve',
         'GEOIP,BY,DIRECT,no-resolve',
