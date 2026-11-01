@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/json_file_store.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
@@ -51,6 +52,9 @@ void main() {
   });
 
   tearDown(() async {
+    for (var i = 0; i < 200 && JsonFileStore.pending > 0; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
     await Future<void>.delayed(const Duration(milliseconds: 50));
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
