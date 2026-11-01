@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
@@ -14,23 +15,29 @@ const (
 	sampleInterval    = time.Second
 	answerTimeout     = 5 * time.Second
 	silenceWindow     = 15 * time.Second
-	minUnanswered     = 5
+	minUnanswered     = 3
 	minRecoverBackoff = time.Minute
 	maxRecoverBackoff = 10 * time.Minute
 )
 
 type connSample struct {
 	id       string
+	dest     string
 	up, down int64
 	start    time.Time
 	final    func() int64
+}
+
+type miss struct {
+	at   time.Time
+	dest string
 }
 
 type stallDetector struct {
 	lastAnswer time.Time
 	last       map[string]connSample
 	gaveUp     map[string]bool
-	misses     []time.Time
+	misses     []miss
 }
 
 func newStallDetector(now time.Time) *stallDetector {
@@ -50,7 +57,7 @@ func (d *stallDetector) observe(now time.Time, samples []connSample) (stalled bo
 		}
 		if s.up > 0 && s.down == 0 && now.Sub(s.start) >= answerTimeout && !d.gaveUp[s.id] {
 			d.gaveUp[s.id] = true
-			d.misses = append(d.misses, now)
+			d.misses = append(d.misses, miss{now, s.dest})
 		}
 	}
 	for id, s := range d.last {
@@ -61,16 +68,20 @@ func (d *stallDetector) observe(now time.Time, samples []connSample) (stalled bo
 		case s.final != nil && s.final() > s.down:
 			d.lastAnswer = now
 		case s.up > 0 && s.down == 0 && !d.gaveUp[id]:
-			d.misses = append(d.misses, now)
+			d.misses = append(d.misses, miss{now, s.dest})
 		}
 		delete(d.gaveUp, id)
 	}
 	d.last = alive
 
 	cutoff := now.Add(-silenceWindow)
-	d.misses = slices.DeleteFunc(d.misses, func(t time.Time) bool { return t.Before(cutoff) })
+	d.misses = slices.DeleteFunc(d.misses, func(m miss) bool { return m.at.Before(cutoff) })
 
-	unanswered = len(d.misses)
+	dests := make(map[string]bool, len(d.misses))
+	for _, m := range d.misses {
+		dests[m.dest] = true
+	}
+	unanswered = len(dests)
 	stalled = now.Sub(d.lastAnswer) >= silenceWindow && unanswered >= minUnanswered
 	return stalled, unanswered
 }
@@ -82,6 +93,7 @@ func watchedSamples() []connSample {
 		if slices.Contains(info.Chain, watchedGroup) {
 			out = append(out, connSample{
 				id:    info.UUID.String(),
+				dest:  destination(info.Metadata),
 				up:    info.UploadTotal.Load(),
 				down:  info.DownloadTotal.Load(),
 				start: info.Start,
@@ -91,6 +103,16 @@ func watchedSamples() []connSample {
 		return true
 	})
 	return out
+}
+
+func destination(m *C.Metadata) string {
+	if m == nil {
+		return ""
+	}
+	if m.Host != "" {
+		return m.Host
+	}
+	return m.DstIP.String()
 }
 
 var watchdogStop chan struct{}
@@ -162,9 +184,9 @@ func runWatchdog(stop <-chan struct{}) {
 			if !stalled || now.Before(notBefore) {
 				continue
 			}
-			log.Warnln("[watchdog] nothing came back through %s for %s, %d connection(s) unanswered",
+			log.Warnln("[watchdog] nothing came back through %s for %s, %d destination(s) unanswered",
 				watchedGroup, now.Sub(detector.lastAnswer).Round(time.Second), unanswered)
-			journal("watchdog: nothing came back through %s for %s, %d connection(s) unanswered; reloading the engine",
+			journal("watchdog: nothing came back through %s for %s, %d destination(s) unanswered; reloading the engine",
 				watchedGroup, now.Sub(detector.lastAnswer).Round(time.Second), unanswered)
 			if episode.stalled() {
 				journal("watchdog: still silent after a reload; the person is told")

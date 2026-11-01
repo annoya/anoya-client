@@ -31,7 +31,8 @@ reconnect that did so is itself a leak (ADR-002, ADR-004).
 
 **Recovery is the switch path with the running config.** `engine.Recover`
 re-applies the last config that was applied successfully, on the same fd, and
-closes the tracked connections — exactly what a location switch does. No
+closes the tracked connections through `PROXY` — what a location switch does,
+except that DIRECT connections stay: they were not what went silent. No
 `stop`/`start`, no `setTunnelNetworkSettings`. The log level is restored
 afterwards, because applying a config overwrites it from the YAML.
 
@@ -46,10 +47,15 @@ the group. A connection that sent something and got nothing within 5 s, or
 closed without a single byte back, is unanswered. A connection that closed
 between two samples is judged by its tracker's final counters, not by the last
 sample: a lookup is often seen before its answer and gone after it. The tunnel is stalled when
-nothing at all came back through `PROXY` for 15 s *and* at least 5 connections
-went unanswered in that window. An idle tunnel, a tunnel with one dead
-destination among live ones, and a machine without network (the dial fails, so
-no tracker exists) are not stalls.
+nothing at all came back through `PROXY` for 15 s *and* connections to at least
+3 different destinations went unanswered in that window. Destinations, not
+connections: on an idle device one app retrying one host the server cannot
+reach (a server-side block, an address family the server lacks) produces a miss
+every few seconds and nothing else; counted by connections, that is a stall,
+and the back-off would reload the engine on it up to every ten minutes all
+night, dropping every long-lived connection each time.
+An idle tunnel, one dead destination, and a machine without network (the dial
+fails, so no tracker exists) are not stalls.
 
 **It backs off.** After a recovery the next one waits at least a minute, then
 doubles up to ten; any byte back resets the wait. A server that is really dead
@@ -62,6 +68,10 @@ gets a reload every ten minutes and a line in the log each time, not a loop.
 - Only connections whose chain contains `PROXY` are watched; DIRECT traffic
   never keeps a dead proxy looking alive. Pinned by
   *TestOnlyConnectionsThroughTheProxyAreWatched*.
+- One unreachable destination is never a stall, however often it is retried
+  (*TestOneDeadDestinationOnAnIdleDeviceIsNotAStall*).
+- A recovery closes only connections through `PROXY`
+  (*TestARecoveryLeavesDirectConnectionsAlone*).
 - Upload alone never counts as an answer. Pinned by the detector tests in
   `engine/watchdog_test.go`.
 - An answer that lands between two samples is an answer
@@ -131,8 +141,10 @@ line after `[recover]` in a real log is what confirms that a reload is enough.
 
 ## Consequences
 
-- A recovery closes every proxied connection, like a switch. They were not
-  getting answers anyway.
+- A recovery closes every proxied connection. They were not getting answers
+  anyway. DIRECT connections are left open.
+- A stall seen by only one or two destinations — a device where a single app is
+  in use — is not acted on until a third destination goes unanswered too.
 - A recovery re-parses the config and re-reads local geo files; the engine
   still fetches nothing (AGENTS.md invariant 7).
 - The watchdog lives in the engine, so Android and the Windows service run it
