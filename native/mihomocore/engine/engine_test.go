@@ -13,6 +13,7 @@ import (
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
+	"github.com/metacubex/mihomo/tunnel"
 	"github.com/sirupsen/logrus"
 )
 
@@ -90,6 +91,20 @@ func TestReloadClosesTheOutboundsItReplaced(t *testing.T) {
 	}
 	if kept.closed || successor.closed {
 		t.Fatal("an outbound still in use must stay open")
+	}
+}
+
+func TestStopClosesEveryOutbound(t *testing.T) {
+	useTempHome(t)
+	proxy := &closeRecorder{}
+	tunnel.UpdateProxies(map[string]constant.Proxy{"proxy": adapter.NewProxy(proxy)}, nil)
+	t.Cleanup(func() { tunnel.UpdateProxies(map[string]constant.Proxy{}, nil) })
+
+	Stop()
+
+	if !proxy.closed {
+		t.Fatal("a stopped engine must close its outbounds, or the WireGuard device " +
+			"of the server just left keeps handshaking until the garbage collector finds it")
 	}
 }
 

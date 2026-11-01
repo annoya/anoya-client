@@ -532,8 +532,7 @@ List<String> _routingRuleLines(
       continue;
     }
     final suffix =
-        (r.type == 'ip-cidr' ||
-            ((r.type == 'geoip' || r.type == 'rule-list') && r.noResolve))
+        r.noResolve && const {'ip-cidr', 'geoip', 'rule-list'}.contains(r.type)
         ? ',no-resolve'
         : '';
     if (_inlined(r)) {

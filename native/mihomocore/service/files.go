@@ -82,7 +82,7 @@ func (f Files) LogsEnabled() bool {
 	return string(bytes.TrimSpace(b)) != "0"
 }
 
-const logTailBytes = 512 * 1024
+const logTailBytes = engine.LogMaxBytes
 
 func (f Files) Tail(path string) string {
 	engine.RotateLog(path)

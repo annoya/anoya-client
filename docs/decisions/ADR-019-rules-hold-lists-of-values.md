@@ -40,7 +40,7 @@ service's domains and subnets one per line or comma-separated.
 - **The engine gets an index, not a scan.** Several `domain-suffix`,
   `domain-exact` or `ip-cidr` values become one `RULE-SET` pointing at an
   inline provider (`type: inline`, `behavior: domain` with `+.` for suffixes,
-  or `ipcidr` with `no-resolve`), named `_inline_<index>` — a name no
+  or `ipcidr`, with `no-resolve` only when the rule asks for it), named `_inline_<index>` — a name no
   provider list can take, since list names start with a letter or digit.
   Other types are written one line per value.
 - **Simple mode shows single-value geo rules only.** A rule with several

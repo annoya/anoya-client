@@ -3,11 +3,36 @@ import 'dns_plan.dart';
 import 'json_file_store.dart';
 
 const kLanDirectRules = [
-  RoutingRule(type: 'ip-cidr', values: ['10.0.0.0/8'], action: 'direct'),
-  RoutingRule(type: 'ip-cidr', values: ['172.16.0.0/12'], action: 'direct'),
-  RoutingRule(type: 'ip-cidr', values: ['192.168.0.0/16'], action: 'direct'),
-  RoutingRule(type: 'ip-cidr', values: ['169.254.0.0/16'], action: 'direct'),
-  RoutingRule(type: 'ip-cidr', values: ['224.0.0.0/4'], action: 'direct'),
+  RoutingRule(
+    type: 'ip-cidr',
+    values: ['10.0.0.0/8'],
+    action: 'direct',
+    noResolve: true,
+  ),
+  RoutingRule(
+    type: 'ip-cidr',
+    values: ['172.16.0.0/12'],
+    action: 'direct',
+    noResolve: true,
+  ),
+  RoutingRule(
+    type: 'ip-cidr',
+    values: ['192.168.0.0/16'],
+    action: 'direct',
+    noResolve: true,
+  ),
+  RoutingRule(
+    type: 'ip-cidr',
+    values: ['169.254.0.0/16'],
+    action: 'direct',
+    noResolve: true,
+  ),
+  RoutingRule(
+    type: 'ip-cidr',
+    values: ['224.0.0.0/4'],
+    action: 'direct',
+    noResolve: true,
+  ),
 ];
 
 Routing withLanDirect(Routing routing) {

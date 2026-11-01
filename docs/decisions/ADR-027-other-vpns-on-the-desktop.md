@@ -44,6 +44,12 @@ Windows. With Anoya connected, corporate resources stopped opening.
   none, is the default: direct makes it split, proxy makes it full. Rules with
   other conditions (`port`, `protocol`, `inboundTag`…) are narrower than our
   routing can say; they are skipped and counted in the log.
+- **A subnet rule resolves names.** With fake-ip a connection made by name has
+  no address, so an `ip-cidr` rule with `no-resolve` sees only connections to a
+  bare IP: a server's network list would send every site direct. `ip-cidr`
+  carries `no-resolve` only when the rule says so — the LAN rules and imported
+  rules that had it. The cost is one cached lookup per name that reaches the
+  rule.
 - **An explicit rule about a private subnet beats Local network direct.**
   `ip-cidr` values inside the LAN ranges go before the LAN rules, in their own
   order; the rest of the routing stays after. Otherwise a server routing
@@ -57,6 +63,9 @@ Windows. With Anoya connected, corporate resources stopped opening.
   `test/connection_check_test.dart` (*the screen*).
 - A full tunnel brings no routing; a network list routes only those networks —
   `test/amnezia_config_test.dart` (*an AWG location*, *an xray routing block*).
+- A subnet rule matches names that resolve into it —
+  `test/mihomo_tun_config_test.dart` (*a subnet rule also catches names that
+  resolve into it*).
 - Private subnets named by a rule are not swallowed by LAN direct —
   `test/routing_v2_test.dart` (*local network direct*).
 

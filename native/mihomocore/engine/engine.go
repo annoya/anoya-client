@@ -225,6 +225,7 @@ func Stop() {
 	stopWatchdog()
 	running = nil
 	executor.Shutdown()
+	closeReplacedProxies(tunnel.Proxies(), nil)
 	closeCacheFile()
 	// Shutdown leaves LastTunConf set, so a reused fd would get no listener.
 	listener.ReCreateTun(LC.Tun{}, nil)
