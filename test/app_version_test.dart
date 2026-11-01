@@ -60,7 +60,7 @@ void main() {
 
   group('what the About section reads out', () {
     test('a release tag reads as a plain version', () {
-      expect(engineVersionLabel, 'mihomo 1.19.30');
+      expect(engineVersionLabel, 'mihomo 1.19.33');
     });
 
     test('the app line pairs version and build, the way Apple shows it', () {
