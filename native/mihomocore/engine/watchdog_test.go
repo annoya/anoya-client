@@ -19,7 +19,8 @@ func at(seconds int) time.Time { return t0.Add(time.Duration(seconds) * time.Sec
 func unansweredConns(prefix string, n int, start time.Time) []connSample {
 	out := make([]connSample, n)
 	for i := range out {
-		out[i] = connSample{id: fmt.Sprintf("%s%d", prefix, i), up: 1200, start: start}
+		id := fmt.Sprintf("%s%d", prefix, i)
+		out[i] = connSample{id: id, dest: id + ".example", up: 1200, start: start}
 	}
 	return out
 }
@@ -34,7 +35,7 @@ func TestSilentProxyIsReportedAfterTheWindow(t *testing.T) {
 	}
 	stalled, unanswered := d.observe(at(int(silenceWindow/time.Second)), conns)
 	if !stalled || unanswered != 6 {
-		t.Fatalf("stalled=%v unanswered=%d, want a stall over 6 connections", stalled, unanswered)
+		t.Fatalf("stalled=%v unanswered=%d, want a stall over 6 destinations", stalled, unanswered)
 	}
 }
 
@@ -98,6 +99,16 @@ func TestFewUnansweredConnectionsAreNotAStall(t *testing.T) {
 	}
 }
 
+func TestOneDeadDestinationOnAnIdleDeviceIsNotAStall(t *testing.T) {
+	d := newStallDetector(t0)
+	for s := 1; s <= 120; s++ {
+		retry := connSample{id: fmt.Sprintf("retry%d", s), dest: "telemetry.example", up: 400, start: at(s)}
+		if stalled, _ := d.observe(at(s), []connSample{retry}); stalled {
+			t.Fatalf("one app retrying one dead host reloaded the engine at %ds", s)
+		}
+	}
+}
+
 func TestConnectionThatSentNothingIsNotUnanswered(t *testing.T) {
 	d := newStallDetector(t0)
 	conns := make([]connSample, 10)
@@ -145,6 +156,22 @@ func TestOnlyConnectionsThroughTheProxyAreWatched(t *testing.T) {
 	}
 	if samples[0].up != 1200 || samples[0].down != 0 {
 		t.Fatalf("sample = %+v, want the tracker's own counters", samples[0])
+	}
+}
+
+func TestARecoveryLeavesDirectConnectionsAlone(t *testing.T) {
+	trackConn(t, "proxy", watchedGroup)
+	trackConn(t, "DIRECT")
+	if closed := closeTrackedConnections(watchedGroup); closed != 1 {
+		t.Fatalf("closed %d connection(s), want only the one through %s", closed, watchedGroup)
+	}
+	var left []string
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		left = append(left, c.Info().Chain...)
+		return true
+	})
+	if len(left) != 1 || left[0] != "DIRECT" {
+		t.Fatalf("still open: %v, want the DIRECT connection", left)
 	}
 }
 

@@ -62,7 +62,7 @@ func (g *memoryGuard) check(now time.Time) {
 	switch g.step(now, footprint, budget) {
 	case memoryShed:
 		usage := describeMemory()
-		closed := closeTrackedConnections()
+		closed := closeTrackedConnections("")
 		debug.FreeOSMemory()
 		journal("memory: %s of the %s limit, closed %d connection(s) and returned memory · %s; now %s",
 			megabytes(footprint), megabytes(budget), closed, usage, megabytes(physFootprint()))

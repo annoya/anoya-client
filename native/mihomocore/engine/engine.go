@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -88,13 +89,13 @@ func start(fd int, ownDevice bool, configYAML string) error {
 func Reload(fd int, configYAML string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	return reload(fd, false, configYAML)
+	return reload(fd, false, configYAML, "")
 }
 
 func ReloadOwnDevice(configYAML string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	return reload(0, true, configYAML)
+	return reload(0, true, configYAML, "")
 }
 
 func Recover(reason string) error {
@@ -106,10 +107,10 @@ func Recover(reason string) error {
 	log.Warnln("[recover] %s: reloading the engine on the running config", reason)
 	level := log.Level()
 	defer log.SetLevel(level)
-	return reload(running.fd, running.ownDevice, running.yaml)
+	return reload(running.fd, running.ownDevice, running.yaml, watchedGroup)
 }
 
-func reload(fd int, ownDevice bool, configYAML string) error {
+func reload(fd int, ownDevice bool, configYAML string, through string) error {
 	previous := tunnel.Proxies()
 	defer func() { closeReplacedProxies(previous, tunnel.Proxies()) }()
 	cfg, err := applyConfig(fd, ownDevice, configYAML)
@@ -119,16 +120,18 @@ func reload(fd int, ownDevice bool, configYAML string) error {
 	}
 	running = &appliedConfig{fd: fd, ownDevice: ownDevice, yaml: configYAML}
 	log.Infoln("[hot switch] redialing %d live connection(s) through the new server",
-		closeTrackedConnections())
+		closeTrackedConnections(through))
 	go logProxyEgress(cfg)
 	return nil
 }
 
-func closeTrackedConnections() int {
+func closeTrackedConnections(through string) int {
 	closed := 0
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
-		_ = c.Close()
-		closed++
+		if through == "" || slices.Contains(c.Info().Chain, through) {
+			_ = c.Close()
+			closed++
+		}
 		return true
 	})
 	return closed
