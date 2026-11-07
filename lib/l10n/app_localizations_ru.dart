@@ -2245,6 +2245,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Подписка прислала формат, который это приложение не распознаёт. Оно читает списки ссылок в base64, Clash / mihomo, Xray JSON и sing-box. Ничего не добавлено.';
 
   @override
+  String get errorUnreadableWireguardTitle =>
+      'Не удалось прочитать конфиг WireGuard';
+
+  @override
+  String get errorUnreadableWireguardDetail =>
+      'Нужны приватный ключ и адрес интерфейса, а также публичный ключ и эндпоинт пира. Ничего не добавлено.';
+
+  @override
   String get errorEmptySubscriptionTitle => 'В этой подписке нет серверов';
 
   @override
@@ -2625,6 +2633,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importFormatSingbox => 'подписку sing-box';
 
   @override
+  String get importFormatWireguard => 'конфиг WireGuard';
+
+  @override
   String get importFormatUnknown => 'что-то нераспознанное';
 
   @override
@@ -2680,6 +2691,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get importUnusableNotALink => 'Это не ссылка и не подписка';
+
+  @override
+  String get importUnusableWireguardConfig =>
+      'в конфиге WireGuard нет ключа, адреса или эндпоинта';
 
   @override
   String get catalogGroupStreaming => 'Стриминг';

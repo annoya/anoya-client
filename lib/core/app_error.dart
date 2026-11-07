@@ -47,6 +47,11 @@ AppError get kUnreadableSubscription => AppError(
   detail: L10n.current.errorUnreadableSubscriptionDetail,
 );
 
+AppError get kUnreadableWireGuardConfig => AppError(
+  L10n.current.errorUnreadableWireguardTitle,
+  detail: L10n.current.errorUnreadableWireguardDetail,
+);
+
 AppError emptySubscription(String what) => AppError(
   L10n.current.errorEmptySubscriptionTitle,
   detail: L10n.current.errorEmptySubscriptionDetail(what),

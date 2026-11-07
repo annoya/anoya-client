@@ -2205,6 +2205,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tu suscripción envió un formato que esta app no reconoce. Lee listas de enlaces en base64, Clash / mihomo, Xray JSON y sing-box. No se añadió nada.';
 
   @override
+  String get errorUnreadableWireguardTitle =>
+      'No se pudo leer esta configuración de WireGuard';
+
+  @override
+  String get errorUnreadableWireguardDetail =>
+      'Hacen falta la clave privada y la dirección de la interfaz, y la clave pública y el endpoint del par. No se añadió nada.';
+
+  @override
   String get errorEmptySubscriptionTitle =>
       'Esta suscripción no tiene servidores';
 
@@ -2590,6 +2598,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importFormatSingbox => 'una suscripción sing-box';
 
   @override
+  String get importFormatWireguard => 'una configuración de WireGuard';
+
+  @override
   String get importFormatUnknown => 'algo no reconocido';
 
   @override
@@ -2644,6 +2655,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get importUnusableNotALink => 'No es un enlace ni una suscripción';
+
+  @override
+  String get importUnusableWireguardConfig =>
+      'a la configuración de WireGuard le falta una clave, un endpoint o una dirección';
 
   @override
   String get catalogGroupStreaming => 'Streaming';

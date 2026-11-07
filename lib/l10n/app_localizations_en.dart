@@ -2181,6 +2181,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your subscription sent a format this app does not recognise. It reads base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.';
 
   @override
+  String get errorUnreadableWireguardTitle =>
+      'Couldn’t read this WireGuard config';
+
+  @override
+  String get errorUnreadableWireguardDetail =>
+      'It needs the interface’s private key and address, and the peer’s public key and endpoint. Nothing was added.';
+
+  @override
   String get errorEmptySubscriptionTitle => 'This subscription has no servers';
 
   @override
@@ -2561,6 +2569,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importFormatSingbox => 'a sing-box subscription';
 
   @override
+  String get importFormatWireguard => 'a WireGuard config';
+
+  @override
   String get importFormatUnknown => 'something unrecognised';
 
   @override
@@ -2614,6 +2625,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importUnusableNotALink => 'Not a link or subscription';
+
+  @override
+  String get importUnusableWireguardConfig =>
+      'WireGuard config is missing a key, endpoint or address';
 
   @override
   String get catalogGroupStreaming => 'Streaming';

@@ -3470,6 +3470,18 @@ abstract class AppLocalizations {
   /// **'Your subscription sent a format this app does not recognise. It reads base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.'**
   String get errorUnreadableSubscriptionDetail;
 
+  /// No description provided for @errorUnreadableWireguardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read this WireGuard config'**
+  String get errorUnreadableWireguardTitle;
+
+  /// No description provided for @errorUnreadableWireguardDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'It needs the interface’s private key and address, and the peer’s public key and endpoint. Nothing was added.'**
+  String get errorUnreadableWireguardDetail;
+
   /// No description provided for @errorEmptySubscriptionTitle.
   ///
   /// In en, this message translates to:
@@ -4064,6 +4076,12 @@ abstract class AppLocalizations {
   /// **'a sing-box subscription'**
   String get importFormatSingbox;
 
+  /// No description provided for @importFormatWireguard.
+  ///
+  /// In en, this message translates to:
+  /// **'a WireGuard config'**
+  String get importFormatWireguard;
+
   /// No description provided for @importFormatUnknown.
   ///
   /// In en, this message translates to:
@@ -4129,6 +4147,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not a link or subscription'**
   String get importUnusableNotALink;
+
+  /// No description provided for @importUnusableWireguardConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'WireGuard config is missing a key, endpoint or address'**
+  String get importUnusableWireguardConfig;
 
   /// Section header in the service catalog
   ///

@@ -437,6 +437,20 @@ fetched keep working.
   `ss://` links carry SIP003 plugins (`obfs`, `v2ray-plugin`); a plugin the
   engine has no adapter for makes the server unsupported instead of being
   dropped, since a server expecting obfuscation refuses a plain connection.
+- **WireGuard and AmneziaWG configs** — a `.conf` pasted, opened from a file
+  or scanned from a QR code (wg-easy). It is one server, a single-server
+  configuration like a link, and renders as the same `wireguard` outbound as a
+  key subscription's AmneziaWG (§9): the first `Address` of each family, the
+  first `[Peer]`, `PresharedKey` and `PersistentKeepalive` when set. Obfuscation
+  parameters in `[Interface]` (`Jc`…`S4`, `H1`–`H4`, `I1`–`I5`) make it
+  AmneziaWG — `amnezia-wg-option` with `version: 3`, the MTU the config's,
+  else 1376 — and without them it stays plain WireGuard with the engine's
+  default MTU. `DNS` addresses become the configuration's resolvers, pinned to
+  the tunnel as a key subscription's are; search domains are dropped. A peer
+  `AllowedIPs` that is not a full tunnel is the config's routing (ADR-027).
+  Keys must decode to 32 bytes and the endpoint must carry a port; a config
+  missing either, or an address, is refused with its own message rather than
+  as an unreadable subscription.
 - **A management server address** plus credentials, or SSO when the server
   advertises a provider.
 

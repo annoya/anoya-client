@@ -103,9 +103,11 @@ AppError _whyNothingUsable(ParsedSubscription parsed) {
   if (parsed.hasUnsupported) {
     return noRunnableServers(parsed.total, parsed.unsupportedList);
   }
-  return parsed.format == SubscriptionFormat.unknown
-      ? kUnreadableSubscription
-      : emptySubscription(parsed.format.label);
+  return switch (parsed.format) {
+    SubscriptionFormat.unknown => kUnreadableSubscription,
+    SubscriptionFormat.wireguard => kUnreadableWireGuardConfig,
+    final format => emptySubscription(format.label),
+  };
 }
 
 Future<Profile> importText(String text, {String? name}) async {
@@ -133,6 +135,7 @@ Future<Profile> importText(String text, {String? name}) async {
               : L10n.current.importImportedName(locations.length)),
     locations: locations,
     dns: parsed.dns,
+    providerRouting: parsed.routing,
     unsupportedServers: parsed.unsupported,
     groups: parsed.groups,
     plan: single ? null : parsed.plan,

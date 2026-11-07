@@ -1597,6 +1597,8 @@
   "errorDeviceLimitDetail": "Your subscription’s device limit is full, so it sent a placeholder instead of your servers. Free a slot in your subscription, then refresh.",
   "errorUnreadableSubscriptionTitle": "Couldn’t read this subscription",
   "errorUnreadableSubscriptionDetail": "Your subscription sent a format this app does not recognise. It reads base64 link lists, Clash / mihomo, Xray JSON and sing-box. Nothing was added.",
+  "errorUnreadableWireguardTitle": "Couldn’t read this WireGuard config",
+  "errorUnreadableWireguardDetail": "It needs the interface’s private key and address, and the peer’s public key and endpoint. Nothing was added.",
   "errorEmptySubscriptionTitle": "This subscription has no servers",
   "errorEmptySubscriptionDetail": "Your subscription answered with {what} that lists none. That usually means the account is out of days or its device limit is full — ask them.",
   "@errorEmptySubscriptionDetail": {
@@ -1842,6 +1844,7 @@
   "importFormatClash": "a Clash / mihomo subscription",
   "importFormatXray": "an Xray JSON subscription",
   "importFormatSingbox": "a sing-box subscription",
+  "importFormatWireguard": "a WireGuard config",
   "importFormatUnknown": "something unrecognised",
   "importDetectedAmneziaKey": "{name} · subscription key",
   "@importDetectedAmneziaKey": {
@@ -1918,6 +1921,7 @@
     }
   },
   "importUnusableNotALink": "Not a link or subscription",
+  "importUnusableWireguardConfig": "WireGuard config is missing a key, endpoint or address",
   "catalogGroupStreaming": "Streaming",
   "@catalogGroupStreaming": {
     "description": "Section header in the service catalog"

@@ -96,9 +96,9 @@ one step there.
 - Android declares `CAMERA` with `android.hardware.camera` not required, so the
   app still installs on devices without a camera. iOS carries
   `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription`.
-- WireGuard/AmneziaWG configs in QR (wg-easy) are not read: the client does not
-  import `.conf` at all. Self-hosted Amnezia QR bundles stay unsupported
-  (ADR-009).
+- WireGuard/AmneziaWG configs in QR (wg-easy) land in the link field as text
+  and are read like a pasted `.conf`. Self-hosted Amnezia QR bundles stay
+  unsupported (ADR-009).
 - Happ's encrypted `happ://crypt/…` links cannot be unwrapped and are refused.
 
 ## Where It Lives

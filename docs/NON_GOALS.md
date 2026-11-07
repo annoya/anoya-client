@@ -76,6 +76,5 @@ non-goals:
 
 - pf-based kill switch (closes the reconnect leak window — ADR-004).
 - Traffic statistics in the client (`statsStream` is currently empty).
-- Importing WireGuard/AmneziaWG `.conf` files and their QR codes (wg-easy).
 - Live Activity / Dynamic Island on iOS. It was designed and never built; the
   design was removed from the mockup rather than left as a promise.

@@ -10,6 +10,7 @@ import 'clash_config.dart';
 import 'singbox_config.dart';
 import 'xray_config.dart';
 import 'share_link.dart';
+import 'wireguard_config.dart';
 
 const _maxSubscriptionChars = 4 * 1024 * 1024;
 
@@ -23,6 +24,7 @@ class ParsedSubscription {
     this.groups = const [],
     this.plan,
     this.dns = const [],
+    this.routing,
     this.format = SubscriptionFormat.unknown,
   });
 
@@ -37,6 +39,8 @@ class ParsedSubscription {
   final ClashPlan? plan;
 
   final List<String> dns;
+
+  final Routing? routing;
 
   final SubscriptionFormat format;
 
@@ -63,6 +67,7 @@ enum SubscriptionFormat {
   clash,
   xray,
   singbox,
+  wireguard,
 
   unknown;
 
@@ -71,6 +76,7 @@ enum SubscriptionFormat {
     SubscriptionFormat.clash => L10n.current.importFormatClash,
     SubscriptionFormat.xray => L10n.current.importFormatXray,
     SubscriptionFormat.singbox => L10n.current.importFormatSingbox,
+    SubscriptionFormat.wireguard => L10n.current.importFormatWireguard,
     SubscriptionFormat.unknown => L10n.current.importFormatUnknown,
   };
 }
@@ -96,6 +102,9 @@ ParsedSubscription _parseBody(String body) {
     Log.e('subscription rejected', 'body too large (${trimmed.length} chars)');
     return const ParsedSubscription(locations: []);
   }
+
+  final wireguard = parseWireGuardConfig(trimmed);
+  if (wireguard != null) return wireguard;
 
   final clash = parseClashProxies(trimmed);
   if (clash != null) return clash;
@@ -186,6 +195,15 @@ DetectedInput? detectInput(String raw) {
             ),
           );
   }
+  if (looksLikeWireGuardConfig(t)) {
+    final loc = parseSubscription(t).firstOrNull;
+    return loc == null
+        ? null
+        : DetectedInput(
+            InputKind.link,
+            L10n.current.importDetectedServer(loc.description, loc.label),
+          );
+  }
   if (scheme == 'http' || scheme == 'https') {
     final u = Uri.tryParse(t);
     if (u == null || u.host.isEmpty) return null;
@@ -210,6 +228,9 @@ DetectedInput? detectInput(String raw) {
 String? whyUnusable(String raw) {
   final t = raw.trim();
   if (t.isEmpty) return null;
+  if (looksLikeWireGuardConfig(t)) {
+    return L10n.current.importUnusableWireguardConfig;
+  }
   final first = t.split(RegExp(r'\s+')).first;
   final scheme = first.contains('://')
       ? first.split('://').first.toLowerCase()

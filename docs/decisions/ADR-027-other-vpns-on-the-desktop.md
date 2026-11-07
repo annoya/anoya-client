@@ -37,6 +37,8 @@ Windows. With Anoya connected, corporate resources stopped opening.
   those networks (a bare address gets `/32` or `/128`; a list or a comma string
   is read; invalid entries are skipped and logged). The user sees and switches
   it like a subscription's routing. It is replaced on every issued server.
+  An imported WireGuard/AmneziaWG `.conf` reads its peer's `AllowedIPs` the
+  same way, once, at import.
 - **An Xray config's `routing` block is server routing too.** Rules with only
   `ip` or only `domain` map to routing rules in their order, the action from
   the outbound's protocol (freedom direct, blackhole block, the rest proxy). A
@@ -111,3 +113,4 @@ checked on Windows with NetBird.
 - `lib/features/advanced_connection_screen.dart`, `settings_screen.dart`.
 - `lib/core/amnezia/secondary_config.dart` — `allowedIpsRouting`, `xrayRouting`.
 - `lib/core/amnezia/amnezia_source.dart` — routing set on issue.
+- `lib/core/parsers/wireguard_config.dart` — `AllowedIPs` of a `.conf`.

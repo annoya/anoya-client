@@ -81,7 +81,7 @@ AmneziaSecondaryConfig? parseAmneziaSecondaryConfig(
   return null;
 }
 
-const _amneziaMtu = 1376;
+const kAmneziaMtu = 1376;
 
 const _privateKeyPlaceholder = r'$WIREGUARD_CLIENT_PRIVATE_KEY';
 
@@ -127,13 +127,13 @@ DateTime? _expiry(Map<String, dynamic> doc) {
     if ('${cfg['psk_key'] ?? ''}'.isNotEmpty) 'pre-shared-key': cfg['psk_key'],
     if ('${cfg['client_ip'] ?? ''}'.isNotEmpty)
       'ip': '${cfg['client_ip']}'.split('/').first,
-    'mtu': int.tryParse('${cfg['mtu'] ?? awg['mtu'] ?? ''}') ?? _amneziaMtu,
+    'mtu': int.tryParse('${cfg['mtu'] ?? awg['mtu'] ?? ''}') ?? kAmneziaMtu,
     if (int.tryParse('${cfg['persistent_keep_alive'] ?? ''}') != null)
       'persistent-keepalive': int.parse('${cfg['persistent_keep_alive']}'),
     'udp': true,
   };
 
-  final awgOpts = _amneziaOptions(cfg);
+  final awgOpts = amneziaWgOptions(cfg);
   if (awgOpts.isNotEmpty) proxy['amnezia-wg-option'] = awgOpts;
 
   return (
@@ -167,7 +167,7 @@ Routing? allowedIpsRouting(Object? allowed) {
   );
 }
 
-Map<String, dynamic> _amneziaOptions(Map<String, dynamic> cfg) {
+Map<String, dynamic> amneziaWgOptions(Map<String, dynamic> cfg) {
   final out = <String, dynamic>{};
   void number(String from, String to) {
     final v = int.tryParse('${cfg[from] ?? ''}');

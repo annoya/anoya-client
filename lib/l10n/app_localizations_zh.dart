@@ -2105,6 +2105,12 @@ class AppLocalizationsZh extends AppLocalizations {
       '订阅返回的格式本应用无法识别。支持的格式有 base64 链接列表、Clash / mihomo、Xray JSON 和 sing-box。未添加任何内容。';
 
   @override
+  String get errorUnreadableWireguardTitle => '无法读取此 WireGuard 配置';
+
+  @override
+  String get errorUnreadableWireguardDetail => '需要接口的私钥和地址，以及对端的公钥和端点。未添加任何内容。';
+
+  @override
   String get errorEmptySubscriptionTitle => '此订阅没有服务器';
 
   @override
@@ -2454,6 +2460,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importFormatSingbox => 'sing-box 订阅';
 
   @override
+  String get importFormatWireguard => 'WireGuard 配置';
+
+  @override
   String get importFormatUnknown => '无法识别的内容';
 
   @override
@@ -2507,6 +2516,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importUnusableNotALink => '不是链接或订阅';
+
+  @override
+  String get importUnusableWireguardConfig => 'WireGuard 配置缺少密钥、端点或地址';
 
   @override
   String get catalogGroupStreaming => '流媒体';
