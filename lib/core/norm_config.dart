@@ -1,5 +1,6 @@
 import '../l10n/l10n.dart';
 import 'clash_plan.dart';
+import 'corp_domains.dart';
 
 class NormConfig {
   NormConfig({
@@ -13,6 +14,7 @@ class NormConfig {
     this.dns = const [],
     this.defaultDns = '',
     this.dnsProtection = false,
+    this.corpDomains = const [],
     this.name = '',
   });
 
@@ -33,6 +35,8 @@ class NormConfig {
   final String defaultDns;
 
   final bool dnsProtection;
+
+  final List<CorpDomains> corpDomains;
 
   final String name;
 

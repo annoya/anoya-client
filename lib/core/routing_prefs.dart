@@ -1,3 +1,4 @@
+import 'corp_domains.dart';
 import 'norm_config.dart';
 import 'dns_plan.dart';
 import 'json_file_store.dart';
@@ -92,6 +93,7 @@ class RoutingPrefs {
     this.geoAutoUpdate = true,
     this.geoUpdatedAt,
     this.defaultDns = kFallbackNameserver,
+    this.corpDomains = const [],
   });
 
   static const defaultGeoipUrl =
@@ -105,6 +107,8 @@ class RoutingPrefs {
 
   final String defaultDns;
 
+  final List<CorpDomains> corpDomains;
+
   final String geoipUrl;
   final String geositeUrl;
   final bool geoAutoUpdate;
@@ -114,6 +118,7 @@ class RoutingPrefs {
     bool? lanDirect,
     bool? dnsProtection,
     String? defaultDns,
+    List<CorpDomains>? corpDomains,
     String? geoipUrl,
     String? geositeUrl,
     bool? geoAutoUpdate,
@@ -122,6 +127,7 @@ class RoutingPrefs {
     lanDirect: lanDirect ?? this.lanDirect,
     dnsProtection: dnsProtection ?? this.dnsProtection,
     defaultDns: defaultDns ?? this.defaultDns,
+    corpDomains: corpDomains ?? this.corpDomains,
     geoipUrl: geoipUrl ?? this.geoipUrl,
     geositeUrl: geositeUrl ?? this.geositeUrl,
     geoAutoUpdate: geoAutoUpdate ?? this.geoAutoUpdate,
@@ -132,6 +138,10 @@ class RoutingPrefs {
     lanDirect: j['lan_direct'] as bool? ?? true,
     dnsProtection: j['dns_protection'] as bool? ?? false,
     defaultDns: j['default_dns'] as String? ?? kFallbackNameserver,
+    corpDomains: [
+      for (final c in j['corp_domains'] as List<dynamic>? ?? const [])
+        if (c is Map) CorpDomains.fromJson(Map<String, dynamic>.from(c)),
+    ],
     geoipUrl: j['geoip_url'] as String? ?? defaultGeoipUrl,
     geositeUrl: j['geosite_url'] as String? ?? defaultGeositeUrl,
     geoAutoUpdate: j['geo_auto_update'] as bool? ?? true,
@@ -144,6 +154,8 @@ class RoutingPrefs {
     'lan_direct': lanDirect,
     'dns_protection': dnsProtection,
     'default_dns': defaultDns,
+    if (corpDomains.isNotEmpty)
+      'corp_domains': corpDomains.map((c) => c.toJson()).toList(),
     'geoip_url': geoipUrl,
     'geosite_url': geositeUrl,
     'geo_auto_update': geoAutoUpdate,

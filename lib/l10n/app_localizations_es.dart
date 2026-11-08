@@ -3259,4 +3259,35 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsCheckOff => 'comprobación desactivada';
+
+  @override
+  String get settingsCorpDomains => 'Dominios corporativos';
+
+  @override
+  String settingsCorpDomainsSubtitle(String domains) {
+    return '$domains · fuera de la VPN';
+  }
+
+  @override
+  String get corpDomainsHint =>
+      'Los nombres de estos dominios se consultan al servidor DNS de tu empresa y se abren fuera de la VPN, con sus direcciones reales. Para todas las configuraciones de este dispositivo.';
+
+  @override
+  String get corpDomainsAdd => 'Añadir dominios…';
+
+  @override
+  String get corpDomainsDomainsLabel => 'Dominios';
+
+  @override
+  String get corpDomainsServerLabel => 'Servidor DNS';
+
+  @override
+  String corpDomainsSummary(String domains, String server) {
+    return '→ Los nombres bajo $domains se consultan directamente a $server y se abren fuera de la VPN, con sus direcciones reales.';
+  }
+
+  @override
+  String corpDomainsErrorDomain(String value) {
+    return '«$value» no es un nombre de dominio.';
+  }
 }

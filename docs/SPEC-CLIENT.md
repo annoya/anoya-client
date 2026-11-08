@@ -260,6 +260,13 @@ Settings › Default DNS, pinned to the tunnel, and backed by a three-operator
 bootstrap for the one job that cannot ride it: resolving the proxy's address. Fake-ip mode
 and range are app constants across configurations.
 
+**Corporate domains** (Settings › Routing) are the one per-domain exception, and
+a device setting rather than part of a configuration: each entry names domains
+and a DNS server. Those names are asked at that server directly
+(`nameserver-policy`), answered with real addresses (`fake-ip-filter`) and
+routed direct ahead of every rule, under any routing owner. A server reachable
+only through another VPN's adapter is out of reach. Full decision: ADR-028.
+
 Each format also says whether a query is issued locally or sent out through
 the proxy — a `#pin` in Clash, a `detour` tag in sing-box, a `+local` scheme
 in Xray — and that intent is translated rather than dropped, because it is
@@ -857,7 +864,8 @@ the mockup, not with the code.
 Rule sets are global to the device and applied per configuration; routing is
 opt-in per configuration; a server-managed policy takes precedence and cannot be
 switched off locally. LAN-direct is a separate device-level switch that applies
-under any policy.
+under any policy, and so are corporate domains (§3.3), whose direct rule goes
+first.
 
 Whose rules apply is decided by one of three policy classes, not by branching:
 a self-hosted server's (unswitchable), a subscription panel's (switchable), or

@@ -812,5 +812,13 @@
   "settingsDnsProtectionOn": "DNS 防护 开",
   "settingsDnsProtectionOff": "DNS 防护 关",
   "settingsCheckOn": "检测 开",
-  "settingsCheckOff": "检测 关"
+  "settingsCheckOff": "检测 关",
+  "settingsCorpDomains": "企业域名",
+  "settingsCorpDomainsSubtitle": "{domains} · 不经过 VPN",
+  "corpDomainsHint": "这些域名下的名称会向贵公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。适用于此设备上的所有配置。",
+  "corpDomainsAdd": "添加域名…",
+  "corpDomainsDomainsLabel": "域名",
+  "corpDomainsServerLabel": "DNS 服务器",
+  "corpDomainsSummary": "→ {domains} 下的名称会直接向 {server} 查询，并以真实地址在 VPN 之外访问。",
+  "corpDomainsErrorDomain": "“{value}”不是域名。"
 }

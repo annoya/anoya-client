@@ -3069,4 +3069,35 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsCheckOff => '检测 关';
+
+  @override
+  String get settingsCorpDomains => '企业域名';
+
+  @override
+  String settingsCorpDomainsSubtitle(String domains) {
+    return '$domains · 不经过 VPN';
+  }
+
+  @override
+  String get corpDomainsHint =>
+      '这些域名下的名称会向贵公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。适用于此设备上的所有配置。';
+
+  @override
+  String get corpDomainsAdd => '添加域名…';
+
+  @override
+  String get corpDomainsDomainsLabel => '域名';
+
+  @override
+  String get corpDomainsServerLabel => 'DNS 服务器';
+
+  @override
+  String corpDomainsSummary(String domains, String server) {
+    return '→ $domains 下的名称会直接向 $server 查询，并以真实地址在 VPN 之外访问。';
+  }
+
+  @override
+  String corpDomainsErrorDomain(String value) {
+    return '“$value”不是域名。';
+  }
 }

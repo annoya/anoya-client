@@ -2137,5 +2137,16 @@
   "settingsDnsProtectionOn": "DNS protection on",
   "settingsDnsProtectionOff": "DNS protection off",
   "settingsCheckOn": "check on",
-  "settingsCheckOff": "check off"
+  "settingsCheckOff": "check off",
+  "settingsCorpDomains": "Corporate domains",
+  "settingsCorpDomainsSubtitle": "{domains} · outside the VPN",
+  "@settingsCorpDomainsSubtitle": {"placeholders": {"domains": {"type": "String"}}},
+  "corpDomainsHint": "Names in these domains are asked at your company’s DNS server and reached outside the VPN, with their real addresses. For every configuration on this device.",
+  "corpDomainsAdd": "Add domains…",
+  "corpDomainsDomainsLabel": "Domains",
+  "corpDomainsServerLabel": "DNS server",
+  "corpDomainsSummary": "→ Names under {domains} are asked at {server} directly and reached outside the VPN, with their real addresses.",
+  "@corpDomainsSummary": {"placeholders": {"domains": {"type": "String"}, "server": {"type": "String"}}},
+  "corpDomainsErrorDomain": "“{value}” is not a domain name.",
+  "@corpDomainsErrorDomain": {"placeholders": {"value": {"type": "String"}}}
 }

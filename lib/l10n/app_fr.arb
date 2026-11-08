@@ -812,5 +812,13 @@
   "settingsDnsProtectionOn": "Protection DNS activée",
   "settingsDnsProtectionOff": "Protection DNS désactivée",
   "settingsCheckOn": "vérification activée",
-  "settingsCheckOff": "vérification désactivée"
+  "settingsCheckOff": "vérification désactivée",
+  "settingsCorpDomains": "Domaines d’entreprise",
+  "settingsCorpDomainsSubtitle": "{domains} · hors du VPN",
+  "corpDomainsHint": "Les noms de ces domaines sont demandés au serveur DNS de votre entreprise et joints hors du VPN, à leurs vraies adresses. Pour toutes les configurations de cet appareil.",
+  "corpDomainsAdd": "Ajouter des domaines…",
+  "corpDomainsDomainsLabel": "Domaines",
+  "corpDomainsServerLabel": "Serveur DNS",
+  "corpDomainsSummary": "→ Les noms sous {domains} sont demandés directement à {server} et joints hors du VPN, à leurs vraies adresses.",
+  "corpDomainsErrorDomain": "« {value} » n’est pas un nom de domaine."
 }

@@ -812,5 +812,13 @@
   "settingsDnsProtectionOn": "Protección DNS activada",
   "settingsDnsProtectionOff": "Protección DNS desactivada",
   "settingsCheckOn": "comprobación activada",
-  "settingsCheckOff": "comprobación desactivada"
+  "settingsCheckOff": "comprobación desactivada",
+  "settingsCorpDomains": "Dominios corporativos",
+  "settingsCorpDomainsSubtitle": "{domains} · fuera de la VPN",
+  "corpDomainsHint": "Los nombres de estos dominios se consultan al servidor DNS de tu empresa y se abren fuera de la VPN, con sus direcciones reales. Para todas las configuraciones de este dispositivo.",
+  "corpDomainsAdd": "Añadir dominios…",
+  "corpDomainsDomainsLabel": "Dominios",
+  "corpDomainsServerLabel": "Servidor DNS",
+  "corpDomainsSummary": "→ Los nombres bajo {domains} se consultan directamente a {server} y se abren fuera de la VPN, con sus direcciones reales.",
+  "corpDomainsErrorDomain": "«{value}» no es un nombre de dominio."
 }

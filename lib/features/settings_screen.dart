@@ -23,6 +23,7 @@ import 'about_screen.dart';
 import 'advanced_connection_screen.dart';
 import 'always_on_screen.dart';
 import 'config/config_screen.dart';
+import 'corp_domains_screen.dart';
 import 'excluded_apps_screen.dart';
 import 'geo_screen.dart';
 import 'logs_screen.dart';
@@ -368,6 +369,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               trailing: [
                 DsToggle(value: prefs.lanDirect, onChanged: _setLanDirect),
               ],
+            ),
+            DsRow(
+              glyph: Glyph.building2,
+              title: l10n.settingsCorpDomains,
+              subtitle: prefs.corpDomains.isEmpty
+                  ? l10n.commonOff
+                  : l10n.settingsCorpDomainsSubtitle(
+                      prefs.corpDomains.expand((c) => c.domains).join(', '),
+                    ),
+              subtitleMaxLines: 1,
+              trailing: const [DsChevron()],
+              onTap: () => _push(const CorpDomainsScreen()),
             ),
             if (supportsExcludedApps)
               DsRow(

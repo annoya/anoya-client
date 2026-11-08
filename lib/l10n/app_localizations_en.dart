@@ -3227,4 +3227,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsCheckOff => 'check off';
+
+  @override
+  String get settingsCorpDomains => 'Corporate domains';
+
+  @override
+  String settingsCorpDomainsSubtitle(String domains) {
+    return '$domains · outside the VPN';
+  }
+
+  @override
+  String get corpDomainsHint =>
+      'Names in these domains are asked at your company’s DNS server and reached outside the VPN, with their real addresses. For every configuration on this device.';
+
+  @override
+  String get corpDomainsAdd => 'Add domains…';
+
+  @override
+  String get corpDomainsDomainsLabel => 'Domains';
+
+  @override
+  String get corpDomainsServerLabel => 'DNS server';
+
+  @override
+  String corpDomainsSummary(String domains, String server) {
+    return '→ Names under $domains are asked at $server directly and reached outside the VPN, with their real addresses.';
+  }
+
+  @override
+  String corpDomainsErrorDomain(String value) {
+    return '“$value” is not a domain name.';
+  }
 }

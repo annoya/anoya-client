@@ -4981,6 +4981,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'check off'**
   String get settingsCheckOff;
+
+  /// No description provided for @settingsCorpDomains.
+  ///
+  /// In en, this message translates to:
+  /// **'Corporate domains'**
+  String get settingsCorpDomains;
+
+  /// No description provided for @settingsCorpDomainsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{domains} · outside the VPN'**
+  String settingsCorpDomainsSubtitle(String domains);
+
+  /// No description provided for @corpDomainsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Names in these domains are asked at your company’s DNS server and reached outside the VPN, with their real addresses. For every configuration on this device.'**
+  String get corpDomainsHint;
+
+  /// No description provided for @corpDomainsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add domains…'**
+  String get corpDomainsAdd;
+
+  /// No description provided for @corpDomainsDomainsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Domains'**
+  String get corpDomainsDomainsLabel;
+
+  /// No description provided for @corpDomainsServerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS server'**
+  String get corpDomainsServerLabel;
+
+  /// No description provided for @corpDomainsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'→ Names under {domains} are asked at {server} directly and reached outside the VPN, with their real addresses.'**
+  String corpDomainsSummary(String domains, String server);
+
+  /// No description provided for @corpDomainsErrorDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'“{value}” is not a domain name.'**
+  String corpDomainsErrorDomain(String value);
 }
 
 class _AppLocalizationsDelegate

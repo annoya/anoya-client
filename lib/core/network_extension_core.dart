@@ -197,6 +197,7 @@ class NetworkExtensionCore implements VpnCore {
           defaultDns: config.defaultDns.isEmpty
               ? kFallbackNameserver
               : config.defaultDns,
+          corpDomains: config.corpDomains,
           listPaths: listPaths,
           collectLogs: Log.enabled,
           autoDetectInterface: Platform.isWindows || Platform.isLinux,

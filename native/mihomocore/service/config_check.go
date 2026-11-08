@@ -23,6 +23,8 @@ var acceptedKeys = map[string]map[string]bool{
 		"default-nameserver":      true,
 		"proxy-server-nameserver": true,
 		"nameserver":              true,
+		"nameserver-policy":       true,
+		"fake-ip-filter":          true,
 	},
 	"sniffer": {
 		"enable":               true,

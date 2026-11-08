@@ -1,4 +1,5 @@
 import 'clash_plan.dart';
+import 'corp_domains.dart';
 import 'dns_plan.dart';
 import 'engine_config_text.dart';
 import 'log.dart';
@@ -14,6 +15,7 @@ String mihomoTunConfigYaml(
   Routing? routing,
   List<String> dns = const [],
   String defaultDns = kFallbackNameserver,
+  List<CorpDomains> corpDomains = const [],
   Map<String, String> listPaths = const {},
   bool collectLogs = true,
   bool autoDetectInterface = true,
@@ -61,6 +63,10 @@ String mihomoTunConfigYaml(
     carriesUdp: shape.carriesUdp,
     fallback: defaultDns,
   );
+  final corpServers = {
+    for (final c in corpDomains)
+      for (final d in c.domains) '+.$d': c.server,
+  };
   final ruleLines = _routingRuleLines(routing, listPaths, processNamesNeedExe);
   final listLines = [
     ..._ruleProviderLines(routing, listPaths),
@@ -103,6 +109,13 @@ String mihomoTunConfigYaml(
     for (final ns in plan.bootstrap) '    - ${yamlScalar(ns)}',
     '  nameserver:',
     for (final r in plan.resolvers) '    - ${yamlScalar(r.wire)}',
+    if (corpServers.isNotEmpty) ...[
+      '  nameserver-policy:',
+      for (final e in corpServers.entries)
+        '    ${yamlScalar(e.key)}: ${yamlScalar(e.value)}',
+      '  fake-ip-filter:',
+      for (final d in corpServers.keys) '    - ${yamlScalar(d)}',
+    ],
     'sniffer:',
     '  enable: true',
     '  force-dns-mapping: true',

@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
+	"github.com/metacubex/mihomo/component/trie"
 	"github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
@@ -243,5 +245,68 @@ func TestInlineRuleListsParseAndMatchWithoutFetching(t *testing.T) {
 	ip := &constant.Metadata{DstIP: netip.MustParseAddr("142.251.1.1")}
 	if !cidrs.Match(ip, constant.RuleMatchHelper{}) {
 		t.Error("an address inside the subnet should match")
+	}
+}
+
+func TestCorporateDomainsAskTheirServerAndGetRealAddresses(t *testing.T) {
+	constant.SetHomeDir(t.TempDir())
+
+	const cfg = "log-level: silent\n" +
+		"dns:\n" +
+		"  enable: true\n" +
+		"  enhanced-mode: fake-ip\n" +
+		"  fake-ip-range: 198.18.0.1/16\n" +
+		"  nameserver:\n" +
+		"    - \"https://1.1.1.1/dns-query#DIRECT\"\n" +
+		"  nameserver-policy:\n" +
+		"    \"+.corp.local\": \"10.0.0.53\"\n" +
+		"    \"+.intra.example.com\": \"tls://10.0.0.54\"\n" +
+		"  fake-ip-filter:\n" +
+		"    - \"+.corp.local\"\n" +
+		"    - \"+.intra.example.com\"\n" +
+		"rules:\n" +
+		"  - DOMAIN-SUFFIX,corp.local,DIRECT\n" +
+		"  - MATCH,DIRECT\n"
+
+	parsed, err := executor.ParseWithBytes([]byte(cfg))
+	if err != nil {
+		t.Fatalf("corporate domains must parse: %v", err)
+	}
+	tree := trie.New[dns.NameServer]()
+	for _, p := range parsed.DNS.NameServerPolicy {
+		if err := tree.Insert(p.Domain, p.NameServers[0]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	server := func(host string) string {
+		node := tree.Search(host)
+		if node == nil {
+			return ""
+		}
+		ns := node.Data()
+		if ns.ProxyName != "" {
+			t.Errorf("%s: corporate resolver pinned to %q", host, ns.ProxyName)
+		}
+		return ns.Net + "://" + ns.Addr
+	}
+	for host, want := range map[string]string{
+		"corp.local":             "://10.0.0.53:53",
+		"dc1.ad.corp.local":      "://10.0.0.53:53",
+		"wiki.intra.example.com": "tls://10.0.0.54:853",
+		"example.com":            "",
+		"notcorp.local":          "",
+	} {
+		if got := server(host); got != want {
+			t.Errorf("%s asked at %q, want %q", host, got, want)
+		}
+	}
+	skip := parsed.DNS.FakeIPSkipper
+	for _, h := range []string{"corp.local", "dc1.ad.corp.local", "wiki.intra.example.com"} {
+		if !skip.ShouldSkipped(h) {
+			t.Errorf("%s would get a fake address", h)
+		}
+	}
+	if skip.ShouldSkipped("example.com") {
+		t.Error("public names must keep fake addresses")
 	}
 }

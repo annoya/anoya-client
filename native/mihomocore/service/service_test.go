@@ -219,13 +219,14 @@ func TestOnlyTheRenderedShapeReachesTheEngine(t *testing.T) {
 		}
 	}
 
-	rendered := "rule-providers:\n" +
+	rendered := "dns:\n  nameserver-policy:\n    \"+.corp.local\": \"10.0.0.53\"\n  fake-ip-filter:\n    - \"+.corp.local\"\n" +
+		"rule-providers:\n" +
 		"  l0: {type: file, path: ./l0.yaml, behavior: domain, format: yaml}\n" +
 		"  _inline_0:\n    type: inline\n    behavior: ipcidr\n    payload:\n      - 10.0.0.0/8\n      - 172.16.0.0/12\n" +
 		"rules:\n  - RULE-SET,_inline_0,PROXY,no-resolve\n  - RULE-SET,l0,DIRECT"
 	accepting, _, _ := harness(t)
 	if _, err := accepting.Handle("start", map[string]any{"config": rendered}); err != nil {
-		t.Fatalf("refused the rule providers the app renders: %v", err)
+		t.Fatalf("refused the dns and rule providers the app renders: %v", err)
 	}
 
 	s, eng, files := harness(t)

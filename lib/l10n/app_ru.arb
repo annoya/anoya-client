@@ -812,5 +812,13 @@
   "settingsDnsProtectionOn": "Защита DNS вкл.",
   "settingsDnsProtectionOff": "Защита DNS выкл.",
   "settingsCheckOn": "проверка вкл.",
-  "settingsCheckOff": "проверка выкл."
+  "settingsCheckOff": "проверка выкл.",
+  "settingsCorpDomains": "Корпоративные домены",
+  "settingsCorpDomainsSubtitle": "{domains} · мимо VPN",
+  "corpDomainsHint": "Имена в этих доменах спрашиваются у DNS-сервера вашей компании и открываются мимо VPN, по своим настоящим адресам. Для всех конфигураций на этом устройстве.",
+  "corpDomainsAdd": "Добавить домены…",
+  "corpDomainsDomainsLabel": "Домены",
+  "corpDomainsServerLabel": "DNS-сервер",
+  "corpDomainsSummary": "→ Имена в {domains} спрашиваются у {server} напрямую и открываются мимо VPN, по своим настоящим адресам.",
+  "corpDomainsErrorDomain": "«{value}» — не доменное имя."
 }

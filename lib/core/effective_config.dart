@@ -1,4 +1,5 @@
 import 'clash_plan.dart';
+import 'corp_domains.dart';
 import 'geo_store.dart';
 import 'log.dart';
 import 'norm_config.dart';
@@ -40,6 +41,7 @@ Future<NormConfig> buildNormConfig(Profile p) async {
 
   final prefs = await RoutingPrefsStore.load();
   if (prefs.lanDirect) routing = withLanDirect(routing);
+  routing = withCorpDomains(routing, prefs.corpDomains);
 
   return NormConfig(
     version: 1,
@@ -50,6 +52,7 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     dns: p.dns,
     defaultDns: prefs.defaultDns,
     dnsProtection: prefs.dnsProtection,
+    corpDomains: prefs.corpDomains,
     name: p.name,
   );
 }
@@ -88,13 +91,17 @@ Future<NormConfig> _subscriptionRulesConfig(Profile p) async {
       skipped: plan.skipped,
     ),
     planChoices: p.groupChoices,
-    routing: Routing(
-      mode: 'full',
-      rules: prefs.lanDirect ? kLanDirectRules : const [],
+    routing: withCorpDomains(
+      Routing(
+        mode: 'full',
+        rules: prefs.lanDirect ? kLanDirectRules : const [],
+      ),
+      prefs.corpDomains,
     ),
     dns: p.dns,
     defaultDns: prefs.defaultDns,
     dnsProtection: prefs.dnsProtection,
+    corpDomains: prefs.corpDomains,
     name: p.name,
   );
 }

@@ -3311,4 +3311,35 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsCheckOff => 'проверка выкл.';
+
+  @override
+  String get settingsCorpDomains => 'Корпоративные домены';
+
+  @override
+  String settingsCorpDomainsSubtitle(String domains) {
+    return '$domains · мимо VPN';
+  }
+
+  @override
+  String get corpDomainsHint =>
+      'Имена в этих доменах спрашиваются у DNS-сервера вашей компании и открываются мимо VPN, по своим настоящим адресам. Для всех конфигураций на этом устройстве.';
+
+  @override
+  String get corpDomainsAdd => 'Добавить домены…';
+
+  @override
+  String get corpDomainsDomainsLabel => 'Домены';
+
+  @override
+  String get corpDomainsServerLabel => 'DNS-сервер';
+
+  @override
+  String corpDomainsSummary(String domains, String server) {
+    return '→ Имена в $domains спрашиваются у $server напрямую и открываются мимо VPN, по своим настоящим адресам.';
+  }
+
+  @override
+  String corpDomainsErrorDomain(String value) {
+    return '«$value» — не доменное имя.';
+  }
 }
