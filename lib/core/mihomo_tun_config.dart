@@ -70,10 +70,7 @@ String mihomoTunConfigYaml(
   };
   final direct = localDns.isEmpty
       ? const <String>[]
-      : {
-          ..._directNames(routing, listPaths),
-          ...?parts?.directNames,
-        }.toList();
+      : {..._directNames(routing, listPaths), ...?parts?.directNames}.toList();
   final dnsPolicy = {
     ...corpServers,
     for (final d in direct)
@@ -346,10 +343,8 @@ _PlanParts _planParts(
     rules.add('  - ${yamlScalar(line)}');
     if (nameOf(resolvePlanRef(r.target, plan, choices)) == 'DIRECT') {
       directNames.addAll(switch (r.type) {
-        'DOMAIN-SUFFIX' when RoutingRule.isValidValue(
-          'domain-suffix',
-          r.payload,
-        ) =>
+        'DOMAIN-SUFFIX'
+            when RoutingRule.isValidValue('domain-suffix', r.payload) =>
           ['+.${r.payload}'],
         'DOMAIN' when RoutingRule.isValidValue('domain-exact', r.payload) => [
           r.payload,
