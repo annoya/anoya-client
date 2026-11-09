@@ -23,7 +23,7 @@ import 'about_screen.dart';
 import 'advanced_connection_screen.dart';
 import 'always_on_screen.dart';
 import 'config/config_screen.dart';
-import 'corp_domains_screen.dart';
+import 'dns_settings_screen.dart';
 import 'excluded_apps_screen.dart';
 import 'geo_screen.dart';
 import 'logs_screen.dart';
@@ -66,58 +66,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) {
       await ref.read(profilesControllerProvider.notifier).syncTunnelConfig();
     }
-  }
-
-  Future<void> _pickDefaultDns() async {
-    const custom = '__custom__';
-    final l10n = context.l10n;
-    final current = ref.read(routingPrefsProvider).defaultDns;
-    final picked = await pickOption<String>(
-      context,
-      title: l10n.settingsDefaultDns,
-      radio: true,
-      selected: kDnsPresets.any((p) => p.address == current) ? current : custom,
-      options: [
-        for (final p in kDnsPresets)
-          Option(
-            p.address,
-            p.name,
-            subtitle: p.note.isEmpty ? p.address : '${p.address} · ${p.note}',
-          ),
-        Option(
-          custom,
-          l10n.settingsDnsCustom,
-          subtitle: l10n.settingsDnsCustomSubtitle,
-        ),
-      ],
-    );
-    if (picked == null || !mounted) return;
-
-    var value = picked;
-    if (picked == custom) {
-      final typed = await promptText(
-        context,
-        title: l10n.settingsDefaultDns,
-        label: l10n.settingsDnsResolverLabel,
-        confirmLabel: l10n.commonSave,
-        initial: current,
-        hint: 'https://1.1.1.1/dns-query',
-        autocorrect: false,
-        resetLabel: l10n.settingsDnsUseCloudflare,
-        resetValue: kFallbackNameserver,
-      );
-      if (typed == null || !mounted) return;
-      final error = dnsDefaultError(typed.trim());
-      if (error != null) {
-        showToast(context, error);
-        return;
-      }
-      value = typed.trim();
-    }
-
-    await ref
-        .read(routingPrefsProvider.notifier)
-        .update((p) => p.copyWith(defaultDns: value));
   }
 
   Future<void> _pickTheme() async {
@@ -370,18 +318,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 DsToggle(value: prefs.lanDirect, onChanged: _setLanDirect),
               ],
             ),
-            DsRow(
-              glyph: Glyph.building2,
-              title: l10n.settingsCorpDomains,
-              subtitle: prefs.corpDomains.isEmpty
-                  ? l10n.commonOff
-                  : l10n.settingsCorpDomainsSubtitle(
-                      prefs.corpDomains.expand((c) => c.domains).join(', '),
-                    ),
-              subtitleMaxLines: 1,
-              trailing: const [DsChevron()],
-              onTap: () => _push(const CorpDomainsScreen()),
-            ),
             if (supportsExcludedApps)
               DsRow(
                 glyph: Glyph.smartphone,
@@ -401,12 +337,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             DsRow(
               glyph: Glyph.globe,
-              title: l10n.settingsDefaultDns,
-              subtitle: l10n.settingsDefaultDnsSubtitle(
-                dnsPresetName(prefs.defaultDns),
-              ),
-              trailing: const [DsChevron(down: true)],
-              onTap: _pickDefaultDns,
+              title: l10n.settingsDns,
+              subtitle: prefs.localDns.isEmpty
+                  ? l10n.settingsDnsSummaryLocalOff(
+                      dnsPresetName(prefs.defaultDns),
+                    )
+                  : l10n.settingsDnsSummaryLocal(
+                      dnsPresetName(prefs.defaultDns),
+                      dnsPresetName(prefs.localDns),
+                    ),
+              subtitleMaxLines: 1,
+              trailing: const [DsChevron()],
+              onTap: () => _push(const DnsSettingsScreen()),
             ),
             DsRow(
               glyph: Glyph.globe,

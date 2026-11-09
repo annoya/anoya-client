@@ -16,6 +16,7 @@ String mihomoTunConfigYaml(
   List<String> dns = const [],
   String defaultDns = kFallbackNameserver,
   List<CorpDomains> corpDomains = const [],
+  String localDns = '',
   Map<String, String> listPaths = const {},
   bool collectLogs = true,
   bool autoDetectInterface = true,
@@ -67,6 +68,17 @@ String mihomoTunConfigYaml(
     for (final c in corpDomains)
       for (final d in c.domains) '+.$d': c.server,
   };
+  final direct = localDns.isEmpty
+      ? const <String>[]
+      : {
+          ..._directNames(routing, listPaths),
+          ...?parts?.directNames,
+        }.toList();
+  final dnsPolicy = {
+    ...corpServers,
+    for (final d in direct)
+      if (!corpServers.containsKey(d)) d: localDns,
+  };
   final ruleLines = _routingRuleLines(routing, listPaths, processNamesNeedExe);
   final listLines = [
     ..._ruleProviderLines(routing, listPaths),
@@ -109,12 +121,17 @@ String mihomoTunConfigYaml(
     for (final ns in plan.bootstrap) '    - ${yamlScalar(ns)}',
     '  nameserver:',
     for (final r in plan.resolvers) '    - ${yamlScalar(r.wire)}',
-    if (corpServers.isNotEmpty) ...[
+    if (localDns.isNotEmpty) ...[
+      '  direct-nameserver:',
+      '    - ${yamlScalar(localDns)}',
+      '  direct-nameserver-follow-policy: true',
+    ],
+    if (dnsPolicy.isNotEmpty) ...[
       '  nameserver-policy:',
-      for (final e in corpServers.entries)
+      for (final e in dnsPolicy.entries)
         '    ${yamlScalar(e.key)}: ${yamlScalar(e.value)}',
       '  fake-ip-filter:',
-      for (final d in corpServers.keys) '    - ${yamlScalar(d)}',
+      for (final d in dnsPolicy.keys) '    - ${yamlScalar(d)}',
     ],
     'sniffer:',
     '  enable: true',
@@ -206,6 +223,7 @@ typedef _PlanParts = ({
   List<String> groups,
   List<String> providers,
   List<String> rules,
+  List<String> directNames,
   String entry,
   Set<String> outbounds,
   bool carriesUdp,
@@ -306,7 +324,12 @@ _PlanParts _planParts(
     ]);
   }
 
+  final behaviors = {
+    for (final l in plan.lists) l.name: l.behavior,
+    for (final l in plan.inline) l.name: l.behavior,
+  };
   final rules = <String>[];
+  final directNames = <String>[];
   var catchAll = false;
   for (final r in plan.rules) {
     final target = nameOf(r.target);
@@ -321,6 +344,25 @@ _PlanParts _planParts(
         ? 'MATCH,$target'
         : [r.type, payload, target, ...r.options].join(',');
     rules.add('  - ${yamlScalar(line)}');
+    if (nameOf(resolvePlanRef(r.target, plan, choices)) == 'DIRECT') {
+      directNames.addAll(switch (r.type) {
+        'DOMAIN-SUFFIX' when RoutingRule.isValidValue(
+          'domain-suffix',
+          r.payload,
+        ) =>
+          ['+.${r.payload}'],
+        'DOMAIN' when RoutingRule.isValidValue('domain-exact', r.payload) => [
+          r.payload,
+        ],
+        'GEOSITE' when RoutingRule.isValidValue('geosite', r.payload) => [
+          'geosite:${r.payload}',
+        ],
+        'RULE-SET' when behaviors[r.payload] != 'ipcidr' => [
+          'rule-set:${listNames[r.payload]}',
+        ],
+        _ => const <String>[],
+      });
+    }
     if (r.isCatchAll) {
       catchAll = true;
       break;
@@ -341,6 +383,7 @@ _PlanParts _planParts(
     groups: groups,
     providers: providers,
     rules: rules,
+    directNames: directNames,
     entry: entry,
     outbounds: {
       kTunnelOutbound,
@@ -522,6 +565,29 @@ List<String> _ruleProviderLines(Routing? routing, Map<String, String> paths) {
   }
   return out.length == 1 ? const [] : out;
 }
+
+List<String> _directNames(Routing? routing, Map<String, String> paths) => [
+  if (routing != null)
+    for (final (i, r) in routing.rules.indexed)
+      if (r.action == 'direct' && r.isValid)
+        ...switch (r.type) {
+          _ when _inlined(r) =>
+            _inlineBehavior[r.type] == 'domain'
+                ? ['rule-set:${_inlineName(i)}']
+                : const <String>[],
+          'domain-suffix' => [for (final v in r.values) '+.$v'],
+          'domain-exact' => r.values,
+          'geosite' => [for (final v in r.values) 'geosite:$v'],
+          'rule-list' => [
+            for (final v in r.values)
+              if (paths.containsKey(v) &&
+                  (routing.listNamed(v)?.isValid ?? false) &&
+                  routing.listNamed(v)!.behavior != 'ipcidr')
+                'rule-set:$v',
+          ],
+          _ => const <String>[],
+        },
+];
 
 List<String> _routingRuleLines(
   Routing? routing, [

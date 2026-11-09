@@ -224,11 +224,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsDefaultDns => 'DNS predeterminado';
 
   @override
-  String settingsDefaultDnsSubtitle(String name) {
-    return '$name · se usa cuando la configuración no trae ninguno';
-  }
-
-  @override
   String get settingsDnsCustom => 'Personalizado…';
 
   @override
@@ -3264,11 +3259,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsCorpDomains => 'Dominios corporativos';
 
   @override
-  String settingsCorpDomainsSubtitle(String domains) {
-    return '$domains · fuera de la VPN';
-  }
-
-  @override
   String get corpDomainsHint =>
       'Los nombres de estos dominios se consultan al servidor DNS de tu empresa y se abren fuera de la VPN, con sus direcciones reales. Para todas las configuraciones de este dispositivo.';
 
@@ -3290,4 +3280,48 @@ class AppLocalizationsEs extends AppLocalizations {
   String corpDomainsErrorDomain(String value) {
     return '«$value» no es un nombre de dominio.';
   }
+
+  @override
+  String get settingsDns => 'DNS';
+
+  @override
+  String settingsDnsSummaryLocalOff(String name) {
+    return '$name · local desactivado';
+  }
+
+  @override
+  String settingsDnsSummaryLocal(String name, String local) {
+    return '$name · local $local';
+  }
+
+  @override
+  String get dnsSettingsThroughVpn => 'A través de la VPN';
+
+  @override
+  String get dnsSettingsOutsideVpn => 'Fuera de la VPN';
+
+  @override
+  String get dnsSettingsCompany => 'Red de la empresa';
+
+  @override
+  String get dnsSettingsDefaultNote =>
+      'Busca las direcciones de los sitios que van por la VPN cuando la configuración no trae su propio DNS. Se consulta a través del túnel: tu red no ve estas consultas.';
+
+  @override
+  String get dnsSettingsLocal => 'DNS local';
+
+  @override
+  String get dnsSettingsLocalNote =>
+      'Busca las direcciones de los sitios que tus reglas envían fuera de la VPN, consultando directamente desde esta red, para que elijan un servidor cercano a ti y no al servidor VPN. Tu red ve estos nombres; ya ve adónde va ese tráfico. Desactivado: usan el mismo DNS que todo lo demás.';
+
+  @override
+  String get dnsSettingsLocalOffSubtitle =>
+      'los sitios fuera de la VPN usan el DNS de la configuración';
+
+  @override
+  String get dnsSettingsLocalCustomSubtitle => 'el de tu proveedor o uno local';
+
+  @override
+  String get dnsSettingsCorpNote =>
+      'Los nombres internos se consultan al servidor DNS de la empresa y se abren fuera de la VPN con sus direcciones reales. Tienen prioridad sobre los dos ajustes anteriores.';
 }

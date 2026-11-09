@@ -227,11 +227,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsDefaultDns => 'DNS по умолчанию';
 
   @override
-  String settingsDefaultDnsSubtitle(String name) {
-    return '$name · используется, если конфигурация не задаёт свой';
-  }
-
-  @override
   String get settingsDnsCustom => 'Свой…';
 
   @override
@@ -3316,11 +3311,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsCorpDomains => 'Корпоративные домены';
 
   @override
-  String settingsCorpDomainsSubtitle(String domains) {
-    return '$domains · мимо VPN';
-  }
-
-  @override
   String get corpDomainsHint =>
       'Имена в этих доменах спрашиваются у DNS-сервера вашей компании и открываются мимо VPN, по своим настоящим адресам. Для всех конфигураций на этом устройстве.';
 
@@ -3342,4 +3332,49 @@ class AppLocalizationsRu extends AppLocalizations {
   String corpDomainsErrorDomain(String value) {
     return '«$value» — не доменное имя.';
   }
+
+  @override
+  String get settingsDns => 'DNS';
+
+  @override
+  String settingsDnsSummaryLocalOff(String name) {
+    return '$name · локальный выкл.';
+  }
+
+  @override
+  String settingsDnsSummaryLocal(String name, String local) {
+    return '$name · локальный $local';
+  }
+
+  @override
+  String get dnsSettingsThroughVpn => 'Через VPN';
+
+  @override
+  String get dnsSettingsOutsideVpn => 'Мимо VPN';
+
+  @override
+  String get dnsSettingsCompany => 'Сеть компании';
+
+  @override
+  String get dnsSettingsDefaultNote =>
+      'Находит адреса сайтов, которые идут через VPN, если конфигурация не задаёт свой DNS. Запросы идут через туннель — ваша сеть их не видит.';
+
+  @override
+  String get dnsSettingsLocal => 'Локальный DNS';
+
+  @override
+  String get dnsSettingsLocalNote =>
+      'Находит адреса сайтов, которые правила отправляют мимо VPN: спрашивает напрямую из этой сети, поэтому сайты выбирают сервер рядом с вами, а не рядом с VPN-сервером. Ваша сеть видит эти имена — она и так видит, куда идёт этот трафик. Выключен — для них используется тот же DNS, что и для остального.';
+
+  @override
+  String get dnsSettingsLocalOffSubtitle =>
+      'сайты мимо VPN используют DNS конфигурации';
+
+  @override
+  String get dnsSettingsLocalCustomSubtitle =>
+      'DNS вашего провайдера или локальный';
+
+  @override
+  String get dnsSettingsCorpNote =>
+      'Внутренние имена спрашиваются у DNS-сервера компании и открываются мимо VPN по настоящим адресам. Эта настройка сильнее двух других.';
 }

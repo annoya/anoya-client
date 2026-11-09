@@ -30,7 +30,7 @@ corporate resources by subnet alone does not help: the name never resolves.
 
 ## Decision
 
-- **Settings → Routing → Corporate domains**, next to Local network direct: a
+- **Settings → Routing → Corporate domains** (now Settings → DNS, ADR-029): a
   list of entries, each a set of domains and one DNS server. It applies to every
   configuration, under any routing owner, like Local network direct.
 - **One entry renders three things.** Each domain becomes `+.<domain>` (itself

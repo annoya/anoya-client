@@ -53,6 +53,7 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     defaultDns: prefs.defaultDns,
     dnsProtection: prefs.dnsProtection,
     corpDomains: prefs.corpDomains,
+    localDns: prefs.localDns,
     name: p.name,
   );
 }
@@ -102,6 +103,7 @@ Future<NormConfig> _subscriptionRulesConfig(Profile p) async {
     defaultDns: prefs.defaultDns,
     dnsProtection: prefs.dnsProtection,
     corpDomains: prefs.corpDomains,
+    localDns: prefs.localDns,
     name: p.name,
   );
 }

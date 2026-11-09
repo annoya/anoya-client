@@ -47,6 +47,7 @@ test.
 | [026](ADR-026-subscription-rules.md) | client | A Clash subscription with rules runs by its own rules or as a server list | two modes, config passed through filtered, proxy groups on Home, choices only within a select, lists after consent and after connect, rendering before the plain address, why not translation or services with a main server |
 | [027](ADR-027-other-vpns-on-the-desktop.md) | client | On the desktop, DNS protection is the user's choice and off by default; an Amnezia config's routing is server routing | `strict-route` switch in Advanced, why ADR-008's leak argument was not enough, `allowed_ips` and Xray `routing` as provider routing, private-subnet rules before LAN direct, why not corporate exceptions or `route-address` first |
 | [028](ADR-028-corporate-domains.md) | both | Corporate domains are a device setting resolved at the company's DNS, with real addresses, outside the VPN | `nameserver-policy` + `fake-ip-filter` + a direct rule per entry, why not a rule set, `direct-nameserver`, `system` or route exclusion, what another VPN's adapter still blocks |
+| [029](ADR-029-local-dns.md) | both | A local DNS answers the names direct rules send past the VPN, with real addresses | Settings › DNS screen, `nameserver-policy` + `fake-ip-filter` from direct domain rules + `direct-nameserver`, why not `direct-nameserver` alone, fake-ip off or per-configuration |
 
 ## Open Questions
 

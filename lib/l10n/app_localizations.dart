@@ -482,12 +482,6 @@ abstract class AppLocalizations {
   /// **'Default DNS'**
   String get settingsDefaultDns;
 
-  /// No description provided for @settingsDefaultDnsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} · used when a configuration brings none'**
-  String settingsDefaultDnsSubtitle(String name);
-
   /// No description provided for @settingsDnsCustom.
   ///
   /// In en, this message translates to:
@@ -4988,12 +4982,6 @@ abstract class AppLocalizations {
   /// **'Corporate domains'**
   String get settingsCorpDomains;
 
-  /// No description provided for @settingsCorpDomainsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'{domains} · outside the VPN'**
-  String settingsCorpDomainsSubtitle(String domains);
-
   /// No description provided for @corpDomainsHint.
   ///
   /// In en, this message translates to:
@@ -5029,6 +5017,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'“{value}” is not a domain name.'**
   String corpDomainsErrorDomain(String value);
+
+  /// No description provided for @settingsDns.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS'**
+  String get settingsDns;
+
+  /// No description provided for @settingsDnsSummaryLocalOff.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · local off'**
+  String settingsDnsSummaryLocalOff(String name);
+
+  /// No description provided for @settingsDnsSummaryLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · local {local}'**
+  String settingsDnsSummaryLocal(String name, String local);
+
+  /// No description provided for @dnsSettingsThroughVpn.
+  ///
+  /// In en, this message translates to:
+  /// **'Through the VPN'**
+  String get dnsSettingsThroughVpn;
+
+  /// No description provided for @dnsSettingsOutsideVpn.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside the VPN'**
+  String get dnsSettingsOutsideVpn;
+
+  /// No description provided for @dnsSettingsCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company network'**
+  String get dnsSettingsCompany;
+
+  /// No description provided for @dnsSettingsDefaultNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Finds addresses for sites that go through the VPN, when the configuration brings no DNS of its own. Asked through the tunnel — your network doesn’t see these lookups.'**
+  String get dnsSettingsDefaultNote;
+
+  /// No description provided for @dnsSettingsLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local DNS'**
+  String get dnsSettingsLocal;
+
+  /// No description provided for @dnsSettingsLocalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Finds addresses for sites your rules send past the VPN, asked directly from this network, so they pick a server near you rather than near the VPN server. Your network sees these names — it already sees where that traffic goes. Off: they use the same DNS as everything else.'**
+  String get dnsSettingsLocalNote;
+
+  /// No description provided for @dnsSettingsLocalOffSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'sites outside the VPN use the configuration’s DNS'**
+  String get dnsSettingsLocalOffSubtitle;
+
+  /// No description provided for @dnsSettingsLocalCustomSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'your provider’s or a local resolver'**
+  String get dnsSettingsLocalCustomSubtitle;
+
+  /// No description provided for @dnsSettingsCorpNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.'**
+  String get dnsSettingsCorpNote;
 }
 
 class _AppLocalizationsDelegate

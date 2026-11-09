@@ -218,11 +218,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDefaultDns => '默认 DNS';
 
   @override
-  String settingsDefaultDnsSubtitle(String name) {
-    return '$name · 配置未指定 DNS 时使用';
-  }
-
-  @override
   String get settingsDnsCustom => '自定义…';
 
   @override
@@ -3074,11 +3069,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsCorpDomains => '企业域名';
 
   @override
-  String settingsCorpDomainsSubtitle(String domains) {
-    return '$domains · 不经过 VPN';
-  }
-
-  @override
   String get corpDomainsHint =>
       '这些域名下的名称会向贵公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。适用于此设备上的所有配置。';
 
@@ -3100,4 +3090,47 @@ class AppLocalizationsZh extends AppLocalizations {
   String corpDomainsErrorDomain(String value) {
     return '“$value”不是域名。';
   }
+
+  @override
+  String get settingsDns => 'DNS';
+
+  @override
+  String settingsDnsSummaryLocalOff(String name) {
+    return '$name · 本地已关闭';
+  }
+
+  @override
+  String settingsDnsSummaryLocal(String name, String local) {
+    return '$name · 本地 $local';
+  }
+
+  @override
+  String get dnsSettingsThroughVpn => '经过 VPN';
+
+  @override
+  String get dnsSettingsOutsideVpn => '不经过 VPN';
+
+  @override
+  String get dnsSettingsCompany => '公司网络';
+
+  @override
+  String get dnsSettingsDefaultNote =>
+      '在配置未自带 DNS 时，为经过 VPN 的网站查找地址。查询经由隧道发出，你的网络看不到这些查询。';
+
+  @override
+  String get dnsSettingsLocal => '本地 DNS';
+
+  @override
+  String get dnsSettingsLocalNote =>
+      '为规则绕过 VPN 的网站查找地址，直接从当前网络查询，使其选择离你近的服务器，而不是离 VPN 服务器近的。你的网络能看到这些域名——它本来就能看到这些流量去往何处。关闭时，它们使用与其他流量相同的 DNS。';
+
+  @override
+  String get dnsSettingsLocalOffSubtitle => '不经过 VPN 的网站使用配置的 DNS';
+
+  @override
+  String get dnsSettingsLocalCustomSubtitle => '运营商的或本地的解析器';
+
+  @override
+  String get dnsSettingsCorpNote =>
+      '内部域名向公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。它优先于上面两项设置。';
 }

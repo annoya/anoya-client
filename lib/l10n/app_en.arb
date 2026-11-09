@@ -115,14 +115,6 @@
     }
   },
   "settingsDefaultDns": "Default DNS",
-  "settingsDefaultDnsSubtitle": "{name} · used when a configuration brings none",
-  "@settingsDefaultDnsSubtitle": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "settingsDnsCustom": "Custom…",
   "settingsDnsCustomSubtitle": "any address the engine accepts",
   "settingsDnsResolverLabel": "Resolver",
@@ -2139,8 +2131,6 @@
   "settingsCheckOn": "check on",
   "settingsCheckOff": "check off",
   "settingsCorpDomains": "Corporate domains",
-  "settingsCorpDomainsSubtitle": "{domains} · outside the VPN",
-  "@settingsCorpDomainsSubtitle": {"placeholders": {"domains": {"type": "String"}}},
   "corpDomainsHint": "Names in these domains are asked at your company’s DNS server and reached outside the VPN, with their real addresses. For every configuration on this device.",
   "corpDomainsAdd": "Add domains…",
   "corpDomainsDomainsLabel": "Domains",
@@ -2148,5 +2138,19 @@
   "corpDomainsSummary": "→ Names under {domains} are asked at {server} directly and reached outside the VPN, with their real addresses.",
   "@corpDomainsSummary": {"placeholders": {"domains": {"type": "String"}, "server": {"type": "String"}}},
   "corpDomainsErrorDomain": "“{value}” is not a domain name.",
-  "@corpDomainsErrorDomain": {"placeholders": {"value": {"type": "String"}}}
+  "@corpDomainsErrorDomain": {"placeholders": {"value": {"type": "String"}}},
+  "settingsDns": "DNS",
+  "settingsDnsSummaryLocalOff": "{name} · local off",
+  "@settingsDnsSummaryLocalOff": {"placeholders": {"name": {"type": "String"}}},
+  "settingsDnsSummaryLocal": "{name} · local {local}",
+  "@settingsDnsSummaryLocal": {"placeholders": {"name": {"type": "String"}, "local": {"type": "String"}}},
+  "dnsSettingsThroughVpn": "Through the VPN",
+  "dnsSettingsOutsideVpn": "Outside the VPN",
+  "dnsSettingsCompany": "Company network",
+  "dnsSettingsDefaultNote": "Finds addresses for sites that go through the VPN, when the configuration brings no DNS of its own. Asked through the tunnel — your network doesn’t see these lookups.",
+  "dnsSettingsLocal": "Local DNS",
+  "dnsSettingsLocalNote": "Finds addresses for sites your rules send past the VPN, asked directly from this network, so they pick a server near you rather than near the VPN server. Your network sees these names — it already sees where that traffic goes. Off: they use the same DNS as everything else.",
+  "dnsSettingsLocalOffSubtitle": "sites outside the VPN use the configuration’s DNS",
+  "dnsSettingsLocalCustomSubtitle": "your provider’s or a local resolver",
+  "dnsSettingsCorpNote": "Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above."
 }

@@ -219,7 +219,7 @@ func TestOnlyTheRenderedShapeReachesTheEngine(t *testing.T) {
 		}
 	}
 
-	rendered := "dns:\n  nameserver-policy:\n    \"+.corp.local\": \"10.0.0.53\"\n  fake-ip-filter:\n    - \"+.corp.local\"\n" +
+	rendered := "dns:\n  direct-nameserver:\n    - \"77.88.8.8\"\n  direct-nameserver-follow-policy: true\n  nameserver-policy:\n    \"+.corp.local\": \"10.0.0.53\"\n  fake-ip-filter:\n    - \"+.corp.local\"\n" +
 		"rule-providers:\n" +
 		"  l0: {type: file, path: ./l0.yaml, behavior: domain, format: yaml}\n" +
 		"  _inline_0:\n    type: inline\n    behavior: ipcidr\n    payload:\n      - 10.0.0.0/8\n      - 172.16.0.0/12\n" +

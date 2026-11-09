@@ -310,3 +310,95 @@ func TestCorporateDomainsAskTheirServerAndGetRealAddresses(t *testing.T) {
 		t.Error("public names must keep fake addresses")
 	}
 }
+
+func TestLocalDnsAnswersDirectDomainsWithRealAddresses(t *testing.T) {
+	constant.SetHomeDir(t.TempDir())
+
+	const cfg = "log-level: silent\n" +
+		"dns:\n" +
+		"  enable: true\n" +
+		"  enhanced-mode: fake-ip\n" +
+		"  fake-ip-range: 198.18.0.1/16\n" +
+		"  nameserver:\n" +
+		"    - \"https://1.1.1.1/dns-query\"\n" +
+		"  direct-nameserver:\n" +
+		"    - \"77.88.8.8\"\n" +
+		"  direct-nameserver-follow-policy: true\n" +
+		"  nameserver-policy:\n" +
+		"    \"+.corp.local\": \"10.0.0.53\"\n" +
+		"    \"rule-set:_inline_0\": \"77.88.8.8\"\n" +
+		"    \"gosuslugi.ru\": \"77.88.8.8\"\n" +
+		"  fake-ip-filter:\n" +
+		"    - \"+.corp.local\"\n" +
+		"    - \"rule-set:_inline_0\"\n" +
+		"    - \"gosuslugi.ru\"\n" +
+		"rule-providers:\n" +
+		"  _inline_0:\n" +
+		"    type: inline\n" +
+		"    behavior: domain\n" +
+		"    payload:\n" +
+		"      - \"+.ozon.ru\"\n" +
+		"      - \"+.corp.local\"\n" +
+		"rules:\n" +
+		"  - RULE-SET,_inline_0,DIRECT\n" +
+		"  - DOMAIN,gosuslugi.ru,DIRECT\n" +
+		"  - MATCH,DIRECT\n"
+
+	parsed, err := executor.ParseWithBytes([]byte(cfg))
+	if err != nil {
+		t.Fatalf("local DNS must parse: %v", err)
+	}
+	for _, p := range parsed.RuleProviders {
+		if err := p.Initial(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tunnel.UpdateRules(parsed.Rules, parsed.SubRules, parsed.RuleProviders)
+
+	if d := parsed.DNS.DirectNameServer; len(d) != 1 || d[0].Addr != "77.88.8.8:53" || d[0].ProxyName != "" {
+		t.Errorf("direct dials resolve at %+v, want 77.88.8.8 asked directly", d)
+	}
+	if !parsed.DNS.DirectFollowPolicy {
+		t.Error("direct dials must keep corporate domains at their own server")
+	}
+
+	server := func(host string) string {
+		for _, p := range parsed.DNS.NameServerPolicy {
+			if p.Matcher != nil {
+				if p.Matcher.MatchDomain(host) {
+					return p.NameServers[0].Addr
+				}
+				continue
+			}
+			tree := trie.New[struct{}]()
+			if err := tree.Insert(p.Domain, struct{}{}); err != nil {
+				t.Fatal(err)
+			}
+			if tree.Search(host) != nil {
+				return p.NameServers[0].Addr
+			}
+		}
+		return ""
+	}
+	for host, want := range map[string]string{
+		"dc1.corp.local":   "10.0.0.53:53",
+		"www.ozon.ru":      "77.88.8.8:53",
+		"gosuslugi.ru":     "77.88.8.8:53",
+		"www.gosuslugi.ru": "",
+		"youtube.com":      "",
+	} {
+		if got := server(host); got != want {
+			t.Errorf("%s asked at %q, want %q", host, got, want)
+		}
+	}
+
+	skip := parsed.DNS.FakeIPSkipper
+	for _, h := range []string{"www.ozon.ru", "gosuslugi.ru", "dc1.corp.local"} {
+		if !skip.ShouldSkipped(h) {
+			t.Errorf("%s would get a fake address", h)
+		}
+	}
+	if skip.ShouldSkipped("youtube.com") {
+		t.Error("names that go through the tunnel must keep fake addresses")
+	}
+}

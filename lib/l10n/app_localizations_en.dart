@@ -222,11 +222,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDefaultDns => 'Default DNS';
 
   @override
-  String settingsDefaultDnsSubtitle(String name) {
-    return '$name · used when a configuration brings none';
-  }
-
-  @override
   String get settingsDnsCustom => 'Custom…';
 
   @override
@@ -3232,11 +3227,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsCorpDomains => 'Corporate domains';
 
   @override
-  String settingsCorpDomainsSubtitle(String domains) {
-    return '$domains · outside the VPN';
-  }
-
-  @override
   String get corpDomainsHint =>
       'Names in these domains are asked at your company’s DNS server and reached outside the VPN, with their real addresses. For every configuration on this device.';
 
@@ -3258,4 +3248,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String corpDomainsErrorDomain(String value) {
     return '“$value” is not a domain name.';
   }
+
+  @override
+  String get settingsDns => 'DNS';
+
+  @override
+  String settingsDnsSummaryLocalOff(String name) {
+    return '$name · local off';
+  }
+
+  @override
+  String settingsDnsSummaryLocal(String name, String local) {
+    return '$name · local $local';
+  }
+
+  @override
+  String get dnsSettingsThroughVpn => 'Through the VPN';
+
+  @override
+  String get dnsSettingsOutsideVpn => 'Outside the VPN';
+
+  @override
+  String get dnsSettingsCompany => 'Company network';
+
+  @override
+  String get dnsSettingsDefaultNote =>
+      'Finds addresses for sites that go through the VPN, when the configuration brings no DNS of its own. Asked through the tunnel — your network doesn’t see these lookups.';
+
+  @override
+  String get dnsSettingsLocal => 'Local DNS';
+
+  @override
+  String get dnsSettingsLocalNote =>
+      'Finds addresses for sites your rules send past the VPN, asked directly from this network, so they pick a server near you rather than near the VPN server. Your network sees these names — it already sees where that traffic goes. Off: they use the same DNS as everything else.';
+
+  @override
+  String get dnsSettingsLocalOffSubtitle =>
+      'sites outside the VPN use the configuration’s DNS';
+
+  @override
+  String get dnsSettingsLocalCustomSubtitle =>
+      'your provider’s or a local resolver';
+
+  @override
+  String get dnsSettingsCorpNote =>
+      'Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.';
 }

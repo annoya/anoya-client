@@ -15,6 +15,7 @@ class NormConfig {
     this.defaultDns = '',
     this.dnsProtection = false,
     this.corpDomains = const [],
+    this.localDns = '',
     this.name = '',
   });
 
@@ -37,6 +38,8 @@ class NormConfig {
   final bool dnsProtection;
 
   final List<CorpDomains> corpDomains;
+
+  final String localDns;
 
   final String name;
 

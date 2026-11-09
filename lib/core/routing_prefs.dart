@@ -94,6 +94,7 @@ class RoutingPrefs {
     this.geoUpdatedAt,
     this.defaultDns = kFallbackNameserver,
     this.corpDomains = const [],
+    this.localDns = '',
   });
 
   static const defaultGeoipUrl =
@@ -109,6 +110,8 @@ class RoutingPrefs {
 
   final List<CorpDomains> corpDomains;
 
+  final String localDns;
+
   final String geoipUrl;
   final String geositeUrl;
   final bool geoAutoUpdate;
@@ -119,6 +122,7 @@ class RoutingPrefs {
     bool? dnsProtection,
     String? defaultDns,
     List<CorpDomains>? corpDomains,
+    String? localDns,
     String? geoipUrl,
     String? geositeUrl,
     bool? geoAutoUpdate,
@@ -128,6 +132,7 @@ class RoutingPrefs {
     dnsProtection: dnsProtection ?? this.dnsProtection,
     defaultDns: defaultDns ?? this.defaultDns,
     corpDomains: corpDomains ?? this.corpDomains,
+    localDns: localDns ?? this.localDns,
     geoipUrl: geoipUrl ?? this.geoipUrl,
     geositeUrl: geositeUrl ?? this.geositeUrl,
     geoAutoUpdate: geoAutoUpdate ?? this.geoAutoUpdate,
@@ -142,6 +147,7 @@ class RoutingPrefs {
       for (final c in j['corp_domains'] as List<dynamic>? ?? const [])
         if (c is Map) CorpDomains.fromJson(Map<String, dynamic>.from(c)),
     ],
+    localDns: j['local_dns'] as String? ?? '',
     geoipUrl: j['geoip_url'] as String? ?? defaultGeoipUrl,
     geositeUrl: j['geosite_url'] as String? ?? defaultGeositeUrl,
     geoAutoUpdate: j['geo_auto_update'] as bool? ?? true,
@@ -156,6 +162,7 @@ class RoutingPrefs {
     'default_dns': defaultDns,
     if (corpDomains.isNotEmpty)
       'corp_domains': corpDomains.map((c) => c.toJson()).toList(),
+    if (localDns.isNotEmpty) 'local_dns': localDns,
     'geoip_url': geoipUrl,
     'geosite_url': geositeUrl,
     'geo_auto_update': geoAutoUpdate,

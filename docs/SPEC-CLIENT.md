@@ -256,16 +256,23 @@ body's `dns.servers` — and falls back to Cloudflare DoH
 DNS. Entries that could not be nameservers are dropped, never escaped into the
 YAML, and hostname-addressed resolvers get a plain-IP bootstrap. When a
 configuration names none, the app's own default stands in — settable in
-Settings › Default DNS, pinned to the tunnel, and backed by a three-operator
+Settings › DNS › Default DNS, pinned to the tunnel, and backed by a three-operator
 bootstrap for the one job that cannot ride it: resolving the proxy's address. Fake-ip mode
 and range are app constants across configurations.
 
-**Corporate domains** (Settings › Routing) are the one per-domain exception, and
+**Corporate domains** (Settings › DNS) are the most specific per-domain exception, and
 a device setting rather than part of a configuration: each entry names domains
 and a DNS server. Those names are asked at that server directly
 (`nameserver-policy`), answered with real addresses (`fake-ip-filter`) and
 routed direct ahead of every rule, under any routing owner. A server reachable
 only through another VPN's adapter is out of reach. Full decision: ADR-028.
+
+**Local DNS** (Settings › DNS, off by default) answers the names that direct
+rules send past the VPN. Every direct rule by domain — under any routing owner,
+including a subscription rule whose current choice is `DIRECT` — names it in
+`nameserver-policy` and `fake-ip-filter`, so those apps get real addresses near
+the user; `direct-nameserver` covers the remaining direct dials. Corporate
+domains stay ahead of it. Full decision: ADR-029.
 
 Each format also says whether a query is issued locally or sent out through
 the proxy — a `#pin` in Clash, a `detour` tag in sing-box, a `+local` scheme
@@ -865,7 +872,7 @@ Rule sets are global to the device and applied per configuration; routing is
 opt-in per configuration; a server-managed policy takes precedence and cannot be
 switched off locally. LAN-direct is a separate device-level switch that applies
 under any policy, and so are corporate domains (§3.3), whose direct rule goes
-first.
+first, and the local DNS (§3.3), which follows the direct rules.
 
 Whose rules apply is decided by one of three policy classes, not by branching:
 a self-hosted server's (unswitchable), a subscription panel's (switchable), or
