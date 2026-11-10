@@ -11,6 +11,61 @@ import 'package:anoya/core/parsers/share_link.dart';
 import 'package:anoya/core/parsers/subscription.dart';
 
 void main() {
+  group('a provider that adds or reorders servers', () {
+    Map<String, String> ids(String body) => {
+      for (final l in parseSubscriptionBody(body).locations) l.label: l.id,
+    };
+
+    test('a Clash server keeps its id', () {
+      final before = ids('''
+proxies:
+  - {name: DE, type: vless, server: de.example, port: 443, uuid: u}
+  - {name: NL, type: vless, server: nl.example, port: 443, uuid: u}
+''');
+      final after = ids('''
+proxies:
+  - {name: FR, type: vless, server: fr.example, port: 443, uuid: u}
+  - {name: NL, type: vless, server: nl.example, port: 443, uuid: u}
+  - {name: DE, type: vless, server: de.example, port: 443, uuid: u}
+''');
+
+      expect(after['DE'], before['DE']);
+      expect(after['NL'], before['NL']);
+      expect(after.values.toSet(), hasLength(3));
+    });
+
+    test('a sing-box server keeps its id', () {
+      String body(List<String> tags) => jsonEncode({
+        'outbounds': [
+          for (final t in tags)
+            {
+              'type': 'vless',
+              'tag': t,
+              'server': '$t.example',
+              'server_port': 443,
+              'uuid': '2f1c3c0e-8a5b-4c1d-9e2f-0a1b2c3d4e5f',
+            },
+        ],
+      });
+
+      final before = ids(body(['de', 'nl']));
+      final after = ids(body(['fr', 'nl', 'de']));
+
+      expect(after['de'], before['de']);
+      expect(after['nl'], before['nl']);
+    });
+
+    test('two servers with one name still get ids of their own', () {
+      final servers = parseSubscriptionBody('''
+proxies:
+  - {name: DE, type: vless, server: a.example, port: 443, uuid: u}
+  - {name: DE, type: vless, server: b.example, port: 443, uuid: u}
+''').locations;
+
+      expect(servers.map((l) => l.id).toSet(), hasLength(2));
+    });
+  });
+
   test('a base64 body wrapped at 76 columns is still a list of servers', () {
     final links = [
       for (var i = 0; i < 4; i++)

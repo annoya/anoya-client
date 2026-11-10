@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../log.dart';
 import '../norm_config.dart';
+import 'base64_text.dart';
 import 'dns_servers.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
@@ -29,7 +30,7 @@ ParsedSubscription? parseSingboxServers(String body) {
 
   final out = <Location>[];
   final unsupported = <String, int>{};
-  var index = 0;
+  final seen = <String, int>{};
   for (final ob in list) {
     if (ob is! Map) continue;
     final kind = '${ob['type'] ?? ''}'.toLowerCase();
@@ -49,7 +50,10 @@ ParsedSubscription? parseSingboxServers(String body) {
       }
       out.add(
         locationFor(
-          'singbox:$index:${proxy['server']}:${proxy['port']}',
+          distinctKey(
+            seen,
+            'singbox:${ob['tag'] ?? ''}:${proxy['server']}:${proxy['port']}',
+          ),
           labelOr(
             '${ob['tag'] ?? ''}'.trim(),
             '${proxy['server']}',
@@ -64,7 +68,6 @@ ParsedSubscription? parseSingboxServers(String body) {
     } catch (e) {
       Log.e('sing-box: unusable outbound', '$kind -> $e');
     }
-    index++;
   }
   if (out.isEmpty && unsupported.isEmpty) return null;
   return ParsedSubscription(

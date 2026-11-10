@@ -18,7 +18,7 @@ ParsedSubscription? parseClashProxies(String body) {
     if (doc['proxies'] is! List && doc['proxy-providers'] is! Map) return null;
     final out = <Location>[];
     final unsupported = <String, int>{};
-    var i = 0;
+    final seen = <String, int>{};
     for (final p in (doc['proxies'] as List? ?? const [])) {
       final m = _deepConvert(p);
       if (m is! Map<String, dynamic> ||
@@ -33,7 +33,11 @@ ParsedSubscription? parseClashProxies(String body) {
       }
       final name = m['name']?.toString() ?? '${m['server']}:${m['port']}';
       out.add(
-        Location(id: 'sub_${i++}_${shortDigest(name)}', label: name, proxy: m),
+        Location(
+          id: 'sub_${shortDigest(distinctKey(seen, name))}',
+          label: name,
+          proxy: m,
+        ),
       );
     }
     final providers = _proxyProviders(doc['proxy-providers']);

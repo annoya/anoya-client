@@ -22,3 +22,8 @@ String? tryDecodeLooseBase64(String s) {
 
 String shortDigest(String s) =>
     sha1.convert(utf8.encode(s)).toString().substring(0, 10);
+
+String distinctKey(Map<String, int> seen, String key) {
+  final n = seen.update(key, (n) => n + 1, ifAbsent: () => 0);
+  return n == 0 ? key : '$key#$n';
+}

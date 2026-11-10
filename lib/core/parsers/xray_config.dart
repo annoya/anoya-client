@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../log.dart';
 import '../norm_config.dart';
+import 'base64_text.dart';
 import 'dns_servers.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
@@ -27,7 +28,7 @@ ParsedSubscription? parseXrayServers(String body) {
   final out = <Location>[];
   final unsupported = <String, int>{};
   final balanced = <(Map, String, List<Location>)>[];
-  var index = 0;
+  final seen = <String, int>{};
   for (final cfg in configs) {
     if (cfg is! Map) continue;
     final label = '${cfg['remarks'] ?? ''}'.trim();
@@ -52,7 +53,10 @@ ParsedSubscription? parseXrayServers(String body) {
         parsed.add((
           tag: tag,
           location: locationFor(
-            'xray:$index:${proxy['server']}:${proxy['port']}',
+            distinctKey(
+              seen,
+              'xray:$label:$tag:${proxy['server']}:${proxy['port']}',
+            ),
             labelOr(
               label.isNotEmpty ? label : tag,
               '${proxy['server']}',
@@ -68,7 +72,6 @@ ParsedSubscription? parseXrayServers(String body) {
       } catch (e) {
         Log.e('xray json: unusable outbound', '$protocol -> $e');
       }
-      index++;
     }
     if (parsed.isEmpty) continue;
     final egress = parsed.first;
