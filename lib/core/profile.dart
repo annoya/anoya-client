@@ -102,7 +102,11 @@ class Profile {
   int get offeredServers =>
       locations.length + unsupportedServers.values.fold(0, (a, b) => a + b);
 
-  bool get isRefreshable => type != ProfileType.link;
+  bool get isRefreshable => switch (type) {
+    ProfileType.link => false,
+    ProfileType.subscription => subscriptionUrl != null,
+    ProfileType.selfhosted || ProfileType.amnezia => true,
+  };
 
   bool get hasModes => plan != null;
 

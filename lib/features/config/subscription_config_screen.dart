@@ -36,7 +36,7 @@ class SubscriptionConfigScreen extends ConsumerWidget {
                         ? p.providerInfo!.webPageUrl
                         : p.subscriptionUrl,
                   ),
-                RefreshRow(profile: p),
+                if (p.isRefreshable) RefreshRow(profile: p),
               ],
             ),
             if (p.usedFallback) const FallbackSourceNote(),

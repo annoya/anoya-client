@@ -207,6 +207,20 @@ void main() {
       );
     });
 
+    test('a pasted list of servers has nowhere to refresh from', () {
+      final pasted = Profile(
+        id: 's1',
+        type: ProfileType.subscription,
+        name: 'Imported',
+        locations: const [],
+      );
+      expect(pasted.isRefreshable, isFalse);
+      expect(
+        pasted.copyWith(subscriptionUrl: 'https://sub.example/t').isRefreshable,
+        isTrue,
+      );
+    });
+
     test('a source is left alone until its own interval is up', () {
       final now = DateTime.now();
       final p = sub(
