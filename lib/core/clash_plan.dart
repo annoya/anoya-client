@@ -108,6 +108,12 @@ class PlanRule {
       for (final m in _nestedType.allMatches(payload)) m[1]!,
   };
 
+  Set<String> get geosites => {
+    if (type == 'GEOSITE') payload,
+    if (kLogicRuleTypes.contains(type))
+      for (final m in _nestedGeosite.allMatches(payload)) m[1]!.trim(),
+  };
+
   bool get needsGeoData => types.contains('GEOIP') || types.contains('GEOSITE');
 
   bool get needsProcess => types.any((t) => t.startsWith('PROCESS-'));
@@ -128,6 +134,8 @@ class PlanRule {
 }
 
 final _nestedType = RegExp(r'\(\s*([A-Z0-9-]+)\s*,');
+
+final _nestedGeosite = RegExp(r'\(\s*GEOSITE\s*,\s*([^,()]+)');
 
 final nestedListPattern = RegExp(r'\(\s*RULE-SET\s*,\s*([^,()]+)');
 
@@ -178,7 +186,6 @@ const kPlanRuleTypes = {
   'IP-CIDR',
   'IP-CIDR6',
   'IP-SUFFIX',
-  'IP-ASN',
   'DST-PORT',
   'NETWORK',
   'PROCESS-NAME',

@@ -1,6 +1,7 @@
 import 'clash_plan.dart';
 import 'corp_domains.dart';
 import 'geo_store.dart';
+import 'geosite_index.dart';
 import 'log.dart';
 import 'norm_config.dart';
 import 'platform_support.dart';
@@ -22,6 +23,35 @@ Future<NormConfig> buildNormConfig(Profile p) async {
       rules: routing.rules.where((r) => !r.needsGeoData).toList(),
       lists: routing.lists,
     );
+  }
+
+  if (routing.rules.any((r) => r.type == 'geosite')) {
+    final known = await _geositeCategories();
+    if (known != null) {
+      final rules = <RoutingRule>[];
+      var left = 0;
+      for (final r in routing.rules) {
+        if (r.type != 'geosite') {
+          rules.add(r);
+          continue;
+        }
+        final values = r.values.where((v) => _inGeosite(known, v)).toList();
+        left += r.values.length - values.length;
+        if (values.isNotEmpty) rules.add(r.copyWith(values: values));
+      }
+      if (left > 0) {
+        Log.e(
+          'routing',
+          '$left geosite categor${left == 1 ? 'y' : 'ies'} skipped: not in '
+              'the downloaded database',
+        );
+        routing = Routing(
+          mode: routing.mode,
+          rules: rules,
+          lists: routing.lists,
+        );
+      }
+    }
   }
 
   if (!supportsProcessRules &&
@@ -58,21 +88,31 @@ Future<NormConfig> buildNormConfig(Profile p) async {
   );
 }
 
+Future<Set<String>?> _geositeCategories() async {
+  final index = await GeositeIndex.load();
+  return index.isEmpty ? null : {for (final c in index) c.name};
+}
+
+bool _inGeosite(Set<String> known, String value) =>
+    known.contains(value.split('@').first.toLowerCase());
+
 Future<NormConfig> _subscriptionRulesConfig(Profile p) async {
   final plan = p.plan!;
   final geoReady = (await GeoStore.status()).downloaded;
+  final known = geoReady ? await _geositeCategories() : null;
   final rules = [
     for (final r in plan.rules)
       if ((geoReady || !r.needsGeoData) &&
-          (supportsProcessRules || !r.needsProcess))
+          (supportsProcessRules || !r.needsProcess) &&
+          (known == null || r.geosites.every((c) => _inGeosite(known, c))))
         r,
   ];
   final left = plan.rules.length - rules.length;
   if (left > 0) {
     Log.e(
       'routing',
-      '$left subscription rule(s) skipped: geo databases or process '
-          'matching unavailable here',
+      '$left subscription rule(s) skipped: geo databases, a geosite category '
+          'or process matching unavailable here',
     );
   }
   Log.i(
