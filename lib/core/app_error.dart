@@ -2,10 +2,18 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart' show PlatformException;
+import 'package:http/http.dart' as http;
 
 import '../api/api_client.dart';
 import '../l10n/l10n.dart';
 import 'oidc_login.dart';
+
+class SubscriptionRefused extends http.ClientException {
+  SubscriptionRefused(this.status, [Uri? uri])
+    : super('subscription fetch failed ($status)', uri);
+
+  final int status;
+}
 
 class AppError {
   const AppError(this.title, {this.detail});
@@ -111,6 +119,22 @@ AppError describeError(Object error, {String? subject}) {
       l10n.errorServerErrorDetail,
     ),
     ApiException(message: final m) => err(l10n.errorServerRefusedTitle, m),
+    SubscriptionRefused(status: 401 || 403) => err(
+      l10n.errorAccessBlockedTitle,
+      l10n.errorAccessBlockedDetail,
+    ),
+    SubscriptionRefused(status: 404 || 410) => err(
+      l10n.errorNothingAtAddressTitle,
+      l10n.errorNothingAtAddressDetail(what),
+    ),
+    SubscriptionRefused(status: >= 500) => err(
+      l10n.errorServerErrorTitle,
+      l10n.errorServerErrorDetail,
+    ),
+    SubscriptionRefused() => err(
+      l10n.errorServerRefusedTitle,
+      l10n.errorServerErrorDetail,
+    ),
     FormatException() => err(l10n.errorNotALinkTitle, l10n.errorNotALinkDetail),
     PlatformException(code: 'service_unavailable') => err(
       l10n.errorTunnelServiceNotRunningTitle,

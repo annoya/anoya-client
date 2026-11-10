@@ -15,6 +15,18 @@ import 'support/ds_finders.dart';
 
 void main() {
   group('describeError', () {
+    test('a subscription server that refuses says why, not "went wrong"', () {
+      String title(int status) => describeError(
+        SubscriptionRefused(status),
+        subject: 'sub.example',
+      ).title;
+
+      expect(title(403), 'Access is blocked');
+      expect(title(404), 'Nothing at this address');
+      expect(title(502), 'The server returned an error');
+      expect(title(429), 'The server refused the request');
+    });
+
     test('never leaks the exception text into the message', () {
       final errors = <Object>[
         const SocketException('Connection refused (OS Error: ...), port = 443'),

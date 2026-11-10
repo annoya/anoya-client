@@ -153,10 +153,7 @@ Future<SubscriptionResponse> _fetch(
     );
   }
   if (res.statusCode ~/ 100 != 2) {
-    throw _RefusedByServer(
-      'subscription fetch failed (${res.statusCode})',
-      Uri(host: uri.host),
-    );
+    throw SubscriptionRefused(res.statusCode, Uri(host: uri.host));
   }
   final body = _text(res);
   final params = subscriptionParameters(res.headers, body);
@@ -200,15 +197,11 @@ Future<SubscriptionResponse?> _clashRendering(
   return null;
 }
 
-class _RefusedByServer extends http.ClientException {
-  _RefusedByServer(super.message, [super.uri]);
-}
-
 bool _neverAnswered(Object e) =>
     e is TimeoutException ||
     e is SocketException ||
     e is TlsException ||
-    (e is http.ClientException && e is! _RefusedByServer);
+    (e is http.ClientException && e is! SubscriptionRefused);
 
 bool _hasGroups(String body) =>
     RegExp(r'(^|\n)\s*proxy-groups\s*:').hasMatch(body) &&
