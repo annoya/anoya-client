@@ -3050,6 +3050,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get advancedDnsProtectionSubtitle => '拦截绕过 VPN 的 DNS 查询';
 
   @override
+  String get advancedDnsProtectionLocked => '关闭 VPN 后才能更改';
+
+  @override
   String get advancedDnsProtectionNote =>
       '系统还会绕过 VPN 向运营商的 DNS 服务器查询，运营商因此能看到你访问了哪些网站。开启防护会拦截这些查询，同时也会拦截本机其他 VPN 的 DNS：企业网络（NetBird、Cisco、OpenVPN）将无法通过域名访问。如果你在使用这类 VPN，请保持关闭。';
 

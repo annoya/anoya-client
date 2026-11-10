@@ -4008,7 +4008,32 @@ of a link subscription. Every fixed string says “subscription”. Flows drawn 
       </div>
       <div class="homeind"></div>
     </div></div>
-    <p class="cap"><span class="id">AdvancedConnectionScreen · Windows / Linux</span><span class="q">нет в Figma</span><b>DNS protection is a choice, and off by default.</b> Where the tunnel is our own service (Windows, Linux) the screen opens with a <i>DNS</i> group above <i>Connection check</i>: one row, <i>DNS protection</i> (<code>shield</code>, toggle), and a note that says what it costs. On turns on the engine’s <code>strict-route</code>: on Windows, WFP filters that block port 53 on every adapter but ours; on Linux, routing rules that send everything into the tunnel.<br><br><b>Why off.</b> Windows asks every adapter’s DNS server, so with protection off the provider’s resolver can see the names the user opens — the answers still come from the engine, which almost always replies first. With it on, the DNS of any other VPN on the machine is blocked too, and corporate networks stop resolving. Clash Verge Rev, FlClash and Mihomo Party all ship it off; we follow them and say the trade-off out loud instead of choosing for the user.<br><br>Switching it is a hot reload while connected. Apple and Android have no such row: their systems route DNS into the tunnel themselves.</p>
+    <p class="cap"><span class="id">AdvancedConnectionScreen · Windows / Linux</span><span class="q">нет в Figma</span><b>DNS protection is a choice, and off by default.</b> Where the tunnel is our own service (Windows, Linux) the screen opens with a <i>DNS</i> group above <i>Connection check</i>: one row, <i>DNS protection</i> (<code>shield</code>, toggle), and a note that says what it costs. On turns on the engine’s <code>strict-route</code>: on Windows, WFP filters that block port 53 on every adapter but ours; on Linux, routing rules that send everything into the tunnel.<br><br><b>Why off.</b> Windows asks every adapter’s DNS server, so with protection off the provider’s resolver can see the names the user opens — the answers still come from the engine, which almost always replies first. With it on, the DNS of any other VPN on the machine is blocked too, and corporate networks stop resolving. Clash Verge Rev, FlClash and Mihomo Party all ship it off; we follow them and say the trade-off out loud instead of choosing for the user.<br><br>Apple and Android have no such row: their systems route DNS into the tunnel themselves.</p>
+  </div>
+
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Advanced</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh">DNS</div>
+          <div class="card">
+            <div class="row off"><svg class="icon"><use href="#l-shield"/></svg><div class="tx"><div class="t">DNS protection</div><div class="s multi">Turn the VPN off to change this</div></div><span class="sw off"><i></i></span></div>
+          </div>
+          <div class="note">The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.</div>
+        </div>
+        <div class="grp"><div class="sh">Connection check</div>
+          <div class="card">
+            <div class="row"><svg class="icon"><use href="#l-activity"/></svg><div class="tx"><div class="t">Check after connecting</div><div class="s multi">Fetch a page through the server and time the answer</div></div><span class="sw"><i></i></span></div>
+            <div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Test URL</div><div class="s multi">https://www.gstatic.com/<wbr>generate_204</div></div><span class="ic"><svg class="icon"><use href="#l-pencil"/></svg></span></div>
+            <div class="row"><svg class="icon"><use href="#l-timer"/></svg><div class="tx"><div class="t">Give up after</div><div class="s">5 seconds</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+          </div>
+        </div>
+        <div class="grp" style="gap:8px"><div class="btn fill"><span>Test now</span></div><div class="note">The request goes through the server itself, so routing rules do not affect it. It proves the server passes traffic — not that your traffic goes through it.</div></div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">AdvancedConnectionScreen · Windows / Linux · VPN on</span><span class="q">нет в Figma</span><b>The switch is locked while the VPN is on.</b> <code>strict-route</code> sits in the engine’s <code>tun</code> section, and a reload that changes that section re-creates the adapter — traffic leaves on the physical interface in between (ADR-002). So the setting changes only with the tunnel down: while connecting or connected the row is dimmed, does not answer a tap, and its subtitle says what to do instead of what the setting is — <i>Turn the VPN off to change this</i>. The toggle keeps showing the current value.</p>
   </div>
   <div class="board">
     <div class="scaler"><div class="ph">

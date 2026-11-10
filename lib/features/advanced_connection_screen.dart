@@ -20,7 +20,8 @@ class AdvancedConnectionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final st = ref.watch(connectionCheckProvider);
     final ctrl = ref.read(connectionCheckProvider.notifier);
-    final connected = ref.watch(sessionProvider).connected;
+    final session = ref.watch(sessionProvider);
+    final connected = session.connected;
     final prefs = st.prefs;
     final l10n = context.l10n;
     final dnsProtection = ref.watch(
@@ -44,10 +45,22 @@ class AdvancedConnectionScreen extends ConsumerWidget {
               DsRow(
                 glyph: Glyph.shield,
                 title: l10n.advancedDnsProtection,
-                subtitle: l10n.advancedDnsProtectionSubtitle,
+                subtitle: session.busy
+                    ? l10n.advancedDnsProtectionLocked
+                    : l10n.advancedDnsProtectionSubtitle,
+                enabled: !session.busy,
                 onTap: () => setDnsProtection(!dnsProtection),
                 trailing: [
-                  DsToggle(value: dnsProtection, onChanged: setDnsProtection),
+                  IgnorePointer(
+                    ignoring: session.busy,
+                    child: ExcludeFocus(
+                      excluding: session.busy,
+                      child: DsToggle(
+                        value: dnsProtection,
+                        onChanged: setDnsProtection,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],

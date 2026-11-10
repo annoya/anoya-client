@@ -3240,6 +3240,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Bloquer les requêtes DNS qui contournent le VPN';
 
   @override
+  String get advancedDnsProtectionLocked =>
+      'Désactivez le VPN pour modifier ce réglage';
+
+  @override
   String get advancedDnsProtectionNote =>
       'Le système interroge aussi le serveur DNS de votre fournisseur, hors du VPN : le fournisseur peut voir les sites que vous ouvrez. La protection bloque ces requêtes, et avec elles le DNS des autres VPN de cet ordinateur : les réseaux d’entreprise (NetBird, Cisco, OpenVPN) ne s’ouvrent plus par leur nom. Laissez-la désactivée si vous en utilisez un.';
 

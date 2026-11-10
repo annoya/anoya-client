@@ -468,6 +468,29 @@ void main() {
       }
     });
 
+    testWidgets('DNS protection cannot be switched while the VPN is on', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      try {
+        final core = _FakeCore(answer: 'ms:120');
+        core.emit(VpnStatus.connected);
+        final container = await pump(tester, core);
+        await tester.pump();
+
+        expect(find.text('Turn the VPN off to change this'), findsOneWidget);
+        await tester.runAsync(() async {
+          await tester.tap(find.text('DNS protection'));
+          await tester.tap(find.byType(DsToggle).first, warnIfMissed: false);
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+        expect(container.read(routingPrefsProvider).dnsProtection, isFalse);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
     testWidgets(
       'where the system routes DNS itself, there is nothing to offer',
       (tester) async {

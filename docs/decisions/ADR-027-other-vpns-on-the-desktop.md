@@ -31,7 +31,9 @@ Windows. With Anoya connected, corporate resources stopped opening.
 
 - **DNS protection is a switch** under Settings → Advanced on Windows and
   Linux, off by default. On renders `strict-route: true`; off omits it. The note
-  under it says what each side costs. Switching is a hot reload.
+  under it says what each side costs. It changes only with the tunnel down:
+  `strict-route` is part of the `tun` section, and a reload that changes that
+  section re-creates the device (ADR-002).
 - **`allowed_ips` from an AWG config is server routing.** Anything other than
   `0.0.0.0/0` becomes provider routing: split, one `ip-cidr → proxy` rule with
   those networks (a bare address gets `/32` or `/128`; a list or a comma string

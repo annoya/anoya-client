@@ -4946,6 +4946,12 @@ abstract class AppLocalizations {
   /// **'Block name lookups that go around the VPN'**
   String get advancedDnsProtectionSubtitle;
 
+  /// No description provided for @advancedDnsProtectionLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the VPN off to change this'**
+  String get advancedDnsProtectionLocked;
+
   /// No description provided for @advancedDnsProtectionNote.
   ///
   /// In en, this message translates to:
