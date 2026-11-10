@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -137,7 +136,7 @@ func LeftTunFdOpen(fd int, err error) bool {
 func closeTrackedConnections(through string) int {
 	closed := 0
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
-		if through == "" || slices.Contains(c.Info().Chain, through) {
+		if through == "" || carries(c.Info().Chain, through) {
 			_ = c.Close()
 			closed++
 		}
@@ -242,12 +241,9 @@ func Stop() {
 
 func ProxyBytes(name string) (up, down int64) {
 	statistic.DefaultManager.Range(func(t statistic.Tracker) bool {
-		for _, hop := range t.Info().Chain {
-			if hop == name {
-				up += t.Info().UploadTotal.Load()
-				down += t.Info().DownloadTotal.Load()
-				break
-			}
+		if carries(t.Info().Chain, name) {
+			up += t.Info().UploadTotal.Load()
+			down += t.Info().DownloadTotal.Load()
 		}
 		return true
 	})

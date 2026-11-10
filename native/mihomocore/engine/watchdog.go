@@ -90,7 +90,7 @@ func watchedSamples() []connSample {
 	var out []connSample
 	statistic.DefaultManager.Range(func(t statistic.Tracker) bool {
 		info := t.Info()
-		if slices.Contains(info.Chain, watchedGroup) {
+		if carries(info.Chain, watchedGroup) {
 			out = append(out, connSample{
 				id:    info.UUID.String(),
 				dest:  destination(info.Metadata),
@@ -103,6 +103,16 @@ func watchedSamples() []connSample {
 		return true
 	})
 	return out
+}
+
+var localOutbounds = []string{"DIRECT", "REJECT", "REJECT-DROP", "PASS", "COMPATIBLE"}
+
+// Subscription rules name their own groups, so nothing there passes through watchedGroup.
+func carries(chain C.Chain, name string) bool {
+	if name != watchedGroup {
+		return slices.Contains(chain, name)
+	}
+	return len(chain) > 0 && !slices.Contains(localOutbounds, chain.Last())
 }
 
 func destination(m *C.Metadata) string {

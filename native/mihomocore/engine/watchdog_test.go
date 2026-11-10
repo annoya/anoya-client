@@ -159,6 +159,21 @@ func TestOnlyConnectionsThroughTheProxyAreWatched(t *testing.T) {
 	}
 }
 
+func TestSubscriptionRuleGroupsAreWatchedAndCountedToo(t *testing.T) {
+	trackConn(t, "p0", "g1")
+	trackConn(t, "DIRECT", "g2")
+	trackConn(t, "REJECT")
+	if samples := watchedSamples(); len(samples) != 1 {
+		t.Fatalf("watched %d connection(s), want the one that leaves through a server", len(samples))
+	}
+	if up, _ := ProxyBytes(watchedGroup); up != 1200 {
+		t.Fatalf("counted %d byte(s) up, want the proxied connection's 1200", up)
+	}
+	if closed := closeTrackedConnections(watchedGroup); closed != 1 {
+		t.Fatalf("a recovery closed %d connection(s), want only the proxied one", closed)
+	}
+}
+
 func TestARecoveryLeavesDirectConnectionsAlone(t *testing.T) {
 	trackConn(t, "proxy", watchedGroup)
 	trackConn(t, "DIRECT")
