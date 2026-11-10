@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 import '../api/api_client.dart';
@@ -8,6 +10,10 @@ import 'log.dart';
 import 'parsers/provider_routing.dart';
 import 'parsers/subscription.dart';
 import 'subscription_info.dart';
+
+// package:http reads a body with no charset as Latin-1.
+String _text(http.Response res) =>
+    utf8.decode(res.bodyBytes, allowMalformed: true);
 
 class SubscriptionResponse {
   const SubscriptionResponse({
@@ -150,7 +156,8 @@ Future<SubscriptionResponse> _fetch(
       Uri(host: uri.host),
     );
   }
-  final params = subscriptionParameters(res.headers, res.body);
+  final body = _text(res);
+  final params = subscriptionParameters(res.headers, body);
   final (routing, probed) = await _providerRouting(
     uri,
     res,
@@ -160,7 +167,7 @@ Future<SubscriptionResponse> _fetch(
   );
 
   return SubscriptionResponse(
-    body: res.body,
+    body: body,
     info: SubscriptionInfo.fromHeaders(params),
     deviceLimitActive: _flag(res.headers, 'x-hwid-active') || reached,
     deviceLimitReached: reached,
@@ -267,7 +274,7 @@ Future<(ProviderRouting?, bool)> _providerRouting(
         .get(jsonUri, headers: identity.headers)
         .timeout(kHttpTimeout);
     if (probe.statusCode ~/ 100 != 2) return (null, true);
-    final parsed = parseXrayRouting(probe.body);
+    final parsed = parseXrayRouting(_text(probe));
     return (parsed, true);
   } catch (e) {
     Log.e('provider routing probe failed', '${uri.host}: $e');
@@ -298,7 +305,7 @@ Future<ParsedSubscription?> fetchProxyProvider(
       );
     }
     return await parseSubscriptionBodyInBackground(
-      res.body,
+      _text(res),
       source: '${provider.name} @ ${uri.host}',
     );
   } catch (e) {

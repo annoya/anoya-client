@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -38,6 +39,25 @@ void main() {
     );
     tmp.deleteSync(recursive: true);
     DeviceIdentityStore.debugCache(null);
+  });
+
+  test('a body served without a charset is still read as UTF-8', () async {
+    final client = MockClient(
+      (req) async => http.Response.bytes(
+        utf8.encode('vless://u@h.example:443?security=none#香港 01'),
+        200,
+        headers: {'content-type': 'text/plain'},
+      ),
+    );
+
+    final res = await fetchSubscription(
+      'https://main.example/tok3n',
+      probeRenderings: false,
+      probeRouting: false,
+      client: client,
+    );
+
+    expect(res.body, endsWith('#香港 01'));
   });
 
   group('the backup address', () {
