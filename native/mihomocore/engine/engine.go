@@ -125,6 +125,15 @@ func reload(fd int, ownDevice bool, configYAML string, through string) error {
 	return nil
 }
 
+type refusedError struct{ error }
+
+func LeftTunFdOpen(fd int, err error) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	var refused refusedError
+	return errors.As(err, &refused) && (running == nil || running.fd != fd)
+}
+
 func closeTrackedConnections(through string) int {
 	closed := 0
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
@@ -151,12 +160,12 @@ func applyConfig(fd int, ownDevice bool, configYAML string) (*config.Config, err
 		return nil, fmt.Errorf("invalid tun fd %d", fd)
 	}
 	if configYAML == "" {
-		return nil, fmt.Errorf("empty config")
+		return nil, refusedError{fmt.Errorf("empty config")}
 	}
 	openCacheFile()
 	cfg, err := executor.ParseWithBytes([]byte(configYAML))
 	if err != nil {
-		return nil, fmt.Errorf("parse config: %s", sanitizeConfigError(err))
+		return nil, refusedError{fmt.Errorf("parse config: %s", sanitizeConfigError(err))}
 	}
 	cfg.General.Tun.Enable = true
 	if !ownDevice {

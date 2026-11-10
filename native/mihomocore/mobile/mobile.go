@@ -45,9 +45,21 @@ func SetEngineLog(path string) { engine.SetEngineLog(path) }
 
 func ServerSilent() bool { return engine.ServerSilent() }
 
-func Start(fd int, configYAML string) error { return engine.Start(fd, configYAML) }
+func Start(fd int, configYAML string) error {
+	return closeUnclaimed(fd, engine.Start(fd, configYAML))
+}
 
-func Reload(fd int, configYAML string) error { return engine.Reload(fd, configYAML) }
+func Reload(fd int, configYAML string) error {
+	return closeUnclaimed(fd, engine.Reload(fd, configYAML))
+}
+
+// Android keeps the VPN interface up for as long as its fd is open.
+func closeUnclaimed(fd int, err error) error {
+	if engine.LeftTunFdOpen(fd, err) {
+		_ = syscall.Close(fd)
+	}
+	return err
+}
 
 func Stop() { engine.Stop() }
 

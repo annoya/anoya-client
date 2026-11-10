@@ -62,6 +62,33 @@ func TestReloadRejectsBadInputBeforeTouchingTheEngine(t *testing.T) {
 	}
 }
 
+func TestARefusedConfigLeavesANewTunFdToTheCaller(t *testing.T) {
+	if !LeftTunFdOpen(5, Reload(5, "{")) {
+		t.Fatal("an fd the engine never took must be reported as still open")
+	}
+	if !LeftTunFdOpen(5, Reload(5, "")) {
+		t.Fatal("an empty config never reaches the tun listener either")
+	}
+	if LeftTunFdOpen(5, nil) {
+		t.Fatal("an applied config owns its fd")
+	}
+
+	mu.Lock()
+	running = &appliedConfig{fd: 5}
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		running = nil
+		mu.Unlock()
+	})
+	if LeftTunFdOpen(5, Reload(5, "{")) {
+		t.Fatal("a failed hot reload must not hand back the fd the tunnel runs on")
+	}
+	if !LeftTunFdOpen(6, Reload(6, "{")) {
+		t.Fatal("a re-established fd the engine refused is still the caller's")
+	}
+}
+
 type closeRecorder struct {
 	constant.ProxyAdapter
 	closed bool
