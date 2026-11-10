@@ -9,6 +9,65 @@ import 'package:anoya/core/parsers/share_link.dart';
 import 'package:anoya/core/parsers/subscription.dart';
 
 void main() {
+  group('a server the subscription dials through another one', () {
+    List<Location> servers(String body) =>
+        parseSubscriptionBody(body).locations;
+
+    final chained = servers('''
+proxies:
+  - {name: Exit, type: vless, server: exit.example, port: 443, uuid: u, dialer-proxy: Entry}
+  - {name: Entry, type: vless, server: entry.example, port: 443, uuid: u}
+  - {name: Plain, type: vless, server: plain.example, port: 443, uuid: u}
+''');
+
+    List<YamlMap> proxies(String yaml) =>
+        ((loadYaml(yaml) as YamlMap)['proxies'] as YamlList).cast<YamlMap>();
+
+    test('picked on its own, it still goes through that server', () {
+      final out = proxies(
+        mihomoTunConfigYaml(chained.first, planLocations: chained),
+      );
+      expect(out.map((p) => p['name']), ['proxy', 'd0']);
+      expect(out.first['dialer-proxy'], 'd0');
+      expect(out.last['server'], 'entry.example');
+    });
+
+    test('in a group, every chained member brings its own way in', () {
+      final out = proxies(
+        mihomoTunConfigYaml(
+          chained.first,
+          group: const ProxyGroup(name: 'Auto', type: 'url-test', members: []),
+          members: [chained.first, chained.last],
+          planLocations: chained,
+        ),
+      );
+      expect(out.map((p) => p['name']), ['p0', 'p1', 'd0']);
+      expect(out.first['dialer-proxy'], 'd0');
+      expect(out[1].containsKey('dialer-proxy'), isFalse);
+    });
+
+    test('a chain that cannot be built is refused, not dialled direct', () {
+      final lost = servers('''
+proxies:
+  - {name: Exit, type: vless, server: exit.example, port: 443, uuid: u, dialer-proxy: Gone}
+''');
+      expect(
+        () => mihomoTunConfigYaml(lost.first, planLocations: lost),
+        throwsStateError,
+      );
+
+      final loop = servers('''
+proxies:
+  - {name: A, type: vless, server: a.example, port: 443, uuid: u, dialer-proxy: B}
+  - {name: B, type: vless, server: b.example, port: 443, uuid: u, dialer-proxy: A}
+''');
+      expect(
+        () => mihomoTunConfigYaml(loop.first, planLocations: loop),
+        throwsStateError,
+      );
+    });
+  });
+
   test('a self-hosted AmneziaWG location renders as a wireguard outbound', () {
     final loc = Location.fromJson({
       'id': 'worker_2',

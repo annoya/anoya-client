@@ -38,15 +38,19 @@ String mihomoTunConfigYaml(
     groupLines.addAll(parts.groups);
     entry = parts.entry;
   } else if (group == null) {
-    final proxy = _mihomoProxy(location);
-    rendered.add(proxy);
-    proxyLines.addAll(_emitProxy(proxy));
+    rendered.add(_mihomoProxy(location));
+    rendered.addAll(_dialersOf(rendered, planLocations));
+    for (final p in rendered) {
+      proxyLines.addAll(_emitProxy(p));
+    }
     entry = 'proxy';
   } else {
     for (var i = 0; i < members.length; i++) {
-      final m = {..._mihomoProxy(members[i]), 'name': 'p$i'};
-      rendered.add(m);
-      proxyLines.addAll(_emitProxy(m));
+      rendered.add({..._mihomoProxy(members[i]), 'name': 'p$i'});
+    }
+    rendered.addAll(_dialersOf(rendered, planLocations));
+    for (final p in rendered) {
+      proxyLines.addAll(_emitProxy(p));
     }
     groupLines.addAll(
       _emitGroup(group, kGroupName, [
@@ -476,6 +480,44 @@ Map<String, dynamic> _mihomoProxy(Location location) {
     if (e.key != 'name') m[e.key] = e.value;
   }
   return m;
+}
+
+List<Map<String, dynamic>> _dialersOf(
+  List<Map<String, dynamic>> proxies,
+  List<Location> locations,
+) {
+  final byName = {
+    for (final l in locations)
+      if (l.proxy['name'] != null) '${l.proxy['name']}': l,
+  };
+  final names = <String, String>{};
+  final dialers = <Map<String, dynamic>>[];
+
+  void link(Map<String, dynamic> proxy, Set<String> chain) {
+    final via = proxy['dialer-proxy']?.toString();
+    if (via == null) return;
+    if (chain.contains(via)) throw StateError('the proxy chain loops');
+    var name = names[via];
+    if (name == null) {
+      final location = byName[via];
+      if (location == null) {
+        throw StateError(
+          'chained through an outbound that is not a server of this '
+          'configuration',
+        );
+      }
+      name = names[via] = 'd${names.length}';
+      final dialer = {..._mihomoProxy(location), 'name': name};
+      link(dialer, {...chain, via});
+      dialers.add(dialer);
+    }
+    proxy['dialer-proxy'] = name;
+  }
+
+  for (final p in proxies) {
+    link(p, {});
+  }
+  return dialers;
 }
 
 List<String> _emitProxy(Map<String, dynamic> proxy) {
