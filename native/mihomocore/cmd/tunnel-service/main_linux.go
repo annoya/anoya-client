@@ -55,12 +55,16 @@ func runService(files service.Files) error {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, os.Interrupt)
-	go func() {
-		<-stop
+	served := make(chan error, 1)
+	go func() { served <- s.Serve(ln) }()
+	select {
+	case err := <-served:
+		return err
+	case <-stop:
 		_ = ln.Close()
 		s.Shutdown()
-	}()
-	return s.Serve(ln)
+		return <-served
+	}
 }
 
 func runConsole(files service.Files) error {

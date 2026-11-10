@@ -81,12 +81,16 @@ func runConsole(files service.Files) error {
 	fmt.Fprintf(os.Stderr, "listening on %s, engine dir %s\n", pipeName, files.Dir)
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	go func() {
-		<-stop
+	served := make(chan error, 1)
+	go func() { served <- s.Serve(ln) }()
+	select {
+	case err := <-served:
+		return err
+	case <-stop:
 		_ = ln.Close()
 		s.Shutdown()
-	}()
-	return s.Serve(ln)
+		return <-served
+	}
 }
 
 func installService() error {
