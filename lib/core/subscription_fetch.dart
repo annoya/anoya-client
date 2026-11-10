@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -151,7 +153,7 @@ Future<SubscriptionResponse> _fetch(
     );
   }
   if (res.statusCode ~/ 100 != 2) {
-    throw http.ClientException(
+    throw _RefusedByServer(
       'subscription fetch failed (${res.statusCode})',
       Uri(host: uri.host),
     );
@@ -192,10 +194,21 @@ Future<SubscriptionResponse?> _clashRendering(
       return res._with(rendering: name, renderingProbed: true);
     } catch (e) {
       Log.e('rendering not available', '${uri.host}/$name');
+      if (_neverAnswered(e)) break;
     }
   }
   return null;
 }
+
+class _RefusedByServer extends http.ClientException {
+  _RefusedByServer(super.message, [super.uri]);
+}
+
+bool _neverAnswered(Object e) =>
+    e is TimeoutException ||
+    e is SocketException ||
+    e is TlsException ||
+    (e is http.ClientException && e is! _RefusedByServer);
 
 bool _hasGroups(String body) =>
     RegExp(r'(^|\n)\s*proxy-groups\s*:').hasMatch(body) &&

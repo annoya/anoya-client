@@ -60,6 +60,47 @@ void main() {
     expect(res.body, endsWith('#香港 01'));
   });
 
+  test(
+    'a host that does not answer is not asked for every rendering',
+    () async {
+      var asked = 0;
+      final client = MockClient((req) async {
+        asked++;
+        throw const SocketException('blocked');
+      });
+
+      await expectLater(
+        fetchSubscription(
+          'https://main.example/tok3n',
+          probeRouting: false,
+          client: client,
+        ),
+        throwsA(isA<SocketException>()),
+      );
+
+      expect(asked, 2, reason: 'one rendering probe, then the plain address');
+    },
+  );
+
+  test('a rendering the panel refuses does not end the search', () async {
+    final asked = <String>[];
+    final client = MockClient((req) async {
+      asked.add(req.url.path);
+      return http.Response('not found', 404);
+    });
+
+    await expectLater(
+      fetchSubscription(
+        'https://main.example/tok3n',
+        probeRouting: false,
+        client: client,
+      ),
+      throwsA(isA<http.ClientException>()),
+    );
+
+    expect(asked.length, greaterThan(2));
+  });
+
   group('the backup address', () {
     test(
       'is used when the main one does not answer, and is reported',
