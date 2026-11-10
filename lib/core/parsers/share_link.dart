@@ -242,16 +242,18 @@ ShareLink _parseTrojan(String raw) {
 
 ShareLink _parseShadowsocks(String s) {
   final hashIdx = s.indexOf('#');
-  final frag = hashIdx >= 0
-      ? Uri.decodeComponent(s.substring(hashIdx + 1))
-      : '';
+  final frag = hashIdx >= 0 ? safeDecode(s.substring(hashIdx + 1)) : '';
   var body = s.substring('ss://'.length, hashIdx >= 0 ? hashIdx : s.length);
 
   String method, password, host;
   int port;
   if (body.contains('@')) {
     final at = body.lastIndexOf('@');
-    final userInfo = decodeLooseBase64(body.substring(0, at));
+    final raw = body.substring(0, at);
+    final decoded = tryDecodeLooseBase64(raw);
+    final userInfo = decoded != null && decoded.contains(':')
+        ? decoded
+        : safeDecode(raw);
     final hostPort = body.substring(at + 1);
     method = userInfo.split(':').first;
     password = userInfo.substring(userInfo.indexOf(':') + 1);

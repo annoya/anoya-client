@@ -279,6 +279,26 @@ void main() {
     });
   });
 
+  group('shadowsocks links', () {
+    test('SIP002 with the method and password in the clear', () {
+      final proxy = parseSubscriptionBody(
+        'ss://2022-blake3-aes-256-gcm:YctPZ6U7xPPcU%2Bgp3u%2B0tx%2FtRizJN9K8y%2BuKlW2qjlI%3D@h.example:8388#SS',
+      ).locations.single.proxy;
+
+      expect(proxy['cipher'], '2022-blake3-aes-256-gcm');
+      expect(proxy['password'], 'YctPZ6U7xPPcU+gp3u+0tx/tRizJN9K8y+uKlW2qjlI=');
+      expect(proxy['port'], 8388);
+    });
+
+    test('a name with a bare percent sign does not drop the server', () {
+      final servers = parseSubscriptionBody(
+        'ss://YWVzLTI1Ni1nY206cHc@h.example:8388#50% off',
+      ).locations;
+
+      expect(servers.single.label, '50% off');
+    });
+  });
+
   group('shadowsocks plugins', () {
     test('simple-obfs becomes the engine\'s obfs plugin', () {
       const link =
