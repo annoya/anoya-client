@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/subscription_info.dart';
+import 'package:anoya/state/profiles_controller.dart';
 
 void main() {
   test('a plan with a quota and an end date', () {
@@ -157,6 +159,31 @@ void main() {
         }).movedFrom('https://old.example/sub/abc'),
         isNull,
       );
+    });
+
+    test('the next refresh goes to the new address', () {
+      final stored = Profile(
+        id: 'p',
+        type: ProfileType.subscription,
+        name: 'Nexus',
+        locations: const [],
+        subscriptionUrl: 'https://old.example/sub/abc',
+        ruleSetId: 'work',
+      );
+      final refreshed = stored
+          .withBundle(
+            locations: const [],
+            account: null,
+            routing: null,
+            dns: const [],
+            refreshedAt: DateTime(2026),
+          )
+          .copyWith(subscriptionUrl: 'https://new.example/sub/abc');
+
+      final merged = ProfilesController.mergeRefreshed(stored, refreshed);
+
+      expect(merged.subscriptionUrl, 'https://new.example/sub/abc');
+      expect(merged.ruleSetId, 'work');
     });
 
     test('new-domain keeps the path and the token', () {

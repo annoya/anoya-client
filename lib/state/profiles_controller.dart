@@ -364,6 +364,36 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     return refreshProfile(p.id);
   }
 
+  @visibleForTesting
+  static Profile mergeRefreshed(Profile current, Profile updated) {
+    return current
+        .withBundle(
+          locations: updated.locations,
+          account: updated.account,
+          routing: updated.routing,
+          dns: updated.dns,
+          deviceLimitActive: updated.deviceLimitActive,
+          deviceLimitReached: updated.deviceLimitReached,
+          unsupportedServers: updated.unsupportedServers,
+          groups: updated.groups,
+          plan: updated.plan,
+          providerRouting: updated.providerRouting,
+          providerRoutingSkipped: updated.providerRoutingSkipped,
+          providerRoutingProbed: updated.providerRoutingProbed,
+          providerInfo: updated.providerInfo,
+          usedFallback: updated.usedFallback,
+          rendering: updated.rendering,
+          renderingProbed: updated.renderingProbed,
+          refreshedAt: updated.refreshedAt ?? DateTime.now(),
+          amnezia: updated.amnezia == null
+              ? current.amnezia
+              : (current.amnezia ?? updated.amnezia!).copyWith(
+                  account: updated.amnezia!.account,
+                ),
+        )
+        .copyWith(subscriptionUrl: updated.subscriptionUrl);
+  }
+
   Future<Profile> refreshProfile(String id) async {
     await ready;
     final p = _byId(id);
@@ -371,30 +401,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     final updated = await configSourceFor(p).refresh();
     if (identical(updated, p)) return p;
     final current = _byId(id) ?? p;
-    final merged = current.withBundle(
-      locations: updated.locations,
-      account: updated.account,
-      routing: updated.routing,
-      dns: updated.dns,
-      deviceLimitActive: updated.deviceLimitActive,
-      deviceLimitReached: updated.deviceLimitReached,
-      unsupportedServers: updated.unsupportedServers,
-      groups: updated.groups,
-      plan: updated.plan,
-      providerRouting: updated.providerRouting,
-      providerRoutingSkipped: updated.providerRoutingSkipped,
-      providerRoutingProbed: updated.providerRoutingProbed,
-      providerInfo: updated.providerInfo,
-      usedFallback: updated.usedFallback,
-      rendering: updated.rendering,
-      renderingProbed: updated.renderingProbed,
-      refreshedAt: updated.refreshedAt ?? DateTime.now(),
-      amnezia: updated.amnezia == null
-          ? current.amnezia
-          : (current.amnezia ?? updated.amnezia!).copyWith(
-              account: updated.amnezia!.account,
-            ),
-    );
+    final merged = mergeRefreshed(current, updated);
     await _replace(merged);
     await RuleListStore.prune(_liveRuleLists());
     if (id == state.activeId) await syncTunnelConfig();
