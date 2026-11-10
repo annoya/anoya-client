@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 String decodeLooseBase64(String s) {
-  var t = s.trim().replaceAll('-', '+').replaceAll('_', '/');
+  var t = s
+      .replaceAll(RegExp(r'\s'), '')
+      .replaceAll('-', '+')
+      .replaceAll('_', '/');
   final pad = t.length % 4;
   if (pad != 0) t += '=' * (4 - pad);
   return utf8.decode(base64.decode(t));

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -9,6 +11,22 @@ import 'package:anoya/core/parsers/share_link.dart';
 import 'package:anoya/core/parsers/subscription.dart';
 
 void main() {
+  test('a base64 body wrapped at 76 columns is still a list of servers', () {
+    final links = [
+      for (var i = 0; i < 4; i++)
+        'vless://2f1c3c0e-8a5b-4c1d-9e2f-0a1b2c3d4e5f@h$i.example:443'
+            '?security=none#Server%20$i',
+    ].join('\n');
+    final encoded = base64.encode(utf8.encode(links));
+    final wrapped = [
+      for (var i = 0; i < encoded.length; i += 76)
+        encoded.substring(i, (i + 76).clamp(0, encoded.length)),
+    ].join('\n');
+
+    expect(wrapped.split('\n').length, greaterThan(1));
+    expect(parseSubscriptionBody('$wrapped\n').locations, hasLength(4));
+  });
+
   group('xray json', () {
     const body = '''
 [
