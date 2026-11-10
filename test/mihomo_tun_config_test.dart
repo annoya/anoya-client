@@ -9,6 +9,20 @@ import 'package:anoya/core/parsers/share_link.dart';
 import 'package:anoya/core/parsers/subscription.dart';
 
 void main() {
+  test('a key the subscription left empty is not sent as the word null', () {
+    final loc = parseSubscriptionBody('''
+proxies:
+  - {name: A, type: trojan, server: a.example, port: 443, password: p, sni: , alpn: [h2, ]}
+''').locations.single;
+
+    final yaml = mihomoTunConfigYaml(loc);
+    final proxy = ((loadYaml(yaml) as YamlMap)['proxies'] as YamlList).first;
+
+    expect(yaml, isNot(contains('null')));
+    expect((proxy as YamlMap).containsKey('sni'), isFalse);
+    expect(proxy['alpn'], ['h2']);
+  });
+
   group('a server the subscription dials through another one', () {
     List<Location> servers(String body) =>
         parseSubscriptionBody(body).locations;

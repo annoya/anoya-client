@@ -530,6 +530,7 @@ List<String> _mapLines(Map<String, dynamic> m, int indent) {
   final pad = ' ' * indent;
   final out = <String>[];
   m.forEach((k, v) {
+    if (v == null) return;
     final key = yamlKey(k);
     if (v is Map) {
       out.add('$pad$key:');
@@ -537,7 +538,7 @@ List<String> _mapLines(Map<String, dynamic> m, int indent) {
     } else if (v is List) {
       out.add('$pad$key:');
       for (final e in v) {
-        out.add('${' ' * (indent + 2)}- ${yamlScalar(e)}');
+        if (e != null) out.add('${' ' * (indent + 2)}- ${yamlScalar(e)}');
       }
     } else {
       out.add('$pad$key: ${yamlScalar(v)}');
