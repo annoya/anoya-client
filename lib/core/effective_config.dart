@@ -89,6 +89,8 @@ Future<NormConfig> _subscriptionRulesConfig(Profile p) async {
       groups: plan.groups,
       rules: rules,
       lists: plan.lists,
+      inline: plan.inline,
+      dialers: plan.dialers,
       skipped: plan.skipped,
     ),
     planChoices: p.groupChoices,
