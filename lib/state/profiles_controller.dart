@@ -271,12 +271,14 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   Future<void> setActive(String id) async {
     await ready;
     final p = _byId(id);
+    final before = state;
     state = ProfilesState(
       profiles: state.profiles,
       activeId: id,
       selectedLocationId: _firstLocation(p),
     );
-    await _applySelection();
+    final live = ref.read(vpnCoreProvider).status == VpnStatus.connected;
+    await _applySelection(undo: live ? before : null);
   }
 
   Future<void> selectLocation(String id) async {
@@ -290,7 +292,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     var p = state.active;
     final selection = state.selectionId;
     if (p == null || selection == null) return;
-    final attempted = state.selectedLocationId;
+    final attempted = (state.activeId, state.selectedLocationId);
 
     state = state.copyWith(switching: true);
     try {
@@ -335,12 +337,11 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
 
   Future<void> _undoSelection(
     ProfilesState? undo,
-    String? attempted, {
+    (String?, String?) attempted, {
     bool profile = false,
   }) async {
     if (undo == null ||
-        state.selectedLocationId != attempted ||
-        state.activeId != undo.activeId) {
+        (state.activeId, state.selectedLocationId) != attempted) {
       return;
     }
     final previous = profile ? undo.active : null;
@@ -348,7 +349,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       profiles: [
         for (final p in state.profiles) p.id == previous?.id ? previous! : p,
       ],
-      activeId: state.activeId,
+      activeId: undo.activeId,
       selectedLocationId: undo.selectedLocationId,
       loading: state.loading,
       switching: state.switching,

@@ -274,6 +274,22 @@ void main() {
       expect(st.selectionId, 'p1-a', reason: 'the picker stays on the old one');
     });
 
+    test(
+      'a failed profile switch stays on the profile the tunnel runs',
+      () async {
+        final (core, ctrl) = harness(VpnStatus.connected);
+        core.failReload = true;
+
+        await ctrl.setActive('p2');
+
+        expect(core.calls, ['reload']);
+        final st = ctrl.state;
+        expect(st.error, isNotNull);
+        expect(st.activeId, 'p1', reason: 'the tunnel is still on this one');
+        expect(st.selectionId, 'p1-a');
+      },
+    );
+
     test('switching while disconnected never starts a tunnel', () async {
       final (core, ctrl) = harness(VpnStatus.disconnected);
 
