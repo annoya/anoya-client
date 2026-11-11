@@ -12,6 +12,15 @@ enum AppLanguage {
 
   final String label;
   final Locale locale;
+
+  static AppLanguage ofSystem([Locale? system]) {
+    final code = (system ?? WidgetsBinding.instance.platformDispatcher.locale)
+        .languageCode;
+    return values.firstWhere(
+      (l) => l.locale.languageCode == code,
+      orElse: () => en,
+    );
+  }
 }
 
 class AppPrefs {
@@ -20,6 +29,8 @@ class AppPrefs {
     this.language = AppLanguage.en,
     this.collectLogs = true,
   });
+
+  factory AppPrefs.initial() => AppPrefs(language: AppLanguage.ofSystem());
 
   final ThemeMode themeMode;
   final AppLanguage language;
@@ -42,8 +53,8 @@ class AppPrefs {
       orElse: () => ThemeMode.system,
     ),
     language: AppLanguage.values.firstWhere(
-      (l) => l.name == (j['language'] as String? ?? 'en'),
-      orElse: () => AppLanguage.en,
+      (l) => l.name == j['language'],
+      orElse: AppLanguage.ofSystem,
     ),
     collectLogs: j['collect_logs'] as bool? ?? true,
   );
@@ -61,8 +72,8 @@ class AppPrefsStore {
   static Future<AppPrefs> load() => _store.load(
     (j) => j is Map
         ? AppPrefs.fromJson(Map<String, dynamic>.from(j))
-        : const AppPrefs(),
-    const AppPrefs(),
+        : AppPrefs.initial(),
+    AppPrefs.initial(),
   );
 
   static Future<void> save(AppPrefs prefs) => _store.save(prefs.toJson());

@@ -32,7 +32,7 @@ class AppPrefsController extends Notifier<AppPrefs> with ReadyGate {
     ready = AppPrefsStore.load().then((v) {
       if (ref.mounted) state = v;
     });
-    return const AppPrefs();
+    return AppPrefs.initial();
   }
 
   Future<void> setThemeMode(ThemeMode mode) =>
