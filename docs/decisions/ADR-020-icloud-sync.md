@@ -50,7 +50,9 @@ store.
   agreed with iCloud. Against that base, a change on one side is sent or
   applied, an item gone on one side is deleted on the other, and when both
   sides changed iCloud wins. The base is dropped when the key's fingerprint
-  changes, which also covers switching to another iCloud account.
+  changes, and when the store holds no fingerprint at all: an account switch
+  that kept the Keychain item presents an empty store under the same key, and
+  read against the old base that is every item deleted.
 - **A configuration travels as a recipe**: what another device cannot fetch
   by itself. Type, name, server URL and token, subscription URL, the `vpn://`
   key and the service it names, the routing choices (rule set, the routing and

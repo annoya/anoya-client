@@ -230,6 +230,7 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
     key ??= await SyncKey.create();
     if (marker == null) {
       await CloudStore.set(SyncItem.keyMarker, key.fingerprint);
+      _seen = {};
     }
     if (_fingerprint != key.fingerprint) {
       _fingerprint = key.fingerprint;

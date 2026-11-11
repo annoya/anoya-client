@@ -438,6 +438,25 @@ void main() {
     await close(b);
   });
 
+  test('an iCloud that comes back empty is filled, not obeyed', () async {
+    seed(deviceA, [link('pa', 'a.example')]);
+    await close(await enable(deviceA));
+
+    cloud.clear();
+    final a = await open(deviceA);
+    await a.read(cloudSyncProvider.notifier).syncNow();
+
+    expect(
+      a.read(profilesControllerProvider).profiles.map((p) => p.id),
+      ['pa'],
+      reason:
+          'another iCloud account with the same key in the Keychain has '
+          'deleted nothing',
+    );
+    expect(cloud.keys, containsAll(['key', 'profile.pa']));
+    await close(a);
+  });
+
   test('what identifies this device never reaches iCloud', () async {
     seed(deviceA, [
       Profile(
