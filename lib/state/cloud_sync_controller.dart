@@ -300,7 +300,7 @@ class CloudSyncController extends Notifier<CloudSyncState> with ReadyGate {
         case SyncItem.routing:
           await ref
               .read(routingPrefsProvider.notifier)
-              .update(
+              .adoptSynced(
                 (p) => RoutingPrefs.fromJson(
                   json,
                 ).copyWith(geoUpdatedAt: p.geoUpdatedAt),

@@ -70,15 +70,29 @@ class RoutingPrefsController extends Notifier<RoutingPrefs> with ReadyGate {
     return const RoutingPrefs();
   }
 
+  bool _editedHere = false;
+  bool get editedHere => _editedHere;
+
   Future<void> reload() async {
     final prefs = await RoutingPrefsStore.load();
+    _editedHere = false;
     if (ref.mounted) state = prefs;
   }
 
-  Future<void> update(RoutingPrefs Function(RoutingPrefs) change) async {
+  Future<void> update(RoutingPrefs Function(RoutingPrefs) change) =>
+      _write(change, editedHere: true);
+
+  Future<void> adoptSynced(RoutingPrefs Function(RoutingPrefs) change) =>
+      _write(change, editedHere: false);
+
+  Future<void> _write(
+    RoutingPrefs Function(RoutingPrefs) change, {
+    required bool editedHere,
+  }) async {
     await ready;
     final prefs = change(await RoutingPrefsStore.load());
     await RoutingPrefsStore.save(prefs);
+    _editedHere = editedHere;
     state = prefs;
   }
 }

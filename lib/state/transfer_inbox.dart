@@ -39,7 +39,7 @@ class TransferInbox {
     if (package.routing case final routing?) {
       await _ref
           .read(routingPrefsProvider.notifier)
-          .update(
+          .adoptSynced(
             (p) => RoutingPrefs.fromJson(
               routing,
             ).copyWith(geoUpdatedAt: p.geoUpdatedAt),

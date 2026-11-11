@@ -17,6 +17,7 @@ import '../core/norm_config.dart';
 import '../core/profile.dart';
 import '../core/profile_import.dart';
 import '../core/profile_store.dart';
+import '../core/routing_prefs.dart';
 import '../core/rule_list_store.dart';
 import '../core/vpn_core.dart';
 import '../l10n/l10n.dart';
@@ -660,13 +661,58 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
   }
 
   void _syncOnTunnelInputs() {
-    ref.listen(routingPrefsProvider, (_, _) => syncTunnelConfig());
+    ref.listen(routingPrefsProvider, (before, after) {
+      if (before != null &&
+          ref.read(routingPrefsProvider.notifier).editedHere) {
+        applyRoutingPrefs(before, after);
+      } else {
+        syncTunnelConfig();
+      }
+    });
     ref.listen(ruleSetRevisionProvider, (_, _) => syncTunnelConfig());
     ref.listen(
       appPrefsProvider.select((p) => p.collectLogs),
       (_, _) => syncTunnelConfig(),
     );
   }
+
+  @visibleForTesting
+  Future<void> applyRoutingPrefs(
+    RoutingPrefs before,
+    RoutingPrefs after,
+  ) async {
+    final core = ref.read(vpnCoreProvider);
+    var p = state.active;
+    final selection = state.selectionId;
+    if (core.status != VpnStatus.connected ||
+        p == null ||
+        selection == null ||
+        _engineInputs(before) == _engineInputs(after)) {
+      return syncTunnelConfig();
+    }
+    state = state.copyWith(switching: true);
+    try {
+      p = await _resolveSelection(p, selection);
+      await core.reload(await buildNormConfig(p), selection);
+      state = state.copyWith(switching: false);
+    } catch (e) {
+      Log.e('applying settings to the live tunnel failed', '$e');
+      state = state.copyWith(
+        switching: false,
+        error: AppError(
+          L10n.current.profilesCouldntSwitch,
+          detail: L10n.current.profilesCouldntSwitchDetail,
+        ),
+      );
+    }
+  }
+
+  static String _engineInputs(RoutingPrefs p) => jsonEncode([
+    p.lanDirect,
+    p.defaultDns,
+    p.localDns,
+    [for (final c in p.corpDomains) c.toJson()],
+  ]);
 
   Future<void> syncTunnelConfig() async {
     var p = state.active;

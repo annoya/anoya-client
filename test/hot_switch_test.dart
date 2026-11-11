@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:anoya/core/corp_domains.dart';
 import 'package:anoya/core/ds.dart';
 import 'package:anoya/core/mihomo_tun_config.dart';
 import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/profile.dart';
+import 'package:anoya/core/routing_prefs.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/vpn_core.dart';
 import 'package:anoya/features/home_screen.dart';
@@ -289,6 +291,56 @@ void main() {
         expect(st.selectionId, 'p1-a');
       },
     );
+
+    test('a routing or DNS setting changed on a live tunnel is applied by a '
+        'reload', () async {
+      final (core, ctrl) = harness(VpnStatus.connected);
+      const before = RoutingPrefs();
+
+      await ctrl.applyRoutingPrefs(before, before.copyWith(lanDirect: false));
+      await ctrl.applyRoutingPrefs(
+        before,
+        before.copyWith(localDns: '10.0.0.1'),
+      );
+      await ctrl.applyRoutingPrefs(
+        before,
+        before.copyWith(
+          corpDomains: const [
+            CorpDomains(server: '10.0.0.2', domains: ['corp.example.com']),
+          ],
+        ),
+      );
+
+      expect(core.calls, ['reload', 'reload', 'reload']);
+    });
+
+    test('new geo databases or the same settings never reload a live '
+        'tunnel', () async {
+      final (core, ctrl) = harness(VpnStatus.connected);
+      const before = RoutingPrefs();
+
+      await ctrl.applyRoutingPrefs(
+        before,
+        before.copyWith(
+          geoipUrl: 'https://example.com/geoip.metadb',
+          geoUpdatedAt: DateTime(2026),
+        ),
+      );
+
+      expect(core.calls, [
+        'sync',
+      ], reason: 'a reload closes every open connection — not for nothing');
+    });
+
+    test('a setting changed with the tunnel down waits for the next '
+        'start', () async {
+      final (core, ctrl) = harness(VpnStatus.disconnected);
+      const before = RoutingPrefs();
+
+      await ctrl.applyRoutingPrefs(before, before.copyWith(lanDirect: false));
+
+      expect(core.calls, ['sync']);
+    });
 
     test('switching while disconnected never starts a tunnel', () async {
       final (core, ctrl) = harness(VpnStatus.disconnected);
