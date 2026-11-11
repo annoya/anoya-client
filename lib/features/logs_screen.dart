@@ -57,6 +57,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
           )
         : _SaveTo.file;
     if (where == null || !mounted) return;
+    final origin = shareOrigin(context);
 
     setState(() => _busy = true);
     try {
@@ -66,7 +67,10 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
       switch (where) {
         case _SaveTo.share:
           await SharePlus.instance.share(
-            ShareParams(files: [XFile(archive.path)]),
+            ShareParams(
+              files: [XFile(archive.path)],
+              sharePositionOrigin: origin,
+            ),
           );
         case _SaveTo.file:
           // The mobile plugin needs the bytes; desktop refuses them and only returns the path.

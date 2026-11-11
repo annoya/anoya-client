@@ -556,3 +556,9 @@ class _NoFlingScrollPhysics extends ClampingScrollPhysics {
     double velocity,
   ) => super.createBallisticSimulation(position, 0);
 }
+
+Rect shareOrigin(BuildContext context) {
+  final box = context.findRenderObject();
+  if (box is! RenderBox || !box.hasSize) return Rect.zero;
+  return box.localToGlobal(Offset.zero) & box.size;
+}

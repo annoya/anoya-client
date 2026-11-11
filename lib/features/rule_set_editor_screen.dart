@@ -121,6 +121,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       ],
     );
     if (to == null || !mounted) return;
+    final origin = shareOrigin(context);
     try {
       switch (to) {
         case _ExportTo.share:
@@ -130,7 +131,7 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
           final file = File('${dir.path}/$fileName');
           await file.writeAsString(encodeRuleSetFile(set), flush: true);
           await SharePlus.instance.share(
-            ShareParams(files: [XFile(file.path)]),
+            ShareParams(files: [XFile(file.path)], sharePositionOrigin: origin),
           );
         case _ExportTo.file:
           final bytes = utf8.encode(encodeRuleSetFile(set));
