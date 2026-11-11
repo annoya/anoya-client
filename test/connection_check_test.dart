@@ -186,6 +186,44 @@ void main() {
       },
     );
 
+    test(
+      'a check still in flight at a hot switch never reports on the new server',
+      () async {
+        final slow = Completer<void>();
+        final core = _FakeCore(answers: ['ms:120', 'ms:300'], firstWaits: slow);
+        final profiles = _DrivenProfiles();
+        final c = boot(core, profiles: profiles);
+        await Future<void>.delayed(Duration.zero);
+
+        core.emit(VpnStatus.connected);
+        await until(
+          () => core.probes == 1,
+          timeout: const Duration(seconds: 12),
+        );
+
+        profiles.set(
+          profiles.state.copyWith(selectedLocationId: 'b', switching: true),
+        );
+        await Future<void>.delayed(Duration.zero);
+        profiles.set(profiles.state.copyWith(switching: false));
+        await until(
+          () => c.read(connectionCheckProvider).last != null,
+          timeout: const Duration(seconds: 12),
+        );
+        expect(c.read(connectionCheckProvider).last?.delayMs, 300);
+
+        slow.complete();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(
+          c.read(connectionCheckProvider).last?.delayMs,
+          300,
+          reason: 'the late answer is about the server that was left',
+        );
+        expect(c.read(connectionCheckProvider).running, isFalse);
+      },
+    );
+
     test('switched off, nothing is sent to anybody', () async {
       final core = _FakeCore(answer: 'ms:120');
       final c = boot(core);
@@ -502,8 +540,14 @@ void main() {
 }
 
 class _FakeCore extends VpnCore {
-  _FakeCore({String? answer, List<String>? answers, this.bytes = '0:0'})
-    : answers = answers ?? [answer ?? 'ms:1'];
+  _FakeCore({
+    String? answer,
+    List<String>? answers,
+    this.bytes = '0:0',
+    this.firstWaits,
+  }) : answers = answers ?? [answer ?? 'ms:1'];
+
+  final Completer<void>? firstWaits;
 
   final String bytes;
 
@@ -527,6 +571,7 @@ class _FakeCore extends VpnCore {
     final answer =
         answers[probes < answers.length ? probes : answers.length - 1];
     probes++;
+    if (probes == 1) await firstWaits?.future;
     return answer;
   }
 

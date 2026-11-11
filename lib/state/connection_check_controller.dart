@@ -89,43 +89,55 @@ class ConnectionCheckController extends Notifier<ConnectionCheckState>
     await ConnectionCheckStore.save(next);
   }
 
-  void forget() => state = state.copyWith(clearLast: true, running: false);
+  int _run = 0;
+
+  void forget() {
+    _run++;
+    state = state.copyWith(clearLast: true, running: false);
+  }
 
   Future<void> runAfterConnect() async {
     await ready;
     if (!state.prefs.enabled || state.running) return;
+    final run = ++_run;
+    bool current() => ref.mounted && run == _run;
     state = state.copyWith(running: true);
     try {
       await Future<void>.delayed(kCheckWarmUp);
       for (var attempt = 1; attempt <= kCheckAttempts; attempt++) {
+        if (!current()) return;
         if (ref.read(vpnCoreProvider).status != VpnStatus.connected) return;
         final observed = await _observe();
+        if (!current()) return;
         if (observed != null) {
-          if (ref.mounted) state = state.copyWith(last: observed);
+          state = state.copyWith(last: observed);
           return;
         }
         final result = await _probe();
+        if (!current()) return;
         if (result.passed || attempt == kCheckAttempts) {
-          if (ref.mounted) state = state.copyWith(last: result);
+          state = state.copyWith(last: result);
           return;
         }
         await Future<void>.delayed(kCheckRetryGap);
       }
     } finally {
-      if (ref.mounted) state = state.copyWith(running: false);
+      if (current()) state = state.copyWith(running: false);
     }
   }
 
   Future<ConnectionCheck> run() async {
     await ready;
     if (state.running) return state.last ?? ConnectionCheck(at: DateTime.now());
+    final run = ++_run;
+    bool current() => ref.mounted && run == _run;
     state = state.copyWith(running: true);
     try {
       final result = await _probe();
-      if (ref.mounted) state = state.copyWith(last: result, running: false);
+      if (current()) state = state.copyWith(last: result, running: false);
       return result;
     } finally {
-      if (ref.mounted && state.running) state = state.copyWith(running: false);
+      if (current() && state.running) state = state.copyWith(running: false);
     }
   }
 
