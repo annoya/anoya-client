@@ -65,15 +65,11 @@ Future<Profile> importSubscriptionUrl(String name, String url) async {
   );
   if (parsed.providers.isNotEmpty) parsed = await withProxyProviders(parsed);
   final page = res.info.webPageUrl.isNotEmpty ? res.info.webPageUrl : url;
-  if (parsed.locations.isEmpty) {
-    throw SubscriptionFormatException(_whyNothingUsable(parsed), openUrl: page);
-  }
-  if (parsed.allPlaceholders && !res.deviceLimitReached) {
-    throw SubscriptionFormatException(
-      providerMessageInstead(parsed.placeholderLines),
-      openUrl: page,
-    );
-  }
+  requireServers(
+    parsed,
+    deviceLimitReached: res.deviceLimitReached,
+    openUrl: page,
+  );
   final title = res.info.title.trim();
   return Profile(
     id: newProfileId(),
@@ -99,17 +95,6 @@ Future<Profile> importSubscriptionUrl(String name, String url) async {
   );
 }
 
-AppError _whyNothingUsable(ParsedSubscription parsed) {
-  if (parsed.hasUnsupported) {
-    return noRunnableServers(parsed.total, parsed.unsupportedList);
-  }
-  return switch (parsed.format) {
-    SubscriptionFormat.unknown => kUnreadableSubscription,
-    SubscriptionFormat.wireguard => kUnreadableWireGuardConfig,
-    final format => emptySubscription(format.label),
-  };
-}
-
 Future<Profile> importText(String text, {String? name}) async {
   final parsed = await parseSubscriptionBodyInBackground(
     text,
@@ -122,7 +107,7 @@ Future<Profile> importText(String text, {String? name}) async {
         'No valid vless://vmess://trojan://ss:// link or subscription found.',
       );
     }
-    throw SubscriptionFormatException(_whyNothingUsable(parsed));
+    throw SubscriptionFormatException(whyNothingUsable(parsed));
   }
   final single = locations.length == 1;
   return Profile(

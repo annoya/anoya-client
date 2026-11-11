@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 
 import '../api/api_client.dart';
 import 'amnezia/amnezia_source.dart';
+import 'app_error.dart';
 import 'log.dart';
 import 'profile.dart';
 import 'profile_store.dart';
@@ -89,14 +90,7 @@ final class SubscriptionSource extends ConfigSource {
       source: Uri.parse(profile.subscriptionUrl!).host,
     );
     if (parsed.providers.isNotEmpty) parsed = await withProxyProviders(parsed);
-    if (parsed.locations.isEmpty) return profile;
-    if (parsed.allPlaceholders && !res.deviceLimitReached) {
-      Log.e(
-        'subscription refresh ignored',
-        '${Uri.parse(profile.subscriptionUrl!).host} sent placeholders only',
-      );
-      return profile;
-    }
+    requireServers(parsed, deviceLimitReached: res.deviceLimitReached);
     final asked = res.routingProbed || profile.providerRoutingProbed;
     final routing =
         res.routing?.routing ??
@@ -181,3 +175,33 @@ ConfigSource configSourceFor(Profile p) => switch (p.type) {
   ProfileType.amnezia => AmneziaConfigSource(p),
   ProfileType.link => LinkSource(p),
 };
+
+void requireServers(
+  ParsedSubscription parsed, {
+  required bool deviceLimitReached,
+  String? openUrl,
+}) {
+  if (parsed.locations.isEmpty) {
+    throw SubscriptionFormatException(
+      whyNothingUsable(parsed),
+      openUrl: openUrl,
+    );
+  }
+  if (parsed.allPlaceholders && !deviceLimitReached) {
+    throw SubscriptionFormatException(
+      providerMessageInstead(parsed.placeholderLines),
+      openUrl: openUrl,
+    );
+  }
+}
+
+AppError whyNothingUsable(ParsedSubscription parsed) {
+  if (parsed.hasUnsupported) {
+    return noRunnableServers(parsed.total, parsed.unsupportedList);
+  }
+  return switch (parsed.format) {
+    SubscriptionFormat.unknown => kUnreadableSubscription,
+    SubscriptionFormat.wireguard => kUnreadableWireGuardConfig,
+    final format => emptySubscription(format.label),
+  };
+}

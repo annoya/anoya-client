@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'package:anoya/core/app_error.dart';
 import 'package:anoya/core/config_source.dart';
 import 'package:anoya/core/log.dart';
 import 'package:anoya/core/norm_config.dart';
@@ -422,6 +423,35 @@ proxies:
       expect(p.locations, isEmpty);
       expect(p.unsupported, {'tuic': 2, 'ssr': 1});
       expect(p.total, 3, reason: 'the panel offered three, we can run none');
+    });
+
+    test('an import and a refresh are told the same thing', () {
+      expect(
+        () => requireServers(
+          parseSubscriptionBody('proxies: []\n'),
+          deviceLimitReached: false,
+        ),
+        throwsA(isA<SubscriptionFormatException>()),
+      );
+
+      final placeholders = parseSubscriptionBody(
+        'vless://u@0.0.0.0:1?security=none#Subscription%20expired',
+      );
+      expect(
+        () => requireServers(placeholders, deviceLimitReached: false),
+        throwsA(
+          isA<SubscriptionFormatException>().having(
+            (e) => e.error.line,
+            'what the provider wrote',
+            contains('Subscription expired'),
+          ),
+        ),
+      );
+      expect(
+        () => requireServers(placeholders, deviceLimitReached: true),
+        returnsNormally,
+        reason: 'a device limit has its own message',
+      );
     });
 
     test('entries that point nowhere are a message, not servers', () {
