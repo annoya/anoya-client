@@ -212,7 +212,12 @@ class DsPage extends StatelessWidget {
     final content =
         body ??
         ListView(
-          padding: kScrollPadding,
+          padding: dock.isEmpty
+              ? kScrollPadding +
+                    EdgeInsets.only(
+                      bottom: MediaQuery.paddingOf(context).bottom,
+                    )
+              : kScrollPadding,
           children: gapped([
             if (subtitle != null) DsSubtitle(subtitle!),
             ...children,
