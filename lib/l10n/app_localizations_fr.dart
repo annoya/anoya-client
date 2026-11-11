@@ -161,7 +161,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count configurations',
-      one: '1 configuration',
+      one: '$count configuration',
     );
     return '$_temp0';
   }
@@ -217,7 +217,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count jeux',
-      one: '1 jeu',
+      one: '$count jeu',
     );
     return '$_temp0';
   }
@@ -309,7 +309,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count secondes',
-      one: '1 seconde',
+      one: '$count seconde',
     );
     return '$_temp0';
   }
@@ -511,7 +511,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: 'il y a $count jours',
-      one: 'il y a 1 jour',
+      one: 'il y a $count jour',
     );
     return '$_temp0';
   }
@@ -522,7 +522,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: 'il y a $count heures',
-      one: 'il y a 1 heure',
+      one: 'il y a $count heure',
     );
     return '$_temp0';
   }
@@ -560,7 +560,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count domaines',
-      one: '1 domaine',
+      one: '$count domaine',
     );
     return '$_temp0';
   }
@@ -705,7 +705,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count serveurs',
-      one: '1 serveur',
+      one: '$count serveur',
     );
     return '$_temp0';
   }
@@ -727,7 +727,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: ' · $count groupes',
-      one: ' · 1 groupe',
+      one: ' · $count groupe',
     );
     return '$_temp0';
   }
@@ -899,7 +899,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count règles',
-      one: '1 règle',
+      one: '$count règle',
     );
     return '$_temp0';
   }
@@ -915,7 +915,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count listes indisponibles',
-      one: '1 liste indisponible',
+      one: '$count liste indisponible',
     );
     return '$_temp0';
   }
@@ -926,7 +926,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count ont besoin de leurs listes',
-      one: '1 a besoin de sa liste',
+      one: '$count a besoin de sa liste',
     );
     return '$_temp0';
   }
@@ -948,7 +948,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count règles en ont besoin',
-      one: '1 règle en a besoin',
+      one: '$count règle en a besoin',
     );
     return 'Désactivées · $_temp0';
   }
@@ -965,7 +965,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count listes',
-      one: '1 liste',
+      one: '$count liste',
     );
     return '$_temp0';
   }
@@ -1192,7 +1192,7 @@ class AppLocalizationsFr extends AppLocalizations {
       other:
           '$count règles supplémentaires n’ont pas pu être traduites pour cette app et ne sont pas appliquées.',
       one:
-          '1 règle supplémentaire n’a pas pu être traduite pour cette app et n’est pas appliquée.',
+          '$count règle supplémentaire n’a pas pu être traduite pour cette app et n’est pas appliquée.',
     );
     return 'Lecture seule. L’actualisation de l’abonnement les remplace. $_temp0';
   }
@@ -1472,7 +1472,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count règles avec des listes par lien',
-      one: '1 règle avec une liste par lien',
+      one: '$count règle avec une liste par lien',
     );
     return '$_temp0';
   }
@@ -1487,7 +1487,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count règles qu’Anoya ne peut pas exécuter',
-      one: '1 règle qu’Anoya ne peut pas exécuter',
+      one: '$count règle qu’Anoya ne peut pas exécuter',
     );
     return '$_temp0';
   }
@@ -1929,7 +1929,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: 'utilisé par $count configurations',
-      one: 'utilisé par 1 configuration',
+      one: 'utilisé par $count configuration',
     );
     return '$_temp0';
   }
@@ -2113,7 +2113,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: 'Activé · $count règles',
-      one: 'Activé · 1 règle',
+      one: 'Activé · $count règle',
     );
     return '$_temp0';
   }
@@ -2620,7 +2620,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count serveurs',
-      one: '1 serveur',
+      one: '$count serveur',
     );
     return 'Abonnement · $_temp0';
   }
@@ -2727,7 +2727,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count doublons supprimés',
-      one: '1 doublon supprimé',
+      one: '$count doublon supprimé',
     );
     return '$_temp0';
   }
@@ -2738,7 +2738,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count lignes non reconnues',
-      one: '1 ligne non reconnue',
+      one: '$count ligne non reconnue',
     );
     return '$_temp0';
   }
@@ -2776,7 +2776,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count domaines',
-      one: '1 domaine',
+      one: '$count domaine',
     );
     return '$_temp0';
   }
@@ -2787,7 +2787,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count mots-clés',
-      one: '1 mot-clé',
+      one: '$count mot-clé',
     );
     return '$_temp0';
   }
@@ -2798,7 +2798,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count motifs',
-      one: '1 motif',
+      one: '$count motif',
     );
     return '$_temp0';
   }
@@ -2809,7 +2809,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count sous-réseaux',
-      one: '1 sous-réseau',
+      one: '$count sous-réseau',
     );
     return '$_temp0';
   }
@@ -2820,7 +2820,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count processus',
-      one: '1 processus',
+      one: '$count processus',
     );
     return '$_temp0';
   }
@@ -2831,7 +2831,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count pays',
-      one: '1 pays',
+      one: '$count pays',
     );
     return '$_temp0';
   }
@@ -2842,7 +2842,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count catégories',
-      one: '1 catégorie',
+      one: '$count catégorie',
     );
     return '$_temp0';
   }
@@ -3111,7 +3111,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count listes de règles',
-      one: '1 liste de règles',
+      one: '$count liste de règles',
     );
     return '$name envoie chaque service par son propre chemin. Pour cela, l’app conserve $_temp0 de $hosts et les met à jour chaque semaine. Sans elles, vous choisissez un serveur et routez avec vos propres règles.';
   }
@@ -3139,7 +3139,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count groupes',
-      one: '1 groupe',
+      one: '$count groupe',
     );
     return 'Le reste via $server · $_temp0';
   }
@@ -3168,7 +3168,7 @@ class AppLocalizationsFr extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count règles de l’abonnement n’ont pas pu être appliquées.',
-      one: '1 règle de l’abonnement n’a pas pu être appliquée.',
+      one: '$count règle de l’abonnement n’a pas pu être appliquée.',
     );
     return '$_temp0';
   }

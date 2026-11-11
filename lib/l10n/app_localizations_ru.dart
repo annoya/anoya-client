@@ -163,7 +163,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count конфигурации',
       many: '$count конфигураций',
       few: '$count конфигурации',
-      one: '1 конфигурация',
+      one: '$count конфигурация',
     );
     return '$_temp0';
   }
@@ -218,7 +218,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count набора',
       many: '$count наборов',
       few: '$count набора',
-      one: '1 набор',
+      one: '$count набор',
     );
     return '$_temp0';
   }
@@ -313,7 +313,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count секунды',
       many: '$count секунд',
       few: '$count секунды',
-      one: '1 секунда',
+      one: '$count секунда',
     );
     return '$_temp0';
   }
@@ -516,7 +516,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count дня назад',
       many: '$count дней назад',
       few: '$count дня назад',
-      one: '1 день назад',
+      one: '$count день назад',
     );
     return '$_temp0';
   }
@@ -529,7 +529,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count часа назад',
       many: '$count часов назад',
       few: '$count часа назад',
-      one: '1 час назад',
+      one: '$count час назад',
     );
     return '$_temp0';
   }
@@ -569,7 +569,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count домена',
       many: '$count доменов',
       few: '$count домена',
-      one: '1 домен',
+      one: '$count домен',
     );
     return '$_temp0';
   }
@@ -717,7 +717,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count сервера',
       many: '$count серверов',
       few: '$count сервера',
-      one: '1 сервер',
+      one: '$count сервер',
     );
     return '$_temp0';
   }
@@ -730,7 +730,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$ours из $offered серверов',
       many: '$ours из $offered серверов',
       few: '$ours из $offered серверов',
-      one: '$ours из 1 сервера',
+      one: '$ours из $offered сервера',
     );
     return '$_temp0';
   }
@@ -743,7 +743,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: ' · $count группы',
       many: ' · $count групп',
       few: ' · $count группы',
-      one: ' · 1 группа',
+      one: ' · $count группа',
     );
     return '$_temp0';
   }
@@ -917,7 +917,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count правила',
       many: '$count правил',
       few: '$count правила',
-      one: '1 правило',
+      one: '$count правило',
     );
     return '$_temp0';
   }
@@ -935,7 +935,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count списка недоступны',
       many: '$count списков недоступны',
       few: '$count списка недоступны',
-      one: '1 список недоступен',
+      one: '$count список недоступен',
     );
     return '$_temp0';
   }
@@ -948,7 +948,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count требуют свои списки',
       many: '$count требуют свои списки',
       few: '$count требуют свои списки',
-      one: '1 требует свои списки',
+      one: '$count требует свои списки',
     );
     return '$_temp0';
   }
@@ -961,7 +961,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Загружаются $count списка…',
       many: 'Загружаются $count списков…',
       few: 'Загружаются $count списка…',
-      one: 'Загружается один список…',
+      one: 'Загружается $count список…',
     );
     return '$_temp0';
   }
@@ -974,7 +974,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count правилам они нужны',
       many: '$count правилам они нужны',
       few: '$count правилам они нужны',
-      one: '1 правилу они нужны',
+      one: '$count правилу они нужны',
     );
     return 'Выкл. · $_temp0';
   }
@@ -993,7 +993,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count списка',
       many: '$count списков',
       few: '$count списка',
-      one: '1 список',
+      one: '$count список',
     );
     return '$_temp0';
   }
@@ -1016,7 +1016,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Не удалось загрузить $count списка',
       many: 'Не удалось загрузить $count списков',
       few: 'Не удалось загрузить $count списка',
-      one: 'Не удалось загрузить один список',
+      one: 'Не удалось загрузить $count список',
     );
     return '$_temp0';
   }
@@ -1231,7 +1231,7 @@ class AppLocalizationsRu extends AppLocalizations {
       few:
           'Ещё $count правила не удалось перевести для этого приложения, они не применяются.',
       one:
-          'Ещё 1 правило не удалось перевести для этого приложения, оно не применяется.',
+          'Ещё $count правило не удалось перевести для этого приложения, оно не применяется.',
     );
     return 'Только чтение. Обновление подписки заменяет их. $_temp0';
   }
@@ -1326,7 +1326,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Подписка закончится через $days дня',
       many: 'Подписка закончится через $days дней',
       few: 'Подписка закончится через $days дня',
-      one: 'Подписка закончится через 1 день',
+      one: 'Подписка закончится через $days день',
       zero: 'Подписка заканчивается сегодня',
     );
     return '$_temp0';
@@ -1958,7 +1958,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count правила',
       many: '$count правил',
       few: '$count правила',
-      one: '1 правило',
+      one: '$count правило',
       zero: 'нет правил',
     );
     return '$_temp0';
@@ -1972,7 +1972,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'используется $count конфигурациями',
       many: 'используется $count конфигурациями',
       few: 'используется $count конфигурациями',
-      one: 'используется 1 конфигурацией',
+      one: 'используется $count конфигурацией',
     );
     return '$_temp0';
   }
@@ -2158,7 +2158,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Вкл. · $count правила',
       many: 'Вкл. · $count правил',
       few: 'Вкл. · $count правила',
-      one: 'Вкл. · 1 правило',
+      one: 'Вкл. · $count правило',
     );
     return '$_temp0';
   }
@@ -2263,7 +2263,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Ни один из $total серверов здесь не запустится',
       many: 'Ни один из $total серверов здесь не запустится',
       few: 'Ни один из $total серверов здесь не запустится',
-      one: 'Единственный сервер здесь не запустится',
+      one: 'Ни один сервер здесь не запустится',
     );
     return '$_temp0';
   }
@@ -2661,7 +2661,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count сервера',
       many: '$count серверов',
       few: '$count сервера',
-      one: '1 сервер',
+      one: '$count сервер',
     );
     return 'Подписка · $_temp0';
   }
@@ -2907,7 +2907,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count приложения',
       many: '$count приложений',
       few: '$count приложения',
-      one: '1 приложение',
+      one: '$count приложение',
       zero: 'Нет',
     );
     return '$_temp0';
