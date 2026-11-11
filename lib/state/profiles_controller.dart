@@ -279,16 +279,19 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
       selectedLocationId: _firstLocation(p),
     );
     final live = ref.read(vpnCoreProvider).status == VpnStatus.connected;
-    await _applySelection(undo: live ? before : null);
+    await _applySelection(undo: live ? before : null, reissue: true);
   }
 
   Future<void> selectLocation(String id) async {
     final before = state;
     state = state.copyWith(selectedLocationId: id);
-    await _applySelection(undo: before);
+    await _applySelection(undo: before, reissue: true);
   }
 
-  Future<void> _applySelection({ProfilesState? undo}) async {
+  Future<void> _applySelection({
+    ProfilesState? undo,
+    bool reissue = false,
+  }) async {
     final core = ref.read(vpnCoreProvider);
     var p = state.active;
     final selection = state.selectionId;
@@ -297,7 +300,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
 
     state = state.copyWith(switching: true);
     try {
-      p = await _resolveSelection(p, selection, force: true);
+      p = await _resolveSelection(p, selection, force: reissue);
     } catch (e) {
       Log.e('issuing the selected server failed', '$e');
       state = state.copyWith(

@@ -342,6 +342,42 @@ void main() {
       expect(core.calls, ['sync']);
     });
 
+    test('a routing change on a live Amnezia tunnel keeps the server it '
+        'has', () async {
+      final core = _RecordingCore(VpnStatus.connected);
+      final container = ProviderContainer(
+        overrides: [
+          vpnCoreProvider.overrideWithValue(core),
+          onDemandProvider.overrideWith(_QuietOnDemand.new),
+          profilesControllerProvider.overrideWith(
+            () => _FixedProfiles([
+              Profile(
+                id: 'am',
+                type: ProfileType.amnezia,
+                name: 'Amnezia',
+                locations: [
+                  Location(
+                    id: 'amnezia_de_awg',
+                    label: 'Germany',
+                    proxy: {'type': 'vless', 'server': '1.1.1.1'},
+                  ),
+                ],
+              ),
+            ], false),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final ctrl = container.read(profilesControllerProvider.notifier);
+
+      await ctrl.setRoutingEnabled('am', false);
+
+      expect(core.calls, [
+        'reload',
+      ], reason: 'only a new selection is worth a round trip to the gateway');
+      expect(container.read(profilesControllerProvider).notice, isNull);
+    });
+
     test('switching while disconnected never starts a tunnel', () async {
       final (core, ctrl) = harness(VpnStatus.disconnected);
 
