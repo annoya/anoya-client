@@ -24,6 +24,7 @@ import '../l10n/l10n.dart';
 import 'favorites_controller.dart';
 import 'on_demand_controller.dart';
 import 'profiles_state.dart';
+import 'provider_rule_lists.dart';
 import 'providers.dart';
 import 'ready_gate.dart';
 import 'routing_status.dart';
@@ -489,6 +490,7 @@ class ProfilesController extends Notifier<ProfilesState> with ReadyGate {
     final lists = _listsOf(_byId(profileId));
     if (lists.isEmpty) return const [];
     final status = await RuleListStore.sync(lists);
+    ref.invalidate(providerRuleListsProvider(profileId));
     if (profileId == state.activeId) await _applySelection();
     return status;
   }

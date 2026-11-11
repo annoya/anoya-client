@@ -29,7 +29,6 @@ class _SubscriptionRulesCardState extends ConsumerState<SubscriptionRulesCard> {
       await ref
           .read(profilesControllerProvider.notifier)
           .syncRuleLists(widget.profile.id);
-      ref.invalidate(providerRuleListsProvider(widget.profile.id));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

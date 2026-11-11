@@ -30,7 +30,6 @@ class _ProviderRoutingCardState extends ConsumerState<ProviderRoutingCard> {
       await ref
           .read(profilesControllerProvider.notifier)
           .setProviderRuleListsEnabled(widget.profile.id, enabled);
-      ref.invalidate(providerRuleListsProvider(widget.profile.id));
     } finally {
       if (mounted) setState(() => _downloading = false);
     }
@@ -174,7 +173,6 @@ class _RuleListFailureCardState extends ConsumerState<RuleListFailureCard> {
       await ref
           .read(profilesControllerProvider.notifier)
           .syncRuleLists(widget.profile.id);
-      ref.invalidate(providerRuleListsProvider(widget.profile.id));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
