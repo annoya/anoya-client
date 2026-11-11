@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../core/app_error.dart';
 import '../core/ds.dart';
 import '../core/log.dart';
+import '../core/oidc_login.dart';
 import '../core/theme.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
@@ -45,6 +46,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     try {
       final signedIn = await action();
       if (signedIn && mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+    } on OidcCancelled {
+      Log.i('sign in cancelled');
     } catch (e) {
       Log.e('sign in failed', '$e');
       if (mounted) showErrorDialog(context, describeError(e, subject: _host()));

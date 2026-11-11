@@ -15,6 +15,10 @@ class OidcException implements Exception {
   String toString() => message;
 }
 
+class OidcCancelled extends OidcException {
+  OidcCancelled() : super('Sign-in was cancelled.');
+}
+
 const _redirectUri = 'vpnclient://auth';
 const _callbackScheme = 'vpnclient';
 const _webAuth = MethodChannel('vpn/web_auth');
@@ -100,11 +104,11 @@ Future<String> _runWebAuth(String authUrl) async {
       'scheme': _callbackScheme,
     });
     if (callback == null || callback.isEmpty) {
-      throw OidcException('Sign-in was cancelled.');
+      throw OidcCancelled();
     }
     return callback;
   } on PlatformException catch (e) {
-    if (e.code == 'cancelled') throw OidcException('Sign-in was cancelled.');
+    if (e.code == 'cancelled') throw OidcCancelled();
     throw OidcException('Sign-in failed: ${e.message ?? e.code}');
   } on MissingPluginException {
     throw OidcException('Sign in with SSO is not available in this build.');
