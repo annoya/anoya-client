@@ -5,6 +5,7 @@ import 'package:yaml/yaml.dart';
 
 import 'norm_config.dart';
 import 'parsers/base64_text.dart';
+import 'parsers/happ_routing.dart';
 import 'rule_set.dart';
 
 const kRuleSetFormatVersion = 1;
@@ -177,47 +178,7 @@ const _happDnsKeys = {
 };
 
 RuleSetImport _fromHapp(Map<String, dynamic> doc, String fallbackName) {
-  final rules = <RoutingRule>[];
-  final unsupported = <String>{};
-  var dropped = 0;
-
-  List<String> list(String key) => [
-    for (final v in (doc[key] as List<dynamic>? ?? const []))
-      if (v is String && v.trim().isNotEmpty) v.trim(),
-  ];
-
-  void sites(String key, String action) {
-    for (final entry in list(key)) {
-      final rule = _happSite(entry, action);
-      if (rule != null) {
-        rules.add(rule);
-      } else {
-        dropped++;
-        unsupported.add(
-          entry.contains(':') ? '${entry.split(':').first}:' : entry,
-        );
-      }
-    }
-  }
-
-  void ips(String key, String action) {
-    for (final entry in list(key)) {
-      final rule = _happIp(entry, action);
-      if (rule != null) {
-        rules.add(rule);
-      } else {
-        dropped++;
-        unsupported.add(entry);
-      }
-    }
-  }
-
-  sites('BlockSites', 'block');
-  ips('BlockIp', 'block');
-  sites('ProxySites', 'proxy');
-  ips('ProxyIp', 'proxy');
-  sites('DirectSites', 'direct');
-  ips('DirectIp', 'direct');
+  final (:rules, :dropped) = happRules(doc);
 
   bool present(String key) {
     final v = doc[key];
@@ -231,57 +192,22 @@ RuleSetImport _fromHapp(Map<String, dynamic> doc, String fallbackName) {
   return RuleSetImport(
     source: RuleSetSource.happ,
     name: _nameOr(doc['Name'], fallbackName),
-    mode: doc['GlobalProxy'] == false ? RoutingMode.split : RoutingMode.full,
+    mode: happGlobalProxy(doc['GlobalProxy']) == false
+        ? RoutingMode.split
+        : RoutingMode.full,
     rules: mergeAdjacentRules(rules),
     skipped: [
       if (_happDnsKeys.any(present)) const SkippedPart(SkipReason.dns),
       if (present('Geoipurl') || present('Geositeurl'))
         const SkippedPart(SkipReason.geoUrls),
-      if (dropped > 0)
+      if (dropped.isNotEmpty)
         SkippedPart(
           SkipReason.unsupported,
-          count: dropped,
-          kinds: unsupported.take(4).toList(),
+          count: dropped.length,
+          kinds: dropped.toSet().take(4).toList(),
         ),
     ],
   );
-}
-
-RoutingRule? _happSite(String entry, String action) {
-  final colon = entry.indexOf(':');
-  final prefix = colon > 0 ? entry.substring(0, colon).toLowerCase() : '';
-  final value = colon > 0 ? entry.substring(colon + 1) : entry;
-  final type = switch (prefix) {
-    '' || 'domain' => 'domain-suffix',
-    'full' => 'domain-exact',
-    'keyword' => 'domain-keyword',
-    'regexp' => 'domain-regex',
-    'geosite' => 'geosite',
-    _ => null,
-  };
-  if (type == null) return null;
-  final rule = RoutingRule(
-    type: type,
-    values: [type == 'geosite' ? value.toLowerCase() : value],
-    action: action,
-  );
-  return rule.isValid ? rule : null;
-}
-
-RoutingRule? _happIp(String entry, String action) {
-  if (entry.toLowerCase().startsWith('geoip:')) {
-    final rule = RoutingRule(
-      type: 'geoip',
-      values: [entry.substring(6).toUpperCase()],
-      action: action,
-    );
-    return rule.isValid ? rule : null;
-  }
-  final cidr = entry.contains('/')
-      ? entry
-      : '$entry/${entry.contains(':') ? 128 : 32}';
-  final rule = RoutingRule(type: 'ip-cidr', values: [cidr], action: action);
-  return rule.isValid ? rule : null;
 }
 
 bool _isComment(String line) {

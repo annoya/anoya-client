@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../log.dart';
 import '../norm_config.dart';
 import 'base64_text.dart';
+import 'happ_routing.dart';
 
 class ProviderRouting {
   const ProviderRouting({required this.routing, this.skipped = 0});
@@ -85,38 +86,16 @@ ProviderRouting? parseHappRouting(String header) {
     final json = jsonDecode(decodeLooseBase64(payload));
     if (json is! Map) return null;
 
-    final rules = <RoutingRule>[];
-    var skipped = 0;
-    void addAll(String? key, String type, String action) {
-      for (final v in (json[key] as List? ?? const [])) {
-        final s = '$v'.trim();
-        if (s.isEmpty) continue;
-        final rule = type == 'domain'
-            ? _domainRule(s, action)
-            : _ipRule(s, action);
-        if (rule == null) {
-          skipped++;
-        } else {
-          rules.add(rule);
-        }
-      }
-    }
-
-    addAll('ProxySites', 'domain', 'proxy');
-    addAll('ProxyIp', 'ip', 'proxy');
-    addAll('DirectSites', 'domain', 'direct');
-    addAll('DirectIp', 'ip', 'direct');
-    addAll('BlockSites', 'domain', 'block');
-    addAll('BlockIp', 'ip', 'block');
-
-    final global = '${json['GlobalProxy']}'.toLowerCase() == 'true';
-    final mode = global ? 'full' : 'split';
+    final (:rules, :dropped) = happRules(json);
+    final mode = happGlobalProxy(json['GlobalProxy']) == true
+        ? 'full'
+        : 'split';
     if (rules.isEmpty) {
       return null;
     }
     return ProviderRouting(
       routing: Routing(mode: mode, rules: rules),
-      skipped: skipped,
+      skipped: dropped.length,
     );
   } catch (e) {
     Log.e('provider routing: unreadable happ routing', '$e');

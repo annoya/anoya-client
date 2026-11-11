@@ -7,7 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'package:anoya/core/device_identity.dart';
+import 'package:anoya/core/norm_config.dart';
 import 'package:anoya/core/parsers/provider_routing.dart';
+import 'package:anoya/core/rule_set.dart';
+import 'package:anoya/core/rule_set_transfer.dart';
 import 'package:anoya/core/subscription_fetch.dart';
 
 void main() {
@@ -123,10 +126,31 @@ void main() {
       final r = parseHappRouting('happ://routing/add/$payload')!;
       expect(r.routing.mode, 'split');
       expect(r.routing.rules.map((e) => '${e.action} ${e.type} ${e.value}'), [
-        'proxy domain-keyword ip.me',
+        'block domain-suffix ads.example',
+        'proxy domain-suffix ip.me',
         'direct ip-cidr 10.0.0.0/8',
-        'block domain-keyword ads.example',
       ]);
+    });
+
+    test('means what the same profile means as a rule set import', () {
+      final profile = {
+        'GlobalProxy': 'false',
+        'DirectSites': ['geosite:RU', 'example.ru'],
+        'DirectIp': ['2001:db8::1', 'geoip:ru'],
+        'ProxySites': ['full:ip.me'],
+        'BlockSites': ['keyword:ads'],
+      };
+      final payload = base64Url.encode(utf8.encode(jsonEncode(profile)));
+      final header = parseHappRouting('happ://routing/add/$payload')!;
+      final imported = parseRuleSetImport(jsonEncode(profile))!;
+
+      String line(RoutingRule r) => '${r.action} ${r.type} ${r.values}';
+      expect(
+        mergeAdjacentRules(header.routing.rules).map(line),
+        imported.rules.map(line),
+      );
+      expect(header.routing.mode, 'split');
+      expect(imported.mode, RoutingMode.split);
     });
 
     test('a direction with no exceptions is not shown as a policy', () {
