@@ -475,7 +475,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
                       kScrollPadding.left,
                       0,
                       kScrollPadding.right,
-                      kScrollPadding.bottom + (advanced ? kFabSize : 0),
+                      kScrollPadding.bottom +
+                          (advanced ? kFabSize : 0) +
+                          MediaQuery.paddingOf(context).bottom,
                     ),
                     child: empty
                         ? Center(child: emptyRulesNote(context, _mode))

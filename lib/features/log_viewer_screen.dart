@@ -118,7 +118,9 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       ],
       body: ListView(
         controller: _scroll,
-        padding: kScrollPadding,
+        padding:
+            kScrollPadding +
+            EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
         children: [
           if (_loading)
             const Center(child: DsSpinner())
