@@ -128,6 +128,8 @@ class DsRow extends StatelessWidget {
       autofocus: autofocus,
       child: row,
     );
+    final state = trailing.length == 1 ? trailing.single : null;
+    if (state is DsToggle || state is DsCheck) row = MergeSemantics(child: row);
     if (tooltip != null) row = Tooltip(message: tooltip!, child: row);
     return enabled
         ? Semantics(selected: selected, child: row)
@@ -308,8 +310,11 @@ class DsCheck extends StatelessWidget {
   final bool checked;
 
   @override
-  Widget build(BuildContext context) => DsAction(
-    glyph: checked ? Glyph.checkSquare : Glyph.square,
-    color: checked ? context.ds.accent : null,
+  Widget build(BuildContext context) => Semantics(
+    checked: checked,
+    child: DsAction(
+      glyph: checked ? Glyph.checkSquare : Glyph.square,
+      color: checked ? context.ds.accent : null,
+    ),
   );
 }

@@ -95,6 +95,7 @@ class SourceRow extends StatelessWidget {
       trailing: [
         DsAction(
           glyph: opens ? Glyph.externalLink : Glyph.copy,
+          tooltip: opens ? context.l10n.commonOpen : context.l10n.commonCopy,
           onPressed: act,
         ),
       ],

@@ -66,7 +66,7 @@ class _SubscriptionRulesCardState extends ConsumerState<SubscriptionRulesCard> {
               DsAction(
                 glyph: Glyph.refreshCw,
                 busy: _busy,
-                tooltip: l10n.configRuleLists,
+                tooltip: l10n.commonRefresh,
                 onPressed: _refresh,
               ),
             ],
