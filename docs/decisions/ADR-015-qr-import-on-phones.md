@@ -93,6 +93,11 @@ one step there.
 
 - `flutter_zxing` compiles zxing-cpp on every platform, desktops included,
   where it is never called. `camera` and `image_picker` come with it.
+- `image_picker` declares a Google Play services module (the backported photo
+  picker) in its manifest, and with it Play asks for Google services when the
+  app is installed. The app's manifest removes that entry: Android 13 and
+  later have the photo picker in the system, and older versions fall back to
+  the system's own image chooser.
 - Android declares `CAMERA` with `android.hardware.camera` not required, so the
   app still installs on devices without a camera. iOS carries
   `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription`.
