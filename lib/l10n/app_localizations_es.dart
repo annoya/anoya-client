@@ -1830,9 +1830,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las configuraciones que usan este conjunto volverán a Predeterminado.';
 
   @override
-  String get ruleSetDeleteTooltip => 'Eliminar conjunto de reglas';
-
-  @override
   String get ruleSetSimple => 'Sencillo';
 
   @override

@@ -1358,7 +1358,6 @@
     }
   },
   "ruleSetDeleteBody": "Configurations using this set fall back to Default.",
-  "ruleSetDeleteTooltip": "Delete rule set",
   "ruleSetSimple": "Simple",
   "ruleSetDownloadSiteLists": "Download the site lists first",
   "ruleSetDownloadSiteListsDetail": "Picking services needs the geo databases (~25 MB, one time)",

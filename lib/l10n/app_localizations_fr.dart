@@ -1825,9 +1825,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les configurations qui utilisent ce jeu reviendront à Par défaut.';
 
   @override
-  String get ruleSetDeleteTooltip => 'Supprimer le jeu de règles';
-
-  @override
   String get ruleSetSimple => 'Simple';
 
   @override

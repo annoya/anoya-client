@@ -240,12 +240,52 @@ void main() {
     );
     await pump(tester, const RuleSetEditorScreen('work'));
 
-    await tester.tap(find.byTooltip('Export'));
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Copy to clipboard'));
     await settle(tester);
 
     expect(clipboard, startsWith('anoya://ruleset/add/'));
+  });
+
+  testWidgets('a set is renamed from its actions, the built-in one too', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => RuleSetStore.save([
+        const RuleSet(id: RuleSet.defaultId, name: 'Default'),
+        const RuleSet(id: 'work', name: 'Work'),
+      ]),
+    );
+    await pump(tester, const RuleSetEditorScreen(RuleSet.defaultId));
+
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Delete'),
+      findsNothing,
+      reason: 'the built-in set can be renamed, never removed',
+    );
+    await tester.tap(find.text('Rename'));
+    await settle(tester);
+
+    await tester.enterText(find.byType(TextField).last, ' work');
+    await tester.pump();
+    expect(find.text('There is already a set named “Work”'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).last, 'Everything');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(DsDialogAction, 'Save'));
+    await settle(tester);
+
+    final set = (await tester.runAsync(
+      () => RuleSetStore.byId(RuleSet.defaultId),
+    ))!;
+    expect(set.name, 'Everything');
+    expect(set.isDefault, isTrue);
+    expect(find.text('Everything'), findsOneWidget);
   });
 
   testWidgets('a set too large for one QR code says so instead', (
@@ -272,7 +312,9 @@ void main() {
     );
     await pump(tester, const RuleSetEditorScreen('big'));
 
-    await tester.tap(find.byTooltip('Export'));
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export'));
     await tester.pumpAndSettle();
 
     expect(

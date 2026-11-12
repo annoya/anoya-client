@@ -1865,9 +1865,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Конфигурации с этим набором перейдут на стандартный.';
 
   @override
-  String get ruleSetDeleteTooltip => 'Удалить набор правил';
-
-  @override
   String get ruleSetSimple => 'Простой';
 
   @override

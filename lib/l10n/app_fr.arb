@@ -461,7 +461,6 @@
   "ruleSummary": "→ {target} {verb}.",
   "ruleSetDeleteTitle": "Supprimer « {name} » ?",
   "ruleSetDeleteBody": "Les configurations qui utilisent ce jeu reviendront à Par défaut.",
-  "ruleSetDeleteTooltip": "Supprimer le jeu de règles",
   "ruleSetSimple": "Simple",
   "ruleSetDownloadSiteLists": "Téléchargez d’abord les listes de sites",
   "ruleSetDownloadSiteListsDetail": "Choisir des services nécessite les bases géo (~25 Mo, une seule fois)",

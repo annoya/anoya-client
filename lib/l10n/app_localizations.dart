@@ -2870,12 +2870,6 @@ abstract class AppLocalizations {
   /// **'Configurations using this set fall back to Default.'**
   String get ruleSetDeleteBody;
 
-  /// No description provided for @ruleSetDeleteTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete rule set'**
-  String get ruleSetDeleteTooltip;
-
   /// No description provided for @ruleSetSimple.
   ///
   /// In en, this message translates to:

@@ -1809,9 +1809,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Configurations using this set fall back to Default.';
 
   @override
-  String get ruleSetDeleteTooltip => 'Delete rule set';
-
-  @override
   String get ruleSetSimple => 'Simple';
 
   @override

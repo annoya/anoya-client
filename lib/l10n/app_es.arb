@@ -461,7 +461,6 @@
   "ruleSummary": "→ {target} {verb}.",
   "ruleSetDeleteTitle": "¿Eliminar «{name}»?",
   "ruleSetDeleteBody": "Las configuraciones que usan este conjunto volverán a Predeterminado.",
-  "ruleSetDeleteTooltip": "Eliminar conjunto de reglas",
   "ruleSetSimple": "Sencillo",
   "ruleSetDownloadSiteLists": "Descarga primero las listas de sitios",
   "ruleSetDownloadSiteListsDetail": "Para elegir servicios hacen falta las bases de datos geográficas (~25 MB, una sola vez)",

@@ -461,7 +461,6 @@
   "ruleSummary": "→ {target}{verb}。",
   "ruleSetDeleteTitle": "删除“{name}”？",
   "ruleSetDeleteBody": "使用此规则集的配置将改用“默认”。",
-  "ruleSetDeleteTooltip": "删除规则集",
   "ruleSetSimple": "简易",
   "ruleSetDownloadSiteLists": "请先下载站点列表",
   "ruleSetDownloadSiteListsDetail": "选择服务需要地理数据库（约 25 MB，仅需一次）",

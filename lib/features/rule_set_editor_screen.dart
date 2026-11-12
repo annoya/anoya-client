@@ -74,6 +74,65 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     });
   }
 
+  Future<void> _more() async {
+    final l10n = context.l10n;
+    final action = await pickOption<_SetAction>(
+      context,
+      title: _name,
+      options: [
+        Option(
+          _SetAction.rename,
+          l10n.commonRename,
+          leading: const GlyphIcon(Glyph.pencil),
+        ),
+        Option(
+          _SetAction.export,
+          l10n.ruleSetExport,
+          leading: const GlyphIcon(Glyph.share),
+        ),
+        if (!_isDefault)
+          Option(
+            _SetAction.delete,
+            l10n.commonDelete,
+            leading: const GlyphIcon(Glyph.trash),
+          ),
+      ],
+    );
+    if (action == null || !mounted) return;
+    switch (action) {
+      case _SetAction.rename:
+        await _rename();
+      case _SetAction.export:
+        await _export();
+      case _SetAction.delete:
+        await _deleteSet();
+    }
+  }
+
+  Future<void> _rename() async {
+    final l10n = context.l10n;
+    final others = [
+      for (final s in await RuleSetStore.load())
+        if (s.id != widget.setId) s.name,
+    ];
+    if (!mounted) return;
+    final typed = await promptText(
+      context,
+      title: l10n.commonRename,
+      label: l10n.commonName,
+      confirmLabel: l10n.commonSave,
+      initial: _name,
+      errorOf: (value) => switch (takenRuleSetName(others, value)) {
+        final taken? => l10n.ruleSetNameTaken(taken),
+        null => null,
+      },
+    );
+    final name = typed?.trim() ?? '';
+    if (name.isEmpty || name == _name || !mounted) return;
+    setState(() => _name = name);
+    await _persist();
+  }
+
   Future<void> _export() async {
     final l10n = context.l10n;
     final set = RuleSet(
@@ -169,7 +228,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
     final sets = await RuleSetStore.load();
     final updated = [
       for (final s in sets)
-        s.id == widget.setId ? s.copyWith(mode: _mode, rules: _rules) : s,
+        s.id == widget.setId
+            ? s.copyWith(name: _name, mode: _mode, rules: _rules)
+            : s,
     ];
     await RuleSetStore.save(updated);
     revision.bump();
@@ -378,15 +439,9 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
       actions: [
         if (!_loading)
           DsNavButton(
-            glyph: Glyph.share,
-            tooltip: l10n.ruleSetExport,
-            onPressed: _export,
-          ),
-        if (!_isDefault && !_loading)
-          DsNavButton(
-            glyph: Glyph.trash,
-            tooltip: l10n.ruleSetDeleteTooltip,
-            onPressed: _deleteSet,
+            glyph: Glyph.ellipsisVertical,
+            tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
+            onPressed: _more,
           ),
       ],
       fab: advanced
@@ -709,5 +764,7 @@ class _CatalogRow extends StatelessWidget {
     );
   }
 }
+
+enum _SetAction { rename, export, delete }
 
 enum _ExportTo { share, file, copy, qr }

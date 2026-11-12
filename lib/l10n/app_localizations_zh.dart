@@ -1757,9 +1757,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ruleSetDeleteBody => '使用此规则集的配置将改用“默认”。';
 
   @override
-  String get ruleSetDeleteTooltip => '删除规则集';
-
-  @override
   String get ruleSetSimple => '简易';
 
   @override
