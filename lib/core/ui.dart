@@ -317,6 +317,8 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
 
   bool get _grouped => widget.onToggleFavorite != null || _favorites.isNotEmpty;
 
+  int get _total => widget.options.length + widget.pinned.length;
+
   bool _matches(Option<T> o) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return true;
@@ -382,10 +384,11 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     final favorites = shown.where((o) => _favorites.contains(o.value)).toList();
     final rest = shown.where((o) => !_favorites.contains(o.value)).toList();
     final searching = _query.trim().isNotEmpty;
+    final nothing = pinnedShown.isEmpty ? [_nothing(l10n)] : const <Widget>[];
 
     return DsSheet(
       title: widget.title,
-      header: widget.options.length >= kSearchThreshold
+      header: _total >= kSearchThreshold
           ? DsSearchField(
               hint: l10n.commonSearch,
               onChanged: (v) => setState(() => _query = v),
@@ -399,10 +402,10 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
             pinnedShown.map((o) => _row(o, favouritable: false)),
           ),
         if (!_grouped)
-          if (shown.isEmpty) _nothing(l10n) else _group(null, shown.map(_row))
+          if (shown.isEmpty) ...nothing else _group(null, shown.map(_row))
         else if (searching)
           if (shown.isEmpty)
-            _nothing(l10n)
+            ...nothing
           else ...[
             if (favorites.isNotEmpty)
               _group(l10n.commonFavorites, favorites.map(_row)),
@@ -422,11 +425,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
   }
 
   Widget _nothing(AppLocalizations l10n) => _NothingMatches(
-    text: l10n.uiNoMatches(
-      widget.itemNoun,
-      _query.trim(),
-      widget.options.length,
-    ),
+    text: l10n.uiNoMatches(widget.itemNoun, _query.trim(), _total),
   );
 }
 
