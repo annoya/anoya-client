@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -171,6 +172,37 @@ func TestSubscriptionRuleGroupsAreWatchedAndCountedToo(t *testing.T) {
 	}
 	if closed := closeTrackedConnections(watchedGroup); closed != 1 {
 		t.Fatalf("a recovery closed %d connection(s), want only the proxied one", closed)
+	}
+}
+
+func TestASwitchOfServersLeavesDirectConnectionsAlone(t *testing.T) {
+	trackConn(t, "proxy", watchedGroup)
+	trackConn(t, "p0", "g1")
+	trackConn(t, "DIRECT", "g2")
+	trackConn(t, "DIRECT")
+	trackConn(t, "REJECT")
+	if closed := closeTrackedConnections(anyServer); closed != 3 {
+		t.Fatalf("closed %d connection(s), want the three a server or a group carries", closed)
+	}
+}
+
+func TestOnlyAChangeOutsideTheServersCountsAsARoutingChange(t *testing.T) {
+	config := func(server, rule string) string {
+		return "mode: rule\n" +
+			"dns:\n  enable: true\n" +
+			"proxies:\n  - name: proxy\n    type: vless\n    server: " + server + "\n" +
+			"proxy-groups:\n  - name: PROXY\n    type: select\n    proxies:\n      - proxy\n" +
+			"rules:\n  - " + rule + "\n  - MATCH,PROXY\n"
+	}
+	before := config("1.1.1.1", "DOMAIN-SUFFIX,corp.example,DIRECT")
+	if routingOf(before) != routingOf(config("2.2.2.2", "DOMAIN-SUFFIX,corp.example,DIRECT")) {
+		t.Fatal("another server read as a routing change")
+	}
+	if routingOf(before) == routingOf(config("1.1.1.1", "DOMAIN-SUFFIX,corp.example,PROXY")) {
+		t.Fatal("another rule read as the same routing")
+	}
+	if strings.Contains(routingOf(before), "1.1.1.1") || !strings.Contains(routingOf(before), "MATCH,PROXY") {
+		t.Fatalf("routing = %q, want the config without its servers", routingOf(before))
 	}
 }
 

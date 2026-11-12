@@ -112,16 +112,34 @@ func Recover(reason string) error {
 func reload(fd int, ownDevice bool, configYAML string, through string) error {
 	previous := tunnel.Proxies()
 	defer func() { closeReplacedProxies(previous, tunnel.Proxies()) }()
+	onlyServersChanged := running != nil && routingOf(running.yaml) == routingOf(configYAML)
 	cfg, err := applyConfig(fd, ownDevice, configYAML)
 	if err != nil {
 		journal("engine reload failed: %s", err)
 		return err
 	}
 	running = &appliedConfig{fd: fd, ownDevice: ownDevice, yaml: configYAML}
+	if through == "" && onlyServersChanged {
+		through = anyServer
+	}
 	log.Infoln("[hot switch] redialing %d live connection(s) through the new server",
 		closeTrackedConnections(through))
 	go logProxyEgress(cfg)
 	return nil
+}
+
+func routingOf(configYAML string) string {
+	var kept []string
+	skipping := false
+	for _, line := range strings.Split(configYAML, "\n") {
+		if line != "" && line[0] != ' ' && line[0] != '-' {
+			skipping = strings.HasPrefix(line, "proxies:") || strings.HasPrefix(line, "proxy-groups:")
+		}
+		if !skipping {
+			kept = append(kept, line)
+		}
+	}
+	return strings.Join(kept, "\n")
 }
 
 type refusedError struct{ error }

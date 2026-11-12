@@ -94,7 +94,11 @@ tunnel down.
 **After a successful reload the engine closes the connections it is proxying.**
 Applying a config only changes where *new* connections go; browsers and system
 services hold connections open for minutes, so without this the switch appears
-to do nothing.
+to do nothing. When the new config differs from the running one only in its
+servers and groups, connections a rule sent straight out — the LAN, a bank, a
+corporate domain — are left open: the switch did not touch them. When anything
+else differs (rules, DNS), every connection is closed, since any of them may
+now belong on another route.
 
 **A reload closes the outbounds it replaced.** mihomo leaves them to a GC
 finalizer, which in practice does not run for minutes: a replaced WireGuard

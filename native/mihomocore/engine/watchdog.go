@@ -107,12 +107,17 @@ func watchedSamples() []connSample {
 
 var localOutbounds = []string{"DIRECT", "REJECT", "REJECT-DROP", "PASS", "COMPATIBLE"}
 
+const anyServer = "\x00any server"
+
 // Subscription rules name their own groups, so nothing there passes through watchedGroup.
 func carries(chain C.Chain, name string) bool {
-	if name != watchedGroup {
-		return slices.Contains(chain, name)
+	switch name {
+	case watchedGroup:
+		return len(chain) > 0 && !slices.Contains(localOutbounds, chain.Last())
+	case anyServer:
+		return len(chain) > 1 || carries(chain, watchedGroup)
 	}
-	return len(chain) > 0 && !slices.Contains(localOutbounds, chain.Last())
+	return slices.Contains(chain, name)
 }
 
 func destination(m *C.Metadata) string {
