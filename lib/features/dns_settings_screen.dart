@@ -117,6 +117,8 @@ class DnsSettingsScreen extends ConsumerWidget {
       autocorrect: false,
       resetLabel: resetLabel,
       resetValue: resetValue,
+      errorOf: (value) =>
+          value.trim().isEmpty ? null : dnsDefaultError(value.trim()),
     );
     if (typed == null || !context.mounted) return null;
     final error = dnsDefaultError(typed.trim());

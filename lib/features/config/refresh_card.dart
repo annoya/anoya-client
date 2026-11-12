@@ -50,16 +50,15 @@ class _RefreshEveryButton extends ConsumerWidget {
       autocorrect: false,
       resetLabel: l10n.configRefreshAsSubscriptionAsks,
       resetValue: '',
+      errorOf: (value) {
+        final v = value.trim();
+        return v.isEmpty || (int.tryParse(v) ?? 0) > 0
+            ? null
+            : l10n.configRefreshEnterWholeHours;
+      },
     );
     if (typed == null) return;
-    final trimmed = typed.trim();
-    final hours = trimmed.isEmpty ? null : int.tryParse(trimmed);
-    if (trimmed.isNotEmpty && (hours == null || hours <= 0)) {
-      if (context.mounted) {
-        showToast(context, l10n.configRefreshEnterWholeHours);
-      }
-      return;
-    }
+    final hours = int.tryParse(typed.trim());
     await ref
         .read(profilesControllerProvider.notifier)
         .setRefreshHours(profile.id, hours);

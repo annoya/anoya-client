@@ -452,6 +452,28 @@ void main() {
       expect(find.textContaining('the tunnel has to be up'), findsOneWidget);
     });
 
+    testWidgets('an address that will not do is refused while it can still be '
+        'corrected', (tester) async {
+      await pump(tester, _FakeCore(answer: 'ms:120'));
+      await tester.pump();
+
+      await tester.ensureVisible(find.text('Test URL'));
+      await tester.tap(find.text('Test URL'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'ftp://example.com/204');
+      await tester.pump();
+
+      expect(
+        find.text('Enter an http:// or https:// address.'),
+        findsOneWidget,
+      );
+      final save = tester.widget<DsDialogAction>(
+        find.widgetWithText(DsDialogAction, 'Save'),
+      );
+      expect(save.onPressed, isNull);
+      expect(find.text('ftp://example.com/204'), findsOneWidget);
+    });
+
     testWidgets('the answer stays on the screen as a line to compare with', (
       tester,
     ) async {

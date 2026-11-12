@@ -128,6 +128,13 @@ class AdvancedConnectionScreen extends ConsumerWidget {
     ConnectionCheckPrefs prefs,
   ) async {
     final l10n = context.l10n;
+    bool isWebUrl(String value) {
+      final uri = Uri.tryParse(value);
+      return value.isNotEmpty &&
+          uri != null &&
+          (uri.isScheme('http') || uri.isScheme('https'));
+    }
+
     final typed = await promptText(
       context,
       title: l10n.advancedTestUrl,
@@ -137,13 +144,13 @@ class AdvancedConnectionScreen extends ConsumerWidget {
       autocorrect: false,
       resetLabel: l10n.advancedUseDefault,
       resetValue: ConnectionCheckPrefs.defaultUrl,
+      errorOf: (value) => value.trim().isEmpty || isWebUrl(value.trim())
+          ? null
+          : l10n.advancedInvalidUrl,
     );
     if (typed == null) return;
     final trimmed = typed.trim();
-    final uri = Uri.tryParse(trimmed);
-    if (trimmed.isEmpty ||
-        uri == null ||
-        !uri.isScheme('http') && !uri.isScheme('https')) {
+    if (!isWebUrl(trimmed)) {
       if (context.mounted) {
         showToast(context, l10n.advancedInvalidUrl);
       }

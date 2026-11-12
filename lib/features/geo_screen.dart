@@ -74,6 +74,13 @@ class _GeoScreenState extends ConsumerState<GeoScreen> {
       resetValue: geoip
           ? RoutingPrefs.defaultGeoipUrl
           : RoutingPrefs.defaultGeositeUrl,
+      errorOf: (value) {
+        final uri = Uri.tryParse(value.trim());
+        return value.trim().isEmpty ||
+                uri != null && (uri.isScheme('http') || uri.isScheme('https'))
+            ? null
+            : l10n.advancedInvalidUrl;
+      },
     );
     final trimmed = url?.trim() ?? '';
     if (trimmed.isEmpty) return;
