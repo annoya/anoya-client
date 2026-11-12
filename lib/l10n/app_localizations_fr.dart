@@ -3327,4 +3327,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Les noms internes sont demandés au serveur DNS de l’entreprise et ouverts hors du VPN avec leurs vraies adresses. Ils l’emportent sur les deux réglages ci-dessus.';
+
+  @override
+  String get ruleRemoved => 'Règle supprimée';
+
+  @override
+  String get commonUndo => 'Annuler';
 }

@@ -830,5 +830,7 @@
   "dnsSettingsLocalNote": "Busca las direcciones de los sitios que tus reglas envían fuera de la VPN, consultando directamente desde esta red, para que elijan un servidor cercano a ti y no al servidor VPN. Tu red ve estos nombres; ya ve adónde va ese tráfico. Desactivado: usan el mismo DNS que todo lo demás.",
   "dnsSettingsLocalOffSubtitle": "los sitios fuera de la VPN usan el DNS de la configuración",
   "dnsSettingsLocalCustomSubtitle": "el de tu proveedor o uno local",
-  "dnsSettingsCorpNote": "Los nombres internos se consultan al servidor DNS de la empresa y se abren fuera de la VPN con sus direcciones reales. Tienen prioridad sobre los dos ajustes anteriores."
+  "dnsSettingsCorpNote": "Los nombres internos se consultan al servidor DNS de la empresa y se abren fuera de la VPN con sus direcciones reales. Tienen prioridad sobre los dos ajustes anteriores.",
+  "ruleRemoved": "Regla eliminada",
+  "commonUndo": "Deshacer"
 }

@@ -830,5 +830,7 @@
   "dnsSettingsLocalNote": "为规则绕过 VPN 的网站查找地址，直接从当前网络查询，使其选择离你近的服务器，而不是离 VPN 服务器近的。你的网络能看到这些域名——它本来就能看到这些流量去往何处。关闭时，它们使用与其他流量相同的 DNS。",
   "dnsSettingsLocalOffSubtitle": "不经过 VPN 的网站使用配置的 DNS",
   "dnsSettingsLocalCustomSubtitle": "运营商的或本地的解析器",
-  "dnsSettingsCorpNote": "内部域名向公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。它优先于上面两项设置。"
+  "dnsSettingsCorpNote": "内部域名向公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。它优先于上面两项设置。",
+  "ruleRemoved": "规则已删除",
+  "commonUndo": "撤销"
 }

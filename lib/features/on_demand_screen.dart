@@ -84,8 +84,18 @@ class OnDemandScreen extends ConsumerWidget {
         DsAction(
           glyph: Glyph.trash,
           tooltip: l10n.commonRemove,
-          onPressed: () =>
-              ref.read(onDemandProvider.notifier).removeRule(rule.id),
+          onPressed: () async {
+            final toasts = ScaffoldMessenger.of(context);
+            final ctrl = ref.read(onDemandProvider.notifier);
+            final before = ref.read(onDemandProvider);
+            await ctrl.removeRule(rule.id);
+            showToastWith(
+              toasts,
+              l10n.ruleRemoved,
+              actionLabel: l10n.commonUndo,
+              onAction: () => ctrl.restoreRules(before),
+            );
+          },
         ),
         ReorderableDragStartListener(
           index: index,

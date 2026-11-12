@@ -218,6 +218,53 @@ void main() {
     expect(find.text('domain-suffix · 2 domains'), findsOneWidget);
   });
 
+  testWidgets('a removed rule comes back where it was on Undo', (tester) async {
+    await tester.runAsync(
+      () => RuleSetStore.save([
+        const RuleSet(id: RuleSet.defaultId, name: 'Default'),
+        const RuleSet(
+          id: 'work',
+          name: 'Work',
+          editor: RuleEditor.advanced,
+          rules: [
+            RoutingRule(
+              type: 'domain-suffix',
+              values: ['first.example'],
+              action: 'proxy',
+            ),
+            RoutingRule(
+              type: 'domain-suffix',
+              values: ['second.example'],
+              action: 'direct',
+            ),
+            RoutingRule(
+              type: 'domain-keyword',
+              values: ['third'],
+              action: 'block',
+            ),
+          ],
+        ),
+      ]),
+    );
+    await pump(tester, const RuleSetEditorScreen('work'));
+    Future<List<String>> stored() async => [
+      for (final r in (await tester.runAsync(
+        () => RuleSetStore.byId('work'),
+      ))!.rules)
+        r.value,
+    ];
+
+    await tester.tap(find.byTooltip('Remove').at(1));
+    await settle(tester);
+    expect(await stored(), ['first.example', 'third']);
+    expect(find.text('Rule removed'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await settle(tester);
+    expect(await stored(), ['first.example', 'second.example', 'third']);
+    expect(find.text('second.example'), findsOneWidget);
+  });
+
   testWidgets('export copies an anoya link that imports back whole', (
     tester,
   ) async {

@@ -3294,4 +3294,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.';
+
+  @override
+  String get ruleRemoved => 'Rule removed';
+
+  @override
+  String get commonUndo => 'Undo';
 }

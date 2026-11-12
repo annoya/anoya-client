@@ -3378,4 +3378,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Внутренние имена спрашиваются у DNS-сервера компании и открываются мимо VPN по настоящим адресам. Эта настройка сильнее двух других.';
+
+  @override
+  String get ruleRemoved => 'Правило удалено';
+
+  @override
+  String get commonUndo => 'Отменить';
 }

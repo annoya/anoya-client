@@ -218,25 +218,66 @@ class DsProgress extends StatelessWidget {
   }
 }
 
-void showToast(BuildContext context, String message) =>
-    showToastWith(ScaffoldMessenger.of(context), message);
+void showToast(
+  BuildContext context,
+  String message, {
+  String? actionLabel,
+  VoidCallback? onAction,
+}) => showToastWith(
+  ScaffoldMessenger.of(context),
+  message,
+  actionLabel: actionLabel,
+  onAction: onAction,
+);
 
-void showToastWith(ScaffoldMessengerState messenger, String message) {
+void showToastWith(
+  ScaffoldMessengerState messenger,
+  String message, {
+  String? actionLabel,
+  VoidCallback? onAction,
+}) {
+  final text = MouseRegion(
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: messenger.hideCurrentSnackBar,
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
+      ),
+    ),
+  );
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(
     SnackBar(
-      duration: const Duration(seconds: 3),
-      content: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: messenger.hideCurrentSnackBar,
-          child: SizedBox(
-            width: double.infinity,
-            child: Text(message, maxLines: 3, overflow: TextOverflow.ellipsis),
-          ),
-        ),
-      ),
+      duration: Duration(seconds: actionLabel == null ? 3 : 5),
+      content: actionLabel == null
+          ? text
+          : Row(
+              children: [
+                Expanded(child: text),
+                Semantics(
+                  button: true,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        messenger.hideCurrentSnackBar();
+                        onAction?.call();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          actionLabel,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     ),
   );
 }

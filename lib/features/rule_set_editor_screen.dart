@@ -419,8 +419,34 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
   }
 
   Future<void> _removeRule(int index) async {
+    final l10n = context.l10n;
+    final toasts = ScaffoldMessenger.of(context);
+    final revision = ref.read(ruleSetRevisionProvider.notifier);
+    final removed = _rules[index];
     setState(() => _rules.removeAt(index));
     await _persist();
+    showToastWith(
+      toasts,
+      l10n.ruleRemoved,
+      actionLabel: l10n.commonUndo,
+      onAction: () async {
+        if (mounted) {
+          setState(() => _rules.insert(index.clamp(0, _rules.length), removed));
+          return _persist();
+        }
+        await RuleSetStore.save([
+          for (final s in await RuleSetStore.load())
+            if (s.id == widget.setId)
+              s.copyWith(
+                rules: [...s.rules]
+                  ..insert(index.clamp(0, s.rules.length), removed),
+              )
+            else
+              s,
+        ]);
+        revision.bump();
+      },
+    );
   }
 
   Future<void> _reorder(int oldIndex, int newIndex) async {

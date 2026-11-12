@@ -5089,6 +5089,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.'**
   String get dnsSettingsCorpNote;
+
+  /// No description provided for @ruleRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule removed'**
+  String get ruleRemoved;
+
+  /// No description provided for @commonUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get commonUndo;
 }
 
 class _AppLocalizationsDelegate

@@ -3135,4 +3135,10 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       '内部域名向公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。它优先于上面两项设置。';
+
+  @override
+  String get ruleRemoved => '规则已删除';
+
+  @override
+  String get commonUndo => '撤销';
 }

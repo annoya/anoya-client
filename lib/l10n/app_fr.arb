@@ -830,5 +830,7 @@
   "dnsSettingsLocalNote": "Trouve les adresses des sites que vos règles envoient hors du VPN, en interrogeant directement depuis ce réseau, pour qu’ils choisissent un serveur proche de vous plutôt que du serveur VPN. Votre réseau voit ces noms — il voit déjà où va ce trafic. Désactivé : ils utilisent le même DNS que le reste.",
   "dnsSettingsLocalOffSubtitle": "les sites hors du VPN utilisent le DNS de la configuration",
   "dnsSettingsLocalCustomSubtitle": "celui de votre fournisseur ou un résolveur local",
-  "dnsSettingsCorpNote": "Les noms internes sont demandés au serveur DNS de l’entreprise et ouverts hors du VPN avec leurs vraies adresses. Ils l’emportent sur les deux réglages ci-dessus."
+  "dnsSettingsCorpNote": "Les noms internes sont demandés au serveur DNS de l’entreprise et ouverts hors du VPN avec leurs vraies adresses. Ils l’emportent sur les deux réglages ci-dessus.",
+  "ruleRemoved": "Règle supprimée",
+  "commonUndo": "Annuler"
 }

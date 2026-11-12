@@ -3325,4 +3325,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Los nombres internos se consultan al servidor DNS de la empresa y se abren fuera de la VPN con sus direcciones reales. Tienen prioridad sobre los dos ajustes anteriores.';
+
+  @override
+  String get ruleRemoved => 'Regla eliminada';
+
+  @override
+  String get commonUndo => 'Deshacer';
 }

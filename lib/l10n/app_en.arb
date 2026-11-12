@@ -2153,5 +2153,7 @@
   "dnsSettingsLocalNote": "Finds addresses for sites your rules send past the VPN, asked directly from this network, so they pick a server near you rather than near the VPN server. Your network sees these names — it already sees where that traffic goes. Off: they use the same DNS as everything else.",
   "dnsSettingsLocalOffSubtitle": "sites outside the VPN use the configuration’s DNS",
   "dnsSettingsLocalCustomSubtitle": "your provider’s or a local resolver",
-  "dnsSettingsCorpNote": "Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above."
+  "dnsSettingsCorpNote": "Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.",
+  "ruleRemoved": "Rule removed",
+  "commonUndo": "Undo"
 }
