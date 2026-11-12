@@ -99,23 +99,12 @@ class _CorpDomainDialogState extends State<_CorpDomainDialog> {
     super.dispose();
   }
 
-  void _save() {
-    final l10n = context.l10n;
-    final parsed = parseCorpDomains(_domains.text);
-    if (parsed.invalid != null) {
-      showToast(context, l10n.corpDomainsErrorDomain(parsed.invalid!));
-      return;
-    }
-    final server = _server.text.trim();
-    final error = dnsDefaultError(server);
-    if (error != null) {
-      showToast(context, error);
-      return;
-    }
-    Navigator.of(
-      context,
-    ).pop(CorpDomains(domains: parsed.domains, server: server));
-  }
+  void _save() => Navigator.of(context).pop(
+    CorpDomains(
+      domains: parseCorpDomains(_domains.text).domains,
+      server: _server.text.trim(),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +112,15 @@ class _CorpDomainDialogState extends State<_CorpDomainDialog> {
     final ds = context.ds;
     final parsed = parseCorpDomains(_domains.text);
     final server = _server.text.trim();
-    final ready = parsed.domains.isNotEmpty && server.isNotEmpty;
+    final domainError = parsed.invalid == null
+        ? null
+        : l10n.corpDomainsErrorDomain(parsed.invalid!);
+    final serverError = server.isEmpty ? null : dnsDefaultError(server);
+    final ready =
+        parsed.domains.isNotEmpty &&
+        server.isNotEmpty &&
+        domainError == null &&
+        serverError == null;
     return DsDialog(
       title: l10n.settingsCorpDomains,
       content: Column(
@@ -138,6 +135,7 @@ class _CorpDomainDialogState extends State<_CorpDomainDialog> {
             decoration: InputDecoration(
               labelText: l10n.corpDomainsDomainsLabel,
               hintText: 'corp.local',
+              errorText: domainError,
             ),
           ),
           const SizedBox(height: 8),
@@ -148,12 +146,13 @@ class _CorpDomainDialogState extends State<_CorpDomainDialog> {
             decoration: InputDecoration(
               labelText: l10n.corpDomainsServerLabel,
               hintText: '10.0.0.53',
+              errorText: serverError,
             ),
             onSubmitted: (_) {
               if (ready) _save();
             },
           ),
-          if (ready && parsed.invalid == null) ...[
+          if (ready) ...[
             const SizedBox(height: 8),
             Text(
               l10n.corpDomainsSummary(parsed.domains.join(', '), server),
