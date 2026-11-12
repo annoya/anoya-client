@@ -38,6 +38,7 @@ class MihomoVpnService : VpnService() {
         const val ACTION_START = "org.anoya.vpn.START"
         const val ACTION_STOP = "org.anoya.vpn.STOP"
         const val ACTION_RESTART = "org.anoya.vpn.RESTART"
+        const val ACTION_DISCONNECT = "org.anoya.vpn.DISCONNECT"
 
         const val kTunnelOutbound = "PROXY"
 
@@ -116,6 +117,11 @@ class MihomoVpnService : VpnService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             log("stop requested by the app")
+            shutdown()
+            return START_NOT_STICKY
+        }
+        if (intent?.action == ACTION_DISCONNECT) {
+            log("stop requested from the notification")
             shutdown()
             return START_NOT_STICKY
         }
@@ -454,6 +460,10 @@ class MihomoVpnService : VpnService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    private fun disconnect(): PendingIntent = PendingIntent.getService(
+        this, 2, Intent(this, MihomoVpnService::class.java).setAction(ACTION_DISCONNECT),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+
     private fun buildNotification(state: Ongoing): Notification {
         val nm = notifications()
         nm.createNotificationChannel(
@@ -471,6 +481,7 @@ class MihomoVpnService : VpnService() {
             .setContentTitle(title)
             .setContentText(text)
             .setContentIntent(openApp(if (state == Ongoing.SILENT) MainActivity.ACTION_SERVER_PICKER else null))
+            .addAction(Notification.Action.Builder(null, notice["disconnect"] ?: "Disconnect", disconnect()).build())
             .setOngoing(true)
             .build()
     }

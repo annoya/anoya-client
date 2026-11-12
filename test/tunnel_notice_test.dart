@@ -42,6 +42,7 @@ void main() {
       final texts = Map<String, String>.from(jsonDecode(notice) as Map);
       expect(texts['configuration'], 'SwagaVPN');
       expect(texts['connected'], 'Connected · FL [VLESS - tcp]');
+      expect(texts['disconnect'], 'Disconnect');
       expect(texts['silent_body'], contains('FL [VLESS - tcp]'));
       expect(notice, isNot(contains('fi.example.net')));
       expect(notice, isNot(contains('secret-uuid')));

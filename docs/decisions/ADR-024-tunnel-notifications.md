@@ -39,7 +39,10 @@ by real traffic once a second.
   while silent, "Connected · no answer from the server". The small icon is the
   cat's silhouette (`ic_notification`): Android draws small icons as a mask, so
   the coloured launcher icon would be a white square. A tap on a silence opens
-  the server picker through `take_launch_action`.
+  the server picker through `take_launch_action`. Expanded, the foreground
+  notification carries one action, "Disconnect", in every state: it reaches
+  the service as its own intent and stops the tunnel the way the app's button
+  does, without bringing the app up.
 - **iOS and macOS.** The network extension posts the notifications itself
   through `UNUserNotificationCenter`, so they arrive with the app closed; the
   system shows the app's icon. The texts travel in the VPN profile

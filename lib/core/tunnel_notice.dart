@@ -9,6 +9,7 @@ Map<String, String> tunnelNotice({
     'configuration': configuration,
     'channel_problems': l10n.noticeChannelProblems,
     'connected': l10n.noticeConnected(server),
+    'disconnect': l10n.commonDisconnect,
     'silent_title': l10n.noticeSilentTitle,
     'silent_body': l10n.noticeSilentBody(server),
     'connected_silent': l10n.noticeConnectedSilent,
