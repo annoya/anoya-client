@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/l10n.dart';
 import 'app_error.dart';
@@ -64,12 +65,23 @@ Future<void> showErrorDialog(
   await showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (context) => DsDialog(
-      glyph: Glyph.alertTriangle,
-      title: error.title,
-      body: error.detail,
-      dismissTooltip: context.l10n.commonDismiss,
-      onDismiss: () => Navigator.of(context).pop(),
+    builder: (context) => CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).pop(),
+        const SingleActivator(LogicalKeyboardKey.enter): () =>
+            Navigator.of(context).pop(),
+      },
+      child: Focus(
+        autofocus: true,
+        child: DsDialog(
+          glyph: Glyph.alertTriangle,
+          title: error.title,
+          body: error.detail,
+          dismissTooltip: context.l10n.commonDismiss,
+          onDismiss: () => Navigator.of(context).pop(),
+        ),
+      ),
     ),
   );
   onDismiss?.call();

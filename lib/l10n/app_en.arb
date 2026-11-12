@@ -1357,7 +1357,8 @@
       }
     }
   },
-  "ruleSetDeleteBody": "Configurations using this set fall back to Default.",
+  "ruleSetDeleteBody": "Configurations using this set fall back to “{name}”.",
+  "@ruleSetDeleteBody": {"placeholders": {"name": {"type": "String"}}},
   "ruleSetSimple": "Simple",
   "ruleSetDownloadSiteLists": "Download the site lists first",
   "ruleSetDownloadSiteListsDetail": "Picking services needs the geo databases (~25 MB, one time)",

@@ -1826,8 +1826,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get ruleSetDeleteBody =>
-      'Las configuraciones que usan este conjunto volverán a Predeterminado.';
+  String ruleSetDeleteBody(String name) {
+    return 'Las configuraciones que usan este conjunto volverán a «$name».';
+  }
 
   @override
   String get ruleSetSimple => 'Sencillo';

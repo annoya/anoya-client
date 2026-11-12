@@ -371,10 +371,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
 
   Future<void> _deleteSet() async {
     final l10n = context.l10n;
+    final fallback = (await RuleSetStore.byId(RuleSet.defaultId)).name;
+    if (!mounted) return;
     final ok = await confirmAction(
       context,
       title: l10n.ruleSetDeleteTitle(_name),
-      body: l10n.ruleSetDeleteBody,
+      body: l10n.ruleSetDeleteBody(fallback),
       confirmLabel: l10n.commonDelete,
     );
     if (!ok) return;

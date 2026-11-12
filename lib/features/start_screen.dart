@@ -245,6 +245,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
               textInputAction: TextInputAction.done,
               enabled: !_busy,
               onChanged: _onChanged,
+              onSubmitted: (_) => _continue(),
               decoration: InputDecoration(
                 labelText: l10n.startLinkLabel,
                 hintText: l10n.startLinkHint,

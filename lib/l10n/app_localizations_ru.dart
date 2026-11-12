@@ -1861,8 +1861,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get ruleSetDeleteBody =>
-      'Конфигурации с этим набором перейдут на стандартный.';
+  String ruleSetDeleteBody(String name) {
+    return 'Конфигурации с этим набором перейдут на «$name».';
+  }
 
   @override
   String get ruleSetSimple => 'Простой';

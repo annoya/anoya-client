@@ -288,6 +288,41 @@ void main() {
     expect(find.text('Everything'), findsOneWidget);
   });
 
+  testWidgets('an empty clipboard is said to be empty', (tester) async {
+    clipboard = '';
+    await pump(tester, const RuleSetsScreen());
+
+    await tester.tap(find.byTooltip('Import a rule set'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paste from clipboard'));
+    await settle(tester);
+
+    expect(find.text('Clipboard is empty'), findsOneWidget);
+    expect(find.textContaining('Couldn’t read a rule set'), findsNothing);
+  });
+
+  testWidgets('deleting a set names the set its configurations fall back to', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => RuleSetStore.save([
+        const RuleSet(id: RuleSet.defaultId, name: 'Everything'),
+        const RuleSet(id: 'work', name: 'Work'),
+      ]),
+    );
+    await pump(tester, const RuleSetEditorScreen('work'));
+
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await settle(tester);
+
+    expect(
+      find.text('Configurations using this set fall back to “Everything”.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('a set too large for one QR code says so instead', (
     tester,
   ) async {

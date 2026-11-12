@@ -2867,8 +2867,8 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSetDeleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Configurations using this set fall back to Default.'**
-  String get ruleSetDeleteBody;
+  /// **'Configurations using this set fall back to “{name}”.'**
+  String ruleSetDeleteBody(String name);
 
   /// No description provided for @ruleSetSimple.
   ///

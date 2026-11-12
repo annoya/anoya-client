@@ -460,7 +460,7 @@
   "ruleSummaryBlock": "se bloquea",
   "ruleSummary": "→ {target} {verb}.",
   "ruleSetDeleteTitle": "¿Eliminar «{name}»?",
-  "ruleSetDeleteBody": "Las configuraciones que usan este conjunto volverán a Predeterminado.",
+  "ruleSetDeleteBody": "Las configuraciones que usan este conjunto volverán a «{name}».",
   "ruleSetSimple": "Sencillo",
   "ruleSetDownloadSiteLists": "Descarga primero las listas de sitios",
   "ruleSetDownloadSiteListsDetail": "Para elegir servicios hacen falta las bases de datos geográficas (~25 MB, una sola vez)",

@@ -1805,8 +1805,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get ruleSetDeleteBody =>
-      'Configurations using this set fall back to Default.';
+  String ruleSetDeleteBody(String name) {
+    return 'Configurations using this set fall back to “$name”.';
+  }
 
   @override
   String get ruleSetSimple => 'Simple';

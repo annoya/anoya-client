@@ -1821,8 +1821,9 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get ruleSetDeleteBody =>
-      'Les configurations qui utilisent ce jeu reviendront à Par défaut.';
+  String ruleSetDeleteBody(String name) {
+    return 'Les configurations qui utilisent ce jeu reviendront à « $name ».';
+  }
 
   @override
   String get ruleSetSimple => 'Simple';

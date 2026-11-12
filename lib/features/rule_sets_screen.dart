@@ -113,7 +113,12 @@ class _RuleSetsScreenState extends ConsumerState<RuleSetsScreen> {
       ),
       _ImportFrom.qr => (await _scan(), ''),
     };
-    if (text == null || !mounted) return;
+    if (!mounted) return;
+    if (from == _ImportFrom.clipboard && (text ?? '').trim().isEmpty) {
+      showToast(context, l10n.startClipboardEmpty);
+      return;
+    }
+    if (text == null) return;
     final imported = parseRuleSetImport(text, fallbackName: name);
     if (imported == null) {
       Log.e('rule set import refused', from.name);

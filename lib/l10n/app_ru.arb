@@ -460,7 +460,7 @@
   "ruleSummaryBlock": "блокируется",
   "ruleSummary": "→ {target} {verb}.",
   "ruleSetDeleteTitle": "Удалить «{name}»?",
-  "ruleSetDeleteBody": "Конфигурации с этим набором перейдут на стандартный.",
+  "ruleSetDeleteBody": "Конфигурации с этим набором перейдут на «{name}».",
   "ruleSetSimple": "Простой",
   "ruleSetDownloadSiteLists": "Сначала загрузите списки сайтов",
   "ruleSetDownloadSiteListsDetail": "Для выбора сервисов нужны гео-базы (~25 МБ, один раз)",
