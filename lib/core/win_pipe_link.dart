@@ -65,7 +65,15 @@ class WinPipeLink implements PipeLink {
       if (event == NULL) return -1;
       overlapped.ref.hEvent = event;
       start(overlapped);
-      while (WaitForSingleObject(event, 100) == WAIT_TIMEOUT) {}
+      // A call that fails at once never signals the event; only the pipe can say it is gone.
+      while (WaitForSingleObject(event, 100) == WAIT_TIMEOUT) {
+        if (PeekNamedPipe(handle, nullptr, 0, nullptr, nullptr, nullptr) != 0) {
+          continue;
+        }
+        CancelIoEx(handle, overlapped);
+        WaitForSingleObject(event, 1000);
+        return -1;
+      }
       if (GetOverlappedResult(handle, overlapped, count, FALSE) == 0) return -1;
       return count.value;
     } finally {
