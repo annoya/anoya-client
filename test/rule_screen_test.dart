@@ -84,6 +84,48 @@ void main() {
     expect(find.text('domain and subdomains'), findsOneWidget);
   });
 
+  testWidgets('closing a page with something entered asks before losing it', (
+    tester,
+  ) async {
+    final saved = await open(tester);
+
+    await tester.enterText(find.byType(TextField), 'corp.example.com');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+
+    await tester.tap(find.text('Keep editing'));
+    await tester.pumpAndSettle();
+    expect(find.text('corp.example.com'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
+    expect(find.byType(RuleScreen), findsNothing);
+    expect(saved(), isNull);
+  });
+
+  testWidgets('a page nobody touched closes without a question', (
+    tester,
+  ) async {
+    await open(
+      tester,
+      initial: const RoutingRule(
+        type: 'domain-suffix',
+        values: ['corp.example.com'],
+        action: 'proxy',
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Discard changes?'), findsNothing);
+    expect(find.byType(RuleScreen), findsNothing);
+  });
+
   testWidgets('a pasted mixed list saves as a domain rule and its subnets', (
     tester,
   ) async {

@@ -2330,6 +2330,23 @@
     </div></div>
     <p class="cap"><span class="id">RuleScreen · _UnrecognizedSheet</span><span class="fig">Figma 502:27900 · 5.3 · RuleScreen · _UnrecognizedSheet</span><b>Which lines, and where.</b> Sheet titled with the count (24/36), a card of 72 rows: the value in monospace 18/24 exactly as pasted, the subtitle “line 214 · not a domain” / “not an address”. Enough to find and fix it in the field behind. Read-only: the lines are simply not saved, so there is nothing to confirm. Note the card behind: here duplicates are folded into the first row’s subtitle (“1180 domains · 12 duplicates removed”), while 5.2 shows them as a row of their own — see the questions.</p>
   </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-x"/></svg></span><span class="ttl">Add rule</span><span class="sp"></span><span class="ic"><svg class="icon"><use href="#l-check"/></svg></span></div>
+      <div class="scr" style="gap:8px">
+        <div class="inp sel"><div class="tx"><div class="lb">Match</div><div class="vl">domain-suffix</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+        <div class="inp sel"><div class="tx"><div class="lb">Action</div><div class="vl">proxy</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
+        <div class="hint">Domains</div>
+        <div class="inp x05-values"><div class="vl multi">youtube.com<br>googlevideo.com<br>ytimg.com, youtu.be, ggpht.com</div><span class="ic"><svg class="icon"><use href="#l-clipboard"/></svg></span></div>
+        <div class="card"><div class="row"><svg class="icon" style="color:var(--badge-ok)"><use href="#l-check"/></svg><div class="tx"><div class="t">1180 domains</div><div class="s">12 duplicates removed</div></div></div><div class="row"><svg class="icon"><use href="#l-split"/></svg><div class="tx"><div class="t">64 subnets</div><div class="s multi">Saved as a separate ip-cidr rule right after this one</div></div></div><div class="row"><svg class="icon" style="color:var(--badge-err)"><use href="#l-alert-triangle"/></svg><div class="tx"><div class="t">3 lines not recognized</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div>
+        <div class="btn secondary"><svg class="icon"><use href="#l-file"/></svg><span>Add from a file…</span></div>
+      </div>
+      <div class="dim"></div><div class="dlg"><h4>Discard changes?</h4><div class="body">What you entered on this page has not been saved.</div><div class="acts"><span class="act">Keep editing</span><span class="act err">Discard</span></div></div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">RuleScreen · discard?</span><span class="q">нет в Figma</span><b>Leaving with unsaved work asks first.</b> Close (x), the system back gesture and Esc all leave the page without saving. When something on it has changed since it opened — a value typed or pasted, another match type or action — the ordinary confirm dialog comes first: “Discard changes?”, Keep editing | Discard (<code>status/destructive</code>). Keep editing returns to the page as it was. An untouched page closes at once, with no question. The same dialog guards the on-demand rule page (8.4).</p>
+  </div>
 </div>
 <h3>Countries and categories</h3>
 <div class="rail">

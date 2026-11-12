@@ -3331,4 +3331,17 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get commonUndo => 'Deshacer';
+
+  @override
+  String get discardChangesTitle => '¿Descartar los cambios?';
+
+  @override
+  String get discardChangesBody =>
+      'Lo que has introducido en esta página no se ha guardado.';
+
+  @override
+  String get discardChangesKeep => 'Seguir editando';
+
+  @override
+  String get discardChangesConfirm => 'Descartar';
 }

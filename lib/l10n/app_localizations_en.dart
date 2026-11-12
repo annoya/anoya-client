@@ -3300,4 +3300,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonUndo => 'Undo';
+
+  @override
+  String get discardChangesTitle => 'Discard changes?';
+
+  @override
+  String get discardChangesBody =>
+      'What you entered on this page has not been saved.';
+
+  @override
+  String get discardChangesKeep => 'Keep editing';
+
+  @override
+  String get discardChangesConfirm => 'Discard';
 }

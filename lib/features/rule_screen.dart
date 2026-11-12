@@ -54,9 +54,15 @@ class _RuleScreenState extends State<RuleScreen> {
 
   Map<String, AndroidApp> _apps = const {};
 
+  late final String _opened;
+
+  String get _entered =>
+      jsonEncode([_type, _action, _noResolve, _text.text, _picked]);
+
   @override
   void initState() {
     super.initState();
+    _opened = _entered;
     if (processRulesPickApps) {
       AndroidApps.installed().then((apps) {
         if (mounted) setState(() => _apps = appsByPackage(apps));
@@ -217,6 +223,17 @@ class _RuleScreenState extends State<RuleScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final result = _result;
+    return DiscardGuard(
+      dirty: _entered != _opened,
+      child: _page(context, l10n, result),
+    );
+  }
+
+  Widget _page(
+    BuildContext context,
+    AppLocalizations l10n,
+    List<RoutingRule>? result,
+  ) {
     return DsPage(
       leading: DsLeading.close,
       title: widget.initial == null ? l10n.ruleAdd : l10n.ruleEdit,

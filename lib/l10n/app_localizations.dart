@@ -5101,6 +5101,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Undo'**
   String get commonUndo;
+
+  /// No description provided for @discardChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get discardChangesTitle;
+
+  /// No description provided for @discardChangesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'What you entered on this page has not been saved.'**
+  String get discardChangesBody;
+
+  /// No description provided for @discardChangesKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get discardChangesKeep;
+
+  /// No description provided for @discardChangesConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discardChangesConfirm;
 }
 
 class _AppLocalizationsDelegate

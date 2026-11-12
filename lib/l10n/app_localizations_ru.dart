@@ -3384,4 +3384,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get commonUndo => 'Отменить';
+
+  @override
+  String get discardChangesTitle => 'Не сохранять изменения?';
+
+  @override
+  String get discardChangesBody =>
+      'То, что вы ввели на этой странице, не сохранено.';
+
+  @override
+  String get discardChangesKeep => 'Продолжить';
+
+  @override
+  String get discardChangesConfirm => 'Не сохранять';
 }

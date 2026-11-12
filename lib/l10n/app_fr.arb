@@ -832,5 +832,9 @@
   "dnsSettingsLocalCustomSubtitle": "celui de votre fournisseur ou un résolveur local",
   "dnsSettingsCorpNote": "Les noms internes sont demandés au serveur DNS de l’entreprise et ouverts hors du VPN avec leurs vraies adresses. Ils l’emportent sur les deux réglages ci-dessus.",
   "ruleRemoved": "Règle supprimée",
-  "commonUndo": "Annuler"
+  "commonUndo": "Annuler",
+  "discardChangesTitle": "Abandonner les modifications ?",
+  "discardChangesBody": "Ce que vous avez saisi sur cette page n’a pas été enregistré.",
+  "discardChangesKeep": "Continuer",
+  "discardChangesConfirm": "Abandonner"
 }

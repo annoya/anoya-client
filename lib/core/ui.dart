@@ -33,6 +33,7 @@ Future<bool> confirmAction(
   required String title,
   String? body,
   required String confirmLabel,
+  String? cancelLabel,
   bool destructive = true,
 }) async {
   final ok = await showDialog<bool>(
@@ -42,7 +43,7 @@ Future<bool> confirmAction(
       body: body,
       actions: [
         DsDialogAction(
-          label: context.l10n.commonCancel,
+          label: cancelLabel ?? context.l10n.commonCancel,
           onPressed: () => Navigator.pop(context, false),
         ),
         DsDialogAction(
@@ -572,4 +573,30 @@ Rect shareOrigin(BuildContext context) {
   final box = context.findRenderObject();
   if (box is! RenderBox || !box.hasSize) return Rect.zero;
   return box.localToGlobal(Offset.zero) & box.size;
+}
+
+class DiscardGuard extends StatelessWidget {
+  const DiscardGuard({super.key, required this.dirty, required this.child});
+
+  final bool dirty;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !dirty,
+    onPopInvokedWithResult: (didPop, _) async {
+      if (didPop) return;
+      final navigator = Navigator.of(context);
+      final l10n = context.l10n;
+      final discard = await confirmAction(
+        context,
+        title: l10n.discardChangesTitle,
+        body: l10n.discardChangesBody,
+        confirmLabel: l10n.discardChangesConfirm,
+        cancelLabel: l10n.discardChangesKeep,
+      );
+      if (discard) navigator.pop();
+    },
+    child: child,
+  );
 }

@@ -832,5 +832,9 @@
   "dnsSettingsLocalCustomSubtitle": "运营商的或本地的解析器",
   "dnsSettingsCorpNote": "内部域名向公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。它优先于上面两项设置。",
   "ruleRemoved": "规则已删除",
-  "commonUndo": "撤销"
+  "commonUndo": "撤销",
+  "discardChangesTitle": "放弃更改？",
+  "discardChangesBody": "您在此页面输入的内容尚未保存。",
+  "discardChangesKeep": "继续编辑",
+  "discardChangesConfirm": "放弃"
 }

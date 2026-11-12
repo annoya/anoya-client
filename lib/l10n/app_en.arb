@@ -2155,5 +2155,9 @@
   "dnsSettingsLocalCustomSubtitle": "your provider’s or a local resolver",
   "dnsSettingsCorpNote": "Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.",
   "ruleRemoved": "Rule removed",
-  "commonUndo": "Undo"
+  "commonUndo": "Undo",
+  "discardChangesTitle": "Discard changes?",
+  "discardChangesBody": "What you entered on this page has not been saved.",
+  "discardChangesKeep": "Keep editing",
+  "discardChangesConfirm": "Discard"
 }

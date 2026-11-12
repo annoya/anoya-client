@@ -832,5 +832,9 @@
   "dnsSettingsLocalCustomSubtitle": "DNS вашего провайдера или локальный",
   "dnsSettingsCorpNote": "Внутренние имена спрашиваются у DNS-сервера компании и открываются мимо VPN по настоящим адресам. Эта настройка сильнее двух других.",
   "ruleRemoved": "Правило удалено",
-  "commonUndo": "Отменить"
+  "commonUndo": "Отменить",
+  "discardChangesTitle": "Не сохранять изменения?",
+  "discardChangesBody": "То, что вы ввели на этой странице, не сохранено.",
+  "discardChangesKeep": "Продолжить",
+  "discardChangesConfirm": "Не сохранять"
 }

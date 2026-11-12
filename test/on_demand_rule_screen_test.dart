@@ -47,6 +47,23 @@ void main() {
     return ctrl;
   }
 
+  testWidgets('closing an edited rule asks before losing the edit', (
+    tester,
+  ) async {
+    final ctrl = await open(tester);
+
+    await tester.enterText(find.byType(TextField).first, 'Office HQ');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
+    expect(find.byType(OnDemandRuleScreen), findsNothing);
+    expect(ctrl.saved, isEmpty);
+  });
+
   testWidgets('an edit is kept only when Save is pressed', (tester) async {
     final ctrl = await open(tester);
 

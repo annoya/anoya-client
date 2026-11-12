@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ds.dart';
 import '../core/on_demand.dart';
 import '../core/theme.dart';
+import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/on_demand_controller.dart';
 import 'on_demand_values_screen.dart';
@@ -141,116 +143,120 @@ class _OnDemandRuleScreenState extends ConsumerState<OnDemandRuleScreen> {
         : OnDemandInterface.cellular;
     final l10n = context.l10n;
 
-    return DsPage(
-      title: widget.isNew ? l10n.onDemandNewRule : l10n.ruleEdit,
-      leading: DsLeading.close,
-      actions: [
-        DsNavButton(
-          glyph: Glyph.check,
-          tooltip: l10n.commonSave,
-          busy: _saving,
-          onPressed: _save,
-        ),
-      ],
-      children: [
-        AbsorbPointer(
-          absorbing: _saving,
-          child: DsStack(
-            gap: kGroupGap,
-            children: [
-              DsStack(
-                gap: kNoteGap,
-                children: [
-                  TextField(
-                    controller: _name,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      labelText: l10n.onDemandNameOptional,
-                      hintText: l10n.onDemandNameHint,
-                    ),
-                    onChanged: (v) => _update(_rule.copyWith(name: v.trim())),
-                  ),
-                  SelectField(
-                    label: l10n.ruleAction,
-                    value: _rule.action.label,
-                    onTap: _pickAction,
-                  ),
-                ],
-              ),
-              DsGroup(
-                caption: l10n.onDemandNetworkHeader,
-                note: _networkHelp(_rule.interface),
-                child: DsSegmented<OnDemandInterface>(
-                  segments: [
-                    (OnDemandInterface.any, l10n.onDemandAny),
-                    (OnDemandInterface.wifi, l10n.onDemandInterfaceWifi),
-                    (mobile, mobile.label),
-                  ],
-                  value:
-                      _rule.interface == OnDemandInterface.cellular ||
-                          _rule.interface == OnDemandInterface.ethernet
-                      ? mobile
-                      : _rule.interface,
-                  onChanged: (v) => _update(_rule.copyWith(interface: v)),
-                ),
-              ),
-              DsGroup(
-                caption: l10n.onDemandConditionsHeader,
-                child: DsStack(
+    return DiscardGuard(
+      dirty: jsonEncode(_rule.toJson()) != jsonEncode(widget.rule.toJson()),
+      child: DsPage(
+        title: widget.isNew ? l10n.onDemandNewRule : l10n.ruleEdit,
+        leading: DsLeading.close,
+        actions: [
+          DsNavButton(
+            glyph: Glyph.check,
+            tooltip: l10n.commonSave,
+            busy: _saving,
+            onPressed: _save,
+          ),
+        ],
+        children: [
+          AbsorbPointer(
+            absorbing: _saving,
+            child: DsStack(
+              gap: kGroupGap,
+              children: [
+                DsStack(
                   gap: kNoteGap,
                   children: [
-                    if (_rule.ssidsApply)
-                      _conditionCard(
-                        glyph: Glyph.wifi,
-                        title: l10n.onDemandWifiNetworks,
-                        values: _rule.ssids,
-                        unit: l10n.onDemandNetworksUnit,
-                        addTitle: l10n.onDemandWifiNetwork,
-                        addHint: 'home-5G',
-                        help: l10n.onDemandWifiNetworksHelp,
-                        apply: (v) => _update(_rule.copyWith(ssids: v)),
+                    TextField(
+                      controller: _name,
+                      autocorrect: false,
+                      decoration: InputDecoration(
+                        labelText: l10n.onDemandNameOptional,
+                        hintText: l10n.onDemandNameHint,
                       ),
-                    _conditionCard(
-                      glyph: Glyph.globe,
-                      title: l10n.onDemandDnsDomains,
-                      values: _rule.dnsDomains,
-                      unit: l10n.onDemandDomainsUnit,
-                      addTitle: l10n.onDemandDnsDomain,
-                      addHint: 'corp.example.com',
-                      help: l10n.onDemandDnsDomainsHelp,
-                      apply: (v) => _update(_rule.copyWith(dnsDomains: v)),
+                      onChanged: (v) => _update(_rule.copyWith(name: v.trim())),
                     ),
-                    _conditionCard(
-                      glyph: Glyph.server,
-                      title: l10n.onDemandDnsServers,
-                      values: _rule.dnsServers,
-                      unit: l10n.onDemandServersUnit,
-                      addTitle: l10n.onDemandDnsServer,
-                      addHint: '10.0.*',
-                      help: l10n.onDemandDnsServersHelp,
-                      apply: (v) => _update(_rule.copyWith(dnsServers: v)),
+                    SelectField(
+                      label: l10n.ruleAction,
+                      value: _rule.action.label,
+                      onTap: _pickAction,
                     ),
                   ],
                 ),
-              ),
-              DsGroup(
-                caption: l10n.onDemandUrlProbeHeader,
-                note: l10n.onDemandUrlProbeHelp,
-                child: TextField(
-                  controller: _probe,
-                  autocorrect: false,
-                  keyboardType: TextInputType.url,
-                  decoration: InputDecoration(
-                    labelText: l10n.onDemandUrlOptional,
-                    hintText: 'https://intranet.example.com/ping',
+                DsGroup(
+                  caption: l10n.onDemandNetworkHeader,
+                  note: _networkHelp(_rule.interface),
+                  child: DsSegmented<OnDemandInterface>(
+                    segments: [
+                      (OnDemandInterface.any, l10n.onDemandAny),
+                      (OnDemandInterface.wifi, l10n.onDemandInterfaceWifi),
+                      (mobile, mobile.label),
+                    ],
+                    value:
+                        _rule.interface == OnDemandInterface.cellular ||
+                            _rule.interface == OnDemandInterface.ethernet
+                        ? mobile
+                        : _rule.interface,
+                    onChanged: (v) => _update(_rule.copyWith(interface: v)),
                   ),
-                  onChanged: (v) => _update(_rule.copyWith(probeUrl: v.trim())),
                 ),
-              ),
-            ],
+                DsGroup(
+                  caption: l10n.onDemandConditionsHeader,
+                  child: DsStack(
+                    gap: kNoteGap,
+                    children: [
+                      if (_rule.ssidsApply)
+                        _conditionCard(
+                          glyph: Glyph.wifi,
+                          title: l10n.onDemandWifiNetworks,
+                          values: _rule.ssids,
+                          unit: l10n.onDemandNetworksUnit,
+                          addTitle: l10n.onDemandWifiNetwork,
+                          addHint: 'home-5G',
+                          help: l10n.onDemandWifiNetworksHelp,
+                          apply: (v) => _update(_rule.copyWith(ssids: v)),
+                        ),
+                      _conditionCard(
+                        glyph: Glyph.globe,
+                        title: l10n.onDemandDnsDomains,
+                        values: _rule.dnsDomains,
+                        unit: l10n.onDemandDomainsUnit,
+                        addTitle: l10n.onDemandDnsDomain,
+                        addHint: 'corp.example.com',
+                        help: l10n.onDemandDnsDomainsHelp,
+                        apply: (v) => _update(_rule.copyWith(dnsDomains: v)),
+                      ),
+                      _conditionCard(
+                        glyph: Glyph.server,
+                        title: l10n.onDemandDnsServers,
+                        values: _rule.dnsServers,
+                        unit: l10n.onDemandServersUnit,
+                        addTitle: l10n.onDemandDnsServer,
+                        addHint: '10.0.*',
+                        help: l10n.onDemandDnsServersHelp,
+                        apply: (v) => _update(_rule.copyWith(dnsServers: v)),
+                      ),
+                    ],
+                  ),
+                ),
+                DsGroup(
+                  caption: l10n.onDemandUrlProbeHeader,
+                  note: l10n.onDemandUrlProbeHelp,
+                  child: TextField(
+                    controller: _probe,
+                    autocorrect: false,
+                    keyboardType: TextInputType.url,
+                    decoration: InputDecoration(
+                      labelText: l10n.onDemandUrlOptional,
+                      hintText: 'https://intranet.example.com/ping',
+                    ),
+                    onChanged: (v) =>
+                        _update(_rule.copyWith(probeUrl: v.trim())),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

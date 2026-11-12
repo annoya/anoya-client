@@ -3333,4 +3333,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get commonUndo => 'Annuler';
+
+  @override
+  String get discardChangesTitle => 'Abandonner les modifications ?';
+
+  @override
+  String get discardChangesBody =>
+      'Ce que vous avez saisi sur cette page n’a pas été enregistré.';
+
+  @override
+  String get discardChangesKeep => 'Continuer';
+
+  @override
+  String get discardChangesConfirm => 'Abandonner';
 }

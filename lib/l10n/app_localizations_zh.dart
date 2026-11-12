@@ -3141,4 +3141,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commonUndo => '撤销';
+
+  @override
+  String get discardChangesTitle => '放弃更改？';
+
+  @override
+  String get discardChangesBody => '您在此页面输入的内容尚未保存。';
+
+  @override
+  String get discardChangesKeep => '继续编辑';
+
+  @override
+  String get discardChangesConfirm => '放弃';
 }

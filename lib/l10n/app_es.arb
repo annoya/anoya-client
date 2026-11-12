@@ -832,5 +832,9 @@
   "dnsSettingsLocalCustomSubtitle": "el de tu proveedor o uno local",
   "dnsSettingsCorpNote": "Los nombres internos se consultan al servidor DNS de la empresa y se abren fuera de la VPN con sus direcciones reales. Tienen prioridad sobre los dos ajustes anteriores.",
   "ruleRemoved": "Regla eliminada",
-  "commonUndo": "Deshacer"
+  "commonUndo": "Deshacer",
+  "discardChangesTitle": "¿Descartar los cambios?",
+  "discardChangesBody": "Lo que has introducido en esta página no se ha guardado.",
+  "discardChangesKeep": "Seguir editando",
+  "discardChangesConfirm": "Descartar"
 }
