@@ -48,10 +48,14 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     super.dispose();
   }
 
+  bool get _atEnd =>
+      !_scroll.hasClients ||
+      _scroll.position.pixels >= _scroll.position.maxScrollExtent - 1;
+
   void _logChanged() {
     _pending ??= Timer(kLogViewerRefreshDelay, () {
       _pending = null;
-      _load();
+      if (_atEnd) _load();
     });
   }
 
