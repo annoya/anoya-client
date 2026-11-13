@@ -58,8 +58,6 @@ void main() {
     ]);
   });
   tearDown(() async {
-    // Un-awaited writes from disposed containers race the directory delete.
-    await Future<void>.delayed(const Duration(milliseconds: 50));
     messenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       null,
@@ -68,7 +66,17 @@ void main() {
       const MethodChannel('vpn/control'),
       null,
     );
-    tmp.deleteSync(recursive: true);
+    // Un-awaited writes from disposed containers race the directory delete,
+    // and Windows refuses to delete a file that is still open.
+    for (var attempt = 0; ; attempt++) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      try {
+        tmp.deleteSync(recursive: true);
+        break;
+      } on FileSystemException {
+        if (attempt == 40) rethrow;
+      }
+    }
   });
 
   Future<ProfilesController> launch() async {
