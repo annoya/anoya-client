@@ -29,9 +29,11 @@ Windows. With Anoya connected, corporate resources stopped opening.
 
 ## Decision
 
-- **DNS protection is a switch** under Settings → Advanced on Windows and
-  Linux, off by default. On renders `strict-route: true`; off omits it. The note
-  under it says what each side costs. It changes only with the tunnel down:
+- **DNS protection is a switch** under Settings → DNS on Windows and Linux,
+  off by default, in its own group below the resolvers: it first sat in
+  Advanced, and people looked for it next to the other DNS settings. On renders
+  `strict-route: true`; off omits it. The explanation behind the group's info
+  glyph says what each side costs. It changes only with the tunnel down:
   `strict-route` is part of the `tun` section, and a reload that changes that
   section re-creates the device (ADR-002).
 - **`allowed_ips` from an AWG config is server routing.** Anything other than
@@ -112,7 +114,7 @@ checked on Windows with NetBird.
 - `lib/core/routing_prefs.dart` — `dnsProtection`, `withLanDirect`, `withinLan`.
 - `lib/core/mihomo_tun_config.dart` — `strictRoute`.
 - `lib/core/network_extension_core.dart`, `lib/core/effective_config.dart`.
-- `lib/features/advanced_connection_screen.dart`, `settings_screen.dart`.
+- `lib/features/dns_settings_screen.dart`.
 - `lib/core/amnezia/secondary_config.dart` — `allowedIpsRouting`, `xrayRouting`.
 - `lib/core/amnezia/amnezia_source.dart` — routing set on issue.
 - `lib/core/parsers/wireguard_config.dart` — `AllowedIPs` of a `.conf`.

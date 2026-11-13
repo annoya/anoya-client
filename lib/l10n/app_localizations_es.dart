@@ -33,6 +33,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commonClose => 'Cerrar';
 
   @override
+  String get commonGotIt => 'Entendido';
+
+  @override
   String get commonRetry => 'Reintentar';
 
   @override
@@ -1048,7 +1051,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get configDeviceRoutingNote =>
-      'Los conjuntos de reglas se comparten entre todas las configuraciones; el interruptor es por configuración, así que una suscripción de trabajo y una personal pueden usar el mismo conjunto de forma distinta.';
+      'Los conjuntos de reglas son compartidos; el interruptor vale solo para esta configuración.';
 
   @override
   String get configGetSupport => 'Obtener ayuda';
@@ -3228,9 +3231,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get advancedSectionDns => 'DNS';
-
-  @override
   String get advancedDnsProtection => 'Protección DNS';
 
   @override
@@ -3243,18 +3243,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get advancedDnsProtectionNote =>
       'El sistema también consulta el servidor DNS de tu proveedor, fuera de la VPN, así que el proveedor puede ver qué sitios abres. La protección bloquea esas consultas, y con ellas el DNS de otras VPN de este equipo: las redes corporativas (NetBird, Cisco, OpenVPN) dejan de abrirse por nombre. Déjala desactivada si usas una.';
-
-  @override
-  String get settingsDnsProtectionOn => 'Protección DNS activada';
-
-  @override
-  String get settingsDnsProtectionOff => 'Protección DNS desactivada';
-
-  @override
-  String get settingsCheckOn => 'comprobación activada';
-
-  @override
-  String get settingsCheckOff => 'comprobación desactivada';
 
   @override
   String get settingsCorpDomains => 'Dominios corporativos';
@@ -3325,6 +3313,20 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Los nombres internos se consultan al servidor DNS de la empresa y se abren fuera de la VPN con sus direcciones reales. Tienen prioridad sobre los dos ajustes anteriores.';
+
+  @override
+  String get dnsSettingsDefaultLine => 'Para los sitios que pasan por la VPN.';
+
+  @override
+  String get dnsSettingsLocalLine =>
+      'Para los sitios que tus reglas envían fuera de la VPN.';
+
+  @override
+  String get dnsSettingsCorpLine =>
+      'Los nombres internos se consultan al servidor DNS de la empresa.';
+
+  @override
+  String get dnsSettingsProtection => 'Protección';
 
   @override
   String get ruleRemoved => 'Regla eliminada';

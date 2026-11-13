@@ -33,6 +33,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonClose => 'Закрыть';
 
   @override
+  String get commonGotIt => 'Понятно';
+
+  @override
   String get commonRetry => 'Повторить';
 
   @override
@@ -1078,7 +1081,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get configDeviceRoutingNote =>
-      'Наборы правил общие для всех конфигураций; переключатель — у каждой свой, так что рабочая и личная подписки могут использовать один набор по-разному.';
+      'Наборы правил общие; переключатель — только для этой конфигурации.';
 
   @override
   String get configGetSupport => 'Обратиться в поддержку';
@@ -3280,9 +3283,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get advancedSectionDns => 'DNS';
-
-  @override
   String get advancedDnsProtection => 'Защита DNS';
 
   @override
@@ -3295,18 +3295,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get advancedDnsProtectionNote =>
       'Система, помимо VPN, спрашивает и DNS-сервер провайдера, поэтому провайдер видит, какие сайты вы открываете. Защита блокирует такие запросы — а вместе с ними DNS других VPN на этом компьютере: корпоративные сети (NetBird, Cisco, OpenVPN) перестают открываться по имени. Если пользуетесь таким VPN, оставьте защиту выключенной.';
-
-  @override
-  String get settingsDnsProtectionOn => 'Защита DNS вкл.';
-
-  @override
-  String get settingsDnsProtectionOff => 'Защита DNS выкл.';
-
-  @override
-  String get settingsCheckOn => 'проверка вкл.';
-
-  @override
-  String get settingsCheckOff => 'проверка выкл.';
 
   @override
   String get settingsCorpDomains => 'Корпоративные домены';
@@ -3378,6 +3366,20 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Внутренние имена спрашиваются у DNS-сервера компании и открываются мимо VPN по настоящим адресам. Эта настройка сильнее двух других.';
+
+  @override
+  String get dnsSettingsDefaultLine => 'Для сайтов, которые идут через VPN.';
+
+  @override
+  String get dnsSettingsLocalLine =>
+      'Для сайтов, которые правила отправляют мимо VPN.';
+
+  @override
+  String get dnsSettingsCorpLine =>
+      'Внутренние имена спрашиваются у DNS-сервера компании.';
+
+  @override
+  String get dnsSettingsProtection => 'Защита';
 
   @override
   String get ruleRemoved => 'Правило удалено';

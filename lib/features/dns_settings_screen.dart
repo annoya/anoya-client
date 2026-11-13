@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/dns_plan.dart';
 import '../core/ds.dart';
+import '../core/platform_support.dart';
 import '../core/ui.dart';
 import '../l10n/l10n.dart';
 import '../state/providers.dart';
+import '../state/session.dart';
 import 'corp_domains_screen.dart';
 
 const _custom = '__custom__';
@@ -133,12 +135,22 @@ class DnsSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final prefs = ref.watch(routingPrefsProvider);
+    final busy =
+        hasDnsProtection && ref.watch(sessionProvider.select((s) => s.busy));
+
+    Future<void> setDnsProtection(bool v) async {
+      await ref
+          .read(routingPrefsProvider.notifier)
+          .update((p) => p.copyWith(dnsProtection: v));
+    }
+
     return DsPage(
       title: l10n.settingsDns,
       children: [
         DsGroup(
           caption: l10n.dnsSettingsThroughVpn,
-          note: l10n.dnsSettingsDefaultNote,
+          note: l10n.dnsSettingsDefaultLine,
+          info: l10n.dnsSettingsDefaultNote,
           children: [
             DsRow(
               glyph: Glyph.globe,
@@ -152,7 +164,8 @@ class DnsSettingsScreen extends ConsumerWidget {
         ),
         DsGroup(
           caption: l10n.dnsSettingsOutsideVpn,
-          note: l10n.dnsSettingsLocalNote,
+          note: l10n.dnsSettingsLocalLine,
+          info: l10n.dnsSettingsLocalNote,
           children: [
             DsRow(
               glyph: Glyph.network,
@@ -168,7 +181,8 @@ class DnsSettingsScreen extends ConsumerWidget {
         ),
         DsGroup(
           caption: l10n.dnsSettingsCompany,
-          note: l10n.dnsSettingsCorpNote,
+          note: l10n.dnsSettingsCorpLine,
+          info: l10n.dnsSettingsCorpNote,
           children: [
             DsRow(
               glyph: Glyph.building2,
@@ -184,6 +198,34 @@ class DnsSettingsScreen extends ConsumerWidget {
             ),
           ],
         ),
+        if (hasDnsProtection)
+          DsGroup(
+            caption: l10n.dnsSettingsProtection,
+            info: l10n.advancedDnsProtectionNote,
+            children: [
+              DsRow(
+                glyph: Glyph.shield,
+                title: l10n.advancedDnsProtection,
+                subtitle: busy
+                    ? l10n.advancedDnsProtectionLocked
+                    : l10n.advancedDnsProtectionSubtitle,
+                enabled: !busy,
+                onTap: () => setDnsProtection(!prefs.dnsProtection),
+                trailing: [
+                  IgnorePointer(
+                    ignoring: busy,
+                    child: ExcludeFocus(
+                      excluding: busy,
+                      child: DsToggle(
+                        value: prefs.dnsProtection,
+                        onChanged: setDnsProtection,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
       ],
     );
   }

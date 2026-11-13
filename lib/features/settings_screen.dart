@@ -225,19 +225,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ];
   }
 
-  Widget _advancedRow(bool checkEnabled, bool dnsProtection) {
+  Widget _advancedRow(bool checkEnabled) {
     final l10n = context.l10n;
     return DsRow(
       glyph: Glyph.settings,
       title: l10n.settingsAdvanced,
-      subtitle: hasDnsProtection
-          ? [
-              dnsProtection
-                  ? l10n.settingsDnsProtectionOn
-                  : l10n.settingsDnsProtectionOff,
-              checkEnabled ? l10n.settingsCheckOn : l10n.settingsCheckOff,
-            ].join(' · ')
-          : checkEnabled
+      subtitle: checkEnabled
           ? l10n.settingsConnectionCheckOn
           : l10n.settingsConnectionCheckOff,
       trailing: const [DsChevron()],
@@ -300,9 +293,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onDemand: onDemand,
                   ),
                 ),
-              DsCard(
-                children: [_advancedRow(check.enabled, prefs.dnsProtection)],
-              ),
+              DsCard(children: [_advancedRow(check.enabled)]),
             ],
           ),
         ),

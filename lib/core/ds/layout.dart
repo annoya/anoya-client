@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme.dart';
+import 'controls.dart';
 import 'glyph.dart';
+import 'sheet.dart';
 
 enum DsLeading { back, close, none }
 
@@ -397,6 +400,7 @@ class DsGroup extends StatelessWidget {
     this.children = const [],
     this.child,
     this.note,
+    this.info,
     this.color,
     this.captionGap = kCaptionGap,
   });
@@ -405,6 +409,7 @@ class DsGroup extends StatelessWidget {
   final List<Widget> children;
   final Widget? child;
   final String? note;
+  final String? info;
   final Color? color;
   final double captionGap;
 
@@ -413,13 +418,58 @@ class DsGroup extends StatelessWidget {
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      if (caption != null) ...[
+      if (caption != null && info != null)
+        _InfoCaption(caption: caption!, info: info!, gap: captionGap)
+      else if (caption != null) ...[
         DsCaption(caption!),
         SizedBox(height: captionGap),
       ],
       child ?? DsCard(color: color, children: children),
       if (note != null) ...[const SizedBox(height: kNoteGap), DsNote(note!)],
     ],
+  );
+}
+
+class _InfoCaption extends StatelessWidget {
+  const _InfoCaption({
+    required this.caption,
+    required this.info,
+    required this.gap,
+  });
+
+  final String caption;
+  final String info;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => showDsSheet<void>(
+        context,
+        (sheet) => DsSheet(
+          title: caption,
+          children: [
+            Text(info, style: DsType.text.copyWith(color: context.ds.text2)),
+            DsButton(
+              label: context.l10n.commonGotIt,
+              onPressed: () => Navigator.of(sheet).pop(),
+            ),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: gap),
+        child: Row(
+          children: [
+            Expanded(child: DsCaption(caption)),
+            const SizedBox(width: 8),
+            GlyphIcon(Glyph.info, size: kSmallIcon, color: context.ds.text3),
+          ],
+        ),
+      ),
+    ),
   );
 }
 

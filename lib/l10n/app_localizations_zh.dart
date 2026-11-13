@@ -33,6 +33,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonClose => '关闭';
 
   @override
+  String get commonGotIt => '知道了';
+
+  @override
   String get commonRetry => '重试';
 
   @override
@@ -1015,8 +1018,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '关闭开关即可改用你自己的规则集。无论开关状态如何，订阅都无法强制执行此策略。';
 
   @override
-  String get configDeviceRoutingNote =>
-      '规则集由所有配置共享；开关则按配置单独设置，因此工作订阅和个人订阅可以用不同方式使用同一规则集。';
+  String get configDeviceRoutingNote => '规则集为共用；此开关仅对当前配置生效。';
 
   @override
   String get configGetSupport => '获取支持';
@@ -3040,9 +3042,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get advancedSectionDns => 'DNS';
-
-  @override
   String get advancedDnsProtection => 'DNS 防护';
 
   @override
@@ -3054,18 +3053,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get advancedDnsProtectionNote =>
       '系统还会绕过 VPN 向运营商的 DNS 服务器查询，运营商因此能看到你访问了哪些网站。开启防护会拦截这些查询，同时也会拦截本机其他 VPN 的 DNS：企业网络（NetBird、Cisco、OpenVPN）将无法通过域名访问。如果你在使用这类 VPN，请保持关闭。';
-
-  @override
-  String get settingsDnsProtectionOn => 'DNS 防护 开';
-
-  @override
-  String get settingsDnsProtectionOff => 'DNS 防护 关';
-
-  @override
-  String get settingsCheckOn => '检测 开';
-
-  @override
-  String get settingsCheckOff => '检测 关';
 
   @override
   String get settingsCorpDomains => '企业域名';
@@ -3135,6 +3122,18 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       '内部域名向公司的 DNS 服务器查询，并以真实地址在 VPN 之外访问。它优先于上面两项设置。';
+
+  @override
+  String get dnsSettingsDefaultLine => '用于经由 VPN 的网站。';
+
+  @override
+  String get dnsSettingsLocalLine => '用于规则设为绕过 VPN 的网站。';
+
+  @override
+  String get dnsSettingsCorpLine => '内部域名向公司的 DNS 服务器查询。';
+
+  @override
+  String get dnsSettingsProtection => '保护';
 
   @override
   String get ruleRemoved => '规则已删除';

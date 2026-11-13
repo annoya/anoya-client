@@ -125,7 +125,7 @@ Rationale and constraints: ADR-001.
 On Windows the tunnel is a Windows service (`AnoyaTunnel`,
 `native/mihomocore/cmd/tunnel-service`), started by the Service Control
 Manager and spoken to over a named pipe; the adapter is Wintun and the engine's
-home is under `ProgramData`. **DNS protection** (Settings → Advanced, off by
+home is under `ProgramData`. **DNS protection** (Settings → DNS, off by
 default) adds `strict-route`: Windows asks every adapter's resolver, so without
 it the provider's resolver can see the names looked up; with it sing-tun's WFP
 filters block port 53 everywhere but the tun and the engine — including the

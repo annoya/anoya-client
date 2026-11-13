@@ -33,6 +33,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonClose => 'Fermer';
 
   @override
+  String get commonGotIt => 'Compris';
+
+  @override
   String get commonRetry => 'Réessayer';
 
   @override
@@ -1046,7 +1049,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get configDeviceRoutingNote =>
-      'Les jeux de règles sont partagés par toutes les configurations ; l’interrupteur est propre à chacune, si bien qu’un abonnement professionnel et un abonnement personnel peuvent utiliser le même jeu différemment.';
+      'Les jeux de règles sont partagés ; l’interrupteur ne vaut que pour cette configuration.';
 
   @override
   String get configGetSupport => 'Obtenir de l’aide';
@@ -3228,9 +3231,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get advancedSectionDns => 'DNS';
-
-  @override
   String get advancedDnsProtection => 'Protection DNS';
 
   @override
@@ -3244,18 +3244,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get advancedDnsProtectionNote =>
       'Le système interroge aussi le serveur DNS de votre fournisseur, hors du VPN : le fournisseur peut voir les sites que vous ouvrez. La protection bloque ces requêtes, et avec elles le DNS des autres VPN de cet ordinateur : les réseaux d’entreprise (NetBird, Cisco, OpenVPN) ne s’ouvrent plus par leur nom. Laissez-la désactivée si vous en utilisez un.';
-
-  @override
-  String get settingsDnsProtectionOn => 'Protection DNS activée';
-
-  @override
-  String get settingsDnsProtectionOff => 'Protection DNS désactivée';
-
-  @override
-  String get settingsCheckOn => 'vérification activée';
-
-  @override
-  String get settingsCheckOff => 'vérification désactivée';
 
   @override
   String get settingsCorpDomains => 'Domaines d’entreprise';
@@ -3327,6 +3315,20 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Les noms internes sont demandés au serveur DNS de l’entreprise et ouverts hors du VPN avec leurs vraies adresses. Ils l’emportent sur les deux réglages ci-dessus.';
+
+  @override
+  String get dnsSettingsDefaultLine => 'Pour les sites qui passent par le VPN.';
+
+  @override
+  String get dnsSettingsLocalLine =>
+      'Pour les sites que vos règles font passer hors du VPN.';
+
+  @override
+  String get dnsSettingsCorpLine =>
+      'Les noms internes sont demandés au serveur DNS de l’entreprise.';
+
+  @override
+  String get dnsSettingsProtection => 'Protection';
 
   @override
   String get ruleRemoved => 'Règle supprimée';

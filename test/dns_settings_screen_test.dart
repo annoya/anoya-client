@@ -66,9 +66,20 @@ void main() {
     expect(find.text('Company network'), findsOneWidget);
     expect(find.text('Cloudflare'), findsOneWidget);
     expect(find.text('Off'), findsNWidgets(2));
-    expect(find.textContaining('your network doesn’t see'), findsOneWidget);
+    expect(find.text('For sites that go through the VPN.'), findsOneWidget);
+    expect(
+      find.text('For sites your rules send past the VPN.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('your company’s DNS server'), findsOneWidget);
+    expect(find.textContaining('a server near you'), findsNothing);
+
+    await tester.tap(find.text('Outside the VPN'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('a server near you'), findsOneWidget);
-    expect(find.textContaining('win over both settings'), findsOneWidget);
+    await tester.tap(find.text('Got it'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('a server near you'), findsNothing);
   });
 
   testWidgets('a local resolver is chosen from a short list and kept', (

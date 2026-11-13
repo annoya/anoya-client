@@ -15,6 +15,7 @@ import 'package:anoya/core/profile.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/vpn_core.dart';
 import 'package:anoya/features/advanced_connection_screen.dart';
+import 'package:anoya/features/dns_settings_screen.dart';
 import 'package:anoya/state/connection_check_controller.dart';
 import 'package:anoya/state/profiles_controller.dart';
 import 'package:anoya/state/providers.dart';
@@ -414,7 +415,11 @@ void main() {
 
   group('the screen', () {
     // The prefs file read never completes inside the fake async zone.
-    Future<ProviderContainer> pump(WidgetTester tester, _FakeCore core) async {
+    Future<ProviderContainer> pump(
+      WidgetTester tester,
+      _FakeCore core, {
+      Widget home = const AdvancedConnectionScreen(),
+    }) async {
       final container = ProviderContainer(
         overrides: [vpnCoreProvider.overrideWithValue(core)],
       );
@@ -430,7 +435,7 @@ void main() {
             theme: buildAppTheme(Brightness.light),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: const AdvancedConnectionScreen(),
+            home: home,
           ),
         ),
       );
@@ -516,9 +521,21 @@ void main() {
     ) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.windows;
       try {
-        await pump(tester, _FakeCore(answer: 'ms:120'));
+        await pump(
+          tester,
+          _FakeCore(answer: 'ms:120'),
+          home: const DnsSettingsScreen(),
+        );
         expect(find.text('DNS protection'), findsOneWidget);
+        expect(find.textContaining('corporate networks'), findsNothing);
+        await tester.ensureVisible(find.text('Protection'));
+        await tester.pump();
+        await tester.tap(find.text('Protection'));
+        await tester.pumpAndSettle();
         expect(find.textContaining('corporate networks'), findsOneWidget);
+        await tester.tap(find.text('Got it'));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('corporate networks'), findsNothing);
         expect(
           tester.widgetList<DsToggle>(find.byType(DsToggle)).first.value,
           isFalse,
@@ -535,10 +552,16 @@ void main() {
       try {
         final core = _FakeCore(answer: 'ms:120');
         core.emit(VpnStatus.connected);
-        final container = await pump(tester, core);
+        final container = await pump(
+          tester,
+          core,
+          home: const DnsSettingsScreen(),
+        );
         await tester.pump();
 
         expect(find.text('Turn the VPN off to change this'), findsOneWidget);
+        await tester.ensureVisible(find.text('DNS protection'));
+        await tester.pump();
         await tester.runAsync(() async {
           await tester.tap(find.text('DNS protection'));
           await tester.tap(find.byType(DsToggle).first, warnIfMissed: false);
@@ -554,8 +577,13 @@ void main() {
     testWidgets(
       'where the system routes DNS itself, there is nothing to offer',
       (tester) async {
-        await pump(tester, _FakeCore(answer: 'ms:120'));
+        await pump(
+          tester,
+          _FakeCore(answer: 'ms:120'),
+          home: const DnsSettingsScreen(),
+        );
         expect(find.text('DNS protection'), findsNothing);
+        expect(find.text('Protection'), findsNothing);
       },
     );
   });

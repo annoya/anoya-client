@@ -196,6 +196,9 @@
   .ph > .sh,.mac > .sh,.sheet > .sh{padding:16px 16px 12px}
   /* SectionNote: 14/18 text/tertiary */
   .note{font-size:14px;line-height:18px;letter-spacing:0;color:var(--tx-3)}
+  .sh.shi{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .sh.shi .icon{width:20px;height:20px;flex:none;color:var(--tx-3)}
+  .infotx{font-size:16px;line-height:24px;letter-spacing:-.4px;color:var(--tx-2)}
 
   /* card = SelectableListItem_Item: r12, background/surface, clips, 1 pt border/soft drawn inside over the rows */
   .card{background:var(--bg-surface);border-radius:12px;overflow:hidden;flex:none;position:relative}
@@ -1788,7 +1791,7 @@
       <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Routing</span></div>
       <div class="scr">
-        <div class="grp"><div class="sh">Device routing</div><div class="card"><div class="row"><svg class="icon"><use href="#l-split"/></svg><div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div><span class="sw off"><i></i></span></div><div class="row off"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div><div class="row"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule sets</div><div class="s">3 sets</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div><div class="hint" style="margin-top:-4px">Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.</div></div>
+        <div class="grp"><div class="sh">Device routing</div><div class="card"><div class="row"><svg class="icon"><use href="#l-split"/></svg><div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div><span class="sw off"><i></i></span></div><div class="row off"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div><div class="row"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule sets</div><div class="s">3 sets</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div><div class="hint" style="margin-top:-4px">Rule sets are shared; the switch is for this configuration only.</div></div>
         <div class="grp"><div class="sh">DNS</div><div class="card"><div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">DNS</div><div class="s">dns.quad9.net · through the tunnel</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div></div>
       </div>
       <div class="homeind"></div>
@@ -1800,7 +1803,7 @@
       <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Routing</span></div>
       <div class="scr">
-        <div class="grp"><div class="sh">Device routing</div><div class="card"><div class="row"><svg class="icon"><use href="#l-split"/></svg><div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div><span class="sw off"><i></i></span></div><div class="row off"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div><div class="hint" style="margin-top:-4px">Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.</div></div>
+        <div class="grp"><div class="sh">Device routing</div><div class="card"><div class="row"><svg class="icon"><use href="#l-split"/></svg><div class="tx"><div class="t">Routing</div><div class="s">Off · everything through the VPN</div></div><span class="sw off"><i></i></span></div><div class="row off"><svg class="icon"><use href="#l-layers"/></svg><div class="tx"><div class="t">Rule set</div><div class="s">Work</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div><div class="hint" style="margin-top:-4px">Rule sets are shared; the switch is for this configuration only.</div></div>
         <div class="grp"><div class="sh">DNS</div><div class="card"><div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">DNS</div><div class="s">dns.quad9.net · through the tunnel</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div></div>
       </div>
       <div class="dim"></div>
@@ -2853,9 +2856,9 @@ The last two boards are the home-screen side of the flow, drawn in §2.</p>
   </div>
   <div class="board">
     <div class="scaler"><div class="ph">
-      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div><div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Settings</span></div><div class="scr"><div class="grp"><div class="sh">Connection</div><div class="card"><div class="row"><svg class="icon"><use href="#l-zap"/></svg><div class="tx"><div class="t">Auto-connect</div><div class="s">Connect when the computer starts</div></div><span class="sw"><i></i></span></div><div class="row"><svg class="icon"><use href="#l-settings"/></svg><div class="tx"><div class="t">Advanced</div><div class="s">DNS protection off · check on</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div></div><div class="grp"><div class="sh">Routing</div><div class="card"><div class="row"><svg class="icon"><use href="#l-wifi"/></svg><div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div><span class="sw"><i></i></span></div></div></div></div><div class="homeind"></div>
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div><div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Settings</span></div><div class="scr"><div class="grp"><div class="sh">Connection</div><div class="card"><div class="row"><svg class="icon"><use href="#l-zap"/></svg><div class="tx"><div class="t">Auto-connect</div><div class="s">Connect when the computer starts</div></div><span class="sw"><i></i></span></div><div class="row"><svg class="icon"><use href="#l-settings"/></svg><div class="tx"><div class="t">Advanced</div><div class="s">Connection check on</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div></div><div class="grp"><div class="sh">Routing</div><div class="card"><div class="row"><svg class="icon"><use href="#l-wifi"/></svg><div class="tx"><div class="t">Local network direct</div><div class="s">LAN traffic bypasses the VPN</div></div><span class="sw"><i></i></span></div></div></div></div><div class="homeind"></div>
     </div></div>
-    <p class="cap"><span class="id">SettingsScreen · Connection (Windows)</span><span class="fig">Figma 225:14813 · 8.8 · SettingsScreen · подключение (Windows)</span><b>Windows: a switch, not a screen.</b> Neither “On demand” nor “Always-on” is here: Windows has no rules that the system would evaluate on its own, let alone a system switch we could point to. But the tunnel is held by <b>our</b> service, and it starts together with the machine — so we do have auto-connect after all, and the only honest way to handle it is to ask. “Auto-connect” and “Advanced” now share one card; the subtitle says “Connect when the computer starts”. The Advanced row names both things behind it here — “DNS protection off · check on” — because on Windows and Linux the screen also holds DNS protection (14.1 · Windows / Linux).<br><br><b>Why the row appeared.</b> Previously it wasn’t there, and the service brought the tunnel up on every boot simply because a saved config was on disk. And that config is written on every selection sync, including with the tunnel down — so a person who had never pressed Connect got VPN after a reboot. This is exactly the authority the app does not have under ADR-005; the row returns the decision to where it belongs.<br><br><b>One row, not a screen.</b> On Apple, “On demand” is backed by a rule set — there is something to edit. Here there is exactly one condition, “when the computer starts”, and the switch says everything about it.<br><br>Default is <b>off</b> (Figma shows it on, as an example): the state in which the app does nothing until asked. When enabled, auto-connect brings up the <b>last selected</b> configuration — the same one shown on Home — and does not depend on whether the tunnel was on when the machine shut down: “auto-connect” promises a connection, not restoration of the previous state.<br><br>The code shows the same row on <b>Linux</b> (the tunnel is the <code>anoya-tunnel</code> systemd service there); Figma draws only Windows.</p>
+    <p class="cap"><span class="id">SettingsScreen · Connection (Windows)</span><span class="fig">Figma 225:14813 · 8.8 · SettingsScreen · подключение (Windows)</span><b>Windows: a switch, not a screen.</b> Neither “On demand” nor “Always-on” is here: Windows has no rules that the system would evaluate on its own, let alone a system switch we could point to. But the tunnel is held by <b>our</b> service, and it starts together with the machine — so we do have auto-connect after all, and the only honest way to handle it is to ask. “Auto-connect” and “Advanced” now share one card; the subtitle says “Connect when the computer starts”. The Advanced row reads as on every platform — “Connection check on”: DNS protection moved to Settings › DNS (12.7 · Windows / Linux).<br><br><b>Why the row appeared.</b> Previously it wasn’t there, and the service brought the tunnel up on every boot simply because a saved config was on disk. And that config is written on every selection sync, including with the tunnel down — so a person who had never pressed Connect got VPN after a reboot. This is exactly the authority the app does not have under ADR-005; the row returns the decision to where it belongs.<br><br><b>One row, not a screen.</b> On Apple, “On demand” is backed by a rule set — there is something to edit. Here there is exactly one condition, “when the computer starts”, and the switch says everything about it.<br><br>Default is <b>off</b> (Figma shows it on, as an example): the state in which the app does nothing until asked. When enabled, auto-connect brings up the <b>last selected</b> configuration — the same one shown on Home — and does not depend on whether the tunnel was on when the machine shut down: “auto-connect” promises a connection, not restoration of the previous state.<br><br>The code shows the same row on <b>Linux</b> (the tunnel is the <code>anoya-tunnel</code> systemd service there); Figma draws only Windows.</p>
   </div>
   <div class="board">
     <div class="scaler"><div class="ph">
@@ -3785,22 +3788,96 @@ the title the user reads and the format. Nothing from the left column reaches th
       <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
       <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">DNS</span></div>
       <div class="scr">
-        <div class="grp"><div class="sh">Through the VPN</div>
+        <div class="grp"><div class="sh shi"><span>Through the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
           <div class="card"><div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Default DNS</div><div class="s">Cloudflare</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
-          <div class="note">Finds addresses for sites that go through the VPN, when the configuration brings no DNS of its own. Asked through the tunnel — your network doesn’t see these lookups.</div>
+          <div class="note">For sites that go through the VPN.</div>
         </div>
-        <div class="grp"><div class="sh">Outside the VPN</div>
+        <div class="grp"><div class="sh shi"><span>Outside the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
           <div class="card"><div class="row"><svg class="icon"><use href="#l-network"/></svg><div class="tx"><div class="t">Local DNS</div><div class="s">Off</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
-          <div class="note">Finds addresses for sites your rules send past the VPN, asked directly from this network, so they pick a server near you rather than near the VPN server. Your network sees these names — it already sees where that traffic goes. Off: they use the same DNS as everything else.</div>
+          <div class="note">For sites your rules send past the VPN.</div>
         </div>
-        <div class="grp"><div class="sh">Company network</div>
+        <div class="grp"><div class="sh shi"><span>Company network</span><svg class="icon"><use href="#l-info"/></svg></div>
           <div class="card"><div class="row"><svg class="icon"><use href="#l-building-2"/></svg><div class="tx"><div class="t">Corporate domains</div><div class="s">corp.local, ad.corp</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div>
-          <div class="note">Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.</div>
+          <div class="note">Internal names are asked at your company’s DNS server.</div>
         </div>
       </div>
       <div class="homeind"></div>
     </div></div>
-    <p class="cap"><span class="id">DnsSettingsScreen</span><span class="q">нет в Figma</span><b>One row in Settings, one screen behind it</b> — like Advanced under Connection. Everything here is the device’s, not the configuration’s: the resolvers a configuration brings are shown on its own DNS screen (12.1–12.3), and nothing on this screen overrides them except where they said nothing.<br><br><b>Three groups, named by where the traffic goes,</b> because that is what tells the three apart: through the VPN, outside the VPN, the company network. Each group is one row and a note (14/18 tertiary, 8 under the card) that says what the setting answers, how the lookup travels, and what it costs — the person is choosing between privacy and speed in the second group, so the note names both. Group captions, rows and notes follow 14.1.<br><br><b>Rows:</b> Default DNS — the 3.3 sheet; Local DNS — the 3.3b sheet; Corporate domains → 12.4, its subtitle the domains or “Off”. Precedence goes top to bottom in the reader’s head but bottom to top in the engine: a corporate domain wins over local, local wins over default for the names it covers — the last note says so. DNS protection stays in Advanced (14.1 · Windows / Linux): it is about what the system may send past the tunnel, not about which server answers.</p>
+    <p class="cap"><span class="id">DnsSettingsScreen</span><span class="q">нет в Figma</span><b>One row in Settings, one screen behind it</b> — like Advanced under Connection. Everything here is the device’s, not the configuration’s: the resolvers a configuration brings are shown on its own DNS screen (12.1–12.3), and nothing on this screen overrides them except where they said nothing.<br><br><b>Three groups, named by where the traffic goes,</b> because that is what tells the three apart: through the VPN, outside the VPN, the company network. Each group is one row and <b>one line</b> under the card (14/18 tertiary, 8 below) that says which sites the setting is for. Everything else — how the lookup travels, what it costs — is behind the <code>info</code> glyph at the end of the group caption (20, <code>text/tertiary</code>; the tap target is the whole caption line with the 12 gap under it, full width): it opens the explanation sheet (12.7c). A wall of text under every setting read as noise and hid the one sentence that mattered.<br><br><b>Rows:</b> Default DNS — the 3.3 sheet; Local DNS — the 3.3b sheet; Corporate domains → 12.4, its subtitle the domains or “Off”. Precedence goes top to bottom in the reader’s head but bottom to top in the engine: a corporate domain wins over local, local wins over default for the names it covers — the company group’s explanation says so.</p>
+  </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">DNS</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh shi"><span>Through the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Default DNS</div><div class="s">Cloudflare</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
+          <div class="note">For sites that go through the VPN.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Outside the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-network"/></svg><div class="tx"><div class="t">Local DNS</div><div class="s">Off</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
+          <div class="note">For sites your rules send past the VPN.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Company network</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-building-2"/></svg><div class="tx"><div class="t">Corporate domains</div><div class="s">corp.local, ad.corp</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div>
+          <div class="note">Internal names are asked at your company’s DNS server.</div>
+        </div>
+      </div>
+      <div class="dim"></div>
+      <div class="sheet"><div class="grab"></div><div class="stitle">Outside the VPN</div><div class="sbody"><div class="infotx">Finds addresses for sites your rules send past the VPN, asked directly from this network, so they pick a server near you rather than near the VPN server. Your network sees these names — it already sees where that traffic goes. Off: they use the same DNS as everything else.</div><div class="btn fill"><span>Got it</span></div></div></div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">DnsSettingsScreen · group info</span><span class="q">нет в Figma</span><b>The explanation, on request.</b> A tap on a group caption with <code>info</code> opens a sheet: the title is the group’s caption, the body is the full explanation in 16/24 <code>text/secondary</code>, and “Got it” (48) closes it — so do the scrim and a swipe down. The same component serves every group that has more to say than one line (<code>DsGroup.info</code>); a group whose note already fits one line keeps the note and gets no glyph, so the glyph always means “there is more”.</p>
+  </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">DNS</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh shi"><span>Through the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Default DNS</div><div class="s">Cloudflare</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
+          <div class="note">For sites that go through the VPN.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Outside the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-network"/></svg><div class="tx"><div class="t">Local DNS</div><div class="s">Off</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
+          <div class="note">For sites your rules send past the VPN.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Company network</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-building-2"/></svg><div class="tx"><div class="t">Corporate domains</div><div class="s">corp.local, ad.corp</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div>
+          <div class="note">Internal names are asked at your company’s DNS server.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Protection</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-shield"/></svg><div class="tx"><div class="t">DNS protection</div><div class="s multi">Block name lookups that go around the VPN</div></div><span class="sw off"><i></i></span></div></div>
+        </div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">DnsSettingsScreen · Windows / Linux</span><span class="q">нет в Figma</span><b>DNS protection lives with the rest of DNS.</b> Where the tunnel is our own service (Windows, Linux) the screen ends with a fourth group, <i>Protection</i>: one row, <i>DNS protection</i> (<code>shield</code>, toggle), its subtitle the one line, and no note under the card — the cost is behind <code>info</code>. It used to sit in Advanced, and people looked for it here, next to the other DNS settings. On turns on the engine’s <code>strict-route</code>: on Windows, WFP filters that block port 53 on every adapter but ours; on Linux, routing rules that send everything into the tunnel.<br><br><b>A choice, and off by default.</b> Windows asks every adapter’s DNS server, so with protection off the provider’s resolver can see the names the user opens — the answers still come from the engine, which almost always replies first. With it on, the DNS of any other VPN on the machine is blocked too, and corporate networks stop resolving. Clash Verge Rev, FlClash and Mihomo Party all ship it off; we follow them and say the trade-off in the explanation instead of choosing for the user.<br><br>Apple and Android have no such group: their systems route DNS into the tunnel themselves.</p>
+  </div>
+  <div class="board">
+    <div class="scaler"><div class="ph">
+      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
+      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">DNS</span></div>
+      <div class="scr">
+        <div class="grp"><div class="sh shi"><span>Through the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Default DNS</div><div class="s">Cloudflare</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
+          <div class="note">For sites that go through the VPN.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Outside the VPN</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-network"/></svg><div class="tx"><div class="t">Local DNS</div><div class="s">Off</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div></div>
+          <div class="note">For sites your rules send past the VPN.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Company network</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row"><svg class="icon"><use href="#l-building-2"/></svg><div class="tx"><div class="t">Corporate domains</div><div class="s">corp.local, ad.corp</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-right"/></svg></span></div></div>
+          <div class="note">Internal names are asked at your company’s DNS server.</div>
+        </div>
+        <div class="grp"><div class="sh shi"><span>Protection</span><svg class="icon"><use href="#l-info"/></svg></div>
+          <div class="card"><div class="row off"><svg class="icon"><use href="#l-shield"/></svg><div class="tx"><div class="t">DNS protection</div><div class="s multi">Turn the VPN off to change this</div></div><span class="sw off"><i></i></span></div></div>
+        </div>
+      </div>
+      <div class="homeind"></div>
+    </div></div>
+    <p class="cap"><span class="id">DnsSettingsScreen · Windows / Linux · VPN on</span><span class="q">нет в Figma</span><b>The switch is locked while the VPN is on.</b> <code>strict-route</code> sits in the engine’s <code>tun</code> section, and a reload that changes that section re-creates the adapter — traffic leaves on the physical interface in between (ADR-002). So the setting changes only with the tunnel down: while connecting or connected the row is dimmed, does not answer a tap, and its subtitle says what to do instead of what the setting is — <i>Turn the VPN off to change this</i>. The toggle keeps showing the current value; the other three groups and every <code>info</code> stay live.</p>
   </div>
 </div>
 
@@ -4052,55 +4129,7 @@ of a link subscription. Every fixed string says “subscription”. Flows drawn 
     <p class="cap"><span class="id">AdvancedConnectionScreen</span><span class="fig">Figma 245:15963 · 14.1 · AdvancedConnectionScreen</span><b>Three settings and a button.</b> The screen behind the “Advanced” row in Settings. The check is on by default: it costs one HEAD per connection, and it catches a state that would otherwise be diagnosed over an evening with logs. It can be turned off — the request goes to a third-party host, and that is the user's decision, not ours.<br><br><b>Layout.</b> One card: <i>Check after connecting</i> (<code>activity</code>, toggle; subtitle wraps), <i>Test URL</i> (<code>globe</code>, <code>pencil</code> → 14.8; the URL wraps to two lines), <i>Give up after</i> (<code>timer</code>, <code>chevron-down</code> → 14.6). <i>Test now</i> is a full-width primary button 24 under the card, the scope note 8 under it. Figma notes: <i>tap — the check runs, with a spinner in the button; without a tunnel the button is inactive (14.7)</i>; <i>after connecting the check starts by itself: after 2 s, up to three attempts 2 s apart</i>.<br><br><b>The URL is editable, the status is not.</b> <code>expected-status</code> in mihomo has its own range syntax, and a field for it would give the user a way to break the check so that it silently stops meaning anything.<br><br>The note covers something easy to mistake for the opposite. The test dials through the proxy itself (<code>Proxy.URLTest</code> calls the adapter's <code>DialContext</code>, bypassing the engine's rules), so split tunneling does not affect it — but for the same reason a green result says nothing about whether app traffic actually goes into the VPN.</p>
   </div>
 
-  <div class="board">
-    <div class="scaler"><div class="ph">
-      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Advanced</span></div>
-      <div class="scr">
-        <div class="grp"><div class="sh">DNS</div>
-          <div class="card">
-            <div class="row"><svg class="icon"><use href="#l-shield"/></svg><div class="tx"><div class="t">DNS protection</div><div class="s multi">Block name lookups that go around the VPN</div></div><span class="sw off"><i></i></span></div>
-          </div>
-          <div class="note">The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.</div>
-        </div>
-        <div class="grp"><div class="sh">Connection check</div>
-          <div class="card">
-            <div class="row"><svg class="icon"><use href="#l-activity"/></svg><div class="tx"><div class="t">Check after connecting</div><div class="s multi">Fetch a page through the server and time the answer</div></div><span class="sw"><i></i></span></div>
-            <div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Test URL</div><div class="s multi">https://www.gstatic.com/<wbr>generate_204</div></div><span class="ic"><svg class="icon"><use href="#l-pencil"/></svg></span></div>
-            <div class="row"><svg class="icon"><use href="#l-timer"/></svg><div class="tx"><div class="t">Give up after</div><div class="s">5 seconds</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
-          </div>
-        </div>
-        <div class="grp" style="gap:8px"><div class="btn fill"><span>Test now</span></div><div class="note">The request goes through the server itself, so routing rules do not affect it. It proves the server passes traffic — not that your traffic goes through it.</div></div>
-      </div>
-      <div class="homeind"></div>
-    </div></div>
-    <p class="cap"><span class="id">AdvancedConnectionScreen · Windows / Linux</span><span class="q">нет в Figma</span><b>DNS protection is a choice, and off by default.</b> Where the tunnel is our own service (Windows, Linux) the screen opens with a <i>DNS</i> group above <i>Connection check</i>: one row, <i>DNS protection</i> (<code>shield</code>, toggle), and a note that says what it costs. On turns on the engine’s <code>strict-route</code>: on Windows, WFP filters that block port 53 on every adapter but ours; on Linux, routing rules that send everything into the tunnel.<br><br><b>Why off.</b> Windows asks every adapter’s DNS server, so with protection off the provider’s resolver can see the names the user opens — the answers still come from the engine, which almost always replies first. With it on, the DNS of any other VPN on the machine is blocked too, and corporate networks stop resolving. Clash Verge Rev, FlClash and Mihomo Party all ship it off; we follow them and say the trade-off out loud instead of choosing for the user.<br><br>Apple and Android have no such row: their systems route DNS into the tunnel themselves.</p>
-  </div>
 
-  <div class="board">
-    <div class="scaler"><div class="ph">
-      <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>
-      <div class="ab"><span class="ic"><svg class="icon"><use href="#l-arrow-left"/></svg></span><span class="ttl">Advanced</span></div>
-      <div class="scr">
-        <div class="grp"><div class="sh">DNS</div>
-          <div class="card">
-            <div class="row off"><svg class="icon"><use href="#l-shield"/></svg><div class="tx"><div class="t">DNS protection</div><div class="s multi">Turn the VPN off to change this</div></div><span class="sw off"><i></i></span></div>
-          </div>
-          <div class="note">The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.</div>
-        </div>
-        <div class="grp"><div class="sh">Connection check</div>
-          <div class="card">
-            <div class="row"><svg class="icon"><use href="#l-activity"/></svg><div class="tx"><div class="t">Check after connecting</div><div class="s multi">Fetch a page through the server and time the answer</div></div><span class="sw"><i></i></span></div>
-            <div class="row"><svg class="icon"><use href="#l-globe"/></svg><div class="tx"><div class="t">Test URL</div><div class="s multi">https://www.gstatic.com/<wbr>generate_204</div></div><span class="ic"><svg class="icon"><use href="#l-pencil"/></svg></span></div>
-            <div class="row"><svg class="icon"><use href="#l-timer"/></svg><div class="tx"><div class="t">Give up after</div><div class="s">5 seconds</div></div><span class="ic"><svg class="icon"><use href="#l-chevron-down"/></svg></span></div>
-          </div>
-        </div>
-        <div class="grp" style="gap:8px"><div class="btn fill"><span>Test now</span></div><div class="note">The request goes through the server itself, so routing rules do not affect it. It proves the server passes traffic — not that your traffic goes through it.</div></div>
-      </div>
-      <div class="homeind"></div>
-    </div></div>
-    <p class="cap"><span class="id">AdvancedConnectionScreen · Windows / Linux · VPN on</span><span class="q">нет в Figma</span><b>The switch is locked while the VPN is on.</b> <code>strict-route</code> sits in the engine’s <code>tun</code> section, and a reload that changes that section re-creates the adapter — traffic leaves on the physical interface in between (ADR-002). So the setting changes only with the tunnel down: while connecting or connected the row is dimmed, does not answer a tap, and its subtitle says what to do instead of what the setting is — <i>Turn the VPN off to change this</i>. The toggle keeps showing the current value.</p>
-  </div>
   <div class="board">
     <div class="scaler"><div class="ph">
       <div class="sb"><span class="side">9:41</span><svg class="lvl"><use href="#sys-levels"/></svg></div>

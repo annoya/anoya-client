@@ -33,6 +33,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClose => 'Close';
 
   @override
+  String get commonGotIt => 'Got it';
+
+  @override
   String get commonRetry => 'Retry';
 
   @override
@@ -1039,7 +1042,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get configDeviceRoutingNote =>
-      'Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.';
+      'Rule sets are shared; the switch is for this configuration only.';
 
   @override
   String get configGetSupport => 'Get support';
@@ -3196,9 +3199,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get advancedSectionDns => 'DNS';
-
-  @override
   String get advancedDnsProtection => 'DNS protection';
 
   @override
@@ -3211,18 +3211,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get advancedDnsProtectionNote =>
       'The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.';
-
-  @override
-  String get settingsDnsProtectionOn => 'DNS protection on';
-
-  @override
-  String get settingsDnsProtectionOff => 'DNS protection off';
-
-  @override
-  String get settingsCheckOn => 'check on';
-
-  @override
-  String get settingsCheckOff => 'check off';
 
   @override
   String get settingsCorpDomains => 'Corporate domains';
@@ -3294,6 +3282,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dnsSettingsCorpNote =>
       'Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.';
+
+  @override
+  String get dnsSettingsDefaultLine => 'For sites that go through the VPN.';
+
+  @override
+  String get dnsSettingsLocalLine => 'For sites your rules send past the VPN.';
+
+  @override
+  String get dnsSettingsCorpLine =>
+      'Internal names are asked at your company’s DNS server.';
+
+  @override
+  String get dnsSettingsProtection => 'Protection';
 
   @override
   String get ruleRemoved => 'Rule removed';

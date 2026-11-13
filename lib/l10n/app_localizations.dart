@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get commonClose;
 
+  /// No description provided for @commonGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get commonGotIt;
+
   /// No description provided for @commonRetry.
   ///
   /// In en, this message translates to:
@@ -1673,7 +1679,7 @@ abstract class AppLocalizations {
   /// No description provided for @configDeviceRoutingNote.
   ///
   /// In en, this message translates to:
-  /// **'Rule sets are shared by every configuration; the switch is per configuration, so a work subscription and a personal one can use the same set differently.'**
+  /// **'Rule sets are shared; the switch is for this configuration only.'**
   String get configDeviceRoutingNote;
 
   /// No description provided for @configGetSupport.
@@ -4922,12 +4928,6 @@ abstract class AppLocalizations {
   /// **'{type} → {target}'**
   String rulesTarget(String type, String target);
 
-  /// No description provided for @advancedSectionDns.
-  ///
-  /// In en, this message translates to:
-  /// **'DNS'**
-  String get advancedSectionDns;
-
   /// No description provided for @advancedDnsProtection.
   ///
   /// In en, this message translates to:
@@ -4951,30 +4951,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The system also asks your provider’s DNS server, past the VPN, so the provider can see which sites you open. Protection blocks those lookups — and with them the DNS of other VPNs on this computer: corporate networks (NetBird, Cisco, OpenVPN) stop opening by name. Leave it off if you use one.'**
   String get advancedDnsProtectionNote;
-
-  /// No description provided for @settingsDnsProtectionOn.
-  ///
-  /// In en, this message translates to:
-  /// **'DNS protection on'**
-  String get settingsDnsProtectionOn;
-
-  /// No description provided for @settingsDnsProtectionOff.
-  ///
-  /// In en, this message translates to:
-  /// **'DNS protection off'**
-  String get settingsDnsProtectionOff;
-
-  /// No description provided for @settingsCheckOn.
-  ///
-  /// In en, this message translates to:
-  /// **'check on'**
-  String get settingsCheckOn;
-
-  /// No description provided for @settingsCheckOff.
-  ///
-  /// In en, this message translates to:
-  /// **'check off'**
-  String get settingsCheckOff;
 
   /// No description provided for @settingsCorpDomains.
   ///
@@ -5089,6 +5065,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Internal names are asked at the company’s DNS server and reached outside the VPN with their real addresses. They win over both settings above.'**
   String get dnsSettingsCorpNote;
+
+  /// No description provided for @dnsSettingsDefaultLine.
+  ///
+  /// In en, this message translates to:
+  /// **'For sites that go through the VPN.'**
+  String get dnsSettingsDefaultLine;
+
+  /// No description provided for @dnsSettingsLocalLine.
+  ///
+  /// In en, this message translates to:
+  /// **'For sites your rules send past the VPN.'**
+  String get dnsSettingsLocalLine;
+
+  /// No description provided for @dnsSettingsCorpLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal names are asked at your company’s DNS server.'**
+  String get dnsSettingsCorpLine;
+
+  /// No description provided for @dnsSettingsProtection.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection'**
+  String get dnsSettingsProtection;
 
   /// No description provided for @ruleRemoved.
   ///
