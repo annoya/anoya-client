@@ -1653,7 +1653,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ruleSetNoRulesSplit =>
-      'No rules: no traffic goes through the VPN. Add rules for what should be tunneled.';
+      'No rules yet: all traffic goes through the VPN. Add rules for what should be tunneled.';
 
   @override
   String get ruleSetNoRulesFull =>
@@ -1848,7 +1848,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ruleSetNothingSelectedSplit =>
-      'Nothing selected · no traffic goes through the VPN yet';
+      'Nothing selected · everything goes through the VPN for now';
 
   @override
   String get ruleSetNothingSelectedFull =>

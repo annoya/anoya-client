@@ -102,6 +102,31 @@ void main() {
     );
   });
 
+  test('a split set with nothing to tunnel carries everything', () async {
+    Future<Routing> resolved(List<RoutingRule> rules) => routingPolicyFor(
+      profile(localOn: true),
+      loadRuleSet: (_) async => RuleSet(
+        id: 'work',
+        name: 'Work',
+        mode: RoutingMode.split,
+        rules: rules,
+      ),
+    ).resolve();
+
+    expect((await resolved(const [])).mode, 'full');
+
+    const around = RoutingRule(
+      type: 'domain-suffix',
+      values: ['ru.example'],
+      action: 'direct',
+    );
+    final exceptionsOnly = await resolved(const [around]);
+    expect(exceptionsOnly.mode, 'full');
+    expect(exceptionsOnly.rules.single.value, 'ru.example');
+
+    expect((await resolved(localSet.rules)).mode, 'split');
+  });
+
   group('a provider policy and its lists', () {
     test('list rules are removed until the user accepts the lists', () async {
       final policy =

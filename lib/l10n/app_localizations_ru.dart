@@ -1710,7 +1710,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ruleSetNoRulesSplit =>
-      'Правил нет: через VPN не идёт ничего. Добавьте правила для того, что нужно туннелировать.';
+      'Правил пока нет: весь трафик идёт через VPN. Добавьте правила для того, что нужно туннелировать.';
 
   @override
   String get ruleSetNoRulesFull => 'Правил нет: весь трафик идёт через VPN.';
@@ -1904,7 +1904,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ruleSetNothingSelectedSplit =>
-      'Ничего не выбрано · через VPN пока ничего не идёт';
+      'Ничего не выбрано · пока всё идёт через VPN';
 
   @override
   String get ruleSetNothingSelectedFull =>

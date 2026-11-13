@@ -1221,7 +1221,7 @@
   },
   "ruleSetModeFullDescription": "All traffic goes through the VPN; rules define exceptions.",
   "ruleSetModeSplitDescription": "Only traffic matching the rules goes through the VPN; the rest connects directly.",
-  "ruleSetNoRulesSplit": "No rules: no traffic goes through the VPN. Add rules for what should be tunneled.",
+  "ruleSetNoRulesSplit": "No rules yet: all traffic goes through the VPN. Add rules for what should be tunneled.",
   "ruleSetNoRulesFull": "No rules: all traffic goes through the VPN.",
   "ruleSetDownload": "Download",
   "ruleKindRuleList": "rule list",
@@ -1377,7 +1377,7 @@
   "ruleSetServicesHeader": "Services",
   "ruleSetAddCategory": "Add category",
   "ruleSetOtherCategoriesHeader": "Other categories",
-  "ruleSetNothingSelectedSplit": "Nothing selected · no traffic goes through the VPN yet",
+  "ruleSetNothingSelectedSplit": "Nothing selected · everything goes through the VPN for now",
   "ruleSetNothingSelectedFull": "Nothing selected · everything goes through the VPN",
   "ruleSetSelectedSplit": "{count} selected · everything else connects directly",
   "@ruleSetSelectedSplit": {

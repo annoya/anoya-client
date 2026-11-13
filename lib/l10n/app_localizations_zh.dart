@@ -1604,7 +1604,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ruleSetModeSplitDescription => '只有匹配规则的流量经由 VPN，其余直连。';
 
   @override
-  String get ruleSetNoRulesSplit => '无规则：没有流量经由 VPN。请为需要走隧道的内容添加规则。';
+  String get ruleSetNoRulesSplit => '暂无规则：全部流量经由 VPN。请为需要走隧道的内容添加规则。';
 
   @override
   String get ruleSetNoRulesFull => '无规则：全部流量经由 VPN。';
@@ -1794,7 +1794,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ruleSetOtherCategoriesHeader => '其他类别';
 
   @override
-  String get ruleSetNothingSelectedSplit => '未选择任何项 · 目前没有流量经由 VPN';
+  String get ruleSetNothingSelectedSplit => '未选择任何项 · 目前全部流量经由 VPN';
 
   @override
   String get ruleSetNothingSelectedFull => '未选择任何项 · 全部流量经由 VPN';

@@ -1668,7 +1668,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ruleSetNoRulesSplit =>
-      'Aucune règle : aucun trafic ne passe par le VPN. Ajoutez des règles pour ce qui doit passer par le tunnel.';
+      'Aucune règle pour l’instant : tout le trafic passe par le VPN. Ajoutez des règles pour ce qui doit passer par le tunnel.';
 
   @override
   String get ruleSetNoRulesFull =>
@@ -1865,7 +1865,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ruleSetNothingSelectedSplit =>
-      'Rien de sélectionné · aucun trafic ne passe encore par le VPN';
+      'Rien de sélectionné · pour l’instant tout passe par le VPN';
 
   @override
   String get ruleSetNothingSelectedFull =>

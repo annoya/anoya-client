@@ -67,6 +67,13 @@ Future<NormConfig> buildNormConfig(Profile p) async {
     );
   }
 
+  if (routing.mode == 'split') {
+    routing = fullIfNothingTunnelled(routing);
+    if (routing.mode == 'full') {
+      Log.i('routing: split with nothing to tunnel, applied as full');
+    }
+  }
+
   Log.i('routing: ${await _describe(policy, routing)}');
 
   final prefs = await RoutingPrefsStore.load();

@@ -2615,7 +2615,7 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSetNoRulesSplit.
   ///
   /// In en, this message translates to:
-  /// **'No rules: no traffic goes through the VPN. Add rules for what should be tunneled.'**
+  /// **'No rules yet: all traffic goes through the VPN. Add rules for what should be tunneled.'**
   String get ruleSetNoRulesSplit;
 
   /// No description provided for @ruleSetNoRulesFull.
@@ -2939,7 +2939,7 @@ abstract class AppLocalizations {
   /// No description provided for @ruleSetNothingSelectedSplit.
   ///
   /// In en, this message translates to:
-  /// **'Nothing selected · no traffic goes through the VPN yet'**
+  /// **'Nothing selected · everything goes through the VPN for now'**
   String get ruleSetNothingSelectedSplit;
 
   /// No description provided for @ruleSetNothingSelectedFull.

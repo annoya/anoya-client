@@ -33,6 +33,14 @@ traffic tunnelled) and an ordered list of rules, first match wins. A built-in
 everything goes into the tunnel. The chosen set is remembered while off and
 comes back when re-enabled, so the switch is not destructive.
 
+**A split that tunnels nothing is applied as full.** A `split` policy with no
+rule whose action is `proxy` — an empty set, one holding only exceptions, or one
+whose tunnelled rules were all dropped for want of a geo database — would leave
+a connected VPN carrying no traffic, with the user's own address showing and
+"connected" on screen. It is rendered as `full` instead, keeping whatever
+`direct` and `block` rules it has, whichever policy it came from. The set itself
+is not rewritten: the first tunnelled rule makes it a split again.
+
 **A server-managed policy wins and ignores the local switch.** For self-hosted
 profiles, management delivers the policy; the configuration screen shows it
 read-only and offers no toggle, because a local override would silently diverge

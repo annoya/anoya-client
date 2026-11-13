@@ -892,10 +892,11 @@ controls what it returns, not where this device's traffic goes (ADR-005).
 A Clash body's `rules:` are not translated: they are the subscription-rules
 mode described above.
 
-A split policy that tunnels nothing once its rule lists are set aside applies
-as **full** while the rule lists switch is off: it would send nothing to the
+A split policy that tunnels nothing applies as **full**, whichever policy it
+is — a device rule set with no rules yet, or a provider's once its rule lists
+are set aside while the rule lists switch is off: it would send nothing to the
 tunnel, and a connected VPN that carries no traffic is the one outcome worse
-than ignoring the provider's exceptions.
+than ignoring the exceptions (ADR-003).
 
 Rule types are the client's own superset of the shared schema (like `geoip` and
 `geosite` before them): `domain-regex` maps to the engine's `DOMAIN-REGEX`, and

@@ -30,12 +30,7 @@ final class ProviderRoutingPolicy extends RoutingPolicy {
   Future<Routing> resolve() async {
     if (listsEnabled) return routing;
     final rules = routing.rules.where((r) => !r.needsRuleList).toList();
-    final tunnelsNothing = !rules.any((r) => r.action == 'proxy');
-    return Routing(
-      mode: routing.mode == 'split' && tunnelsNothing ? 'full' : routing.mode,
-      rules: rules,
-      lists: const [],
-    );
+    return fullIfNothingTunnelled(Routing(mode: routing.mode, rules: rules));
   }
 }
 
@@ -49,9 +44,14 @@ final class LocalRoutingPolicy extends RoutingPolicy {
   @override
   Future<Routing> resolve() async {
     if (!enabled) return const Routing(mode: 'full', rules: []);
-    return (await load(profile.ruleSetId)).toRouting();
+    return fullIfNothingTunnelled((await load(profile.ruleSetId)).toRouting());
   }
 }
+
+Routing fullIfNothingTunnelled(Routing r) =>
+    r.mode == 'split' && !r.rules.any((x) => x.action == 'proxy')
+    ? Routing(mode: 'full', rules: r.rules, lists: r.lists)
+    : r;
 
 RoutingPolicy routingPolicyFor(
   Profile p, {
