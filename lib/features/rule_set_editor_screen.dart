@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../core/app_error.dart';
 import '../core/country_flag.dart';
 import '../core/ds.dart';
+import '../core/file_open.dart';
 import '../core/geo_store.dart';
 import '../core/geosite_index.dart';
 import '../core/log.dart';
@@ -193,15 +193,12 @@ class _RuleSetEditorScreenState extends ConsumerState<RuleSetEditorScreen> {
             ShareParams(files: [XFile(file.path)], sharePositionOrigin: origin),
           );
         case _ExportTo.file:
-          final bytes = utf8.encode(encodeRuleSetFile(set));
-          final writesItself = Platform.isIOS || Platform.isAndroid;
-          final path = await FilePicker.platform.saveFile(
-            dialogTitle: l10n.ruleSetExportSave,
-            fileName: fileName,
-            bytes: writesItself ? bytes : null,
+          final path = await saveFileAs(
+            title: l10n.ruleSetExportSave,
+            name: fileName,
+            bytes: utf8.encode(encodeRuleSetFile(set)),
           );
           if (path == null) return;
-          if (!writesItself) await File(path).writeAsBytes(bytes, flush: true);
           if (mounted) showToast(context, l10n.logsSavedTo(path));
         case _ExportTo.copy:
           await Clipboard.setData(ClipboardData(text: link));

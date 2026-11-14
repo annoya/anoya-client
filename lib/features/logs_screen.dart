@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -8,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../core/app_error.dart';
 import '../core/ds.dart';
 import '../core/ext_logs.dart';
+import '../core/file_open.dart';
 import '../core/log.dart';
 import '../core/log_archive.dart';
 import '../core/platform_support.dart';
@@ -73,15 +71,12 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
             ),
           );
         case _SaveTo.file:
-          // The mobile plugin needs the bytes; desktop refuses them and only returns the path.
-          final writesItself = Platform.isIOS || Platform.isAndroid;
-          final path = await FilePicker.platform.saveFile(
-            dialogTitle: l10n.logsSaveDialogTitle,
-            fileName: name,
-            bytes: writesItself ? await archive.readAsBytes() : null,
+          final path = await saveFileAs(
+            title: l10n.logsSaveDialogTitle,
+            name: name,
+            bytes: await archive.readAsBytes(),
           );
           if (path == null) return;
-          if (!writesItself) await archive.copy(path);
           if (mounted) showToast(context, l10n.logsSavedTo(path));
       }
     } catch (e) {

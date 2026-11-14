@@ -37,13 +37,13 @@ dependencies:
   path_provider: ^2.1.6
   crypto: ^3.0.6
   yaml: ^3.1.3            # parse Clash/mihomo-format subscriptions
-  file_picker: ^8.1.6     # "open a file with a link" on the start screen
+  file_picker: ^12.3.0    # "open a file with a link" on the start screen
   archive: ^4.0.9
-  share_plus: ^12.0.2
+  share_plus: ^13.3.1
   flutter_svg: ^2.0.10    # brand glyphs in the routing service catalog
   url_launcher: ^6.3.2
   ffi: ^2.2.0              # the Amnezia gateway SDK is a C ABI (native/libagw)
-  win32: ^5.15.0           # the named pipe to the Windows tunnel service
+  win32: ^6.3.0           # the named pipe to the Windows tunnel service
   cryptography: ^2.9.0
   flutter_zxing: ^3.1.0
   camera: ^0.12.1

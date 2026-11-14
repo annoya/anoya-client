@@ -20,19 +20,20 @@ Future<OpenedFile?> openFile() async {
       AppError(l10n.fileAccessDenied, detail: l10n.fileAccessDeniedDetail),
     );
   }
-  final FilePickerResult? res;
+  final PlatformFile? file;
   try {
-    res = await FilePicker.platform.pickFiles(withData: true);
+    file = await FilePicker.pickFile();
   } on PlatformException catch (e) {
-    if (e.code != 'invalid_format_type') rethrow;
+    if (e.code != 'explorer_not_found') rethrow;
     throw AppErrorException(
       AppError(l10n.fileNoPicker, detail: l10n.fileNoPickerDetail),
     );
   }
-  final file = res?.files.single;
   if (file == null) return null;
-  final bytes = file.bytes;
-  if (bytes == null) {
+  final Uint8List bytes;
+  try {
+    bytes = await file.readAsBytes();
+  } on Exception {
     throw AppErrorException(
       AppError(
         l10n.startCouldntReadFile,
@@ -41,6 +42,20 @@ Future<OpenedFile?> openFile() async {
     );
   }
   return OpenedFile(name: file.name, bytes: bytes);
+}
+
+Future<String?> saveFileAs({
+  required String title,
+  required String name,
+  required Uint8List bytes,
+}) async {
+  final saved = await FilePicker.saveFile(
+    dialogTitle: title,
+    fileName: name,
+    bytes: bytes,
+  );
+  if (saved == null) return null;
+  return saved.scheme == 'file' ? saved.toFilePath() : '$saved';
 }
 
 Future<bool> _mayReadStorage() async {

@@ -15,7 +15,7 @@ class WinPipeLink implements PipeLink {
   WinPipeLink([this.path = kTunnelPipe]);
 
   final String path;
-  int _handle = INVALID_HANDLE_VALUE;
+  HANDLE? _handle;
   final _incoming = StreamController<List<int>>();
   Isolate? _reader;
 
@@ -25,24 +25,27 @@ class WinPipeLink implements PipeLink {
   @override
   Future<void> connect() async {
     final name = path.toNativeUtf16();
+    final HANDLE handle;
     try {
-      _handle = CreateFile(
-        name,
+      final opened = CreateFile(
+        PCWSTR(name),
         GENERIC_READ | GENERIC_WRITE,
-        0,
-        nullptr,
+        FILE_SHARE_NONE,
+        null,
         OPEN_EXISTING,
         FILE_FLAG_OVERLAPPED,
-        NULL,
+        null,
       );
-      if (_handle == INVALID_HANDLE_VALUE) {
-        throw StateError('cannot open $path: error ${GetLastError()}');
+      if (!opened.value.isValid) {
+        throw StateError('cannot open $path: error ${opened.error}');
       }
+      handle = opened.value;
     } finally {
       calloc.free(name);
     }
+    _handle = handle;
     final port = ReceivePort();
-    _reader = await Isolate.spawn(_readLoop, (_handle, port.sendPort));
+    _reader = await Isolate.spawn(_readLoop, (handle.address, port.sendPort));
     port.listen((msg) {
       if (msg == null) {
         port.close();
@@ -55,43 +58,44 @@ class WinPipeLink implements PipeLink {
 
   // Return values and GetLastError ignored: the VM overwrites the last error.
   static int _transfer(
-    int handle,
-    int Function(Pointer<OVERLAPPED> overlapped) start,
+    HANDLE handle,
+    void Function(Pointer<OVERLAPPED> overlapped) start,
   ) {
     final overlapped = calloc<OVERLAPPED>();
     final count = calloc<Uint32>();
-    final event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+    final event = CreateEvent(null, true, false, null).value;
     try {
-      if (event == NULL) return -1;
+      if (!event.isValid) return -1;
       overlapped.ref.hEvent = event;
       start(overlapped);
       // A call that fails at once never signals the event; only the pipe can say it is gone.
-      while (WaitForSingleObject(event, 100) == WAIT_TIMEOUT) {
-        if (PeekNamedPipe(handle, nullptr, 0, nullptr, nullptr, nullptr) != 0) {
-          continue;
-        }
+      while (WaitForSingleObject(event, 100).value == WAIT_TIMEOUT) {
+        if (PeekNamedPipe(handle, null, 0, null, null, null).value) continue;
         CancelIoEx(handle, overlapped);
         WaitForSingleObject(event, 1000);
         return -1;
       }
-      if (GetOverlappedResult(handle, overlapped, count, FALSE) == 0) return -1;
+      if (!GetOverlappedResult(handle, overlapped, count, false).value) {
+        return -1;
+      }
       return count.value;
     } finally {
-      if (event != NULL) CloseHandle(event);
+      if (event.isValid) CloseHandle(event);
       calloc.free(count);
       calloc.free(overlapped);
     }
   }
 
   static void _readLoop((int, SendPort) args) {
-    final (handle, port) = args;
+    final (address, port) = args;
+    final handle = HANDLE(Pointer.fromAddress(address));
     const size = 64 * 1024;
     final buf = calloc<Uint8>(size);
     try {
       while (true) {
         final read = _transfer(
           handle,
-          (o) => ReadFile(handle, buf, size, nullptr, o),
+          (o) => ReadFile(handle, buf, size, null, o),
         );
         if (read <= 0) break;
         port.send(Uint8List.fromList(buf.asTypedList(read)));
@@ -104,21 +108,17 @@ class WinPipeLink implements PipeLink {
 
   @override
   void write(List<int> bytes) {
-    if (_handle == INVALID_HANDLE_VALUE) return;
+    final handle = _handle;
+    if (handle == null) return;
     final buf = calloc<Uint8>(bytes.length);
     try {
       buf.asTypedList(bytes.length).setAll(0, bytes);
       var offset = 0;
       while (offset < bytes.length) {
         final written = _transfer(
-          _handle,
-          (o) => WriteFile(
-            _handle,
-            buf + offset,
-            bytes.length - offset,
-            nullptr,
-            o,
-          ),
+          handle,
+          (o) =>
+              WriteFile(handle, buf + offset, bytes.length - offset, null, o),
         );
         if (written <= 0) break;
         offset += written;
@@ -130,9 +130,10 @@ class WinPipeLink implements PipeLink {
 
   @override
   void close() {
-    if (_handle != INVALID_HANDLE_VALUE) {
-      CloseHandle(_handle);
-      _handle = INVALID_HANDLE_VALUE;
+    final handle = _handle;
+    if (handle != null) {
+      CloseHandle(handle);
+      _handle = null;
     }
     _reader?.kill(priority: Isolate.immediate);
     _reader = null;
