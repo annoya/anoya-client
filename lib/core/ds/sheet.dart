@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../theme.dart';
 import 'layout.dart';
@@ -23,6 +24,7 @@ class DsSheet extends StatelessWidget {
     required this.children,
     this.footer,
     this.gap = 16,
+    this.eager = false,
   });
 
   final String? title;
@@ -30,6 +32,7 @@ class DsSheet extends StatelessWidget {
   final List<Widget> children;
   final Widget? footer;
   final double gap;
+  final bool eager;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +65,9 @@ class DsSheet extends StatelessWidget {
                   type: MaterialType.transparency,
                   child: ListView(
                     shrinkWrap: true,
+                    scrollCacheExtent: eager
+                        ? const ScrollCacheExtent.pixels(1e6)
+                        : null,
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     children: gapped(children, gap),
                   ),

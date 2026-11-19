@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/l10n.dart';
@@ -327,6 +328,27 @@ class _PickSheet<T> extends StatefulWidget {
 class _PickSheetState<T> extends State<_PickSheet<T>> {
   late final Set<T> _favorites = {...widget.favorites};
   String _query = '';
+  final _selectedRow = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _revealSelected());
+  }
+
+  void _revealSelected() {
+    final row = _selectedRow.currentContext?.findRenderObject();
+    if (row == null) return;
+    final viewport = RenderAbstractViewport.of(row);
+    final position = Scrollable.of(_selectedRow.currentContext!).position;
+    if (viewport.getOffsetToReveal(row, 1).offset <= position.pixels) return;
+    position.jumpTo(
+      viewport
+          .getOffsetToReveal(row, 0.5)
+          .offset
+          .clamp(position.minScrollExtent, position.maxScrollExtent),
+    );
+  }
 
   bool get _grouped => widget.onToggleFavorite != null || _favorites.isNotEmpty;
 
@@ -359,6 +381,7 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
     final favorite = _favorites.contains(o.value);
     final selected = o.value == widget.selected;
     return DsRow(
+      key: selected ? _selectedRow : null,
       leading: widget.radio ? DsRadio(selected: selected) : o.leading,
       title: o.title,
       subtitle: o.subtitle,
@@ -408,6 +431,8 @@ class _PickSheetState<T> extends State<_PickSheet<T>> {
             )
           : null,
       gap: kGroupGap,
+      // The chosen row has to be laid out before it can be scrolled to.
+      eager: widget.selected != null,
       children: [
         if (pinnedShown.isNotEmpty)
           _group(
