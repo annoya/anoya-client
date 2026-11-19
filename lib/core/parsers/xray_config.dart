@@ -45,7 +45,7 @@ ParsedSubscription? parseXrayServers(String body) {
           parsed.add((tag: tag, location: null, unsupported: protocol));
           continue;
         }
-        final skip = proxy['type'] == 'hysteria2'
+        final skip = const {'hysteria2', 'wireguard'}.contains(proxy['type'])
             ? null
             : _applyStream(proxy, protocol, ob['streamSettings']);
         if (skip != null) {
@@ -294,6 +294,41 @@ Map<String, dynamic>? _proxyFor(String protocol, Map ob) {
         proxy['obfs-password'] = password;
       }
       return proxy;
+
+    case 'wireguard':
+      final peer = (settings['peers'] as List? ?? const []).firstOrNull;
+      if (peer is! Map) return null;
+      final endpoint = '${peer['endpoint'] ?? ''}';
+      final colon = endpoint.lastIndexOf(':');
+      final privateKey = '${settings['secretKey'] ?? ''}';
+      final publicKey = '${peer['publicKey'] ?? ''}';
+      String? v4, v6;
+      for (final e in settings['address'] as List? ?? const []) {
+        final ip = '$e'.split('/').first.trim();
+        if (ip.isEmpty) continue;
+        ip.contains(':') ? v6 ??= ip : v4 ??= ip;
+      }
+      if (colon <= 0 ||
+          privateKey.isEmpty ||
+          publicKey.isEmpty ||
+          (v4 == null && v6 == null)) {
+        return null;
+      }
+      final psk = '${peer['preSharedKey'] ?? ''}';
+      final keepalive = _int(peer['keepAlive']);
+      return {
+        'type': 'wireguard',
+        'server': endpoint.substring(0, colon),
+        'port': _int(endpoint.substring(colon + 1)),
+        'private-key': privateKey,
+        'public-key': publicKey,
+        if (psk.isNotEmpty) 'pre-shared-key': psk,
+        'ip': ?v4,
+        'ipv6': ?v6,
+        if (_int(settings['mtu']) > 0) 'mtu': _int(settings['mtu']),
+        if (keepalive > 0) 'persistent-keepalive': keepalive,
+        'udp': true,
+      };
 
     default:
       return null;

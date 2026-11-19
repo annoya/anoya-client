@@ -175,11 +175,18 @@ DetectedInput? detectInput(String raw) {
   final scheme = t.contains('://') ? t.split('://').first.toLowerCase() : '';
   if (scheme == 'vpn') {
     final key = parseAmneziaVpnKey(t);
-    return key == null
+    if (key != null) {
+      return DetectedInput(
+        InputKind.amneziaKey,
+        L10n.current.importDetectedAmneziaKey(key.name),
+      );
+    }
+    final loc = parseProxyUri(t);
+    return loc == null
         ? null
         : DetectedInput(
-            InputKind.amneziaKey,
-            L10n.current.importDetectedAmneziaKey(key.name),
+            InputKind.link,
+            L10n.current.importDetectedServer(loc.description, loc.label),
           );
   }
   final singleToken = !t.contains(RegExp(r'\s'));

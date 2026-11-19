@@ -201,11 +201,19 @@ Map<String, dynamic> amneziaWgOptions(Map<String, dynamic> cfg) {
     'RejectAfterTime': 'reject-after-time',
     'KeepaliveTimeout': 'keepalive-timeout',
     'MaxHandshakeAttempts': 'max-handshake-attempts',
-    'RandomTrailers': 'random-trailers',
-    'DisableCookies': 'disable-cookies',
   };
   for (final e in v3.entries) {
     text(e.key, e.value);
+  }
+  // A config file spells these on/off; the engine takes only a boolean.
+  const switches = {
+    'RandomTrailers': 'random-trailers',
+    'DisableCookies': 'disable-cookies',
+  };
+  for (final e in switches.entries) {
+    final v = '${cfg[e.key] ?? ''}'.toLowerCase();
+    if (const {'on', 'true', '1', 'yes'}.contains(v)) out[e.value] = true;
+    if (const {'off', 'false', '0', 'no'}.contains(v)) out[e.value] = false;
   }
   // The engine picks its AmneziaWG port on this number alone (`device` at 3).
   out['version'] = 3;

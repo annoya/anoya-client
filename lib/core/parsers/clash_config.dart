@@ -27,9 +27,15 @@ ParsedSubscription? parseClashProxies(String body) {
         continue;
       }
       final type = m['type'].toString();
-      if (!kSubscriptionProxyTypes.contains(type)) {
+      if (!kSubscriptionProxyTypes.contains(type) ||
+          (type == 'wireguard' && '${m['private-key'] ?? ''}'.isEmpty)) {
         unsupported[type] = (unsupported[type] ?? 0) + 1;
         continue;
+      }
+      if (type == 'wireguard') {
+        // Names behind the tunnel resolve by the app's DNS plan, as for every other server.
+        m.remove('remote-dns-resolve');
+        m.remove('dns');
       }
       final name = m['name']?.toString() ?? '${m['server']}:${m['port']}';
       out.add(

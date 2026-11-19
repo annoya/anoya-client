@@ -451,6 +451,19 @@ fetched keep working.
   `ss://` links carry SIP003 plugins (`obfs`, `v2ray-plugin`); a plugin the
   engine has no adapter for makes the server unsupported instead of being
   dropped, since a server expecting obfuscation refuses a plain connection.
+  A subscription may list WireGuard and AmneziaWG servers too, when it hands
+  out the key with them (3x-ui does): `vpn://` over the base64 of a plain
+  config, named by the fragment or by the config's first comment;
+  `wireguard://key@host:port?address=…&publickey=…`; a Clash `wireguard` proxy
+  with its `private-key`; an Xray `wireguard` outbound. One without a key is
+  counted as unsupported. A Clash entry's own `dns` and `remote-dns-resolve`
+  are dropped: names resolve by the app's DNS plan, as for any other server.
+  From Xray JSON, vless and vmess are read both nested in `vnext` and written
+  flat in `settings`, and a `hysteria` outbound of version 2 is hysteria2.
+  A Reality server marked `support-x25519mlkem768` (`pqv` in short) is dialled
+  with the Chrome hello whatever fingerprint it asked for: it is the only one
+  of the engine's that carries that key share, and such a server refuses the
+  rest.
 - **WireGuard and AmneziaWG configs** — a `.conf` pasted, opened from a file
   or scanned from a QR code (wg-easy). It is one server, a single-server
   configuration like a link, and renders as the same `wireguard` outbound as a

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
 import 'package:anoya/core/mihomo_tun_config.dart';
+import 'package:anoya/core/parsers/share_link.dart';
 import 'package:anoya/core/parsers/subscription.dart';
 import 'package:anoya/core/profile_import.dart';
 import 'package:anoya/core/app_error.dart';
@@ -187,6 +190,95 @@ I1 = <b 0xc30000000108><r 16>
       expect(proxy['type'], 'wireguard');
       expect(proxy['private-key'], _priv);
       expect((proxy['amnezia-wg-option'] as YamlMap)['i1'], startsWith('<b'));
+    });
+  });
+  group('a WireGuard server inside a subscription', () {
+    const key = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+    const ini =
+        '[Interface]\n'
+        'PrivateKey = $key\n'
+        'Address = 10.8.31.2/32\n'
+        'Jc = 5\nJmin = 40\nJmax = 92\n'
+        'RandomTrailers = on\nDisableCookies = off\n'
+        '\n# awg31\n[Peer]\n'
+        'PublicKey = $key\n'
+        'AllowedIPs = 0.0.0.0/0\n'
+        'Endpoint = wg.example:3478\n';
+
+    test('3x-ui wraps an AmneziaWG config in vpn:// and names it in a '
+        'comment', () {
+      final link = 'vpn://${base64.encode(utf8.encode(ini))}';
+      final p = parseSubscriptionBody('vless://u@h.example:443\n$link\n');
+      expect(p.unsupported, isEmpty);
+      final awg = p.locations.last;
+      expect(awg.label, 'awg31');
+      expect(awg.proxy['type'], 'wireguard');
+      expect(awg.proxy['server'], 'wg.example');
+      expect(awg.proxy['port'], 3478);
+      final opts = awg.proxy['amnezia-wg-option'] as Map;
+      expect(opts['jc'], 5);
+      expect(
+        opts['random-trailers'],
+        isTrue,
+        reason: 'the engine wants a bool',
+      );
+      expect(opts['disable-cookies'], isFalse);
+    });
+
+    test('vpn:// that is not a config stays unsupported', () {
+      final p = parseSubscriptionBody(
+        'vless://u@h.example:443\nvpn://AAAAAAAAAAAAAAAAAAAA\n',
+      );
+      expect(p.unsupported, {'vpn': 1});
+    });
+
+    test('a wireguard:// link carries its own key', () {
+      final loc = parseProxyUri(
+        'wireguard://${Uri.encodeComponent(key)}@wg.example:51821'
+        '?address=10.8.40.2%2F32&mtu=1420'
+        '&publickey=${Uri.encodeComponent(key)}#home',
+      )!;
+      expect(loc.label, 'home');
+      expect(loc.proxy, {
+        'type': 'wireguard',
+        'server': 'wg.example',
+        'port': 51821,
+        'private-key': key,
+        'public-key': key,
+        'ip': '10.8.40.2',
+        'mtu': 1420,
+        'udp': true,
+      });
+    });
+
+    test('a Clash wireguard proxy is taken with its key, and not without', () {
+      final p = parseSubscriptionBody(
+        'proxies:\n'
+        '  - {name: wg, type: wireguard, server: wg.example, port: 51820,\n'
+        '     private-key: "$key", public-key: "$key", ip: 10.8.0.2,\n'
+        '     remote-dns-resolve: true, dns: [1.1.1.1]}\n'
+        '  - {name: bare, type: wireguard, server: b.example, port: 51820}\n',
+      );
+      expect(p.unsupported, {'wireguard': 1});
+      final wg = p.locations.single.proxy;
+      expect(wg['private-key'], key);
+      expect(wg.containsKey('dns'), isFalse);
+      expect(wg.containsKey('remote-dns-resolve'), isFalse);
+    });
+
+    test('an Xray wireguard outbound is read from its peer', () {
+      final p = parseSubscriptionBody('''
+[{"remarks": "wg", "outbounds": [{"tag": "proxy", "protocol": "wireguard",
+  "settings": {"address": ["10.8.40.2/32"], "mtu": 1420, "secretKey": "$key",
+    "peers": [{"endpoint": "wg.example:51821", "publicKey": "$key",
+      "allowedIPs": ["0.0.0.0/0"]}]}}]}]''');
+      expect(p.unsupported, isEmpty);
+      final wg = p.locations.single.proxy;
+      expect(wg['type'], 'wireguard');
+      expect(wg['server'], 'wg.example');
+      expect(wg['port'], 51821);
+      expect(wg['ip'], '10.8.40.2');
+      expect(wg['mtu'], 1420);
     });
   });
 }

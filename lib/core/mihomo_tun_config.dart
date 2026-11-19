@@ -440,7 +440,14 @@ const kSupportedProxyTypes = {
   'wireguard',
 };
 
-const kSubscriptionProxyTypes = {'vless', 'vmess', 'trojan', 'ss', 'hysteria2'};
+const kSubscriptionProxyTypes = {
+  'vless',
+  'vmess',
+  'trojan',
+  'ss',
+  'hysteria2',
+  'wireguard',
+};
 
 Map<String, dynamic> _mihomoProxy(Location location) {
   final type = location.proxyType;

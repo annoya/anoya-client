@@ -198,12 +198,17 @@ the app cannot call it without an IPC round trip for something that is ordinary
 HTTPS — and on Apple would mean asking a Network Extension to make requests on
 the app's behalf while the tunnel is down.
 
-### Treat AmneziaWG as a WireGuard subscription type
+### Keep WireGuard out of ordinary subscriptions
 
-Rejected implicitly by keeping `wireguard` out of `kSubscriptionProxyTypes`: a
-panel listing a WireGuard server lists one we hold no key material for, while
-an Amnezia gateway issues the key with the config. The renderer can emit both;
-only one of them can ever work.
+First rejected by leaving `wireguard` out of `kSubscriptionProxyTypes`, on the
+premise that a panel listing a WireGuard server lists one we hold no key
+material for. 3x-ui disproved it: its subscriptions carry the client's private
+key with every WireGuard and AmneziaWG server, in all three formats it serves.
+Those are now read (SPEC §4.2) and render as the same outbound a gateway key's
+AmneziaWG does; all five generations a 3x-ui server offered were dialled
+through the engine before this was accepted. What stays refused is the entry
+the premise was about — a WireGuard server without a key — and it is counted
+as unsupported.
 
 ## Consequences
 

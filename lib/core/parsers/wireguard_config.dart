@@ -5,6 +5,7 @@ import '../amnezia/secondary_config.dart';
 import '../log.dart';
 import '../mihomo_tun_config.dart';
 import '../norm_config.dart';
+import 'base64_text.dart';
 import 'mihomo_proxy.dart';
 import 'subscription.dart';
 
@@ -21,7 +22,7 @@ ParsedSubscription? parseWireGuardConfig(String text) {
   final sections = _sections(text);
   final iface = sections['interface']?.first ?? const {};
   final peer = sections['peer']?.first ?? const {};
-  final location = _location(text, iface, peer);
+  final location = _location(text, iface, peer, '');
   if (location == null) {
     return const ParsedSubscription(
       locations: [],
@@ -60,10 +61,29 @@ Map<String, List<Map<String, String>>> _sections(String text) {
   return out;
 }
 
+final _remark = RegExp(r'^\s*#\s*(\S.*?)\s*$', multiLine: true);
+
+// 3x-ui hands an AmneziaWG client out as vpn:// over the plain config, its name in a comment.
+Location? wireGuardFromEnvelope(String link) {
+  final hash = link.indexOf('#');
+  final body = link.substring('vpn://'.length, hash < 0 ? link.length : hash);
+  final text = tryDecodeLooseBase64(body);
+  if (text == null || !looksLikeWireGuardConfig(text)) return null;
+  final sections = _sections(text);
+  final fragment = hash < 0 ? '' : safeDecode(link.substring(hash + 1)).trim();
+  return _location(
+    text,
+    sections['interface']?.first ?? const {},
+    sections['peer']?.first ?? const {},
+    fragment.isNotEmpty ? fragment : _remark.firstMatch(text)?.group(1) ?? '',
+  );
+}
+
 Location? _location(
   String text,
   Map<String, String> iface,
   Map<String, String> peer,
+  String label,
 ) {
   final privateKey = iface['PrivateKey'] ?? '';
   final publicKey = peer['PublicKey'] ?? '';
@@ -83,7 +103,7 @@ Location? _location(
   final mtu =
       int.tryParse(iface['MTU'] ?? '') ?? (amnezia ? kAmneziaMtu : null);
   final keepalive = int.tryParse(peer['PersistentKeepalive'] ?? '') ?? 0;
-  return locationFor(text, labelOr('', endpoint.host, endpoint.port), {
+  return locationFor(text, labelOr(label, endpoint.host, endpoint.port), {
     'type': 'wireguard',
     'server': endpoint.host,
     'port': endpoint.port,

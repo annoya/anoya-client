@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../norm_config.dart';
 import 'base64_text.dart';
 import 'mihomo_proxy.dart';
+import 'wireguard_config.dart';
 
 const kShareLinkSchemes = {
   'vless',
@@ -11,6 +12,7 @@ const kShareLinkSchemes = {
   'ss',
   'hysteria2',
   'hy2',
+  'wireguard',
 };
 
 class ShareLink {
@@ -47,6 +49,11 @@ ShareLink parseShareLink(String raw) {
       'trojan' => _parseTrojan(s),
       'ss' => _parseShadowsocks(s),
       'hysteria2' || 'hy2' => _parseHysteria2(s),
+      'wireguard' => _parseWireguard(s),
+      'vpn' => switch (wireGuardFromEnvelope(s)) {
+        final location? => ShareLink.server(location),
+        null => const ShareLink.unsupported('vpn'),
+      },
       '' => const ShareLink.junk(),
       _ => ShareLink.unsupported(scheme),
     };
@@ -381,6 +388,46 @@ ShareLink _parseHysteria2(String s) {
       labelOr(meta.name, u.host, u.port),
       proxy,
       description: meta.description,
+    ),
+  );
+}
+
+ShareLink _parseWireguard(String s) {
+  final u = Uri.parse(s);
+  final q = u.queryParameters;
+  String? v4, v6;
+  for (final e in (q['address'] ?? '').split(',')) {
+    final ip = e.split('/').first.trim();
+    if (ip.isEmpty) continue;
+    ip.contains(':') ? v6 ??= ip : v4 ??= ip;
+  }
+  final privateKey = Uri.decodeComponent(u.userInfo);
+  final publicKey = q['publickey'] ?? '';
+  if (privateKey.isEmpty || publicKey.isEmpty || (v4 == null && v6 == null)) {
+    throw const FormatException('no key or address');
+  }
+  final psk = q['presharedkey'] ?? '';
+  final mtu = int.tryParse(q['mtu'] ?? '');
+  final keepalive = int.tryParse(q['keepalive'] ?? '') ?? 0;
+  final meta = splitFragment(safeDecode(u.fragment));
+  return ShareLink.server(
+    locationFor(
+      s,
+      labelOr(meta.name, u.host, u.port),
+      {
+        'type': 'wireguard',
+        'server': u.host,
+        'port': u.port,
+        'private-key': privateKey,
+        'public-key': publicKey,
+        if (psk.isNotEmpty) 'pre-shared-key': psk,
+        'ip': ?v4,
+        'ipv6': ?v6,
+        'mtu': ?mtu,
+        if (keepalive > 0) 'persistent-keepalive': keepalive,
+        'udp': true,
+      },
+      description: meta.description.isNotEmpty ? meta.description : 'WireGuard',
     ),
   );
 }

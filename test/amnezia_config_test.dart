@@ -246,7 +246,7 @@ void main() {
           parsed!.location.proxy['amnezia-wg-option'] as Map<String, dynamic>;
       expect(opts['version'], 3);
       expect(opts['header-protection-key'], 'aGVhZGVyLXByb3RlY3Rpb24ta2V5');
-      expect(opts['disable-cookies'], 'true');
+      expect(opts['disable-cookies'], isTrue);
     });
 
     test('a config we hold no private key for is refused, not run', () {
