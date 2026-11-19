@@ -44,8 +44,8 @@ void main() {
     }
   }
 
-  Future<void> rest(WidgetTester tester) async {
-    for (var i = 0; i < 40; i++) {
+  Future<void> rest(WidgetTester tester, {int steps = 40}) async {
+    for (var i = 0; i < steps; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
   }
@@ -76,7 +76,8 @@ void main() {
       await pump(tester, CatMood.awake);
       await taps(tester, 1);
       expect(frame(tester), CatFrame.happy);
-      await rest(tester);
+      // Stops short of the first blink, which shows the same happy frame.
+      await rest(tester, steps: 30);
       expect(frame(tester), CatFrame.on);
     });
 
