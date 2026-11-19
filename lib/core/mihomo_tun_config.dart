@@ -479,6 +479,13 @@ Map<String, dynamic> _mihomoProxy(Location location) {
   for (final e in p.entries) {
     if (e.key != 'name') m[e.key] = e.value;
   }
+  // Of the engine's browser hellos only Chrome's carries the X25519MLKEM768 share such a server demands.
+  final reality = m['reality-opts'];
+  if (reality is Map &&
+      reality['support-x25519mlkem768'] == true &&
+      m['client-fingerprint'] != 'chrome') {
+    m['client-fingerprint'] = 'chrome';
+  }
   return m;
 }
 

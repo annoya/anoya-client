@@ -157,6 +157,35 @@ proxies:
     expect((proxy['reality-opts'] as YamlMap)['short-id'], '882bd333');
   });
 
+  test('a Reality server that demands the post-quantum share gets the '
+      'one hello that carries it', () {
+    Location reality({required bool mlkem}) => Location.fromJson({
+      'id': 'l',
+      'label': 'L',
+      'proxy': {
+        'type': 'vless',
+        'server': '203.0.113.10',
+        'port': 443,
+        'uuid': '2182dac0-d9a4-43a0-b905-963db9bc3abe',
+        'tls': true,
+        'servername': 'www.apple.com',
+        'client-fingerprint': 'firefox',
+        'reality-opts': {
+          'public-key': 'PUBKEY',
+          'short-id': '882bd333',
+          if (mlkem) 'support-x25519mlkem768': true,
+        },
+      },
+    });
+    String hello(Location l) =>
+        ((loadYaml(mihomoTunConfigYaml(l)) as YamlMap)['proxies'] as YamlList)
+                .first['client-fingerprint']
+            as String;
+
+    expect(hello(reality(mlkem: true)), 'chrome');
+    expect(hello(reality(mlkem: false)), 'firefox');
+  });
+
   test('mihomoTunConfigYaml rejects unknown proxy types', () {
     final loc = Location.fromJson({
       'id': 'w',

@@ -121,7 +121,10 @@ ShareLink _parseVless(String raw) {
         ? (
             publicKey: q['pbk'] ?? '',
             shortId: q['sid'] ?? '',
-            pqv: q['pqv'] == '1' || q['pqv'] == 'true',
+            pqv:
+                q['pqv'] == '1' ||
+                q['pqv'] == 'true' ||
+                q['support-x25519mlkem768'] == 'true',
           )
         : null,
   );

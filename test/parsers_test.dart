@@ -431,6 +431,17 @@ rules:
       );
     });
 
+    test('3x-ui spells the post-quantum flag out in full', () {
+      final loc = parseProxyUri(
+        'vless://u@h.example:443?security=reality&pbk=K&sid=00'
+        '&support-x25519mlkem768=true',
+      )!;
+      expect(
+        (loc.proxy['reality-opts'] as Map)['support-x25519mlkem768'],
+        isTrue,
+      );
+    });
+
     test('a fingerprint on trojan is not dropped', () {
       expect(
         parseProxyUri(
