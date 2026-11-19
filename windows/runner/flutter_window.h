@@ -13,6 +13,9 @@ class FlutterWindow : public Win32Window {
  public:
   // Creates a new FlutterWindow hosting a Flutter view running |project|.
   explicit FlutterWindow(const flutter::DartProject& project);
+
+  // Started at sign-in: the window stays in the tray until it is asked for.
+  void SetStartHidden(bool hidden) { start_hidden_ = hidden; }
   virtual ~FlutterWindow();
 
   static UINT ShowWindowMessage();
@@ -34,6 +37,7 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<TrayIcon> tray_;
 
   bool quitting_ = false;
+  bool start_hidden_ = false;
 
   void ToggleWindow();
   void BringToFront();

@@ -12,6 +12,7 @@ import 'package:anoya/core/on_demand.dart';
 import 'package:anoya/core/platform_support.dart';
 import 'package:anoya/core/theme.dart';
 import 'package:anoya/core/vpn_core.dart';
+import 'package:anoya/core/win_login_item.dart';
 import 'package:anoya/features/settings_screen.dart';
 import 'package:anoya/state/auto_connect_controller.dart';
 import 'package:anoya/state/providers.dart';
@@ -46,6 +47,13 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
   }
+
+  test('the sign-in entry starts the app in the tray, whatever its path', () {
+    expect(
+      loginCommand(r'C:\Program Files\Anoya\Anoya.exe'),
+      r'"C:\Program Files\Anoya\Anoya.exe" --hidden',
+    );
+  });
 
   group('the setting', () {
     test('is off until somebody turns it on', () async {

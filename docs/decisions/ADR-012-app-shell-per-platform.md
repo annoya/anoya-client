@@ -40,6 +40,13 @@ fact, and each platform gets it wrong in its own way by default.
 
 - The tray menu mirrors the macOS one item for item (`tray_icon.cpp`),
   including `sync` before opening.
+- While Auto-connect is on (ADR-004) the app is in the user's sign-in list
+  (the `Run` key under `HKCU`, `win_login_item.dart`) and starts there with
+  `--hidden`: no window, only the tray icon. The service brings the tunnel up
+  at boot before anyone signs in, and without this the VPN ran with no icon and
+  no menu until the app was opened by hand. The entry is rewritten on every
+  launch, so it follows a reinstall to another path, and the uninstaller
+  removes it.
 - Closing the window hides it to the tray; Quit is the menu's
   (`flutter_window.cpp`). A left click toggles the window, as background apps
   on Windows do.

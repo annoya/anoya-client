@@ -69,6 +69,8 @@ Filename: "{app}\{#AppName}.exe"; Description: "{cm:LaunchProgram,{#AppName}}"; 
 [UninstallRun]
 Filename: "{app}\service\tunnel-service.exe"; Parameters: "-uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#AppName} transfer"""; Flags: runhidden waituntilterminated; RunOnceId: "TransferRule"
+; The app adds itself to the sign-in list while Auto-connect is on (win_login_item.dart).
+Filename: "{sys}\reg.exe"; Parameters: "delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Run"" /v {#AppName} /f"; Flags: runhidden waituntilterminated; RunOnceId: "LoginItem"
 
 [Code]
 // A running service holds its executable open; stop it before the files are

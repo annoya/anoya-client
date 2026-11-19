@@ -133,7 +133,9 @@ DNS of a corporate VPN on the same machine, which is why it is off (ADR-027).
 The service starts with the machine, and brings a
 tunnel up on its own **only when auto-connect is on** — a switch in Settings →
 Connection, off by default, which the app writes into the service's own
-directory because at boot there is no app to ask. The saved config cannot stand
+directory because at boot there is no app to ask. With the switch on, Windows
+also starts the app at sign-in, hidden in the tray (ADR-012), so a tunnel the
+service brought up has its icon. The saved config cannot stand
 in for that answer: it is rewritten whenever the app mirrors the current
 selection, connected or not, so its presence means "there is something to run",
 never "run it". Connecting and disconnecting say what the user wants now; the

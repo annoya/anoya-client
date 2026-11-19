@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/json_file_store.dart';
+import '../core/win_login_item.dart';
 import 'providers.dart';
 import 'ready_gate.dart';
 
@@ -21,6 +22,7 @@ class AutoConnectController extends Notifier<bool> with ReadyGate {
     if (!ref.mounted) return;
     state = on;
     await ref.read(vpnCoreProvider).setAutoConnect(on);
+    setStartsAtLogin(on);
   }
 
   Future<void> set(bool enabled) async {
@@ -28,6 +30,7 @@ class AutoConnectController extends Notifier<bool> with ReadyGate {
     state = enabled;
     await _store.save({'enabled': enabled});
     await ref.read(vpnCoreProvider).setAutoConnect(enabled);
+    setStartsAtLogin(enabled);
   }
 }
 
