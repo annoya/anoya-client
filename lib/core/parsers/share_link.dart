@@ -12,6 +12,7 @@ const kShareLinkSchemes = {
   'ss',
   'hysteria2',
   'hy2',
+  'tuic',
   'wireguard',
 };
 
@@ -49,6 +50,7 @@ ShareLink parseShareLink(String raw) {
       'trojan' => _parseTrojan(s),
       'ss' => _parseShadowsocks(s),
       'hysteria2' || 'hy2' => _parseHysteria2(s),
+      'tuic' => _parseTuic(s),
       'wireguard' => _parseWireguard(s),
       'vpn' => switch (wireGuardFromEnvelope(s)) {
         final location? => ShareLink.server(location),
@@ -381,6 +383,46 @@ ShareLink _parseHysteria2(String s) {
   final ports = q['ports'] ?? q['mport'];
   if (ports != null && ports.isNotEmpty) proxy['ports'] = ports;
   if ((q['pinSHA256'] ?? '').isNotEmpty) proxy['fingerprint'] = q['pinSHA256'];
+  final meta = splitFragment(safeDecode(u.fragment));
+  return ShareLink.server(
+    locationFor(
+      s,
+      labelOr(meta.name, u.host, u.port),
+      proxy,
+      description: meta.description,
+    ),
+  );
+}
+
+ShareLink _parseTuic(String s) {
+  final u = Uri.parse(s);
+  final q = u.queryParameters;
+  final colon = u.userInfo.indexOf(':');
+  final proxy = <String, dynamic>{
+    'type': 'tuic',
+    'server': u.host,
+    'port': u.port,
+    if (colon < 0) 'token': Uri.decodeComponent(u.userInfo),
+    if (colon >= 0) 'uuid': Uri.decodeComponent(u.userInfo.substring(0, colon)),
+    if (colon >= 0)
+      'password': Uri.decodeComponent(u.userInfo.substring(colon + 1)),
+    'udp': true,
+  };
+  applyTls(
+    proxy,
+    tls: true,
+    sniKey: 'sni',
+    sni: q['sni'],
+    alpn: splitAlpn(q['alpn']),
+    insecure: _insecure(q),
+  );
+  if ((q['congestion_control'] ?? '').isNotEmpty) {
+    proxy['congestion-controller'] = q['congestion_control'];
+  }
+  if ((q['udp_relay_mode'] ?? '').isNotEmpty) {
+    proxy['udp-relay-mode'] = q['udp_relay_mode'];
+  }
+  if (q['disable_sni'] == '1') proxy['disable-sni'] = true;
   final meta = splitFragment(safeDecode(u.fragment));
   return ShareLink.server(
     locationFor(

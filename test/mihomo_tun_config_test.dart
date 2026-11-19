@@ -482,7 +482,7 @@ proxies:
     final loc = Location.fromJson({
       'id': 'x',
       'label': 'y',
-      'proxy': {'type': 'tuic'},
+      'proxy': {'type': 'snell'},
     });
     expect(() => mihomoTunConfigYaml(loc), throwsStateError);
   });

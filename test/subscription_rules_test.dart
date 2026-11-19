@@ -14,7 +14,7 @@ proxies:
   - {name: 🇳🇱 NL, type: vless, server: nl.example, port: 443, uuid: u, udp: true, dialer-proxy: WL}
   - {name: 🇷🇺 RU, type: vless, server: ru.example, port: 443, uuid: u, udp: true}
   - {name: 🏳 LTE, type: vless, server: lte.example, port: 443, uuid: u, udp: true, dialer-proxy: WL, reality-opts: {public-key: k, short-id: 0000000000000000}}
-  - {name: Old, type: tuic, server: t.example, port: 443}
+  - {name: Old, type: snell, server: t.example, port: 443}
   - {name: Без VPN, type: direct}
 proxy-groups:
   - {name: 🚀 Proxy, type: select, proxies: [Auto, 🇩🇪 DE, 🇳🇱 NL]}
@@ -370,7 +370,7 @@ proxy-groups:
     expect(
       parsed.locations.whereType<Location>().length,
       4,
-      reason: 'tuic is not runnable and the direct entry is not a server',
+      reason: 'snell is not runnable and the direct entry is not a server',
     );
   });
 }

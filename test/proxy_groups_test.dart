@@ -11,7 +11,7 @@ void main() {
 proxies:
   - {name: "🇩🇪 Germany", type: vless, server: de.example, port: 443, uuid: u1}
   - {name: "🇳🇱 Netherlands", type: vless, server: nl.example, port: 443, uuid: u2}
-  - {name: "🇯🇵 Tokyo", type: tuic, server: jp.example, port: 443, uuid: u3}
+  - {name: "🇯🇵 Tokyo", type: snell, server: jp.example, port: 443, uuid: u3}
 proxy-groups:
   - name: ⚡️ Fastest
     type: url-test
@@ -59,7 +59,7 @@ rules:
       final p = parseSubscriptionBody(body);
       final fastest = p.groups.first;
       expect(fastest.members.length, 2);
-      expect(p.unsupported, {'tuic': 1});
+      expect(p.unsupported, {'snell': 1});
     });
 
     group('membership by pattern', () {

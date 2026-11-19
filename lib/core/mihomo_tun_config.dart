@@ -437,6 +437,7 @@ const kSupportedProxyTypes = {
   'trojan',
   'ss',
   'hysteria2',
+  'tuic',
   'wireguard',
 };
 
@@ -446,6 +447,7 @@ const kSubscriptionProxyTypes = {
   'trojan',
   'ss',
   'hysteria2',
+  'tuic',
   'wireguard',
 };
 

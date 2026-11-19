@@ -176,8 +176,8 @@ void main() {
   group('whyUnusable', () {
     test('a scheme we have no protocol for', () {
       expect(
-        whyUnusable('tuic://a:b@h.example:443'),
-        'tuic:// isn’t supported',
+        whyUnusable('snell://a:b@h.example:443'),
+        'snell:// isn’t supported',
       );
     });
 

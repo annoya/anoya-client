@@ -251,9 +251,9 @@ rules:
         [
           'vless://u@a.example:443?security=tls',
           'hysteria2://p@b.example:443',
-          'tuic://p@c.example:443',
+          'snell://p@c.example:443',
           'anytls://p@d.example:443',
-          'tuic://p@e.example:443',
+          'snell://p@e.example:443',
           '# a comment, not a server',
         ].join('\n'),
       );
@@ -262,13 +262,43 @@ rules:
         hasLength(2),
         reason: 'vless and hysteria2 are ours',
       );
-      expect(parsed.unsupported, {'tuic': 2, 'anytls': 1});
+      expect(parsed.unsupported, {'snell': 2, 'anytls': 1});
       expect(
         parsed.total,
         5,
         reason: 'the comment is noise, not a skipped server',
       );
-      expect(parsed.unsupportedList, 'anytls, tuic');
+      expect(parsed.unsupportedList, 'anytls, snell');
+    });
+
+    test('tuic is ours, from a link and from a Clash body', () {
+      final link = parseProxyUri(
+        'tuic://uuid-1:secret@t.example:4444?sni=t.example&alpn=h3'
+        '&congestion_control=bbr&udp_relay_mode=native#tu',
+      )!;
+      expect(link.label, 'tu');
+      expect(link.proxy, {
+        'type': 'tuic',
+        'server': 't.example',
+        'port': 4444,
+        'uuid': 'uuid-1',
+        'password': 'secret',
+        'udp': true,
+        'sni': 't.example',
+        'alpn': ['h3'],
+        'congestion-controller': 'bbr',
+        'udp-relay-mode': 'native',
+      });
+      expect(link.transport, 'QUIC');
+      expect(link.security, 'TLS');
+
+      final clash = parseSubscriptionBody(
+        'proxies:\n'
+        '  - {name: tu, type: tuic, server: t.example, port: 4444,\n'
+        '     uuid: uuid-1, password: secret}\n',
+      );
+      expect(clash.unsupported, isEmpty);
+      expect(clash.locations.single.proxyType, 'tuic');
     });
 
     test('a Clash body drops what the engine cannot render, and says so', () {
@@ -276,19 +306,19 @@ rules:
         'proxies:\n'
         '  - {name: ok, type: vless, server: a.example, port: 443, uuid: u}\n'
         '  - {name: wg, type: wireguard, server: b.example, port: 51820}\n'
-        '  - {name: tu, type: tuic, server: c.example, port: 443}\n',
+        '  - {name: tu, type: snell, server: c.example, port: 443}\n',
       );
       expect(parsed.locations.map((l) => l.label), ['ok']);
-      expect(parsed.unsupported, {'wireguard': 1, 'tuic': 1});
+      expect(parsed.unsupported, {'wireguard': 1, 'snell': 1});
       expect(parsed.total, 3);
     });
 
     test(
       'a body of nothing but unsupported servers is still accounted for',
       () {
-        final parsed = parseSubscriptionBody('tuic://p@c.example:443');
+        final parsed = parseSubscriptionBody('snell://p@c.example:443');
         expect(parsed.locations, isEmpty);
-        expect(parsed.unsupported, {'tuic': 1});
+        expect(parsed.unsupported, {'snell': 1});
       },
     );
   });
@@ -459,14 +489,14 @@ rules:
         'vless://u@b.example:443?security=tls&type=kcp',
         'vless://u@c.example:443?security=tls&type=kcp',
         'trojan://p@d.example:443?type=xhttp',
-        'tuic://p@e.example:443',
+        'snell://p@e.example:443',
       ].join('\n'),
     );
     expect(parsed.locations, hasLength(1));
     expect(parsed.unsupported, {
       'kcp': 2,
       'xhttp': 1,
-      'tuic': 1,
+      'snell': 1,
     }, reason: 'vless is supported; its transport was not — say which');
     expect(parsed.total, 5);
   });

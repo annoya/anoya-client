@@ -419,8 +419,9 @@ fetched keep working.
 ### 4.2 Accepted inputs
 
 - **Share links** — `vless://`, `vmess://`, `trojan://`, `ss://`,
-  `hysteria2://` (and its `hy2://` alias), pasted or opened from a file
-  containing several. A `vless://` or `trojan://` whose payload is base64 is
+  `hysteria2://` (and its `hy2://` alias) and `tuic://` (`uuid:password@` for
+  v5, a bare token for v4, the form mihomo itself reads), pasted or opened from
+  a file containing several. A `vless://` or `trojan://` whose payload is base64 is
   read too, in both forms panels emit: the URI body encoded (`uuid@host:port?…`,
   the name inside or after the `#`) and, for vless, the vmess-style JSON
   object. Transports: plain tcp (also under Xray's newer name, raw), tcp with

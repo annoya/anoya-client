@@ -468,11 +468,11 @@ proxies:
     });
 
     test('a readable body full of things we cannot run says which', () {
-      const body = 'tuic://x@h:443#a\ntuic://y@h:443#b\nssr://zzz#c';
+      const body = 'snell://x@h:443#a\nsnell://y@h:443#b\nssr://zzz#c';
       final p = parseSubscriptionBody(body);
       expect(p.format, SubscriptionFormat.links);
       expect(p.locations, isEmpty);
-      expect(p.unsupported, {'tuic': 2, 'ssr': 1});
+      expect(p.unsupported, {'snell': 2, 'ssr': 1});
       expect(p.total, 3, reason: 'the panel offered three, we can run none');
     });
 

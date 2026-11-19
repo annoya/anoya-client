@@ -42,7 +42,7 @@ void main() {
     tester,
   ) async {
     await pump(tester);
-    await tester.enterText(find.byType(TextField), 'tuic://a:b@h.example:443');
+    await tester.enterText(find.byType(TextField), 'snell://a:b@h.example:443');
     await tester.pump();
     expect(
       chip('Can’t use this'),
@@ -51,7 +51,7 @@ void main() {
     );
 
     await tester.pump(const Duration(milliseconds: 700));
-    expect(chip('Can’t use this · tuic:// isn’t supported'), findsOneWidget);
+    expect(chip('Can’t use this · snell:// isn’t supported'), findsOneWidget);
     expect(
       tester
           .widget<DsButton>(find.widgetWithText(DsButton, 'Continue'))
@@ -126,14 +126,14 @@ void main() {
     testWidgets('a pasted refusal is said without the typing pause', (
       tester,
     ) async {
-      clipboard(tester, 'tuic://a:b@h.example:443');
+      clipboard(tester, 'snell://a:b@h.example:443');
       await pump(tester);
 
       await tester.tap(button());
       await tester.pump();
 
       expect(
-        chip('Can’t use this · tuic:// isn’t supported'),
+        chip('Can’t use this · snell:// isn’t supported'),
         findsOneWidget,
         reason: 'a paste arrives whole; there is nothing left to wait for',
       );

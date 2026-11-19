@@ -384,7 +384,7 @@ class Location {
   bool get isPlaceholder => proxy.isEmpty;
 
   String get transport {
-    if (proxyType == 'hysteria2') return 'QUIC';
+    if (proxyType == 'hysteria2' || proxyType == 'tuic') return 'QUIC';
     final network = '${proxy['network'] ?? ''}'.toLowerCase();
     if (network == 'ws') {
       final ws = proxy['ws-opts'];
@@ -405,7 +405,7 @@ class Location {
     if (proxy['reality-opts'] != null || proxy['reality'] != null) {
       return 'Reality';
     }
-    if (proxyType == 'trojan' || proxyType == 'hysteria2') return 'TLS';
+    if (const {'trojan', 'hysteria2', 'tuic'}.contains(proxyType)) return 'TLS';
     return proxy['tls'] == true ? 'TLS' : 'No TLS';
   }
 
