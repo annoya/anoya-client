@@ -45,7 +45,9 @@ ParsedSubscription? parseXrayServers(String body) {
           parsed.add((tag: tag, location: null, unsupported: protocol));
           continue;
         }
-        final skip = _applyStream(proxy, protocol, ob['streamSettings']);
+        final skip = proxy['type'] == 'hysteria2'
+            ? null
+            : _applyStream(proxy, protocol, ob['streamSettings']);
         if (skip != null) {
           parsed.add((tag: tag, location: null, unsupported: skip));
           continue;
@@ -214,10 +216,13 @@ Map<String, dynamic>? _proxyFor(String protocol, Map ob) {
   switch (protocol) {
     case 'vless':
     case 'vmess':
-      final vnext = (settings['vnext'] as List? ?? const []).firstOrNull;
-      if (vnext is! Map) return null;
-      final user = (vnext['users'] as List? ?? const []).firstOrNull;
-      if (user is! Map) return null;
+      // Xray also writes one server flat: address, port and the user's fields beside each other.
+      final nested = (settings['vnext'] as List? ?? const []).firstOrNull;
+      final vnext = nested is Map ? nested : settings;
+      final user = nested is Map
+          ? (nested['users'] as List? ?? const []).firstOrNull
+          : settings;
+      if (user is! Map || '${vnext['address'] ?? ''}'.isEmpty) return null;
       final proxy = <String, dynamic>{
         'type': protocol,
         'server': '${vnext['address'] ?? ''}',
@@ -248,6 +253,45 @@ Map<String, dynamic>? _proxyFor(String protocol, Map ob) {
       };
       if (protocol == 'shadowsocks') {
         proxy['cipher'] = '${server['method'] ?? ''}';
+      }
+      return proxy;
+
+    case 'hysteria':
+      final stream = ob['streamSettings'];
+      final ss = stream is Map ? stream : const {};
+      final hysteria = ss['hysteriaSettings'] is Map
+          ? ss['hysteriaSettings'] as Map
+          : const {};
+      if (_int(settings['version'] ?? hysteria['version']) != 2) return null;
+      final tls = ss['tlsSettings'] is Map
+          ? ss['tlsSettings'] as Map
+          : const {};
+      final proxy = <String, dynamic>{
+        'type': 'hysteria2',
+        'server': '${settings['address'] ?? ''}',
+        'port': _int(settings['port']),
+        'password': '${hysteria['auth'] ?? ''}',
+        'udp': true,
+      };
+      applyTls(
+        proxy,
+        tls: true,
+        sniKey: 'sni',
+        sni: '${tls['serverName'] ?? ''}',
+        alpn: (tls['alpn'] as List? ?? const []).map((e) => '$e').toList(),
+        insecure: tls['allowInsecure'] == true,
+      );
+      final masks = ss['finalmask'] is Map
+          ? (ss['finalmask'] as Map)['udp']
+          : null;
+      for (final mask in masks is List ? masks : const []) {
+        if (mask is! Map || mask['type'] != 'salamander') continue;
+        final password = mask['settings'] is Map
+            ? '${(mask['settings'] as Map)['password'] ?? ''}'
+            : '';
+        if (password.isEmpty) continue;
+        proxy['obfs'] = 'salamander';
+        proxy['obfs-password'] = password;
       }
       return proxy;
 

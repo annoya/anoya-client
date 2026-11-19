@@ -107,6 +107,57 @@ proxies:
    ]}
 ]''';
 
+    test('one server written flat, without vnext, is read the same', () {
+      final p = parseSubscriptionBody('''
+[{"remarks": "flat", "outbounds": [
+  {"tag": "proxy", "protocol": "vless",
+   "settings": {"address": "de.example", "port": 443, "id": "uuid-1",
+     "flow": "xtls-rprx-vision", "encryption": "none"},
+   "streamSettings": {"network": "tcp", "security": "tls",
+     "tlsSettings": {"serverName": "de.example"}}}]},
+ {"remarks": "flat vmess", "outbounds": [
+  {"tag": "proxy", "protocol": "vmess",
+   "settings": {"address": "vm.example", "port": 443, "id": "uuid-2",
+     "security": "auto"},
+   "streamSettings": {"network": "ws", "security": "tls",
+     "tlsSettings": {"serverName": "vm.example"},
+     "wsSettings": {"path": "/ws"}}}]}]''');
+      expect(p.unsupported, isEmpty);
+      final vless = p.locations.first.proxy;
+      expect(vless['server'], 'de.example');
+      expect(vless['port'], 443);
+      expect(vless['uuid'], 'uuid-1');
+      expect(vless['flow'], 'xtls-rprx-vision');
+      final vmess = p.locations.last.proxy;
+      expect(vmess['uuid'], 'uuid-2');
+      expect(vmess['cipher'], 'auto');
+    });
+
+    test('a hysteria outbound of version 2 is hysteria2, mask included', () {
+      final p = parseSubscriptionBody('''
+[{"remarks": "hy2", "outbounds": [
+  {"tag": "proxy", "protocol": "hysteria",
+   "settings": {"address": "hy.example", "port": 4443, "version": 2},
+   "streamSettings": {"network": "hysteria", "security": "tls",
+     "hysteriaSettings": {"auth": "secret", "version": 2},
+     "tlsSettings": {"serverName": "hy.example", "alpn": ["h3"]},
+     "finalmask": {"udp": [{"type": "salamander",
+       "settings": {"password": "mask"}}]}}}]},
+ {"remarks": "hy1", "outbounds": [
+  {"tag": "proxy", "protocol": "hysteria",
+   "settings": {"address": "old.example", "port": 443, "version": 1}}]}]''');
+      expect(p.unsupported, {'hysteria': 1});
+      final hy = p.locations.single.proxy;
+      expect(hy['type'], 'hysteria2');
+      expect(hy['server'], 'hy.example');
+      expect(hy['port'], 4443);
+      expect(hy['password'], 'secret');
+      expect(hy['sni'], 'hy.example');
+      expect(hy['alpn'], ['h3']);
+      expect(hy['obfs'], 'salamander');
+      expect(hy['obfs-password'], 'mask');
+    });
+
     test('every config in the array is one server, named by its remarks', () {
       final p = parseSubscriptionBody(body);
       expect(p.format, SubscriptionFormat.xray);
