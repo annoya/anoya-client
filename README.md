@@ -1,30 +1,81 @@
-# Anoya
+<p align="center">
+  <a href="https://anoya.io"><img src="docs/images/banner.jpg" alt="Anoya — your VPN, with a cat" width="720"></a>
+</p>
 
-A cross-platform VPN client for Android, iOS, macOS, Windows and Linux. One
-Flutter app; the tunnel is the [mihomo](https://github.com/MetaCubeX/mihomo)
-engine running inside each platform's system VPN.
+<h1 align="center">Anoya</h1>
 
-It connects through:
+<p align="center">
+  A cross-platform VPN client for your own links and subscriptions.<br>
+  Android · iOS · macOS · Windows · Linux
+</p>
 
-- share links — `vless://`, `vmess://`, `trojan://`, `ss://`, `hysteria2://`;
-- subscriptions from panels such as 3x-ui, Marzban, Remnawave and Hiddify
-  (base64 link lists, Clash/mihomo, Xray JSON, sing-box);
-- `vpn://` key subscriptions;
-- a self-hosted management server, with password or SSO sign-in.
+<p align="center">
+  <a href="https://github.com/annoya/anoya-client/actions/workflows/build-client.yml"><img src="https://github.com/annoya/anoya-client/actions/workflows/build-client.yml/badge.svg?branch=main" alt="Build"></a>
+  <a href="https://github.com/annoya/anoya-client/releases/latest"><img src="https://img.shields.io/github/v/release/annoya/anoya-client?label=release" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
+</p>
 
-Links can be pasted, opened from a file or scanned from a QR code on phones.
-Split tunneling and DNS are set per configuration; on-demand connection is
-set once for the device.
+<p align="center">
+  <a href="https://anoya.io"><b>Website</b></a> ·
+  <a href="https://github.com/annoya/anoya-client/releases/latest"><b>Download</b></a> ·
+  <a href="docs/SPEC-CLIENT.md"><b>Specification</b></a>
+</p>
+
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id=io.anoya.app"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="60"></a>
+</p>
+
+<p align="center">
+  <img src="docs/images/screen-1.jpg" alt="Connected" width="18%">
+  <img src="docs/images/screen-2.jpg" alt="Add a connection" width="18%">
+  <img src="docs/images/screen-3.jpg" alt="Server picker with Auto" width="18%">
+  <img src="docs/images/screen-4.jpg" alt="Split tunneling by service" width="18%">
+  <img src="docs/images/screen-5.jpg" alt="Settings" width="18%">
+</p>
+
+One Flutter app on every platform; the tunnel is the
+[mihomo](https://github.com/MetaCubeX/mihomo) engine running inside each
+platform's system VPN.
+
+## Features
+
+- **Bring your own link** — `vless://`, `vmess://`, `trojan://`, `ss://`,
+  `hysteria2://`, `tuic://`, WireGuard and AmneziaWG configs. Paste them, open
+  a file, or scan a QR code on a phone.
+- **Subscriptions** from panels such as 3x-ui, Marzban, Remnawave and Hiddify:
+  base64 link lists, Clash/mihomo YAML, Xray JSON and sing-box JSON. A server
+  the engine cannot run is counted and named, never silently dropped.
+- **`vpn://` keys** and a **self-hosted management server** with password or
+  SSO sign-in.
+- **Auto** — picks the lowest-latency server from a group and rechecks it
+  periodically.
+- **Split tunneling** — a catalog of services and countries ("only selected" /
+  "all except selected"), or ordered rules of every type in the advanced view;
+  per-app exclusions on Android.
+- **On-demand** connection rules, rule sets, per-configuration DNS, LAN-direct
+  and iCloud sync between Apple devices.
+- Interface in English, Russian, Spanish, French and Chinese.
+
+## Download
+
+Builds for every release are on the
+[Releases](https://github.com/annoya/anoya-client/releases/latest) page:
+
+| Platform | Package |
+|---|---|
+| Android | [Google Play](https://play.google.com/store/apps/details?id=io.anoya.app), or `.apk` (universal or per ABI) |
+| Windows | installer `.exe` or portable `.zip` |
+| Linux | `.deb`, `.rpm`, Arch `.pkg.tar.zst` or portable `.tar.gz` |
+| iOS, macOS | [build from source](#building) |
 
 ## How it fits together
 
-- `lib/` — the Flutter app. Screens and state reach the tunnel only through
-  `VpnCore` (`lib/core/vpn_core.dart`).
-- `native/mihomocore/` — the Go engine wrapper: an xcframework for Apple, an
-  AAR for Android, and a tunnel service for Windows and Linux.
-- `shared/apple/` — the Network Extension and the app's VPN glue, shared by
-  iOS and macOS.
-- `native/libagw/` — the gateway library for `vpn://` keys (a submodule).
+| Path | What it is |
+|---|---|
+| `lib/` | The Flutter app. Screens and state reach the tunnel only through `VpnCore` (`lib/core/vpn_core.dart`). |
+| `native/mihomocore/` | The Go engine wrapper: an xcframework for Apple, an AAR for Android, a tunnel service for Windows and Linux. |
+| `shared/apple/` | The Network Extension and the app's VPN glue, shared by iOS and macOS. |
+| `native/libagw/` | The gateway library for `vpn://` keys (a submodule). |
 
 Per platform the tunnel runs as:
 
@@ -70,8 +121,8 @@ flutter analyze
 flutter test
 ```
 
-CI (`.github/workflows/build-client.yml`) runs both and builds Android,
-Windows and Linux on every push and pull request.
+CI ([`build-client.yml`](.github/workflows/build-client.yml)) runs both and
+builds Android, Windows and Linux on every push and pull request.
 
 ## Documentation
 
@@ -80,7 +131,19 @@ Windows and Linux on every push and pull request.
 - [`docs/decisions/`](docs/decisions/README.md) — why it is built this way.
 - [`design/ui-spec.html`](design/ui-spec.html) — every screen, 1:1.
 
+## Built with
+
+- [mihomo](https://github.com/MetaCubeX/mihomo) — the proxy engine
+- [Flutter](https://flutter.dev) — the app on every platform
+- [sing-tun](https://github.com/MetaCubeX/sing-tun) and [gVisor](https://gvisor.dev) — the TUN stack
+- [AmneziaWG](https://github.com/amnezia-vpn/amneziawg-go) — WireGuard with obfuscation
+- [Wintun](https://www.wintun.net) — the TUN driver on Windows
+- [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) — QR code scanning
+
+…and more, listed in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+
 ## License
 
-GPL-3.0 — see [`LICENSE`](LICENSE). Third-party components are listed in
-[`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+Anoya is licensed under the GNU General Public License v3.0 — see
+[`LICENSE`](LICENSE). Third-party components are distributed under their own
+terms, listed in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
