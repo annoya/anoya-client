@@ -192,9 +192,8 @@ runtime are BSD 3-Clause.
 
 ## libagw
 
-- Source: https://github.com/amnezia-vpn/libagw (pinned tag `v1.0.8`)
-- License: GNU General Public License v3.0 (GPL-3.0); the license file was
-  added to the repository after the pinned tag
+- Source: https://github.com/amnezia-vpn/libagw (pinned tag `v1.0.9`)
+- License: GNU General Public License v3.0 (GPL-3.0)
 - License Text: https://github.com/amnezia-vpn/libagw/blob/master/LICENSE
 
 ---
