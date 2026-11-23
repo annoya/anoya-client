@@ -1,5 +1,5 @@
 import 'package:camera/camera.dart' show FlashMode;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
 import 'package:image_picker/image_picker.dart';
 
